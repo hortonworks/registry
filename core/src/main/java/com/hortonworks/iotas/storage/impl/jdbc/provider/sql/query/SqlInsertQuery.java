@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,25 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query;
 
-import com.hortonworks.iotas.common.Schema;
-import com.hortonworks.iotas.storage.PrimaryKey;
+import com.hortonworks.iotas.storage.Storable;
 
-import java.sql.PreparedStatement;
-import java.util.List;
+public class SqlInsertQuery extends AbstractStorableSqlQuery {
 
-public interface SqlBuilder {
-    /** @return The list of columns that constitute this database table */
-    List<Schema.Field> getColumns();
+    public SqlInsertQuery(Storable storable) {
+        super(storable);
+    }
 
-    /** @return table name or namespace */
-    String getNamespace();
-
-    /** @return The {@link PrimaryKey} used in the query construction process <br/>
-     * null if no {@link PrimaryKey} used */
-    PrimaryKey getPrimaryKey();
-
-    /** @return The SQL query with the place parameters ready to be replaced in a {@link PreparedStatement} */
-    String getParametrizedSql();
+    // "INSERT INTO DB.TABLE (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE id=1, name="A", age=19";
+    @Override
+    protected void setParameterizedSql() {
+        sql = "INSERT INTO " + tableName + " ("
+                + join(getColumnNames(columns, null), ", ")
+                + ") VALUES( " + getBindVariables("?,", columns.size()) + ")";
+        log.debug(sql);
+    }
 }

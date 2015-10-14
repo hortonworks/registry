@@ -15,22 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query;
 
 import com.hortonworks.iotas.storage.StorableKey;
 
-import java.util.LinkedList;
-
-public abstract class MySqlStorableKeyBuilder extends MySqlBuilder {
-    public MySqlStorableKeyBuilder(String nameSpace) {
-        tableName = nameSpace;
-        setParameterizedSql();
+public class SqlSelectQuery extends AbstractStorableKeyQuery {
+    public SqlSelectQuery(String nameSpace) {
+        super(nameSpace);   // super.columns == null => no where clause filtering
     }
 
-    public MySqlStorableKeyBuilder(StorableKey storableKey) {
-        tableName = storableKey.getNameSpace();
-        primaryKey = storableKey.getPrimaryKey();
-        columns = new LinkedList<>(storableKey.getPrimaryKey().getFieldsToVal().keySet());
-        setParameterizedSql();
+    public SqlSelectQuery(StorableKey storableKey) {
+        super(storableKey);     // super.columns != null => do where clause filtering on PrimaryKey
+    }
+
+    // "SELECT * FROM DB.TABLE [WHERE C1 = ?, C2 = ?]"
+    @Override
+    protected void setParameterizedSql() {
+        sql = "SELECT * FROM " + tableName;
+        //where clause is defined by columns specified in the PrimaryKey
+        if (columns != null) {
+            sql += " WHERE " + join(getColumnNames(columns, "%s = ?"), " AND ");
+        }
+        log.debug(sql);
     }
 }

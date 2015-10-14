@@ -15,17 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query;
 
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
+import com.hortonworks.iotas.common.Schema;
+import com.hortonworks.iotas.storage.PrimaryKey;
 
-public class MySqlQuery extends MySqlBuilder {
+import java.sql.PreparedStatement;
+import java.util.List;
 
-    public MySqlQuery(String sql) {
-        this.sql = sql;
-    }
+public interface SqlQuery {
 
-    @Override
-    protected void setParameterizedSql() {
-        log.debug(sql);
-    }
+    /**
+     * @return The list of columns that constitute this database table
+     */
+    List<Schema.Field> getColumns();
+
+    /**
+     * @return table name or namespace
+     *
+     */
+    String getNamespace();
+
+    /**
+     * @return The {@link PrimaryKey} used in the query construction process <br/>
+     * null if no {@link PrimaryKey} used
+     */
+    PrimaryKey getPrimaryKey();
+
+    /**
+     * @return The SQL query with the place parameters ready to be replaced in a {@link PreparedStatement}
+     */
+    String getParametrizedSql();
 }

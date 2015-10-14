@@ -16,21 +16,22 @@
  * limitations under the License.
  */
 
-package com.hortonworks.iotas.storage.impl.jdbc;
+package com.hortonworks.iotas.storage.impl.jdbc.mysql;
 
-import com.google.common.cache.CacheBuilder;
-import com.hortonworks.iotas.IntegrationTest;
+import com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager;
+import com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManagerIntegrationTest;
 import com.hortonworks.iotas.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.iotas.storage.impl.jdbc.config.HikariBasicConfig;
 import com.hortonworks.iotas.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.iotas.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
+import com.hortonworks.iotas.test.IntegrationTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
-public class JdbcStorageManagerWithCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
+public class MySqlStorageManagerNoCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
@@ -52,14 +53,7 @@ public class JdbcStorageManagerWithCacheIntegrationTest extends JdbcStorageManag
 
     private static void setFields(ConnectionBuilder connectionBuilder, Database db) {
         JdbcStorageManagerIntegrationTest.connectionBuilder = connectionBuilder;
-        jdbcStorageManager = new JdbcStorageManager(new MySqlExecutorForTest(newGuavaCacheBuilder(),
-                new ExecutionConfig(-1), connectionBuilder));
+        jdbcStorageManager = new JdbcStorageManager(new MySqlExecutorForTest(new ExecutionConfig(-1), connectionBuilder));
         database = db;
     }
-
-    private static CacheBuilder newGuavaCacheBuilder() {
-        final long maxSize = 3;
-        return  CacheBuilder.newBuilder().maximumSize(maxSize);
-    }
-
 }
