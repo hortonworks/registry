@@ -15,11 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.mysql.query;
 
 import com.hortonworks.iotas.storage.Storable;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.AbstractStorableSqlQuery;
 
-public class MySqlInsertUpdateDuplicate extends MySqlStorableBuilder {
+public class MySqlInsertUpdateDuplicate extends AbstractStorableSqlQuery {
 
     public MySqlInsertUpdateDuplicate(Storable storable) {
         super(storable);

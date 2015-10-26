@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,21 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
 
-import com.hortonworks.iotas.storage.StorableKey;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.mysql.query;
 
-public class MySqlDelete extends MySqlStorableKeyBuilder {
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.AbstractSqlQuery;
 
-    public MySqlDelete(StorableKey storableKey) {
-        super(storableKey);
+public class MySqlQuery extends AbstractSqlQuery {
+
+    public MySqlQuery(String sql) {
+        this.sql = sql;
     }
 
-    // "DELETE FROM DB.TABLE WHERE id1 = val1 AND id2 = val2"
     @Override
     protected void setParameterizedSql() {
-        sql = "DELETE FROM  " + tableName + " WHERE "
-                + join(getColumnNames(columns, "%s = ?"), " AND ");
         log.debug(sql);
     }
 }

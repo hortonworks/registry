@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.statement;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.statement;
 
 import com.hortonworks.iotas.common.Schema;
 import com.hortonworks.iotas.storage.exception.MalformedQueryException;
 import com.hortonworks.iotas.storage.impl.jdbc.config.ExecutionConfig;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MySqlStorableBuilder;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MySqlStorableKeyBuilder;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.SqlBuilder;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.AbstractStorableKeyQuery;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.AbstractStorableSqlQuery;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,16 +37,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Prepares a {@link PreparedStatement} from a {@link SqlBuilder} object. The parameters are replaced
+ * Prepares a {@link PreparedStatement} from a {@link SqlQuery} object. The parameters are replaced
  * with calls to method {@code getPreparedStatement}, which returns the {@link PreparedStatement} ready to be executed
  *
- * @see #getPreparedStatement(SqlBuilder)
+ * @see #getPreparedStatement(SqlQuery)
  */
 public class PreparedStatementBuilder {
     private static final Logger log = LoggerFactory.getLogger(PreparedStatementBuilder.class);
     private final Connection connection;
     private PreparedStatement preparedStatement;
-    private final SqlBuilder sqlBuilder;
+    private final SqlQuery sqlBuilder;
     private final ExecutionConfig config;
     private int numPrepStmntParams;                          // Number of prepared statement parameters
 
@@ -60,7 +60,7 @@ public class PreparedStatementBuilder {
      * @throws SQLException
      */
     public PreparedStatementBuilder(Connection connection, ExecutionConfig config,
-                                    SqlBuilder sqlBuilder) throws SQLException {
+                                    SqlQuery sqlBuilder) throws SQLException {
         this.connection = connection;
         this.config = config;
         this.sqlBuilder = sqlBuilder;
@@ -97,7 +97,7 @@ public class PreparedStatementBuilder {
     }
 
     // Used to assert that data passed in is valid
-    private void assertIsNumColumnsMultipleOfNumParameters(SqlBuilder sqlBuilder, int groupCount) {
+    private void assertIsNumColumnsMultipleOfNumParameters(SqlQuery sqlBuilder, int groupCount) {
         final List<Schema.Field> columns = sqlBuilder.getColumns();
         boolean isMultiple = false;
 
@@ -113,24 +113,24 @@ public class PreparedStatementBuilder {
     }
 
     /**
-     * Replaces parameters from {@link SqlBuilder} and returns a {@code getPreparedStatement} ready to be executed
+     * Replaces parameters from {@link SqlQuery} and returns a {@code getPreparedStatement} ready to be executed
      *
-     * @param sqlBuilder The {@link SqlBuilder} for which to get the {@link PreparedStatement}.
-     *                   This parameter must be of the same type of the {@link SqlBuilder} used to construct this object.
+     * @param sqlBuilder The {@link SqlQuery} for which to get the {@link PreparedStatement}.
+     *                   This parameter must be of the same type of the {@link SqlQuery} used to construct this object.
      * @return The prepared statement with the parameters values set and ready to be executed
      * */
-    public PreparedStatement getPreparedStatement(SqlBuilder sqlBuilder) throws SQLException {
+    public PreparedStatement getPreparedStatement(SqlQuery sqlBuilder) throws SQLException {
         // If more types become available consider subclassing instead of going with this approach, which was chosen here for simplicity
-        if (sqlBuilder instanceof MySqlStorableKeyBuilder) {
+        if (sqlBuilder instanceof AbstractStorableKeyQuery) {
             setStorableKeyPreparedStatement(sqlBuilder);
-        } else if (sqlBuilder instanceof MySqlStorableBuilder) {
+        } else if (sqlBuilder instanceof AbstractStorableSqlQuery) {
             setStorablePreparedStatement(sqlBuilder);
         }
         log.debug("Successfully prepared statement [{}]", preparedStatement);
         return preparedStatement;
     }
 
-    private void setStorableKeyPreparedStatement(SqlBuilder sqlBuilder) throws SQLException {
+    private void setStorableKeyPreparedStatement(SqlQuery sqlBuilder) throws SQLException {
         final List<Schema.Field> columns = sqlBuilder.getColumns();
 
         if (columns != null) {
@@ -146,12 +146,12 @@ public class PreparedStatementBuilder {
         }
     }
 
-    private void setStorablePreparedStatement(SqlBuilder sqlBuilder) throws SQLException {
+    private void setStorablePreparedStatement(SqlQuery sqlBuilder) throws SQLException {
         final List<Schema.Field> columns = sqlBuilder.getColumns();
 
         if (columns != null) {
             final int len = columns.size();
-            final Map columnsToValues = ((MySqlStorableBuilder)sqlBuilder).getStorable().toMap();
+            final Map columnsToValues = ((AbstractStorableSqlQuery)sqlBuilder).getStorable().toMap();
             final int nTimes = numPrepStmntParams /len;   // Number of times each column must be replaced on a query parameter
 
             for (int j = 0; j < len*nTimes; j++) {
