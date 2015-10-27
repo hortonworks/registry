@@ -15,22 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query;
 
-import com.hortonworks.iotas.storage.Storable;
+import com.hortonworks.iotas.storage.StorableKey;
 
-public class MySqlInsert extends MySqlStorableBuilder {
+/**
+ *
+ */
+public class SqlDeleteQuery extends AbstractStorableKeyQuery {
 
-    public MySqlInsert(Storable storable) {
-        super(storable);
+    public SqlDeleteQuery(StorableKey storableKey) {
+        super(storableKey);
     }
 
-    // "INSERT INTO DB.TABLE (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE id=1, name="A", age=19";
+    // "DELETE FROM DB.TABLE WHERE id1 = val1 AND id2 = val2"
     @Override
     protected void setParameterizedSql() {
-        sql = "INSERT INTO " + tableName + " ("
-                + join(getColumnNames(columns, null), ", ")
-                + ") VALUES( " + getBindVariables("?,", columns.size()) + ")";
+        sql = "DELETE FROM  " + tableName + " WHERE "
+                + join(getColumnNames(columns, "%s = ?"), " AND ");
         log.debug(sql);
     }
 }

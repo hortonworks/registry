@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.query;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class MySqlBuilder implements SqlBuilder {
-    protected static final Logger log = LoggerFactory.getLogger(MySqlBuilder.class);
+public abstract class AbstractSqlQuery implements SqlQuery {
+    protected static final Logger log = LoggerFactory.getLogger(AbstractSqlQuery.class);
     protected List<Schema.Field> columns;
     protected String tableName;
     protected PrimaryKey primaryKey;
@@ -94,7 +94,7 @@ public abstract class MySqlBuilder implements SqlBuilder {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        MySqlBuilder that = (MySqlBuilder) o;
+        AbstractSqlQuery that = (AbstractSqlQuery) o;
 
         if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
         if (tableName != null ? !tableName.equals(that.tableName) : that.tableName != null) return false;
@@ -112,7 +112,7 @@ public abstract class MySqlBuilder implements SqlBuilder {
 
     @Override
     public String toString() {
-        return "MySqlBuilder{" +
+        return "AbstractSqlQuery{" +
                 "columns=" + columns +
                 ", tableName='" + tableName + '\'' +
                 ", primaryKey=" + primaryKey +

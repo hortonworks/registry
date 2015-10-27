@@ -1,22 +1,4 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.hortonworks.iotas.storage.impl.jdbc.mysql.factory;
+package com.hortonworks.iotas.storage.impl.jdbc.provider.sql.factory;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -28,16 +10,14 @@ import com.hortonworks.iotas.catalog.Device;
 import com.hortonworks.iotas.catalog.ParserInfo;
 import com.hortonworks.iotas.storage.Storable;
 import com.hortonworks.iotas.storage.StorableKey;
-import com.hortonworks.iotas.storage.StorageException;
+import com.hortonworks.iotas.storage.exception.StorageException;
 import com.hortonworks.iotas.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.iotas.storage.impl.jdbc.connection.ConnectionBuilder;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MetadataHelper;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MySqlDelete;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MySqlInsert;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MySqlInsertUpdateDuplicate;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.MySqlSelect;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.query.SqlBuilder;
-import com.hortonworks.iotas.storage.impl.jdbc.mysql.statement.PreparedStatementBuilder;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.SqlDeleteQuery;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.SqlInsertQuery;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.SqlQuery;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
+import com.hortonworks.iotas.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.iotas.storage.impl.jdbc.util.Util;
 
 import java.sql.Connection;
@@ -59,96 +39,56 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-public class MySqlExecutor implements SqlExecutor {
-    private Cache<SqlBuilder, PreparedStatementBuilder> cache;
-    private final ExecutionConfig config;
-    private final int queryTimeoutSecs;
-    private final ConnectionBuilder connectionBuilder;
-    private final List<Connection> activeConnections;
+/**
+ *
+ */
+public abstract class AbstractQueryExecutor implements QueryExecutor {
 
-    /**
-     * @param config Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
-     * @param connectionBuilder Object that establishes the connection to the database
-     */
-    public MySqlExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
+    protected final ExecutionConfig config;
+    protected final int queryTimeoutSecs;
+    protected final ConnectionBuilder connectionBuilder;
+    protected final List<Connection> activeConnections;
+
+    private final Cache<SqlQuery, PreparedStatementBuilder> cache;
+
+    public AbstractQueryExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
+        this(config, connectionBuilder, null);
+    }
+
+    public AbstractQueryExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         this.connectionBuilder = connectionBuilder;
         this.config = config;
+        cache = cacheBuilder != null ? buildCache(cacheBuilder) : null;
         this.queryTimeoutSecs = config.getQueryTimeoutSecs();
         activeConnections = Collections.synchronizedList(new ArrayList<Connection>());
     }
 
-    /**
-     * @param cacheBuilder Guava cache configuration. The maximum number of entries in cache (open connections)
-     *                     must not exceed the maximum number of open database connections allowed
-     * @param config Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
-     * @param connectionBuilder Object that establishes the connection to the database
-     */
-    public MySqlExecutor(CacheBuilder<SqlBuilder, PreparedStatementBuilder> cacheBuilder,
-                         ExecutionConfig config, ConnectionBuilder connectionBuilder) {
-        this(config, connectionBuilder);
-        setCache(cacheBuilder);
-    }
-
-    protected void setCache(CacheBuilder<SqlBuilder, PreparedStatementBuilder> cacheBuilder) {
-        cache = cacheBuilder.removalListener(new RemovalListener<SqlBuilder, PreparedStatementBuilder>() {
-            /** Closes and removes the database connection when the entry is removed from cache */
-            @Override
-            public void onRemoval(RemovalNotification<SqlBuilder, PreparedStatementBuilder> notification) {
-                final PreparedStatementBuilder val = notification.getValue();
-                log.debug("Removing entry from cache and closing connection [key:{}, val: {}]", notification.getKey(), val);
-                log.debug("Cache size: {}", cache.size());
-                if (val != null) {
-                    closeConnection(val.getConnection());;
-                }
-            }
-        }).build();
-    }
-
-    // ============= Public API methods =============
-
     @Override
     public void insert(Storable storable) {
-        executeUpdate(new MySqlInsert(storable));
+        executeUpdate(new SqlInsertQuery(storable));
     }
 
-    @Override
-    public void insertOrUpdate(final Storable storable) {
-        executeUpdate(new MySqlInsertUpdateDuplicate(storable));
-    }
+    public abstract void insertOrUpdate(Storable storable);
 
     @Override
     public void delete(StorableKey storableKey) {
-        executeUpdate(new MySqlDelete(storableKey));
+        executeUpdate(new SqlDeleteQuery(storableKey));
     }
 
     @Override
     public <T extends Storable> Collection<T> select(final String namespace) {
-        return executeQuery(namespace, new MySqlSelect(namespace));
+        return executeQuery(namespace, new SqlSelectQuery(namespace));
     }
 
     @Override
     public <T extends Storable> Collection<T> select(final StorableKey storableKey){
-        return executeQuery(storableKey.getNameSpace(), new MySqlSelect(storableKey));
+        return executeQuery(storableKey.getNameSpace(), new SqlSelectQuery(storableKey));
     }
 
-    @Override
-    public Long nextId(String namespace) {
-        // This only works if the table has auto-increment. The TABLE_SCHEMA part is implicitly specified in the Connection object
-        // SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'temp' AND TABLE_SCHEMA = 'test'
-        Connection connection = null;
-        try {
-            connection = getConnection();
-            return getNextId(connection, namespace);
-        } catch (SQLException e) {
-            throw new StorageException(e);
-        } finally {
-            closeConnection(connection);
-        }
-    }
+    public abstract Long nextId(String namespace);
 
-    // Protected to be able to override it in the test framework
-    protected Long getNextId(Connection connection, String namespace) throws SQLException {
-        return MetadataHelper.nextIdMySql(connection, namespace, queryTimeoutSecs);
+    public ExecutionConfig getConfig() {
+        return config;
     }
 
     @Override
@@ -179,23 +119,10 @@ public class MySqlExecutor implements SqlExecutor {
         }
     }
 
-    public ExecutionConfig getConfig() {
-        return config;
-    }
-
-    // =============== Private helper Methods ===============
-
-    private void executeUpdate(SqlBuilder sqlBuilder) {
-        new QueryExecution(sqlBuilder).executeUpdate();
-    }
-
-    private <T extends Storable> Collection<T> executeQuery(String namespace, SqlBuilder sqlBuilder) {
-        return new QueryExecution(sqlBuilder).executeQuery(namespace);
-    }
-
     private boolean isCacheEnabled() {
         return cache != null;
     }
+
 
     private void closeAllOpenConnections() {
         for(Iterator<Connection> iter = activeConnections.iterator(); iter.hasNext(); ) {
@@ -212,11 +139,37 @@ public class MySqlExecutor implements SqlExecutor {
         }
     }
 
-    private class QueryExecution {
-        private SqlBuilder sqlBuilder;
+    private Cache<SqlQuery, PreparedStatementBuilder> buildCache(CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
+        return cacheBuilder.removalListener(new RemovalListener<SqlQuery, PreparedStatementBuilder>() {
+            /** Closes and removes the database connection when the entry is removed from cache */
+            @Override
+            public void onRemoval(RemovalNotification<SqlQuery, PreparedStatementBuilder> notification) {
+                final PreparedStatementBuilder val = notification.getValue();
+                log.debug("Removing entry from cache and closing connection [key:{}, val: {}]", notification.getKey(), val);
+                log.debug("Cache size: {}", cache.size());
+                if (val != null) {
+                    closeConnection(val.getConnection());;
+                }
+            }
+        }).build();
+    }
+
+
+    // =============== Private helper Methods ===============
+
+    protected void executeUpdate(SqlQuery sqlBuilder) {
+        new QueryExecution(sqlBuilder).executeUpdate();
+    }
+
+    protected <T extends Storable> Collection<T> executeQuery(String namespace, SqlQuery sqlBuilder) {
+        return new QueryExecution(sqlBuilder).executeQuery(namespace);
+    }
+
+    protected class QueryExecution {
+        private SqlQuery sqlBuilder;
         private Connection connection;
 
-        public QueryExecution(SqlBuilder sqlBuilder) {
+        public QueryExecution(SqlQuery sqlBuilder) {
             this.sqlBuilder = sqlBuilder;
         }
 
@@ -230,7 +183,7 @@ public class MySqlExecutor implements SqlExecutor {
             } finally {
                 // Close every opened connection if not using cache. If using cache, cache expiry manages connections
                 if (!isCacheEnabled()) {
-                    closeConnection();
+                    closeConn();
                 }
             }
             return result;
@@ -244,13 +197,13 @@ public class MySqlExecutor implements SqlExecutor {
             } finally {
                 // Close every opened connection if not using cache. If using cache, cache expiry manages connections
                 if (!isCacheEnabled()) {
-                    closeConnection();
+                    closeConn();
                 }
             }
         }
 
-        void closeConnection() {
-            MySqlExecutor.this.closeConnection(connection);
+        void closeConn() {
+            closeConnection(connection);
         }
 
         // ====== private helper methods ======
@@ -269,9 +222,9 @@ public class MySqlExecutor implements SqlExecutor {
 
         /** This callable is instantiated and called the first time every key:val entry is inserted into the cache */
         private class PreparedStatementBuilderCallable implements Callable<PreparedStatementBuilder> {
-            private final SqlBuilder sqlBuilder;
+            private final SqlQuery sqlBuilder;
 
-            public PreparedStatementBuilderCallable(SqlBuilder sqlBuilder) {
+            public PreparedStatementBuilderCallable(SqlQuery sqlBuilder) {
                 this.sqlBuilder = sqlBuilder;
             }
 
@@ -289,7 +242,7 @@ public class MySqlExecutor implements SqlExecutor {
             final Collection<T> storables = new ArrayList<>();
             // maps contains the data to populate the state of Storable objects
             final List<Map<String, Object>> maps = getMapsFromResultSet(resultSet);
-            if (maps != null) {
+            if (maps != null && !maps.isEmpty()) {
                 for (Map<String, Object> map : maps) {
                     if (map != null) {
                         T storable = newStorableInstance(nameSpace);
@@ -306,16 +259,14 @@ public class MySqlExecutor implements SqlExecutor {
             List<Map<String, Object>> maps = null;
 
             try {
-                if (resultSet.first()) {    // returns false if no rows in result set. Otherwise points to first row
+                boolean next = resultSet.next();
+                if(next) {
                     maps = new LinkedList<>();
                     ResultSetMetaData rsMetadata = resultSet.getMetaData();
-                    Map<String, Object> map = newMapWithRowContents(resultSet, rsMetadata);;
-                    maps.add(map);
-
-                    while (resultSet.next()) {
-                        map = newMapWithRowContents(resultSet, rsMetadata);;
+                    do {
+                        Map<String, Object> map = newMapWithRowContents(resultSet, rsMetadata);
                         maps.add(map);
-                    }
+                    } while(resultSet.next());
                 }
             } catch (SQLException e) {
                 log.error("Exception occurred while processing result set.", e);
@@ -379,4 +330,5 @@ public class MySqlExecutor implements SqlExecutor {
             return map;
         }
     }
+
 }

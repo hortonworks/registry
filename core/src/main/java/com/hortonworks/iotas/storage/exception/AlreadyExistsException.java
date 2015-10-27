@@ -1,4 +1,4 @@
-package com.hortonworks.iotas.storage;
+package com.hortonworks.iotas.storage.exception;
 
 public class AlreadyExistsException extends StorageException {
 
