@@ -31,7 +31,14 @@ import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
-public class MySqlStorageManagerWithCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
+public abstract class MySqlStorageManagerWithCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
+
+    public MySqlStorageManagerWithCacheIntegrationTest() {
+        //MySql DB Configuration. Useful for local testing
+        //setFields(new HikariCPConnectionBuilder(HikariBasicConfig.getMySqlHikariConfig()), Database.MYSQL);
+        //H2 DB Configuration. Useful for testing as part of the build
+        setFields(new HikariCPConnectionBuilder(HikariBasicConfig.getH2HikariConfig()), Database.H2);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -43,15 +50,7 @@ public class MySqlStorageManagerWithCacheIntegrationTest extends JdbcStorageMana
         super.tearDown();
     }
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        //MySql DB Configuration. Useful for local testing
-        //setFields(new HikariCPConnectionBuilder(HikariBasicConfig.getMySqlHikariConfig()), Database.MYSQL);
-        //H2 DB Configuration. Useful for testing as part of the build
-        setFields(new HikariCPConnectionBuilder(HikariBasicConfig.getH2HikariConfig()), Database.H2);
-    }
-
-    private static void setFields(ConnectionBuilder connectionBuilder, Database db) {
+    private void setFields(ConnectionBuilder connectionBuilder, Database db) {
         JdbcStorageManagerIntegrationTest.connectionBuilder = connectionBuilder;
         jdbcStorageManager =  createJdbcStorageManager(new MySqlExecutorForTest(newGuavaCacheBuilder(),
                 new ExecutionConfig(-1), connectionBuilder));

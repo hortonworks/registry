@@ -19,9 +19,9 @@
 package com.hortonworks.iotas.storage.impl.jdbc;
 
 import com.google.common.cache.CacheBuilder;
-import com.hortonworks.iotas.service.CatalogService;
 import com.hortonworks.iotas.storage.AbstractStoreManagerTest;
 import com.hortonworks.iotas.storage.Storable;
+import com.hortonworks.iotas.storage.StorableTest;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.exception.NonIncrementalColumnException;
 import com.hortonworks.iotas.storage.impl.jdbc.config.ExecutionConfig;
@@ -74,18 +74,6 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
         return jdbcStorageManager;
     }
 
-    @Override
-    protected void setStorableTests() {
-        storableTests = new ArrayList<StorableTest>() {{
-            add(new DataSourceTest());
-            add(new DeviceJdbcTest());
-            add(new ParsersTest());
-            add(new DataFeedsJdbcTest());
-            add(new FilesTest());
-            add(new StreamInfoTest());
-            add(new NotifierInfoTest());
-        }};
-    }
 
     // =============== TEST METHODS ===============
 
@@ -98,45 +86,16 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
         }
     }
 
-    @Test(expected = NonIncrementalColumnException.class)
-    public void testNextId_NoAutoincrementTable_NonIncrementalKeyException() throws Exception {
-        for (StorableTest test : storableTests) {
-            if (test instanceof DeviceTest) {
-                    getStorageManager().nextId(test.getNameSpace());    // should throw exception
-            }
-        }
-    }
-
     @Test
     public void testNextId_AutoincrementColumn_IdPlusOne() throws Exception {
 
         for (StorableTest test : storableTests) {
-            // Device does not have auto_increment, and therefore there is no concept of nextId and should throw exception (tested below)
-            if (!(test instanceof DeviceTest)) {
                 doTestNextId_AutoincrementColumn_IdPlusOne(test);
-            }
         }
     }
 
     // ============= Inner classes that handle the initialization steps required for the Storable entity to be tested =================
 
-    //Device has foreign key in DataSource table, which has to be initialized before we can insert data in the Device table
-    class DeviceJdbcTest extends DeviceTest {
-        @Override
-        public void init() {
-            new DataSourceTest().addAllToStorage();
-        }
-    }
-
-    class DataFeedsJdbcTest extends DataFeedsTest {
-        // DataFeed has foreign keys in ParserInfo and DataSource tables, which have to be
-        // initialized before we can insert data in the DataFeed table
-        @Override
-        public void init() {
-            new ParsersTest().addAllToStorage();
-            new DataSourceTest().addAllToStorage();
-        }
-    }
 
     protected static Connection getConnection() {
         Connection connection = connectionBuilder.getConnection();
@@ -203,10 +162,6 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
         return new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(fileName));
     }
 
-    protected static JdbcStorageManager createJdbcStorageManager(QueryExecutor queryExecutor) {
-        JdbcStorageManager jdbcStorageManager = new JdbcStorageManager(queryExecutor);
-        jdbcStorageManager.registerStorables(CatalogService.getStorableClasses());
-        return jdbcStorageManager;
-    }
+    public abstract JdbcStorageManager createJdbcStorageManager(QueryExecutor queryExecutor);
 
 }

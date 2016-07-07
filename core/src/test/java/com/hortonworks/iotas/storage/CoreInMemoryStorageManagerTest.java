@@ -15,39 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.iotas.storage.impl.memory;
+package com.hortonworks.iotas.storage;
 
-import com.hortonworks.iotas.storage.AbstractStoreManagerTest;
-import com.hortonworks.iotas.storage.Storable;
-import com.hortonworks.iotas.storage.StorageManager;
+import com.hortonworks.iotas.catalog.*;
+import com.hortonworks.iotas.common.Schema;
+import com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManagerTest;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
-public class InMemoryStorageManagerTest extends AbstractStoreManagerTest {
-    private StorageManager storageManager = new InMemoryStorageManager();
-
-    @Override
-    public StorageManager getStorageManager() {
-        return storageManager;
-    }
-
-    @Test
-    public void testList_NonexistentNameSpace_StorageException() {
-        Collection<Storable> found = getStorageManager().list("NONEXISTENT_NAME_SPACE");
-        Assert.assertTrue(found.isEmpty());
-    }
+public class CoreInMemoryStorageManagerTest extends InMemoryStorageManagerTest {
 
     @Override
     protected void setStorableTests() {
-        storableTests = new ArrayList<StorableTest>() {{
-            add(new DataSourceTest());
-            add(new DeviceTest());
-            add(new ParsersTest());
-            add(new DataFeedsTest());
-            add(new FilesTest());
-        }};
+        storableTests = new CatalogTests().getAllInMemoryTests();
     }
 }

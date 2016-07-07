@@ -12,13 +12,12 @@ import org.junit.experimental.categories.Category;
  */
 
 @Category(HBaseIntegrationTest.class)
-public class PhoenixStorageManagerWithCacheIntegrationTest extends PhoenixStorageManagerNoCacheIntegrationTest {
+public abstract  class PhoenixStorageManagerWithCacheIntegrationTest extends PhoenixStorageManagerNoCacheIntegrationTest {
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    public PhoenixStorageManagerWithCacheIntegrationTest() {
         setConnectionBuilder();
         CacheBuilder  cacheBuilder = CacheBuilder.newBuilder().maximumSize(3);
         jdbcStorageManager = createJdbcStorageManager(new PhoenixExecutor(new ExecutionConfig(-1), connectionBuilder, cacheBuilder));
-    }
 
+    }
 }
