@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS datafeeds;
+DROP TABLE IF EXISTS parser_info;
+DROP TABLE IF EXISTS devices;
+DROP TABLE IF EXISTS datasources;
+DROP TABLE IF EXISTS topologies;
+DROP TABLE IF EXISTS topology_component_definitions;
+DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS streaminfo;
+DROP TABLE IF EXISTS notifierinfos;
+DROP TABLE IF EXISTS topology_components;
+DROP TABLE IF EXISTS topology_sources;
+DROP TABLE IF EXISTS topology_source_stream_mapping;
+DROP TABLE IF EXISTS topology_sinks;
+DROP TABLE IF EXISTS topology_processors;
+DROP TABLE IF EXISTS topology_processor_stream_mapping;
+DROP TABLE IF EXISTS topology_edges;
