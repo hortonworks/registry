@@ -66,13 +66,13 @@ public class CatalogTagService implements TagService {
         }
         checkCycles(tag, tag.getTags());
         dao.add(tag);
-        addTagsForStorable(getEntityId(tag), tag.getTags());
+        addTagsForStorable(getTaggedEntity(tag), tag.getTags());
         return tag;
     }
 
     private void checkCycles(Tag current, List<Tag> tags) {
         for (Tag tag : tags) {
-            if (tag.equals(current) || flatten(getTags(getEntityId(tag))).contains(current)) {
+            if (tag.equals(current) || flatten(getTags(getTaggedEntity(tag))).contains(current)) {
                 throw new IllegalArgumentException("Tagging " + current +
                         " with " + tag + " would result in a cycle.");
             }
@@ -80,7 +80,7 @@ public class CatalogTagService implements TagService {
     }
 
 
-    private TaggedEntity getEntityId(Tag tag) {
+    private TaggedEntity getTaggedEntity(Tag tag) {
         return new TaggedEntity(tag.getNameSpace(), tag.getId());
     }
 
@@ -105,12 +105,12 @@ public class CatalogTagService implements TagService {
         if (tag.getTimestamp() == null) {
             tag.setTimestamp(System.currentTimeMillis());
         }
-        List<Tag> existingTags = getTags(getEntityId(tag));
+        List<Tag> existingTags = getTags(getTaggedEntity(tag));
         List<Tag> tagsToBeAdded = getTagsToBeAdded(existingTags, tag.getTags());
         List<Tag> tagsToBeRemoved = getTagsToBeRemoved(existingTags, tag.getTags());
         checkCycles(tag, tagsToBeAdded);
         this.dao.addOrUpdate(tag);
-        updateTags(getEntityId(tag), tagsToBeAdded, tagsToBeRemoved);
+        updateTags(getTaggedEntity(tag), tagsToBeAdded, tagsToBeRemoved);
         return tag;
     }
 
@@ -120,7 +120,7 @@ public class CatalogTagService implements TagService {
         tag.setId(tagId);
         Tag result = this.dao.<Tag>get(new StorableKey(TAG_NAMESPACE, tag.getPrimaryKey()));
         if (result != null) {
-            result.setTags(getTags(getEntityId(result)));
+            result.setTags(getTags(getTaggedEntity(result)));
         }
         return result;
     }
@@ -132,7 +132,7 @@ public class CatalogTagService implements TagService {
             if (!getEntities(tagId, false).isEmpty()) {
                 throw new TagNotEmptyException("Tag not empty, has child entities.");
             }
-            removeTagsFromStorable(getEntityId(tag), tag.getTags());
+            removeTagsFromStorable(getTaggedEntity(tag), tag.getTags());
             dao.<Tag>remove(new StorableKey(TAG_NAMESPACE, tag.getPrimaryKey()));
         }
         return tag;
@@ -149,22 +149,22 @@ public class CatalogTagService implements TagService {
     }
 
     @Override
-    public void addTagsForStorable(TaggedEntity entityId, List<Tag> tags) {
+    public void addTagsForStorable(TaggedEntity taggedEntity, List<Tag> tags) {
         if (tags != null) {
             for (Tag tag : tags) {
                 TagStorableMapping tagStorable = new TagStorableMapping();
                 tagStorable.setTagId(tag.getId());
-                tagStorable.setStorableNamespace(entityId.getNamespace());
-                tagStorable.setStorableId(entityId.getId());
+                tagStorable.setStorableNamespace(taggedEntity.getNamespace());
+                tagStorable.setStorableId(taggedEntity.getId());
                 this.dao.add(tagStorable);
             }
         }
     }
 
     @Override
-    public void addOrUpdateTagsForStorable(TaggedEntity entityId, List<Tag> tags) {
-        List<Tag> existingTags = getTags(entityId);
-        updateTags(entityId, getTagsToBeAdded(existingTags, tags), getTagsToBeRemoved(existingTags, tags));
+    public void addOrUpdateTagsForStorable(TaggedEntity taggedEntity, List<Tag> tags) {
+        List<Tag> existingTags = getTags(taggedEntity);
+        updateTags(taggedEntity, getTagsToBeAdded(existingTags, tags), getTagsToBeRemoved(existingTags, tags));
     }
 
     private List<Tag> getTagsToBeRemoved(List<Tag> existing, List<Tag> newList) {
@@ -177,31 +177,31 @@ public class CatalogTagService implements TagService {
                 Sets.difference(ImmutableSet.copyOf(newList), ImmutableSet.copyOf(existing)));
     }
 
-    private void updateTags(TaggedEntity entityId, List<Tag> tagsToBeAdded, List<Tag> tagsToBeRemoved) {
-        removeTagsFromStorable(entityId, tagsToBeRemoved);
-        addTagsForStorable(entityId, tagsToBeAdded);
+    private void updateTags(TaggedEntity taggedEntity, List<Tag> tagsToBeAdded, List<Tag> tagsToBeRemoved) {
+        removeTagsFromStorable(taggedEntity, tagsToBeRemoved);
+        addTagsForStorable(taggedEntity, tagsToBeAdded);
     }
 
     @Override
-    public void removeTagsFromStorable(TaggedEntity entityId, List<Tag> tags) {
+    public void removeTagsFromStorable(TaggedEntity taggedEntity, List<Tag> tags) {
         if (tags != null) {
             for (Tag tag : tags) {
                 TagStorableMapping tagStorable = new TagStorableMapping();
                 tagStorable.setTagId(tag.getId());
-                tagStorable.setStorableId(entityId.getId());
-                tagStorable.setStorableNamespace(entityId.getNamespace());
+                tagStorable.setStorableId(taggedEntity.getId());
+                tagStorable.setStorableNamespace(taggedEntity.getNamespace());
                 this.dao.remove(tagStorable.getStorableKey());
             }
         }
     }
 
     @Override
-    public List<Tag> getTags(TaggedEntity entityId) {
+    public List<Tag> getTags(TaggedEntity taggedEntity) {
         List<Tag> tags = new ArrayList<>();
         QueryParam qp1 = new QueryParam(TagStorableMapping.FIELD_STORABLE_ID,
-                                        String.valueOf(entityId.getId()));
+                                        String.valueOf(taggedEntity.getId()));
         QueryParam qp2 = new QueryParam(TagStorableMapping.FIELD_STORABLE_NAMESPACE,
-                                        String.valueOf(entityId.getNamespace()));
+                                        String.valueOf(taggedEntity.getNamespace()));
         for (TagStorableMapping mapping : listTagStorableMapping(ImmutableList.of(qp1, qp2))) {
             tags.add(getTag(mapping.getTagId()));
         }
@@ -224,11 +224,11 @@ public class CatalogTagService implements TagService {
             throw new IllegalStateException("Cycle detected");
         } else if (tagState != State.VISITED) {
             state.put(tagId, State.VISITING);
-            for (TaggedEntity entityId : getTagStorable(tagId)) {
-                if (recurse && Tag.NAMESPACE.equalsIgnoreCase(entityId.getNamespace())) {
-                    result.addAll(getEntities(entityId.getId(), recurse, state));
+            for (TaggedEntity taggedEntity : getTaggedEntities(tagId)) {
+                if (recurse && Tag.NAMESPACE.equalsIgnoreCase(taggedEntity.getNamespace())) {
+                    result.addAll(getEntities(taggedEntity.getId(), recurse, state));
                 } else {
-                    result.add(entityId);
+                    result.add(taggedEntity);
                 }
             }
             state.put(tagId, State.VISITED);
@@ -236,13 +236,13 @@ public class CatalogTagService implements TagService {
         return new LinkedList<>(result);
     }
 
-    private List<TaggedEntity> getTagStorable(Long tagId) {
-        List<TaggedEntity> storables = new ArrayList<>();
+    private List<TaggedEntity> getTaggedEntities(Long tagId) {
+        List<TaggedEntity> taggedEntities = new ArrayList<>();
         QueryParam qp1 = new QueryParam(TagStorableMapping.FIELD_TAG_ID, String.valueOf(tagId));
         for (TagStorableMapping mapping : listTagStorableMapping(ImmutableList.of(qp1))) {
-            storables.add(new TaggedEntity(mapping.getStorableNamespace(), mapping.getStorableId()));
+            taggedEntities.add(new TaggedEntity(mapping.getStorableNamespace(), mapping.getStorableId()));
         }
-        return storables;
+        return taggedEntities;
     }
 
     private Collection<TagStorableMapping> listTagStorableMapping(List<QueryParam> params) {
@@ -252,7 +252,7 @@ public class CatalogTagService implements TagService {
     private Collection<Tag> makeTags(Collection<Tag> tags) {
         if (tags != null) {
             for (Tag tag : tags) {
-                tag.setTags(getTags(getEntityId(tag)));
+                tag.setTags(getTags(getTaggedEntity(tag)));
             }
         }
         return tags;
