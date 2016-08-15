@@ -13,23 +13,20 @@
 
     <properties>
         <hikari.version>2.2.5</hikari.version>
-        <commons-lang.version>2.5</commons-lang.version>
         <h2database.version>1.4.188</h2database.version>
-        <commons-lang-3.version>3.3</commons-lang-3.version>
-        <iotas.version>0.1.0-SNAPSHOT</iotas.version>
     </properties>
 
     <dependencies>
         <!-- module dependency -->
         <dependency>
-            <groupId>com.hortonworks.iotas</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>common</artifactId>
-            <version>${iotas.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.hortonworks.iotas</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>cache</artifactId>
-            <version>${iotas.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -47,7 +44,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang-3.version}</version>
+            <version>${commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
