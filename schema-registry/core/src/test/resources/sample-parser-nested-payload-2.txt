@@ -1,0 +1,2 @@
+devices:thermostat:id:nest,description:nest thermostat,temp:78,loc:livingroom,,camera:id:nikon,description:nikon d,temp:80,loc:balcony,active:true,clicks:90,,,
+devices:thermostat:id:nest,description:nest thermostat,temp:78,loc:livingroom,,camera:id:nikon,description:nikon d,temp:80,loc:balcony,active:true,clicks:90,,,

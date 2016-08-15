@@ -1,0 +1,110 @@
+# schema registry configuration
+
+schemaProviderClasses: ["com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"]
+fileStorageConfiguration:
+  className: "com.hortonworks.iotas.common.util.LocalFileSystemStorage"
+  properties:
+    directory: "/tmp/storage"
+
+# storage provider configuration
+# providerClass can be inmemory and jdbc.
+#
+# Example configuration for inmemory is:
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
+#
+# Example configuration for phoenix based JDBC driver
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "phoenix"
+#   jdbcDriverClass: "org.apache.phoenix.jdbc.PhoenixDriver"
+#   jdbcUrl: "jdbc:phoenix:localhost:2181"
+#   queryTimeoutInSecs: 30
+#
+# MySQL based jdbc provider configuration is:
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "mysql"
+#   dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+#   dataSource.url: "jdbc:mysql://localhost/test"
+#   queryTimeoutInSecs: 30
+#
+storageProviderConfiguration:
+  providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
+
+# use the simple server factory if you only want to run on a single port
+#server:
+#  type: simple
+#  connector:
+#    type: http
+#    port: 8080
+
+server:
+  rootPath: '/*'
+#  softNofileLimit: 1000
+#  hardNofileLimit: 1000
+  applicationConnectors:
+    - type: http
+      port: 8080
+#    - type: https
+#      port: 8443
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
+# this requires the alpn-boot library on the JVM's boot classpath
+#    - type: spdy3
+#      port: 8445
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
+  adminConnectors:
+    - type: http
+      port: 8081
+#    - type: https
+#      port: 8444
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
+
+# Logging settings.
+logging:
+
+  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  level: INFO
+
+  # Logger-specific levels.
+  loggers:
+
+    # Sets the level for 'com.example.app' to DEBUG.
+    com.hortonworks.iotas: DEBUG
+
+
+  appenders:
+    - type: console
+#    - type: file
+#      threshold: DEBUG
+#      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+#      currentLogFilename: /tmp/application.log
+#      archivedLogFilenamePattern: /tmp/application-%d{yyyy-MM-dd}-%i.log.gz
+#      archivedFileCount: 7
+#      timeZone: UTC
+#      maxFileSize: 10MB
+
+#jerseyClient:
+#  minThreads: 1
+#  maxThreads: 16
+#  workQueueSize: 1000
+#  gzipEnabled: true
+#  gzipEnabledForRequests: true
+#  chunkedEncodingEnabled: true
+#  timeout: 1000ms
+#  connectionTimeout: 1000ms
+#  timeToLive: 1h
+#  cookiesEnabled: false
+#  maxConnections: 10
+#  maxConnectionsPerRoute: 1024
+#  keepAlive: 0ms
+#  retries: 10
+#  userAgent: Storm-Client
