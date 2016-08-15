@@ -188,7 +188,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Long addDeserializer(SerDesInfo deserializerInfo) {
-        String response = postEntity(rootTarget.path("deserializers"), deserializerInfo, String.class);
+        String response = postEntity(rootTarget.path(DESERIALIZERS_PATH), deserializerInfo, String.class);
         return readEntity(response, Long.class);
     }
 
@@ -235,7 +235,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private ClassLoader getClassLoader(String fileId) {
-        //todo cache of files with respective classloaders
+        //todo create/retrieve class loader
+        // maintain a cache of files with respective classloaders
         return null;
     }
 

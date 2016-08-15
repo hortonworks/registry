@@ -11,16 +11,12 @@
 
     <artifactId>schema-registry-core</artifactId>
 
-    <properties>
-        <iotas.version>0.1.0-SNAPSHOT</iotas.version>
-    </properties>
-
     <dependencies>
         <!-- module dependency -->
         <dependency>
-            <groupId>com.hortonworks.iotas</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>storage-core</artifactId>
-            <version>${iotas.version}</version>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.sun.jersey</groupId>
