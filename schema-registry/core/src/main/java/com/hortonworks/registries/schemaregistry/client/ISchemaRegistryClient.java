@@ -92,7 +92,7 @@ import java.util.Collection;
  * </pre>
  *
  */
-public interface ISchemaRegistryClient extends Resourceable {
+public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
      * Returns {@link SchemaKey} of the added or an existing schema.

@@ -22,6 +22,7 @@ import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
+import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
@@ -48,8 +49,7 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
 
     @Override
     public void init(Map<String, Object> config) {
-        schemaRegistryClient = new SchemaRegistryClient();
-        schemaRegistryClient.init(config);
+        schemaRegistryClient = new SchemaRegistryClient(config);
     }
 
     @Override
@@ -66,7 +66,11 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
     }
 
     private org.apache.avro.Schema getSchema(Object input) {
-        return null;
+        if(input instanceof GenericContainer) {
+            return ((GenericContainer) input).getSchema();
+        }
+        
+        throw new IllegalArgumentException("input is not an instance of GenericContainer");
     }
 
     @Override

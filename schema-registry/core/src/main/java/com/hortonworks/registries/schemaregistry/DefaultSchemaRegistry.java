@@ -38,6 +38,12 @@ import java.util.UUID;
 
 /**
  *
+ * Remove todos with respective JIRAs created
+ * todo need to check whether given schema exists in store by using fingerprint, most likely md5
+ * For example like avro, use md5 hash. https://avro.apache.org/docs/1.7.7/spec.html#Schema+Fingerprints
+ *
+ * Use API for respective SchemaProvider,
+ * schemaTypeWithProviders.get(schemaMetadataStorable.getType()).getFingerPrint(schemaText);
  */
 public class DefaultSchemaRegistry implements ISchemaRegistry {
     private static Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);

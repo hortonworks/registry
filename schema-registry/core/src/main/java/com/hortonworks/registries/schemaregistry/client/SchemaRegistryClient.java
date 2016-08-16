@@ -31,6 +31,7 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -43,6 +44,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
 
 /**
  * This is the default implementation of {@link ISchemaRegistryClient} which connects to the given {@code rootCatalogURL}.
@@ -58,31 +62,33 @@ import java.util.Map;
  * </pre>
  */
 public class SchemaRegistryClient implements ISchemaRegistryClient {
-    private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(SchemaRegistryClient.class);
-
-    public static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
-    private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
-    private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
-    private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
-    private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
-    public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
-    public static final String LOCAL_JAR_PATH = "schema.registry.local.jars.path";
-    public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.class.loader.cache.size";
+    private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryClient.class);
+    static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
+    static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
+    static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
+    static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
+    static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
 
     private Client client;
     private WebTarget rootTarget;
     private WebTarget schemasTarget;
+    private Options options;
+    private ClassLoaderCache classLoaderCache;
 
-    public SchemaRegistryClient() {
-    }
+    public SchemaRegistryClient(Map<String, Object> conf) {
+        options = new Options(conf);
 
-    @Override
-    public void init(Map<String, Object> conf) {
         client = ClientBuilder.newClient(new ClientConfig());
         client.register(MultiPartFeature.class);
         String rootCatalogURL = (String) conf.get(SCHEMA_REGISTRY_URL);
         rootTarget = client.target(rootCatalogURL);
         schemasTarget = rootTarget.path(SCHEMAS_PATH);
+
+        classLoaderCache = new ClassLoaderCache(this);
+    }
+
+    public Options getOptions() {
+        return options;
     }
 
     @Override
@@ -178,7 +184,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public InputStream downloadFile(String fileId) {
-        return rootTarget.path(FILES_PATH).path("download/"+fileId).request().get(InputStream.class);
+        return rootTarget.path(FILES_PATH).path("download/" + fileId).request().get(InputStream.class);
     }
 
     @Override
@@ -199,12 +205,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SerDesInfo> getSerializers(Long schemaMetadataId) {
-        return getEntities(schemasTarget.path(schemaMetadataId+"/serializers/"), SerDesInfo.class);
+        return getEntities(schemasTarget.path(schemaMetadataId + "/serializers/"), SerDesInfo.class);
     }
 
     @Override
     public Collection<SerDesInfo> getDeserializers(Long schemaMetadataId) {
-        return getEntities(schemasTarget.path(schemaMetadataId+"/deserializers/"), SerDesInfo.class);
+        return getEntities(schemasTarget.path(schemaMetadataId + "/deserializers/"), SerDesInfo.class);
     }
 
     public <T> T createSerializerInstance(SerDesInfo serializerInfo) {
@@ -220,7 +226,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         // loading serializer, create a class loader and and keep them in cache.
         String fileId = serializerInfo.getFileId();
         // get class loader for this file ID
-        ClassLoader classLoader = getClassLoader(fileId);
+        ClassLoader classLoader = classLoaderCache.getClassLoader(fileId);
 
         //
         T t = null;
@@ -234,10 +240,39 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return t;
     }
 
-    private ClassLoader getClassLoader(String fileId) {
-        //todo create/retrieve class loader
-        // maintain a cache of files with respective classloaders
-        return null;
-    }
+    public static class Options {
+        // we may want to remove schema.registry prefix from configuration properties as these are all properties
+        // given by client.
+        public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
+        public static final String LOCAL_JAR_PATH = "schema.registry.local.jars.path";
+        public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.class.loader.cache.size";
+        public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL = "schema.registry.class.loader.cache.expiry.interval";
+        public static final int DEFAULT_CACHE_SIZE = 1024;
+        public static final long DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 1000L;
+        public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
 
+        private Map<String, Object> config;
+
+        public Options(Map<String, Object> config) {
+            this.config = config;
+        }
+
+
+        private Object getPropertyValue(String propertyKey, Object defaultValue) {
+            Object value = config.get(propertyKey);
+            return value != null ? value : defaultValue;
+        }
+
+        public int getCacheSize() {
+            return (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CACHE_SIZE);
+        }
+
+        public long getExpiryInMilliSecs() {
+            return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL, DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS);
+        }
+
+        public String getLocalJarPath() {
+            return (String) getPropertyValue(LOCAL_JAR_PATH, DEFAULT_LOCAL_JARS_PATH);
+        }
+    }
 }

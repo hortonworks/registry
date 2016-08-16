@@ -27,6 +27,9 @@ import org.apache.avro.SchemaValidator;
 import org.apache.avro.SchemaValidatorBuilder;
 
 import javax.annotation.Nullable;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -108,4 +111,16 @@ public class AvroSchemaProvider implements SchemaProvider {
 
         return compatibilityStrategy.validate(toSchema, existingSchemas);
     }
+
+    @Override
+    public byte[] getFingerPrint(String schemaText) {
+        Schema schema = new Schema.Parser().parse(schemaText);
+        // This API gives json string o fthe schema, check any other specific API to get canonicalized schema
+        try {
+            return MessageDigest.getInstance("MD5").digest(schema.toString().getBytes("UTF-8"));
+        } catch (NoSuchAlgorithmException  | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

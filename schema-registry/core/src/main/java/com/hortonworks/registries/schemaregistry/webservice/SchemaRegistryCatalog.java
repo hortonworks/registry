@@ -15,11 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry;
+package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import com.hortonworks.iotas.common.util.WSUtils;
+import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaInfo;
+import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
+import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
+import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.SerDesInfoStorable;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -31,7 +39,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -97,7 +104,7 @@ public class SchemaRegistryCatalog {
     @POST
     @Path("/schemas/{id}")
     @Timed
-    public Response addSchemaInfo(@PathParam("id") Long schemaMetadataId, VersionedSchema versionedSchema) {
+    public Response addVersionedSchema(@PathParam("id") Long schemaMetadataId, VersionedSchema versionedSchema) {
         try {
             SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
             schemaInfoStorable.setSchemaMetadataId(schemaMetadataId);

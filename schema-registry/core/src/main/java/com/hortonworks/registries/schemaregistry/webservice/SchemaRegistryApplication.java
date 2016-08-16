@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry;
+package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -23,6 +23,9 @@ import com.hortonworks.iotas.common.FileStorageConfiguration;
 import com.hortonworks.iotas.common.util.FileStorage;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.StorageProviderConfiguration;
+import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
+import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;

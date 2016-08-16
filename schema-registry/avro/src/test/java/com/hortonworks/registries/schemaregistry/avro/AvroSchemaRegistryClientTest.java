@@ -21,8 +21,8 @@ import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.SchemaRegistryApplication;
-import com.hortonworks.registries.schemaregistry.SchemaRegistryConfiguration;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
@@ -65,8 +65,7 @@ public class AvroSchemaRegistryClientTest {
 
     @Before
     public void setup() throws IOException {
-        schemaRegistryClient = new SchemaRegistryClient();
-        schemaRegistryClient.init(Collections.singletonMap(SchemaRegistryClient.SCHEMA_REGISTRY_URL, (Object) rootUrl));
+        schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, (Object) rootUrl));
         schema1 = getSchema("/device.avsc");
         schema2 = getSchema("/device2.avsc");
         schemaName = "schema-" + System.currentTimeMillis();

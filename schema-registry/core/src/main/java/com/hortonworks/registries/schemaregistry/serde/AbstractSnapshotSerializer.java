@@ -38,8 +38,7 @@ public abstract class AbstractSnapshotSerializer<O> implements SnapshotSerialize
 
     @Override
     public void init(Map<String, Object> config) {
-        schemaRegistryClient = new SchemaRegistryClient();
-        schemaRegistryClient.init(config);
+        schemaRegistryClient = new SchemaRegistryClient(config);
     }
 
     protected abstract void doSerialize(InputStream input, OutputStream outputStream, SchemaMetadata schemaMetadata) throws SerDeException;

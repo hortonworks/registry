@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry;
+package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.hortonworks.iotas.common.FileStorageConfiguration;
 import com.hortonworks.iotas.storage.StorageProviderConfiguration;

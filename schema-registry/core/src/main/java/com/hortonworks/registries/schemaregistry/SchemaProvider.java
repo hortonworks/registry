@@ -37,4 +37,6 @@ public interface SchemaProvider {
 
     public boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility);
 
+    public byte[] getFingerPrint(String schemaText);
+
 }
