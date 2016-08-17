@@ -22,9 +22,6 @@ import com.google.common.collect.Collections2;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaValidationException;
-import org.apache.avro.SchemaValidationStrategy;
-import org.apache.avro.SchemaValidator;
-import org.apache.avro.SchemaValidatorBuilder;
 
 import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
@@ -45,37 +42,6 @@ public class AvroSchemaProvider implements SchemaProvider {
         return TYPE;
     }
 
-    private enum CompatibilityStrategy {
-        BACKWARD_COMPATIBILITY(new SchemaValidatorBuilder().canReadStrategy().validateAll()),
-        FORWARD_COMPATIBILITY(new SchemaValidatorBuilder().canBeReadStrategy().validateAll()),
-        BOTH_COMPATIBILITY(new SchemaValidatorBuilder().mutualReadStrategy().validateAll()),
-        NONE_COMPATIBILITY(new SchemaValidatorBuilder().strategy(new SchemaValidationStrategy() {
-            @Override
-            public void validate(Schema toValidate, Schema existing) throws SchemaValidationException {
-                throw new SchemaValidationException(toValidate, existing);
-            }
-        }).validateAll());
-
-        private SchemaValidator schemaValidator;
-
-        CompatibilityStrategy(SchemaValidator schemaValidator) {
-            this.schemaValidator = schemaValidator;
-        }
-
-        public boolean validate(Schema toSchema, Schema existingSchema) {
-            return validate(toSchema, Collections.singleton(existingSchema));
-        }
-
-        public boolean validate(Schema toSchema, Collection<Schema> existingSchemas) {
-            try {
-                schemaValidator.validate(toSchema, existingSchemas);
-            } catch (SchemaValidationException e) {
-                return false;
-            }
-            return true;
-        }
-    }
-
     @Override
     public boolean isCompatible(String toSchemaText, String existingSchemaText, Compatibility existingSchemaCompatibility) {
         return isCompatible(toSchemaText, Collections.singleton(existingSchemaText), existingSchemaCompatibility);
@@ -91,34 +57,23 @@ public class AvroSchemaProvider implements SchemaProvider {
             }
         });
 
-        CompatibilityStrategy compatibilityStrategy = null;
-        switch(existingSchemaCompatibility) {
-            case BACKWARD:
-                compatibilityStrategy = CompatibilityStrategy.BACKWARD_COMPATIBILITY;
-                break;
-            case FORWARD:
-                compatibilityStrategy = CompatibilityStrategy.FORWARD_COMPATIBILITY;
-                break;
-            case BOTH:
-                compatibilityStrategy = CompatibilityStrategy.BOTH_COMPATIBILITY;
-                break;
-            case NONE:
-                compatibilityStrategy = CompatibilityStrategy.NONE_COMPATIBILITY;
-                break;
-            default:
-                throw new RuntimeException("Invalid schema compatibility");
+        try {
+            SchemaCompatibilityValidator.of(existingSchemaCompatibility).validate(toSchema, existingSchemas);
+        } catch (SchemaValidationException e) {
+            return false;
         }
 
-        return compatibilityStrategy.validate(toSchema, existingSchemas);
+        return true;
     }
 
     @Override
     public byte[] getFingerPrint(String schemaText) {
         Schema schema = new Schema.Parser().parse(schemaText);
-        // This API gives json string o fthe schema, check any other specific API to get canonicalized schema
+        // This API gives json string of the schema, could not find other API to get canonicalized schema
         try {
+            // each digest instance maintains state and it should not be used across different instances/threads
             return MessageDigest.getInstance("MD5").digest(schema.toString().getBytes("UTF-8"));
-        } catch (NoSuchAlgorithmException  | UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }

@@ -36,6 +36,7 @@ public class SchemaInfoStorable extends AbstractStorable {
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String VERSION = "version";
     public static final String TIMESTAMP = "timestamp";
+    public static final String FINGERPRINT = "fingerprint";
 
     /**
      * Unique ID generated for this component.
@@ -66,6 +67,11 @@ public class SchemaInfoStorable extends AbstractStorable {
      * Time at which this schema was created/updated.
      */
     protected Long timestamp;
+
+    /**
+     * Fingerprint of the schema.
+     */
+    private byte[] fingerprint;
 
     public SchemaInfoStorable() {
     }
@@ -101,7 +107,9 @@ public class SchemaInfoStorable extends AbstractStorable {
                 Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
                 Schema.Field.of(DESCRIPTION, Schema.Type.STRING),
                 Schema.Field.of(VERSION, Schema.Type.LONG),
-                Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
+                Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
+                // schema does not really support array with given types!!!, it simply assumes that as list
+                Schema.Field.of(FINGERPRINT, Schema.Type.ARRAY)
         );
     }
 
@@ -134,6 +142,10 @@ public class SchemaInfoStorable extends AbstractStorable {
         return timestamp;
     }
 
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public Long getSchemaMetadataId() {
         return schemaMetadataId;
     }
@@ -148,5 +160,13 @@ public class SchemaInfoStorable extends AbstractStorable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public byte[] getFingerprint() {
+        return fingerprint;
+    }
+
+    public void setFingerprint(byte[] fingerprint) {
+        this.fingerprint = fingerprint;
     }
 }

@@ -35,6 +35,8 @@ public interface ISchemaRegistry {
 
     public Collection<SchemaInfoStorable> findAllVersions(Long schemaMetadataId);
 
+    public SchemaKey getSchemaInfo(String type, String schemaText);
+
     public SchemaInfoStorable getSchemaInfo(Long schemaMetadataId, Integer version);
 
     public SchemaInfoStorable getLatestSchemaInfo(Long schemaMetadataId);
@@ -70,4 +72,5 @@ public interface ISchemaRegistry {
     public InputStream downloadJar(Long serializerId);
 
     public void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
+
 }

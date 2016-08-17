@@ -173,6 +173,21 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public SchemaKey getSchemaInfo(String type, String schemaText) {
+        SchemaInfoStorable result = null;
+
+        byte[] fingerPrint = schemaTypeWithProviders.get(type).getFingerPrint(schemaText);
+        // query param does supports only string representation, it does not support byte array. No way to convert that into string.
+//       Collection<SchemaInfoStorable> versionedSchemas = storageManager.find(SchemaInfoStorable.NAME_SPACE, Collections.singletonList(new QueryParam(SchemaInfoStorable.FINGERPRINT, fingerPrint)));
+//        if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
+//            LOG.warn("Exists more than one schema with metadataId: [{}] and version [{}]", schemaMetadataId, version);
+//            result = versionedSchemas.iterator().next();
+//        }
+
+        return result != null ? new SchemaKey(result.getId(), result.getVersion()) : null;
+    }
+
+    @Override
     public SchemaInfoStorable getSchemaInfo(final Long schemaMetadataId, Integer version) {
         SchemaMetadataStorable schemaMetadataStorable = storageManager.get(new SchemaMetadataStorable() {{
             id = schemaMetadataId;

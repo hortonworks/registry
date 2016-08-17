@@ -89,12 +89,23 @@ public class SchemaRegistryCatalog {
     @Timed
     public Response addSchema(SchemaMetadata schemaMetadata) {
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getOrCreateSchemaMetadata(schemaMetadata.schemaMetadataStorable());
-            SchemaInfoStorable schemaInfoStorable = schemaMetadata.schemaInfoStorable();
-            schemaInfoStorable.setSchemaMetadataId(schemaMetadataStorable.getId());
-            SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(schemaInfoStorable);
+            SchemaKey schemaKey = null;
+            if(schemaMetadata.getSchemaText() != null) {
+                // check whether the same schema text exists in storage
+                schemaRegistry.getSchemaInfo(schemaMetadata.getType(), schemaMetadata.getSchemaText());
 
-            return WSUtils.respond(CREATED, SUCCESS, new SchemaKey(addedSchemaInfoStorable.getId(), addedSchemaInfoStorable.getVersion()));
+                SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getOrCreateSchemaMetadata(schemaMetadata.schemaMetadataStorable());
+
+                SchemaInfoStorable schemaInfoStorable = schemaMetadata.schemaInfoStorable();
+                schemaInfoStorable.setSchemaMetadataId(schemaMetadataStorable.getId());
+                SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(schemaInfoStorable);
+                schemaKey = new SchemaKey(schemaMetadataStorable.getId(), addedSchemaInfoStorable.getVersion());
+            } else {
+                SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getOrCreateSchemaMetadata(schemaMetadata.schemaMetadataStorable());
+                schemaKey = new SchemaKey(schemaMetadataStorable.getId());
+            }
+
+            return WSUtils.respond(CREATED, SUCCESS, schemaKey);
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
             return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());

@@ -26,10 +26,16 @@ import java.io.Serializable;
  * of a schema in the schema repository.
  */
 public class SchemaKey implements Serializable {
+    public static final int NO_VERSION = Integer.MIN_VALUE;
+
     private Long id;
     private Integer version;
 
     private SchemaKey() {
+    }
+
+    public SchemaKey(Long id) {
+        this(id, NO_VERSION);
     }
 
     public SchemaKey(Long id, Integer version) {
