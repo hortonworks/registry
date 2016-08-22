@@ -63,7 +63,15 @@ public class AvroSchemaRegistryTest {
     @Test
     public void testRegistrySchemaOps() throws Exception {
 
-        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaName, AvroSchemaProvider.TYPE, schemaName, SchemaProvider.Compatibility.BOTH, schema1);
+        SchemaMetadata schemaMetadata =
+                new SchemaMetadata.Builder()
+                        .group("test-group")
+                        .namespace(schemaName)
+                        .schemaText(schema1)
+                        .type(AvroSchemaProvider.TYPE)
+                        .description(schemaName)
+                        .compatibility(SchemaProvider.Compatibility.BOTH)
+                        .build();
 
         SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getOrCreateSchemaMetadata(schemaMetadata.schemaMetadataStorable());
 

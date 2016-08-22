@@ -25,41 +25,58 @@ import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import java.io.Serializable;
 
 /**
- * This class encapsulates schema information including name, type, description, schemaText and compatibility. This can
- * be used when client does not know about the existing registered schema information.
+ * This class encapsulates information of an evolving schema including group, name, type, description and compatibility.
  *
+ * There can be only one instance with same (name, group, type) fields.
+ *
+ * This can be used to register a schema when client does not know about the existing registered schema information.
  */
-public class SchemaMetadata implements Serializable {
+public final class SchemaMetadata implements Serializable {
 
-    // name for schema which is part of schema metadata
+    private static final SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
+
+    /**
+     * name of this schema.
+     * Follows unique constraint of (name, group, type).
+     */
     private String name;
 
-    // type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc
+    /**
+     * Data source group to which this schema belongs to. For ex: kafka, hive etc
+     * This can be used in querying schemas belonging to a specific data source group.
+     */
+    private String group;
+
+    /**
+     * type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc
+     */
     private String type;
 
-    // description of the schema which is given in schema metadata
+    /**
+     * Description about the schema.
+     */
     private String description;
 
-    // textual representation of the schema which is given in SchemaInfo
+    /**
+     * Textual representation of the schema for the initial version which is passed along with this SchemaMetadata.
+     */
     private String schemaText;
 
-    // Compatibility of the schema for a given version which is given in SchemaInfo
+    /**
+     * Compatibility to be supported for all versions of this evolving schema.
+     */
     private SchemaProvider.Compatibility compatibility;
 
     private SchemaMetadata() {
     }
 
-    public SchemaMetadata(String name, String type, String description, SchemaProvider.Compatibility compatibility) {
-        this(name, type, description, compatibility, null);
-    }
-
-
-    public SchemaMetadata(String name, String type, String description, SchemaProvider.Compatibility compatibility, String schemaText) {
-        Preconditions.checkNotNull(name, "name can not be null");
+    protected SchemaMetadata(String group, String name, String type, String description, SchemaProvider.Compatibility compatibility, String schemaText) {
+        Preconditions.checkNotNull(group, "group can not be null");
+        Preconditions.checkNotNull(name, "namespace can not be null");
         Preconditions.checkNotNull(type, "type can not be null");
-        Preconditions.checkNotNull(description, "description can not be null");
-        Preconditions.checkNotNull(compatibility, "compatinility can not be null");
+        Preconditions.checkNotNull(compatibility, "compatibility can not be null");
 
+        this.group = group;
         this.name = name;
         this.type = type;
         this.description = description;
@@ -89,6 +106,7 @@ public class SchemaMetadata implements Serializable {
 
     public SchemaMetadataStorable schemaMetadataStorable() {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
+        schemaMetadataStorable.setGroup(group);
         schemaMetadataStorable.setName(name);
         schemaMetadataStorable.setType(type);
         schemaMetadataStorable.setDescription(description);
@@ -101,6 +119,76 @@ public class SchemaMetadata implements Serializable {
         schemaInfoStorable.setSchemaText(schemaText);
 
         return schemaInfoStorable;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public static final class Builder {
+
+        private String group;
+
+        private String namespace;
+
+        private String type;
+
+        private String description;
+
+        private String schemaText;
+
+        private SchemaProvider.Compatibility compatibility = DEFAULT_COMPATIBILITY;
+
+        public Builder() {
+        }
+
+        public Builder(SchemaMetadata schemaMetadata) {
+            group = schemaMetadata.getGroup();
+            namespace = schemaMetadata.getName();
+            type = schemaMetadata.getType();
+            description = schemaMetadata.getDescription();
+            schemaText = schemaMetadata.getSchemaText();
+            compatibility = schemaMetadata.getCompatibility();
+        }
+
+        public Builder namespace(String namespace) {
+            this.namespace = namespace;
+            return this;
+        }
+
+        public Builder group(String group) {
+            this.group = group;
+            return this;
+        }
+
+        public Builder type(String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder schemaText(String schemaText) {
+            this.schemaText = schemaText;
+            return this;
+        }
+
+        public Builder compatibility(SchemaProvider.Compatibility compatibility) {
+            this.compatibility = compatibility;
+            return this;
+        }
+
+        public SchemaMetadata build() {
+            Preconditions.checkNotNull(group, "group can not be null");
+            Preconditions.checkNotNull(namespace, "namespace can not be null");
+            Preconditions.checkNotNull(type, "type can not be null");
+
+            return new SchemaMetadata(group, namespace, type, description, compatibility, schemaText);
+        }
+
     }
 
 }

@@ -34,6 +34,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public static final String NAME_SPACE = "schema_metadata_info";
     public static final String ID = "id";
     public static final String NAME = "name";
+    public static final String GROUP = "group";
     public static final String COMPATIBILITY = "compatibility";
     public static final String TYPE="type";
     public static final String TIMESTAMP = "timestamp";
@@ -47,6 +48,11 @@ public class SchemaMetadataStorable extends AbstractStorable {
      * Given name of the schema.
      */
     private String name;
+
+    /**
+     * Data source group for which this schema metadata belongs to.
+     */
+    private String group;
 
     /**
      * Description of the schema.
@@ -68,15 +74,6 @@ public class SchemaMetadataStorable extends AbstractStorable {
      */
     private SchemaProvider.Compatibility compatibility = SchemaProvider.Compatibility.NONE;
 
-    /**
-     * Serializer Ids which be used for this set of schemas
-     */
-    private List<Long> serializerIds;
-
-    /**
-     * Deserializer ids which can be used for this set of schemas
-     */
-    private List<Long> deserializerIds;
 
     public SchemaMetadataStorable() {
     }
@@ -87,6 +84,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     }
 
     public SchemaMetadataStorable(SchemaMetadataStorable givenSchemaInfo) {
+        group = givenSchemaInfo.group;
         id = givenSchemaInfo.id;
         name = givenSchemaInfo.name;
         type = givenSchemaInfo.type;
@@ -113,6 +111,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
         return Schema.of(
                 Schema.Field.of(ID, Schema.Type.LONG),
                 Schema.Field.of(NAME, Schema.Type.STRING),
+                Schema.Field.of(GROUP, Schema.Type.STRING),
                 Schema.Field.of(TYPE, Schema.Type.STRING),
                 Schema.Field.of(COMPATIBILITY, Schema.Type.STRING),
                 Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
@@ -137,6 +136,14 @@ public class SchemaMetadataStorable extends AbstractStorable {
     @Override
     public Long getId() {
         return id;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     public String getName() {
@@ -184,6 +191,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (group != null ? !group.equals(that.group) : that.group != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
@@ -195,10 +203,25 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (group != null ? group.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "SchemaMetadataStorable{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", group='" + group + '\'' +
+                ", description='" + description + '\'' +
+                ", timestamp=" + timestamp +
+                ", type='" + type + '\'' +
+                ", compatibility=" + compatibility +
+                '}';
+    }
+
 }

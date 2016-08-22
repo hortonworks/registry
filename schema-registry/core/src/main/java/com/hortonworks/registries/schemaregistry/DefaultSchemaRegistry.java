@@ -175,6 +175,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public SchemaKey getSchemaInfo(String type, String schemaText) {
         SchemaInfoStorable result = null;
+        SchemaMetadataStorable schemaMetadataStorable = null;
 
         byte[] fingerPrint = schemaTypeWithProviders.get(type).getFingerPrint(schemaText);
         // query param does supports only string representation, it does not support byte array. No way to convert that into string.
@@ -184,7 +185,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 //            result = versionedSchemas.iterator().next();
 //        }
 
-        return result != null ? new SchemaKey(result.getId(), result.getVersion()) : null;
+        // this should come from api invoker
+        String group = null;
+        return result != null ? new SchemaKey(group, schemaMetadataStorable.getName(), result.getId(), result.getVersion()) : null;
     }
 
     @Override

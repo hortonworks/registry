@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema metadata id and version of a schema instance. This key can be used to find any version
+ * This class contains the schema metadata. This key can be used to find any version
  * of a schema in the schema repository.
  */
 public class SchemaKey implements Serializable {
@@ -30,17 +30,24 @@ public class SchemaKey implements Serializable {
 
     private Long id;
     private Integer version;
+    private String namespace;
+    private String group;
 
     private SchemaKey() {
     }
 
-    public SchemaKey(Long id) {
-        this(id, NO_VERSION);
+    public SchemaKey(String group, String namespace, Long id) {
+        this(group, namespace, id, NO_VERSION);
     }
 
-    public SchemaKey(Long id, Integer version) {
+    public SchemaKey(String group, String namespace, Long id, Integer version) {
+        Preconditions.checkNotNull(group, "group can not be null");
+        Preconditions.checkNotNull(namespace, "namespace can not be null");
         Preconditions.checkNotNull(id, "id can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
+
+        this.namespace = namespace;
+        this.group = group;
         this.id = id;
         this.version = version;
     }
@@ -53,6 +60,14 @@ public class SchemaKey implements Serializable {
         return version;
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -61,7 +76,9 @@ public class SchemaKey implements Serializable {
         SchemaKey schemaKey = (SchemaKey) o;
 
         if (id != null ? !id.equals(schemaKey.id) : schemaKey.id != null) return false;
-        return version != null ? version.equals(schemaKey.version) : schemaKey.version == null;
+        if (version != null ? !version.equals(schemaKey.version) : schemaKey.version != null) return false;
+        if (namespace != null ? !namespace.equals(schemaKey.namespace) : schemaKey.namespace != null) return false;
+        return group != null ? group.equals(schemaKey.group) : schemaKey.group == null;
 
     }
 
@@ -69,6 +86,8 @@ public class SchemaKey implements Serializable {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
+        result = 31 * result + (group != null ? group.hashCode() : 0);
         return result;
     }
 
@@ -77,6 +96,8 @@ public class SchemaKey implements Serializable {
         return "SchemaKey{" +
                 "id=" + id +
                 ", version=" + version +
+                ", namespace='" + namespace + '\'' +
+                ", group='" + group + '\'' +
                 '}';
     }
 }

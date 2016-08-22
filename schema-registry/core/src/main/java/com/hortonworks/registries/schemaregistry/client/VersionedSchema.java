@@ -29,7 +29,7 @@ public class VersionedSchema implements Serializable {
     private VersionedSchema() {
     }
 
-    public VersionedSchema(String description, String schemaText) {
+    public VersionedSchema(String schemaText, String description) {
         this.description = description;
         this.schemaText = schemaText;
     }

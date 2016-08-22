@@ -99,10 +99,10 @@ public class SchemaRegistryCatalog {
                 SchemaInfoStorable schemaInfoStorable = schemaMetadata.schemaInfoStorable();
                 schemaInfoStorable.setSchemaMetadataId(schemaMetadataStorable.getId());
                 SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(schemaInfoStorable);
-                schemaKey = new SchemaKey(schemaMetadataStorable.getId(), addedSchemaInfoStorable.getVersion());
+                schemaKey = new SchemaKey(schemaMetadata.getGroup(), schemaMetadata.getName(), schemaMetadataStorable.getId(), addedSchemaInfoStorable.getVersion());
             } else {
                 SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getOrCreateSchemaMetadata(schemaMetadata.schemaMetadataStorable());
-                schemaKey = new SchemaKey(schemaMetadataStorable.getId());
+                schemaKey = new SchemaKey(schemaMetadata.getGroup(), schemaMetadata.getName(), schemaMetadataStorable.getId());
             }
 
             return WSUtils.respond(CREATED, SUCCESS, schemaKey);
@@ -122,8 +122,9 @@ public class SchemaRegistryCatalog {
             schemaInfoStorable.setSchemaText(versionedSchema.getSchemaText());
             schemaInfoStorable.setDescription(versionedSchema.getDescription());
 
+            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataId);
             SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(schemaInfoStorable);
-            return WSUtils.respond(CREATED, SUCCESS, new SchemaKey(addedSchemaInfoStorable.getSchemaMetadataId(), addedSchemaInfoStorable.getVersion()));
+            return WSUtils.respond(CREATED, SUCCESS, new SchemaKey(schemaMetadataStorable.getGroup(), schemaMetadataStorable.getNameSpace(), addedSchemaInfoStorable.getSchemaMetadataId(), addedSchemaInfoStorable.getVersion()));
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
             return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());

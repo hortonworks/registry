@@ -21,12 +21,12 @@ import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.IOUtils;
@@ -82,12 +82,20 @@ public class AvroSchemaRegistryClientTest {
     public void testSchemaRelatedOps() throws Exception {
 
         // registering new schema-metadata
-        SchemaMetadata schemaMetadata = new SchemaMetadata("com.hwx.iot.device.schema", type(), "device schema", SchemaProvider.Compatibility.BOTH, schema1 );
+        SchemaMetadata schemaMetadata =
+                new SchemaMetadata.Builder()
+                        .group("group-1")
+                        .namespace("com.hwx.iot.device.schema")
+                        .type(type())
+                        .description("device schema")
+                        .compatibility(SchemaProvider.Compatibility.BOTH)
+                        .schemaText(schema1).build();
+
         SchemaKey schemaKey1 = schemaRegistryClient.registerSchema(schemaMetadata);
         int v1 = schemaKey1.getVersion();
 
         // adding a new version of the schema
-        VersionedSchema schemaInfo2 = new VersionedSchema("second version", schema2);
+        VersionedSchema schemaInfo2 = new VersionedSchema(schema2, "second version");
         SchemaKey schemaKey2 = schemaRegistryClient.addVersionedSchema(schemaKey1.getId(), schemaInfo2);
         int v2 = schemaKey2.getVersion();
 
@@ -115,7 +123,13 @@ public class AvroSchemaRegistryClientTest {
         Long schemaMetadataId = 0L;
 
         // add serializer with the respective uploaded jar file id.
-        SerDesInfo serializerInfo = SerDesInfo.createSerializerInfo(null, "avro serializer", "avro serializer", fileId, "con.hwx.iotas.serializer.AvroSnapshotSerializer");
+        SerDesInfo serializerInfo =
+                new SerDesInfo.Builder()
+                        .name("avro serializer")
+                        .description("avro serializer")
+                        .fileId(fileId).className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
+                        .buildSerializerInfo();
+
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
         // map this serializer with a registered schema
@@ -130,7 +144,13 @@ public class AvroSchemaRegistryClientTest {
     }
 
     private SerDesInfo createSerializerInfo(Long serializerId, SerDesInfo serializerInfo) {
-        return SerDesInfo.createSerializerInfo(serializerId, serializerInfo.getDescription(), serializerInfo.getName(), serializerInfo.getFileId(), serializerInfo.getClassName());
+        return new SerDesInfo.Builder()
+                .id(serializerId)
+                .description(serializerInfo.getDescription())
+                .name(serializerInfo.getName())
+                .fileId(serializerInfo.getFileId())
+                .className(serializerInfo.getClassName())
+                .buildSerializerInfo();
     }
 
     private String type() {

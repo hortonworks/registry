@@ -45,10 +45,12 @@ public abstract class AbstractSnapshotDeserializer<O> implements SnapshotDeseria
         }
         long id = byteBuffer.getLong();
         int version = byteBuffer.getInt();
-        SchemaInfo writerSchema = schemaRegistryClient.getSchema(new SchemaKey(id, version));
+        SchemaInfo writerSchema = schemaRegistryClient.getSchema(getSchemaKey(id, version));
 
         return doDeserialize(payloadInputStream, writerSchema, readerSchema);
     }
+
+    protected abstract SchemaKey getSchemaKey(Long id, Integer version);
 
     protected abstract O doDeserialize(InputStream payloadInputStream, SchemaInfo writerSchema, SchemaInfo readerSchema);
 }

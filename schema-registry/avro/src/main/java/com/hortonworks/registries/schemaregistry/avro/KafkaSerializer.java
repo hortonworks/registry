@@ -26,6 +26,7 @@ import java.util.Map;
  *
  */
 public class KafkaSerializer implements org.apache.kafka.common.serialization.Serializer<Object> {
+    private static final String GROUP_ID = "kafka";
 
     private final AvroSnapshotSerializer avroSnapshotSerializer;
     private boolean isKey;
@@ -47,8 +48,13 @@ public class KafkaSerializer implements org.apache.kafka.common.serialization.Se
     }
 
     private SchemaMetadata createSchemaMetadataInfo(String topic, Object data) {
-        String schemaName = getSchemaName(topic, data);
-        return new SchemaMetadata(schemaName, schemaName, AvroSnapshotSerializer.TYPE, compatibility);
+        String schemaNamespace = getSchemaName(topic, data);
+        return new SchemaMetadata.Builder()
+                .group(GROUP_ID)
+                .namespace(schemaNamespace)
+                .description(schemaNamespace)
+                .type(AvroSnapshotSerializer.TYPE)
+                .compatibility(compatibility).build();
     }
 
     protected String getSchemaName(String topic, Object data) {

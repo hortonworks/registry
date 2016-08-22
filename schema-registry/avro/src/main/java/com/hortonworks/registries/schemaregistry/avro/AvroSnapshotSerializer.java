@@ -61,15 +61,16 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
     }
 
     private SchemaMetadata createSchemaMetadata(SchemaMetadata schemaMetadata, org.apache.avro.Schema avroSchema) {
-        return new SchemaMetadata(schemaMetadata.getName(), schemaMetadata.getDescription(),
-                schemaMetadata.getDescription(), schemaMetadata.getCompatibility(), avroSchema.toString());
+        return new SchemaMetadata.Builder(schemaMetadata)
+                .schemaText(avroSchema.toString())
+                .build();
     }
 
     private org.apache.avro.Schema getSchema(Object input) {
-        if(input instanceof GenericContainer) {
+        if (input instanceof GenericContainer) {
             return ((GenericContainer) input).getSchema();
         }
-        
+
         throw new IllegalArgumentException("input is not an instance of GenericContainer");
     }
 
