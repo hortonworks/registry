@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for schema registry.
@@ -112,7 +113,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                     version = createSchemaInfo(versionedSchema, schemaMetadataStorable.getId());
                 }
             } else {
-                throw new SchemaNotFoundException("Schema not found with the given schemaMetadataKey: "+schemaMetadataKey);
+                throw new SchemaNotFoundException("Schema not found with the given schemaMetadataKey: " + schemaMetadataKey);
             }
         }
 
@@ -340,6 +341,17 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return storageManager.remove(schemaInfoStorable.getStorableKey());
     }
 
+    public boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException {
+        Collection<SchemaInfoStorable> existingSchemaInfoStorable = findAllVersions(schemaMetadataId);
+        Collection<String> schemaTexts =
+                existingSchemaInfoStorable.stream()
+                        .map(schemaInfoStorable -> schemaInfoStorable.getSchemaText()).collect(Collectors.toList());
+
+        SchemaMetadataStorable schemaMetadata = getSchemaMetadata(schemaMetadataId);
+
+        return isCompatible(schemaMetadata.getType(), toSchema, schemaTexts, schemaMetadata.getCompatibility());
+    }
+
     public boolean isCompatible(Long schemaMetadataId,
                                 Integer version,
                                 String toSchema) throws SchemaNotFoundException {
@@ -347,19 +359,19 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         String schemaText = existingSchemaInfoStorable.getSchemaText();
         SchemaMetadataStorable schemaMetadata = getSchemaMetadata(schemaMetadataId);
 
-        return isCompatible(schemaMetadata.getType(), toSchema, schemaText, schemaMetadata.getCompatibility());
+        return isCompatible(schemaMetadata.getType(), toSchema, Collections.singletonList(schemaText), schemaMetadata.getCompatibility());
     }
 
-    public boolean isCompatible(String type,
-                                String toSchema,
-                                String existingSchema,
-                                SchemaProvider.Compatibility compatibility) {
+    private boolean isCompatible(String type,
+                                 String toSchema,
+                                 Collection<String> existingSchemas,
+                                 SchemaProvider.Compatibility compatibility) {
         SchemaProvider schemaProvider = schemaTypeWithProviders.get(type);
         if (schemaProvider == null) {
             throw new IllegalStateException("No SchemaProvider registered for type: " + type);
         }
 
-        return schemaProvider.isCompatible(toSchema, existingSchema, compatibility);
+        return schemaProvider.isCompatible(toSchema, existingSchemas, compatibility);
     }
 
     public Collection<SchemaInfoStorable> getCompatibleSchemas(Long schemaMetadataId,

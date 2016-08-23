@@ -63,6 +63,8 @@ public class AvroSchemaRegistryClientTest {
     protected String schema1;
     protected String schema2;
     protected String schemaName;
+    private SchemaMetadata schemaMetadata;
+    private SchemaMetadataKey schemaMetadataKey;
 
     @Before
     public void setup() throws IOException {
@@ -70,6 +72,8 @@ public class AvroSchemaRegistryClientTest {
         schema1 = getSchema("/device.avsc");
         schema2 = getSchema("/device2.avsc");
         schemaName = "schema-" + System.currentTimeMillis();
+        schemaMetadataKey = new SchemaMetadataKey(type(), "group-1", "com.hwx.iot.device.schema");
+        schemaMetadata = new SchemaMetadata(schemaMetadataKey, "device schema", SchemaProvider.Compatibility.BOTH);
 
     }
 
@@ -83,9 +87,6 @@ public class AvroSchemaRegistryClientTest {
     public void testSchemaRelatedOps() throws Exception {
 
         // registering new schema-metadata
-        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type(), "group-1", "com.hwx.iot.device.schema");
-        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey, "device schema", SchemaProvider.Compatibility.BOTH);
-
         Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
 
         // adding a new version of the schema
@@ -104,28 +105,28 @@ public class AvroSchemaRegistryClientTest {
         Assert.assertEquals(allVersions.size(), 2);
     }
 
+
     @Test
     public void testSerializerOps() throws Exception {
+        String fileId = uploadFile();
+        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
+        SerDesInfo serializerInfo = createSerDesInfo(fileId);
+        Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
+        schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataKey, serializerId);
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataKey);
+        SerDesInfo registeredSerializerInfo = serializers.iterator().next();
 
-        // upload a dummy file.
-        File tmpJarFile = Files.createTempFile("foo", ".jar").toFile();
-        tmpJarFile.deleteOnExit();
-        try (FileOutputStream fileOutputStream = new FileOutputStream(tmpJarFile)) {
-            IOUtils.write(("Some random stuff: " + UUID.randomUUID()).getBytes(), fileOutputStream);
-        }
+        Assert.assertEquals(registeredSerializerInfo, createSerializerInfo(serializerId, serializerInfo));
+    }
 
-        InputStream inputStream = new FileInputStream(tmpJarFile);
-        String fileId = schemaRegistryClient.uploadFile(inputStream);
+    @Test
+    public void testSerializerOpsWithIds() throws Exception {
+        String fileId = uploadFile();
 
         Long schemaMetadataId = 0L;
 
         // add serializer with the respective uploaded jar file id.
-        SerDesInfo serializerInfo =
-                new SerDesInfo.Builder()
-                        .name("avro serializer")
-                        .description("avro serializer")
-                        .fileId(fileId).className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
-                        .buildSerializerInfo();
+        SerDesInfo serializerInfo = createSerDesInfo(fileId);
 
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
@@ -138,6 +139,26 @@ public class AvroSchemaRegistryClientTest {
         SerDesInfo registeredSerializerInfo = serializers.iterator().next();
 
         Assert.assertEquals(registeredSerializerInfo, createSerializerInfo(serializerId, serializerInfo));
+    }
+
+    private SerDesInfo createSerDesInfo(String fileId) {
+        return new SerDesInfo.Builder()
+                .name("avro serializer")
+                .description("avro serializer")
+                .fileId(fileId).className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
+                .buildSerializerInfo();
+    }
+
+    private String uploadFile() throws IOException {
+        // upload a dummy file.
+        File tmpJarFile = Files.createTempFile("foo", ".jar").toFile();
+        tmpJarFile.deleteOnExit();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tmpJarFile)) {
+            IOUtils.write(("Some random stuff: " + UUID.randomUUID()).getBytes(), fileOutputStream);
+        }
+
+        InputStream inputStream = new FileInputStream(tmpJarFile);
+        return schemaRegistryClient.uploadFile(inputStream);
     }
 
     private SerDesInfo createSerializerInfo(Long serializerId, SerDesInfo serializerInfo) {

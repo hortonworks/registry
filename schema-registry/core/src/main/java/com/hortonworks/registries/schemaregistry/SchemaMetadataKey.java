@@ -58,7 +58,7 @@ public class SchemaMetadataKey implements Serializable {
     }
 
     /**
-     * Unique name of schema with in a group.
+     * Returns unique name of schema with in a group and type.
      *
      * @return
      */
@@ -67,7 +67,7 @@ public class SchemaMetadataKey implements Serializable {
     }
 
     /**
-     * Group of the schema. For ex: Kafka, Hive.
+     * Returns group of the schema. For ex: Kafka, Hive.
      *
      * @return
      */

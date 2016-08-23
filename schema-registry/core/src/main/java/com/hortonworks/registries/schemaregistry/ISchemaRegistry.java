@@ -58,6 +58,8 @@ public interface ISchemaRegistry {
 
     public boolean isCompatible(Long schemaMetadataId, Integer existingSchemaVersion, String schema) throws SchemaNotFoundException;
 
+    public boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException;
+
     public Collection<SchemaInfoStorable> getCompatibleSchemas(Long schemaMetadataId, SchemaProvider.Compatibility compatibility, String toSchema) throws SchemaNotFoundException;
 
     public SchemaMetadataStorable getOrCreateSchemaMetadata(SchemaMetadata givenSchemaMetadataStorable);
