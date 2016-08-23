@@ -23,6 +23,7 @@ import com.hortonworks.iotas.common.QueryParam;
 import com.hortonworks.iotas.common.util.FileStorage;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +38,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
+ * Default implementation for schema registry.
  *
  * Remove todos with respective JIRAs created
- * todo need to check whether given schema exists in store by using fingerprint, most likely md5
- * For example like avro, use md5 hash. https://avro.apache.org/docs/1.7.7/spec.html#Schema+Fingerprints
  *
- * Use API for respective SchemaProvider,
- * schemaTypeWithProviders.get(schemaMetadataStorable.getType()).getFingerPrint(schemaText);
  */
 public class DefaultSchemaRegistry implements ISchemaRegistry {
     private static Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
@@ -72,10 +70,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public SchemaMetadataStorable addSchemaMetadata(SchemaMetadataStorable schemaMetadataStorable) {
         final Long nextId = storageManager.nextId(schemaMetadataStorable.getNameSpace());
-        SchemaMetadataStorable updatedSchemaMetadataStorable = new SchemaMetadataStorable(schemaMetadataStorable) {{
-            id = nextId;
-            timestamp = System.currentTimeMillis();
-        }};
+        SchemaMetadataStorable updatedSchemaMetadataStorable = new SchemaMetadataStorable(schemaMetadataStorable);
+        updatedSchemaMetadataStorable.setId(nextId);
+        updatedSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
+
         storageManager.addOrUpdate(updatedSchemaMetadataStorable);
         return updatedSchemaMetadataStorable;
     }
@@ -99,10 +97,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             LOG.info("Received ID [{}] in SchemaInfo instance is ignored", id);
         }
         final Long nextId = storageManager.nextId(givenSchemaInfoStorable.getNameSpace());
-        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable(givenSchemaInfoStorable) {{
-            id = nextId;
-            timestamp = System.currentTimeMillis();
-        }};
+        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable(givenSchemaInfoStorable);
+        schemaInfoStorable.setId(nextId);
+        schemaInfoStorable.setTimestamp(System.currentTimeMillis());
 
         //todo fix this by generating version sequence for each schema in storage layer or explore other ways to make it scalable
         synchronized (addOrUpdateLock) {
@@ -114,6 +111,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 }
             }
             schemaInfoStorable.setVersion(version + 1);
+            schemaInfoStorable.setFingerprint(getFingerprint(getSchemaMetadata(schemaMetadataId).getType() , schemaInfoStorable.getSchemaText()));
             storageManager.add(schemaInfoStorable);
         }
 
@@ -121,9 +119,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public SchemaInfoStorable getSchemaInfo(final Long schemaInfoId) {
-        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable() {{
-            id = schemaInfoId;
-        }};
+        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();schemaInfoStorable.setId(schemaInfoId);
 
         return storageManager.get(schemaInfoStorable.getStorableKey());
     }
@@ -174,20 +170,29 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public SchemaKey getSchemaInfo(String type, String schemaText) {
-        SchemaInfoStorable result = null;
-        SchemaMetadataStorable schemaMetadataStorable = null;
+        SchemaKey result = null;
 
-        byte[] fingerPrint = schemaTypeWithProviders.get(type).getFingerPrint(schemaText);
-        // query param does supports only string representation, it does not support byte array. No way to convert that into string.
-//       Collection<SchemaInfoStorable> versionedSchemas = storageManager.find(SchemaInfoStorable.NAME_SPACE, Collections.singletonList(new QueryParam(SchemaInfoStorable.FINGERPRINT, fingerPrint)));
-//        if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
-//            LOG.warn("Exists more than one schema with metadataId: [{}] and version [{}]", schemaMetadataId, version);
-//            result = versionedSchemas.iterator().next();
-//        }
+        String fingerPrint = getFingerprint(type, schemaText);
+        LOG.debug("Fingerprint of the given schema [{}] is [{}]", schemaText, fingerPrint);
 
-        // this should come from api invoker
-        String group = null;
-        return result != null ? new SchemaKey(group, schemaMetadataStorable.getName(), result.getId(), result.getVersion()) : null;
+        Collection<SchemaInfoStorable> versionedSchemas =
+                storageManager.find(SchemaInfoStorable.NAME_SPACE,
+                        Collections.singletonList(new QueryParam(SchemaInfoStorable.FINGERPRINT, fingerPrint)));
+
+        if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
+            if (versionedSchemas.size() > 1) {
+                LOG.warn("Exists more than one schema with type: [{}] and schemaText [{}]", type, schemaText);
+            }
+            SchemaInfoStorable schemaInfoStorable = versionedSchemas.iterator().next();
+            SchemaMetadataStorable schemaMetadataStorable = getSchemaMetadata(schemaInfoStorable.getSchemaMetadataId());
+            result = new SchemaKey(schemaMetadataStorable.getGroup(), schemaMetadataStorable.getName(), schemaInfoStorable.getId(), schemaInfoStorable.getVersion());
+        }
+
+        return result;
+    }
+
+    private String getFingerprint(String type, String schemaText) {
+        return Hex.encodeHexString(schemaTypeWithProviders.get(type).getFingerPrint(schemaText));
     }
 
     @Override
@@ -250,9 +255,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public SchemaInfoStorable removeSchemaInfo(final Long schemaInfoId) {
-        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable() {{
-            id = schemaInfoId;
-        }};
+        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
+        schemaInfoStorable.setId(schemaInfoId);
+
         return storageManager.remove(schemaInfoStorable.getStorableKey());
     }
 

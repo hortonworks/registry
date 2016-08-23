@@ -18,12 +18,11 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import org.apache.avro.Schema;
 import org.apache.avro.SchemaValidationException;
-import org.apache.avro.SchemaValidationStrategy;
 import org.apache.avro.SchemaValidator;
 import org.apache.avro.SchemaValidatorBuilder;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,21 +31,20 @@ import java.util.Map;
  */
 public final class SchemaCompatibilityValidator {
 
-    private static final Map<SchemaProvider.Compatibility, SchemaValidator> comaptibilityValidators = new HashMap<>();
+    private static final Map<SchemaProvider.Compatibility, SchemaValidator> COMPATIBILITY_VALIDATORS;
 
     static {
-        comaptibilityValidators.put(SchemaProvider.Compatibility.BACKWARD, new SchemaValidatorBuilder().canReadStrategy().validateAll());
-        comaptibilityValidators.put(SchemaProvider.Compatibility.FORWARD, new SchemaValidatorBuilder().canBeReadStrategy().validateAll());
-        comaptibilityValidators.put(SchemaProvider.Compatibility.BOTH, new SchemaValidatorBuilder().mutualReadStrategy().validateAll());
-        comaptibilityValidators.put(SchemaProvider.Compatibility.NONE, new SchemaValidatorBuilder().strategy(new SchemaValidationStrategy() {
-            @Override
-            public void validate(Schema toValidate, Schema existing) throws SchemaValidationException {
-                throw new SchemaValidationException(toValidate, existing);
-            }
+        Map<SchemaProvider.Compatibility, SchemaValidator> validators = new HashMap<>();
+        validators.put(SchemaProvider.Compatibility.BACKWARD, new SchemaValidatorBuilder().canReadStrategy().validateAll());
+        validators.put(SchemaProvider.Compatibility.FORWARD, new SchemaValidatorBuilder().canBeReadStrategy().validateAll());
+        validators.put(SchemaProvider.Compatibility.BOTH, new SchemaValidatorBuilder().mutualReadStrategy().validateAll());
+        validators.put(SchemaProvider.Compatibility.NONE, new SchemaValidatorBuilder().strategy((toValidate, existing) -> {
+            throw new SchemaValidationException(toValidate, existing);
         }).validateAll());
+        COMPATIBILITY_VALIDATORS = Collections.unmodifiableMap(validators);
     }
 
     static SchemaValidator of(SchemaProvider.Compatibility compatibility) {
-        return comaptibilityValidators.get(compatibility);
+        return COMPATIBILITY_VALIDATORS.get(compatibility);
     }
 }

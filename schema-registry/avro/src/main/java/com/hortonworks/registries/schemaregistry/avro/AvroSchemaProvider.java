@@ -17,19 +17,16 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
 import org.apache.avro.SchemaValidationException;
 
-import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -50,13 +47,11 @@ public class AvroSchemaProvider implements SchemaProvider {
 
     public boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility) {
         Schema toSchema = new Schema.Parser().parse(toSchemaText);
-        Collection<Schema> existingSchemas = Collections2.transform(existingSchemaTexts, new Function<String, Schema>() {
-            @Nullable
-            @Override
-            public Schema apply(@Nullable String input) {
-                return new Schema.Parser().parse(input);
-            }
-        });
+
+        Iterable<Schema> existingSchemas = existingSchemaTexts
+                                            .stream()
+                                            .map(input -> new Schema.Parser().parse(input))
+                                            .collect(Collectors.toList());
 
         try {
             SchemaCompatibilityValidator.of(existingSchemaCompatibility).validate(toSchema, existingSchemas);

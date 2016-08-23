@@ -250,7 +250,7 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- Enforces compilation using JDK 1.7. By default Maven uses JDK 1.5 -->
+                <!-- Enforces compilation using JDK 1.8. By default Maven uses JDK 1.5 -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>

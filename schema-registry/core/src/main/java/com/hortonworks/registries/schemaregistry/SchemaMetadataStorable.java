@@ -46,6 +46,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     /**
      * Given name of the schema.
+     * Unique constraint with (name, group, type)
      */
     private String name;
 
@@ -62,7 +63,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     /**
      * Time at which this schema was created/updated.
      */
-    protected Long timestamp;
+    private Long timestamp;
 
     /**
      * Schema type which can be avro, protobuf or json etc. User can have a unique constraint with (type, name) values.
@@ -138,6 +139,10 @@ public class SchemaMetadataStorable extends AbstractStorable {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getGroup() {
         return group;
     }
@@ -156,6 +161,10 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     public Long getTimestamp() {
         return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public SchemaProvider.Compatibility getCompatibility() {

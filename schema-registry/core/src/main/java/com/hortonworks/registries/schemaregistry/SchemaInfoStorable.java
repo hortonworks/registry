@@ -41,7 +41,7 @@ public class SchemaInfoStorable extends AbstractStorable {
     /**
      * Unique ID generated for this component.
      */
-    protected Long id;
+    private Long id;
 
     /**
      * Id of the SchemaMetadata instance.
@@ -66,12 +66,12 @@ public class SchemaInfoStorable extends AbstractStorable {
     /**
      * Time at which this schema was created/updated.
      */
-    protected Long timestamp;
+    private Long timestamp;
 
     /**
      * Fingerprint of the schema.
      */
-    private byte[] fingerprint;
+    private String fingerprint;
 
     public SchemaInfoStorable() {
     }
@@ -162,11 +162,11 @@ public class SchemaInfoStorable extends AbstractStorable {
         this.description = description;
     }
 
-    public byte[] getFingerprint() {
+    public String getFingerprint() {
         return fingerprint;
     }
 
-    public void setFingerprint(byte[] fingerprint) {
+    public void setFingerprint(String fingerprint) {
         this.fingerprint = fingerprint;
     }
 }

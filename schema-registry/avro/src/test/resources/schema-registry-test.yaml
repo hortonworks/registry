@@ -1,6 +1,8 @@
 # schema registry configuration
 
-schemaProviderClasses: ["com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"]
+schemaProviderClasses:
+  - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+
 fileStorageConfiguration:
   className: "com.hortonworks.iotas.common.util.LocalFileSystemStorage"
   properties:
