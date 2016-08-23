@@ -22,55 +22,30 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema metadata id and version of a schema instance. This key can be used to find any version
+ * This class contains the schema metadata. This key can be used to find any version
  * of a schema in the schema repository.
  */
 public class SchemaKey implements Serializable {
-    private Long id;
+
+    private SchemaMetadataKey schemaMetadataKey;
     private Integer version;
 
     private SchemaKey() {
     }
 
-    public SchemaKey(Long id, Integer version) {
-        Preconditions.checkNotNull(id, "id can not be null");
+    public SchemaKey(SchemaMetadataKey schemaMetadataKey, Integer version) {
+        Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
-        this.id = id;
+
+        this.schemaMetadataKey = schemaMetadataKey;
         this.version = version;
     }
 
-    public Long getId() {
-        return id;
+    public SchemaMetadataKey getSchemaMetadataKey() {
+        return schemaMetadataKey;
     }
 
     public Integer getVersion() {
         return version;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        SchemaKey schemaKey = (SchemaKey) o;
-
-        if (id != null ? !id.equals(schemaKey.id) : schemaKey.id != null) return false;
-        return version != null ? version.equals(schemaKey.version) : schemaKey.version == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "SchemaKey{" +
-                "id=" + id +
-                ", version=" + version +
-                '}';
     }
 }

@@ -20,13 +20,14 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.IOUtils;
@@ -82,21 +83,25 @@ public class AvroSchemaRegistryClientTest {
     public void testSchemaRelatedOps() throws Exception {
 
         // registering new schema-metadata
-        SchemaMetadata schemaMetadata = new SchemaMetadata("com.hwx.iot.device.schema", type(), "device schema", SchemaProvider.Compatibility.BOTH, schema1 );
-        SchemaKey schemaKey1 = schemaRegistryClient.registerSchema(schemaMetadata);
-        int v1 = schemaKey1.getVersion();
+        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type(), "group-1", "com.hwx.iot.device.schema");
+        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey, "device schema", SchemaProvider.Compatibility.BOTH);
+
+        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
 
         // adding a new version of the schema
-        VersionedSchema schemaInfo2 = new VersionedSchema("second version", schema2);
-        SchemaKey schemaKey2 = schemaRegistryClient.addVersionedSchema(schemaKey1.getId(), schemaInfo2);
-        int v2 = schemaKey2.getVersion();
+        VersionedSchema schemaInfo2 = new VersionedSchema(schema2, "second version");
+        Integer v2 = schemaRegistryClient.addVersionedSchema(schemaMetadataKey, schemaInfo2);
 
         Assert.assertTrue(v2 == v1 + 1);
 
-        SchemaInfo schemaDto2 = schemaRegistryClient.getSchema(schemaKey2);
-        SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaKey1.getId());
-        Assert.assertEquals(latest, schemaDto2);
+        SchemaInfo schemaInfo = schemaRegistryClient.getSchema(new SchemaKey(schemaMetadataKey, v2));
+        SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaMetadataKey);
 
+        Assert.assertEquals(latest, schemaInfo);
+
+        Collection<SchemaInfo> allVersions = schemaRegistryClient.getAllVersions(schemaMetadataKey);
+
+        Assert.assertEquals(allVersions.size(), 2);
     }
 
     @Test
@@ -115,7 +120,13 @@ public class AvroSchemaRegistryClientTest {
         Long schemaMetadataId = 0L;
 
         // add serializer with the respective uploaded jar file id.
-        SerDesInfo serializerInfo = SerDesInfo.createSerializerInfo(null, "avro serializer", "avro serializer", fileId, "con.hwx.iotas.serializer.AvroSnapshotSerializer");
+        SerDesInfo serializerInfo =
+                new SerDesInfo.Builder()
+                        .name("avro serializer")
+                        .description("avro serializer")
+                        .fileId(fileId).className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
+                        .buildSerializerInfo();
+
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
         // map this serializer with a registered schema
@@ -130,7 +141,13 @@ public class AvroSchemaRegistryClientTest {
     }
 
     private SerDesInfo createSerializerInfo(Long serializerId, SerDesInfo serializerInfo) {
-        return SerDesInfo.createSerializerInfo(serializerId, serializerInfo.getDescription(), serializerInfo.getName(), serializerInfo.getFileId(), serializerInfo.getClassName());
+        return new SerDesInfo.Builder()
+                .id(serializerId)
+                .description(serializerInfo.getDescription())
+                .name(serializerInfo.getName())
+                .fileId(serializerInfo.getFileId())
+                .className(serializerInfo.getClassName())
+                .buildSerializerInfo();
     }
 
     private String type() {

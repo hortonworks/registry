@@ -20,6 +20,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.apache.avro.generic.GenericContainer;
@@ -31,7 +32,6 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecord;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -60,27 +60,22 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
         return baos.toByteArray();
     }
 
-    private SchemaMetadata createSchemaMetadata(SchemaMetadata schemaMetadata, org.apache.avro.Schema avroSchema) {
-        return new SchemaMetadata(schemaMetadata.getName(), schemaMetadata.getDescription(),
-                schemaMetadata.getDescription(), schemaMetadata.getCompatibility(), avroSchema.toString());
-    }
-
     private org.apache.avro.Schema getSchema(Object input) {
-        if(input instanceof GenericContainer) {
+        if (input instanceof GenericContainer) {
             return ((GenericContainer) input).getSchema();
         }
-        
+
         throw new IllegalArgumentException("input is not an instance of GenericContainer");
     }
 
     @Override
     public void serialize(Object input, OutputStream outputStream, SchemaMetadata schemaMetadataInfo) throws SerDeException {
         org.apache.avro.Schema schema = getSchema(input);
-        // register given schema
-        SchemaKey schemaKey = schemaRegistryClient.registerSchema(createSchemaMetadata(schemaMetadataInfo, schema));
         try {
+            // register given schema
+            Integer version = schemaRegistryClient.registerSchema(schemaMetadataInfo, new VersionedSchema(schema.toString(), ""));
             // write schema id and version, both of them require 12 bytes (Long +Int)
-            outputStream.write(ByteBuffer.allocate(12).putLong(schemaKey.getId()).putInt(schemaKey.getVersion()).array());
+            outputStream.write(ByteBuffer.allocate(4).putInt(version).array());
 
             // todo handle all cases
             BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(outputStream, null);
@@ -92,7 +87,7 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
             }
             writer.write(input, encoder);
             encoder.flush();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new SerDeException(e);
         }
 

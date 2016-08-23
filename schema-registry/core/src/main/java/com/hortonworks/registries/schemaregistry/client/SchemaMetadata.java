@@ -18,69 +18,51 @@
 package com.hortonworks.registries.schemaregistry.client;
 
 import com.google.common.base.Preconditions;
-import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 
 import java.io.Serializable;
 
 /**
- * This class encapsulates schema information including name, type, description, schemaText and compatibility. This can
- * be used when client does not know about the existing registered schema information.
- *
+ * This class encapsulates information of an evolving schema including group, name, type, description and compatibility.
+ * <p>
+ * There can be only one instance with same (type, name, group) fields.
+ * <p>
+ * This can be used to register a schema when client does not know about the existing registered schema information.
  */
-public class SchemaMetadata implements Serializable {
+public final class SchemaMetadata implements Serializable {
 
-    // name for schema which is part of schema metadata
-    private String name;
+    private static final SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
 
-    // type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc
-    private String type;
+    /**
+     *
+     */
+    private SchemaMetadataKey schemaMetadataKey;
 
-    // description of the schema which is given in schema metadata
+    /**
+     * Description about the schema metadata.
+     */
     private String description;
 
-    // textual representation of the schema which is given in SchemaInfo
-    private String schemaText;
-
-    // Compatibility of the schema for a given version which is given in SchemaInfo
-    private SchemaProvider.Compatibility compatibility;
+    /**
+     * Compatibility to be supported for all versions of this evolving schema.
+     */
+    private SchemaProvider.Compatibility compatibility = DEFAULT_COMPATIBILITY;
 
     private SchemaMetadata() {
     }
 
-    public SchemaMetadata(String name, String type, String description, SchemaProvider.Compatibility compatibility) {
-        this(name, type, description, compatibility, null);
-    }
+    public SchemaMetadata(SchemaMetadataKey schemaMetadataKey, String description, SchemaProvider.Compatibility compatibility) {
+        this.schemaMetadataKey = schemaMetadataKey;
+        Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
 
-
-    public SchemaMetadata(String name, String type, String description, SchemaProvider.Compatibility compatibility, String schemaText) {
-        Preconditions.checkNotNull(name, "name can not be null");
-        Preconditions.checkNotNull(type, "type can not be null");
-        Preconditions.checkNotNull(description, "description can not be null");
-        Preconditions.checkNotNull(compatibility, "compatinility can not be null");
-
-        this.name = name;
-        this.type = type;
-        this.description = description;
         this.compatibility = compatibility;
-        this.schemaText = schemaText;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
+        this.description = description;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    public String getSchemaText() {
-        return schemaText;
     }
 
     public SchemaProvider.Compatibility getCompatibility() {
@@ -89,18 +71,17 @@ public class SchemaMetadata implements Serializable {
 
     public SchemaMetadataStorable schemaMetadataStorable() {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
-        schemaMetadataStorable.setName(name);
-        schemaMetadataStorable.setType(type);
+        schemaMetadataStorable.setType(schemaMetadataKey.getType());
+        schemaMetadataStorable.setGroup(schemaMetadataKey.getGroup());
+        schemaMetadataStorable.setName(schemaMetadataKey.getName());
         schemaMetadataStorable.setDescription(description);
+        schemaMetadataStorable.setCompatibility(compatibility);
 
         return schemaMetadataStorable;
     }
 
-    public SchemaInfoStorable schemaInfoStorable() {
-        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
-        schemaInfoStorable.setSchemaText(schemaText);
-
-        return schemaInfoStorable;
+    public SchemaMetadataKey getSchemaMetadataKey() {
+        return schemaMetadataKey;
     }
 
 }

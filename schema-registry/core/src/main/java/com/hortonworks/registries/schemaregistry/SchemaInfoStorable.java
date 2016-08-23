@@ -36,11 +36,12 @@ public class SchemaInfoStorable extends AbstractStorable {
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String VERSION = "version";
     public static final String TIMESTAMP = "timestamp";
+    public static final String FINGERPRINT = "fingerprint";
 
     /**
      * Unique ID generated for this component.
      */
-    protected Long id;
+    private Long id;
 
     /**
      * Id of the SchemaMetadata instance.
@@ -65,7 +66,12 @@ public class SchemaInfoStorable extends AbstractStorable {
     /**
      * Time at which this schema was created/updated.
      */
-    protected Long timestamp;
+    private Long timestamp;
+
+    /**
+     * Fingerprint of the schema.
+     */
+    private String fingerprint;
 
     public SchemaInfoStorable() {
     }
@@ -101,7 +107,8 @@ public class SchemaInfoStorable extends AbstractStorable {
                 Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
                 Schema.Field.of(DESCRIPTION, Schema.Type.STRING),
                 Schema.Field.of(VERSION, Schema.Type.LONG),
-                Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
+                Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
+                Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
         );
     }
 
@@ -134,6 +141,10 @@ public class SchemaInfoStorable extends AbstractStorable {
         return timestamp;
     }
 
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public Long getSchemaMetadataId() {
         return schemaMetadataId;
     }
@@ -148,5 +159,13 @@ public class SchemaInfoStorable extends AbstractStorable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getFingerprint() {
+        return fingerprint;
+    }
+
+    public void setFingerprint(String fingerprint) {
+        this.fingerprint = fingerprint;
     }
 }

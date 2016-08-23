@@ -18,14 +18,13 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
 
 /**
  *
  */
-//@JsonTypeInfo(use= JsonTypeInfo.Id.CLASS, include= JsonTypeInfo.As.PROPERTY, property="__type")
 public class SerDesInfo implements Serializable {
     protected Long id;
     protected String description;
@@ -115,12 +114,59 @@ public class SerDesInfo implements Serializable {
         return result;
     }
 
-    public static SerDesInfo createSerializerInfo(Long id, String name, String description, String fileId, String className) {
-        return new SerDesInfo(id, name,description, fileId, className, true);
-    }
+    public static class Builder {
+        private Long id;
+        private String description;
+        private String name;
+        private String fileId;
+        private String className;
 
-    public static SerDesInfo createSerDesInfo(Long id, String name, String description, String fileId, String className) {
-        return new SerDesInfo(id, name,description, fileId, className, false);
+        public Builder() {
+        }
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder fileId(String fileId) {
+            this.fileId = fileId;
+            return this;
+        }
+
+        public Builder className(String className) {
+            this.className = className;
+            return this;
+        }
+
+        public SerDesInfo buildSerializerInfo() {
+            validate();
+
+            return new SerDesInfo(id, name, description, fileId, className, true);
+        }
+
+        public SerDesInfo buildDeserializerInfo() {
+            validate();
+
+            return new SerDesInfo(id, name, description, fileId, className, false);
+        }
+
+        private void validate() {
+            Preconditions.checkNotNull(name, "name can not be null");
+            Preconditions.checkNotNull(fileId, "fileId can not be null");
+            Preconditions.checkNotNull(className, "className can not be null");
+        }
+
     }
 
 }

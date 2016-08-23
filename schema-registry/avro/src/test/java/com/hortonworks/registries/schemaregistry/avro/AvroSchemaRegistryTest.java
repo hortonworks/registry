@@ -20,10 +20,11 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
+import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
 import org.apache.avro.Schema;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,13 +39,15 @@ import java.util.Collections;
  */
 public class AvroSchemaRegistryTest {
 
+    public static final String SCHEMA_GROUP = "test-group";
+
     private DefaultSchemaRegistry schemaRegistry;
 
     @Before
     public void setup() throws IOException {
         schema1 = getSchema("/device.avsc");
         schema2 = getSchema("/device2.avsc");
-        schemaName = "schema-" + System.currentTimeMillis();
+        schemaName = "org.hwx.schemas.test-schema." + System.currentTimeMillis();
         StorageManager storageManager = new InMemoryStorageManager();
         schemaRegistry = new DefaultSchemaRegistry(storageManager, null, Collections.singleton(new AvroSchemaProvider()));
         schemaRegistry.init(Collections.<String, Object>emptyMap());
@@ -61,37 +64,21 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test
-    public void testRegistrySchemaOps() throws Exception {
+    public void testRegistrySchemaOpsUsing() throws Exception {
 
-        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaName, AvroSchemaProvider.TYPE, schemaName, SchemaProvider.Compatibility.BOTH, schema1);
+        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, schemaName);
+        SchemaMetadata schemaMetadata =
+                new SchemaMetadata(schemaMetadataKey,
+                        "devices schema", SchemaProvider.Compatibility.BOTH);
 
-        SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getOrCreateSchemaMetadata(schemaMetadata.schemaMetadataStorable());
+        Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadata);
 
-        Long schemaMetadataId = schemaMetadataStorable.getId();
-        SchemaInfoStorable givenSchemaInfoStorable = schemaMetadata.schemaInfoStorable();
-        givenSchemaInfoStorable.setSchemaMetadataId(schemaMetadataId);
-        SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(givenSchemaInfoStorable);
+        Integer v1 = schemaRegistry.addSchema(schemaMetadata, new VersionedSchema(schema1, "initial version of the schema"));
 
-        int v1 = addedSchemaInfoStorable.getVersion();
+        Integer v2 = schemaRegistry.addSchema(schemaMetadataKey, new VersionedSchema(schema2, "second version of the the schema"));
 
-        SchemaInfoStorable schemaInfoStorable2 = new SchemaInfoStorable();
-        schemaInfoStorable2.setSchemaMetadataId(schemaMetadataId);
-        schemaInfoStorable2.setSchemaText(schema2);
-        SchemaInfoStorable addedSchemaInfoStorable2 = addSchemaAndVerify(schemaInfoStorable2);
-        int v2 = addedSchemaInfoStorable2.getVersion();
+        Assert.assertTrue(v2 == v1+1);
 
-        Assert.assertTrue(v2 == v1 + 1);
-
-        SchemaInfoStorable latest = schemaRegistry.getLatestSchemaInfo(schemaMetadataId);
-        Assert.assertEquals(latest, addedSchemaInfoStorable2);
-
-    }
-
-    private SchemaInfoStorable addSchemaAndVerify(SchemaInfoStorable schemaInfoStorable) {
-        SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(schemaInfoStorable);
-        Assert.assertEquals(addedSchemaInfoStorable.getSchemaMetadataId(), schemaInfoStorable.getSchemaMetadataId());
-        Assert.assertEquals(addedSchemaInfoStorable.getSchemaText(), schemaInfoStorable.getSchemaText());
-        return addedSchemaInfoStorable;
     }
 
 }

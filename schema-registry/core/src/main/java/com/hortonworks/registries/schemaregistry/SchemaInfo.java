@@ -24,66 +24,40 @@ import java.io.Serializable;
  */
 public final class SchemaInfo implements Serializable {
 
-    // schema metadata id
-    private Long id;
-
-    // name for schema which is part of schema metadata
-    private String name;
-
-    // type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc
-    private String type;
-
-    // description of the schema which is given in schema metadata
+    /**
+     * description of this schema instance
+     */
     private String description;
 
-    // version of the schema which is given in SchemaInfo
+    /**
+     * version of the schema which is given in SchemaInfo
+     */
     private Integer version;
 
-    // textual representation of the schema which is given in SchemaInfo
+    /**
+     * textual representation of the schema which is given in SchemaInfo
+     */
     private String schemaText;
 
-    // timestamp of the schema which is given in SchemaInfo
+    /**
+     * timestamp of the schema which is given in SchemaInfo
+     */
     private Long timestamp;
 
-    // Compatibility of the schema for a given version which is given in SchemaInfo
+    /**
+     * Compatibility of the schema for a given version which is given in SchemaInfo
+     */
     private SchemaProvider.Compatibility compatibility;
 
     private SchemaInfo() {
     }
 
-    public SchemaInfo(Long id, String name, String type, String description, Integer version, String schemaText,
-                      Long timestamp, SchemaProvider.Compatibility compatibility) {
-        this.id = id;
-        this.name = name;
-        this.type = type;
-        this.description = description;
-        this.version = version;
-        this.schemaText = schemaText;
-        this.timestamp = timestamp;
-        this.compatibility = compatibility;
-    }
-
     public SchemaInfo(SchemaMetadataStorable schemaMetadataStorable, SchemaInfoStorable schemaInfoStorable) {
-        id = schemaMetadataStorable.getId();
-        name = schemaMetadataStorable.getName();
-        type = schemaMetadataStorable.getType();
-        description = schemaMetadataStorable.getDescription();
+        description = schemaInfoStorable.getDescription();
         version = schemaInfoStorable.getVersion();
         schemaText = schemaInfoStorable.getSchemaText();
         timestamp = schemaInfoStorable.getTimestamp();
         compatibility = schemaMetadataStorable.getCompatibility();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public String getDescription() {
@@ -105,50 +79,40 @@ public final class SchemaInfo implements Serializable {
     public SchemaProvider.Compatibility getCompatibility() {
         return compatibility;
     }
-    
-    @Override
-    public String toString() {
-        return "SchemaDto{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", type='" + type + '\'' +
-                ", description='" + description + '\'' +
-                ", version=" + version +
-                ", schemaText='" + schemaText + '\'' +
-                ", timestamp=" + timestamp +
-                ", compatibility=" + compatibility +
-                '}';
-    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SchemaInfo schemaInfo = (SchemaInfo) o;
+        SchemaInfo that = (SchemaInfo) o;
 
-        if (id != null ? !id.equals(schemaInfo.id) : schemaInfo.id != null) return false;
-        if (name != null ? !name.equals(schemaInfo.name) : schemaInfo.name != null) return false;
-        if (type != null ? !type.equals(schemaInfo.type) : schemaInfo.type != null) return false;
-        if (description != null ? !description.equals(schemaInfo.description) : schemaInfo.description != null)
-            return false;
-        if (version != null ? !version.equals(schemaInfo.version) : schemaInfo.version != null) return false;
-        if (schemaText != null ? !schemaText.equals(schemaInfo.schemaText) : schemaInfo.schemaText != null) return false;
-        if (timestamp != null ? !timestamp.equals(schemaInfo.timestamp) : schemaInfo.timestamp != null) return false;
-        return compatibility == schemaInfo.compatibility;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+        if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        return compatibility == that.compatibility;
 
     }
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
+        int result = (description != null ? description.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaInfo{" +
+                ", description='" + description + '\'' +
+                ", version=" + version +
+                ", schemaText='" + schemaText + '\'' +
+                ", timestamp=" + timestamp +
+                ", compatibility=" + compatibility +
+                '}';
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
 
@@ -26,6 +27,7 @@ import java.util.Map;
  *
  */
 public class KafkaSerializer implements org.apache.kafka.common.serialization.Serializer<Object> {
+    private static final String GROUP_ID = "kafka";
 
     private final AvroSnapshotSerializer avroSnapshotSerializer;
     private boolean isKey;
@@ -48,7 +50,7 @@ public class KafkaSerializer implements org.apache.kafka.common.serialization.Se
 
     private SchemaMetadata createSchemaMetadataInfo(String topic, Object data) {
         String schemaName = getSchemaName(topic, data);
-        return new SchemaMetadata(schemaName, schemaName, AvroSnapshotSerializer.TYPE, compatibility);
+        return new SchemaMetadata(new SchemaMetadataKey(AvroSnapshotSerializer.TYPE, GROUP_ID, schemaName), schemaName, compatibility);
     }
 
     protected String getSchemaName(String topic, Object data) {
