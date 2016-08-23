@@ -22,7 +22,7 @@
         <kafka.version>0.8.1.1</kafka.version>
         <kafkaArtifact>kafka_2.10</kafkaArtifact>
         <scalaVersion>2.10.5</scalaVersion>
-        <dropwizard.version>0.9.3</dropwizard.version>
+        <dropwizard.version>1.0.0</dropwizard.version>
         <jersey.version>2.22.1</jersey.version>
         <jersey-media-multipart.version>2.22.1</jersey-media-multipart.version>
         <jmockit.version>1.19</jmockit.version>
@@ -30,7 +30,7 @@
         <hbase.version>1.1.2.2.3.98.0-44</hbase.version>
         <jsonschemavalidator.version>2.2.6</jsonschemavalidator.version>
         <kryo.version>2.21</kryo.version>
-        <logback.version>1.1.3</logback.version>
+        <logback.version>1.1.7</logback.version>
         <phoenix.version>4.4.0-HBase-1.1</phoenix.version>
         <calcite.version>1.4.0-incubating</calcite.version>
         <commons-lang3.version>3.3</commons-lang3.version>
@@ -82,18 +82,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
                 <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-api</artifactId>
-                    </exclusion>
-                </exclusions>
-                <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -267,8 +255,8 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
-                        <source>1.7</source>
-                        <target>1.7</target>
+                        <source>1.8</source>
+                        <target>1.8</target>
                     </configuration>
                 </plugin>
                 <plugin>
