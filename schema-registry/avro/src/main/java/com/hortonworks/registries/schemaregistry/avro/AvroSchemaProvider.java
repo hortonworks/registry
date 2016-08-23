@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaNormalization;
 import org.apache.avro.SchemaValidationException;
 
 import javax.annotation.Nullable;
@@ -68,11 +69,8 @@ public class AvroSchemaProvider implements SchemaProvider {
 
     @Override
     public byte[] getFingerPrint(String schemaText) {
-        Schema schema = new Schema.Parser().parse(schemaText);
-        // This API gives json string of the schema, could not find other API to get canonicalized schema
         try {
-            // each digest instance maintains state and it should not be used across different instances/threads
-            return MessageDigest.getInstance("MD5").digest(schema.toString().getBytes("UTF-8"));
+            return SchemaNormalization.fingerprint("MD5", schemaText.getBytes("UTF-8"));
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
