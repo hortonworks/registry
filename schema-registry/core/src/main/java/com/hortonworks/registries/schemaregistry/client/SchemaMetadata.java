@@ -36,7 +36,7 @@ public final class SchemaMetadata implements Serializable {
     private static final SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
 
     /**
-     *
+     * Unique key representation for this evolving schema.
      */
     private SchemaMetadataKey schemaMetadataKey;
 
