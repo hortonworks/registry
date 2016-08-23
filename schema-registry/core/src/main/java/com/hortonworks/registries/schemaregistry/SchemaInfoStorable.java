@@ -108,8 +108,7 @@ public class SchemaInfoStorable extends AbstractStorable {
                 Schema.Field.of(DESCRIPTION, Schema.Type.STRING),
                 Schema.Field.of(VERSION, Schema.Type.LONG),
                 Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-                // schema does not really support array with given types!!!, it simply assumes that as list
-                Schema.Field.of(FINGERPRINT, Schema.Type.ARRAY)
+                Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
         );
     }
 

@@ -53,9 +53,10 @@ public abstract class AbstractSnapshotSerializer<O> implements SnapshotSerialize
 
         try {
             // register given schema
-            SchemaKey schemaKey = schemaRegistryClient.registerSchema(schemaMetadata);
-            // write schema id and version, both of them require 12 bytes (Long +Int)
-            outputStream.write(ByteBuffer.allocate(12).putLong(schemaKey.getId()).putInt(schemaKey.getVersion()).array());
+            // todo fix this!!
+            SchemaKey schemaKey = null; //schemaRegistryClient.registerSchemaMetadata(schemaMetadata);
+            // write schema id and version, both of them require 12 bytes (Long + Int)
+            outputStream.write(ByteBuffer.allocate(4).putInt(schemaKey.getVersion()).array());
         } catch (IOException e) {
             throw new SerDeException(e);
         }

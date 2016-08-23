@@ -20,6 +20,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
@@ -82,29 +83,25 @@ public class AvroSchemaRegistryClientTest {
     public void testSchemaRelatedOps() throws Exception {
 
         // registering new schema-metadata
-        SchemaMetadata schemaMetadata =
-                new SchemaMetadata.Builder()
-                        .group("group-1")
-                        .namespace("com.hwx.iot.device.schema")
-                        .type(type())
-                        .description("device schema")
-                        .compatibility(SchemaProvider.Compatibility.BOTH)
-                        .schemaText(schema1).build();
+        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type(), "group-1", "com.hwx.iot.device.schema");
+        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey, "device schema", SchemaProvider.Compatibility.BOTH);
 
-        SchemaKey schemaKey1 = schemaRegistryClient.registerSchema(schemaMetadata);
-        int v1 = schemaKey1.getVersion();
+        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
 
         // adding a new version of the schema
         VersionedSchema schemaInfo2 = new VersionedSchema(schema2, "second version");
-        SchemaKey schemaKey2 = schemaRegistryClient.addVersionedSchema(schemaKey1.getId(), schemaInfo2);
-        int v2 = schemaKey2.getVersion();
+        Integer v2 = schemaRegistryClient.addVersionedSchema(schemaMetadataKey, schemaInfo2);
 
         Assert.assertTrue(v2 == v1 + 1);
 
-        SchemaInfo schemaDto2 = schemaRegistryClient.getSchema(schemaKey2);
-        SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaKey1.getId());
-        Assert.assertEquals(latest, schemaDto2);
+        SchemaInfo schemaInfo = schemaRegistryClient.getSchema(new SchemaKey(schemaMetadataKey, v2));
+        SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaMetadataKey);
 
+        Assert.assertEquals(latest, schemaInfo);
+
+        Collection<SchemaInfo> allVersions = schemaRegistryClient.getAllVersions(schemaMetadataKey);
+
+        Assert.assertEquals(allVersions.size(), 2);
     }
 
     @Test

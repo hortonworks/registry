@@ -23,8 +23,7 @@ import com.hortonworks.iotas.storage.PrimaryKey;
 import com.hortonworks.iotas.storage.Storable;
 import com.hortonworks.iotas.storage.catalog.AbstractStorable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -36,13 +35,17 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public static final String NAME = "name";
     public static final String GROUP = "group";
     public static final String COMPATIBILITY = "compatibility";
-    public static final String TYPE="type";
+    public static final String TYPE = "type";
     public static final String TIMESTAMP = "timestamp";
+
+    public static final Schema.Field NAME_FIELD = Schema.Field.of(NAME, Schema.Type.STRING);
+    public static final Schema.Field GROUP_FIELD = Schema.Field.of(GROUP, Schema.Type.STRING);
+    public static final Schema.Field TYPE_FIELD = Schema.Field.of(TYPE, Schema.Type.STRING);
 
     /**
      * Unique ID generated for this component.
      */
-    protected Long id;
+    private Long id;
 
     /**
      * Given name of the schema.
@@ -103,7 +106,12 @@ public class SchemaMetadataStorable extends AbstractStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        return new PrimaryKey(Collections.singletonMap(new Schema.Field(ID, Schema.Type.LONG), (Object) id));
+        Map<Schema.Field, Object> fieldValues = new HashMap<Schema.Field, Object>() {{
+            put(NAME_FIELD, name);
+            put(GROUP_FIELD, group);
+            put(TYPE_FIELD, type);
+        }};
+        return new PrimaryKey(fieldValues);
     }
 
     @Override
@@ -111,9 +119,9 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public Schema getSchema() {
         return Schema.of(
                 Schema.Field.of(ID, Schema.Type.LONG),
-                Schema.Field.of(NAME, Schema.Type.STRING),
-                Schema.Field.of(GROUP, Schema.Type.STRING),
-                Schema.Field.of(TYPE, Schema.Type.STRING),
+                NAME_FIELD,
+                GROUP_FIELD,
+                TYPE_FIELD,
                 Schema.Field.of(COMPATIBILITY, Schema.Type.STRING),
                 Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
         );

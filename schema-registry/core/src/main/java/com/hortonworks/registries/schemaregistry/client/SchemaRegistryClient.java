@@ -23,6 +23,8 @@ import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
+import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
 import org.glassfish.jersey.client.ClientConfig;
@@ -44,7 +46,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
 
@@ -97,8 +98,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaKey registerSchema(SchemaMetadata schemaMetadata) {
-        return postEntity(schemasTarget, schemaMetadata, SchemaKey.class);
+    public SchemaMetadataKey registerSchemaMetadata(SchemaMetadata schemaMetadata) {
+        return postEntity(schemasTarget, schemaMetadata, SchemaMetadataKey.class);
+    }
+
+    @Override
+    public Integer registerSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema) throws InvalidSchemaException {
+        SchemaMetadataKey schemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
+        WebTarget path = schemasTarget.path(
+                String.format("types/%s/groups/%s/names/%s",
+                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+        SchemaDetails schemaDetails = new SchemaDetails(schemaMetadata.getDescription(), schemaMetadata.getCompatibility(), versionedSchema);
+        return postEntity(path, schemaDetails, Integer.class);
     }
 
     @Override
@@ -107,42 +118,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return postEntity(path, schemaInfo, SchemaKey.class);
     }
 
-    private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
-        List<T> entities = new ArrayList<>();
-        String response = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(response);
-            Iterator<JsonNode> it = node.get("entities").elements();
-            while (it.hasNext()) {
-                entities.add(mapper.treeToValue(it.next(), clazz));
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-        return entities;
-    }
-
-    private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
-        String response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
-
-        return readEntity(response, responseType);
-    }
-
-    private <T> T readEntity(String response, Class<T> clazz) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(response);
-            return mapper.treeToValue(node.get("entity"), clazz);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private <T> T getEntity(WebTarget target, Class<T> clazz) {
-        String response = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
-
-        return readEntity(response, clazz);
+    @Override
+    public Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException {
+        WebTarget path = schemasTarget.path(
+                String.format("/types/%s/groups/%s/names/%s",
+                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+        SchemaDetails schemaDetails = new SchemaDetails(versionedSchema);
+        return postEntity(path, schemaDetails, Integer.class);
     }
 
     @Override
@@ -152,7 +134,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaInfo getSchema(SchemaKey schemaKey) {
-        return getEntity(schemasTarget.path(String.format("%d/versions/%d", schemaKey.getId(), schemaKey.getVersion())), SchemaInfo.class);
+        SchemaMetadataKey schemaMetadataKey = schemaKey.getSchemaMetadataKey();
+        WebTarget webTarget = schemasTarget.path(
+                String.format("types/%s/groups/%s/names/%s/versions/%d",
+                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName(), schemaKey.getVersion()));
+
+        return getEntity(webTarget, SchemaInfo.class);
     }
 
     @Override
@@ -161,14 +148,39 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException {
+        WebTarget webTarget = schemasTarget.path(
+                String.format("types/%s/groups/%s/names/%s/versions/latest",
+                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+        return getEntity(webTarget, SchemaInfo.class);
+    }
+
+    @Override
     public Iterable<SchemaInfo> getAllVersions(Long schemaMetadataId) {
         return getEntities(schemasTarget.path(schemaMetadataId.toString()), SchemaInfo.class);
+    }
+
+    @Override
+    public Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException {
+        WebTarget webTarget = schemasTarget.path(
+                String.format("types/%s/groups/%s/names/%s/versions",
+                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+        return getEntities(webTarget, SchemaInfo.class);
     }
 
     @Override
     public boolean isCompatibleWithLatestSchema(Long schemaMetadataId, String toSchemaText) {
         WebTarget target = schemasTarget.path(String.format("compatibility/%d/versions/latest", schemaMetadataId));
         String response = target.request().post(Entity.text(toSchemaText), String.class);
+        return readEntity(response, Boolean.class);
+    }
+
+    @Override
+    public boolean isCompatibleWithLatestSchema(SchemaMetadataKey schemaMetadataKey, String toSchemaText) throws SchemaNotFoundException {
+        WebTarget webTarget = schemasTarget.path(
+                String.format("types/%s/groups/%s/names/%s/compatibility",
+                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+        String response = webTarget.request().post(Entity.text(toSchemaText), String.class);
         return readEntity(response, Boolean.class);
     }
 
@@ -238,6 +250,44 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         return t;
+    }
+
+    private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
+        List<T> entities = new ArrayList<>();
+        String response = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(response);
+            Iterator<JsonNode> it = node.get("entities").elements();
+            while (it.hasNext()) {
+                entities.add(mapper.treeToValue(it.next(), clazz));
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        return entities;
+    }
+
+    private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
+        String response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
+
+        return readEntity(response, responseType);
+    }
+
+    private <T> T readEntity(String response, Class<T> clazz) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(response);
+            return mapper.treeToValue(node.get("entity"), clazz);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private <T> T getEntity(WebTarget target, Class<T> clazz) {
+        String response = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+
+        return readEntity(response, clazz);
     }
 
     public static class Options {

@@ -19,9 +19,9 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
-import com.hortonworks.registries.schemaregistry.Resourceable;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
@@ -32,70 +32,69 @@ import java.util.Collection;
 
 /**
  * This interface defines different methods to interact with remote schema registry.
- *
+ * <p>
  * Below code describes how to register new schemas, add new version of a schema and fetch different versions of a schema.
  * <pre>
  *      // registering new schema-metadata
-        SchemaMetadata schemaMetadata = new SchemaMetadata();
-        schemaMetadata.setName("com.hwx.iot.device.schema");
-        schemaMetadata.setSchemaText(schema1);
-        schemaMetadata.setType(type());
-        schemaMetadata.setCompatibility(SchemaProvider.Compatibility.BOTH);
-        SchemaKey schemaKey1 = schemaRegistryClient.registerSchema(schemaMetadata);
-        int v1 = schemaKey1.getVersion();
-
-        // adding a new version of the schema
-        VersionedSchema schemaInfo2 = new VersionedSchema();
-        schemaInfo2.setSchemaText(schema2);
-        SchemaKey schemaKey2 = schemaRegistryClient.addVersionedSchema(schemaKey1.getId(), schemaInfo2);
-        int v2 = schemaKey2.getVersion();
-
-        // get the specific version of the schema
-        SchemaDto schemaDto2 = schemaRegistryClient.getSchema(schemaKey2);
-
-        // get the latest version of the schema
-        SchemaDto latest = schemaRegistryClient.getLatestSchema(schemaKey1.getId());
- * </pre>
+ * SchemaMetadata schemaMetadata = new SchemaMetadata();
+ * schemaMetadata.setName("com.hwx.iot.device.schema");
+ * schemaMetadata.setSchemaText(schema1);
+ * schemaMetadata.setType(type());
+ * schemaMetadata.setCompatibility(SchemaProvider.Compatibility.BOTH);
+ * SchemaKey schemaKey1 = schemaRegistryClient.registerSchema(schemaMetadata);
+ * int v1 = schemaKey1.getVersion();
  *
+ * // adding a new version of the schema
+ * VersionedSchema schemaInfo2 = new VersionedSchema();
+ * schemaInfo2.setSchemaText(schema2);
+ * SchemaKey schemaKey2 = schemaRegistryClient.addVersionedSchema(schemaKey1.getId(), schemaInfo2);
+ * int v2 = schemaKey2.getVersion();
+ *
+ * // get the specific version of the schema
+ * SchemaDto schemaDto2 = schemaRegistryClient.getSchema(schemaKey2);
+ *
+ * // get the latest version of the schema
+ * SchemaDto latest = schemaRegistryClient.getLatestSchema(schemaKey1.getId());
+ * </pre>
+ * <p>
  * Below code describes how to register serializer and deserializers, map them with a schema etc.
  * <pre>
  *      // upload a jar containing serializer and deserializer classes.
-        InputStream inputStream = new FileInputStream("/schema-custom-ser-des.jar");
-        String fileId = schemaRegistryClient.uploadFile(inputStream);
-
-        // add serializer with the respective uploaded jar file id.
-        SerializerInfo serializerInfo = new SerializerInfo();
-        serializerInfo.setName("avro serializer");
-        serializerInfo.setDescription("avro serializer");
-        serializerInfo.setFileId(fileId);
-        serializerInfo.setClassName("con.hwx.iotas.serializer.AvroSnapshotSerializer");
-        Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
-
-        // map this serializer with a registered schema
-        schemaRegistryClient.mapSerializer(schemaMetadataId, serializerId);
-
-        // get registered serializers
-        Collection<SerializerInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataId);
-        SchemaMetadata schemaMetadata = null;
-        Object input = null;
-
-        SerializerInfo registeredSerializerInfo = serializers.iterator().next();
-
-        //get serializer and serialize the given payload
-        try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
-            Map<String, Object> config = Collections.emptyMap();
-            snapshotSerializer.init(config);
-
-            byte[] serializedData = snapshotSerializer.serialize(input, schemaMetadata);
-        }
-
- * </pre>
+ * InputStream inputStream = new FileInputStream("/schema-custom-ser-des.jar");
+ * String fileId = schemaRegistryClient.uploadFile(inputStream);
  *
+ * // add serializer with the respective uploaded jar file id.
+ * SerializerInfo serializerInfo = new SerializerInfo();
+ * serializerInfo.setName("avro serializer");
+ * serializerInfo.setDescription("avro serializer");
+ * serializerInfo.setFileId(fileId);
+ * serializerInfo.setClassName("con.hwx.iotas.serializer.AvroSnapshotSerializer");
+ * Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
+ *
+ * // map this serializer with a registered schema
+ * schemaRegistryClient.mapSerializer(schemaMetadataId, serializerId);
+ *
+ * // get registered serializers
+ * Collection<SerializerInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataId);
+ * SchemaMetadata schemaMetadata = null;
+ * Object input = null;
+ *
+ * SerializerInfo registeredSerializerInfo = serializers.iterator().next();
+ *
+ * //get serializer and serialize the given payload
+ * try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
+ * Map<String, Object> config = Collections.emptyMap();
+ * snapshotSerializer.init(config);
+ *
+ * byte[] serializedData = snapshotSerializer.serialize(input, schemaMetadata);
+ * }
+ *
+ * </pre>
  */
 public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
-     * Returns {@link SchemaKey} of the added or an existing schema.
+     * Returns {@link SchemaMetadataKey} for the added schema metadata.
      * <pre>
      * It tries to fetch an existing schema or register the given schema with the below conditions
      *  - Checks whether there exists a schema with the given schemaText, type and name
@@ -106,14 +105,23 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadata
      * @return
      */
-    public SchemaKey registerSchema(SchemaMetadata schemaMetadata) throws InvalidSchemaException;
+    public SchemaMetadataKey registerSchemaMetadata(SchemaMetadata schemaMetadata) throws InvalidSchemaException;
 
     /**
+     * Returns {@link SchemaKey} for the added schema metadata.
+     * <pre>
+     * It tries to fetch an existing schema or register the given schema with the below conditions
+     *  - Checks whether there exists a schema with the given schemaText, and schemaMetadata
+     *      - returns respective schemaKey if it exists.
+     *      - Creates a schema for the given name and returns respective schemaKey if it does not exist
+     * </pre>
      *
-     * @param schemaMetadataId id of the schema metadata.
+     * @param schemaMetadata
      * @param versionedSchema
      * @return
+     * @throws InvalidSchemaException
      */
+    public Integer registerSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema) throws InvalidSchemaException;
 
     /**
      * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
@@ -121,10 +129,21 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataId
      * @param versionedSchema
      * @return
-     * @throws InvalidSchemaException if the given schema is not valid.
+     * @throws InvalidSchemaException      if the given schema is not valid.
      * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
      */
     public SchemaKey addVersionedSchema(Long schemaMetadataId, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
+
+    /**
+     * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
+     *
+     * @param schemaMetadataKey
+     * @param versionedSchema
+     * @return
+     * @throws InvalidSchemaException      if the given schema is not valid.
+     * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
+     */
+    public Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
      * Returns all schemas registered in the repository. It may be paging the results internally with out realizing all
@@ -150,6 +169,15 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      */
     public SchemaInfo getLatestSchema(Long schemaMetadataId) throws SchemaNotFoundException;
 
+
+    /**
+     * Returns the latest version of the schema for the given {@param schemaMetadataKey}
+     *
+     * @param schemaMetadataKey
+     * @return
+     */
+    public SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
+
     /**
      * Returns all versions of the schemas for given {@param schemaMetadataId}
      *
@@ -159,6 +187,14 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     public Iterable<SchemaInfo> getAllVersions(Long schemaMetadataId) throws SchemaNotFoundException;
 
     /**
+     * Returns all versions of the schemas for given {@param schemaMetadataKey}
+     *
+     * @param schemaMetadataKey
+     * @return
+     */
+    public Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
+
+    /**
      * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataId}.
      *
      * @param schemaMetadataId
@@ -166,6 +202,15 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @return
      */
     public boolean isCompatibleWithLatestSchema(Long schemaMetadataId, String toSchemaText) throws SchemaNotFoundException;
+
+    /**
+     * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
+     *
+     * @param schemaMetadataKey
+     * @param toSchemaText
+     * @return
+     */
+    public boolean isCompatibleWithLatestSchema(SchemaMetadataKey schemaMetadataKey, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * Returns unique id for the uploaded bytes read from input stream to file storage.
@@ -226,7 +271,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Returns a new instance of the respective Serializer class for the given {@code serializerInfo}
      *
-     * @param <T> type of the instance to be created
+     * @param <T>            type of the instance to be created
      * @param serializerInfo
      * @throws SerDeException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
@@ -235,7 +280,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Returns a new instance of the respective Deserializer class for the given {@code deserializerInfo}
      *
-     * @param <T> type of the instance to be created
+     * @param <T>              type of the instance to be created
      * @param deserializerInfo
      * @throws SerDeException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
