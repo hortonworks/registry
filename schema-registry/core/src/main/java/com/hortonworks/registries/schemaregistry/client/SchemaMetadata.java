@@ -33,8 +33,6 @@ import java.io.Serializable;
  */
 public final class SchemaMetadata implements Serializable {
 
-    private static final SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
-
     /**
      * Unique key representation for this evolving schema.
      */
@@ -48,7 +46,7 @@ public final class SchemaMetadata implements Serializable {
     /**
      * Compatibility to be supported for all versions of this evolving schema.
      */
-    private SchemaProvider.Compatibility compatibility = DEFAULT_COMPATIBILITY;
+    private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
 
     private SchemaMetadata() {
     }

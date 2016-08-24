@@ -38,31 +38,29 @@ public interface ISchemaRegistry {
 
     public Integer addSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws SchemaNotFoundException;
 
+    public SchemaMetadataStorable getSchemaMetadata(SchemaMetadataKey schemaMetadataKey);
+
+
     public SchemaMetadataStorable getSchemaMetadata(Long schemaMetadataId);
 
     public Collection<SchemaInfoStorable> findAllVersions(Long schemaMetadataId);
 
-    public Integer getSchemaVersion(SchemaMetadataKey schemaMetadataKey, String schemaText);
+    public Integer getSchemaVersion(SchemaMetadataKey schemaMetadataKey, String schemaText) throws SchemaNotFoundException;
 
-    public SchemaInfoStorable getSchemaInfo(Long schemaMetadataId, Integer version);
 
-    public SchemaInfoStorable getLatestSchemaInfo(Long schemaMetadataId);
+    public SchemaInfoStorable getSchemaInfo(Long schemaMetadataId, Integer version) throws SchemaNotFoundException;
 
-    public SchemaInfoStorable addSchemaInfo(SchemaInfoStorable schemaInfoStorable);
+    public SchemaInfoStorable getLatestSchemaInfo(Long schemaMetadataId) throws SchemaNotFoundException;
 
     public Collection<SchemaInfoStorable> listAll();
 
-    public SchemaInfoStorable getSchemaInfo(Long schemaInfoId);
+    public SchemaMetadataStorable getOrCreateSchemaMetadata(SchemaMetadata givenSchemaMetadataStorable);
 
-    public SchemaInfoStorable removeSchemaInfo(Long schemaInfoId);
 
     public boolean isCompatible(Long schemaMetadataId, Integer existingSchemaVersion, String schema) throws SchemaNotFoundException;
 
     public boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException;
 
-    public Collection<SchemaInfoStorable> getCompatibleSchemas(Long schemaMetadataId, SchemaProvider.Compatibility compatibility, String toSchema) throws SchemaNotFoundException;
-
-    public SchemaMetadataStorable getOrCreateSchemaMetadata(SchemaMetadata givenSchemaMetadataStorable);
 
     public String uploadFile(InputStream inputStream);
 
@@ -79,7 +77,5 @@ public interface ISchemaRegistry {
     public InputStream downloadJar(Long serializerId);
 
     public void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
-
-    public SchemaMetadataStorable getSchemaMetadata(SchemaMetadataKey schemaMetadataKey);
 
 }
