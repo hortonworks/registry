@@ -380,7 +380,7 @@ public class SchemaRegistryCatalog {
     @Produces({"application/octet-stream", "application/json"})
     @Path("/files/download/{fileId}")
     public Response downloadFile(@PathParam("fileId") String fileId) {
-        Response response = null;
+        Response response;
         try {
             StreamingOutput streamOutput = WSUtils.wrapWithStreamingOutput(schemaRegistry.downloadFile(fileId));
             response = Response.ok(streamOutput).build();

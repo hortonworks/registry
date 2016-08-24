@@ -39,7 +39,7 @@ public class JdbcClient {
             Connection connection = DriverManager.getConnection(url);
             connection.setAutoCommit(true);
 
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
                     connection.createStatement().execute(line);
