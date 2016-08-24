@@ -34,7 +34,7 @@ public class JdbcClient {
         }
 
         try (BufferedReader reader =
-                     new BufferedReader(new InputStreamReader(resourceAsStream));
+                     new BufferedReader(new InputStreamReader(resourceAsStream))
         ) {
             Connection connection = DriverManager.getConnection(url);
             connection.setAutoCommit(true);

@@ -30,7 +30,7 @@ import com.hortonworks.registries.schemaregistry.Resourceable;
  */
 public interface PullDeserializer<S, F> extends Resourceable {
 
-    public enum State {
+    enum State {
         /**
          * Represents start of processing the given payload.
          */
@@ -78,17 +78,17 @@ public interface PullDeserializer<S, F> extends Resourceable {
      *
      * @return
      */
-    public boolean hasNext() throws ParserException;
+    boolean hasNext() throws ParserException;
 
     /**
      * Returns the next record/field's {@link PullEventContext} in the payload given to the deserializer.
      *
      * @return
      */
-    public PullEventContext<F> next() throws ParserException;
+    PullEventContext<F> next() throws ParserException;
 
     /**
      * @return S which is about schema related information
      */
-    public S schema();
+    S schema();
 }

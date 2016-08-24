@@ -29,5 +29,5 @@ public interface PullSerializer extends Resourceable {
      *
      * @param pullContext
      */
-    public void add(PullEventContext pullContext);
+    void add(PullEventContext pullContext);
 }

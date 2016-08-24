@@ -37,7 +37,7 @@ public interface SnapshotSerializer<I, O, S> extends Resourceable {
      * @param schema
      * @return
      */
-    public O serialize(I input, S schema) throws SerDeException;
+    O serialize(I input, S schema) throws SerDeException;
 
     /**
      * Serializes the given input according to the schema and writes it to the given outputStream
@@ -46,5 +46,5 @@ public interface SnapshotSerializer<I, O, S> extends Resourceable {
      * @param outputStream
      * @param schema
      */
-    public void serialize(I input, OutputStream outputStream, S schema) throws SerDeException;
+    void serialize(I input, OutputStream outputStream, S schema) throws SerDeException;
 }

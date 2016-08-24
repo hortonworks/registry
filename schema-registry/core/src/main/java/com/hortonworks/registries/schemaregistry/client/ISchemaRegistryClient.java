@@ -99,7 +99,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadata
      * @return
      */
-    public boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) throws InvalidSchemaException;
+    boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) throws InvalidSchemaException;
 
     /**
      * Returns version of the schema added to schema-metadata.
@@ -115,7 +115,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @return
      * @throws InvalidSchemaException
      */
-    public Integer registerSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema) throws InvalidSchemaException;
+    Integer registerSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema) throws InvalidSchemaException;
 
     /**
      * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
@@ -126,7 +126,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @throws InvalidSchemaException      if the given schema is not valid.
      * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
      */
-    public SchemaKey addVersionedSchema(Long schemaMetadataId, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
+    SchemaKey addVersionedSchema(Long schemaMetadataId, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
      * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
@@ -137,7 +137,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @throws InvalidSchemaException      if the given schema is not valid.
      * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
      */
-    public Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
+    Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
      * Returns all schemas registered in the repository. It may be paging the results internally with out realizing all
@@ -145,7 +145,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      *
      * @return
      */
-    public Iterable<SchemaInfo> listAllSchemas();
+    Iterable<SchemaInfo> listAllSchemas();
 
     /**
      * Returns {@link SchemaInfo} for the given {@link SchemaKey}
@@ -153,7 +153,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaKey
      * @return
      */
-    public SchemaInfo getSchema(SchemaKey schemaKey) throws SchemaNotFoundException;
+    SchemaInfo getSchema(SchemaKey schemaKey) throws SchemaNotFoundException;
 
     /**
      * Returns the latest version of the schema for the given {@param schemaMetadataId}
@@ -161,7 +161,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataId
      * @return
      */
-    public SchemaInfo getLatestSchema(Long schemaMetadataId) throws SchemaNotFoundException;
+    SchemaInfo getLatestSchema(Long schemaMetadataId) throws SchemaNotFoundException;
 
 
     /**
@@ -170,7 +170,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataKey
      * @return
      */
-    public SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
+    SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
 
     /**
      * Returns all versions of the schemas for given {@param schemaMetadataId}
@@ -178,7 +178,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataId
      * @return
      */
-    public Iterable<SchemaInfo> getAllVersions(Long schemaMetadataId) throws SchemaNotFoundException;
+    Iterable<SchemaInfo> getAllVersions(Long schemaMetadataId) throws SchemaNotFoundException;
 
     /**
      * Returns all versions of the schemas for given {@param schemaMetadataKey}
@@ -186,7 +186,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataKey
      * @return
      */
-    public Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
+    Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
 
     /**
      * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataId}.
@@ -195,7 +195,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param toSchemaText
      * @return
      */
-    public boolean isCompatibleWithAllVersions(Long schemaMetadataId, String toSchemaText) throws SchemaNotFoundException;
+    boolean isCompatibleWithAllVersions(Long schemaMetadataId, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
@@ -204,7 +204,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param toSchemaText
      * @return
      */
-    public boolean isCompatibleWithAllVersions(SchemaMetadataKey schemaMetadataKey, String toSchemaText) throws SchemaNotFoundException;
+    boolean isCompatibleWithAllVersions(SchemaMetadataKey schemaMetadataKey, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * Returns unique id for the uploaded bytes read from input stream to file storage.
@@ -212,7 +212,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param inputStream
      * @return
      */
-    public String uploadFile(InputStream inputStream) throws SerDeException;
+    String uploadFile(InputStream inputStream) throws SerDeException;
 
     /**
      * Downloads the content of file stored with the given {@code fileId}.
@@ -220,7 +220,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param fileId
      * @return
      */
-    public InputStream downloadFile(String fileId) throws FileNotFoundException;
+    InputStream downloadFile(String fileId) throws FileNotFoundException;
 
     /**
      * Returns unique id for the added Serializer for the given {@code schemaSerializerInfo}
@@ -228,7 +228,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param serializerInfo
      * @return
      */
-    public Long addSerializer(SerDesInfo serializerInfo);
+    Long addSerializer(SerDesInfo serializerInfo);
 
     /**
      * Returns unique id for the added Serializer for the given {@code schemaSerializerInfo}
@@ -236,7 +236,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param deserializerInfo
      * @return
      */
-    public Long addDeserializer(SerDesInfo deserializerInfo);
+    Long addDeserializer(SerDesInfo deserializerInfo);
 
     /**
      * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaMetadataId}
@@ -244,7 +244,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataId
      * @param serializerId
      */
-    public void mapSchemaWithSerDes(Long schemaMetadataId, Long serializerId) throws SchemaNotFoundException;
+    void mapSchemaWithSerDes(Long schemaMetadataId, Long serializerId) throws SchemaNotFoundException;
 
     /**
      * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaMetadataKey}
@@ -260,7 +260,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataId
      * @return
      */
-    public Collection<SerDesInfo> getSerializers(Long schemaMetadataId) throws SchemaNotFoundException;
+    Collection<SerDesInfo> getSerializers(Long schemaMetadataId) throws SchemaNotFoundException;
 
     /**
      * Returns Collection of Serializers registered for the schema with {@code schemaMetadataKey}
@@ -276,7 +276,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadataId
      * @return
      */
-    public Collection<SerDesInfo> getDeserializers(Long schemaMetadataId) throws SchemaNotFoundException;
+    Collection<SerDesInfo> getDeserializers(Long schemaMetadataId) throws SchemaNotFoundException;
 
     /**
      * Returns Collection of Deserializers registered for the schema with {@code schemaMetadataKey}
@@ -293,7 +293,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param serializerInfo
      * @throws SerDeException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
-    public <T> T createSerializerInstance(SerDesInfo serializerInfo);
+    <T> T createSerializerInstance(SerDesInfo serializerInfo);
 
     /**
      * Returns a new instance of the respective Deserializer class for the given {@code deserializerInfo}
@@ -302,6 +302,6 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param deserializerInfo
      * @throws SerDeException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
-    public <T> T createDeserializerInstance(SerDesInfo deserializerInfo);
+    <T> T createDeserializerInstance(SerDesInfo deserializerInfo);
 
 }
