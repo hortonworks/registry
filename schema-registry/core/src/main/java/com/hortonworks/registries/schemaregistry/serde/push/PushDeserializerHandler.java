@@ -28,43 +28,43 @@ public interface PushDeserializerHandler<F> {
     /**
      * Indicates deserialization of the given payload is started.
      */
-    public void startDeserialize();
+    void startDeserialize();
 
     /**
      * Indicates the deserialization of the given payload is finished.
      */
-    public void endDeserialize();
+    void endDeserialize();
 
     /**
      * Indicates the deserialization of a new record is started.
      */
-    public void startRecord();
+    void startRecord();
 
     /**
      * Indicates the current record is finished
      */
-    public void endRecord();
+    void endRecord();
 
     /**
      * Indicates the deserialization of the given field is started
      *
      * @param startField
      */
-    public void startField(F startField);
+    void startField(F startField);
 
     /**
      * Callback to receive the currently deserialized value.
      *
      * @param value
      */
-    public void readFieldValue(Object value);
+    void readFieldValue(Object value);
 
     /**
      * Indicates the deserialization of the given field is finished.
      *
      * @param endField
      */
-    public void endField(F endField);
+    void endField(F endField);
 
     /**
      * Callback to receive current field and value
@@ -72,6 +72,6 @@ public interface PushDeserializerHandler<F> {
      * @param field
      * @param value
      */
-    public void currentFieldValue(F field, Object value);
+    void currentFieldValue(F field, Object value);
 
 }

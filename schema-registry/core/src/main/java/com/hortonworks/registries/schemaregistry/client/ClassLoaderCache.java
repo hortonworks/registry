@@ -81,7 +81,7 @@ public class ClassLoaderCache {
 
         try (FileOutputStream fos = new FileOutputStream(file);
              FileLock fileLock = fos.getChannel().lock();
-             FileInputStream fileInputStream = new FileInputStream(file);) {
+             FileInputStream fileInputStream = new FileInputStream(file)) {
             LOG.debug("Took file lock: [{}] for file: [{}]", fileLock, file);
 
             if (fileInputStream.read() != -1) {
@@ -89,7 +89,7 @@ public class ClassLoaderCache {
                 return file;
             } else {
                 LOG.debug("File [{}] does not have content, downloading and storing started..", file);
-                try (InputStream inputStream = schemaRegistryClient.downloadFile(fileId);) {
+                try (InputStream inputStream = schemaRegistryClient.downloadFile(fileId)) {
                     IOUtils.copy(inputStream, fos);
                     LOG.debug("Finished storing file [{}]", file);
                 } catch (Exception e) {

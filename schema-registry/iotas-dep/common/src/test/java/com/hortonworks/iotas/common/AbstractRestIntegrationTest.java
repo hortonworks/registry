@@ -69,7 +69,7 @@ public class AbstractRestIntegrationTest {
         return mapper.treeToValue(node.get("responseCode"), Integer.class);
     }
 
-    protected <T extends Object> List<T> getEntities(String response, Class<T> clazz) {
+    protected <T> List<T> getEntities(String response, Class<T> clazz) {
         return getEntities(response, clazz, Collections.<String>emptyList());
     }
 
@@ -81,8 +81,8 @@ public class AbstractRestIntegrationTest {
      * @param <T>
      * @return
      */
-    protected <T extends Object> List<T> getEntities(String response, Class<T> clazz,
-                                                     List<String> fieldsToIgnore) {
+    protected <T> List<T> getEntities(String response, Class<T> clazz,
+                                      List<String> fieldsToIgnore) {
         List<T> entities = new ArrayList<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
