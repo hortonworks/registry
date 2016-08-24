@@ -41,7 +41,7 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
     private static final int DEFAULT_NUM_THREADS = 5;
     private static final Logger LOG = LoggerFactory.getLogger(CacheLoaderAsync.class);
 
-    private ListeningExecutorService executorService;
+    private final ListeningExecutorService executorService;
 
     public CacheLoaderAsync(Cache<K, V> cache, DataStoreReader<K,V> dataStoreReader) {
         this(cache, dataStoreReader, Executors.newFixedThreadPool(DEFAULT_NUM_THREADS));
@@ -63,7 +63,7 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
     }
 
     private class DataStoreCallable implements Callable<Map<K,V>> {
-        private Collection<? extends K> keys;
+        private final Collection<? extends K> keys;
 
         public DataStoreCallable(Collection<? extends K> keys) {
             this.keys = keys;
@@ -79,7 +79,7 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
 
     public class CacheLoaderAsyncFutureCallback implements FutureCallback<Map<K,V>> {
         private final Collection<? extends K> keys;
-        private CacheLoaderCallback<K,V> callback;
+        private final CacheLoaderCallback<K,V> callback;
 
         public CacheLoaderAsyncFutureCallback(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback) {
             this.keys = keys;

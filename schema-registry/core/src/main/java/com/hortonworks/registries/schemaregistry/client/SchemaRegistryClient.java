@@ -73,7 +73,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private Client client;
     private WebTarget rootTarget;
     private WebTarget schemasTarget;
-    private Options options;
+    private final Options options;
     private ClassLoaderCache classLoaderCache;
 
     public SchemaRegistryClient(Map<String, Object> conf) {

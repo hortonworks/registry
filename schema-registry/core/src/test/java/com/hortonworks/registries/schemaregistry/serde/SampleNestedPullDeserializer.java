@@ -49,7 +49,7 @@ public class SampleNestedPullDeserializer implements PullDeserializer<SchemaDeta
     private String currentLine;
     private List<PullEventContext.FieldValue> values = new ArrayList<>();
 
-    private Stack<FieldWithIndex> schemaFields = new Stack<>();
+    private final Stack<FieldWithIndex> schemaFields = new Stack<>();
     private int rootIndex;
 
     public SampleNestedPullDeserializer(SchemaDetails schemaDetails, InputStream payloadInputStream) {

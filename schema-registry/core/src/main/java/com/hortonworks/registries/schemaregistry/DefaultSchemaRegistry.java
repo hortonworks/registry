@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * Remove todos with respective JIRAs created
  */
 public class DefaultSchemaRegistry implements ISchemaRegistry {
-    private static Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
 
     private final StorageManager storageManager;
     private final FileStorage fileStorage;

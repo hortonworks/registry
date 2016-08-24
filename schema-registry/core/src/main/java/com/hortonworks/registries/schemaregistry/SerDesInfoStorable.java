@@ -150,10 +150,8 @@ public class SerDesInfoStorable extends AbstractStorable {
     }
 
     public static SerDesInfoStorable fromSerDesInfo(SerDesInfo serDesInfo) {
-        SerDesInfoStorable serDesInfoStorable =
-                new SerDesInfoStorable(serDesInfo.getId(), serDesInfo.getDescription(), serDesInfo.getName(),
-                                        serDesInfo.getFileId(), serDesInfo.getClassName(), serDesInfo.getIsSerializer());
-        return serDesInfoStorable;
+        return new SerDesInfoStorable(serDesInfo.getId(), serDesInfo.getDescription(), serDesInfo.getName(),
+                                      serDesInfo.getFileId(), serDesInfo.getClassName(), serDesInfo.getIsSerializer());
     }
 
     public SerDesInfo toSerDesInfo() {
