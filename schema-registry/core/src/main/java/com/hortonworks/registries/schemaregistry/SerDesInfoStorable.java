@@ -157,7 +157,13 @@ public class SerDesInfoStorable extends AbstractStorable {
     }
 
     public SerDesInfo toSerDesInfo() {
-        return new SerDesInfo(getId(), getName(), getDescription(),
-                        getFileId(), getClassName(), isSerializer());
+        SerDesInfo.Builder builder = new SerDesInfo.Builder()
+                .id(getId())
+                .name(getName())
+                .description(getDescription())
+                .fileId(getFileId())
+                .className(getClassName());
+
+        return isSerializer() ? builder.buildSerializerInfo() : builder.buildDeserializerInfo();
     }
 }

@@ -226,4 +226,16 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 '}';
     }
 
+    public static class Builder {
+        private Long id;
+        private String type;
+        private String group;
+        private String name;
+        private String description;
+        private Long timestamp;
+
+        public Builder(SchemaMetadataKey schemaMetadataKey) {
+        }
+    }
+
 }

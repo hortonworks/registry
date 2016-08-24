@@ -107,11 +107,10 @@ public class SchemaMetadataKey implements Serializable {
 
     @Override
     public String toString() {
-        return "SchemaKey{" +
-                " name='" + name + '\'' +
+        return "SchemaMetadataKey{" +
+                "type='" + type + '\'' +
                 ", group='" + group + '\'' +
-                ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
                 '}';
     }
-
 }

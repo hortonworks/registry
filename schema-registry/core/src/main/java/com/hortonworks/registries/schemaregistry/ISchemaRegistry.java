@@ -17,9 +17,6 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
-import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -38,40 +35,63 @@ public interface ISchemaRegistry {
 
     Integer addSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws SchemaNotFoundException;
 
-    SchemaMetadataStorable getSchemaMetadata(SchemaMetadataKey schemaMetadataKey);
-    
-    SchemaMetadataStorable getSchemaMetadata(Long schemaMetadataId);
-
-    Collection<SchemaInfoStorable> findAllVersions(Long schemaMetadataId);
+    SchemaMetadata getSchemaMetadata(SchemaMetadataKey schemaMetadataKey);
 
     Integer getSchemaVersion(SchemaMetadataKey schemaMetadataKey, String schemaText) throws SchemaNotFoundException;
 
-    SchemaInfoStorable getSchemaInfo(Long schemaMetadataId, Integer version) throws SchemaNotFoundException;
+    SchemaMetadata getSchemaMetadata(Long schemaMetadataId);
 
-    SchemaInfoStorable getLatestSchemaInfo(Long schemaMetadataId) throws SchemaNotFoundException;
+    Collection<SchemaInfo> findAllVersions(Long schemaMetadataId);
 
-    Collection<SchemaInfoStorable> listAll();
+    SchemaInfo getSchemaInfo(Long schemaMetadataId, Integer version) throws SchemaNotFoundException;
 
-    SchemaMetadataStorable getOrCreateSchemaMetadata(SchemaMetadata givenSchemaMetadataStorable);
+    SchemaInfo getLatestSchemaInfo(Long schemaMetadataId) throws SchemaNotFoundException;
+
+    Collection<SchemaInfo> listAll();
 
 
     boolean isCompatible(Long schemaMetadataId, Integer existingSchemaVersion, String schema) throws SchemaNotFoundException;
 
     boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException;
 
+    /**
+     * Uploads the given input stream in the configured file storage and returns a unique identifier to access that file later.
+     *
+     * @param inputStream
+     * @return
+     */
     String uploadFile(InputStream inputStream);
 
+    /**
+     * Returns {@link InputStream} of the file with the given {@code fileId} if it exists.
+     *
+     * @param fileId
+     * @return
+     * @throws IOException when there are any IO errors or there is no file with the given identifier.
+     */
     InputStream downloadFile(String fileId) throws IOException;
 
-    Long addSerDesInfo(SerDesInfoStorable serDesInfoStorable);
+    /**
+     * Returns uniqueid of the added Serializer/Deserializer
+     *
+     * @param serDesInfo
+     * @return
+     */
+    Long addSerDesInfo(SerDesInfo serDesInfo);
 
-    SerDesInfo getSerDesInfo(Long serializerId);
+    SerDesInfo getSerDesInfo(Long serDesId);
 
     Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId);
 
     Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId);
 
-    InputStream downloadJar(Long serializerId);
+    /**
+     * Download the jar file which contains the classes required for respective serializer/deserializer for given {@code serDesId}
+     *
+     * @param serDesId
+     * @return
+     */
+    InputStream downloadJar(Long serDesId);
 
     void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
 

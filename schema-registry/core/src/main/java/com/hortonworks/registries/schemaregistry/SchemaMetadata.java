@@ -15,12 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.client;
+package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.base.Preconditions;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
-import com.hortonworks.registries.schemaregistry.SchemaProvider;
 
 import java.io.Serializable;
 
@@ -38,6 +35,8 @@ public final class SchemaMetadata implements Serializable {
      */
     private SchemaMetadataKey schemaMetadataKey;
 
+    private Long id;
+
     /**
      * Description about the schema metadata.
      */
@@ -48,11 +47,24 @@ public final class SchemaMetadata implements Serializable {
      */
     private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
 
+    private Long timestamp;
+
     private SchemaMetadata() {
     }
 
-    public SchemaMetadata(SchemaMetadataKey schemaMetadataKey, String description, SchemaProvider.Compatibility compatibility) {
+    public SchemaMetadata(SchemaMetadataKey schemaMetadataKey,
+                          String description,
+                          SchemaProvider.Compatibility compatibility) {
+        this(schemaMetadataKey, null, description, null, compatibility);
+    }
+    public SchemaMetadata(SchemaMetadataKey schemaMetadataKey,
+                          Long id,
+                          String description,
+                          Long timestamp,
+                          SchemaProvider.Compatibility compatibility) {
         this.schemaMetadataKey = schemaMetadataKey;
+        this.id = id;
+        this.timestamp = timestamp;
         Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
 
         this.compatibility = compatibility;
@@ -67,15 +79,38 @@ public final class SchemaMetadata implements Serializable {
         return compatibility;
     }
 
-    public SchemaMetadataStorable schemaMetadataStorable() {
+    public Long getId() {
+        return id;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public SchemaMetadataStorable toSchemaMetadataStorable() {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
+        schemaMetadataStorable.setId(id);
         schemaMetadataStorable.setType(schemaMetadataKey.getType());
         schemaMetadataStorable.setGroup(schemaMetadataKey.getGroup());
         schemaMetadataStorable.setName(schemaMetadataKey.getName());
         schemaMetadataStorable.setDescription(description);
         schemaMetadataStorable.setCompatibility(compatibility);
+        schemaMetadataStorable.setTimestamp(timestamp);
 
         return schemaMetadataStorable;
+    }
+
+    public static SchemaMetadata fromSchemaMetadataStorable(SchemaMetadataStorable schemaMetadataStorable) {
+        SchemaMetadataKey schemaMetadataKey =
+                new SchemaMetadataKey(schemaMetadataStorable.getType(),
+                        schemaMetadataStorable.getGroup(),
+                        schemaMetadataStorable.getName());
+
+        return  new SchemaMetadata(schemaMetadataKey,
+                                    schemaMetadataStorable.getId(),
+                                    schemaMetadataStorable.getDescription(),
+                                    schemaMetadataStorable.getTimestamp(),
+                                    schemaMetadataStorable.getCompatibility());
     }
 
     public SchemaMetadataKey getSchemaMetadataKey() {
