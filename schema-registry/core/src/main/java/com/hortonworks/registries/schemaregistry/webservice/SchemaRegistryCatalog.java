@@ -59,7 +59,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 /**
  *
  */
-@Path("/api/v1/catalog/schemaregistry")
+@Path("/api/v1/schemaregistry")
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryCatalog {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryCatalog.class);
