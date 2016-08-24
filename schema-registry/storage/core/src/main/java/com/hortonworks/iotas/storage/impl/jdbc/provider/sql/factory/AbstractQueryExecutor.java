@@ -216,7 +216,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         // ====== private helper methods ======
 
         private PreparedStatement getPreparedStatement() throws ExecutionException, SQLException {
-            PreparedStatementBuilder preparedStatementBuilder = null;
+            PreparedStatementBuilder preparedStatementBuilder;
 
             if (isCacheEnabled()) {
                 preparedStatementBuilder = cache.get(sqlBuilder, new PreparedStatementBuilderCallable(sqlBuilder));

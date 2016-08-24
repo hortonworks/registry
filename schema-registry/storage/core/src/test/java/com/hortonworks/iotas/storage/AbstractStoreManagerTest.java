@@ -112,7 +112,7 @@ public abstract class AbstractStoreManagerTest {
 
     //@Test(expected = StorageException.class)
     public void testList_NonexistentNameSpace_StorageException() {
-        Collection<Storable> found = getStorageManager().list("NONEXISTENT_NAME_SPACE");
+        Assert.assertTrue(getStorageManager().list("NONEXISTENT_NAME_SPACE").isEmpty());
     }
 
     //@Test

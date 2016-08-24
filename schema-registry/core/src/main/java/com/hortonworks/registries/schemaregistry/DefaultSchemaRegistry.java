@@ -78,7 +78,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public Integer addSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema) {
 
-        Integer version = null;
+        Integer version;
         // todo handle without using lock.
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
@@ -101,7 +101,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public Integer addSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws SchemaNotFoundException {
 
-        Integer version = null;
+        Integer version;
         // todo handle without using lock.
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
@@ -217,7 +217,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaMetadataStorable schemaMetadataStorable = getSchemaMetadata(schemaMetadataId);
 
-        Collection<SchemaInfoStorable> result = null;
+        Collection<SchemaInfoStorable> result;
         if (schemaMetadataStorable == null) {
             result = Collections.emptyList();
         } else {
@@ -446,7 +446,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId) {
         Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
-        List<SerDesInfo> serializerInfos = null;
+        List<SerDesInfo> serializerInfos;
         if (schemaSerDesMappings == null || schemaSerDesMappings.isEmpty()) {
             serializerInfos = Collections.emptyList();
         } else {
@@ -470,13 +470,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId) {
         Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
-        List<SerDesInfo> SerDesInfos = null;
+        List<SerDesInfo> SerDesInfos;
         if (schemaSerDesMappings == null || schemaSerDesMappings.isEmpty()) {
             SerDesInfos = Collections.emptyList();
         } else {
             SerDesInfos = new ArrayList<>();
             for (SchemaSerDesMapping schemaSerDesMapping : schemaSerDesMappings) {
-                SerDesInfos.add((SerDesInfo) getSerDesInfo(schemaSerDesMapping.getSerDesId()));
+                SerDesInfos.add(getSerDesInfo(schemaSerDesMapping.getSerDesId()));
             }
         }
 

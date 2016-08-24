@@ -442,7 +442,7 @@ public class Schema implements Serializable {
     }
 
     private static Field parseField(String fieldName, Object fieldValue) throws ParserException {
-        Field field = null;
+        Field field;
         Type fieldType = fromJavaType(fieldValue);
         if(fieldType == Type.NESTED) {
             field = new NestedField(fieldName, parseFields((Map<String, Object>)fieldValue));

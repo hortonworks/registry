@@ -104,7 +104,7 @@ public class SampleNestedPullDeserializer implements PullDeserializer<SchemaDeta
             //start field
             String fieldName = currentLine.substring(0, startFieldIndex);
             //todo go through schema also and validate the current field with the respective field in schema.
-            Schema.Field currentField = null;
+            Schema.Field currentField;
             if (schemaFields.empty()) {
                 currentField = nextRootField();
                 schemaFields.push(new FieldWithIndex(currentField));
@@ -132,7 +132,7 @@ public class SampleNestedPullDeserializer implements PullDeserializer<SchemaDeta
 
             Schema.Field schemaField = schemaFields.pop().field;
 
-            MyFieldValue currentFieldValue = null;
+            MyFieldValue currentFieldValue;
             if (value.isEmpty()) {
                 // this means all the values stored will be part of this parent field.
                 currentFieldValue = new MyFieldValue(schemaField, values);
