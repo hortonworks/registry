@@ -37,6 +37,6 @@ public interface SnapshotDeserializer<O, S> extends Resourceable {
      * @param schema
      * @return
      */
-    public O deserialize(InputStream payloadInputStream, S schema) throws SerDeException;
+    O deserialize(InputStream payloadInputStream, S schema) throws SerDeException;
 
 }

@@ -20,7 +20,7 @@ public interface StorageManager {
      *
      * @param properties
      */
-    public void init(Map<String, Object> properties);
+    void init(Map<String, Object> properties);
     
     /**
      * TODO: update this javadoc
@@ -102,5 +102,5 @@ public interface StorageManager {
      * @param classes
      * @throws StorageException
      */
-    public void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException;
+    void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException;
 }

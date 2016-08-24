@@ -39,6 +39,6 @@ public interface PushDeserializer<S, F> extends Resourceable {
      * @param schema
      * @param handler
      */
-    public void deserialize(InputStream inputStream, S schema, PushDeserializerHandler<F> handler);
+    void deserialize(InputStream inputStream, S schema, PushDeserializerHandler<F> handler);
 
 }

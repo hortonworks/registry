@@ -30,6 +30,6 @@ public interface Resourceable extends AutoCloseable {
      *
      * @param config
      */
-    public void init(Map<String, Object> config);
+    void init(Map<String, Object> config);
 
 }

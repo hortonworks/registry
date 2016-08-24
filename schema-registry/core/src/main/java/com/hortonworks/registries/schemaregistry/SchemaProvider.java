@@ -25,19 +25,19 @@ import java.util.Collection;
 public interface SchemaProvider {
     SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
 
-    public enum Compatibility {
+    enum Compatibility {
         NONE,
         BACKWARD,
         FORWARD,
         BOTH
     }
 
-    public String getType();
+    String getType();
 
-    public boolean isCompatible(String toSchema, String existingSchema, Compatibility compatibility);
+    boolean isCompatible(String toSchema, String existingSchema, Compatibility compatibility);
 
-    public boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility);
+    boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility);
 
-    public byte[] getFingerPrint(String schemaText);
+    byte[] getFingerPrint(String schemaText);
 
 }

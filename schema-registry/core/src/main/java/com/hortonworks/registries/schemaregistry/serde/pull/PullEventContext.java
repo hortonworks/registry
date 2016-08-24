@@ -30,40 +30,40 @@ public interface PullEventContext<F> {
      *
      * @return
      */
-    public boolean startRecord();
+    boolean startRecord();
 
     /**
      * Returns true if this context indicates end of a record.
      *
      * @return
      */
-    public boolean endRecord();
+    boolean endRecord();
 
     /**
      * Returns true if this context indicates start of a field. New field information can be retrieved by calling {@code #currentField()}.
      *
      * @return
      */
-    public boolean startField();
+    boolean startField();
 
     /**
      * Returns true if this context indicates end of field. New field and value can be retrieved by calling {@code #fieldValue()}.
      *
      * @return
      */
-    public boolean endField();
+    boolean endField();
 
     /**
      * @return Current field
      */
-    public F currentField();
+    F currentField();
 
     /**
      * Returns {@link PullEventContext.FieldValue} instance for the current context.
      *
      * @return
      */
-    public FieldValue<F> fieldValue();
+    FieldValue<F> fieldValue();
 
     /**
      * This class contains information about Field and its value.
@@ -77,7 +77,7 @@ public interface PullEventContext<F> {
          *
          * @return
          */
-        public F field();
+        F field();
 
         /**
          * This MAY be lazily generated. If this method is not accessed then internal stream may not realize the value
@@ -85,6 +85,6 @@ public interface PullEventContext<F> {
          *
          * @return
          */
-        public Object value();
+        Object value();
     }
 }

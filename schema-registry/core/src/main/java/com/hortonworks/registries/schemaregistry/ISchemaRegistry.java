@@ -30,52 +30,49 @@ import java.util.Map;
  */
 public interface ISchemaRegistry {
 
-    public void init(Map<String, Object> props);
+    void init(Map<String, Object> props);
 
-    public Long addSchemaMetadata(SchemaMetadata schemaMetadata);
+    Long addSchemaMetadata(SchemaMetadata schemaMetadata);
 
-    public Integer addSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema);
+    Integer addSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema);
 
-    public Integer addSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws SchemaNotFoundException;
+    Integer addSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws SchemaNotFoundException;
 
-    public SchemaMetadataStorable getSchemaMetadata(SchemaMetadataKey schemaMetadataKey);
+    SchemaMetadataStorable getSchemaMetadata(SchemaMetadataKey schemaMetadataKey);
+    
+    SchemaMetadataStorable getSchemaMetadata(Long schemaMetadataId);
 
+    Collection<SchemaInfoStorable> findAllVersions(Long schemaMetadataId);
 
-    public SchemaMetadataStorable getSchemaMetadata(Long schemaMetadataId);
+    Integer getSchemaVersion(SchemaMetadataKey schemaMetadataKey, String schemaText) throws SchemaNotFoundException;
 
-    public Collection<SchemaInfoStorable> findAllVersions(Long schemaMetadataId);
+    SchemaInfoStorable getSchemaInfo(Long schemaMetadataId, Integer version) throws SchemaNotFoundException;
 
-    public Integer getSchemaVersion(SchemaMetadataKey schemaMetadataKey, String schemaText) throws SchemaNotFoundException;
+    SchemaInfoStorable getLatestSchemaInfo(Long schemaMetadataId) throws SchemaNotFoundException;
 
+    Collection<SchemaInfoStorable> listAll();
 
-    public SchemaInfoStorable getSchemaInfo(Long schemaMetadataId, Integer version) throws SchemaNotFoundException;
-
-    public SchemaInfoStorable getLatestSchemaInfo(Long schemaMetadataId) throws SchemaNotFoundException;
-
-    public Collection<SchemaInfoStorable> listAll();
-
-    public SchemaMetadataStorable getOrCreateSchemaMetadata(SchemaMetadata givenSchemaMetadataStorable);
+    SchemaMetadataStorable getOrCreateSchemaMetadata(SchemaMetadata givenSchemaMetadataStorable);
 
 
-    public boolean isCompatible(Long schemaMetadataId, Integer existingSchemaVersion, String schema) throws SchemaNotFoundException;
+    boolean isCompatible(Long schemaMetadataId, Integer existingSchemaVersion, String schema) throws SchemaNotFoundException;
 
-    public boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException;
+    boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException;
 
+    String uploadFile(InputStream inputStream);
 
-    public String uploadFile(InputStream inputStream);
+    InputStream downloadFile(String fileId) throws IOException;
 
-    public InputStream downloadFile(String fileId) throws IOException;
+    Long addSerDesInfo(SerDesInfoStorable serDesInfoStorable);
 
-    public Long addSerDesInfo(SerDesInfoStorable serDesInfoStorable);
+    SerDesInfo getSerDesInfo(Long serializerId);
 
-    public SerDesInfo getSerDesInfo(Long serializerId);
+    Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId);
 
-    public Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId);
+    Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId);
 
-    public Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId);
+    InputStream downloadJar(Long serializerId);
 
-    public InputStream downloadJar(Long serializerId);
-
-    public void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
+    void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
 
 }
