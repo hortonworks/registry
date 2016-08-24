@@ -251,7 +251,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public <T> T createDeserializerInstance(SerDesInfo deserializerInfo) {
-        return createDeserializerInstance(deserializerInfo);
+        return createInstance(deserializerInfo);
     }
 
     private <T> T createInstance(SerDesInfo serializerInfo) {
