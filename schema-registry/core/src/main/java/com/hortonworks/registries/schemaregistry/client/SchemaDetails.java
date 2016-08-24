@@ -18,6 +18,7 @@
 package com.hortonworks.registries.schemaregistry.client;
 
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
+import com.hortonworks.registries.schemaregistry.VersionedSchema;
 
 import java.io.Serializable;
 

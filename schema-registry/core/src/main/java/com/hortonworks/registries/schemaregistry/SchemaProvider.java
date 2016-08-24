@@ -23,6 +23,7 @@ import java.util.Collection;
  *
  */
 public interface SchemaProvider {
+    SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
 
     enum Compatibility {
         NONE,

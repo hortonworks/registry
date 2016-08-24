@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.client;
+package com.hortonworks.registries.schemaregistry;
 
 import java.io.Serializable;
 

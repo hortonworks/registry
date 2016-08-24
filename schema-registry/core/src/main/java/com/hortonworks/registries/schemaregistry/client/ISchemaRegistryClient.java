@@ -21,9 +21,11 @@ import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.VersionedSchema;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
 
 import java.io.FileNotFoundException;
@@ -35,51 +37,46 @@ import java.util.Collection;
  * <p>
  * Below code describes how to register new schemas, add new version of a schema and fetch different versions of a schema.
  * <pre>
- *      // registering new schema-metadata
- * SchemaMetadata schemaMetadata = new SchemaMetadata();
- * schemaMetadata.setName("com.hwx.iot.device.schema");
- * schemaMetadata.setSchemaText(schema1);
- * schemaMetadata.setType(type());
- * schemaMetadata.setCompatibility(SchemaProvider.Compatibility.BOTH);
- * SchemaKey schemaKey1 = schemaRegistryClient.registerSchema(schemaMetadata);
- * int v1 = schemaKey1.getVersion();
  *
- * // adding a new version of the schema
- * VersionedSchema schemaInfo2 = new VersionedSchema();
- * schemaInfo2.setSchemaText(schema2);
- * SchemaKey schemaKey2 = schemaRegistryClient.addVersionedSchema(schemaKey1.getId(), schemaInfo2);
- * int v2 = schemaKey2.getVersion();
+ * // registering new schema-metadata
+ * SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, schemaName);
+ * SchemaProvider.Compatibility compatibility = SchemaProvider.Compatibility.BOTH;
+ * SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey, "devices schema", compatibility);
+ *
+ * Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadata);
+ *
+ * Integer v1 = schemaRegistry.addSchema(schemaMetadata, new VersionedSchema(schema1, "initial version of the schema"));
+ * Integer v2 = schemaRegistry.addSchema(schemaMetadataKey, new VersionedSchema(schema2, "second version of the the schema"));
  *
  * // get the specific version of the schema
- * SchemaDto schemaDto2 = schemaRegistryClient.getSchema(schemaKey2);
+ * SchemaInfo schemaInfo = schemaRegistryClient.getSchema(new SchemaKey(schemaMetadataKey, v2));
  *
  * // get the latest version of the schema
- * SchemaDto latest = schemaRegistryClient.getLatestSchema(schemaKey1.getId());
+ * SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaMetadataKey);
+ *
+ * // get all versions of a specific schema
+ * Collection<SchemaInfo> allVersions = schemaRegistryClient.getAllVersions(schemaMetadataKey);
+ *
  * </pre>
  * <p>
  * Below code describes how to register serializer and deserializers, map them with a schema etc.
  * <pre>
- *      // upload a jar containing serializer and deserializer classes.
+ * // upload a jar containing serializer and deserializer classes.
  * InputStream inputStream = new FileInputStream("/schema-custom-ser-des.jar");
  * String fileId = schemaRegistryClient.uploadFile(inputStream);
  *
  * // add serializer with the respective uploaded jar file id.
- * SerializerInfo serializerInfo = new SerializerInfo();
- * serializerInfo.setName("avro serializer");
- * serializerInfo.setDescription("avro serializer");
- * serializerInfo.setFileId(fileId);
- * serializerInfo.setClassName("con.hwx.iotas.serializer.AvroSnapshotSerializer");
+ * SerDesInfo serializerInfo = createSerDesInfo(fileId);
  * Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
  *
+ * schemaMetadataKey = new SchemaMetadataKey(type(), "kafka", "com.hwx.iot.device.schema");
+ *
  * // map this serializer with a registered schema
- * schemaRegistryClient.mapSerializer(schemaMetadataId, serializerId);
+ * schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataKey, serializerId);
  *
  * // get registered serializers
- * Collection<SerializerInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataId);
- * SchemaMetadata schemaMetadata = null;
- * Object input = null;
- *
- * SerializerInfo registeredSerializerInfo = serializers.iterator().next();
+ * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataKey);
+ * SerDesInfo registeredSerializerInfo = serializers.iterator().next();
  *
  * //get serializer and serialize the given payload
  * try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
@@ -87,7 +84,6 @@ import java.util.Collection;
  * snapshotSerializer.init(config);
  *
  * byte[] serializedData = snapshotSerializer.serialize(input, schemaMetadata);
- * }
  *
  * </pre>
  */
