@@ -56,7 +56,7 @@ public class PhoenixSequenceIdQuery {
         // create sequence for each namespace and insert it into with a value uuid.
         // get the id for inserted uuid.
         // delete that entry from the table.
-        long nextId = 0;
+        long nextId;
         UUID uuid = UUID.randomUUID();
         PhoenixSqlQuery updateQuery = new PhoenixSqlQuery("UPSERT INTO " + SEQUENCE_TABLE + "(\""+ID+"\", \"" + namespace + "\") VALUES('" + uuid + "', NEXT VALUE FOR " + namespace + "_sequence)");
         PhoenixSqlQuery selectQuery = new PhoenixSqlQuery("SELECT \"" + namespace + "\" FROM " + SEQUENCE_TABLE + " WHERE \"" + ID + "\"='" + uuid + "'");

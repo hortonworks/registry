@@ -261,7 +261,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         ClassLoader classLoader = classLoaderCache.getClassLoader(fileId);
 
         //
-        T t = null;
+        T t;
         try {
             Class<T> clazz = (Class<T>) Class.forName(serializerInfo.getClassName(), true, classLoader);
             t = clazz.newInstance();

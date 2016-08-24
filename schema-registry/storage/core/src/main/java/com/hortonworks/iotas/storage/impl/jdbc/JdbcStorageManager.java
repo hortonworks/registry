@@ -221,7 +221,7 @@ public class JdbcStorageManager implements StorageManager {
         }
         log.info("jdbc provider type: [{}]", type);
 
-        QueryExecutor queryExecutor = null;
+        QueryExecutor queryExecutor;
         switch (type) {
             case "phoenix":
                 try {

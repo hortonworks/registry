@@ -85,7 +85,7 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
 
     private StorageManager getStorageManager(StorageProviderConfiguration storageProviderConfiguration) {
         final String providerClass = storageProviderConfiguration.getProviderClass();
-        StorageManager storageManager = null;
+        StorageManager storageManager;
         try {
             storageManager = (StorageManager) Class.forName(providerClass).newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {

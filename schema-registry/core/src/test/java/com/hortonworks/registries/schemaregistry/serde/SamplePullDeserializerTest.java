@@ -71,7 +71,7 @@ public class SamplePullDeserializerTest {
     public List<Map<String, Object>> createEvents(InputStream inputStream) throws Exception {
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
             List<Map<String, Object>> events = new ArrayList<>();
-            String line = null;
+            String line;
             while ((line = bufferedReader.readLine()) != null) {
                 final String[] fieldStrings = line.split(",");
                 Map<String, Object> fields = new HashMap<>();
