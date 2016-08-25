@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS schema_instance_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  PRIMARY KEY (id),
+  PRIMARY KEY (version, schemaMetadataId),
   FOREIGN KEY (schemaMetadataId) REFERENCES schema_metadata_info (id)
 );
 

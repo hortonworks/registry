@@ -116,17 +116,6 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
      *
-     * @param schemaMetadataId
-     * @param versionedSchema
-     * @return
-     * @throws InvalidSchemaException      if the given schema is not valid.
-     * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
-     */
-    SchemaKey addVersionedSchema(Long schemaMetadataId, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
-
-    /**
-     * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
-     *
      * @param schemaMetadataKey
      * @param versionedSchema
      * @return
@@ -151,14 +140,6 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      */
     SchemaInfo getSchema(SchemaKey schemaKey) throws SchemaNotFoundException;
 
-    /**
-     * Returns the latest version of the schema for the given {@param schemaMetadataId}
-     *
-     * @param schemaMetadataId
-     * @return
-     */
-    SchemaInfo getLatestSchema(Long schemaMetadataId) throws SchemaNotFoundException;
-
 
     /**
      * Returns the latest version of the schema for the given {@param schemaMetadataKey}
@@ -169,29 +150,12 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
 
     /**
-     * Returns all versions of the schemas for given {@param schemaMetadataId}
-     *
-     * @param schemaMetadataId
-     * @return
-     */
-    Iterable<SchemaInfo> getAllVersions(Long schemaMetadataId) throws SchemaNotFoundException;
-
-    /**
      * Returns all versions of the schemas for given {@param schemaMetadataKey}
      *
      * @param schemaMetadataKey
      * @return
      */
     Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
-
-    /**
-     * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataId}.
-     *
-     * @param schemaMetadataId
-     * @param toSchemaText
-     * @return
-     */
-    boolean isCompatibleWithAllVersions(Long schemaMetadataId, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
@@ -235,14 +199,6 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     Long addDeserializer(SerDesInfo deserializerInfo);
 
     /**
-     * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaMetadataId}
-     *
-     * @param schemaMetadataId
-     * @param serializerId
-     */
-    void mapSchemaWithSerDes(Long schemaMetadataId, Long serializerId) throws SchemaNotFoundException;
-
-    /**
      * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaMetadataKey}
      *
      * @param schemaMetadataKey
@@ -251,28 +207,12 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     void mapSchemaWithSerDes(SchemaMetadataKey schemaMetadataKey, Long serDesId);
 
     /**
-     * Returns Collection of Serializers registered for the schema with {@code schemaMetadataId}
-     *
-     * @param schemaMetadataId
-     * @return
-     */
-    Collection<SerDesInfo> getSerializers(Long schemaMetadataId) throws SchemaNotFoundException;
-
-    /**
      * Returns Collection of Serializers registered for the schema with {@code schemaMetadataKey}
      *
      * @param schemaMetadataKey
      * @return
      */
     Collection<SerDesInfo> getSerializers(SchemaMetadataKey schemaMetadataKey);
-
-    /**
-     * Returns Collection of Deserializers registered for the schema with {@code schemaMetadataId}
-     *
-     * @param schemaMetadataId
-     * @return
-     */
-    Collection<SerDesInfo> getDeserializers(Long schemaMetadataId) throws SchemaNotFoundException;
 
     /**
      * Returns Collection of Deserializers registered for the schema with {@code schemaMetadataKey}
