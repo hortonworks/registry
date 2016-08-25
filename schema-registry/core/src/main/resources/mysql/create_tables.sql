@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   compatibility   VARCHAR(256)          NOT NULL,
   description     TEXT,
   timestamp       BIGINT                NOT NULL,
-  PRIMARY KEY (id),
+  PRIMARY KEY (type, dataSourceGroup, name),
+  UNIQUE KEY (id),
   UNIQUE KEY `UK_TYPE_GROUP_NAME` (type, dataSourceGroup, name)
 );
 
@@ -22,8 +23,13 @@ CREATE TABLE IF NOT EXISTS schema_instance_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  PRIMARY KEY (version, schemaMetadataId),
-  FOREIGN KEY (schemaMetadataId) REFERENCES schema_metadata_info (id)
+  type             VARCHAR(256)          NOT NULL,
+  dataSourceGroup  VARCHAR(256)          NOT NULL,
+  name             VARCHAR(256)          NOT NULL,
+  UNIQUE KEY (id),
+  UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
+  PRIMARY KEY  (version, type, dataSourceGroup, name),
+  FOREIGN KEY (schemaMetadataId, type, dataSourceGroup, name) REFERENCES schema_metadata_info (id, type, dataSourceGroup, name)
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
@@ -43,5 +49,3 @@ CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
 
   UNIQUE KEY `UK_IDS` (schemaMetadataId, serdesId)
 );
-
-
