@@ -97,8 +97,8 @@ public class SchemaInfoStorable extends AbstractStorable {
                 Schema.Field.of(ID, Schema.Type.LONG),
                 Schema.Field.of(SCHEMA_METADATA_ID, Schema.Type.LONG),
                 Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
-                Schema.Field.of(DESCRIPTION, Schema.Type.STRING),
-                Schema.Field.of(VERSION, Schema.Type.LONG),
+                Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
+                Schema.Field.of(VERSION, Schema.Type.INTEGER),
                 Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
                 Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
         );

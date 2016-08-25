@@ -36,7 +36,7 @@ public class SchemaMetadataKey implements Serializable {
      * Data source group to which this schema belongs to. For ex: kafka, hive etc
      * This can be used in querying schemas belonging to a specific data source group.
      */
-    private String group;
+    private String dataSourceGroup;
 
     /**
      * name of this schema.
@@ -47,14 +47,14 @@ public class SchemaMetadataKey implements Serializable {
     private SchemaMetadataKey() {
     }
 
-    public SchemaMetadataKey(String type, String group, String name) {
+    public SchemaMetadataKey(String type, String dataSourceGroup, String name) {
         Preconditions.checkNotNull(type, "type can not be null");
-        Preconditions.checkNotNull(group, "group can not be null");
+        Preconditions.checkNotNull(dataSourceGroup, "datasourceGroup can not be null");
         Preconditions.checkNotNull(name, "namespace can not be null");
 
         this.type = type;
         this.name = name;
-        this.group = group;
+        this.dataSourceGroup = dataSourceGroup;
     }
 
     /**
@@ -71,8 +71,8 @@ public class SchemaMetadataKey implements Serializable {
      *
      * @return
      */
-    public String getGroup() {
-        return group;
+    public String getDataSourceGroup() {
+        return dataSourceGroup;
     }
 
     /**
@@ -92,7 +92,7 @@ public class SchemaMetadataKey implements Serializable {
         SchemaMetadataKey schemaKey = (SchemaMetadataKey) o;
 
         if (name != null ? !name.equals(schemaKey.name) : schemaKey.name != null) return false;
-        if (group != null ? !group.equals(schemaKey.group) : schemaKey.group != null) return false;
+        if (dataSourceGroup != null ? !dataSourceGroup.equals(schemaKey.dataSourceGroup) : schemaKey.dataSourceGroup != null) return false;
         return type != null ? type.equals(schemaKey.type) : schemaKey.type == null;
 
     }
@@ -100,7 +100,7 @@ public class SchemaMetadataKey implements Serializable {
     @Override
     public int hashCode() {
         int result = (name != null ? name.hashCode() : 0);
-        result = 31 * result + (group != null ? group.hashCode() : 0);
+        result = 31 * result + (dataSourceGroup != null ? dataSourceGroup.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
         return result;
     }
@@ -109,7 +109,7 @@ public class SchemaMetadataKey implements Serializable {
     public String toString() {
         return "SchemaMetadataKey{" +
                 "type='" + type + '\'' +
-                ", group='" + group + '\'' +
+                ", dataSourceGroup='" + dataSourceGroup + '\'' +
                 ", name='" + name + '\'' +
                 '}';
     }

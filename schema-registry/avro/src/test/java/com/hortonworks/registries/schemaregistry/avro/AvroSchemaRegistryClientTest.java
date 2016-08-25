@@ -45,6 +45,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.UUID;
 
 /**
@@ -114,9 +115,8 @@ public class AvroSchemaRegistryClientTest {
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
         schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataKey, serializerId);
         Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataKey);
-        SerDesInfo registeredSerializerInfo = serializers.iterator().next();
 
-        Assert.assertEquals(registeredSerializerInfo, createSerializerInfo(serializerId, serializerInfo));
+        Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
     }
 
     @Test
@@ -136,16 +136,15 @@ public class AvroSchemaRegistryClientTest {
         // get registered serializers
         Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataId);
 
-        SerDesInfo registeredSerializerInfo = serializers.iterator().next();
-
-        Assert.assertEquals(registeredSerializerInfo, createSerializerInfo(serializerId, serializerInfo));
+        Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
     }
 
     private SerDesInfo createSerDesInfo(String fileId) {
         return new SerDesInfo.Builder()
                 .name("avro serializer")
                 .description("avro serializer")
-                .fileId(fileId).className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
+                .fileId(fileId)
+                .className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
                 .buildSerializerInfo();
     }
 
