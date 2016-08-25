@@ -21,11 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.hortonworks.iotas.common.exception.ParserException;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 //TODO Make this class Jackson Compatible.
 public class Schema implements Serializable {
@@ -43,7 +39,7 @@ public class Schema implements Serializable {
         NESTED(Map.class),  // nested field
         ARRAY(List.class);    // array field
 
-        private Class javaType;
+        private final Class javaType;
 
         Type(Class javaType) {
             this.javaType = javaType;
@@ -181,15 +177,13 @@ public class Schema implements Serializable {
      * A builder for constructing the schema from fields.
      */
     public static class SchemaBuilder {
-        private List<Field> fields = new ArrayList<Field>();
+        private final List<Field> fields = new ArrayList<Field>();
         public SchemaBuilder field(Field field) {
             fields.add(field);
             return this;
         }
         public SchemaBuilder fields(Field... fields) {
-            for(Field field : fields){
-                this.fields.add(field);
-            }
+            Collections.addAll(this.fields, fields);
             return this;
         }
 
@@ -332,7 +326,7 @@ public class Schema implements Serializable {
         }
     }
 
-    private Map<String, Field> fields = new LinkedHashMap<>();
+    private final Map<String, Field> fields = new LinkedHashMap<>();
 
     // for jackson
     public Schema() {

@@ -41,9 +41,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class InMemoryStorageManager implements StorageManager {
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryStorageManager.class);
 
-    private ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>> storageMap = new ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>>();
-    private ConcurrentHashMap<String, Long> sequenceMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, Class<?>> nameSpaceClassMap = new ConcurrentHashMap<String, Class<?>>();
+    private final ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>> storageMap = new ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>>();
+    private final ConcurrentHashMap<String, Long> sequenceMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Class<?>> nameSpaceClassMap = new ConcurrentHashMap<String, Class<?>>();
 
     @Override
     public void init(Map<String, Object> properties) {
@@ -56,9 +56,7 @@ public class InMemoryStorageManager implements StorageManager {
 
         if (existing == null) {
             addOrUpdate(storable);
-        } else if (existing.equals(storable)) {
-            return;
-        } else {
+        } else if (!existing.equals(storable)) {
             throw new AlreadyExistsException("Another instance with same id = " + storable.getPrimaryKey()
                     + " exists with different value in namespace " + storable.getNameSpace()
                     + " Consider using addOrUpdate method if you always want to overwrite.");
@@ -151,7 +149,7 @@ public class InMemoryStorageManager implements StorageManager {
     public Long nextId(String namespace) {
         Long id = this.sequenceMap.get(namespace);
         if (id == null) {
-            id = 0l;
+            id = 0L;
         }
         return id + 1;
     }
@@ -163,7 +161,7 @@ public class InMemoryStorageManager implements StorageManager {
     private void incrementIdSequence(String namespace) {
         Long id = sequenceMap.get(namespace);
         if (id == null) {
-            id = 0l;
+            id = 0L;
         }
         this.sequenceMap.put(namespace, ++id);
     }

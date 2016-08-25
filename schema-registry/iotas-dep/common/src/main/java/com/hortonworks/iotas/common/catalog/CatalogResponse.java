@@ -32,9 +32,9 @@ public class CatalogResponse {
         UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type", 0),
         BAD_REQUEST(1110, "Bad Request", 0);
 
-        private int code;
-        private String msg;
-        private int nargs;
+        private final int code;
+        private final String msg;
+        private final int nargs;
 
         ResponseMessage(int code, String msg, int nargs) {
             this.code = code;
@@ -80,10 +80,10 @@ public class CatalogResponse {
     private CatalogResponse() {}
 
     public static class Builder {
-        private ResponseMessage responseMessage;
+        private final ResponseMessage responseMessage;
         private Object entity;
         private Collection<?> entities;
-        private String DOC_LINK_MESSAGE = " Please check webservice/ErrorCodes.md for more details.";
+        private final String DOC_LINK_MESSAGE = " Please check webservice/ErrorCodes.md for more details.";
 
         public Builder(ResponseMessage responseMessage) {
             this.responseMessage = responseMessage;

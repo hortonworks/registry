@@ -368,7 +368,6 @@ public class SchemaRegistryCatalog {
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
             String uploadedFileId = schemaRegistry.uploadFile(inputStream);
-
             response = WSUtils.respond(OK, SUCCESS, uploadedFileId, null);
         } catch (Exception ex) {
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());

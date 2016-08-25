@@ -57,7 +57,7 @@ public class AvroSchemaRegistryClientTest {
     public static final DropwizardAppRule<SchemaRegistryConfiguration> RULE
             = new DropwizardAppRule<>(SchemaRegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
 
-    private String rootUrl = String.format("http://localhost:%d/api/v1", RULE.getLocalPort());
+    private final String rootUrl = String.format("http://localhost:%d/api/v1", RULE.getLocalPort());
     private SchemaRegistryClient schemaRegistryClient;
 
     protected String schema1;
