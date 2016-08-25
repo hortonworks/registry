@@ -33,6 +33,9 @@ public class SchemaInfoStorable extends AbstractStorable {
     public static final String ID = "id";
     public static final String SCHEMA_METADATA_ID = "schemaMetadataId";
     public static final String DESCRIPTION = "description";
+    public static final String TYPE = "type";
+    public static final String GROUP = "dataSourceGroup";
+    public static final String NAME = "name";
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String VERSION = "version";
     public static final String TIMESTAMP = "timestamp";
@@ -47,6 +50,10 @@ public class SchemaInfoStorable extends AbstractStorable {
      * Id of the SchemaMetadata instance.
      */
     private Long schemaMetadataId;
+
+    private String type;
+    private String dataSourceGroup;
+    private String name;
 
     /**
      * Description about this schema instance
@@ -97,6 +104,9 @@ public class SchemaInfoStorable extends AbstractStorable {
                 Schema.Field.of(ID, Schema.Type.LONG),
                 Schema.Field.of(SCHEMA_METADATA_ID, Schema.Type.LONG),
                 Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
+                Schema.Field.of(TYPE, Schema.Type.STRING),
+                Schema.Field.of(GROUP, Schema.Type.STRING),
+                Schema.Field.of(NAME, Schema.Type.STRING),
                 Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
                 Schema.Field.of(VERSION, Schema.Type.INTEGER),
                 Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
@@ -159,5 +169,29 @@ public class SchemaInfoStorable extends AbstractStorable {
 
     public void setFingerprint(String fingerprint) {
         this.fingerprint = fingerprint;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getDataSourceGroup() {
+        return dataSourceGroup;
+    }
+
+    public void setDataSourceGroup(String dataSourceGroup) {
+        this.dataSourceGroup = dataSourceGroup;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

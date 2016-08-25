@@ -95,17 +95,17 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
             SchemaMetadataKey givenSchemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
-            SchemaMetadata schemaMetadataStorable = getSchemaMetadata(givenSchemaMetadataKey);
-            if (schemaMetadataStorable != null) {
+            SchemaMetadata retreivedschemaMetadata = getSchemaMetadata(givenSchemaMetadataKey);
+            if (retreivedschemaMetadata != null) {
                 // check whether the same schema text exists
                 try {
                     version = getSchemaVersion(givenSchemaMetadataKey, versionedSchema.getSchemaText());
                 } catch (SchemaNotFoundException e) {
-                    version = createSchemaInfo(schemaMetadataStorable.getId(), versionedSchema);
+                    version = createSchemaInfo(retreivedschemaMetadata.getId(), versionedSchema, givenSchemaMetadataKey);
                 }
             } else {
                 Long schemaMetadataId = addSchemaMetadata(schemaMetadata);
-                version = createSchemaInfo(schemaMetadataId, versionedSchema);
+                version = createSchemaInfo(schemaMetadataId, versionedSchema, givenSchemaMetadataKey);
             }
         }
 
@@ -123,7 +123,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 // check whether the same schema text exists
                 version = findSchemaVersion(schemaMetadataKey.getType(), versionedSchema.getSchemaText(), schemaMetadataStorable.getId());
                 if (version == null) {
-                    version = createSchemaInfo(schemaMetadataStorable.getId(), versionedSchema);
+                    version = createSchemaInfo(schemaMetadataStorable.getId(), versionedSchema, schemaMetadataKey);
                 }
             } else {
                 throw new SchemaNotFoundException("Schema not found with the given schemaMetadataKey: " + schemaMetadataKey);
@@ -133,21 +133,26 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    private Integer createSchemaInfo(Long schemaMetadataId, VersionedSchema versionedSchema) {
+    private Integer createSchemaInfo(Long schemaMetadataId, VersionedSchema versionedSchema, SchemaMetadataKey schemaMetadataKey) {
 
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
         SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
         final Long nextId = storageManager.nextId(schemaInfoStorable.getNameSpace());
+        schemaInfoStorable.setId(nextId);
         schemaInfoStorable.setSchemaMetadataId(schemaMetadataId);
+
+        schemaInfoStorable.setType(schemaMetadataKey.getType());
+        schemaInfoStorable.setDataSourceGroup(schemaMetadataKey.getDataSourceGroup());
+        schemaInfoStorable.setName(schemaMetadataKey.getName());
+
         schemaInfoStorable.setSchemaText(versionedSchema.getSchemaText());
         schemaInfoStorable.setDescription(versionedSchema.getDescription());
-        schemaInfoStorable.setId(nextId);
         schemaInfoStorable.setTimestamp(System.currentTimeMillis());
 
         //todo fix this by generating version sequence for each schema in storage layer or explore other ways to make it scalable
         synchronized (addOrUpdateLock) {
-            Collection<SchemaInfo> schemaInfos = findAllVersions(schemaMetadataId);
+            Collection<SchemaInfo> schemaInfos = findAllVersions(schemaMetadataKey);
             Integer version = 0;
             if (schemaInfos != null && !schemaInfos.isEmpty()) {
                 for (SchemaInfo schemaInfo : schemaInfos) {
@@ -155,19 +160,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 }
             }
             schemaInfoStorable.setVersion(version + 1);
-            schemaInfoStorable.setFingerprint(getFingerprint(getSchemaMetadata(schemaMetadataId).getSchemaMetadataKey().getType(), schemaInfoStorable.getSchemaText()));
+            schemaInfoStorable.setFingerprint(getFingerprint(schemaMetadataKey.getType(), schemaInfoStorable.getSchemaText()));
 
             storageManager.add(schemaInfoStorable);
         }
 
         return schemaInfoStorable.getVersion();
-    }
-
-    @Override
-    public SchemaMetadata getSchemaMetadata(final Long schemaMetadataId) {
-        List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaMetadataStorable.ID, schemaMetadataId.toString()));
-        SchemaMetadataStorable schemaMetadataStorable = getSchemaMetadataStorable(queryParams);
-        return schemaMetadataStorable != null ? SchemaMetadata.fromSchemaMetadataStorable(schemaMetadataStorable) : null;
     }
 
     @Override
@@ -190,9 +188,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaInfo> findAllVersions(final Long schemaMetadataId) {
+    public Collection<SchemaInfo> findAllVersions(final SchemaMetadataKey schemaMetadataKey) {
         List<QueryParam> queryParams =
-                Collections.singletonList(new QueryParam(SchemaInfoStorable.SCHEMA_METADATA_ID, schemaMetadataId.toString()));
+                Lists.newArrayList(
+                        new QueryParam(SchemaInfoStorable.TYPE, schemaMetadataKey.getType()),
+                        new QueryParam(SchemaInfoStorable.GROUP, schemaMetadataKey.getDataSourceGroup()),
+                        new QueryParam(SchemaInfoStorable.NAME, schemaMetadataKey.getName())
+                        );
+
         Collection<SchemaInfoStorable> storables = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
 
         return (storables != null && !storables.isEmpty())
@@ -245,11 +248,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public SchemaInfo getSchemaInfo(final Long schemaMetadataId, Integer version) throws SchemaNotFoundException {
+    public SchemaInfo getSchemaInfo(SchemaKey schemaKey) throws SchemaNotFoundException {
 
-        SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataId);
+        SchemaMetadataKey schemaMetadataKey = schemaKey.getSchemaMetadataKey();
+        SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataKey);
 
         if (schemaMetadata != null) {
+            Integer version = schemaKey.getVersion();
+            Long schemaMetadataId = schemaMetadata.getId();
             List<QueryParam> queryParams = Lists.newArrayList(
                     new QueryParam(SchemaInfoStorable.SCHEMA_METADATA_ID, schemaMetadataId.toString()),
                     new QueryParam(SchemaInfoStorable.VERSION, version.toString()));
@@ -263,7 +269,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             }
         }
 
-        throw new SchemaNotFoundException("No SchemaMetadata exists with id " + schemaMetadataId);
+        throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataKey);
     }
 
     private SchemaMetadataStorable getSchemaMetadataStorable(List<QueryParam> queryParams) {
@@ -283,8 +289,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public SchemaInfo getLatestSchemaInfo(Long schemaMetadataId) throws SchemaNotFoundException {
-        Collection<SchemaInfo> schemaInfos = findAllVersions(schemaMetadataId);
+    public SchemaInfo getLatestSchemaInfo(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException {
+        Collection<SchemaInfo> schemaInfos = findAllVersions(schemaMetadataKey);
 
         SchemaInfo latestSchema = null;
         if (schemaInfos != null && !schemaInfos.isEmpty()) {
@@ -300,25 +306,26 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return latestSchema;
     }
 
-    public boolean isCompatible(Long schemaMetadataId, String toSchema) throws SchemaNotFoundException {
-        Collection<SchemaInfo> existingSchemaInfoStorable = findAllVersions(schemaMetadataId);
+    public boolean isCompatible(SchemaMetadataKey schemaMetadataKey, String toSchema) throws SchemaNotFoundException {
+        Collection<SchemaInfo> existingSchemaInfoStorable = findAllVersions(schemaMetadataKey);
         Collection<String> schemaTexts =
                 existingSchemaInfoStorable.stream()
                         .map(schemaInfoStorable -> schemaInfoStorable.getSchemaText()).collect(Collectors.toList());
 
-        SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataId);
+        SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataKey);
 
         return isCompatible(schemaMetadata.getSchemaMetadataKey().getType(), toSchema, schemaTexts, schemaMetadata.getCompatibility());
     }
 
-    public boolean isCompatible(Long schemaMetadataId,
-                                Integer version,
+    public boolean isCompatible(SchemaKey schemaKey,
                                 String toSchema) throws SchemaNotFoundException {
-        SchemaInfo existingSchemaInfo = getSchemaInfo(schemaMetadataId, version);
-        String schemaText = existingSchemaInfo.getSchemaText();
-        SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataId);
+        SchemaMetadataKey schemaMetadataKey = schemaKey.getSchemaMetadataKey();
 
-        return isCompatible(schemaMetadata.getSchemaMetadataKey().getType(), toSchema, Collections.singletonList(schemaText), schemaMetadata.getCompatibility());
+        SchemaInfo existingSchemaInfo = getSchemaInfo(schemaKey);
+        String schemaText = existingSchemaInfo.getSchemaText();
+        SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataKey);
+
+        return isCompatible(schemaMetadataKey.getType(), toSchema, Collections.singletonList(schemaText), schemaMetadata.getCompatibility());
     }
 
     private boolean isCompatible(String type,
@@ -370,9 +377,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId) {
-        List<SerDesInfo> serializerInfos = getSerDesInfos(schemaMetadataId, true);
-
-        return serializerInfos;
+        return getSerDesInfos(schemaMetadataId, true);
     }
 
     private Collection<SchemaSerDesMapping> getSchemaSerDesMappings(Long schemaMetadataId) {
@@ -384,9 +389,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId) {
-        List<SerDesInfo> SerDesInfos = getSerDesInfos(schemaMetadataId, false);
-
-        return SerDesInfos;
+        return getSerDesInfos(schemaMetadataId, false);
     }
 
     private List<SerDesInfo> getSerDesInfos(Long schemaMetadataId, boolean isSerializer) {
@@ -398,7 +401,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             serDesInfos = new ArrayList<>();
             for (SchemaSerDesMapping schemaSerDesMapping : schemaSerDesMappings) {
                 SerDesInfo serDesInfo = getSerDesInfo(schemaSerDesMapping.getSerDesId());
-                if((isSerializer && serDesInfo.getIsSerializer())
+                if ((isSerializer && serDesInfo.getIsSerializer())
                         || !serDesInfo.getIsSerializer()) {
                     serDesInfos.add(serDesInfo);
                 }

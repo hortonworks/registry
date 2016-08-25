@@ -119,26 +119,6 @@ public class AvroSchemaRegistryClientTest {
         Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
     }
 
-    @Test
-    public void testSerializerOpsWithIds() throws Exception {
-        String fileId = uploadFile();
-
-        Long schemaMetadataId = 0L;
-
-        // add serializer with the respective uploaded jar file id.
-        SerDesInfo serializerInfo = createSerDesInfo(fileId);
-
-        Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
-
-        // map this serializer with a registered schema
-        schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataId, serializerId);
-
-        // get registered serializers
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataId);
-
-        Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
-    }
-
     private SerDesInfo createSerDesInfo(String fileId) {
         return new SerDesInfo.Builder()
                 .name("avro serializer")
