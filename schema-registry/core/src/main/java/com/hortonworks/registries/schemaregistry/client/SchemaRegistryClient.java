@@ -109,7 +109,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         SchemaMetadataKey schemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
         WebTarget path = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s",
-                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+                        schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName()));
         SchemaDetails schemaDetails = new SchemaDetails(schemaMetadata.getDescription(), schemaMetadata.getCompatibility(), versionedSchema);
         return postEntity(path, schemaDetails, Integer.class);
     }
@@ -124,7 +124,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException {
         WebTarget path = schemasTarget.path(
                 String.format("/types/%s/groups/%s/names/%s",
-                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+                        schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName()));
         SchemaDetails schemaDetails = new SchemaDetails(versionedSchema);
         return postEntity(path, schemaDetails, Integer.class);
     }
@@ -134,7 +134,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         SchemaMetadataKey schemaMetadataKey = schemaKey.getSchemaMetadataKey();
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/versions/%d",
-                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName(), schemaKey.getVersion()));
+                        schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName(), schemaKey.getVersion()));
 
         return getEntity(webTarget, SchemaInfo.class);
     }
@@ -143,7 +143,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException {
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/versions/latest",
-                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+                        schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName()));
         return getEntity(webTarget, SchemaInfo.class);
     }
 
@@ -151,7 +151,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException {
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/versions",
-                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+                        schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName()));
         return getEntities(webTarget, SchemaInfo.class);
     }
 
@@ -164,7 +164,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public boolean isCompatibleWithAllVersions(SchemaMetadataKey schemaMetadataKey, String toSchemaText) throws SchemaNotFoundException {
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/compatibility",
-                        schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName()));
+                        schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName()));
         String response = webTarget.request().post(Entity.text(toSchemaText), String.class);
         return readEntity(response, Boolean.class);
     }
@@ -219,7 +219,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void mapSchemaWithSerDes(SchemaMetadataKey schemaMetadataKey, Long serDesId) {
-        String path = String.format("types/%s/groups/%s/names/%s/mapping/%s", schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName(), serDesId.toString());
+        String path = String.format("types/%s/groups/%s/names/%s/mapping/%s", schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName(), serDesId.toString());
 
         Boolean success = postEntity(schemasTarget.path(path), null, Boolean.class);
         LOG.info("Received response while mapping schemaMetadataKey [{}] with serialzer/deserializer [{}] : [{}]", schemaMetadataKey, serDesId, success);
@@ -232,7 +232,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SerDesInfo> getSerializers(SchemaMetadataKey schemaMetadataKey) {
-        String path = String.format("types/%s/groups/%s/names/%s/serializers/", schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName());
+        String path = String.format("types/%s/groups/%s/names/%s/serializers/", schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName());
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 
@@ -243,7 +243,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SerDesInfo> getDeserializers(SchemaMetadataKey schemaMetadataKey) {
-        String path = String.format("types/%s/groups/%s/names/%s/deserializers/", schemaMetadataKey.getType(), schemaMetadataKey.getGroup(), schemaMetadataKey.getName());
+        String path = String.format("types/%s/groups/%s/names/%s/deserializers/", schemaMetadataKey.getType(), schemaMetadataKey.getDataSourceGroup(), schemaMetadataKey.getName());
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 

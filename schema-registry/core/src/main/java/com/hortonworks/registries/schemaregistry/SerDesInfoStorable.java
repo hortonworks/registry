@@ -40,7 +40,7 @@ public class SerDesInfoStorable extends AbstractStorable {
     public static final Schema SCHEMA = Schema.of(
             Schema.Field.of(ID, Schema.Type.LONG),
             Schema.Field.of(NAME, Schema.Type.STRING),
-            Schema.Field.of(DESCRIPTION, Schema.Type.STRING),
+            Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
             Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
             Schema.Field.of(SERIALIZER, Schema.Type.BOOLEAN),
             Schema.Field.of(CLASS_NAME, Schema.Type.STRING),
@@ -72,7 +72,9 @@ public class SerDesInfoStorable extends AbstractStorable {
      */
     private String className;
 
-    protected boolean isSerializer;
+    private Boolean isSerializer;
+
+    private Long timestamp;
 
     public SerDesInfoStorable() {
     }
@@ -145,13 +147,25 @@ public class SerDesInfoStorable extends AbstractStorable {
         this.className = className;
     }
 
-    public boolean isSerializer() {
+    public Boolean getIsSerializer() {
         return isSerializer;
+    }
+
+    public void setIsSerializer(Boolean serializer) {
+        isSerializer = serializer;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public static SerDesInfoStorable fromSerDesInfo(SerDesInfo serDesInfo) {
         return new SerDesInfoStorable(serDesInfo.getId(), serDesInfo.getDescription(), serDesInfo.getName(),
-                                      serDesInfo.getFileId(), serDesInfo.getClassName(), serDesInfo.getIsSerializer());
+                                serDesInfo.getFileId(), serDesInfo.getClassName(), serDesInfo.getIsSerializer());
     }
 
     public SerDesInfo toSerDesInfo() {
@@ -162,6 +176,6 @@ public class SerDesInfoStorable extends AbstractStorable {
                 .fileId(getFileId())
                 .className(getClassName());
 
-        return isSerializer() ? builder.buildSerializerInfo() : builder.buildDeserializerInfo();
+        return getIsSerializer() ? builder.buildSerializerInfo() : builder.buildDeserializerInfo();
     }
 }

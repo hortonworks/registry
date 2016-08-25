@@ -91,7 +91,7 @@ public final class SchemaMetadata implements Serializable {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
         schemaMetadataStorable.setId(id);
         schemaMetadataStorable.setType(schemaMetadataKey.getType());
-        schemaMetadataStorable.setGroup(schemaMetadataKey.getGroup());
+        schemaMetadataStorable.setDataSourceGroup(schemaMetadataKey.getDataSourceGroup());
         schemaMetadataStorable.setName(schemaMetadataKey.getName());
         schemaMetadataStorable.setDescription(description);
         schemaMetadataStorable.setCompatibility(compatibility);
@@ -103,7 +103,7 @@ public final class SchemaMetadata implements Serializable {
     public static SchemaMetadata fromSchemaMetadataStorable(SchemaMetadataStorable schemaMetadataStorable) {
         SchemaMetadataKey schemaMetadataKey =
                 new SchemaMetadataKey(schemaMetadataStorable.getType(),
-                        schemaMetadataStorable.getGroup(),
+                        schemaMetadataStorable.getDataSourceGroup(),
                         schemaMetadataStorable.getName());
 
         return  new SchemaMetadata(schemaMetadataKey,
@@ -117,4 +117,40 @@ public final class SchemaMetadata implements Serializable {
         return schemaMetadataKey;
     }
 
+    @Override
+    public String toString() {
+        return "SchemaMetadata{" +
+                "schemaMetadataKey=" + schemaMetadataKey +
+                ", id=" + id +
+                ", description='" + description + '\'' +
+                ", compatibility=" + compatibility +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SchemaMetadata that = (SchemaMetadata) o;
+
+        if (schemaMetadataKey != null ? !schemaMetadataKey.equals(that.schemaMetadataKey) : that.schemaMetadataKey != null)
+            return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (compatibility != that.compatibility) return false;
+        return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = schemaMetadataKey != null ? schemaMetadataKey.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        return result;
+    }
 }

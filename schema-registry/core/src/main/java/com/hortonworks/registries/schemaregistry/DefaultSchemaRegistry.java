@@ -61,8 +61,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public void init(Map<String, Object> props) {
-        // initialize storage manager
-        storageManager.init(props);
         for (SchemaProvider schemaProvider : schemaProviders) {
             schemaTypeWithProviders.put(schemaProvider.getType(), schemaProvider);
         }
@@ -176,7 +174,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public SchemaMetadata getSchemaMetadata(SchemaMetadataKey schemaMetadataKey) {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
         schemaMetadataStorable.setType(schemaMetadataKey.getType());
-        schemaMetadataStorable.setGroup(schemaMetadataKey.getGroup());
+        schemaMetadataStorable.setDataSourceGroup(schemaMetadataKey.getDataSourceGroup());
         schemaMetadataStorable.setName(schemaMetadataKey.getName());
 
         SchemaMetadataStorable schemaMetadataStorable1 = storageManager.get(schemaMetadataStorable.getStorableKey());
@@ -357,6 +355,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SerDesInfoStorable serDesInfoStorable = SerDesInfoStorable.fromSerDesInfo(serDesInfo);
         Long nextId = storageManager.nextId(serDesInfoStorable.getNameSpace());
         serDesInfoStorable.setId(nextId);
+        serDesInfoStorable.setTimestamp(System.currentTimeMillis());
         storageManager.add(serDesInfoStorable);
 
         return nextId;
@@ -371,42 +370,41 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId) {
-        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
-        List<SerDesInfo> serializerInfos;
-        if (schemaSerDesMappings == null || schemaSerDesMappings.isEmpty()) {
-            serializerInfos = Collections.emptyList();
-        } else {
-            serializerInfos = new ArrayList<>();
-            for (SchemaSerDesMapping schemaSerDesMapping : schemaSerDesMappings) {
-                serializerInfos.add(getSerDesInfo(schemaSerDesMapping.getSerDesId()));
-            }
-        }
+        List<SerDesInfo> serializerInfos = getSerDesInfos(schemaMetadataId, true);
 
         return serializerInfos;
     }
 
     private Collection<SchemaSerDesMapping> getSchemaSerDesMappings(Long schemaMetadataId) {
-        List<QueryParam> queryParams = Lists.newArrayList(
-                new QueryParam(SchemaSerDesMapping.SCHEMA_METADATA_ID, schemaMetadataId.toString()),
-                new QueryParam(SchemaSerDesMapping.IS_SERIALIZER, Boolean.TRUE.toString()));
+        List<QueryParam> queryParams =
+                Collections.singletonList(new QueryParam(SchemaSerDesMapping.SCHEMA_METADATA_ID, schemaMetadataId.toString()));
 
         return storageManager.find(SchemaSerDesMapping.NAMESPACE, queryParams);
     }
 
     @Override
     public Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId) {
-        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
-        List<SerDesInfo> SerDesInfos;
-        if (schemaSerDesMappings == null || schemaSerDesMappings.isEmpty()) {
-            SerDesInfos = Collections.emptyList();
-        } else {
-            SerDesInfos = new ArrayList<>();
-            for (SchemaSerDesMapping schemaSerDesMapping : schemaSerDesMappings) {
-                SerDesInfos.add(getSerDesInfo(schemaSerDesMapping.getSerDesId()));
-            }
-        }
+        List<SerDesInfo> SerDesInfos = getSerDesInfos(schemaMetadataId, false);
 
         return SerDesInfos;
+    }
+
+    private List<SerDesInfo> getSerDesInfos(Long schemaMetadataId, boolean isSerializer) {
+        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
+        List<SerDesInfo> serDesInfos;
+        if (schemaSerDesMappings == null || schemaSerDesMappings.isEmpty()) {
+            serDesInfos = Collections.emptyList();
+        } else {
+            serDesInfos = new ArrayList<>();
+            for (SchemaSerDesMapping schemaSerDesMapping : schemaSerDesMappings) {
+                SerDesInfo serDesInfo = getSerDesInfo(schemaSerDesMapping.getSerDesId());
+                if((isSerializer && serDesInfo.getIsSerializer())
+                        || !serDesInfo.getIsSerializer()) {
+                    serDesInfos.add(serDesInfo);
+                }
+            }
+        }
+        return serDesInfos;
     }
 
     @Override
@@ -426,7 +424,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             throw new SerDeException("Serializer with given ID " + serDesId + " does not exist");
         }
 
-        SchemaSerDesMapping schemaSerDesMapping = new SchemaSerDesMapping(schemaMetadataId, serDesId, serDesInfo.getIsSerializer());
+        SchemaSerDesMapping schemaSerDesMapping = new SchemaSerDesMapping(schemaMetadataId, serDesId);
         storageManager.add(schemaSerDesMapping);
     }
 

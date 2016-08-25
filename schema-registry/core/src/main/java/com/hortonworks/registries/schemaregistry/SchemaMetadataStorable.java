@@ -33,13 +33,13 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public static final String NAME_SPACE = "schema_metadata_info";
     public static final String ID = "id";
     public static final String NAME = "name";
-    public static final String GROUP = "group";
+    public static final String DATA_SOURCE_GROUP = "dataSourceGroup";
     public static final String COMPATIBILITY = "compatibility";
     public static final String TYPE = "type";
     public static final String TIMESTAMP = "timestamp";
 
     public static final Schema.Field NAME_FIELD = Schema.Field.of(NAME, Schema.Type.STRING);
-    public static final Schema.Field GROUP_FIELD = Schema.Field.of(GROUP, Schema.Type.STRING);
+    public static final Schema.Field GROUP_FIELD = Schema.Field.of(DATA_SOURCE_GROUP, Schema.Type.STRING);
     public static final Schema.Field TYPE_FIELD = Schema.Field.of(TYPE, Schema.Type.STRING);
 
     /**
@@ -56,7 +56,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     /**
      * Data source group for which this schema metadata belongs to.
      */
-    private String group;
+    private String dataSourceGroup;
 
     /**
      * Given name of the schema.
@@ -93,7 +93,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public PrimaryKey getPrimaryKey() {
         Map<Schema.Field, Object> fieldValues = new HashMap<Schema.Field, Object>() {{
             put(NAME_FIELD, name);
-            put(GROUP_FIELD, group);
+            put(GROUP_FIELD, dataSourceGroup);
             put(TYPE_FIELD, type);
         }};
         return new PrimaryKey(fieldValues);
@@ -136,12 +136,12 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.id = id;
     }
 
-    public String getGroup() {
-        return group;
+    public String getDataSourceGroup() {
+        return dataSourceGroup;
     }
 
-    public void setGroup(String group) {
-        this.group = group;
+    public void setDataSourceGroup(String dataSourceGroup) {
+        this.dataSourceGroup = dataSourceGroup;
     }
 
     public String getName() {
@@ -193,7 +193,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (group != null ? !group.equals(that.group) : that.group != null) return false;
+        if (dataSourceGroup != null ? !dataSourceGroup.equals(that.dataSourceGroup) : that.dataSourceGroup != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
@@ -205,7 +205,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (group != null ? group.hashCode() : 0);
+        result = 31 * result + (dataSourceGroup != null ? dataSourceGroup.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
@@ -218,24 +218,12 @@ public class SchemaMetadataStorable extends AbstractStorable {
         return "SchemaMetadataStorable{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", group='" + group + '\'' +
+                ", group='" + dataSourceGroup + '\'' +
                 ", description='" + description + '\'' +
                 ", timestamp=" + timestamp +
                 ", type='" + type + '\'' +
                 ", compatibility=" + compatibility +
                 '}';
-    }
-
-    public static class Builder {
-        private Long id;
-        private String type;
-        private String group;
-        private String name;
-        private String description;
-        private Long timestamp;
-
-        public Builder(SchemaMetadataKey schemaMetadataKey) {
-        }
     }
 
 }

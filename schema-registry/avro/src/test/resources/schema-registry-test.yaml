@@ -19,20 +19,22 @@ fileStorageConfiguration:
 #storageProviderConfiguration:
 # providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
 # properties:
-#   db.type: "phoenix"
-#   jdbcDriverClass: "org.apache.phoenix.jdbc.PhoenixDriver"
-#   jdbcUrl: "jdbc:phoenix:localhost:2181"
+#   db.type: "mysql"
 #   queryTimeoutInSecs: 30
+#   db.properties:
+#      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+#      dataSource.url: "jdbc:mysql://localhost:3307/test"
 #
 # MySQL based jdbc provider configuration is:
 #storageProviderConfiguration:
-# providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
-# properties:
-#   db.type: "mysql"
-#   dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
-#   dataSource.url: "jdbc:mysql://localhost/test"
-#   queryTimeoutInSecs: 30
-#
+#  providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+#  properties:
+#    db.type: "mysql"
+#    queryTimeoutInSecs: 30
+#    db.properties:
+#      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+#      dataSource.url: "jdbc:mysql://localhost:3307/schema_registry"
+
 storageProviderConfiguration:
   providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
 

@@ -31,22 +31,17 @@ import java.util.Map;
 public class SchemaSerDesMapping extends AbstractStorable {
     public static final String NAMESPACE = "schema_serdes_mapping";
     public static final String SCHEMA_METADATA_ID = "schemaMetadataId";
-    public static final String IS_SERIALIZER = "isSerializer";
     public static final String SERDES_ID = "serDesId";
 
     private Long schemaMetadataId;
     private Long serDesId;
 
-    @JsonProperty
-    private boolean isSerializer;
-
     public SchemaSerDesMapping() {
     }
 
-    public SchemaSerDesMapping(Long schemaMetadataId, Long serDesId, boolean isSerializer) {
+    public SchemaSerDesMapping(Long schemaMetadataId, Long serDesId) {
         this.schemaMetadataId = schemaMetadataId;
         this.serDesId = serDesId;
-        this.isSerializer = isSerializer;
     }
 
     @Override
@@ -59,7 +54,6 @@ public class SchemaSerDesMapping extends AbstractStorable {
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field(SCHEMA_METADATA_ID, Schema.Type.LONG), this.schemaMetadataId);
         fieldToObjectMap.put(new Schema.Field(SERDES_ID, Schema.Type.LONG), this.serDesId);
-        fieldToObjectMap.put(new Schema.Field(IS_SERIALIZER, Schema.Type.BOOLEAN), this.isSerializer);
         return new PrimaryKey(fieldToObjectMap);
     }
 
@@ -79,20 +73,11 @@ public class SchemaSerDesMapping extends AbstractStorable {
         this.serDesId = serDesId;
     }
 
-    public boolean getIsSerializer() {
-        return isSerializer;
-    }
-
-    public void setIsSerializer(boolean serializer) {
-        isSerializer = serializer;
-    }
-
     @Override
     public String toString() {
         return "SchemaSerDesMapping{" +
                 "schemaMetadataId=" + schemaMetadataId +
                 ", serDesId=" + serDesId +
-                ", isSerializer=" + isSerializer +
                 '}';
     }
 
@@ -103,7 +88,6 @@ public class SchemaSerDesMapping extends AbstractStorable {
 
         SchemaSerDesMapping that = (SchemaSerDesMapping) o;
 
-        if (isSerializer != that.isSerializer) return false;
         if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
             return false;
         return serDesId != null ? serDesId.equals(that.serDesId) : that.serDesId == null;
@@ -114,7 +98,6 @@ public class SchemaSerDesMapping extends AbstractStorable {
     public int hashCode() {
         int result = schemaMetadataId != null ? schemaMetadataId.hashCode() : 0;
         result = 31 * result + (serDesId != null ? serDesId.hashCode() : 0);
-        result = 31 * result + (isSerializer ? 1 : 0);
         return result;
     }
 }

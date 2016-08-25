@@ -19,13 +19,18 @@ package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 import com.hortonworks.iotas.common.FileStorageConfiguration;
 import com.hortonworks.iotas.common.util.FileStorage;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
+import com.hortonworks.registries.schemaregistry.SchemaSerDesMapping;
+import com.hortonworks.registries.schemaregistry.SerDesInfoStorable;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -58,13 +63,13 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
 
     private FileStorage getJarStorage(FileStorageConfiguration fileStorageConfiguration) {
         FileStorage fileStorage = null;
-        if(fileStorageConfiguration.getClassName() != null)
-        try {
-            fileStorage = (FileStorage) Class.forName(fileStorageConfiguration.getClassName(), true, Thread.currentThread().getContextClassLoader()).newInstance();
-            fileStorage.init(fileStorageConfiguration.getProperties());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        if (fileStorageConfiguration.getClassName() != null)
+            try {
+                fileStorage = (FileStorage) Class.forName(fileStorageConfiguration.getClassName(), true, Thread.currentThread().getContextClassLoader()).newInstance();
+                fileStorage.init(fileStorageConfiguration.getProperties());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         return fileStorage;
     }
 
@@ -92,7 +97,8 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
             throw new RuntimeException(e);
         }
         storageManager.init(storageProviderConfiguration.getProperties());
-
+        storageManager.registerStorables( Lists.newArrayList(SchemaMetadataStorable.class, SchemaInfoStorable.class,
+                                                                SerDesInfoStorable.class, SchemaSerDesMapping.class));
         return storageManager;
     }
 
