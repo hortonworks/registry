@@ -48,15 +48,21 @@ public class SchemaMetadataStorable extends AbstractStorable {
     private Long id;
 
     /**
-     * Given name of the schema.
-     * Unique constraint with (name, group, type)
+     * Schema type which can be avro, protobuf or json etc. User can have a unique constraint with (type, name) values.
      */
-    private String name;
+    private String type;
+
 
     /**
      * Data source group for which this schema metadata belongs to.
      */
     private String group;
+
+    /**
+     * Given name of the schema.
+     * Unique constraint with (name, group, type)
+     */
+    private String name;
 
     /**
      * Description of the schema.
@@ -69,32 +75,11 @@ public class SchemaMetadataStorable extends AbstractStorable {
     private Long timestamp;
 
     /**
-     * Schema type which can be avro, protobuf or json etc. User can have a unique constraint with (type, name) values.
-     */
-    private String type;
-
-    /**
      * Compatibility of this schema instance
      */
-    private SchemaProvider.Compatibility compatibility = SchemaProvider.Compatibility.NONE;
-
+    private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
 
     public SchemaMetadataStorable() {
-    }
-
-    public SchemaMetadataStorable(String name, String type) {
-        this.name = name;
-        this.type = type;
-    }
-
-    public SchemaMetadataStorable(SchemaMetadataStorable givenSchemaInfo) {
-        group = givenSchemaInfo.group;
-        id = givenSchemaInfo.id;
-        name = givenSchemaInfo.name;
-        type = givenSchemaInfo.type;
-        timestamp = givenSchemaInfo.timestamp;
-        compatibility = givenSchemaInfo.compatibility;
-        description = givenSchemaInfo.description;
     }
 
     @Override
@@ -239,6 +224,18 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 ", type='" + type + '\'' +
                 ", compatibility=" + compatibility +
                 '}';
+    }
+
+    public static class Builder {
+        private Long id;
+        private String type;
+        private String group;
+        private String name;
+        private String description;
+        private Long timestamp;
+
+        public Builder(SchemaMetadataKey schemaMetadataKey) {
+        }
     }
 
 }

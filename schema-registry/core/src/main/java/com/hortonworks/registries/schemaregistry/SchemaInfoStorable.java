@@ -76,14 +76,6 @@ public class SchemaInfoStorable extends AbstractStorable {
     public SchemaInfoStorable() {
     }
 
-    public SchemaInfoStorable(SchemaInfoStorable givenSchemaInfoStorable) {
-        id = givenSchemaInfoStorable.id;
-        schemaMetadataId = givenSchemaInfoStorable.schemaMetadataId;
-        version = givenSchemaInfoStorable.version;
-        schemaText = givenSchemaInfoStorable.schemaText;
-        timestamp = givenSchemaInfoStorable.timestamp;
-    }
-
     @Override
     @JsonIgnore
     public String getNameSpace() {

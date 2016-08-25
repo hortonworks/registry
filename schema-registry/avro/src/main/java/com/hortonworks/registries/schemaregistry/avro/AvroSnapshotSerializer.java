@@ -17,10 +17,9 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.VersionedSchema;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.apache.avro.generic.GenericContainer;

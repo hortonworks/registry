@@ -21,23 +21,19 @@ import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.iotas.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.SerDesInfoStorable;
+import com.hortonworks.registries.schemaregistry.VersionedSchema;
 import com.hortonworks.registries.schemaregistry.client.SchemaDetails;
-import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -51,8 +47,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND;
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.EXCEPTION;
@@ -65,7 +59,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 /**
  *
  */
-@Path("/api/v1/catalog/schemaregistry")
+@Path("/api/v1/schemaregistry")
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryCatalog {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryCatalog.class);
@@ -91,13 +85,16 @@ public class SchemaRegistryCatalog {
     @Path("/schemas")
     @Timed
     public Response addSchema(SchemaMetadata schemaMetadata) {
+        Response response;
         try {
             schemaRegistry.addSchemaMetadata(schemaMetadata);
-            return WSUtils.respond(CREATED, SUCCESS, true);
+            response = WSUtils.respond(CREATED, SUCCESS, true);
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+
+        return response;
     }
 
     @POST
@@ -108,17 +105,19 @@ public class SchemaRegistryCatalog {
                               @PathParam("name") String name,
                               SchemaDetails schemaDetails) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
-
-        SchemaMetadata schemaMetadata =
-                new SchemaMetadata(schemaMetadataKey, schemaDetails.getSchemaMetadataDescription(), schemaDetails.getCompatibility());
-
+        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey,
+                schemaDetails.getSchemaMetadataDescription(),
+                schemaDetails.getCompatibility());
+        Response response;
         try {
             Integer version = schemaRegistry.addSchema(schemaMetadata, schemaDetails.getVersionedSchema());
-            return WSUtils.respond(CREATED, SUCCESS, version);
+            response = WSUtils.respond(CREATED, SUCCESS, version);
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+
+        return response;
     }
 
 
@@ -130,17 +129,21 @@ public class SchemaRegistryCatalog {
                                       @PathParam("name") String name) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
 
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
-            SchemaInfoStorable schemaInfoStorable = schemaRegistry.getLatestSchemaInfo(schemaMetadataStorable.getId());
-            if (schemaInfoStorable != null) {
-                return WSUtils.respond(OK, SUCCESS, new SchemaInfo(schemaMetadataStorable, schemaInfoStorable));
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
+            SchemaInfo schemaInfo = schemaRegistry.getLatestSchemaInfo(schemaMetadataStorable.getId());
+            if (schemaInfo != null) {
+                response = WSUtils.respond(OK, SUCCESS, schemaInfo);
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
             }
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
+        return response;
+
     }
 
     @GET
@@ -151,24 +154,21 @@ public class SchemaRegistryCatalog {
                                        @PathParam("name") String name) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
 
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
-            Collection<SchemaInfoStorable> schemaInfoStorables = schemaRegistry.findAllVersions(schemaMetadataStorable.getId());
-            if (schemaInfoStorables != null) {
-                List<SchemaInfo> schemaInfos =
-                        schemaInfoStorables.stream()
-                                .map(schemaInfoStorable
-                                        -> new SchemaInfo(schemaMetadataStorable, schemaInfoStorable)).collect(Collectors.toList());
-
-                return WSUtils.respond(OK, SUCCESS, schemaInfos);
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
+            Collection<SchemaInfo> schemaInfos = schemaRegistry.findAllVersions(schemaMetadataStorable.getId());
+            if (schemaInfos != null) {
+                response = WSUtils.respond(OK, SUCCESS, schemaInfos);
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
             }
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
+        return response;
     }
-
 
     @GET
     @Path("/schemas/types/{type}/groups/{group}/names/{name}/versions/{version}")
@@ -180,17 +180,18 @@ public class SchemaRegistryCatalog {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
         SchemaKey schemaKey = new SchemaKey(schemaMetadataKey, version);
 
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
-            SchemaInfoStorable schemaInfoStorable = schemaRegistry.getSchemaInfo(schemaMetadataStorable.getId(), version);
-            if (schemaInfoStorable != null) {
-                return WSUtils.respond(OK, SUCCESS, new SchemaInfo(schemaMetadataStorable, schemaInfoStorable));
-            }
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
+            SchemaInfo schemaInfo = schemaRegistry.getSchemaInfo(schemaMetadataStorable.getId(), version);
+            response = WSUtils.respond(OK, SUCCESS, schemaInfo);
+        } catch (SchemaNotFoundException e) {
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
+        return response;
     }
 
     @GET
@@ -201,18 +202,19 @@ public class SchemaRegistryCatalog {
                                            @PathParam("name") String name,
                                            String schema) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
             boolean compatible = schemaRegistry.isCompatible(schemaMetadataStorable.getId(), schema);
-            return WSUtils.respond(OK, SUCCESS, compatible);
+            response = WSUtils.respond(OK, SUCCESS, compatible);
         } catch (SchemaNotFoundException e) {
-            return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
+        return response;
     }
-
 
     @GET
     @Path("/schemas/types/{type}/groups/{group}/names/{name}/serializers")
@@ -222,94 +224,82 @@ public class SchemaRegistryCatalog {
                                    @PathParam("name") String name,
                                    String schema) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
             if (schemaMetadataStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaMetadataStorable.getId());
-                return WSUtils.respond(OK, SUCCESS, schemaSerializers);
+                response = WSUtils.respond(OK, SUCCESS, schemaSerializers);
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
             }
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataKey.toString());
+        return response;
     }
 
     @POST
     @Path("/schemas/{id}")
     @Timed
     public Response addVersionedSchema(@PathParam("id") Long schemaMetadataId, VersionedSchema versionedSchema) {
+        Response response = null;
         try {
-            SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
-            schemaInfoStorable.setSchemaMetadataId(schemaMetadataId);
-            schemaInfoStorable.setSchemaText(versionedSchema.getSchemaText());
-            schemaInfoStorable.setDescription(versionedSchema.getDescription());
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataId);
+            if (schemaMetadataStorable != null) {
+                SchemaMetadataKey schemaMetadataKey = schemaMetadataStorable.getSchemaMetadataKey();
+                Integer version = schemaRegistry.addSchema(schemaMetadataKey, versionedSchema);
 
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataId);
-            SchemaInfoStorable addedSchemaInfoStorable = schemaRegistry.addSchemaInfo(schemaInfoStorable);
-            SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(schemaMetadataStorable.getType(), schemaMetadataStorable.getGroup(),
-                    schemaMetadataStorable.getNameSpace());
-
-            return WSUtils.respond(CREATED, SUCCESS, new SchemaKey(schemaMetadataKey, addedSchemaInfoStorable.getVersion()));
+                response = WSUtils.respond(CREATED, SUCCESS, new SchemaKey(schemaMetadataKey, version));
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId);
+            }
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
-    }
 
-    private Response buildSchemaInfo(SchemaInfoStorable schemaInfoStorable) {
-        if (schemaInfoStorable != null) {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaInfoStorable.getSchemaMetadataId());
-            SchemaInfo schemaInfo = new SchemaInfo(schemaMetadataStorable, schemaInfoStorable);
-            return WSUtils.respond(OK, SUCCESS, schemaInfo);
-        }
-        return null;
-    }
-
-    @DELETE
-    @Path("/schemas/{id}")
-    @Timed
-    public Response removeSchemaInfo(@PathParam("id") Long schemaMetadataId) {
-        try {
-            SchemaInfoStorable removedParser = schemaRegistry.removeSchemaInfo(schemaMetadataId);
-            return WSUtils.respond(OK, SUCCESS, removedParser);
-        } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
-        }
+        return response;
     }
 
     @GET
     @Path("/schemas/{id}/versions/latest")
     @Timed
     public Response getLatestSchema(@PathParam("id") Long schemaMetadataId) {
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataId);
-            SchemaInfoStorable schemaInfoStorable = schemaRegistry.getLatestSchemaInfo(schemaMetadataId);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getLatestSchemaInfo(schemaMetadataId);
             if (schemaInfoStorable != null) {
-                return WSUtils.respond(OK, SUCCESS, new SchemaInfo(schemaMetadataStorable, schemaInfoStorable));
+                response = WSUtils.respond(OK, SUCCESS, schemaInfoStorable);
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
             }
+        } catch (SchemaNotFoundException e) {
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
+        return response;
     }
 
     @GET
     @Path("/schemas/{id}/versions/{version}")
     @Timed
-    public Response getVersionedSchema(@PathParam("id") Long schemaMetadataId, @PathParam("version") Integer version) {
+    public Response getVersionedSchema(@PathParam("id") Long schemaMetadataId,
+                                       @PathParam("version") Integer version) {
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataId);
-            SchemaInfoStorable schemaInfoStorable = schemaRegistry.getSchemaInfo(schemaMetadataId, version);
-            if (schemaInfoStorable != null) {
-                return WSUtils.respond(OK, SUCCESS, new SchemaInfo(schemaMetadataStorable, schemaInfoStorable));
-            }
+            SchemaInfo schemaInfo = schemaRegistry.getSchemaInfo(schemaMetadataId, version);
+            response = WSUtils.respond(OK, SUCCESS, schemaInfo);
+        } catch (SchemaNotFoundException ex) {
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
+        return response;
     }
 
     @POST
@@ -333,14 +323,17 @@ public class SchemaRegistryCatalog {
     @Path("/schemas/{id}/compatible/versions")
     @Timed
     public Response isCompatible(@PathParam("id") Long schemaMetadataId, String schema) {
+        Response response;
         try {
             boolean compatible = schemaRegistry.isCompatible(schemaMetadataId, schema);
-            return WSUtils.respond(OK, SUCCESS, compatible);
+            response = WSUtils.respond(OK, SUCCESS, compatible);
         } catch (SchemaNotFoundException e) {
-            return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+
+        return response;
     }
 
     @GET
@@ -348,17 +341,20 @@ public class SchemaRegistryCatalog {
     @Path("/schemas/{id}/serializers/{serializerId}")
     @Timed
     public Response downloadSerializer(@PathParam("id") Long schemaMetadataId, @PathParam("serializerId") Long serializerId) {
+        Response response;
         try {
             InputStream inputStream = schemaRegistry.downloadJar(serializerId);
             if (inputStream != null) {
                 StreamingOutput streamOutput = WSUtils.wrapWithStreamingOutput(inputStream);
-                return Response.ok(streamOutput).build();
+                response = Response.ok(streamOutput).build();
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
             }
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
+        return response;
     }
 
     @Timed
@@ -368,13 +364,16 @@ public class SchemaRegistryCatalog {
     public Response uploadFile(@FormDataParam("file") final InputStream inputStream,
                                @FormDataParam("file") final FormDataContentDisposition contentDispositionHeader) {
         // todo we should be using file upload resources in iotas.
+        Response response;
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
             String uploadedFileId = schemaRegistry.uploadFile(inputStream);
-            return WSUtils.respond(OK, SUCCESS, uploadedFileId, null);
+            response = WSUtils.respond(OK, SUCCESS, uploadedFileId, null);
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+
+        return response;
     }
 
     @Timed
@@ -400,48 +399,56 @@ public class SchemaRegistryCatalog {
     @Path("/serializers")
     @Timed
     public Response addSerializer(SerDesInfo schemaSerDesInfo) {
+        Response response;
         try {
-            Long serializerId = schemaRegistry.addSerDesInfo(SerDesInfoStorable.fromSerDesInfo(schemaSerDesInfo));
-            return WSUtils.respond(OK, SUCCESS, serializerId);
+            Long serializerId = schemaRegistry.addSerDesInfo(schemaSerDesInfo);
+            response = WSUtils.respond(OK, SUCCESS, serializerId);
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+        return response;
     }
 
     @GET
     @Path("/serializers/{id}")
     @Timed
     public Response getSerializer(@PathParam("id") Long serializerId) {
+        Response response;
         try {
             SerDesInfo serializerInfo = schemaRegistry.getSerDesInfo(serializerId);
-            return WSUtils.respond(OK, SUCCESS, serializerInfo);
+            response = WSUtils.respond(OK, SUCCESS, serializerInfo);
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+        return response;
     }
 
     @POST
     @Path("/deserializers")
     @Timed
     public Response addDeserializer(SerDesInfo schemaSerDesInfo) {
+        Response response;
         try {
-            Long serializerId = schemaRegistry.addSerDesInfo(SerDesInfoStorable.fromSerDesInfo(schemaSerDesInfo));
-            return WSUtils.respond(OK, SUCCESS, serializerId);
+            Long serializerId = schemaRegistry.addSerDesInfo(schemaSerDesInfo);
+            response = WSUtils.respond(OK, SUCCESS, serializerId);
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+        return response;
     }
 
     @GET
     @Path("/deserializers/{id}")
     @Timed
     public Response getDeserializer(@PathParam("id") Long deserializerId) {
+        Response response;
         try {
             SerDesInfo serializerInfo = schemaRegistry.getSerDesInfo(deserializerId);
-            return WSUtils.respond(OK, SUCCESS, serializerInfo);
+            response = WSUtils.respond(OK, SUCCESS, serializerInfo);
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+        return response;
     }
 
     @POST
@@ -464,13 +471,16 @@ public class SchemaRegistryCatalog {
                               @PathParam("name") String name,
                               @PathParam("serDesId") Long serDesId) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
+        Response response;
         try {
-            SchemaMetadataStorable schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
+            SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
             schemaRegistry.mapSerDesWithSchema(schemaMetadataStorable.getId(), serDesId);
-            return WSUtils.respond(OK, SUCCESS, true);
+            response = WSUtils.respond(OK, SUCCESS, true);
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+
+        return response;
     }
 
 
@@ -478,35 +488,39 @@ public class SchemaRegistryCatalog {
     @Path("/schemas/{id}/serializers/")
     @Timed
     public Response getSerializers(@PathParam("id") Long schemaMetadataId) {
+        Response response;
         try {
             Collection<SerDesInfo> serializers = schemaRegistry.getSchemaSerializers(schemaMetadataId);
 
             if (serializers != null) {
-                return WSUtils.respond(OK, SUCCESS, serializers);
+                response = WSUtils.respond(OK, SUCCESS, serializers);
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
             }
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
-
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
+        return response;
     }
 
     @GET
     @Path("/schemas/{id}/deserializers/")
     @Timed
     public Response getDeserializers(@PathParam("id") Long schemaMetadataId) {
+        Response response;
         try {
             Collection<SerDesInfo> deserializers = schemaRegistry.getSchemaDeserializers(schemaMetadataId);
 
             if (deserializers != null) {
-                return WSUtils.respond(OK, SUCCESS, deserializers);
+                response = WSUtils.respond(OK, SUCCESS, deserializers);
+            } else {
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
             }
         } catch (Exception ex) {
-            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+            response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
-        return WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadataId.toString());
+        return response;
     }
-
 
 }

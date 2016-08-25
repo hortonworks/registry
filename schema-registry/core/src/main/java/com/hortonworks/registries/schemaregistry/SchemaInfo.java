@@ -44,20 +44,21 @@ public final class SchemaInfo implements Serializable {
      */
     private Long timestamp;
 
-    /**
-     * Compatibility of the schema for a given version which is given in SchemaInfo
-     */
-    private SchemaProvider.Compatibility compatibility;
-
     private SchemaInfo() {
     }
 
-    public SchemaInfo(SchemaMetadataStorable schemaMetadataStorable, SchemaInfoStorable schemaInfoStorable) {
+    public SchemaInfo(Integer version, String schemaText, Long timestamp, String description) {
+        this.description = description;
+        this.version = version;
+        this.schemaText = schemaText;
+        this.timestamp = timestamp;
+    }
+
+    public SchemaInfo(SchemaInfoStorable schemaInfoStorable) {
         description = schemaInfoStorable.getDescription();
         version = schemaInfoStorable.getVersion();
         schemaText = schemaInfoStorable.getSchemaText();
         timestamp = schemaInfoStorable.getTimestamp();
-        compatibility = schemaMetadataStorable.getCompatibility();
     }
 
     public String getDescription() {
@@ -76,10 +77,6 @@ public final class SchemaInfo implements Serializable {
         return timestamp;
     }
 
-    public SchemaProvider.Compatibility getCompatibility() {
-        return compatibility;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -90,29 +87,26 @@ public final class SchemaInfo implements Serializable {
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-        return compatibility == that.compatibility;
+        return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (description != null ? description.hashCode() : 0);
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
-        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
-        result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
-        return result;
     }
 
     @Override
     public String toString() {
         return "SchemaInfo{" +
-                ", description='" + description + '\'' +
+                "description='" + description + '\'' +
                 ", version=" + version +
                 ", schemaText='" + schemaText + '\'' +
                 ", timestamp=" + timestamp +
-                ", compatibility=" + compatibility +
                 '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        return result;
     }
 }

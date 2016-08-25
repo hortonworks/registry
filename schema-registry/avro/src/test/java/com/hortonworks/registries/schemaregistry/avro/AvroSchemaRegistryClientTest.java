@@ -23,9 +23,9 @@ import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.client.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.VersionedSchema;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
@@ -57,7 +57,7 @@ public class AvroSchemaRegistryClientTest {
     public static final DropwizardAppRule<SchemaRegistryConfiguration> RULE
             = new DropwizardAppRule<>(SchemaRegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
 
-    private final String rootUrl = String.format("http://localhost:%d/api/v1/catalog", RULE.getLocalPort());
+    private final String rootUrl = String.format("http://localhost:%d/api/v1", RULE.getLocalPort());
     private SchemaRegistryClient schemaRegistryClient;
 
     protected String schema1;
@@ -84,7 +84,7 @@ public class AvroSchemaRegistryClientTest {
     }
 
     @Test
-    public void testSchemaRelatedOps() throws Exception {
+    public void testSchemaOps() throws Exception {
 
         // registering new schema-metadata
         Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));

@@ -18,7 +18,7 @@
 package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.client.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 
 import java.io.IOException;
