@@ -44,8 +44,8 @@ public final class SchemaInfo implements Serializable {
      */
     private Long timestamp;
 
-    private SchemaInfo() {
-    }
+    @SuppressWarnings("unused")
+    private SchemaInfo() { /* Private constructor for Jackson JSON mapping */ }
 
     public SchemaInfo(Integer version, String schemaText, Long timestamp, String description) {
         this.description = description;

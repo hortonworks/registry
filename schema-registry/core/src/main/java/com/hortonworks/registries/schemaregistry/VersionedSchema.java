@@ -26,8 +26,8 @@ public class VersionedSchema implements Serializable {
     private String description;
     private String schemaText;
 
-    private VersionedSchema() {
-    }
+    @SuppressWarnings("unused")
+    private VersionedSchema() { /* Private constructor for Jackson JSON mapping */ }
 
     public VersionedSchema(String schemaText, String description) {
         this.description = description;
@@ -41,5 +41,4 @@ public class VersionedSchema implements Serializable {
     public String getSchemaText() {
         return schemaText;
     }
-
 }

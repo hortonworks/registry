@@ -39,8 +39,8 @@ public class SchemaDetails implements Serializable {
 
     private VersionedSchema versionedSchema;
 
-    private SchemaDetails() {
-    }
+    @SuppressWarnings("unused")
+    private SchemaDetails() { /** Private constructor for Jackson JSON mapping */ }
 
     public SchemaDetails(VersionedSchema versionedSchema) {
         this(null, null, versionedSchema);

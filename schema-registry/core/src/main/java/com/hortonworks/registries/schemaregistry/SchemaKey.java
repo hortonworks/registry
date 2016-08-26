@@ -26,17 +26,12 @@ import java.io.Serializable;
  * of a schema in the schema repository.
  */
 public class SchemaKey implements Serializable {
-
-    private SchemaMetadataKey schemaMetadataKey;
-    private Integer version;
-
-    private SchemaKey() {
-    }
+    private final SchemaMetadataKey schemaMetadataKey;
+    private final Integer version;
 
     public SchemaKey(SchemaMetadataKey schemaMetadataKey, Integer version) {
         Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
-
         this.schemaMetadataKey = schemaMetadataKey;
         this.version = version;
     }
@@ -45,7 +40,5 @@ public class SchemaKey implements Serializable {
         return schemaMetadataKey;
     }
 
-    public Integer getVersion() {
-        return version;
-    }
+    public Integer getVersion() { return version; }
 }

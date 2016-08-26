@@ -27,25 +27,17 @@ import java.io.Serializable;
  */
 public class SchemaMetadataKey implements Serializable {
 
-    /**
-     * type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc
-     */
-    private String type;
+    /** type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc */
+    private final String type;
 
     /**
      * Data source group to which this schema belongs to. For ex: kafka, hive etc
      * This can be used in querying schemas belonging to a specific data source group.
      */
-    private String dataSourceGroup;
+    private final String dataSourceGroup;
 
-    /**
-     * name of this schema.
-     * Follows unique constraint of (name, group, type).
-     */
-    private String name;
-
-    private SchemaMetadataKey() {
-    }
+    /** Name of this schema. Follows unique constraint of (name, group, type). */
+    private final String name;
 
     public SchemaMetadataKey(String type, String dataSourceGroup, String name) {
         Preconditions.checkNotNull(type, "type can not be null");
@@ -58,27 +50,21 @@ public class SchemaMetadataKey implements Serializable {
     }
 
     /**
-     * Returns unique name of schema with in a group and type.
-     *
-     * @return
+     * @return unique name of schema with in a group and type.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Returns group of the schema. For ex: Kafka, Hive.
-     *
-     * @return
+     * @return group of the schema. For ex: Kafka, Hive.
      */
     public String getDataSourceGroup() {
         return dataSourceGroup;
     }
 
     /**
-     * Returns type of the schema. For ex: AVRO, JSON
-     *
-     * @return
+     * @return type of the schema. For ex: AVRO, JSON
      */
     public String getType() {
         return type;
