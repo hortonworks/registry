@@ -137,7 +137,7 @@ public class InMemoryStorageManager implements StorageManager {
     @Override
     public <T extends Storable> Collection<T> list(String namespace) throws StorageException {
         return storageMap.containsKey(namespace)
-                ? (Collection<T>) storageMap.get(namespace).values() : Collections.<T>emptyList();
+                ? (Collection<T>) storageMap.get(namespace).values() : Collections.emptyList();
     }
 
     @Override

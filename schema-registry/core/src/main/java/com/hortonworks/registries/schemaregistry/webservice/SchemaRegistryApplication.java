@@ -57,7 +57,7 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         ISchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
 
         //todo should be moved to resource initialization callback method
-        schemaRegistry.init(Collections.<String, Object>emptyMap());
+        schemaRegistry.init(Collections.emptyMap());
         environment.jersey().register(new SchemaRegistryCatalog(schemaRegistry));
     }
 

@@ -1,10 +1,6 @@
 package com.hortonworks.iotas.storage;
 
-import com.google.common.collect.Lists;
 import com.hortonworks.iotas.common.QueryParam;
-import com.hortonworks.iotas.common.Schema;
-import com.hortonworks.iotas.storage.exception.AlreadyExistsException;
-import com.hortonworks.iotas.storage.exception.StorageException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,15 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 
 public abstract class AbstractStoreManagerTest {
     protected static final Logger log = LoggerFactory.getLogger(AbstractStoreManagerTest.class);

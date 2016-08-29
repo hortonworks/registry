@@ -17,7 +17,6 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.iotas.common.Schema;
 import com.hortonworks.iotas.storage.PrimaryKey;
 import com.hortonworks.iotas.storage.catalog.AbstractStorable;

@@ -62,7 +62,7 @@ public class WSUtils {
 
     public static List<QueryParam> buildQueryParameters(MultivaluedMap<String, String> params) {
         if (params == null || params.isEmpty()) {
-            return Collections.<QueryParam>emptyList();
+            return Collections.emptyList();
         }
 
         List<QueryParam> queryParams = new ArrayList<>();

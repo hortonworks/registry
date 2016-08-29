@@ -97,7 +97,7 @@ public class SerDesInfoStorable extends AbstractStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        return new PrimaryKey(Collections.singletonMap(new Schema.Field(ID, Schema.Type.LONG), (Object) id));
+        return new PrimaryKey(Collections.singletonMap(new Schema.Field(ID, Schema.Type.LONG), id));
     }
 
     @Override

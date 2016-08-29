@@ -55,7 +55,7 @@ public class AvroSchemaRegistryTest {
         schemaName = "org.hwx.schemas.test-schema." + System.currentTimeMillis();
         StorageManager storageManager = new InMemoryStorageManager();
         schemaRegistry = new DefaultSchemaRegistry(storageManager, null, Collections.singleton(new AvroSchemaProvider()));
-        schemaRegistry.init(Collections.<String, Object>emptyMap());
+        schemaRegistry.init(Collections.emptyMap());
     }
 
     protected String schema1;

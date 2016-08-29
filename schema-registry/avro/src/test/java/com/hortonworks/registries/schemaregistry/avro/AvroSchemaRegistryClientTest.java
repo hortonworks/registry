@@ -69,7 +69,7 @@ public class AvroSchemaRegistryClientTest {
 
     @Before
     public void setup() throws IOException {
-        schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, (Object) rootUrl));
+        schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl));
         schema1 = getSchema("/device.avsc");
         schema2 = getSchema("/device2.avsc");
         schemaName = "schema-" + System.currentTimeMillis();
