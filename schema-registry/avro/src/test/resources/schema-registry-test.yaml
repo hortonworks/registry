@@ -26,17 +26,17 @@ fileStorageConfiguration:
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
 #
 # MySQL based jdbc provider configuration is:
-storageProviderConfiguration:
-  providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
-  properties:
-    db.type: "mysql"
-    queryTimeoutInSecs: 30
-    db.properties:
-      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
-      dataSource.url: "jdbc:mysql://localhost:3307/test"
-
 #storageProviderConfiguration:
-#  providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
+#  providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+#  properties:
+#    db.type: "mysql"
+#    queryTimeoutInSecs: 30
+#    db.properties:
+#      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+#      dataSource.url: "jdbc:mysql://localhost:3307/test"
+
+storageProviderConfiguration:
+  providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
 
 # use the simple server factory if you only want to run on a single port
 #server:
