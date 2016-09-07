@@ -20,6 +20,8 @@ package com.hortonworks.registries.schemaregistry.webservice;
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.iotas.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
+import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -40,12 +42,16 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND;
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.EXCEPTION;
@@ -74,10 +80,48 @@ public class SchemaRegistryCatalog {
     @Timed
     public Response listSchemas(@Context UriInfo uriInfo) {
         try {
-            return WSUtils.respond(OK, SUCCESS, schemaRegistry.listAll());
+            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+            Map<String, String> filters = new HashMap<>();
+            queryParameters.forEach((key, values) -> filters.put(key, values != null && !values.isEmpty() ? values.get(0) : null));
+            Collection<SchemaKey> schemaKeys = schemaRegistry.findSchemas(filters);
+
+            return WSUtils.respond(OK, SUCCESS, schemaKeys);
         } catch (Exception ex) {
             return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
+    }
+
+    @GET
+    @Path("/schemas/search/fields")
+    @Timed
+    public Response findSchemasbyFields(@Context UriInfo uriInfo) {
+        try {
+            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+            Collection<SchemaKey> schemaKeys = schemaRegistry.findSchemasWithFields(buildSchemaFieldQuery(queryParameters));
+
+            return WSUtils.respond(OK, SUCCESS, schemaKeys);
+        } catch (Exception ex) {
+            return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
+        }
+    }
+
+    private SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
+        SchemaFieldQuery.Builder builder = new SchemaFieldQuery.Builder();
+        for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
+            List<String> entryValue = entry.getValue();
+            String value = entryValue != null && !entryValue.isEmpty() ? entryValue.get(0) : null;
+            if (value != null) {
+                if (SchemaFieldInfoStorable.FIELD_NAMESPACE.equals(entry.getKey())) {
+                    builder.namespace(value);
+                } else if (SchemaFieldInfoStorable.NAME.equals(entry.getKey())) {
+                    builder.name(value);
+                } else if (SchemaFieldInfoStorable.TYPE.equals(entry.getKey())) {
+                    builder.type(value);
+                }
+            }
+        }
+
+        return builder.build();
     }
 
     @POST
@@ -240,9 +284,9 @@ public class SchemaRegistryCatalog {
     @Path("/schemas/types/{type}/groups/{group}/names/{name}/deserializers")
     @Timed
     public Response getDeserializers(@PathParam("type") String type,
-                                   @PathParam("group") String group,
-                                   @PathParam("name") String name,
-                                   String schema) {
+                                     @PathParam("group") String group,
+                                     @PathParam("name") String name,
+                                     String schema) {
         SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type, group, name);
         Response response;
         try {

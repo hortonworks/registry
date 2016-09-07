@@ -138,11 +138,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
         SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
-        final Long nextId = storageManager.nextId(schemaInfoStorable.getNameSpace());
-        schemaInfoStorable.setId(nextId);
+        final Long schemaInstanceId = storageManager.nextId(schemaInfoStorable.getNameSpace());
+        schemaInfoStorable.setId(schemaInstanceId);
         schemaInfoStorable.setSchemaMetadataId(schemaMetadataId);
 
-        schemaInfoStorable.setType(schemaMetadataKey.getType());
+        String type = schemaMetadataKey.getType();
+        schemaInfoStorable.setType(type);
         schemaInfoStorable.setDataSourceGroup(schemaMetadataKey.getDataSourceGroup());
         schemaInfoStorable.setName(schemaMetadataKey.getName());
 
@@ -160,9 +161,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 }
             }
             schemaInfoStorable.setVersion(version + 1);
-            schemaInfoStorable.setFingerprint(getFingerprint(schemaMetadataKey.getType(), schemaInfoStorable.getSchemaText()));
+            schemaInfoStorable.setFingerprint(getFingerprint(type, schemaInfoStorable.getSchemaText()));
 
             storageManager.add(schemaInfoStorable);
+            String storableNamespace = new SchemaFieldInfoStorable().getNameSpace();
+            List<SchemaFieldInfo> schemaFieldInfos = schemaTypeWithProviders.get(type).generateFields(schemaInfoStorable.getSchemaText());
+            for (SchemaFieldInfo schemaFieldInfo : schemaFieldInfos) {
+                final Long fieldInstanceId = storageManager.nextId(storableNamespace);
+                SchemaFieldInfoStorable schemaFieldInfoStorable = schemaFieldInfo.toFieldInfoStorable(fieldInstanceId);
+                schemaFieldInfoStorable.setSchemaInstanceId(schemaInstanceId);
+                schemaFieldInfoStorable.setTimestamp(System.currentTimeMillis());
+                storageManager.add(schemaFieldInfoStorable);
+            }
         }
 
         return schemaInfoStorable.getVersion();
@@ -180,11 +190,83 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaInfo> listAll() {
-        Collection<SchemaInfoStorable> storables = storageManager.list(SchemaInfoStorable.NAME_SPACE);
+    public Collection<SchemaKey> findSchemas(Map<String, String> filters) {
+        // todo get only few selected columns instead of getting the whole row.
+        Collection<SchemaInfoStorable> storables;
+
+        if(filters == null || filters.isEmpty()) {
+            storables = storageManager.list(SchemaInfoStorable.NAME_SPACE);
+        } else {
+            List<QueryParam> queryParams =
+                    filters.entrySet()
+                            .stream()
+                            .map(entry -> new QueryParam(entry.getKey(), entry.getValue()))
+                            .collect(Collectors.toList());
+            storables = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
+        }
+
         return storables != null && !storables.isEmpty()
-                ? storables.stream().map(schemaInfoStorable -> new SchemaInfo(schemaInfoStorable)).collect(Collectors.toList())
+                ? storables.stream().map(schemaInfoStorable -> getSchemaKey(schemaInfoStorable)).collect(Collectors.toList())
                 : Collections.emptyList();
+    }
+
+    @Override
+    public Collection<SchemaKey> findSchemasWithFields(SchemaFieldQuery schemaFieldQuery) {
+        List<QueryParam> queryParams = buildQueryParam(schemaFieldQuery);
+
+        Collection<SchemaFieldInfoStorable> fieldInfos = storageManager.find(SchemaFieldInfoStorable.STORABLE_NAME_SPACE, queryParams);
+        Collection<SchemaKey> schemaKeys;
+        if (fieldInfos != null && !fieldInfos.isEmpty()) {
+            List<Long> schemaIds = fieldInfos.stream()
+                                                .map(schemaFieldInfoStorable -> schemaFieldInfoStorable.getSchemaInstanceId())
+                                                .collect(Collectors.toList());
+
+            // todo get only few selected columns instead of getting the whole row.
+            // add OR query to find items from store
+            schemaKeys = new ArrayList<>();
+            for (Long schemaId : schemaIds) {
+                SchemaKey schemaKey = getSchemaKey(schemaId);
+                if(schemaKey != null) {
+                    schemaKeys.add(schemaKey);
+                }
+            }
+        } else {
+            schemaKeys = Collections.emptyList();
+        }
+
+        return schemaKeys;
+    }
+
+    private SchemaKey getSchemaKey(Long schemaId) {
+        SchemaKey schemaKey = null;
+
+        List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaInfoStorable.ID, schemaId.toString()));
+        Collection<SchemaInfoStorable> versionedSchemas = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
+        if(versionedSchemas != null && !versionedSchemas.isEmpty()) {
+            SchemaInfoStorable storable = versionedSchemas.iterator().next();
+            schemaKey = new SchemaKey(new SchemaMetadataKey(storable.getType(), storable.getDataSourceGroup(), storable.getName()), storable.getVersion());
+        }
+
+        return schemaKey;
+    }
+
+    private List<QueryParam> buildQueryParam(SchemaFieldQuery schemaFieldQuery) {
+        List<QueryParam> queryParams = new ArrayList<>(3);
+        if(schemaFieldQuery.getNamespace() != null) {
+            queryParams.add(new QueryParam(SchemaFieldInfoStorable.FIELD_NAMESPACE, schemaFieldQuery.getNamespace()));
+        }
+        if(schemaFieldQuery.getName() != null) {
+            queryParams.add(new QueryParam(SchemaFieldInfoStorable.NAME, schemaFieldQuery.getName()));
+        }
+        if(schemaFieldQuery.getType() != null) {
+            queryParams.add(new QueryParam(SchemaFieldInfoStorable.TYPE, schemaFieldQuery.getType()));
+        }
+
+        return queryParams;
+    }
+
+    private SchemaKey getSchemaKey(SchemaInfoStorable storable) {
+        return new SchemaKey(new SchemaMetadataKey(storable.getType(), storable.getDataSourceGroup(), storable.getName()), storable.getVersion());
     }
 
     @Override
@@ -194,7 +276,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         new QueryParam(SchemaInfoStorable.TYPE, schemaMetadataKey.getType()),
                         new QueryParam(SchemaInfoStorable.GROUP, schemaMetadataKey.getDataSourceGroup()),
                         new QueryParam(SchemaInfoStorable.NAME, schemaMetadataKey.getName())
-                        );
+                );
 
         Collection<SchemaInfoStorable> storables = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
 
@@ -244,7 +326,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     private String getFingerprint(String type, String schemaText) {
-        return Hex.encodeHexString(schemaTypeWithProviders.get(type).getFingerPrint(schemaText));
+        return Hex.encodeHexString(schemaTypeWithProviders.get(type).getFingerprint(schemaText));
     }
 
     @Override
@@ -262,7 +344,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
             Collection<SchemaInfoStorable> versionedSchemas = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
             if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
-                LOG.warn("More than one schema exists with metadataId: [{}] and version [{}]", schemaMetadataId, version);
+                if(versionedSchemas.size() > 1) {
+                    LOG.warn("More than one schema exists with metadataId: [{}] and version [{}]", schemaMetadataId, version);
+                }
                 return new SchemaInfo(versionedSchemas.iterator().next());
             } else {
                 throw new SchemaNotFoundException("No Schema version exists with schemaMetadataId " + schemaMetadataId + " and version " + version);

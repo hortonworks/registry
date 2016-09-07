@@ -18,12 +18,13 @@
 package com.hortonworks.registries.schemaregistry;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  *
  */
 public interface SchemaProvider {
-    SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
+    public SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
 
     enum Compatibility {
         NONE,
@@ -32,12 +33,29 @@ public interface SchemaProvider {
         BOTH
     }
 
+    /**
+     * Type of this provider. This should be unique among all the registered providers.
+     *
+     * @return
+     */
     String getType();
 
     boolean isCompatible(String toSchema, String existingSchema, Compatibility compatibility);
 
     boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility);
 
-    byte[] getFingerPrint(String schemaText);
+    /**
+     * Returns fingerprint of canonicalized form of the given schema.
+     * @param schemaText
+     * @return
+     */
+    byte[] getFingerprint(String schemaText);
+
+    /**
+     * Returns all the fields in the given schema
+     * @param rootSchema
+     * @return
+     */
+    List<SchemaFieldInfo> generateFields(String rootSchema);
 
 }

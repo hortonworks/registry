@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -75,6 +76,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private Client client;
     private WebTarget rootTarget;
     private WebTarget schemasTarget;
+    private final WebTarget searchFieldsTarget;
+
     private final Options options;
     private ClassLoaderCache classLoaderCache;
 
@@ -86,6 +89,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         String rootCatalogURL = (String) conf.get(SCHEMA_REGISTRY_URL);
         rootTarget = client.target(rootCatalogURL);
         schemasTarget = rootTarget.path(SCHEMAS_PATH);
+        searchFieldsTarget = schemasTarget.path("search/fields");
 
         classLoaderCache = new ClassLoaderCache(this);
     }
@@ -161,8 +165,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Iterable<SchemaInfo> listAllSchemas() {
-        return getEntities(schemasTarget, SchemaInfo.class);
+    public Collection<SchemaKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
+        WebTarget target = searchFieldsTarget;
+        for (Map.Entry<String, String> entry : schemaFieldQuery.toQueryMap().entrySet()) {
+            target = target.queryParam(entry.getKey(), entry.getValue());
+        }
+
+        return getEntities(target, SchemaKey.class);
     }
 
     @Override

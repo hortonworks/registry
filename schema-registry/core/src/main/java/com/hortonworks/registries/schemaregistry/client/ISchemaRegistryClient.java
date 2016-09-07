@@ -19,6 +19,7 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -124,13 +125,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      */
     Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
 
-    /**
-     * Returns all schemas registered in the repository. It may be paging the results internally with out realizing all
-     * the results.
-     *
-     * @return
-     */
-    Iterable<SchemaInfo> listAllSchemas();
+    public Collection<SchemaKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery);
 
     /**
      * Returns {@link SchemaInfo} for the given {@link SchemaKey}
@@ -156,6 +151,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @return
      */
     Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
+
 
     /**
      * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
