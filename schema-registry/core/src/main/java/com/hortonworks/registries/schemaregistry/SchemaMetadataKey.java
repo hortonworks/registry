@@ -28,16 +28,19 @@ import java.io.Serializable;
 public class SchemaMetadataKey implements Serializable {
 
     /** type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc */
-    private final String type;
+    private String type;
 
     /**
      * Data source group to which this schema belongs to. For ex: kafka, hive etc
      * This can be used in querying schemas belonging to a specific data source group.
      */
-    private final String dataSourceGroup;
+    private String dataSourceGroup;
 
     /** Name of this schema. Follows unique constraint of (name, group, type). */
-    private final String name;
+    private String name;
+
+    private SchemaMetadataKey() {
+    }
 
     public SchemaMetadataKey(String type, String dataSourceGroup, String name) {
         Preconditions.checkNotNull(type, "type can not be null");

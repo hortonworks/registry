@@ -45,8 +45,9 @@ public interface ISchemaRegistry {
 
     SchemaInfo getLatestSchemaInfo(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
 
-    Collection<SchemaInfo> listAll();
+    Collection<SchemaKey> findSchemas(Map<String, String> filters);
 
+    Collection<SchemaKey> findSchemasWithFields(SchemaFieldQuery schemaFieldQuery);
 
     boolean isCompatible(SchemaKey schemaKey, String schema) throws SchemaNotFoundException;
 

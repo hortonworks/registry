@@ -25,6 +25,7 @@ import com.hortonworks.iotas.common.util.FileStorage;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
@@ -97,8 +98,9 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
             throw new RuntimeException(e);
         }
         storageManager.init(storageProviderConfiguration.getProperties());
-        storageManager.registerStorables( Lists.newArrayList(SchemaMetadataStorable.class, SchemaInfoStorable.class,
-                                                                SerDesInfoStorable.class, SchemaSerDesMapping.class));
+        storageManager.registerStorables(
+                Lists.newArrayList(SchemaMetadataStorable.class, SchemaInfoStorable.class, SchemaFieldInfoStorable.class,
+                                    SerDesInfoStorable.class, SchemaSerDesMapping.class));
         return storageManager;
     }
 

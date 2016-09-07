@@ -18,6 +18,7 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.iotas.common.test.IntegrationTest;
+import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
@@ -70,8 +71,8 @@ public class AvroSchemaRegistryClientTest {
     @Before
     public void setup() throws IOException {
         schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl));
-        schema1 = getSchema("/device.avsc");
-        schema2 = getSchema("/device2.avsc");
+        schema1 = getSchema("/schema-1.avsc");
+        schema2 = getSchema("/schema-2.avsc");
         schemaName = "schema-" + System.currentTimeMillis();
         schemaMetadataKey = new SchemaMetadataKey(type(), "group-1", "com.hwx.iot.device.schema");
         schemaMetadata = new SchemaMetadata(schemaMetadataKey, "device schema", SchemaProvider.Compatibility.BOTH);
@@ -103,7 +104,13 @@ public class AvroSchemaRegistryClientTest {
 
         Collection<SchemaInfo> allVersions = schemaRegistryClient.getAllVersions(schemaMetadataKey);
 
-        Assert.assertEquals(allVersions.size(), 2);
+        Assert.assertEquals(2, allVersions.size());
+
+        Collection<SchemaKey> md5SchemaKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("md5").build());
+        Assert.assertEquals(2, md5SchemaKeys.size());
+
+        Collection<SchemaKey> txidSchemaKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
+        Assert.assertEquals(1, txidSchemaKeys.size());
     }
 
 

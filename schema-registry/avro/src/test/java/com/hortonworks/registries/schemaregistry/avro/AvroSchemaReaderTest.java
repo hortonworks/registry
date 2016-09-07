@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.avro.Schema;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,16 +32,16 @@ public class AvroSchemaReaderTest {
 
     @Test
     public void testComplexSchemaRead() throws Exception {
-        AvroSchemaReader avroSchemaReader = new AvroSchemaReader();
+        AvroFieldsGenerator avroFieldsGenerator = new AvroFieldsGenerator();
 
         try (InputStream schemaStream = this.getClass().getResourceAsStream("/schema-1.avsc");) {
 
             Schema.Parser parser = new Schema.Parser();
             Schema schema = parser.parse(schemaStream);
 
-            List<AvroSchemaReader.FieldInfo> fieldInfos = avroSchemaReader.parse(schema);
+            List<SchemaFieldInfo> schemaFieldInfos = avroFieldsGenerator.generateFields(schema);
 
-            Assert.assertEquals(fieldInfos.size(), 12);
+            Assert.assertEquals(schemaFieldInfos.size(), 12);
         }
     }
 }

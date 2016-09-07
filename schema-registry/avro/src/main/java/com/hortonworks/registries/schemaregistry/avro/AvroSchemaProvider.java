@@ -17,15 +17,16 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
 import org.apache.avro.SchemaValidationException;
 
-import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -63,12 +64,19 @@ public class AvroSchemaProvider implements SchemaProvider {
     }
 
     @Override
-    public byte[] getFingerPrint(String schemaText) {
+    public byte[] getFingerprint(String schemaText) {
         try {
-            return SchemaNormalization.fingerprint("MD5", schemaText.getBytes("UTF-8"));
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            // generates fingerprint of canonical form of the given schema.
+            return SchemaNormalization.parsingFingerprint("MD5", new Schema.Parser().parse(schemaText));
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<SchemaFieldInfo> generateFields(String rootSchema) {
+        AvroFieldsGenerator avroFieldsGenerator = new AvroFieldsGenerator();
+        return avroFieldsGenerator.generateFields(new Schema.Parser().parse(rootSchema));
     }
 
 }

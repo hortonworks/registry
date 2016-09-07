@@ -17,35 +17,33 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.avro.Schema;
 import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  *
  */
-public class AvroSchemaReader {
-    private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaReader.class);
+public class AvroFieldsGenerator {
+    private static final Logger LOG = LoggerFactory.getLogger(AvroFieldsGenerator.class);
 
-    public AvroSchemaReader() {
+    public AvroFieldsGenerator() {
     }
 
-    public List<FieldInfo> parse(Schema rootSchema) {
-        List<FieldInfo> fieldInfos = new ArrayList<>();
-        parse(rootSchema, fieldInfos);
+    public List<SchemaFieldInfo> generateFields(Schema rootSchema) {
+        List<SchemaFieldInfo> schemaFieldInfos = new ArrayList<>();
+        parse(rootSchema, schemaFieldInfos);
 
-        return fieldInfos;
+        return schemaFieldInfos;
     }
 
-    public void parse(Schema schema, List<FieldInfo> fieldInfos) {
+    private void parse(Schema schema, List<SchemaFieldInfo> schemaFieldInfos) {
         String fullName = schema.getFullName();
         String namespace = schema.getNamespace();
         Set<String> aliases = schema.getAliases();
@@ -54,12 +52,12 @@ public class AvroSchemaReader {
 
         List<Schema.Field> fields = schema.getFields();
         for (Schema.Field field : fields) {
-            parseField(field, fieldInfos);
+            parseField(field, schemaFieldInfos);
         }
 
     }
 
-    private void parseField(Schema.Field field, List<FieldInfo> fieldInfos) {
+    private void parseField(Schema.Field field, List<SchemaFieldInfo> schemaFieldInfos) {
         Schema schema = field.schema();
         Schema.Type type = schema.getType();
         String name = field.name();
@@ -73,14 +71,13 @@ public class AvroSchemaReader {
         } catch (Exception e) {
             //ignore.
         }
-        fieldInfos.add(new FieldInfo(namespace, name, type.name()));
+        schemaFieldInfos.add(new SchemaFieldInfo(namespace, name, type.name()));
 
         // todo check whether fields should be mapped to the root schema.
-        // should be mapped to the parent element.
-        handleSchema(schema, fieldInfos);
+        parseSchema(schema, schemaFieldInfos);
     }
 
-    private void handleSchema(Schema schema, List<FieldInfo> fieldInfos) {
+    private void parseSchema(Schema schema, List<SchemaFieldInfo> schemaFieldInfos) {
         Schema.Type type = schema.getType();
         LOG.debug("Visiting type: [{}]", type);
 
@@ -89,24 +86,24 @@ public class AvroSchemaReader {
                 // store fields of a record.
                 List<Schema.Field> fields = schema.getFields();
                 for (Schema.Field recordField : fields) {
-                    parseField(recordField, fieldInfos);
+                    parseField(recordField, schemaFieldInfos);
                 }
                 break;
             case MAP:
                 Schema valueTypeSchema = schema.getValueType();
-                handleSchema(valueTypeSchema, fieldInfos);
+                parseSchema(valueTypeSchema, schemaFieldInfos);
                 break;
             case ENUM:
                 break;
             case ARRAY:
                 Schema elementType = schema.getElementType();
-                handleSchema(elementType, fieldInfos);
+                parseSchema(elementType, schemaFieldInfos);
                 break;
 
             case UNION:
                 List<Schema> unionTypes = schema.getTypes();
                 for (Schema typeSchema : unionTypes) {
-                    handleSchema(typeSchema, fieldInfos);
+                    parseSchema(typeSchema, schemaFieldInfos);
                 }
                 break;
 
@@ -129,19 +126,4 @@ public class AvroSchemaReader {
 
     }
 
-    private String getFullName(Schema.Field field) {
-        return field.schema().getNamespace() + "." + field.name();
-    }
-
-    static class FieldInfo implements Serializable {
-        public final String namespace;
-        public final String name;
-        public final String type;
-
-        public FieldInfo(String namespace, String name, String type) {
-            this.namespace = namespace;
-            this.name = name;
-            this.type = type;
-        }
-    }
 }
