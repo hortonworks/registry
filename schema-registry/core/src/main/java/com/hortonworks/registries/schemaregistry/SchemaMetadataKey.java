@@ -22,12 +22,12 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema metadata information. This key can be used to find any schema metadata in
- * the schema repository.
+ * This class contains the schema metadata information. This key (name, group, type) is used
+ * to find a schema in the schema repository.
  */
 public class SchemaMetadataKey implements Serializable {
 
-    /** type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc */
+    /** Type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc */
     private String type;
 
     /**
@@ -39,6 +39,8 @@ public class SchemaMetadataKey implements Serializable {
     /** Name of this schema. Follows unique constraint of (name, group, type). */
     private String name;
 
+    /** Private constructor for Jackson JSON mapping */
+    @SuppressWarnings("unused")
     private SchemaMetadataKey() {
     }
 

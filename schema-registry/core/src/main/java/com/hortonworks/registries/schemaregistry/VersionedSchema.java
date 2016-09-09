@@ -21,6 +21,7 @@ import java.io.Serializable;
 
 /**
  * This can be used for adding details about versioned instance of a schema.
+ * TODO: needs better description. Why is it called VersionedSchema?
  */
 public class VersionedSchema implements Serializable {
     private String description;

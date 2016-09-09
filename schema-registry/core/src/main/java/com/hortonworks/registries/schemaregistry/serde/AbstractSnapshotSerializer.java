@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * SnapshotSerializer implementation which sends schema-id and version to the outputstream by taking {@link SchemaMetadata} instance.
+ * SnapshotSerializer implementation which sends schema-id and version to the output stream by taking {@link SchemaMetadata} instance.
  */
 public abstract class AbstractSnapshotSerializer<O> implements SnapshotSerializer<InputStream, O, SchemaMetadata> {
     private SchemaRegistryClient schemaRegistryClient;

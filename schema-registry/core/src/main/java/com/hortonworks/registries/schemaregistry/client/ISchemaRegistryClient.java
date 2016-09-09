@@ -91,10 +91,8 @@ import java.util.Collection;
 public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
-     * Returns true if the given {@code schemaMetadata} is successfully registered.
-     *
-     * @param schemaMetadata
-     * @return
+     * @param schemaMetadata schema metadata
+     * @return true if the given {@code schemaMetadata} is successfully registered.
      */
     boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) throws InvalidSchemaException;
 
@@ -107,71 +105,67 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      *      - Creates a schema for the given name and returns respective schemaKey if it does not exist
      * </pre>
      *
-     * @param schemaMetadata
-     * @param versionedSchema
-     * @return
-     * @throws InvalidSchemaException
+     * @param schemaMetadata metadata related to schema
+     * @param versionedSchema schema to be registered
+     * @return version of the schema added to schema-metadata.
+     * @throws InvalidSchemaException on error
      */
     Integer registerSchema(SchemaMetadata schemaMetadata, VersionedSchema versionedSchema) throws InvalidSchemaException;
 
     /**
-     * Returns {@link SchemaKey} after adding the given schema as the next version of the schema.
+     * Adds the given schema {@code versionedSchema} and returns the corresponding version
      *
-     * @param schemaMetadataKey
-     * @param versionedSchema
-     * @return
+     * @param schemaMetadataKey key identifying a schema
+     * @param versionedSchema schema to be registered
+     * @return version of the schema added to schema-metadata.
      * @throws InvalidSchemaException      if the given schema is not valid.
      * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
      */
     Integer addVersionedSchema(SchemaMetadataKey schemaMetadataKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
 
-    public Collection<SchemaKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery);
+    /**
+     * @return schemas matching the fields specified in the query
+     */
+    Collection<SchemaKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery);
 
     /**
-     * Returns {@link SchemaInfo} for the given {@link SchemaKey}
-     *
-     * @param schemaKey
-     * @return
+     * @param schemaKey key identifying a schema and a version
+     * @return {@link SchemaInfo} for the given {@link SchemaKey}
      */
     SchemaInfo getSchema(SchemaKey schemaKey) throws SchemaNotFoundException;
 
 
     /**
-     * Returns the latest version of the schema for the given {@param schemaMetadataKey}
-     *
-     * @param schemaMetadataKey
-     * @return
+     * @param schemaMetadataKey key identifying schema
+     * @return latest version of the schema for the given {@param schemaMetadataKey}
      */
     SchemaInfo getLatestSchema(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
 
     /**
-     * Returns all versions of the schemas for given {@param schemaMetadataKey}
-     *
-     * @param schemaMetadataKey
-     * @return
+     * @param schemaMetadataKey key identifying schema
+     * @return all versions of the schemas for given {@param schemaMetadataKey}
      */
     Collection<SchemaInfo> getAllVersions(SchemaMetadataKey schemaMetadataKey) throws SchemaNotFoundException;
 
 
     /**
-     * Returns true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
-     *
-     * @param schemaMetadataKey
-     * @param toSchemaText
-     * @return
+     * @param schemaMetadataKey key identifying a schema
+     * @param toSchemaText text representing the schema
+     * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
      */
     boolean isCompatibleWithAllVersions(SchemaMetadataKey schemaMetadataKey, String toSchemaText) throws SchemaNotFoundException;
 
     /**
-     * Returns unique id for the uploaded bytes read from input stream to file storage.
+     * TODO: needs better description. What bytes are being uploaded?
      *
      * @param inputStream
-     * @return
+     * @return unique id for the uploaded bytes read from input stream to file storage.
      */
     String uploadFile(InputStream inputStream) throws SerDeException;
 
     /**
      * Downloads the content of file stored with the given {@code fileId}.
+     * TODO need description on what these files are
      *
      * @param fileId
      * @return

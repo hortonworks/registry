@@ -73,13 +73,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
     static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
 
-    private Client client;
-    private WebTarget rootTarget;
-    private WebTarget schemasTarget;
+    private final Client client;
+    private final WebTarget rootTarget;
+    private final WebTarget schemasTarget;
     private final WebTarget searchFieldsTarget;
 
     private final Options options;
-    private ClassLoaderCache classLoaderCache;
+    private final ClassLoaderCache classLoaderCache;
 
     public SchemaRegistryClient(Map<String, Object> conf) {
         options = new Options(conf);
@@ -296,7 +296,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final long DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 1000L;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
 
-        private Map<String, Object> config;
+        private final Map<String, Object> config;
 
         public Options(Map<String, Object> config) {
             this.config = config;

@@ -39,7 +39,6 @@ public class AvroFieldsGenerator {
     public List<SchemaFieldInfo> generateFields(Schema rootSchema) {
         List<SchemaFieldInfo> schemaFieldInfos = new ArrayList<>();
         parse(rootSchema, schemaFieldInfos);
-
         return schemaFieldInfos;
     }
 
@@ -54,7 +53,6 @@ public class AvroFieldsGenerator {
         for (Schema.Field field : fields) {
             parseField(field, schemaFieldInfos);
         }
-
     }
 
     private void parseField(Schema.Field field, List<SchemaFieldInfo> schemaFieldInfos) {
