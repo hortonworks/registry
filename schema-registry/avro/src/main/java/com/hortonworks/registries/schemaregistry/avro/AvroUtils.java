@@ -1,0 +1,55 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.hortonworks.registries.schemaregistry.avro;
+
+import org.apache.avro.Schema;
+
+/**
+ * Utils class for Avro related functionality.
+ */
+public final class AvroUtils {
+
+    private AvroUtils() {
+    }
+
+    public static Schema getSchemaForPrimitives(Object input) {
+        Schema.Type type;
+        if(input == null) {
+            type = Schema.Type.NULL;
+        } else if(input instanceof byte[]) {
+            type = Schema.Type.BYTES;
+        } else if(input instanceof Integer || input instanceof Short) {
+            type = Schema.Type.INT;
+        } else if(input instanceof Float) {
+            type = Schema.Type.FLOAT;
+        } else if(input instanceof Double) {
+            type = Schema.Type.DOUBLE;
+        } else if(input instanceof Long) {
+            type = Schema.Type.LONG;
+        } else if(input instanceof String) {
+            type = Schema.Type.STRING;
+        } else if(input instanceof Boolean) {
+            type = Schema.Type.BOOLEAN;
+        } else {
+            throw new RuntimeException("input type: " +input.getClass()+" is not supported");
+        }
+
+        return Schema.create(type);
+
+    }
+}

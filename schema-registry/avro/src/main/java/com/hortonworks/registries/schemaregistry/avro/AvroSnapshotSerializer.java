@@ -18,8 +18,8 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDeException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.apache.avro.Schema;
@@ -56,7 +56,7 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
         Schema schema = getSchema(input);
         try {
             // register given schema
-            Integer version = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema.toString(), "Schema registered by serializer:"+ this.getClass()));
+            Integer version = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema.toString(), "Schema registered by serializer:" + this.getClass()));
 
             // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
             byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(version).array());
@@ -79,11 +79,14 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
     }
 
     private Schema getSchema(Object input) {
+        Schema schema = null;
         if (input instanceof GenericContainer) {
-            return ((GenericContainer) input).getSchema();
+            schema = ((GenericContainer) input).getSchema();
+        } else {
+            schema = AvroUtils.getSchemaForPrimitives(input);
         }
 
-        throw new IllegalArgumentException("input is not an instance of GenericContainer");
+        return schema;
     }
 
     @Override

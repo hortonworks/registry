@@ -45,10 +45,8 @@ public class AvroFieldsGenerator {
 
     private void parse(Schema schema, List<SchemaFieldInfo> schemaFieldInfos) {
         String fullName = schema.getFullName();
-        String namespace = schema.getNamespace();
-        Set<String> aliases = schema.getAliases();
 
-        LOG.debug("Full name: [{}], namespace: [{}], aliases: [{}]", fullName, namespace, aliases);
+        LOG.debug("Schema full name: [{}]", fullName);
 
         List<Schema.Field> fields = schema.getFields();
         for (Schema.Field field : fields) {
@@ -62,8 +60,6 @@ public class AvroFieldsGenerator {
         Schema.Type type = schema.getType();
         String name = field.name();
 
-        Set<String> aliases = field.aliases();
-        JsonNode jsonNode = field.defaultValue();
         LOG.debug("Visiting field: [{}]", field);
         String namespace = null;
         try {

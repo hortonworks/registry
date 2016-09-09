@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.google.common.collect.Lists;
 import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
@@ -31,6 +32,9 @@ import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplic
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,6 +42,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -47,6 +52,9 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -111,6 +119,44 @@ public class AvroSchemaRegistryClientTest {
 
         Collection<SchemaKey> txidSchemaKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
         Assert.assertEquals(1, txidSchemaKeys.size());
+    }
+
+    @Test
+    public void testAvroSerDe() throws Exception {
+        String deviceSchema = getSchema("/device.avsc");
+        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(deviceSchema, "Initial version of the schema"));
+
+        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+        AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
+        avroSnapshotSerializer.init(config);
+        AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();
+        avroSnapshotDeserializer.init(config);
+
+        Object avroObject = createGenericAvroRecord(deviceSchema);
+        Random random = new Random();
+        byte[] bytes = new byte[4];
+        random.nextBytes(bytes);
+        List<?> objects = Lists.newArrayList(avroObject, random.nextBoolean(), random.nextInt(), random.nextLong(),
+                                                bytes, "Current time:"+System.currentTimeMillis());
+        for (Object obj : objects) {
+            byte[] serializedData = avroSnapshotSerializer.serialize(obj, schemaMetadata);
+
+            Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata.getSchemaMetadataKey(), null);
+
+            Assert.assertEquals(avroObject, deserializedObj);
+        }
+    }
+
+    private Object createGenericAvroRecord(String schemaText) {
+        Schema schema = new Schema.Parser().parse(schemaText);
+
+        GenericRecord avroRecord = new GenericData.Record(schema);
+        avroRecord.put("xid", System.currentTimeMillis());
+        avroRecord.put("name", "foo-"+System.currentTimeMillis());
+        avroRecord.put("version", new Random().nextInt());
+        avroRecord.put("timestamp", System.currentTimeMillis());
+
+        return avroRecord;
     }
 
 
