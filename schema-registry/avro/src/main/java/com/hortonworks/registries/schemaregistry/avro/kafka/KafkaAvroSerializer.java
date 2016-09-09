@@ -15,47 +15,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.avro;
+package com.hortonworks.registries.schemaregistry.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
+import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
 
 /**
  *
  */
-public class KafkaSerializer implements org.apache.kafka.common.serialization.Serializer<Object> {
-    private static final String GROUP_ID = "kafka";
+public class KafkaAvroSerializer implements Serializer<Object> {
 
     private final AvroSnapshotSerializer avroSnapshotSerializer;
     private boolean isKey;
     private SchemaProvider.Compatibility compatibility;
 
-    public KafkaSerializer(AvroSnapshotSerializer avroSnapshotSerializer) {
-        this.avroSnapshotSerializer = avroSnapshotSerializer;
+    public KafkaAvroSerializer() {
+        avroSnapshotSerializer = new AvroSnapshotSerializer();
     }
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
         compatibility = (SchemaProvider.Compatibility) configs.get("compatibility");
         this.isKey = isKey;
+
+        avroSnapshotSerializer.init(configs);
     }
 
     @Override
     public byte[] serialize(String topic, Object data) {
-        return avroSnapshotSerializer.serialize(data, createSchemaMetadataInfo(topic, data));
+        return avroSnapshotSerializer.serialize(data, createSchemaMetadata(topic));
     }
 
-    private SchemaMetadata createSchemaMetadataInfo(String topic, Object data) {
-        String schemaName = getSchemaName(topic, data);
-        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(AvroSnapshotSerializer.TYPE, GROUP_ID, schemaName);
-        return new SchemaMetadata(schemaMetadataKey, schemaName, compatibility);
-    }
-
-    protected String getSchemaName(String topic, Object data) {
-        return topic + ":" + (isKey ? "k" : "v");
+    private SchemaMetadata createSchemaMetadata(String topic) {
+        SchemaMetadataKey schemaMetadataKey = Utils.getSchemaMetadataKey(topic, isKey);
+        return new SchemaMetadata(schemaMetadataKey, null, compatibility);
     }
 
     @Override

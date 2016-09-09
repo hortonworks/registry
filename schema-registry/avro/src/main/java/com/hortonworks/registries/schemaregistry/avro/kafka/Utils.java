@@ -15,32 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.avro;
+package com.hortonworks.registries.schemaregistry.avro.kafka;
 
-import org.apache.avro.Schema;
-import org.junit.BeforeClass;
-
-import java.io.IOException;
-import java.io.InputStream;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 
 /**
  *
  */
-public class AvroSerDeTest {
+public final class Utils {
+    public static final String GROUP_ID = "kafka";
 
-    private static Schema schema;
-
-    @BeforeClass
-    public static void setup() throws IOException {
-        InputStream avroSchemaStream = AvroSerDeTest.class.getResourceAsStream("/device.avsc");
-        Schema.Parser parser = new Schema.Parser();
-        schema = parser.parse(avroSchemaStream);
+    private Utils() {
     }
 
-    public void testKafkaSerDes() {
-
-
-
+    public static SchemaMetadataKey getSchemaMetadataKey(String topic, boolean isKey) {
+        String name = topic + ":" + (isKey ? "k" : "v");
+        return new SchemaMetadataKey(AvroSchemaProvider.TYPE, GROUP_ID, name);
     }
 
 }

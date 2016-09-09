@@ -26,7 +26,7 @@ import java.io.OutputStream;
  *
  * @param <I> Input type of the payload
  * @param <O> serialized output type. For ex: byte[], String etc.
- * @param <S> schema to which given Input to be serialized as Output
+ * @param <S> schema related information, which can be used for Input to be serialized as Output
  */
 public interface SnapshotSerializer<I, O, S> extends Resourceable {
 
@@ -39,12 +39,4 @@ public interface SnapshotSerializer<I, O, S> extends Resourceable {
      */
     O serialize(I input, S schema) throws SerDeException;
 
-    /**
-     * Serializes the given input according to the schema and writes it to the given outputStream
-     *
-     * @param input
-     * @param outputStream
-     * @param schema
-     */
-    void serialize(I input, OutputStream outputStream, S schema) throws SerDeException;
 }

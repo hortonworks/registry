@@ -81,7 +81,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final Options options;
     private ClassLoaderCache classLoaderCache;
 
-    public SchemaRegistryClient(Map<String, Object> conf) {
+    public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
 
         client = ClientBuilder.newClient(new ClientConfig());
@@ -296,13 +296,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final long DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 1000L;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
 
-        private Map<String, Object> config;
+        private Map<String, ?> config;
 
-        public Options(Map<String, Object> config) {
+        public Options(Map<String, ?> config) {
             this.config = config;
         }
-
-
+        
         private Object getPropertyValue(String propertyKey, Object defaultValue) {
             Object value = config.get(propertyKey);
             return value != null ? value : defaultValue;

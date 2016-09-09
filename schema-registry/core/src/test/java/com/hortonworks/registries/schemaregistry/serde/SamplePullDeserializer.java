@@ -102,7 +102,7 @@ public class SamplePullDeserializer implements PullDeserializer<SchemaDetails, S
     }
 
     @Override
-    public void init(Map<String, Object> config) {
+    public void init(Map<String, ?> config) {
 
     }
 

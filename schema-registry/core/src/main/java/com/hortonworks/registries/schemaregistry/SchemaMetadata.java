@@ -67,7 +67,9 @@ public final class SchemaMetadata implements Serializable {
         this.timestamp = timestamp;
         Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
 
-        this.compatibility = compatibility;
+        if(compatibility != null) {
+            this.compatibility = compatibility;
+        }
         this.description = description;
     }
 
