@@ -15,32 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.avro;
-
-import org.apache.avro.Schema;
-import org.junit.BeforeClass;
-
-import java.io.IOException;
-import java.io.InputStream;
+package com.hortonworks.registries.schemaregistry.serde;
 
 /**
- *
+ * This Exception is thrown when any errors occur during serialization/deserialization of a given payload.
  */
-public class AvroSerDeTest {
+public class SerDesException extends RuntimeException {
 
-    private static Schema schema;
-
-    @BeforeClass
-    public static void setup() throws IOException {
-        InputStream avroSchemaStream = AvroSerDeTest.class.getResourceAsStream("/device.avsc");
-        Schema.Parser parser = new Schema.Parser();
-        schema = parser.parse(avroSchemaStream);
+    public SerDesException() {
     }
 
-    public void testKafkaSerDes() {
-
-
-
+    public SerDesException(String message) {
+        super(message);
     }
 
+    public SerDesException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public SerDesException(Throwable cause) {
+        super(cause);
+    }
+
+    public SerDesException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

@@ -23,7 +23,7 @@ import com.hortonworks.iotas.common.QueryParam;
 import com.hortonworks.iotas.common.util.FileStorage;
 import com.hortonworks.iotas.storage.Storable;
 import com.hortonworks.iotas.storage.StorageManager;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,7 +194,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // todo get only few selected columns instead of getting the whole row.
         Collection<SchemaInfoStorable> storables;
 
-        if(filters == null || filters.isEmpty()) {
+        if (filters == null || filters.isEmpty()) {
             storables = storageManager.list(SchemaInfoStorable.NAME_SPACE);
         } else {
             List<QueryParam> queryParams =
@@ -218,15 +218,15 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Collection<SchemaKey> schemaKeys;
         if (fieldInfos != null && !fieldInfos.isEmpty()) {
             List<Long> schemaIds = fieldInfos.stream()
-                                                .map(schemaFieldInfoStorable -> schemaFieldInfoStorable.getSchemaInstanceId())
-                                                .collect(Collectors.toList());
+                    .map(schemaFieldInfoStorable -> schemaFieldInfoStorable.getSchemaInstanceId())
+                    .collect(Collectors.toList());
 
             // todo get only few selected columns instead of getting the whole row.
             // add OR query to find items from store
             schemaKeys = new ArrayList<>();
             for (Long schemaId : schemaIds) {
                 SchemaKey schemaKey = getSchemaKey(schemaId);
-                if(schemaKey != null) {
+                if (schemaKey != null) {
                     schemaKeys.add(schemaKey);
                 }
             }
@@ -242,7 +242,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaInfoStorable.ID, schemaId.toString()));
         Collection<SchemaInfoStorable> versionedSchemas = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
-        if(versionedSchemas != null && !versionedSchemas.isEmpty()) {
+        if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
             SchemaInfoStorable storable = versionedSchemas.iterator().next();
             schemaKey = new SchemaKey(new SchemaMetadataKey(storable.getType(), storable.getDataSourceGroup(), storable.getName()), storable.getVersion());
         }
@@ -252,13 +252,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     private List<QueryParam> buildQueryParam(SchemaFieldQuery schemaFieldQuery) {
         List<QueryParam> queryParams = new ArrayList<>(3);
-        if(schemaFieldQuery.getNamespace() != null) {
+        if (schemaFieldQuery.getNamespace() != null) {
             queryParams.add(new QueryParam(SchemaFieldInfoStorable.FIELD_NAMESPACE, schemaFieldQuery.getNamespace()));
         }
-        if(schemaFieldQuery.getName() != null) {
+        if (schemaFieldQuery.getName() != null) {
             queryParams.add(new QueryParam(SchemaFieldInfoStorable.NAME, schemaFieldQuery.getName()));
         }
-        if(schemaFieldQuery.getType() != null) {
+        if (schemaFieldQuery.getType() != null) {
             queryParams.add(new QueryParam(SchemaFieldInfoStorable.TYPE, schemaFieldQuery.getType()));
         }
 
@@ -344,7 +344,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
             Collection<SchemaInfoStorable> versionedSchemas = storageManager.find(SchemaInfoStorable.NAME_SPACE, queryParams);
             if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
-                if(versionedSchemas.size() > 1) {
+                if (versionedSchemas.size() > 1) {
                     LOG.warn("More than one schema exists with metadataId: [{}] and version [{}]", schemaMetadataId, version);
                 }
                 return new SchemaInfo(versionedSchemas.iterator().next());
@@ -508,7 +508,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId) {
         SerDesInfo serDesInfo = getSerDesInfo(serDesId);
         if (serDesInfo == null) {
-            throw new SerDeException("Serializer with given ID " + serDesId + " does not exist");
+            throw new SerDesException("Serializer with given ID " + serDesId + " does not exist");
         }
 
         SchemaSerDesMapping schemaSerDesMapping = new SchemaSerDesMapping(schemaMetadataId, serDesId);

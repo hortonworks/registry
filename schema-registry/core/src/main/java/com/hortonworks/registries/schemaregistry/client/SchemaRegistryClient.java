@@ -29,7 +29,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -241,7 +241,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             Class<T> clazz = (Class<T>) Class.forName(serializerInfo.getClassName(), true, classLoader);
             t = clazz.newInstance();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            throw new SerDeException(e);
+            throw new SerDesException(e);
         }
 
         return t;
@@ -301,17 +301,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public Options(Map<String, ?> config) {
             this.config = config;
         }
-        
+
         private Object getPropertyValue(String propertyKey, Object defaultValue) {
             Object value = config.get(propertyKey);
             return value != null ? value : defaultValue;
         }
 
-        public int getCacheSize() {
+        public int getClassLoaderCacheSize() {
             return (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CACHE_SIZE);
         }
 
-        public long getExpiryInMilliSecs() {
+        public long getClassLoaderCacheExpiryInMilliSecs() {
             return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL, DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS);
         }
 

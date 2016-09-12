@@ -58,8 +58,8 @@ public class ClassLoaderCache {
 
         SchemaRegistryClient.Options options = schemaRegistryClient.getOptions();
         loadingCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getCacheSize())
-                .expireAfterAccess(options.getExpiryInMilliSecs(), TimeUnit.MILLISECONDS)
+                .maximumSize(options.getClassLoaderCacheSize())
+                .expireAfterAccess(options.getClassLoaderCacheExpiryInMilliSecs(), TimeUnit.MILLISECONDS)
                 .build(cacheLoader);
 
         localJarsDir = new File(schemaRegistryClient.getOptions().getLocalJarPath());

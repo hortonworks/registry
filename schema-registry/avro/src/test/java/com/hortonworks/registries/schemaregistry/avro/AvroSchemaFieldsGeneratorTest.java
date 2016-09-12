@@ -28,7 +28,7 @@ import java.util.List;
 /**
  *
  */
-public class AvroSchemaReaderTest {
+public class AvroSchemaFieldsGeneratorTest {
 
     @Test
     public void testComplexSchemaRead() throws Exception {

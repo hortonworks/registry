@@ -19,14 +19,14 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,29 +49,45 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
     }
 
     @Override
-    public Object deserialize(InputStream payloadInputStream, SchemaMetadataKey writerSchemaMetadataKey, Schema readerSchema) throws SerDeException {
+    public Object deserialize(InputStream payloadInputStream, SchemaMetadataKey writerSchemaMetadataKey, Schema readerSchema) throws SerDesException {
         ByteBuffer byteBuffer = ByteBuffer.allocate(4);
         try {
             payloadInputStream.read(byteBuffer.array());
         } catch (IOException e) {
-            throw new SerDeException(e);
+            throw new SerDesException(e);
         }
         int version = byteBuffer.getInt();
 
         SchemaInfo writerSchemaInfo = schemaRegistryClient.getSchema(new SchemaKey(writerSchemaMetadataKey, version));
         if (writerSchemaInfo == null) {
-            throw new SerDeException("No schema exists with metadata-key: " + writerSchemaMetadataKey + " and version: " + version);
+            throw new SerDesException("No schema exists with metadata-key: " + writerSchemaMetadataKey + " and version: " + version);
         }
 
+        // todo have cache to avoid parsing schema every time
         String schemaText = writerSchemaInfo.getSchemaText();
         Schema writerSchema = new Schema.Parser().parse(schemaText);
-        GenericDatumReader genericDatumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema) : new GenericDatumReader(writerSchema);
+        Object deserializedObj = null;
         try {
-            return genericDatumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
+            Schema.Type writerSchemaType = writerSchema.getType();
+            if (Schema.Type.BYTES.equals(writerSchemaType)) {
+                // serializer writes byte array directly without going through avro decoder layers.
+                deserializedObj = IOUtils.toByteArray(payloadInputStream);
+            } else if (Schema.Type.STRING.equals(writerSchemaType)) {
+                // generate UTF-8 string object from the received bytes.
+                deserializedObj = new String(IOUtils.toByteArray(payloadInputStream), AvroUtils.UTF_8);
+            } else {
+                GenericDatumReader genericDatumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema) : new GenericDatumReader(writerSchema);
+                deserializedObj = genericDatumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
+                // String type's values are not always returned as String objects but with internal Avro representations for UTF-8.
+                if (Schema.Type.STRING == writerSchemaType) {
+                    deserializedObj = deserializedObj.toString();
+                }
+            }
         } catch (IOException e) {
-            throw new SerDeException(e);
+            throw new SerDesException(e);
         }
 
+        return deserializedObj;
     }
 
     @Override

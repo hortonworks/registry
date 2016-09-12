@@ -27,7 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -168,7 +168,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param inputStream
      * @return
      */
-    String uploadFile(InputStream inputStream) throws SerDeException;
+    String uploadFile(InputStream inputStream) throws SerDesException;
 
     /**
      * Downloads the content of file stored with the given {@code fileId}.
@@ -223,7 +223,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      *
      * @param <T>            type of the instance to be created
      * @param serializerInfo
-     * @throws SerDeException throws an Exception if serializer or deserializer class is not an instance of {@code T}
+     * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createSerializerInstance(SerDesInfo serializerInfo);
 
@@ -232,7 +232,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      *
      * @param <T>              type of the instance to be created
      * @param deserializerInfo
-     * @throws SerDeException throws an Exception if serializer or deserializer class is not an instance of {@code T}
+     * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createDeserializerInstance(SerDesInfo deserializerInfo);
 

@@ -17,7 +17,6 @@
  */
 package com.hortonworks.registries.schemaregistry.avro.kafka;
 
-import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 
@@ -31,7 +30,6 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     private final AvroSnapshotDeserializer avroSnapshotDeserializer;
 
     private boolean isKey;
-    private SchemaProvider.Compatibility compatibility;
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
@@ -46,8 +44,8 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     @Override
     public Object deserialize(String topic, byte[] data) {
         return avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(data),
-                                                    Utils.getSchemaMetadataKey(topic, isKey),
-                                                    null);
+                Utils.getSchemaMetadataKey(topic, isKey),
+                null);
     }
 
     @Override

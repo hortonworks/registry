@@ -14,6 +14,7 @@
     <properties>
         <kafka-clients.version>0.10.0.0</kafka-clients.version>
         <avro.version>1.7.7</avro.version>
+        <commons.version>2.5</commons.version>
         <jersey-media-multipart.version>2.22.1</jersey-media-multipart.version>
     </properties>
 
@@ -54,14 +55,13 @@
               </exclusion>
             </exclusions>
         </dependency>
-
-        <!-- test dependencies -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.1</version>
-            <scope>test</scope>
+            <version>${commons.version}</version>
         </dependency>
+
+        <!-- test dependencies -->
         <dependency>
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>

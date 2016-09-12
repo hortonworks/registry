@@ -22,8 +22,9 @@ import com.hortonworks.registries.schemaregistry.Resourceable;
 /**
  * Deserializer interface for deserializing InputStream into output {@code O} according to the Schema {@code S}.
  * <p>
- * @param <I> Input type of the payload
- * @param <O> Output type of the deserialized content.
+ *
+ * @param <I>  Input type of the payload
+ * @param <O>  Output type of the deserialized content.
  * @param <WS> Writer schema information.
  * @param <RS> Reader schema information.
  */
@@ -36,9 +37,8 @@ public interface SnapshotDeserializer<I, O, WS, RS> extends Resourceable {
      * @param input
      * @param writerSchemaInfo
      * @param readerSchemaInfo
-     *
      * @return O output
      */
-    O deserialize(I input, WS writerSchemaInfo, RS readerSchemaInfo) throws SerDeException;
+    O deserialize(I input, WS writerSchemaInfo, RS readerSchemaInfo) throws SerDesException;
 
 }

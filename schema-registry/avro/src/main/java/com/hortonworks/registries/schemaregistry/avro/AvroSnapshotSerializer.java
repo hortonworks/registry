@@ -20,7 +20,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
@@ -51,31 +51,42 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
     }
 
     @Override
-    public byte[] serialize(Object input, SchemaMetadata schemaMetadata) throws SerDeException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    public byte[] serialize(Object input, SchemaMetadata schemaMetadata) throws SerDesException {
+
         Schema schema = getSchema(input);
-        try {
+
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();) {
             // register given schema
             Integer version = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema.toString(), "Schema registered by serializer:" + this.getClass()));
 
             // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
             byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(version).array());
 
-            // todo handle all cases
-            BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(byteArrayOutputStream, null);
-            DatumWriter<Object> writer;
-            if (input instanceof SpecificRecord) {
-                writer = new SpecificDatumWriter<>(schema);
+            Schema.Type schemaType = schema.getType();
+            if (Schema.Type.BYTES.equals(schemaType)) {
+                // incase of byte arrays, no need to go through avro as there is not much to optimize and avro is expecting
+                // the payload to be ByteBuffer instead of a byte array
+                byteArrayOutputStream.write((byte[]) input);
+            } else if (Schema.Type.STRING.equals(schemaType)) {
+                // get UTF-8 bytes and directly send those over instead of usng avro.
+                byteArrayOutputStream.write(input.toString().getBytes(AvroUtils.UTF_8));
             } else {
-                writer = new GenericDatumWriter<>(schema);
-            }
-            writer.write(input, encoder);
-            encoder.flush();
-        } catch (Exception e) {
-            throw new SerDeException(e);
-        }
+                BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
+                DatumWriter<Object> writer;
+                if (input instanceof SpecificRecord) {
+                    writer = new SpecificDatumWriter<>(schema);
+                } else {
+                    writer = new GenericDatumWriter<>(schema);
+                }
 
-        return byteArrayOutputStream.toByteArray();
+                writer.write(input, encoder);
+                encoder.flush();
+            }
+
+            return byteArrayOutputStream.toByteArray();
+        } catch (Exception e) {
+            throw new SerDesException(e);
+        }
     }
 
     private Schema getSchema(Object input) {

@@ -19,13 +19,11 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.avro.Schema;
-import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
@@ -44,15 +42,19 @@ public class AvroFieldsGenerator {
     }
 
     private void parse(Schema schema, List<SchemaFieldInfo> schemaFieldInfos) {
-        String fullName = schema.getFullName();
+        if (schema.getType() != Schema.Type.RECORD) {
+            LOG.info("Given schema type [{}] is not record", schema.getType());
+        } else {
 
-        LOG.debug("Schema full name: [{}]", fullName);
+            String fullName = schema.getFullName();
 
-        List<Schema.Field> fields = schema.getFields();
-        for (Schema.Field field : fields) {
-            parseField(field, schemaFieldInfos);
+            LOG.debug("Schema full name: [{}]", fullName);
+
+            List<Schema.Field> fields = schema.getFields();
+            for (Schema.Field field : fields) {
+                parseField(field, schemaFieldInfos);
+            }
         }
-
     }
 
     private void parseField(Schema.Field field, List<SchemaFieldInfo> schemaFieldInfos) {

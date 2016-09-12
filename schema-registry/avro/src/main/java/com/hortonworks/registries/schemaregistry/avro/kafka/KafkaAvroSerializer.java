@@ -17,10 +17,9 @@
  */
 package com.hortonworks.registries.schemaregistry.avro.kafka;
 
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer;
 import org.apache.kafka.common.serialization.Serializer;
 
