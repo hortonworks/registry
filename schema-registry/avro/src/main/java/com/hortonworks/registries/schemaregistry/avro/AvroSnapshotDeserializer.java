@@ -26,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,18 +71,22 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
         try {
             Schema.Type writerSchemaType = writerSchema.getType();
             if (Schema.Type.BYTES.equals(writerSchemaType)) {
-                // serializer writes byte array directly without going through avro decoder layers.
+                // serializer writes byte array directly without going through avro encoder layers.
                 deserializedObj = IOUtils.toByteArray(payloadInputStream);
             } else if (Schema.Type.STRING.equals(writerSchemaType)) {
                 // generate UTF-8 string object from the received bytes.
                 deserializedObj = new String(IOUtils.toByteArray(payloadInputStream), AvroUtils.UTF_8);
             } else {
-                GenericDatumReader genericDatumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema) : new GenericDatumReader(writerSchema);
-                deserializedObj = genericDatumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
-                // String type's values are not always returned as String objects but with internal Avro representations for UTF-8.
-                if (Schema.Type.STRING == writerSchemaType) {
-                    deserializedObj = deserializedObj.toString();
+                int recordType = payloadInputStream.read();
+                GenericDatumReader datumReader = null;
+                if (recordType == AvroUtils.GENERIC_RECORD) {
+                    datumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema)
+                                                                : new GenericDatumReader(writerSchema);
+                } else {
+                    datumReader = readerSchema != null ? new SpecificDatumReader(writerSchema, readerSchema)
+                            : new SpecificDatumReader(writerSchema);
                 }
+                deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
         } catch (IOException e) {
             throw new SerDesException(e);

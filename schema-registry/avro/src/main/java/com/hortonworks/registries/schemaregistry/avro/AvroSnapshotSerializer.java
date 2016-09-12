@@ -73,7 +73,9 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
             } else {
                 BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
                 DatumWriter<Object> writer;
-                if (input instanceof SpecificRecord) {
+                boolean isSpecificRecord = input instanceof SpecificRecord;
+                byteArrayOutputStream.write(isSpecificRecord ? AvroUtils.SPECIFIC_RECORD : AvroUtils.GENERIC_RECORD);
+                if (isSpecificRecord) {
                     writer = new SpecificDatumWriter<>(schema);
                 } else {
                     writer = new GenericDatumWriter<>(schema);

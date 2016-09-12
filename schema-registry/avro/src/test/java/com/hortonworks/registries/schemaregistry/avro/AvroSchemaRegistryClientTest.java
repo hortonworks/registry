@@ -118,7 +118,8 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
         Object[] objects = generatePrimitivePayloads();
         for (Object obj : objects) {
-            SchemaMetadata schemaMetadata = createSchemaMetadata(obj.getClass().getName());
+            String name = obj != null ? obj.getClass().getName() : Void.TYPE.getName();
+            SchemaMetadata schemaMetadata = createSchemaMetadata(name);
             byte[] serializedData = avroSnapshotSerializer.serialize(obj, schemaMetadata);
 
             Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata.getSchemaMetadataKey(), null);

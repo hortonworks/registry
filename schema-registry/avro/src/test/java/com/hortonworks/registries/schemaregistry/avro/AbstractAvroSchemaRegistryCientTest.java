@@ -48,13 +48,11 @@ public class AbstractAvroSchemaRegistryCientTest {
 
     protected final String rootUrl = String.format("http://localhost:%d/api/v1", DROPWIZARD_APP_RULE.getLocalPort());
     protected final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
-    ;
 
     @Rule
     public TestName TEST_NAME_RULE = new TestName();
 
     protected SchemaRegistryClient schemaRegistryClient;
-
 
     @Before
     public void setup() throws IOException {
@@ -65,7 +63,7 @@ public class AbstractAvroSchemaRegistryCientTest {
         Random random = new Random();
         byte[] bytes = new byte[4];
         random.nextBytes(bytes);
-        return new Object[]{random.nextBoolean(), random.nextDouble(), random.nextLong(), random.nextInt(), "Stringpayload:" + new Date()};
+        return new Object[]{random.nextBoolean(), random.nextDouble(), random.nextLong(), random.nextInt(), "String payload:" + new Date(), null};
     }
 
     protected Object createGenericAvroRecord(String schemaText) {
