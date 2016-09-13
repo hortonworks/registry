@@ -19,7 +19,7 @@
         <slf4j.version>1.7.12</slf4j.version>
         <guava.version>18.0</guava.version>
         <hadoop.version>2.7.1</hadoop.version>
-        <kafka.version>0.8.1.1</kafka.version>
+        <kafka.version>0.10.0.1</kafka.version>
         <kafkaArtifact>kafka_2.10</kafkaArtifact>
         <scalaVersion>2.10.5</scalaVersion>
         <dropwizard.version>1.0.0</dropwizard.version>
