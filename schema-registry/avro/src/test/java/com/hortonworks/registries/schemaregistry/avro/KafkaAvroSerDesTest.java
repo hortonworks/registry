@@ -17,10 +17,13 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.iot.Device;
 import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroSerializer;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Random;
 
 /**
  *
@@ -31,14 +34,17 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
     public void testPrimitiveSerDes() {
         String topic = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
 
-        _testPrimitiveSerDes(topic, true);
-
-        _testPrimitiveSerDes(topic, false);
+        _testPrimitiveSerDes(topic);
     }
 
-    private void _testPrimitiveSerDes(String topic, boolean isKey) {
+    private void _testPrimitiveSerDes(String topic) {
         Object[] payloads = generatePrimitivePayloads();
-        _testKafkaSerDes(topic, isKey, payloads);
+        _testKafkaSerDes(topic, payloads);
+    }
+
+    private void _testKafkaSerDes(String topic, Object... payloads) {
+        _testKafkaSerDes(topic, true, payloads);
+        _testKafkaSerDes(topic, false, payloads);
     }
 
     private void _testKafkaSerDes(String topic, boolean isKey, Object... payloads) {
@@ -59,9 +65,18 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
     }
 
     @Test
-    public void testGenericRecordSerDes() throws Exception {
+    public void testAvroRecordSerDes() throws Exception {
         String topic = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
-        Object genericAvroRecord = createGenericAvroRecord(getSchema("/device.avsc"));
-        _testKafkaSerDes(topic, true, genericAvroRecord);
+
+        _testKafkaSerDes(topic, createGenericAvroRecord(getSchema("/device.avsc")));
+
+        _testKafkaSerDes(topic, createSpecificRecord());
+    }
+
+    public Device createSpecificRecord() {
+        return Device.newBuilder().setName("device-"+System.currentTimeMillis())
+                .setTimestamp(System.currentTimeMillis())
+                .setVersion(new Random().nextInt())
+                .setXid(new Random().nextLong()).build();
     }
 }

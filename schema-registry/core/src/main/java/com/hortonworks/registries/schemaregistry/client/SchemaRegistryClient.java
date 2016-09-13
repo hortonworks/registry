@@ -67,19 +67,20 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
  */
 public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryClient.class);
-    static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
-    static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
-    static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
-    static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
-    static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
+    
+    private static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
+    private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
+    private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
+    private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
+    private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
 
-    private Client client;
-    private WebTarget rootTarget;
-    private WebTarget schemasTarget;
+    private final Client client;
+    private final WebTarget rootTarget;
+    private final WebTarget schemasTarget;
     private final WebTarget searchFieldsTarget;
 
     private final Options options;
-    private ClassLoaderCache classLoaderCache;
+    private final ClassLoaderCache classLoaderCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);

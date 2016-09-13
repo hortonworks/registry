@@ -1,7 +1,7 @@
 {
   "type": "record",
   "namespace": "com.hwx.schemas",
-  "name": "device_1",
+  "name": "ComplexDevice",
   "fields": [
     {
       "name": "xid",
