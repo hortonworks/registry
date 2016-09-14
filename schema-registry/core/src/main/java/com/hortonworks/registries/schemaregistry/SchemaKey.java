@@ -22,16 +22,16 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema metadata. This key can be used to find any version
+ * This class contains the schema metadata. This key can be used to find a given version
  * of a schema in the schema repository.
  */
 public class SchemaKey implements Serializable {
     private SchemaMetadataKey schemaMetadataKey;
     private Integer version;
 
-    private SchemaKey() {
-
-    }
+    /** Private contructor for Jackson JSON mapping */
+    @SuppressWarnings("unused")
+    private SchemaKey() { }
 
     public SchemaKey(SchemaMetadataKey schemaMetadataKey, Integer version) {
         Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");

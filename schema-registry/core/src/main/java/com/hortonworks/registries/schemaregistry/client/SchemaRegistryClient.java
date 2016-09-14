@@ -67,7 +67,7 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
  */
 public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryClient.class);
-    
+
     private static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
     private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
@@ -297,7 +297,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final long DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 1000L;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
 
-        private Map<String, ?> config;
+        private final Map<String, ?> config;
 
         public Options(Map<String, ?> config) {
             this.config = config;

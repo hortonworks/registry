@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class encapsulates information of an evolving schema including group, name, type, description and compatibility.
+ * This class encapsulates information of a schema including group, name, type, description and compatibility.
  * <p>
  * There can be only one instance with same (type, name, group) fields.
  * <p>
@@ -30,33 +30,29 @@ import java.io.Serializable;
  */
 public final class SchemaMetadata implements Serializable {
 
-    /**
-     * Unique key representation for this evolving schema.
-     */
-    private SchemaMetadataKey schemaMetadataKey;
+    /** Unique key to identify a schema */
+    private final SchemaMetadataKey schemaMetadataKey;
 
-    private Long id;
+    private final Long id;
 
     /**
      * Description about the schema metadata.
      */
-    private String description;
+    private final String description;
 
     /**
      * Compatibility to be supported for all versions of this evolving schema.
      */
-    private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
+    private final SchemaProvider.Compatibility compatibility;
 
-    private Long timestamp;
-
-    private SchemaMetadata() {
-    }
+    private final Long timestamp;
 
     public SchemaMetadata(SchemaMetadataKey schemaMetadataKey,
                           String description,
                           SchemaProvider.Compatibility compatibility) {
         this(schemaMetadataKey, null, description, null, compatibility);
     }
+
     public SchemaMetadata(SchemaMetadataKey schemaMetadataKey,
                           Long id,
                           String description,

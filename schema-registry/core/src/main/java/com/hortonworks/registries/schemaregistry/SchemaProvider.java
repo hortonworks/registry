@@ -21,11 +21,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *
+ * Different types of Schema providers such as AVRO, Protobuf etc.
  */
 public interface SchemaProvider {
-    public SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
+    SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
 
+    /**
+     * Compatibility across different versions of a given schema
+     */
     enum Compatibility {
         NONE,
         BACKWARD,
@@ -34,9 +37,7 @@ public interface SchemaProvider {
     }
 
     /**
-     * Type of this provider. This should be unique among all the registered providers.
-     *
-     * @return
+     * @return type of this provider. This should be unique among all the registered providers.
      */
     String getType();
 
@@ -45,17 +46,15 @@ public interface SchemaProvider {
     boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility);
 
     /**
-     * Returns fingerprint of canonicalized form of the given schema.
-     * @param schemaText
-     * @return
+     * @param schemaText textual representation of schema
+     * @return fingerprint of canonicalized form of the given schema.
      */
     byte[] getFingerprint(String schemaText);
 
     /**
-     * Returns all the fields in the given schema
+     * TODO why is this called rootSchema? Is this same as schemaText above?
      * @param rootSchema
-     * @return
+     * @return all the fields in the given schema
      */
     List<SchemaFieldInfo> generateFields(String rootSchema);
-
 }

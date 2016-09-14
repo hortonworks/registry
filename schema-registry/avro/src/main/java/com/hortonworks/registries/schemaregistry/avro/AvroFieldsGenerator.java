@@ -37,7 +37,6 @@ public class AvroFieldsGenerator {
     public List<SchemaFieldInfo> generateFields(Schema rootSchema) {
         List<SchemaFieldInfo> schemaFieldInfos = new ArrayList<>();
         parse(rootSchema, schemaFieldInfos);
-
         return schemaFieldInfos;
     }
 
@@ -45,9 +44,7 @@ public class AvroFieldsGenerator {
         if (schema.getType() != Schema.Type.RECORD) {
             LOG.info("Given schema type [{}] is not record", schema.getType());
         } else {
-
             String fullName = schema.getFullName();
-
             LOG.debug("Schema full name: [{}]", fullName);
 
             List<Schema.Field> fields = schema.getFields();
