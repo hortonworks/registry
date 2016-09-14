@@ -48,11 +48,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * These tests use embedded kafka cluster and sends/receives messages with producer/consumer apis by configuring
+ * {@link KafkaAvroSerializer} and {@link KafkaAvroDeserializer}
  */
 @Category(IntegrationTest.class)
-public class KafkaAvroSerDesIntegrationTest extends AbstractAvroSchemaRegistryCientTest {
-    private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesIntegrationTest.class);
+public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegistryCientTest {
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesWithKafkaServerTest.class);
 
     @ClassRule
     public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
@@ -67,12 +68,12 @@ public class KafkaAvroSerDesIntegrationTest extends AbstractAvroSchemaRegistryCi
     }
 
     @Test
-    public void testGenericRecordInKafkaCluster() throws Exception {
+    public void testAvroRecordsInKafkaCluster() throws Exception {
         String topicName = TEST_NAME_RULE.getMethodName();
 
-        Object record = createGenericAvroRecord(getSchema("/device.avsc"));
+        Object[] records = {createDeviceGenericAvroRecord(), createDeviceRecord()};
 
-        _testWithKafkaCluster(topicName, record);
+        _testWithKafkaCluster(topicName, records);
 
     }
 
@@ -80,8 +81,6 @@ public class KafkaAvroSerDesIntegrationTest extends AbstractAvroSchemaRegistryCi
         CLUSTER.createTopic(topicName);
 
         String bootstrapServers = produceMessage(topicName, msgs);
-        LOG.info("######## Sent the message, waiting for few secs");
-        Thread.sleep(5 * 1000);
 
         ConsumerRecords<String, Object> consumerRecords = consumeMessage(topicName, bootstrapServers);
 
@@ -113,8 +112,8 @@ public class KafkaAvroSerDesIntegrationTest extends AbstractAvroSchemaRegistryCi
         for (PartitionInfo partitionInfo : partitionInfos) {
             partitions.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
         }
-        LOG.info("############## partitions [{}]", partitions);
-        LOG.info("############## subscribed topis: [{}] ", consumer.listTopics());
+        LOG.info("partitions [{}]", partitions);
+        LOG.info("subscribed topis: [{}] ", consumer.listTopics());
 
         consumer.assign(partitions);
         consumer.seekToBeginning(partitions);
@@ -122,7 +121,7 @@ public class KafkaAvroSerDesIntegrationTest extends AbstractAvroSchemaRegistryCi
         ConsumerRecords<String, Object> consumerRecords = null;
         int ct = 0;
         while (ct++ < 100 && (consumerRecords == null || consumerRecords.isEmpty())) {
-            LOG.info("################ polling again");
+            LOG.info("Polling for consuming messages");
             consumerRecords = consumer.poll(500);
         }
         consumer.commitSync();
@@ -140,21 +139,24 @@ public class KafkaAvroSerDesIntegrationTest extends AbstractAvroSchemaRegistryCi
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
 
         final Producer<String, Object> producer = new KafkaProducer<>(config);
-
+        final Callback callback = new ProducerCallback();
+        LOG.info("Sending messages: [{}] to topic: [{}]", msgs.length, topicName);
         for (Object msg : msgs) {
             ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(topicName, getKey(msg), msg);
-            producer.send(producerRecord, new Callback() {
-                @Override
-                public void onCompletion(RecordMetadata recordMetadata, Exception e) {
-                    LOG.info("################################################################################");
-                    LOG.info("################# received notification: " + recordMetadata + "   ex:" + e);
-                }
-            });
+            producer.send(producerRecord, callback);
         }
         producer.flush();
+        LOG.info("Messages successsfully sent to topic: [{}]", topicName);
         producer.close(5, TimeUnit.SECONDS);
 
         return bootstrapServers;
+    }
+
+    private static class ProducerCallback implements Callback {
+        @Override
+        public void onCompletion(RecordMetadata recordMetadata, Exception ex) {
+            LOG.info("Received notification: [{}] and ex: [{}]", recordMetadata, ex);
+        }
     }
 
     private String getKey(Object msg) {

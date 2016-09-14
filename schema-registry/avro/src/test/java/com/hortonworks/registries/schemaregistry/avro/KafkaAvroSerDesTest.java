@@ -17,17 +17,17 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.iot.Device;
+import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroSerializer;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Random;
+import org.junit.experimental.categories.Category;
 
 /**
  *
  */
+@Category(IntegrationTest.class)
 public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
 
     @Test
@@ -48,14 +48,14 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
     }
 
     private void _testKafkaSerDes(String topic, boolean isKey, Object... payloads) {
-        KafkaAvroSerializer keySerializer = new KafkaAvroSerializer();
-        keySerializer.configure(SCHEMA_REGISTRY_CLIENT_CONF, isKey);
-        KafkaAvroDeserializer keyDeserializer = new KafkaAvroDeserializer();
-        keyDeserializer.configure(SCHEMA_REGISTRY_CLIENT_CONF, isKey);
+        KafkaAvroSerializer avroSerializer = new KafkaAvroSerializer();
+        avroSerializer.configure(SCHEMA_REGISTRY_CLIENT_CONF, isKey);
+        KafkaAvroDeserializer avroDeserializer = new KafkaAvroDeserializer();
+        avroDeserializer.configure(SCHEMA_REGISTRY_CLIENT_CONF, isKey);
 
         for (Object obj : payloads) {
-            byte[] serializedData = keySerializer.serialize(topic, obj);
-            Object deserializedObj = keyDeserializer.deserialize(topic, serializedData);
+            byte[] serializedData = avroSerializer.serialize(topic, obj);
+            Object deserializedObj = avroDeserializer.deserialize(topic, serializedData);
             if (obj instanceof byte[]) {
                 Assert.assertArrayEquals((byte[]) obj, (byte[]) deserializedObj);
             } else {
@@ -65,18 +65,12 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
     }
 
     @Test
-    public void testAvroRecordSerDes() throws Exception {
+    public void testAvroRecordsSerDes() throws Exception {
         String topic = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
 
-        _testKafkaSerDes(topic, createGenericAvroRecord(getSchema("/device.avsc")));
+        _testKafkaSerDes(topic, createDeviceGenericAvroRecord());
 
-        _testKafkaSerDes(topic, createSpecificRecord());
+        _testKafkaSerDes(topic, createDeviceRecord());
     }
 
-    public Device createSpecificRecord() {
-        return Device.newBuilder().setName("device-"+System.currentTimeMillis())
-                .setTimestamp(System.currentTimeMillis())
-                .setVersion(new Random().nextInt())
-                .setXid(new Random().nextLong()).build();
-    }
 }

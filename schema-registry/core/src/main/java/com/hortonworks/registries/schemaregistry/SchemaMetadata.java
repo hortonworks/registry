@@ -63,9 +63,7 @@ public final class SchemaMetadata implements Serializable {
         this.timestamp = timestamp;
         Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
 
-        if(compatibility != null) {
-            this.compatibility = compatibility;
-        }
+        this.compatibility = compatibility != null ? compatibility : SchemaProvider.DEFAULT_COMPATIBILITY;
         this.description = description;
     }
 
@@ -104,11 +102,11 @@ public final class SchemaMetadata implements Serializable {
                         schemaMetadataStorable.getDataSourceGroup(),
                         schemaMetadataStorable.getName());
 
-        return  new SchemaMetadata(schemaMetadataKey,
-                                    schemaMetadataStorable.getId(),
-                                    schemaMetadataStorable.getDescription(),
-                                    schemaMetadataStorable.getTimestamp(),
-                                    schemaMetadataStorable.getCompatibility());
+        return new SchemaMetadata(schemaMetadataKey,
+                schemaMetadataStorable.getId(),
+                schemaMetadataStorable.getDescription(),
+                schemaMetadataStorable.getTimestamp(),
+                schemaMetadataStorable.getCompatibility());
     }
 
     public SchemaMetadataKey getSchemaMetadataKey() {

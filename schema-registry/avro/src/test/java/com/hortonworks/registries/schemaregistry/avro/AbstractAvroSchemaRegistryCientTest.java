@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.iot.Device;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
@@ -40,7 +41,7 @@ import java.util.Random;
 /**
  *
  */
-public class AbstractAvroSchemaRegistryCientTest {
+public abstract class AbstractAvroSchemaRegistryCientTest {
 
     @ClassRule
     public static final DropwizardAppRule<SchemaRegistryConfiguration> DROPWIZARD_APP_RULE
@@ -66,8 +67,8 @@ public class AbstractAvroSchemaRegistryCientTest {
         return new Object[]{random.nextBoolean(), random.nextDouble(), random.nextLong(), random.nextInt(), "String payload:" + new Date(), null};
     }
 
-    protected Object createGenericAvroRecord(String schemaText) {
-        Schema schema = new Schema.Parser().parse(schemaText);
+    protected Object createDeviceGenericAvroRecord() throws IOException {
+        Schema schema = new Schema.Parser().parse(getSchema("/device.avsc"));
 
         GenericRecord avroRecord = new GenericData.Record(schema);
         avroRecord.put("xid", System.currentTimeMillis());
@@ -84,4 +85,10 @@ public class AbstractAvroSchemaRegistryCientTest {
         return parser.parse(avroSchemaStream).toString();
     }
 
+    protected Device createDeviceRecord() {
+        return Device.newBuilder().setName("device-" + System.currentTimeMillis())
+                .setTimestamp(System.currentTimeMillis())
+                .setVersion(new Random().nextInt())
+                .setXid(new Random().nextLong()).build();
+    }
 }

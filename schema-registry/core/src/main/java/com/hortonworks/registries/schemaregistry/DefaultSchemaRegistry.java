@@ -331,7 +331,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public SchemaInfo getSchemaInfo(SchemaKey schemaKey) throws SchemaNotFoundException {
-
+        // todo add caching.
         SchemaMetadataKey schemaMetadataKey = schemaKey.getSchemaMetadataKey();
         SchemaMetadata schemaMetadata = getSchemaMetadata(schemaMetadataKey);
 
