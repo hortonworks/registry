@@ -15,29 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.serde;
+package com.hortonworks.registries.schemaregistry.avro.kafka;
+
+import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 
 /**
- * This Exception is thrown when any errors occur during serialization/deserialization of a given payload.
+ *
  */
-public class SerDeException extends RuntimeException {
+public final class Utils {
+    public static final String GROUP_ID = "kafka";
 
-    public SerDeException() {
+    private Utils() {
     }
 
-    public SerDeException(String message) {
-        super(message);
+    public static SchemaMetadataKey getSchemaMetadataKey(String topic, boolean isKey) {
+        String name = topic + ":" + (isKey ? "k" : "v");
+        return new SchemaMetadataKey(AvroSchemaProvider.TYPE, GROUP_ID, name);
     }
 
-    public SerDeException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public SerDeException(Throwable cause) {
-        super(cause);
-    }
-
-    public SerDeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

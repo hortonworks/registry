@@ -15,33 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.avro;
-
-import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
-import org.apache.avro.Schema;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.InputStream;
-import java.util.List;
+package com.hortonworks.registries.schemaregistry.serde;
 
 /**
- *
+ * This Exception is thrown when any errors occur during serialization/deserialization of a given payload.
  */
-public class AvroSchemaReaderTest {
+public class SerDesException extends RuntimeException {
 
-    @Test
-    public void testComplexSchemaRead() throws Exception {
-        AvroFieldsGenerator avroFieldsGenerator = new AvroFieldsGenerator();
+    public SerDesException() {
+    }
 
-        try (InputStream schemaStream = this.getClass().getResourceAsStream("/schema-1.avsc");) {
+    public SerDesException(String message) {
+        super(message);
+    }
 
-            Schema.Parser parser = new Schema.Parser();
-            Schema schema = parser.parse(schemaStream);
+    public SerDesException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-            List<SchemaFieldInfo> schemaFieldInfos = avroFieldsGenerator.generateFields(schema);
+    public SerDesException(Throwable cause) {
+        super(cause);
+    }
 
-            Assert.assertEquals(schemaFieldInfos.size(), 12);
-        }
+    public SerDesException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

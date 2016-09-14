@@ -18,10 +18,11 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.BinaryEncoder;
@@ -31,7 +32,6 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecord;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -40,60 +40,70 @@ import java.util.Map;
  */
 public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[], SchemaMetadata> {
 
-    public static final String TYPE = "AVRO";
     private SchemaRegistryClient schemaRegistryClient;
 
     public AvroSnapshotSerializer() {
     }
 
     @Override
-    public void init(Map<String, Object> config) {
+    public void init(Map<String, ?> config) {
         schemaRegistryClient = new SchemaRegistryClient(config);
     }
 
     @Override
-    public byte[] serialize(Object input, SchemaMetadata schemaMetadataInfo) throws SerDeException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        serialize(input, baos, schemaMetadataInfo);
+    public byte[] serialize(Object input, SchemaMetadata schemaMetadata) throws SerDesException {
 
-        return baos.toByteArray();
-    }
+        Schema schema = getSchema(input);
 
-    private org.apache.avro.Schema getSchema(Object input) {
-        if (input instanceof GenericContainer) {
-            return ((GenericContainer) input).getSchema();
-        }
-
-        throw new IllegalArgumentException("input is not an instance of GenericContainer");
-    }
-
-    @Override
-    public void serialize(Object input, OutputStream outputStream, SchemaMetadata schemaMetadataInfo) throws SerDeException {
-        org.apache.avro.Schema schema = getSchema(input);
-        try {
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();) {
             // register given schema
-            Integer version = schemaRegistryClient.registerSchema(schemaMetadataInfo, new VersionedSchema(schema.toString(), ""));
-            // write schema id and version, both of them require 12 bytes (Long +Int)
-            outputStream.write(ByteBuffer.allocate(4).putInt(version).array());
+            Integer version = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema.toString(), "Schema registered by serializer:" + this.getClass()));
 
-            // todo handle all cases
-            BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(outputStream, null);
-            DatumWriter<Object> writer;
-            if (input instanceof SpecificRecord) {
-                writer = new SpecificDatumWriter<>(schema);
+            // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
+            byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(version).array());
+
+            Schema.Type schemaType = schema.getType();
+            if (Schema.Type.BYTES.equals(schemaType)) {
+                // incase of byte arrays, no need to go through avro as there is not much to optimize and avro is expecting
+                // the payload to be ByteBuffer instead of a byte array
+                byteArrayOutputStream.write((byte[]) input);
+            } else if (Schema.Type.STRING.equals(schemaType)) {
+                // get UTF-8 bytes and directly send those over instead of usng avro.
+                byteArrayOutputStream.write(input.toString().getBytes(AvroUtils.UTF_8));
             } else {
-                writer = new GenericDatumWriter<>(schema);
+                BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
+                DatumWriter<Object> writer;
+                boolean isSpecificRecord = input instanceof SpecificRecord;
+                byteArrayOutputStream.write(isSpecificRecord ? AvroUtils.SPECIFIC_RECORD : AvroUtils.GENERIC_RECORD);
+                if (isSpecificRecord) {
+                    writer = new SpecificDatumWriter<>(schema);
+                } else {
+                    writer = new GenericDatumWriter<>(schema);
+                }
+
+                writer.write(input, encoder);
+                encoder.flush();
             }
-            writer.write(input, encoder);
-            encoder.flush();
+
+            return byteArrayOutputStream.toByteArray();
         } catch (Exception e) {
-            throw new SerDeException(e);
+            throw new SerDesException(e);
+        }
+    }
+
+    private Schema getSchema(Object input) {
+        Schema schema = null;
+        if (input instanceof GenericContainer) {
+            schema = ((GenericContainer) input).getSchema();
+        } else {
+            schema = AvroUtils.getSchemaForPrimitives(input);
         }
 
+        return schema;
     }
 
     @Override
     public void close() throws Exception {
-
+        schemaRegistryClient.close();
     }
 }

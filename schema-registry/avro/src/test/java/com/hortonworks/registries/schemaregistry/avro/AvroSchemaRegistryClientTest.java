@@ -21,23 +21,18 @@ import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
-import io.dropwizard.testing.ResourceHelpers;
-import io.dropwizard.testing.junit.DropwizardAppRule;
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -47,46 +42,21 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  *
  */
 @Category(IntegrationTest.class)
-public class AvroSchemaRegistryClientTest {
-
-    @ClassRule
-    public static final DropwizardAppRule<SchemaRegistryConfiguration> RULE
-            = new DropwizardAppRule<>(SchemaRegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
-
-    private final String rootUrl = String.format("http://localhost:%d/api/v1", RULE.getLocalPort());
-    private SchemaRegistryClient schemaRegistryClient;
-
-    protected String schema1;
-    protected String schema2;
-    protected String schemaName;
-    private SchemaMetadata schemaMetadata;
-    private SchemaMetadataKey schemaMetadataKey;
-
-    @Before
-    public void setup() throws IOException {
-        schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl));
-        schema1 = getSchema("/schema-1.avsc");
-        schema2 = getSchema("/schema-2.avsc");
-        schemaName = "schema-" + System.currentTimeMillis();
-        schemaMetadataKey = new SchemaMetadataKey(type(), "group-1", "com.hwx.iot.device.schema");
-        schemaMetadata = new SchemaMetadata(schemaMetadataKey, "device schema", SchemaProvider.Compatibility.BOTH);
-
-    }
-
-    private String getSchema(String schemaFileName) throws IOException {
-        InputStream avroSchemaStream = AvroSerDeTest.class.getResourceAsStream(schemaFileName);
-        org.apache.avro.Schema.Parser parser = new org.apache.avro.Schema.Parser();
-        return parser.parse(avroSchemaStream).toString();
-    }
+public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCientTest {
 
     @Test
     public void testSchemaOps() throws Exception {
+        String schema1 = getSchema("/schema-1.avsc");
+        String schema2 = getSchema("/schema-2.avsc");
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
+        SchemaMetadataKey schemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
 
         // registering new schema-metadata
         Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
@@ -113,13 +83,66 @@ public class AvroSchemaRegistryClientTest {
         Assert.assertEquals(1, txidSchemaKeys.size());
     }
 
+    private SchemaMetadata createSchemaMetadata(String methodName) {
+        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type(), methodName + "-group", methodName + "-schema");
+        return new SchemaMetadata(schemaMetadataKey, "Schema for " + methodName, SchemaProvider.Compatibility.BOTH);
+    }
+
+    @Test
+    public void testAvroSerDeGenericObj() throws Exception {
+        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+        AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
+        avroSnapshotSerializer.init(config);
+        AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();
+        avroSnapshotDeserializer.init(config);
+
+        String deviceSchema = getSchema("/device.avsc");
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
+        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata,
+                new VersionedSchema(deviceSchema, "Initial version of the schema"));
+
+        Object deviceObject = createDeviceGenericAvroRecord();
+
+        byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
+        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata.getSchemaMetadataKey(), null);
+        Assert.assertEquals(deviceObject, deserializedObj);
+    }
+
+    @Test
+    public void testAvroSerDePrimtives() throws Exception {
+        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+        AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
+        avroSnapshotSerializer.init(config);
+        AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();
+        avroSnapshotDeserializer.init(config);
+
+        Object[] objects = generatePrimitivePayloads();
+        for (Object obj : objects) {
+            String name = obj != null ? obj.getClass().getName() : Void.TYPE.getName();
+            SchemaMetadata schemaMetadata = createSchemaMetadata(name);
+            byte[] serializedData = avroSnapshotSerializer.serialize(obj, schemaMetadata);
+
+            Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata.getSchemaMetadataKey(), null);
+
+            if (obj instanceof byte[]) {
+                Assert.assertArrayEquals((byte[]) obj, (byte[]) deserializedObj);
+            } else {
+                Assert.assertEquals(obj, deserializedObj);
+            }
+        }
+    }
 
     @Test
     public void testSerializerOps() throws Exception {
         String fileId = uploadFile();
-        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
+
+        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata,
+                new VersionedSchema(getSchema("/device.avsc"), "Initial version of the schema"));
         SerDesInfo serializerInfo = createSerDesInfo(fileId);
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
+
+        SchemaMetadataKey schemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
         schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataKey, serializerId);
         Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataKey);
 

@@ -63,7 +63,7 @@ public class AvroSchemaRegistryTest {
     protected String schemaName;
 
     private String getSchema(String schemaFileName) throws IOException {
-        InputStream avroSchemaStream = AvroSerDeTest.class.getResourceAsStream(schemaFileName);
+        InputStream avroSchemaStream = AvroSchemaRegistryClientTest.class.getResourceAsStream(schemaFileName);
         Schema.Parser parser = new Schema.Parser();
         return parser.parse(avroSchemaStream).toString();
     }

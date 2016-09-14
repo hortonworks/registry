@@ -153,7 +153,7 @@ public class SampleNestedPullDeserializer implements PullDeserializer<SchemaDeta
     }
 
     @Override
-    public void init(Map<String, Object> config) {
+    public void init(Map<String, ?> config) {
 
     }
 

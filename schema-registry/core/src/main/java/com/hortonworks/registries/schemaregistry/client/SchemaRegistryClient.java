@@ -19,6 +19,9 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -29,7 +32,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
-import com.hortonworks.registries.schemaregistry.serde.SerDeException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -49,6 +52,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
 
@@ -67,11 +72,12 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
  */
 public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryClient.class);
-    static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
-    static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
-    static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
-    static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
-    static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
+
+    private static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
+    private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
+    private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
+    private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
+    private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
 
     private final Client client;
     private final WebTarget rootTarget;
@@ -80,8 +86,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private final Options options;
     private final ClassLoaderCache classLoaderCache;
+    private LoadingCache<SchemaKey, SchemaInfo> schemaCache;
 
-    public SchemaRegistryClient(Map<String, Object> conf) {
+    public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
 
         client = ClientBuilder.newClient(new ClientConfig());
@@ -92,6 +99,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         searchFieldsTarget = schemasTarget.path("search/fields");
 
         classLoaderCache = new ClassLoaderCache(this);
+
+        schemaCache = CacheBuilder.newBuilder()
+                .maximumSize(options.getMaxSchemaCacheSize())
+                .expireAfterAccess(options.getSchemaExpiryInMillis(), TimeUnit.MILLISECONDS)
+                .build(new CacheLoader<SchemaKey, SchemaInfo>() {
+                    @Override
+                    public SchemaInfo load(SchemaKey schemaKey) throws Exception {
+                        return _getSchema(schemaKey);
+                    }
+                });
     }
 
     public Options getOptions() {
@@ -131,6 +148,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaInfo getSchema(SchemaKey schemaKey) {
+        try {
+            return schemaCache.get(schemaKey);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public SchemaInfo _getSchema(SchemaKey schemaKey) {
         SchemaMetadataKey schemaMetadataKey = schemaKey.getSchemaMetadataKey();
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/versions/%d",
@@ -241,7 +266,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             Class<T> clazz = (Class<T>) Class.forName(serializerInfo.getClassName(), true, classLoader);
             t = clazz.newInstance();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            throw new SerDeException(e);
+            throw new SerDesException(e);
         }
 
         return t;
@@ -292,32 +317,43 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final String LOCAL_JAR_PATH = "schema.registry.local.jars.path";
         public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.class.loader.cache.size";
         public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL = "schema.registry.class.loader.cache.expiry.interval";
-        public static final int DEFAULT_CACHE_SIZE = 1024;
-        public static final long DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 1000L;
+        public static final int DEFAULT_CLASS_LOADER_CACHE_SIZE = 1024;
+        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
+        public static final String SCHEMA_CACHE_SIZE = "schema.registry.schema.cache.size";
+        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL = "schema.registry.schema.cache.expiry.interval";
+        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
+        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
 
-        private final Map<String, Object> config;
+        private final Map<String, ?> config;
 
-        public Options(Map<String, Object> config) {
+        public Options(Map<String, ?> config) {
             this.config = config;
         }
-
 
         private Object getPropertyValue(String propertyKey, Object defaultValue) {
             Object value = config.get(propertyKey);
             return value != null ? value : defaultValue;
         }
 
-        public int getCacheSize() {
-            return (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CACHE_SIZE);
+        public int getClassLoaderCacheSize() {
+            return (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASS_LOADER_CACHE_SIZE);
         }
 
-        public long getExpiryInMilliSecs() {
-            return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL, DEFAULT_CACHE_EXPIRY_INTERVAL_MILLISECS);
+        public long getClassLoaderCacheExpiryInMilliSecs() {
+            return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL, DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS);
         }
 
         public String getLocalJarPath() {
             return (String) getPropertyValue(LOCAL_JAR_PATH, DEFAULT_LOCAL_JARS_PATH);
+        }
+
+        public int getMaxSchemaCacheSize() {
+            return (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+        }
+
+        public long getSchemaExpiryInMillis() {
+            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS);
         }
     }
 }

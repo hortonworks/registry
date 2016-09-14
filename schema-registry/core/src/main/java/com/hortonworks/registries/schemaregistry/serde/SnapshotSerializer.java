@@ -19,14 +19,12 @@ package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.schemaregistry.Resourceable;
 
-import java.io.OutputStream;
-
 /**
  * Serializer interface for serializing input {@code I} into output {@code O} according to the Schema {@code S}.
  *
  * @param <I> Input type of the payload
  * @param <O> serialized output type. For ex: byte[], String etc.
- * @param <S> schema to which given Input to be serialized as Output
+ * @param <S> schema related information, which can be used for Input to be serialized as Output
  */
 public interface SnapshotSerializer<I, O, S> extends Resourceable {
 
@@ -37,14 +35,6 @@ public interface SnapshotSerializer<I, O, S> extends Resourceable {
      * @param schema
      * @return
      */
-    O serialize(I input, S schema) throws SerDeException;
+    O serialize(I input, S schema) throws SerDesException;
 
-    /**
-     * Serializes the given input according to the schema and writes it to the given outputStream
-     *
-     * @param input
-     * @param outputStream
-     * @param schema
-     */
-    void serialize(I input, OutputStream outputStream, S schema) throws SerDeException;
 }

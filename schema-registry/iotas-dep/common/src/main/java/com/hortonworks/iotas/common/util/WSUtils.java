@@ -19,14 +19,15 @@
 package com.hortonworks.iotas.common.util;
 
 import com.google.common.io.ByteStreams;
-import com.hortonworks.iotas.common.catalog.CatalogResponse;
 import com.hortonworks.iotas.common.QueryParam;
+import com.hortonworks.iotas.common.catalog.CatalogResponse;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -89,14 +90,16 @@ public class WSUtils {
     public static StreamingOutput wrapWithStreamingOutput(final InputStream inputStream) {
         return new StreamingOutput() {
             public void write(OutputStream os) throws IOException, WebApplicationException {
-                try {
-                    ByteStreams.copy(inputStream, os);
-                } finally {
-                    os.close();
+                OutputStream wrappedOutputStream = os;
+                if (!(os instanceof BufferedOutputStream)) {
+                    wrappedOutputStream = new BufferedOutputStream(os);
                 }
+
+                ByteStreams.copy(inputStream, wrappedOutputStream);
+
+                wrappedOutputStream.flush();
             }
         };
     }
-
 
 }

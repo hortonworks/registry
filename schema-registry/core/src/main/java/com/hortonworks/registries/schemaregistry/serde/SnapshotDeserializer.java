@@ -19,24 +19,26 @@ package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.schemaregistry.Resourceable;
 
-import java.io.InputStream;
-
 /**
  * Deserializer interface for deserializing InputStream into output {@code O} according to the Schema {@code S}.
  * <p>
  *
- * @param <O> Output type of the deserialized content.
- * @param <S> Schema representation class
+ * @param <I>  Input type of the payload
+ * @param <O>  Output type of the deserialized content.
+ * @param <WS> Writer schema information.
+ * @param <RS> Reader schema information.
  */
-public interface SnapshotDeserializer<O, S> extends Resourceable {
+public interface SnapshotDeserializer<I, O, WS, RS> extends Resourceable {
 
     /**
-     * Returns output {@code O} after deserializing the given {@code payloadInputStream} according to the Schema {@code S}.
+     * Returns output {@code O} after deserializing the given {@code input} according to the writer schema {@code WS} and
+     * it may be projected if reader schema {@code RS} is given.
      *
-     * @param payloadInputStream
-     * @param schema
-     * @return
+     * @param input
+     * @param writerSchemaInfo
+     * @param readerSchemaInfo
+     * @return O output
      */
-    O deserialize(InputStream payloadInputStream, S schema) throws SerDeException;
+    O deserialize(I input, WS writerSchemaInfo, RS readerSchemaInfo) throws SerDesException;
 
 }
