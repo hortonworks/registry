@@ -20,9 +20,9 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStream, Object, SchemaMetadataKey, Schema> {
+public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStream, Object, SchemaKey, Schema> {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
 
     public static final String DESERIALIZER_CACHE_MAX_SIZE = "schemaregistry.deserializer.cache.size";
@@ -53,7 +53,7 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
     public static final Long DEFAULT_DESERIALIZER_CACHE_EXPIRY_IN_MILLS = 60 * 5 * 1000L;
 
     private SchemaRegistryClient schemaRegistryClient;
-    private LoadingCache<SchemaKey, Schema> schemaCache;
+    private LoadingCache<SchemaVersionKey, Schema> schemaCache;
 
     @Override
     public void init(Map<String, ?> config) {
@@ -63,11 +63,11 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
         schemaCache = CacheBuilder.newBuilder()
                 .maximumSize(getCacheMaxSize(config))
                 .expireAfterAccess(getCacheExpiryInMillis(config), TimeUnit.MILLISECONDS)
-                .build(new CacheLoader<SchemaKey, Schema>() {
+                .build(new CacheLoader<SchemaVersionKey, Schema>() {
                     @Override
-                    public Schema load(SchemaKey schemaKey) throws Exception {
-                        SchemaInfo schemaInfo = schemaRegistryClient.getSchema(schemaKey);
-                        return schemaInfo != null ? new Schema.Parser().parse(schemaInfo.getSchemaText()) : null;
+                    public Schema load(SchemaVersionKey schemaVersionKey) throws Exception {
+                        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchema(schemaVersionKey);
+                        return schemaVersionInfo != null ? new Schema.Parser().parse(schemaVersionInfo.getSchemaText()) : null;
                     }
                 });
     }
@@ -97,15 +97,15 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
     }
 
     @Override
-    public Object deserialize(InputStream payloadInputStream, SchemaMetadataKey writerSchemaMetadataKey, Schema readerSchema) throws SerDesException {
+    public Object deserialize(InputStream payloadInputStream, SchemaKey writerSchemaKey, Schema readerSchema) throws SerDesException {
         Object deserializedObj = null;
         try {
             int version = readVersion(payloadInputStream);
-            SchemaKey schemaKey = new SchemaKey(writerSchemaMetadataKey, version);
-            LOG.debug("SchemaKey: [{}] for the received payload", schemaKey);
-            Schema writerSchema = schemaCache.get(schemaKey);
+            SchemaVersionKey schemaVersionKey = new SchemaVersionKey(writerSchemaKey, version);
+            LOG.debug("SchemaKey: [{}] for the received payload", schemaVersionKey);
+            Schema writerSchema = schemaCache.get(schemaVersionKey);
             if (writerSchema == null) {
-                throw new SerDesException("No schema exists with metadata-key: " + writerSchemaMetadataKey + " and version: " + version);
+                throw new SerDesException("No schema exists with metadata-key: " + writerSchemaKey + " and version: " + version);
             }
 
             Schema.Type writerSchemaType = writerSchema.getType();

@@ -20,6 +20,7 @@ package com.hortonworks.registries.schemaregistry;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.iotas.common.Schema;
 import com.hortonworks.iotas.storage.PrimaryKey;
+import com.hortonworks.iotas.storage.Storable;
 import com.hortonworks.iotas.storage.catalog.AbstractStorable;
 
 import java.util.HashMap;
@@ -29,17 +30,17 @@ import java.util.Map;
  *
  */
 public class SchemaInfoStorable extends AbstractStorable {
-    public static final String NAME_SPACE = "schema_instance_info";
+    public static final String NAME_SPACE = "schema_info";
     public static final String ID = "id";
-    public static final String SCHEMA_METADATA_ID = "schemaMetadataId";
-    public static final String DESCRIPTION = "description";
-    public static final String TYPE = "type";
-    public static final String GROUP = "dataSourceGroup";
     public static final String NAME = "name";
-    public static final String SCHEMA_TEXT = "schemaText";
-    public static final String VERSION = "version";
+    public static final String SCHEMA_GROUP = "schemaGroup";
+    public static final String COMPATIBILITY = "compatibility";
+    public static final String TYPE = "type";
     public static final String TIMESTAMP = "timestamp";
-    public static final String FINGERPRINT = "fingerprint";
+
+    public static final Schema.Field NAME_FIELD = Schema.Field.of(NAME, Schema.Type.STRING);
+    public static final Schema.Field SCHEMA_GROUP_FIELD = Schema.Field.of(SCHEMA_GROUP, Schema.Type.STRING);
+    public static final Schema.Field TYPE_FIELD = Schema.Field.of(TYPE, Schema.Type.STRING);
 
     /**
      * Unique ID generated for this component.
@@ -47,28 +48,26 @@ public class SchemaInfoStorable extends AbstractStorable {
     private Long id;
 
     /**
-     * Id of the SchemaMetadata instance.
+     * Schema type which can be avro, protobuf or json etc. User can have a unique constraint with (type, name) values.
      */
-    private Long schemaMetadataId;
-
     private String type;
-    private String dataSourceGroup;
+
+
+    /**
+     * Schema group for which this schema metadata belongs to.
+     */
+    private String schemaGroup;
+
+    /**
+     * Given name of the schema.
+     * Unique constraint with (name, group, type)
+     */
     private String name;
 
     /**
-     * Description about this schema instance
+     * Description of the schema.
      */
     private String description;
-
-    /**
-     * Textual representation of the schema
-     */
-    private String schemaText;
-
-    /**
-     * Current version of the schema. (id, version) pair is unique constraint.
-     */
-    private Integer version;
 
     /**
      * Time at which this schema was created/updated.
@@ -76,9 +75,9 @@ public class SchemaInfoStorable extends AbstractStorable {
     private Long timestamp;
 
     /**
-     * Fingerprint of the schema.
+     * Compatibility of this schema instance
      */
-    private String fingerprint;
+    private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
 
     public SchemaInfoStorable() {
     }
@@ -92,9 +91,12 @@ public class SchemaInfoStorable extends AbstractStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        Map<Schema.Field, Object> values = new HashMap<>();
-        values.put(new Schema.Field(ID, Schema.Type.LONG), id);
-        return new PrimaryKey(values);
+        Map<Schema.Field, Object> fieldValues = new HashMap<Schema.Field, Object>() {{
+            put(NAME_FIELD, name);
+            put(SCHEMA_GROUP_FIELD, schemaGroup);
+            put(TYPE_FIELD, type);
+        }};
+        return new PrimaryKey(fieldValues);
     }
 
     @Override
@@ -102,16 +104,27 @@ public class SchemaInfoStorable extends AbstractStorable {
     public Schema getSchema() {
         return Schema.of(
                 Schema.Field.of(ID, Schema.Type.LONG),
-                Schema.Field.of(SCHEMA_METADATA_ID, Schema.Type.LONG),
-                Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
-                Schema.Field.of(TYPE, Schema.Type.STRING),
-                Schema.Field.of(GROUP, Schema.Type.STRING),
-                Schema.Field.of(NAME, Schema.Type.STRING),
-                Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
-                Schema.Field.of(VERSION, Schema.Type.INTEGER),
-                Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-                Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
+                NAME_FIELD,
+                SCHEMA_GROUP_FIELD,
+                TYPE_FIELD,
+                Schema.Field.of(COMPATIBILITY, Schema.Type.STRING),
+                Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
         );
+    }
+
+    @Override
+    public Map<String, Object> toMap() {
+        Map<String, Object> values = super.toMap();
+        values.put(COMPATIBILITY, compatibility.name());
+        return values;
+    }
+
+    @Override
+    public Storable fromMap(Map<String, Object> map) {
+        String compatibilityName = (String) map.remove(COMPATIBILITY);
+        compatibility = SchemaProvider.Compatibility.valueOf(compatibilityName);
+        super.fromMap(map);
+        return this;
     }
 
     @Override
@@ -123,20 +136,20 @@ public class SchemaInfoStorable extends AbstractStorable {
         this.id = id;
     }
 
-    public String getSchemaText() {
-        return schemaText;
+    public String getSchemaGroup() {
+        return schemaGroup;
     }
 
-    public void setSchemaText(String schemaText) {
-        this.schemaText = schemaText;
+    public void setSchemaGroup(String schemaGroup) {
+        this.schemaGroup = schemaGroup;
     }
 
-    public Integer getVersion() {
-        return version;
+    public String getName() {
+        return name;
     }
 
-    public void setVersion(Integer version) {
-        this.version = version;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Long getTimestamp() {
@@ -147,28 +160,12 @@ public class SchemaInfoStorable extends AbstractStorable {
         this.timestamp = timestamp;
     }
 
-    public Long getSchemaMetadataId() {
-        return schemaMetadataId;
+    public SchemaProvider.Compatibility getCompatibility() {
+        return compatibility;
     }
 
-    public void setSchemaMetadataId(Long schemaMetadataId) {
-        this.schemaMetadataId = schemaMetadataId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getFingerprint() {
-        return fingerprint;
-    }
-
-    public void setFingerprint(String fingerprint) {
-        this.fingerprint = fingerprint;
+    public void setCompatibility(SchemaProvider.Compatibility compatibility) {
+        this.compatibility = compatibility;
     }
 
     public String getType() {
@@ -179,19 +176,54 @@ public class SchemaInfoStorable extends AbstractStorable {
         this.type = type;
     }
 
-    public String getDataSourceGroup() {
-        return dataSourceGroup;
+    public String getDescription() {
+        return description;
     }
 
-    public void setDataSourceGroup(String dataSourceGroup) {
-        this.dataSourceGroup = dataSourceGroup;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SchemaInfoStorable that = (SchemaInfoStorable) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        return compatibility == that.compatibility;
+
     }
 
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (schemaGroup != null ? schemaGroup.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
+        return result;
     }
+
+    @Override
+    public String toString() {
+        return "SchemaMetadataStorable{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", schemaGroup='" + schemaGroup + '\'' +
+                ", description='" + description + '\'' +
+                ", timestamp=" + timestamp +
+                ", type='" + type + '\'' +
+                ", compatibility=" + compatibility +
+                '}';
+    }
+
 }
