@@ -19,10 +19,10 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.iotas.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
@@ -55,37 +55,37 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     public void testSchemaOps() throws Exception {
         String schema1 = getSchema("/schema-1.avsc");
         String schema2 = getSchema("/schema-2.avsc");
-        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
-        SchemaMetadataKey schemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
+        SchemaInfo schemaInfo = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
+        SchemaKey schemaKey = schemaInfo.getSchemaKey();
 
         // registering new schema-metadata
-        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata, new VersionedSchema(schema1, "Initial version of the schema"));
+        Integer v1 = schemaRegistryClient.registerSchema(schemaInfo, new VersionedSchema(schema1, "Initial version of the schema"));
 
         // adding a new version of the schema
         VersionedSchema schemaInfo2 = new VersionedSchema(schema2, "second version");
-        Integer v2 = schemaRegistryClient.addVersionedSchema(schemaMetadataKey, schemaInfo2);
+        Integer v2 = schemaRegistryClient.addVersionedSchema(schemaKey, schemaInfo2);
 
         Assert.assertTrue(v2 == v1 + 1);
 
-        SchemaInfo schemaInfo = schemaRegistryClient.getSchema(new SchemaKey(schemaMetadataKey, v2));
-        SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaMetadataKey);
+        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchema(new SchemaVersionKey(schemaKey, v2));
+        SchemaVersionInfo latest = schemaRegistryClient.getLatestSchema(schemaKey);
 
-        Assert.assertEquals(latest, schemaInfo);
+        Assert.assertEquals(latest, schemaVersionInfo);
 
-        Collection<SchemaInfo> allVersions = schemaRegistryClient.getAllVersions(schemaMetadataKey);
+        Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaKey);
 
         Assert.assertEquals(2, allVersions.size());
 
-        Collection<SchemaKey> md5SchemaKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("md5").build());
-        Assert.assertEquals(2, md5SchemaKeys.size());
+        Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("md5").build());
+        Assert.assertEquals(2, md5SchemaVersionKeys.size());
 
-        Collection<SchemaKey> txidSchemaKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
-        Assert.assertEquals(1, txidSchemaKeys.size());
+        Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
+        Assert.assertEquals(1, txidSchemaVersionKeys.size());
     }
 
-    private SchemaMetadata createSchemaMetadata(String methodName) {
-        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(type(), methodName + "-group", methodName + "-schema");
-        return new SchemaMetadata(schemaMetadataKey, "Schema for " + methodName, SchemaProvider.Compatibility.BOTH);
+    private SchemaInfo createSchemaMetadata(String methodName) {
+        SchemaKey schemaKey = new SchemaKey(type(), methodName + "-group", methodName + "-schema");
+        return new SchemaInfo(schemaKey, "Schema for " + methodName, SchemaProvider.Compatibility.BOTH);
     }
 
     @Test
@@ -97,14 +97,14 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         avroSnapshotDeserializer.init(config);
 
         String deviceSchema = getSchema("/device.avsc");
-        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
-        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata,
+        SchemaInfo schemaInfo = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
+        Integer v1 = schemaRegistryClient.registerSchema(schemaInfo,
                 new VersionedSchema(deviceSchema, "Initial version of the schema"));
 
         Object deviceObject = createDeviceGenericAvroRecord();
 
-        byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
-        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata.getSchemaMetadataKey(), null);
+        byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaInfo);
+        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaInfo.getSchemaKey(), null);
         Assert.assertEquals(deviceObject, deserializedObj);
     }
 
@@ -119,10 +119,10 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         Object[] objects = generatePrimitivePayloads();
         for (Object obj : objects) {
             String name = obj != null ? obj.getClass().getName() : Void.TYPE.getName();
-            SchemaMetadata schemaMetadata = createSchemaMetadata(name);
-            byte[] serializedData = avroSnapshotSerializer.serialize(obj, schemaMetadata);
+            SchemaInfo schemaInfo = createSchemaMetadata(name);
+            byte[] serializedData = avroSnapshotSerializer.serialize(obj, schemaInfo);
 
-            Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata.getSchemaMetadataKey(), null);
+            Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaInfo.getSchemaKey(), null);
 
             if (obj instanceof byte[]) {
                 Assert.assertArrayEquals((byte[]) obj, (byte[]) deserializedObj);
@@ -135,16 +135,16 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     @Test
     public void testSerializerOps() throws Exception {
         String fileId = uploadFile();
-        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
+        SchemaInfo schemaInfo = createSchemaMetadata(TEST_NAME_RULE.getMethodName());
 
-        Integer v1 = schemaRegistryClient.registerSchema(schemaMetadata,
+        Integer v1 = schemaRegistryClient.registerSchema(schemaInfo,
                 new VersionedSchema(getSchema("/device.avsc"), "Initial version of the schema"));
         SerDesInfo serializerInfo = createSerDesInfo(fileId);
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
-        SchemaMetadataKey schemaMetadataKey = schemaMetadata.getSchemaMetadataKey();
-        schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataKey, serializerId);
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataKey);
+        SchemaKey schemaKey = schemaInfo.getSchemaKey();
+        schemaRegistryClient.mapSchemaWithSerDes(schemaKey, serializerId);
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaKey);
 
         Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
     }

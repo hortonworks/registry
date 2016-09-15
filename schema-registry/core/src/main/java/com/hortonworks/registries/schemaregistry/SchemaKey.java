@@ -22,27 +22,86 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema metadata. This key can be used to find a given version
- * of a schema in the schema repository.
+ * This class contains the schema information. This key (name, group, type) is used
+ * to find a schema in the schema repository.
  */
 public class SchemaKey implements Serializable {
-    private SchemaMetadataKey schemaMetadataKey;
-    private Integer version;
 
-    /** Private contructor for Jackson JSON mapping */
+    /** Type for schema which is part of schema metadata, which can be AVRO, JSON, PROTOBUF etc */
+    private String type;
+
+    /**
+     * Schema group to which this schema belongs to. For ex: kafka, hive etc
+     * This can be used in querying schemas belonging to a specific schema group.
+     */
+    private String schemaGroup;
+
+    /** Name of this schema. Follows unique constraint of (name, group, type). */
+    private String name;
+
+    /** Private constructor for Jackson JSON mapping */
     @SuppressWarnings("unused")
-    private SchemaKey() { }
-
-    public SchemaKey(SchemaMetadataKey schemaMetadataKey, Integer version) {
-        Preconditions.checkNotNull(schemaMetadataKey, "schemaMetadataKey can not be null");
-        Preconditions.checkNotNull(version, "version can not be null");
-        this.schemaMetadataKey = schemaMetadataKey;
-        this.version = version;
+    private SchemaKey() {
     }
 
-    public SchemaMetadataKey getSchemaMetadataKey() {
-        return schemaMetadataKey;
+    public SchemaKey(String type, String schemaGroup, String name) {
+        Preconditions.checkNotNull(type, "type can not be null");
+        Preconditions.checkNotNull(schemaGroup, "schemaGroup can not be null");
+        Preconditions.checkNotNull(name, "name can not be null");
+
+        this.type = type;
+        this.name = name;
+        this.schemaGroup = schemaGroup;
     }
 
-    public Integer getVersion() { return version; }
+    /**
+     * @return unique name of schema with in a group and type.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @return group of the schema. For ex: Kafka, Hive.
+     */
+    public String getSchemaGroup() {
+        return schemaGroup;
+    }
+
+    /**
+     * @return type of the schema. For ex: AVRO, JSON
+     */
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SchemaKey schemaKey = (SchemaKey) o;
+
+        if (name != null ? !name.equals(schemaKey.name) : schemaKey.name != null) return false;
+        if (schemaGroup != null ? !schemaGroup.equals(schemaKey.schemaGroup) : schemaKey.schemaGroup != null) return false;
+        return type != null ? type.equals(schemaKey.type) : schemaKey.type == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (name != null ? name.hashCode() : 0);
+        result = 31 * result + (schemaGroup != null ? schemaGroup.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaMetadataKey{" +
+                "type='" + type + '\'' +
+                ", schemaGroup='" + schemaGroup + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

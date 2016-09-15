@@ -27,8 +27,8 @@ import com.hortonworks.iotas.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaVersionStorable;
 import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaSerDesMapping;
 import com.hortonworks.registries.schemaregistry.SerDesInfoStorable;
@@ -99,7 +99,7 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         }
         storageManager.init(storageProviderConfiguration.getProperties());
         storageManager.registerStorables(
-                Lists.newArrayList(SchemaMetadataStorable.class, SchemaInfoStorable.class, SchemaFieldInfoStorable.class,
+                Lists.newArrayList(SchemaInfoStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
                                     SerDesInfoStorable.class, SchemaSerDesMapping.class));
         return storageManager;
     }

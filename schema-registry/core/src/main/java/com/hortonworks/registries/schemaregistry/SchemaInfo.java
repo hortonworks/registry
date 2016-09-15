@@ -17,64 +17,111 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.google.common.base.Preconditions;
+
 import java.io.Serializable;
 
 /**
- *
+ * This class encapsulates information of a schema including group, name, type, description and compatibility.
+ * <p>
+ * There can be only one instance with same (type, name, group) fields.
+ * <p>
+ * This can be used to register a schema when client does not know about the existing registered schema information.
  */
 public final class SchemaInfo implements Serializable {
 
-    /**
-     * description of this schema instance
-     */
-    private String description;
+    /** Unique key to identify a schema */
+    private final SchemaKey schemaKey;
+
+    private final Long id;
 
     /**
-     * version of the schema which is given in SchemaInfo
+     * Description about the schema metadata.
      */
-    private Integer version;
+    private final String description;
 
     /**
-     * textual representation of the schema which is given in SchemaInfo
+     * Compatibility to be supported for all versions of this evolving schema.
      */
-    private String schemaText;
+    private final SchemaProvider.Compatibility compatibility;
 
-    /**
-     * timestamp of the schema which is given in SchemaInfo
-     */
-    private Long timestamp;
+    private final Long timestamp;
 
-    @SuppressWarnings("unused")
-    private SchemaInfo() { /* Private constructor for Jackson JSON mapping */ }
-
-    public SchemaInfo(Integer version, String schemaText, Long timestamp, String description) {
-        this.description = description;
-        this.version = version;
-        this.schemaText = schemaText;
-        this.timestamp = timestamp;
+    public SchemaInfo(SchemaKey schemaKey,
+                      String description,
+                      SchemaProvider.Compatibility compatibility) {
+        this(schemaKey, null, description, null, compatibility);
     }
 
-    public SchemaInfo(SchemaInfoStorable schemaInfoStorable) {
-        description = schemaInfoStorable.getDescription();
-        version = schemaInfoStorable.getVersion();
-        schemaText = schemaInfoStorable.getSchemaText();
-        timestamp = schemaInfoStorable.getTimestamp();
+    public SchemaInfo(SchemaKey schemaKey,
+                      Long id,
+                      String description,
+                      Long timestamp,
+                      SchemaProvider.Compatibility compatibility) {
+        this.schemaKey = schemaKey;
+        this.id = id;
+        this.timestamp = timestamp;
+        Preconditions.checkNotNull(schemaKey, "schemaMetadataKey can not be null");
+
+        this.compatibility = compatibility != null ? compatibility : SchemaProvider.DEFAULT_COMPATIBILITY;
+        this.description = description;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public Integer getVersion() {
-        return version;
+    public SchemaProvider.Compatibility getCompatibility() {
+        return compatibility;
     }
 
-    public String getSchemaText() {
-        return schemaText;
+    public Long getId() {
+        return id;
     }
 
-    public Long getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
+    }
+
+    public SchemaInfoStorable toSchemaMetadataStorable() {
+        SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
+        schemaInfoStorable.setId(id);
+        schemaInfoStorable.setType(schemaKey.getType());
+        schemaInfoStorable.setSchemaGroup(schemaKey.getSchemaGroup());
+        schemaInfoStorable.setName(schemaKey.getName());
+        schemaInfoStorable.setDescription(description);
+        schemaInfoStorable.setCompatibility(compatibility);
+        schemaInfoStorable.setTimestamp(timestamp);
+
+        return schemaInfoStorable;
+    }
+
+    public static SchemaInfo fromSchemaMetadataStorable(SchemaInfoStorable schemaInfoStorable) {
+        SchemaKey schemaKey =
+                new SchemaKey(schemaInfoStorable.getType(),
+                        schemaInfoStorable.getSchemaGroup(),
+                        schemaInfoStorable.getName());
+
+        return new SchemaInfo(schemaKey,
+                schemaInfoStorable.getId(),
+                schemaInfoStorable.getDescription(),
+                schemaInfoStorable.getTimestamp(),
+                schemaInfoStorable.getCompatibility());
+    }
+
+    public SchemaKey getSchemaKey() {
+        return schemaKey;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaMetadata{" +
+                "schemaMetadataKey=" + schemaKey +
+                ", id=" + id +
+                ", description='" + description + '\'' +
+                ", compatibility=" + compatibility +
+                ", timestamp=" + timestamp +
+                '}';
     }
 
     @Override
@@ -84,28 +131,21 @@ public final class SchemaInfo implements Serializable {
 
         SchemaInfo that = (SchemaInfo) o;
 
+        if (schemaKey != null ? !schemaKey.equals(that.schemaKey) : that.schemaKey != null)
+            return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
+        if (compatibility != that.compatibility) return false;
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
     }
 
     @Override
-    public String toString() {
-        return "SchemaInfo{" +
-                "description='" + description + '\'' +
-                ", version=" + version +
-                ", schemaText='" + schemaText + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
-    }
-
-    @Override
     public int hashCode() {
-        int result = description != null ? description.hashCode() : 0;
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
+        int result = schemaKey != null ? schemaKey.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         return result;
     }

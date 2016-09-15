@@ -20,10 +20,10 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.VersionedSchema;
@@ -43,8 +43,8 @@ import java.util.Collections;
 public class AvroSchemaRegistryTest {
 
     public static final String SCHEMA_GROUP = "test-group";
-    public static final SchemaMetadataKey INVALIDSCHEMA_METADATA_KEY =
-            new SchemaMetadataKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, "invalid-schema" + System.currentTimeMillis());
+    public static final SchemaKey INVALIDSCHEMA_METADATA_KEY =
+            new SchemaKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, "invalid-schema" + System.currentTimeMillis());
 
     private DefaultSchemaRegistry schemaRegistry;
 
@@ -70,41 +70,41 @@ public class AvroSchemaRegistryTest {
 
     @Test
     public void testRegistrySchemaOps() throws Exception {
-        SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, schemaName);
+        SchemaKey schemaKey = new SchemaKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, schemaName);
         SchemaProvider.Compatibility compatibility = SchemaProvider.Compatibility.BOTH;
-        SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey, "devices schema", compatibility);
+        SchemaInfo schemaInfo = new SchemaInfo(schemaKey, "devices schema", compatibility);
 
-        schemaRegistry.addSchemaMetadata(schemaMetadata);
+        schemaRegistry.addSchemaMetadata(schemaInfo);
 
-        Integer v1 = schemaRegistry.addSchema(schemaMetadata, new VersionedSchema(schema1, "initial version of the schema"));
-        Integer v2 = schemaRegistry.addSchema(schemaMetadataKey, new VersionedSchema(schema2, "second version of the the schema"));
+        Integer v1 = schemaRegistry.addSchema(schemaInfo, new VersionedSchema(schema1, "initial version of the schema"));
+        Integer v2 = schemaRegistry.addSchema(schemaKey, new VersionedSchema(schema2, "second version of the the schema"));
         Assert.assertTrue(v2 == v1 + 1);
 
-        Collection<SchemaInfo> allSchemaVersions = schemaRegistry.findAllVersions(schemaMetadataKey);
+        Collection<SchemaVersionInfo> allSchemaVersions = schemaRegistry.findAllVersions(schemaKey);
         Assert.assertTrue(allSchemaVersions.size() == 2);
 
-        SchemaMetadata schemaMetadataStorable = schemaRegistry.getSchemaMetadata(schemaMetadataKey);
-        Assert.assertEquals(schemaMetadataKey, schemaMetadataStorable.getSchemaMetadataKey());
-        Assert.assertEquals(compatibility, schemaMetadataStorable.getCompatibility());
+        SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+        Assert.assertEquals(schemaKey, schemaInfoStorable.getSchemaKey());
+        Assert.assertEquals(compatibility, schemaInfoStorable.getCompatibility());
 
-        Integer schemaVersion = schemaRegistry.getSchemaVersion(schemaMetadataKey, schema1);
+        Integer schemaVersion = schemaRegistry.getSchemaVersion(schemaKey, schema1);
         Assert.assertEquals(v1, schemaVersion);
 
-        SchemaInfo schemaInfo1 = schemaRegistry.getSchemaInfo(new SchemaKey(schemaMetadataKey, v1));
-        Assert.assertEquals(schemaInfo1.getSchemaText(), schema1);
+        SchemaVersionInfo schemaVersionInfo1 = schemaRegistry.getSchemaInfo(new SchemaVersionKey(schemaKey, v1));
+        Assert.assertEquals(schemaVersionInfo1.getSchemaText(), schema1);
 
-        SchemaInfo schemaInfo2 = schemaRegistry.getSchemaInfo(new SchemaKey(schemaMetadataKey, v2));
-        Assert.assertEquals(schemaInfo2.getSchemaText(), schema2);
+        SchemaVersionInfo schemaVersionInfo2 = schemaRegistry.getSchemaInfo(new SchemaVersionKey(schemaKey, v2));
+        Assert.assertEquals(schemaVersionInfo2.getSchemaText(), schema2);
 
         // receive the same version as earlier without adding a new schema entry as it exists in the same schema group.
-        Integer version = schemaRegistry.addSchema(schemaMetadataKey, new VersionedSchema(schema1, "already added schema"));
+        Integer version = schemaRegistry.addSchema(schemaKey, new VersionedSchema(schema1, "already added schema"));
         Assert.assertEquals(version, v1);
     }
 
     @Test
     public void testNonExistingSchemaMetadata() {
-        SchemaMetadata schemaMetadata = schemaRegistry.getSchemaMetadata(INVALIDSCHEMA_METADATA_KEY);
-        Assert.assertNull(schemaMetadata);
+        SchemaInfo schemaInfo = schemaRegistry.getSchemaMetadata(INVALIDSCHEMA_METADATA_KEY);
+        Assert.assertNull(schemaInfo);
     }
 
     @Test(expected = SchemaNotFoundException.class)
