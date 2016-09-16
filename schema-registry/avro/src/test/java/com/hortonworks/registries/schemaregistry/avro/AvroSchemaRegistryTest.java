@@ -20,6 +20,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
+import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
@@ -51,7 +52,7 @@ public class AvroSchemaRegistryTest {
     @Before
     public void setup() throws IOException {
         schema1 = getSchema("/device.avsc");
-        schema2 = getSchema("/device2.avsc");
+        schema2 = getSchema("/device-compat.avsc");
         schemaName = "org.hwx.schemas.test-schema." + System.currentTimeMillis();
         StorageManager storageManager = new InMemoryStorageManager();
         schemaRegistry = new DefaultSchemaRegistry(storageManager, null, Collections.singleton(new AvroSchemaProvider()));
@@ -108,7 +109,7 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test(expected = SchemaNotFoundException.class)
-    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException {
+    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException {
         schemaRegistry.addSchema(INVALIDSCHEMA_METADATA_KEY, new VersionedSchema("foo", "dummy"));
     }
 

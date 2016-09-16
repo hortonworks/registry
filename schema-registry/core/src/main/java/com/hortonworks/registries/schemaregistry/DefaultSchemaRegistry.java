@@ -88,7 +88,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Integer addSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) {
+    public Integer addSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) throws IncompatibleSchemaException {
 
         Integer version;
         // todo handle with minimal lock usage.
@@ -112,7 +112,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    public Integer addSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws SchemaNotFoundException {
+    public Integer addSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws SchemaNotFoundException, IncompatibleSchemaException {
 
         Integer version;
         // todo handle with minimal lock usage.
@@ -133,7 +133,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    private Integer createSchemaInfo(Long schemaMetadataId, VersionedSchema versionedSchema, SchemaKey schemaKey) {
+    private Integer createSchemaInfo(Long schemaMetadataId, VersionedSchema versionedSchema, SchemaKey schemaKey) throws IncompatibleSchemaException {
 
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
@@ -155,9 +155,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         synchronized (addOrUpdateLock) {
             Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaKey);
             Integer version = 0;
+            SchemaVersionInfo latestSchemaVersionInfo = null;
             if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
                 for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-                    version = Math.max(schemaVersionInfo.getVersion(), version);
+                    if(schemaVersionInfo.getVersion() > version) {
+                        latestSchemaVersionInfo = schemaVersionInfo;
+                    }
+                }
+                version = latestSchemaVersionInfo.getVersion();
+                // check for compatibility
+                SchemaInfo schemaInfo = getSchemaMetadata(schemaKey);
+                if(!schemaTypeWithProviders.get(type).isCompatible(versionedSchema.getSchemaText(), latestSchemaVersionInfo.getSchemaText(), schemaInfo.getCompatibility())) {
+                    throw new IncompatibleSchemaException("Given schema is not compatible with earlier schemas");
                 }
             }
             schemaVersionStorable.setVersion(version + 1);

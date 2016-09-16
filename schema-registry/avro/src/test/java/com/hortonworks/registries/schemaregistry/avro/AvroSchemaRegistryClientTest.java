@@ -101,7 +101,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         Integer v1 = schemaRegistryClient.registerSchema(schemaInfo,
                 new VersionedSchema(deviceSchema, "Initial version of the schema"));
 
-        Object deviceObject = createDeviceGenericAvroRecord();
+        Object deviceObject = createGenericRecordForDevice();
 
         byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaInfo);
         Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaInfo.getSchemaKey(), null);
