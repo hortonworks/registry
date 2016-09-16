@@ -67,7 +67,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Long addSchemaMetadata(SchemaInfo schemaInfo) {
+    public Long addSchema(SchemaInfo schemaInfo) {
         SchemaInfoStorable givenSchemaInfoStorable = schemaInfo.toSchemaMetadataStorable();
 
         Long id;
@@ -88,42 +88,42 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Integer addSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) {
+    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws IncompatibleSchemaException {
 
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
             SchemaKey givenSchemaKey = schemaInfo.getSchemaKey();
-            SchemaInfo retreivedschemaInfo = getSchemaMetadata(givenSchemaKey);
+            SchemaInfo retreivedschemaInfo = getSchema(givenSchemaKey);
             if (retreivedschemaInfo != null) {
                 // check whether the same schema text exists
                 try {
-                    version = getSchemaVersion(givenSchemaKey, versionedSchema.getSchemaText());
+                    version = getSchemaVersion(givenSchemaKey, schemaVersion.getSchemaText());
                 } catch (SchemaNotFoundException e) {
-                    version = createSchemaInfo(retreivedschemaInfo.getId(), versionedSchema, givenSchemaKey);
+                    version = createSchemaInfo(retreivedschemaInfo.getId(), schemaVersion, givenSchemaKey);
                 }
             } else {
-                Long schemaMetadataId = addSchemaMetadata(schemaInfo);
-                version = createSchemaInfo(schemaMetadataId, versionedSchema, givenSchemaKey);
+                Long schemaMetadataId = addSchema(schemaInfo);
+                version = createSchemaInfo(schemaMetadataId, schemaVersion, givenSchemaKey);
             }
         }
 
         return version;
     }
 
-    public Integer addSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws SchemaNotFoundException {
+    public Integer adSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException {
 
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
-            SchemaInfo schemaInfoStorable = getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = getSchema(schemaKey);
             if (schemaInfoStorable != null) {
                 // check whether the same schema text exists
-                version = findSchemaVersion(schemaKey.getType(), versionedSchema.getSchemaText(), schemaInfoStorable.getId());
+                version = findSchemaVersion(schemaKey.getType(), schemaVersion.getSchemaText(), schemaInfoStorable.getId());
                 if (version == null) {
-                    version = createSchemaInfo(schemaInfoStorable.getId(), versionedSchema, schemaKey);
+                    version = createSchemaInfo(schemaInfoStorable.getId(), schemaVersion, schemaKey);
                 }
             } else {
                 throw new SchemaNotFoundException("Schema not found with the given schemaMetadataKey: " + schemaKey);
@@ -133,7 +133,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    private Integer createSchemaInfo(Long schemaMetadataId, VersionedSchema versionedSchema, SchemaKey schemaKey) {
+    private Integer createSchemaInfo(Long schemaMetadataId, SchemaVersion schemaVersion, SchemaKey schemaKey) throws IncompatibleSchemaException {
 
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
@@ -147,17 +147,26 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         schemaVersionStorable.setSchemaGroup(schemaKey.getSchemaGroup());
         schemaVersionStorable.setName(schemaKey.getName());
 
-        schemaVersionStorable.setSchemaText(versionedSchema.getSchemaText());
-        schemaVersionStorable.setDescription(versionedSchema.getDescription());
+        schemaVersionStorable.setSchemaText(schemaVersion.getSchemaText());
+        schemaVersionStorable.setDescription(schemaVersion.getDescription());
         schemaVersionStorable.setTimestamp(System.currentTimeMillis());
 
         //todo fix this by generating version sequence for each schema in storage layer or explore other ways to make it scalable
         synchronized (addOrUpdateLock) {
             Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaKey);
             Integer version = 0;
+            SchemaVersionInfo latestSchemaVersionInfo = null;
             if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
                 for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-                    version = Math.max(schemaVersionInfo.getVersion(), version);
+                    if(schemaVersionInfo.getVersion() > version) {
+                        latestSchemaVersionInfo = schemaVersionInfo;
+                    }
+                }
+                version = latestSchemaVersionInfo.getVersion();
+                // check for compatibility
+                SchemaInfo schemaInfo = getSchema(schemaKey);
+                if(!schemaTypeWithProviders.get(type).isCompatible(schemaVersion.getSchemaText(), latestSchemaVersionInfo.getSchemaText(), schemaInfo.getCompatibility())) {
+                    throw new IncompatibleSchemaException("Given schema is not compatible with earlier schemas");
                 }
             }
             schemaVersionStorable.setVersion(version + 1);
@@ -179,7 +188,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public SchemaInfo getSchemaMetadata(SchemaKey schemaKey) {
+    public SchemaInfo getSchema(SchemaKey schemaKey) {
         SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
         schemaInfoStorable.setType(schemaKey.getType());
         schemaInfoStorable.setSchemaGroup(schemaKey.getSchemaGroup());
@@ -287,7 +296,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException {
-        SchemaInfo schemaInfo = getSchemaMetadata(schemaKey);
+        SchemaInfo schemaInfo = getSchema(schemaKey);
         if (schemaInfo == null) {
             throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaKey);
         }
@@ -333,7 +342,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public SchemaVersionInfo getSchemaInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         // todo add caching.
         SchemaKey schemaKey = schemaVersionKey.getSchemaKey();
-        SchemaInfo schemaInfo = getSchemaMetadata(schemaKey);
+        SchemaInfo schemaInfo = getSchema(schemaKey);
 
         if (schemaInfo != null) {
             Integer version = schemaVersionKey.getVersion();
@@ -396,7 +405,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 existingSchemaVersionInfoStorable.stream()
                         .map(schemaInfoStorable -> schemaInfoStorable.getSchemaText()).collect(Collectors.toList());
 
-        SchemaInfo schemaInfo = getSchemaMetadata(schemaKey);
+        SchemaInfo schemaInfo = getSchema(schemaKey);
 
         return isCompatible(schemaInfo.getSchemaKey().getType(), toSchema, schemaTexts, schemaInfo.getCompatibility());
     }
@@ -407,7 +416,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaVersionInfo existingSchemaVersionInfo = getSchemaInfo(schemaVersionKey);
         String schemaText = existingSchemaVersionInfo.getSchemaText();
-        SchemaInfo schemaInfo = getSchemaMetadata(schemaKey);
+        SchemaInfo schemaInfo = getSchema(schemaKey);
 
         return isCompatible(schemaKey.getType(), toSchema, Collections.singletonList(schemaText), schemaInfo.getCompatibility());
     }

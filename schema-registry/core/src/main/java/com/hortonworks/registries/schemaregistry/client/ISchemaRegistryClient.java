@@ -26,7 +26,7 @@ import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.FileNotFoundException;
@@ -91,13 +91,14 @@ import java.util.Collection;
 public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
-     * @param schemaInfo schema metadata
-     * @return true if the given {@code schemaMetadata} is successfully registered.
+     * Registers a schema
+     * @param schemaInfo information about schema.
+     * @return true if the given {@code schemaInfo} is successfully registered.
      */
-    boolean registerSchemaMetadata(SchemaInfo schemaInfo) throws InvalidSchemaException;
+    boolean registerSchemaInfo(SchemaInfo schemaInfo) throws InvalidSchemaException;
 
     /**
-     * Returns version of the schema added to schema-metadata.
+     * Returns version of the schema added to the schema.
      * <pre>
      * It tries to fetch an existing schema or register the given schema with the below conditions
      *  - Checks whether there exists a schema with the given schemaText, and schemaMetadata
@@ -106,22 +107,22 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * </pre>
      *
      * @param schemaInfo metadata related to schema
-     * @param versionedSchema schema to be registered
-     * @return version of the schema added to schema-metadata.
+     * @param schemaVersion schema to be registered
+     * @return version of the schema added.
      * @throws InvalidSchemaException on error
      */
-    Integer registerSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) throws InvalidSchemaException;
+    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException;
 
     /**
      * Adds the given schema {@code versionedSchema} and returns the corresponding version
      *
      * @param schemaKey key identifying a schema
-     * @param versionedSchema schema to be registered
-     * @return version of the schema added to schema-metadata.
-     * @throws InvalidSchemaException      if the given schema is not valid.
-     * @throws IncompatibleSchemaException if the given schema is incompatible according to the compatibility set.
+     * @param schemaVersion  new version of the schema to be added
+     * @return version of the schema added
+     * @throws InvalidSchemaException      if the given versionedSchema is not valid
+     * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
-    Integer addVersionedSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException;
+    Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
      * @return schemas matching the fields specified in the query

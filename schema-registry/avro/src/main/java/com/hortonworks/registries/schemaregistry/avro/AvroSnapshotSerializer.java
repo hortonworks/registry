@@ -18,7 +18,7 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -57,7 +57,7 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();) {
             // register given schema
-            Integer version = schemaRegistryClient.registerSchema(schemaInfo, new VersionedSchema(schema.toString(), "Schema registered by serializer:" + this.getClass()));
+            Integer version = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema.toString(), "Schema registered by serializer:" + this.getClass()));
 
             // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
             byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(version).array());

@@ -20,13 +20,14 @@ package com.hortonworks.registries.schemaregistry.webservice;
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.iotas.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.client.SchemaDetails;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -55,6 +56,7 @@ import java.util.Map;
 
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND;
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.EXCEPTION;
+import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA;
 import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.SUCCESS;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -130,7 +132,7 @@ public class SchemaRegistryCatalog {
     public Response addSchema(SchemaInfo schemaInfo) {
         Response response;
         try {
-            schemaRegistry.addSchemaMetadata(schemaInfo);
+            schemaRegistry.addSchema(schemaInfo);
             response = WSUtils.respond(CREATED, SUCCESS, true);
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
@@ -153,8 +155,11 @@ public class SchemaRegistryCatalog {
                 schemaDetails.getCompatibility());
         Response response;
         try {
-            Integer version = schemaRegistry.addSchema(schemaInfo, schemaDetails.getVersionedSchema());
+            Integer version = schemaRegistry.addSchemaVersion(schemaInfo, schemaDetails.getSchemaVersion());
             response = WSUtils.respond(CREATED, SUCCESS, version);
+        } catch (IncompatibleSchemaException ex) {
+            LOG.error("Incompatible schema error encountered while adding schema", ex);
+            response = WSUtils.respond(Response.Status.BAD_REQUEST, INCOMPATIBLE_SCHEMA, ex.getMessage());
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
@@ -265,7 +270,7 @@ public class SchemaRegistryCatalog {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getSchema(schemaKey);
             if (schemaInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaInfoStorable.getId());
                 response = WSUtils.respond(OK, SUCCESS, schemaSerializers);
@@ -290,7 +295,7 @@ public class SchemaRegistryCatalog {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getSchema(schemaKey);
             if (schemaInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaInfoStorable.getId());
                 response = WSUtils.respond(OK, SUCCESS, schemaSerializers);
@@ -441,7 +446,7 @@ public class SchemaRegistryCatalog {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getSchema(schemaKey);
             schemaRegistry.mapSerDesWithSchema(schemaInfoStorable.getId(), serDesId);
             response = WSUtils.respond(OK, SUCCESS, true);
         } catch (Exception ex) {

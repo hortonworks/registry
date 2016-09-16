@@ -23,14 +23,14 @@ import java.io.Serializable;
  * This can be used for adding details about versioned instance of a schema.
  * TODO: needs better description. Why is it called VersionedSchema?
  */
-public class VersionedSchema implements Serializable {
+public class SchemaVersion implements Serializable {
     private String description;
     private String schemaText;
 
     @SuppressWarnings("unused")
-    private VersionedSchema() { /* Private constructor for Jackson JSON mapping */ }
+    private SchemaVersion() { /* Private constructor for Jackson JSON mapping */ }
 
-    public VersionedSchema(String schemaText, String description) {
+    public SchemaVersion(String schemaText, String description) {
         this.description = description;
         this.schemaText = schemaText;
     }

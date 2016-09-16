@@ -31,7 +31,7 @@ import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.BodyPart;
@@ -121,15 +121,15 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean registerSchemaMetadata(SchemaInfo schemaInfo) {
+    public boolean registerSchemaInfo(SchemaInfo schemaInfo) {
         return postEntity(schemasTarget, schemaInfo, Boolean.class);
     }
 
     @Override
-    public Integer registerSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) throws InvalidSchemaException {
+    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException {
         SchemaKey schemaKey = schemaInfo.getSchemaKey();
         WebTarget path = schemaMetadataPath(schemaKey);
-        SchemaDetails schemaDetails = new SchemaDetails(schemaInfo.getDescription(), schemaInfo.getCompatibility(), versionedSchema);
+        SchemaDetails schemaDetails = new SchemaDetails(schemaInfo.getDescription(), schemaInfo.getCompatibility(), schemaVersion);
         return postEntity(path, schemaDetails, Integer.class);
     }
 
@@ -140,9 +140,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Integer addVersionedSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws InvalidSchemaException, IncompatibleSchemaException {
+    public Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
         WebTarget path = schemaMetadataPath(schemaKey);
-        SchemaDetails schemaDetails = new SchemaDetails(versionedSchema);
+        SchemaDetails schemaDetails = new SchemaDetails(schemaVersion);
         return postEntity(path, schemaDetails, Integer.class);
     }
 
