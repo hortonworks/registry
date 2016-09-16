@@ -18,7 +18,7 @@
 package com.hortonworks.registries.schemaregistry.client;
 
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.VersionedSchema;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 
 import java.io.Serializable;
 
@@ -37,19 +37,19 @@ public class SchemaDetails implements Serializable {
      */
     private SchemaProvider.Compatibility compatibility;
 
-    private VersionedSchema versionedSchema;
+    private SchemaVersion schemaVersion;
 
     @SuppressWarnings("unused")
     private SchemaDetails() { /** Private constructor for Jackson JSON mapping */ }
 
-    public SchemaDetails(VersionedSchema versionedSchema) {
-        this(null, null, versionedSchema);
+    public SchemaDetails(SchemaVersion schemaVersion) {
+        this(null, null, schemaVersion);
     }
 
-    public SchemaDetails(String schemaMetadataDescription, SchemaProvider.Compatibility compatibility, VersionedSchema versionedSchema) {
+    public SchemaDetails(String schemaMetadataDescription, SchemaProvider.Compatibility compatibility, SchemaVersion schemaVersion) {
         this.schemaMetadataDescription = schemaMetadataDescription;
         this.compatibility = compatibility;
-        this.versionedSchema = versionedSchema;
+        this.schemaVersion = schemaVersion;
     }
 
     public String getSchemaMetadataDescription() {
@@ -60,7 +60,7 @@ public class SchemaDetails implements Serializable {
         return compatibility;
     }
 
-    public VersionedSchema getVersionedSchema() {
-        return versionedSchema;
+    public SchemaVersion getSchemaVersion() {
+        return schemaVersion;
     }
 }

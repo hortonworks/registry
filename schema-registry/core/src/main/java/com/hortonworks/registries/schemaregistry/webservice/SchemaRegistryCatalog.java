@@ -132,7 +132,7 @@ public class SchemaRegistryCatalog {
     public Response addSchema(SchemaInfo schemaInfo) {
         Response response;
         try {
-            schemaRegistry.addSchemaMetadata(schemaInfo);
+            schemaRegistry.addSchema(schemaInfo);
             response = WSUtils.respond(CREATED, SUCCESS, true);
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema", ex);
@@ -155,7 +155,7 @@ public class SchemaRegistryCatalog {
                 schemaDetails.getCompatibility());
         Response response;
         try {
-            Integer version = schemaRegistry.addSchema(schemaInfo, schemaDetails.getVersionedSchema());
+            Integer version = schemaRegistry.addSchemaVersion(schemaInfo, schemaDetails.getSchemaVersion());
             response = WSUtils.respond(CREATED, SUCCESS, version);
         } catch (IncompatibleSchemaException ex) {
             LOG.error("Incompatible schema error encountered while adding schema", ex);
@@ -270,7 +270,7 @@ public class SchemaRegistryCatalog {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getSchema(schemaKey);
             if (schemaInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaInfoStorable.getId());
                 response = WSUtils.respond(OK, SUCCESS, schemaSerializers);
@@ -295,7 +295,7 @@ public class SchemaRegistryCatalog {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getSchema(schemaKey);
             if (schemaInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaInfoStorable.getId());
                 response = WSUtils.respond(OK, SUCCESS, schemaSerializers);
@@ -446,7 +446,7 @@ public class SchemaRegistryCatalog {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaMetadata(schemaKey);
+            SchemaInfo schemaInfoStorable = schemaRegistry.getSchema(schemaKey);
             schemaRegistry.mapSerDesWithSchema(schemaInfoStorable.getId(), serDesId);
             response = WSUtils.respond(OK, SUCCESS, true);
         } catch (Exception ex) {

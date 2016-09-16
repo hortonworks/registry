@@ -29,13 +29,13 @@ public interface ISchemaRegistry {
 
     void init(Map<String, Object> props);
 
-    Long addSchemaMetadata(SchemaInfo schemaInfo);
+    Long addSchema(SchemaInfo schemaInfo);
 
-    Integer addSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) throws IncompatibleSchemaException;
+    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws IncompatibleSchemaException;
 
-    Integer addSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws SchemaNotFoundException, IncompatibleSchemaException;
+    Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException;
 
-    SchemaInfo getSchemaMetadata(SchemaKey schemaKey);
+    SchemaInfo getSchema(SchemaKey schemaKey);
 
     Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException;
 
