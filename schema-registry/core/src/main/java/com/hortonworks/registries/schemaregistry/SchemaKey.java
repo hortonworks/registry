@@ -98,7 +98,7 @@ public class SchemaKey implements Serializable {
 
     @Override
     public String toString() {
-        return "SchemaMetadataKey{" +
+        return "SchemaKey{" +
                 "type='" + type + '\'' +
                 ", schemaGroup='" + schemaGroup + '\'' +
                 ", name='" + name + '\'' +

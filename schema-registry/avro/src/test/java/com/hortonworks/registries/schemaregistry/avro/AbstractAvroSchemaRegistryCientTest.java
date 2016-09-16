@@ -67,14 +67,42 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
         return new Object[]{random.nextBoolean(), random.nextDouble(), random.nextLong(), random.nextInt(), "String payload:" + new Date(), null};
     }
 
-    protected Object createDeviceGenericAvroRecord() throws IOException {
+    protected Object createGenericRecordForCompatDevice() throws IOException {
+        Schema schema = new Schema.Parser().parse(getSchema("/device-compat.avsc"));
+
+        GenericRecord avroRecord = new GenericData.Record(schema);
+        long now = System.currentTimeMillis();
+        avroRecord.put("xid", now);
+        avroRecord.put("name", "foo-" + now);
+        avroRecord.put("version", new Random().nextInt());
+        avroRecord.put("timestamp", now);
+        avroRecord.put("make", "make-" + now);
+
+        return avroRecord;
+    }
+
+    protected Object createGenericRecordForIncompatDevice() throws IOException {
+        Schema schema = new Schema.Parser().parse(getSchema("/device-incompat.avsc"));
+
+        GenericRecord avroRecord = new GenericData.Record(schema);
+        long now = System.currentTimeMillis();
+        avroRecord.put("xid", now);
+        avroRecord.put("name", "foo-" + now);
+        avroRecord.put("version", new Random().nextInt());
+        avroRecord.put("mfr", "mfr-"+now);
+
+        return avroRecord;
+    }
+
+    protected Object createGenericRecordForDevice() throws IOException {
         Schema schema = new Schema.Parser().parse(getSchema("/device.avsc"));
 
         GenericRecord avroRecord = new GenericData.Record(schema);
-        avroRecord.put("xid", System.currentTimeMillis());
-        avroRecord.put("name", "foo-" + System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        avroRecord.put("xid", now);
+        avroRecord.put("name", "foo-" + now);
         avroRecord.put("version", new Random().nextInt());
-        avroRecord.put("timestamp", System.currentTimeMillis());
+        avroRecord.put("timestamp", now);
 
         return avroRecord;
     }
@@ -85,7 +113,7 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
         return parser.parse(avroSchemaStream).toString();
     }
 
-    protected Device createDeviceRecord() {
+    protected Device createSpecificRecord() {
         return Device.newBuilder().setName("device-" + System.currentTimeMillis())
                 .setTimestamp(System.currentTimeMillis())
                 .setVersion(new Random().nextInt())

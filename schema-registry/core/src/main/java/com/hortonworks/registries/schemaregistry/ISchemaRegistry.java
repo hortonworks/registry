@@ -31,9 +31,9 @@ public interface ISchemaRegistry {
 
     Long addSchemaMetadata(SchemaInfo schemaInfo);
 
-    Integer addSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema);
+    Integer addSchema(SchemaInfo schemaInfo, VersionedSchema versionedSchema) throws IncompatibleSchemaException;
 
-    Integer addSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws SchemaNotFoundException;
+    Integer addSchema(SchemaKey schemaKey, VersionedSchema versionedSchema) throws SchemaNotFoundException, IncompatibleSchemaException;
 
     SchemaInfo getSchemaMetadata(SchemaKey schemaKey);
 
