@@ -89,7 +89,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws IncompatibleSchemaException {
-
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
@@ -113,7 +112,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public Integer adSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException {
-
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {

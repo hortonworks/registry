@@ -1,0 +1,105 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for com.hortonworks.registries:common:jar:0.1.0-SNAPSHOT
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-failsafe-plugin is missing. @ com.hortonworks.registries:common:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/common/pom.xml, line 105, column 21
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-surefire-plugin is missing. @ com.hortonworks.registries:common:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/common/pom.xml, line 101, column 21
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-surefire-report-plugin is missing. @ com.hortonworks.registries:common:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/common/pom.xml, line 109, column 21
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ com.hortonworks.registries:common:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/common/pom.xml, line 90, column 21
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for com.hortonworks.registries:storage-core:jar:0.1.0-SNAPSHOT
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: com.h2database:h2:jar -> duplicate declaration of version ${h2database.version} @ com.hortonworks.registries:storage-core:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/storage/core/pom.xml, line 82, column 21
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for com.hortonworks.registries:schema-registry-core:jar:0.1.0-SNAPSHOT
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-failsafe-plugin is missing. @ com.hortonworks.registries:schema-registry-core:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/core/pom.xml, line 130, column 21
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-surefire-plugin is missing. @ com.hortonworks.registries:schema-registry-core:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/core/pom.xml, line 126, column 21
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-surefire-report-plugin is missing. @ com.hortonworks.registries:schema-registry-core:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/core/pom.xml, line 134, column 21
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ com.hortonworks.registries:schema-registry-core:[unknown-version], /Users/sduggana/GitHub/registries/schema-registry/core/pom.xml, line 86, column 21
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] registries
+[INFO] schema-registry
+[INFO] iotas-dep
+[INFO] common
+[INFO] cache
+[INFO] storage
+[INFO] storage-core
+[INFO] schema-registry-core
+[INFO] schema-registry-avro
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building registries 0.1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ registries ---
+[INFO] 
+[INFO] --- maven-install-plugin:2.4:install (default-install) @ registries ---
+[INFO] Installing /Users/sduggana/GitHub/registries/pom.xml to /Users/sduggana/.m2/repository/com/hortonworks/registries/registries/0.1.0-SNAPSHOT/registries-0.1.0-SNAPSHOT.pom
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building schema-registry 0.1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ schema-registry ---
+[INFO] 
+[INFO] --- maven-install-plugin:2.4:install (default-install) @ schema-registry ---
+[INFO] Installing /Users/sduggana/GitHub/registries/schema-registry/pom.xml to /Users/sduggana/.m2/repository/com/hortonworks/registries/schema-registry/0.1.0-SNAPSHOT/schema-registry-0.1.0-SNAPSHOT.pom
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building iotas-dep 0.1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ iotas-dep ---
+[INFO] 
+[INFO] --- maven-install-plugin:2.4:install (default-install) @ iotas-dep ---
+[INFO] Installing /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/pom.xml to /Users/sduggana/.m2/repository/com/hortonworks/registries/iotas-dep/0.1.0-SNAPSHOT/iotas-dep-0.1.0-SNAPSHOT.pom
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building common 0.1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ common ---
+[INFO] Deleting /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/common/target
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 3 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ common ---
+[INFO] Changes detected - recompiling the module!
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 23 source files to /Users/sduggana/GitHub/registries/schema-registry/iotas-dep/common/target/classes
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] registries ......................................... SUCCESS [  0.358 s]
+[INFO] schema-registry .................................... SUCCESS [  0.009 s]
+[INFO] iotas-dep .......................................... SUCCESS [  0.009 s]
+[INFO] common ............................................. FAILURE [  1.032 s]
+[INFO] cache .............................................. SKIPPED
+[INFO] storage ............................................ SKIPPED
+[INFO] storage-core ....................................... SKIPPED
+[INFO] schema-registry-core ............................... SKIPPED
+[INFO] schema-registry-avro ............................... SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 1.597 s
+[INFO] Finished at: 2016-09-16T09:27:22+05:30
+[INFO] Final Memory: 14M/245M
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:compile (default-compile) on project common: Fatal error compiling: invalid target release: 1.8 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <goals> -rf :common
