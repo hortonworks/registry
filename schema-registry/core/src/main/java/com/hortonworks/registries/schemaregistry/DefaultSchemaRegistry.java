@@ -111,7 +111,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    public Integer adSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException {
+    public Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException {
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {

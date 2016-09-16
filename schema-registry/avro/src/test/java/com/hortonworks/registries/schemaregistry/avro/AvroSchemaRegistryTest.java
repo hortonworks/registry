@@ -78,7 +78,7 @@ public class AvroSchemaRegistryTest {
         schemaRegistry.addSchema(schemaInfo);
 
         Integer v1 = schemaRegistry.addSchemaVersion(schemaInfo, new SchemaVersion(schema1, "initial version of the schema"));
-        Integer v2 = schemaRegistry.adSchemaVersion(schemaKey, new SchemaVersion(schema2, "second version of the the schema"));
+        Integer v2 = schemaRegistry.addSchemaVersion(schemaKey, new SchemaVersion(schema2, "second version of the the schema"));
         Assert.assertTrue(v2 == v1 + 1);
 
         Collection<SchemaVersionInfo> allSchemaVersions = schemaRegistry.findAllVersions(schemaKey);
@@ -98,7 +98,7 @@ public class AvroSchemaRegistryTest {
         Assert.assertEquals(schemaVersionInfo2.getSchemaText(), schema2);
 
         // receive the same version as earlier without adding a new schema entry as it exists in the same schema group.
-        Integer version = schemaRegistry.adSchemaVersion(schemaKey, new SchemaVersion(schema1, "already added schema"));
+        Integer version = schemaRegistry.addSchemaVersion(schemaKey, new SchemaVersion(schema1, "already added schema"));
         Assert.assertEquals(version, v1);
     }
 
@@ -110,7 +110,7 @@ public class AvroSchemaRegistryTest {
 
     @Test(expected = SchemaNotFoundException.class)
     public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException {
-        schemaRegistry.adSchemaVersion(INVALIDSCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy"));
+        schemaRegistry.addSchemaVersion(INVALIDSCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy"));
     }
 
     //todo add tests for compatibility
