@@ -27,6 +27,7 @@ public class CatalogResponse {
         DATASOURCE_TYPE_FILTER_NOT_FOUND(1104, "Datasource not found for type [%s], query params [%s].", 2),
         ENTITY_NOT_FOUND_FOR_FILTER(1105, "Entity not found for query params [%s].", 1),
         INCOMPATIBLE_SCHEMA(1106, "Given schema is incompatible.", 0),
+        INVALID_SCHEMA(1107, "Given schema is invalid.", 0),
         UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type", 0),
         BAD_REQUEST(1110, "Bad Request", 0);
 

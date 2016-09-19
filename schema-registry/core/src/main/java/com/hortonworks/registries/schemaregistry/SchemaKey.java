@@ -22,8 +22,7 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema information. This key (name, group, type) is used
- * to find a schema in the schema repository.
+ * This class represents a key(name, schemaGroup, type) for finding SchemaInfo.
  */
 public class SchemaKey implements Serializable {
 

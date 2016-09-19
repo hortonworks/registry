@@ -66,7 +66,7 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
                 .build(new CacheLoader<SchemaVersionKey, Schema>() {
                     @Override
                     public Schema load(SchemaVersionKey schemaVersionKey) throws Exception {
-                        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchema(schemaVersionKey);
+                        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaVersionKey);
                         return schemaVersionInfo != null ? new Schema.Parser().parse(schemaVersionInfo.getSchemaText()) : null;
                     }
                 });

@@ -17,10 +17,12 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
+import org.apache.avro.SchemaParseException;
 import org.apache.avro.SchemaValidationException;
 
 import java.security.NoSuchAlgorithmException;
@@ -64,10 +66,13 @@ public class AvroSchemaProvider implements SchemaProvider {
     }
 
     @Override
-    public byte[] getFingerprint(String schemaText) {
+    public byte[] getFingerprint(String schemaText) throws InvalidSchemaException {
         try {
             // generates fingerprint of canonical form of the given schema.
-            return SchemaNormalization.parsingFingerprint("MD5", new Schema.Parser().parse(schemaText));
+            Schema schema = new Schema.Parser().parse(schemaText);
+            return SchemaNormalization.parsingFingerprint("MD5", schema);
+        } catch (SchemaParseException e) {
+            throw new InvalidSchemaException("Given schema is invalid", e);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
