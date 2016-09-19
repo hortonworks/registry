@@ -20,13 +20,13 @@ package com.hortonworks.registries.schemaregistry.client;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.FileNotFoundException;
@@ -40,23 +40,28 @@ import java.util.Collection;
  * <pre>
  *
  * // registering new schema-metadata
- * SchemaMetadataKey schemaMetadataKey = new SchemaMetadataKey(AvroSchemaProvider.TYPE, SCHEMA_GROUP, schemaName);
- * SchemaProvider.Compatibility compatibility = SchemaProvider.Compatibility.BOTH;
- * SchemaMetadata schemaMetadata = new SchemaMetadata(schemaMetadataKey, "devices schema", compatibility);
+ * SchemaInfo schemaInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName());
+ * SchemaKey schemaKey = schemaInfo.getSchemaKey();
  *
- * Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadata);
+ * // registering a new schema
+ * Integer v1 = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema1, "Initial version of the schema"));
  *
- * Integer v1 = schemaRegistry.addSchema(schemaMetadata, new VersionedSchema(schema1, "initial version of the schema"));
- * Integer v2 = schemaRegistry.addSchema(schemaMetadataKey, new VersionedSchema(schema2, "second version of the the schema"));
+ * // adding a new version of the schema
+ * SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
+ * Integer v2 = schemaRegistryClient.addSchemaVersion(schemaKey, schemaInfo2);
  *
  * // get the specific version of the schema
- * SchemaInfo schemaInfo = schemaRegistryClient.getSchema(new SchemaKey(schemaMetadataKey, v2));
+ * SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaKey, v2));
  *
  * // get the latest version of the schema
- * SchemaInfo latest = schemaRegistryClient.getLatestSchema(schemaMetadataKey);
+ * SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaKey);
  *
  * // get all versions of a specific schema
- * Collection<SchemaInfo> allVersions = schemaRegistryClient.getAllVersions(schemaMetadataKey);
+ * Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaKey);
+ *
+ * // get schema versions which have schema field swith name 'txid'
+ * Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
+ *
  *
  * </pre>
  * <p>
@@ -70,13 +75,13 @@ import java.util.Collection;
  * SerDesInfo serializerInfo = createSerDesInfo(fileId);
  * Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
  *
- * schemaMetadataKey = new SchemaMetadataKey(type(), "kafka", "com.hwx.iot.device.schema");
+ * schemaKey = new SchemaKey(type(), "kafka", "com.hwx.iot.device.schema");
  *
  * // map this serializer with a registered schema
- * schemaRegistryClient.mapSchemaWithSerDes(schemaMetadataKey, serializerId);
+ * schemaRegistryClient.mapSchemaWithSerDes(schemaKey, serializerId);
  *
  * // get registered serializers
- * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadataKey);
+ * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaKey);
  * SerDesInfo registeredSerializerInfo = serializers.iterator().next();
  *
  * //get serializer and serialize the given payload
@@ -84,48 +89,50 @@ import java.util.Collection;
  * Map<String, Object> config = Collections.emptyMap();
  * snapshotSerializer.init(config);
  *
- * byte[] serializedData = snapshotSerializer.serialize(input, schemaMetadata);
+ * byte[] serializedData = snapshotSerializer.serialize(input, schemaInfo);
  *
  * </pre>
  */
 public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
-     * Registers a schema
+     * Registers information about a schema.
+     *
      * @param schemaInfo information about schema.
      * @return true if the given {@code schemaInfo} is successfully registered.
      */
     boolean registerSchemaInfo(SchemaInfo schemaInfo) throws InvalidSchemaException;
 
     /**
-     * Returns version of the schema added to the schema.
+     * Returns version of the schema added to the given schemaInfo.
      * <pre>
      * It tries to fetch an existing schema or register the given schema with the below conditions
-     *  - Checks whether there exists a schema with the given schemaText, and schemaMetadata
-     *      - returns respective schemaKey if it exists.
-     *      - Creates a schema for the given name and returns respective schemaKey if it does not exist
+     *  - Checks whether there exists a schema with the given schemaText, and schemaInfo#getSchemaKey()
+     *      - returns respective schemaVersionKey if it exists.
+     *      - Creates a schema for the given name and returns respective schemaVersionKey if it does not exist.
      * </pre>
      *
-     * @param schemaInfo metadata related to schema
-     * @param schemaVersion schema to be registered
+     * @param schemaInfo    information about the schema
+     * @param schemaVersion new version of the schema to be registered
      * @return version of the schema added.
-     * @throws InvalidSchemaException on error
+     * @throws InvalidSchemaException      if the given versionedSchema is not valid
+     * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
-    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException;
+    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
-     * Adds the given schema {@code versionedSchema} and returns the corresponding version
+     * Adds the given {@code schemaVersion} and returns the corresponding version number.
      *
-     * @param schemaKey key identifying a schema
-     * @param schemaVersion  new version of the schema to be added
-     * @return version of the schema added
+     * @param schemaKey     key identifying a schema
+     * @param schemaVersion new version of the schema to be added
+     * @return version number of the schema added
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
     Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
-     * @return schemas matching the fields specified in the query
+     * @return schema versions matching the fields specified in the query
      */
     Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery);
 
@@ -133,14 +140,14 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaVersionKey key identifying a schema and a version
      * @return {@link SchemaVersionInfo} for the given {@link SchemaVersionKey}
      */
-    SchemaVersionInfo getSchema(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
+    SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
 
     /**
      * @param schemaKey key identifying schema
      * @return latest version of the schema for the given {@param schemaMetadataKey}
      */
-    SchemaVersionInfo getLatestSchema(SchemaKey schemaKey) throws SchemaNotFoundException;
+    SchemaVersionInfo getLatestSchemaVersionInfo(SchemaKey schemaKey) throws SchemaNotFoundException;
 
     /**
      * @param schemaKey key identifying schema
@@ -150,8 +157,8 @@ public interface ISchemaRegistryClient extends AutoCloseable {
 
 
     /**
-     * @param schemaKey key identifying a schema
-     * @param toSchemaText text representing the schema
+     * @param schemaKey    key identifying a schema
+     * @param toSchemaText text representing the schema to be checked for compatibility
      * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
      */
     boolean isCompatibleWithAllVersions(SchemaKey schemaKey, String toSchemaText) throws SchemaNotFoundException;

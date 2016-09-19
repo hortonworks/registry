@@ -19,19 +19,19 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.hortonworks.iotas.common.catalog.CatalogResponse;
+import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.BodyPart;
@@ -46,14 +46,14 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
 
@@ -86,7 +86,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private final Options options;
     private final ClassLoaderCache classLoaderCache;
-    private LoadingCache<SchemaVersionKey, SchemaVersionInfo> schemaCache;
+    private SchemaVersionInfoCache schemaVersionInfoCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
@@ -100,15 +100,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         classLoaderCache = new ClassLoaderCache(this);
 
-        schemaCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getMaxSchemaCacheSize())
-                .expireAfterAccess(options.getSchemaExpiryInMillis(), TimeUnit.MILLISECONDS)
-                .build(new CacheLoader<SchemaVersionKey, SchemaVersionInfo>() {
-                    @Override
-                    public SchemaVersionInfo load(SchemaVersionKey schemaVersionKey) throws Exception {
-                        return _getSchema(schemaVersionKey);
-                    }
-                });
+        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> _getSchema(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInMillis());
     }
 
     public Options getOptions() {
@@ -126,11 +118,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException {
+    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
         SchemaKey schemaKey = schemaInfo.getSchemaKey();
-        WebTarget path = schemaMetadataPath(schemaKey);
-        SchemaDetails schemaDetails = new SchemaDetails(schemaInfo.getDescription(), schemaInfo.getCompatibility(), schemaVersion);
-        return postEntity(path, schemaDetails, Integer.class);
+        return addSchemaVersion(schemaKey, schemaVersion);
     }
 
     private WebTarget schemaMetadataPath(SchemaKey schemaKey) {
@@ -141,21 +131,50 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
-        WebTarget path = schemaMetadataPath(schemaKey);
+        WebTarget target = schemaMetadataPath(schemaKey);
         SchemaDetails schemaDetails = new SchemaDetails(schemaVersion);
-        return postEntity(path, schemaDetails, Integer.class);
+
+        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaDetails), Response.class);
+        int status = response.getStatus();
+        String msg = response.readEntity(String.class);
+        if (status == Response.Status.BAD_REQUEST.getStatusCode() || status == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+            CatalogResponse catalogResponse = readCatalogResponse(msg);
+            if (CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA.getCode() == catalogResponse.getResponseCode()) {
+                throw new IncompatibleSchemaException(catalogResponse.getResponseMessage());
+            } else if (CatalogResponse.ResponseMessage.INVALID_SCHEMA.getCode() == catalogResponse.getResponseCode()) {
+                throw new InvalidSchemaException(catalogResponse.getResponseMessage());
+            } else {
+                throw new RuntimeException(catalogResponse.getResponseMessage());
+            }
+
+        }
+
+        return readEntity(msg, Integer.class);
     }
 
-    @Override
-    public SchemaVersionInfo getSchema(SchemaVersionKey schemaVersionKey) {
+    private CatalogResponse readCatalogResponse(String msg) {
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return schemaCache.get(schemaVersionKey);
-        } catch (ExecutionException e) {
+            JsonNode node = objectMapper.readTree(msg);
+
+            return objectMapper.treeToValue(node, CatalogResponse.class);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public SchemaVersionInfo _getSchema(SchemaVersionKey schemaVersionKey) {
+    @Override
+    public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        try {
+            return schemaVersionInfoCache.getSchema(schemaVersionKey);
+        } catch (SchemaNotFoundException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private SchemaVersionInfo _getSchema(SchemaVersionKey schemaVersionKey) {
         SchemaKey schemaKey = schemaVersionKey.getSchemaKey();
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/versions/%d",
@@ -165,7 +184,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionInfo getLatestSchema(SchemaKey schemaKey) throws SchemaNotFoundException {
+    public SchemaVersionInfo getLatestSchemaVersionInfo(SchemaKey schemaKey) throws SchemaNotFoundException {
         WebTarget webTarget = schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s/versions/latest",
                         schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName()));
@@ -320,15 +339,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final int DEFAULT_CLASS_LOADER_CACHE_SIZE = 1024;
         public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
-        public static final String SCHEMA_CACHE_SIZE = "schema.registry.schema.cache.size";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL = "schema.registry.schema.cache.expiry.interval";
-        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
 
         private final Map<String, ?> config;
+        private final DefaultSchemaRegistry.Options schemaRegistryOptions;
 
         public Options(Map<String, ?> config) {
             this.config = config;
+            schemaRegistryOptions = new DefaultSchemaRegistry.Options(config);
         }
 
         private Object getPropertyValue(String propertyKey, Object defaultValue) {
@@ -349,11 +366,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         public int getMaxSchemaCacheSize() {
-            return (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+            return schemaRegistryOptions.getMaxSchemaCacheSize();
         }
 
         public long getSchemaExpiryInMillis() {
-            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS);
+            return schemaRegistryOptions.getSchemaExpiryInMillis();
         }
     }
 }

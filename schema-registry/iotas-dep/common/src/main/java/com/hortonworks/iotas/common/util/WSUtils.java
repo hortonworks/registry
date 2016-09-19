@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * Utility methods for the webservice.
  */
-public class WSUtils {
+public final class WSUtils {
     private WSUtils() {
     }
 
@@ -59,32 +59,6 @@ public class WSUtils {
         return Response.status(status)
                 .entity(CatalogResponse.newResponse(msg).entity(null).format(formatArgs))
                 .build();
-    }
-
-    public static List<QueryParam> buildQueryParameters(MultivaluedMap<String, String> params) {
-        if (params == null || params.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<QueryParam> queryParams = new ArrayList<>();
-        for (String param : params.keySet()) {
-            queryParams.add(new QueryParam(param, params.getFirst(param)));
-        }
-        return queryParams;
-    }
-
-
-    public static List<QueryParam> buildTopologyIdAwareQueryParams(Long topologyId, UriInfo uriInfo) {
-        List<QueryParam> queryParams = new ArrayList<QueryParam>();
-        queryParams.add(new QueryParam("topologyId", topologyId.toString()));
-        if (uriInfo != null) {
-            MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-            if (!params.isEmpty()) {
-                queryParams.addAll(WSUtils.buildQueryParameters(params));
-            }
-        }
-
-        return queryParams;
     }
 
     public static StreamingOutput wrapWithStreamingOutput(final InputStream inputStream) {

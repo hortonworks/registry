@@ -22,15 +22,15 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class encapsulates information of a schema including group, name, type, description and compatibility.
- * <p>
+ * This class encapsulates information of different versions of a schema which includes group, name, type, description and compatibility.
  * There can be only one instance with same (type, name, group) fields.
- * <p>
- * This can be used to register a schema when client does not know about the existing registered schema information.
+ * New versions of the schema can be registered for the given {@link SchemaInfo} by giving {@link SchemaVersion} instances.
  */
 public final class SchemaInfo implements Serializable {
 
-    /** Unique key to identify a schema */
+    /**
+     * Unique key to identify a schema
+     */
     private final SchemaKey schemaKey;
 
     private final Long id;
@@ -83,7 +83,7 @@ public final class SchemaInfo implements Serializable {
         return timestamp;
     }
 
-    public SchemaInfoStorable toSchemaMetadataStorable() {
+    public SchemaInfoStorable toSchemaInfoStorable() {
         SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
         schemaInfoStorable.setId(id);
         schemaInfoStorable.setType(schemaKey.getType());
@@ -96,7 +96,7 @@ public final class SchemaInfo implements Serializable {
         return schemaInfoStorable;
     }
 
-    public static SchemaInfo fromSchemaMetadataStorable(SchemaInfoStorable schemaInfoStorable) {
+    public static SchemaInfo fromSchemaInfoStorable(SchemaInfoStorable schemaInfoStorable) {
         SchemaKey schemaKey =
                 new SchemaKey(schemaInfoStorable.getType(),
                         schemaInfoStorable.getSchemaGroup(),

@@ -29,21 +29,21 @@ public interface ISchemaRegistry {
 
     void init(Map<String, Object> props);
 
-    Long addSchema(SchemaInfo schemaInfo);
+    Long addSchemaInfo(SchemaInfo schemaInfo);
 
-    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws IncompatibleSchemaException;
+    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException;
 
-    Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException;
+    Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException;
 
-    SchemaInfo getSchema(SchemaKey schemaKey);
+    SchemaInfo getSchemaVersionInfo(SchemaKey schemaKey);
 
-    Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException;
+    Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
     Collection<SchemaVersionInfo> findAllVersions(SchemaKey schemaKey);
 
-    SchemaVersionInfo getSchemaInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
+    SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
-    SchemaVersionInfo getLatestSchemaInfo(SchemaKey schemaKey) throws SchemaNotFoundException;
+    SchemaVersionInfo getLatestSchemaVersionInfo(SchemaKey schemaKey) throws SchemaNotFoundException;
 
     Collection<SchemaVersionKey> findSchemas(Map<String, String> filters);
 

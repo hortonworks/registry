@@ -49,7 +49,7 @@ public interface SchemaProvider {
      * @param schemaText textual representation of schema
      * @return fingerprint of canonicalized form of the given schema.
      */
-    byte[] getFingerprint(String schemaText);
+    byte[] getFingerprint(String schemaText) throws InvalidSchemaException;
 
     /**
      * TODO why is this called rootSchema? Is this same as schemaText above?
