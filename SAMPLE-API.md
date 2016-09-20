@@ -1,3 +1,37 @@
+# Introduction
+ 
+Each Schema is mainly represented by 
+- type
+  - Represents the type of schema. For ex Avro, ProtoBuf, Json etc
+- schemaGroup
+  - group of schemas in which this schema belongs to. It can be like Kafka, Hive, Spark or system log etc
+- name
+  - name of the schema. 
+- compatibility
+  - Compatibility between different versions of the schema.
+- description
+  - Description about the different versions of a schema.
+
+ (type, schemaGroup, name) represents unique constraint for schemas in SchemaRegistry.
+
+
+Each of these schemas can evolve with multiple versions. Each version of the Schema can have 
+- schemaText
+  - Textual representation of schema
+- description
+  - Description about this version
+    
+### Compatibility
+Compatibility of different versions of a schema can be configured with any of the below values
+- Backward
+  - It indicates that new version of a schema would be compatible with earlier version of that schema. That means the data written from earlier version of the schema, can be deserialized with a new version of the schema.
+- Forward
+  - It indicates that an existing schema is compatible with subsequent versions of the schema. That means the data written from new version of the schema can still be read with old version of the schema.
+- Full
+  - It indicates that a new version of the schema provides both backward and forward compatibilities. 
+- None
+  - There is no compatibility between different versions of a schema.
+
 # SchemaRegistry configuration
 
 Configuration file is located at conf/registry-dev.yaml. By default it uses inmemory storage manager. It can be changed to use MySQL as storage by providing configuration like below. You should configure respective dataSourceUrl
@@ -83,14 +117,14 @@ CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
 ```
 
 # API examples
+## Using schema related APIs
 
 Below set of code snippets explain how SchemaRegistryClient can be used for
  - registering new versions of schemas
  - fetching registered schema versions
  - registering serializers/deserializers
  - fetching serializer/deserializer for a given schema
- 
-## Using schema related APIs
+
  
 ```java
 
