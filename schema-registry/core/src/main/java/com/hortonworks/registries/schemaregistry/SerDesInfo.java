@@ -24,6 +24,7 @@ import java.io.Serializable;
 
 /**
  *
+ * todo: Better to store serializer and deserializer in pairs instead of individual entities.
  */
 public class SerDesInfo implements Serializable {
     protected Long id;

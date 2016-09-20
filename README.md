@@ -1,5 +1,5 @@
-# registries
-Hwx  registries repository
+# Registries
+Hortonworks  registries repository
 
 # Build
 mvn clean install

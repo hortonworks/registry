@@ -20,8 +20,7 @@ package com.hortonworks.registries.schemaregistry;
 import java.io.Serializable;
 
 /**
- * This can be used for adding details about versioned instance of a schema.
- * TODO: needs better description. Why is it called VersionedSchema?
+ * This class represents details about versioned instance of a schema which includes descrption and schema text.
  */
 public class SchemaVersion implements Serializable {
     private String description;
@@ -41,5 +40,13 @@ public class SchemaVersion implements Serializable {
 
     public String getSchemaText() {
         return schemaText;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaVersion{" +
+                "description='" + description + '\'' +
+                ", schemaText='" + schemaText + '\'' +
+                '}';
     }
 }
