@@ -38,7 +38,7 @@ public class SchemaVersionInfoCache {
                 .build(new CacheLoader<SchemaVersionKey, SchemaVersionInfo>() {
                     @Override
                     public SchemaVersionInfo load(SchemaVersionKey key) throws Exception {
-                        return schemaRetriever.getSchema(key);
+                        return schemaRetriever.retrieveSchemaVersion(key);
                     }
                 });
 
@@ -53,6 +53,6 @@ public class SchemaVersionInfoCache {
     }
 
     public interface SchemaRetriever {
-        SchemaVersionInfo getSchema(SchemaVersionKey key) throws SchemaNotFoundException;
+        SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException;
     }
 }

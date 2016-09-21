@@ -53,11 +53,11 @@ public final class SchemaInfo implements Serializable {
         this(schemaKey, null, description, null, compatibility);
     }
 
-    public SchemaInfo(SchemaKey schemaKey,
-                      Long id,
-                      String description,
-                      Long timestamp,
-                      SchemaProvider.Compatibility compatibility) {
+    SchemaInfo(SchemaKey schemaKey,
+               Long id,
+               String description,
+               Long timestamp,
+               SchemaProvider.Compatibility compatibility) {
         this.schemaKey = schemaKey;
         this.id = id;
         this.timestamp = timestamp;

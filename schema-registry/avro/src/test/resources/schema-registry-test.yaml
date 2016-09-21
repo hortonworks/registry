@@ -38,6 +38,10 @@ fileStorageConfiguration:
 storageProviderConfiguration:
   providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
 
+
+#enable CORS, may want to disable in production
+enableCors: true
+
 # use the simple server factory if you only want to run on a single port
 #server:
 #  type: simple

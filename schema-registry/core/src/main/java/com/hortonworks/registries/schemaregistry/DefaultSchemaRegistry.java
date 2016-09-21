@@ -98,7 +98,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
             SchemaKey givenSchemaKey = schemaInfo.getSchemaKey();
-            SchemaInfo retreivedschemaInfo = getSchemaVersionInfo(givenSchemaKey);
+            SchemaInfo retreivedschemaInfo = getSchemaInfo(givenSchemaKey);
             if (retreivedschemaInfo != null) {
                 // check whether the same schema text exists
                 try {
@@ -120,7 +120,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
             // check whether there exists schema-metadata for schema-metadata-key
-            SchemaInfo schemaInfoStorable = getSchemaVersionInfo(schemaKey);
+            SchemaInfo schemaInfoStorable = getSchemaInfo(schemaKey);
             if (schemaInfoStorable != null) {
                 // check whether the same schema text exists
                 version = findSchemaVersion(schemaKey.getType(), schemaVersion.getSchemaText(), schemaInfoStorable.getId());
@@ -174,7 +174,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 }
                 version = latestSchemaVersionInfo.getVersion();
                 // check for compatibility
-                SchemaInfo schemaInfo = getSchemaVersionInfo(schemaKey);
+                SchemaInfo schemaInfo = getSchemaInfo(schemaKey);
                 if (!schemaTypeWithProviders.get(type).isCompatible(schemaVersion.getSchemaText(), latestSchemaVersionInfo.getSchemaText(), schemaInfo.getCompatibility())) {
                     throw new IncompatibleSchemaException("Given schema is not compatible with earlier schema versions");
                 }
@@ -198,7 +198,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public SchemaInfo getSchemaVersionInfo(SchemaKey schemaKey) {
+    public SchemaInfo getSchemaInfo(SchemaKey schemaKey) {
         SchemaInfoStorable schemaInfoStorable = new SchemaInfoStorable();
         schemaInfoStorable.setType(schemaKey.getType());
         schemaInfoStorable.setSchemaGroup(schemaKey.getSchemaGroup());
@@ -306,7 +306,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException, InvalidSchemaException {
-        SchemaInfo schemaInfo = getSchemaVersionInfo(schemaKey);
+        SchemaInfo schemaInfo = getSchemaInfo(schemaKey);
         if (schemaInfo == null) {
             throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaKey);
         }
@@ -355,7 +355,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     SchemaVersionInfo retrieveSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         SchemaKey schemaKey = schemaVersionKey.getSchemaKey();
-        SchemaInfo schemaInfo = getSchemaVersionInfo(schemaKey);
+        SchemaInfo schemaInfo = getSchemaInfo(schemaKey);
 
         if (schemaInfo != null) {
             Integer version = schemaVersionKey.getVersion();
@@ -418,7 +418,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 existingSchemaVersionInfoStorable.stream()
                         .map(schemaInfoStorable -> schemaInfoStorable.getSchemaText()).collect(Collectors.toList());
 
-        SchemaInfo schemaInfo = getSchemaVersionInfo(schemaKey);
+        SchemaInfo schemaInfo = getSchemaInfo(schemaKey);
 
         return isCompatible(schemaInfo.getSchemaKey().getType(), toSchema, schemaTexts, schemaInfo.getCompatibility());
     }
@@ -429,7 +429,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaVersionInfo existingSchemaVersionInfo = getSchemaVersionInfo(schemaVersionKey);
         String schemaText = existingSchemaVersionInfo.getSchemaText();
-        SchemaInfo schemaInfo = getSchemaVersionInfo(schemaKey);
+        SchemaInfo schemaInfo = getSchemaInfo(schemaKey);
 
         return isCompatible(schemaKey.getType(), toSchema, Collections.singletonList(schemaText), schemaInfo.getCompatibility());
     }
@@ -518,12 +518,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public InputStream downloadJar(Long serDesId) {
+        InputStream inputStream = null;
+
         SerDesInfo serDesInfoStorable = getSerDesInfo(serDesId);
-        try {
-            return fileStorage.downloadFile(serDesInfoStorable.getFileId());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (serDesInfoStorable != null) {
+            try {
+                inputStream = fileStorage.downloadFile(serDesInfoStorable.getFileId());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+
+        return inputStream;
     }
 
     @Override
@@ -542,7 +548,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
         public static final String SCHEMA_CACHE_SIZE = "schema.registry.schema.cache.size";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL = "schema.registry.schema.cache.expiry.interval";
+        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_MILLIS = "schema.registry.schema.cache.expiry.interval.millis";
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
 
@@ -562,7 +568,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         public long getSchemaExpiryInMillis() {
-            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS);
+            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_MILLIS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS);
         }
     }
 

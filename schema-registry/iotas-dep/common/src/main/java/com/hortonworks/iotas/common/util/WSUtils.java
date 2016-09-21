@@ -19,22 +19,16 @@
 package com.hortonworks.iotas.common.util;
 
 import com.google.common.io.ByteStreams;
-import com.hortonworks.iotas.common.QueryParam;
 import com.hortonworks.iotas.common.catalog.CatalogResponse;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Utility methods for the webservice.
@@ -43,13 +37,13 @@ public final class WSUtils {
     private WSUtils() {
     }
 
-    public static Response respond(Response.Status status, CatalogResponse.ResponseMessage msg, Collection<?> entities, String... formatArgs) {
+    public static Response respond(Collection<?> entities, Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
         return Response.status(status)
                 .entity(CatalogResponse.newResponse(msg).entities(entities).format(formatArgs))
                 .build();
     }
 
-    public static Response respond(Response.Status status, CatalogResponse.ResponseMessage msg, Object entity, String... formatArgs) {
+    public static Response respond(Object entity, Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
         return Response.status(status)
                 .entity(CatalogResponse.newResponse(msg).entity(entity).format(formatArgs))
                 .build();
