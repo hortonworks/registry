@@ -25,22 +25,32 @@ import com.hortonworks.iotas.common.util.FileStorage;
 import com.hortonworks.iotas.storage.StorageManager;
 import com.hortonworks.iotas.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaVersionStorable;
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
 import com.hortonworks.registries.schemaregistry.SchemaInfoStorable;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaSerDesMapping;
+import com.hortonworks.registries.schemaregistry.SchemaVersionStorable;
 import com.hortonworks.registries.schemaregistry.SerDesInfoStorable;
 import io.dropwizard.Application;
+import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Environment;
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -50,16 +60,62 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
 
     @Override
     public void run(SchemaRegistryConfiguration configuration, Environment environment) throws Exception {
-        environment.jersey().register(MultiPartFeature.class);
 
         StorageManager storageManager = getStorageManager(configuration.getStorageProviderConfiguration());
         FileStorage fileStorage = getJarStorage(configuration.getFileStorageConfiguration());
         Collection<? extends SchemaProvider> schemaProviders = getSchemaProviders(configuration.getSchemaProviderClasses());
         ISchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
 
-        //todo should be moved to resource initialization callback method
-        schemaRegistry.init(Collections.emptyMap());
-        environment.jersey().register(new SchemaRegistryCatalog(schemaRegistry));
+        initializeSchemaRegistry(schemaRegistry, configuration.getSchemaCache());
+
+        registerResources(environment, new SchemaRegistryResource(schemaRegistry));
+
+        if (configuration.isEnableCors()) {
+            enableCORS(environment);
+        }
+
+    }
+
+    private void initializeSchemaRegistry(ISchemaRegistry schemaRegistry, SchemaRegistryConfiguration.SchemaCache schemaCache) {
+        Map<String, Object> config = null;
+        if (schemaCache != null) {
+            new HashMap<>();
+            config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_SIZE, schemaCache.getMaxSize());
+            config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_EXPIRY_INTERVAL_MILLIS, schemaCache.getExpiryIntervalMillis());
+        } else {
+            config = Collections.emptyMap();
+        }
+        schemaRegistry.init(config);
+    }
+
+    private void registerResources(Environment environment, SchemaRegistryResource schemaRegistryResource) {
+        JerseyEnvironment jersey = environment.jersey();
+        jersey.register(MultiPartFeature.class);
+        jersey.register(schemaRegistryResource);
+
+        // register swagger resources
+        jersey.register(ApiListingResource.class);
+        jersey.register(SwaggerSerializers.class);
+
+        // this is required to set ScanFactory and scanning enabled for given packages.
+        BeanConfig config = new BeanConfig();
+        config.setTitle("SchemaRegistry Application");
+        config.setVersion("0.1.0");
+        config.setResourcePackage("com.hortonworks.registries.schemaregistry.webservice");
+        config.setScan(true);
+    }
+
+    private void enableCORS(Environment environment) {
+        // Enable CORS headers
+        final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+
+        // Configure CORS parameters
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Authorization,Content-Type,Accept,Origin");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+
+        // Add URL mapping
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
     }
 
     private FileStorage getJarStorage(FileStorageConfiguration fileStorageConfiguration) {
@@ -100,7 +156,7 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         storageManager.init(storageProviderConfiguration.getProperties());
         storageManager.registerStorables(
                 Lists.newArrayList(SchemaInfoStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
-                                    SerDesInfoStorable.class, SchemaSerDesMapping.class));
+                        SerDesInfoStorable.class, SchemaSerDesMapping.class));
         return storageManager;
     }
 

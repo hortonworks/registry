@@ -128,12 +128,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
-        SchemaKey schemaKey = schemaInfo.getSchemaKey();
-        return addSchemaVersion(schemaKey, schemaVersion);
+    public SchemaInfo getSchemaInfo(SchemaKey schemaKey) {
+        return getEntity(schemaInfoPath(schemaKey), SchemaInfo.class);
     }
 
-    private WebTarget schemaMetadataPath(SchemaKey schemaKey) {
+    @Override
+    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
+        SchemaKey schemaKey = schemaInfo.getSchemaKey();
+        SchemaInstanceDetails schemaInstanceDetails = new SchemaInstanceDetails(schemaInfo.getDescription(), schemaInfo.getCompatibility(), schemaVersion);
+        return addSchemaVersion(schemaKey, schemaInstanceDetails);
+    }
+
+    private WebTarget schemaInfoPath(SchemaKey schemaKey) {
         return schemasTarget.path(
                 String.format("types/%s/groups/%s/names/%s",
                         schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName()));
@@ -141,10 +147,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
-        WebTarget target = schemaMetadataPath(schemaKey);
-        SchemaDetails schemaDetails = new SchemaDetails(schemaVersion);
+        SchemaInstanceDetails schemaInstanceDetails = new SchemaInstanceDetails(schemaVersion);
+        return addSchemaVersion(schemaKey, schemaInstanceDetails);
+    }
 
-        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaDetails), Response.class);
+    private Integer addSchemaVersion(SchemaKey schemaKey, SchemaInstanceDetails schemaInstanceDetails) throws IncompatibleSchemaException, InvalidSchemaException {
+        WebTarget target = schemaInfoPath(schemaKey);
+        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaInstanceDetails), Response.class);
         int status = response.getStatus();
         String msg = response.readEntity(String.class);
         if (status == Response.Status.BAD_REQUEST.getStatusCode() || status == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {

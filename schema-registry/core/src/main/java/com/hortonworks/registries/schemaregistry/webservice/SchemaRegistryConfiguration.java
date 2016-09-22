@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.webservice;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.iotas.common.FileStorageConfiguration;
 import com.hortonworks.iotas.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
@@ -40,6 +41,12 @@ public class SchemaRegistryConfiguration extends Configuration {
     @NotEmpty
     private List<String> schemaProviderClasses;
 
+    @JsonProperty
+    private boolean enableCors;
+
+    @JsonProperty
+    private SchemaCache schemaCache;
+
     public StorageProviderConfiguration getStorageProviderConfiguration() {
         return storageProviderConfiguration;
     }
@@ -62,5 +69,31 @@ public class SchemaRegistryConfiguration extends Configuration {
 
     public void setFileStorageConfiguration(FileStorageConfiguration fileStorageConfiguration) {
         this.fileStorageConfiguration = fileStorageConfiguration;
+    }
+
+    public boolean isEnableCors() {
+        return enableCors;
+    }
+
+    public SchemaCache getSchemaCache() {
+        return schemaCache;
+    }
+
+    public static class SchemaCache {
+        private final int maxSize;
+        private final int expiryIntervalMillis;
+
+        public SchemaCache(int maxSize, int expiryIntervalMillis) {
+            this.maxSize = maxSize;
+            this.expiryIntervalMillis = expiryIntervalMillis;
+        }
+
+        public int getMaxSize() {
+            return maxSize;
+        }
+
+        public int getExpiryIntervalMillis() {
+            return expiryIntervalMillis;
+        }
     }
 }

@@ -101,10 +101,18 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaInfo information about schema.
      * @return true if the given {@code schemaInfo} is successfully registered.
      */
-    boolean registerSchemaInfo(SchemaInfo schemaInfo) throws InvalidSchemaException;
+    boolean registerSchemaInfo(SchemaInfo schemaInfo);
 
     /**
-     * Returns version of the schema added to the given schemaInfo.
+     * Returns information about given {@link SchemaKey}
+     *
+     * @param schemaKey
+     * @return
+     */
+    SchemaInfo getSchemaInfo(SchemaKey schemaKey);
+
+    /**
+     * Returns version of the schema added with the given schemaInfo.
      * <pre>
      * It tries to fetch an existing schema or register the given schema with the below conditions
      *  - Checks whether there exists a schema with the given schemaText, and schemaInfo#getSchemaKey()

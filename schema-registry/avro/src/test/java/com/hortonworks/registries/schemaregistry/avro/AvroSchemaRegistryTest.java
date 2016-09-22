@@ -91,7 +91,7 @@ public class AvroSchemaRegistryTest {
         Collection<SchemaVersionInfo> allSchemaVersions = schemaRegistry.findAllVersions(schemaKey);
         Assert.assertTrue(allSchemaVersions.size() == 2);
 
-        SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaVersionInfo(schemaKey);
+        SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaInfo(schemaKey);
         Assert.assertEquals(schemaKey, schemaInfoStorable.getSchemaKey());
         Assert.assertEquals(compatibility, schemaInfoStorable.getCompatibility());
 
@@ -111,7 +111,7 @@ public class AvroSchemaRegistryTest {
 
     @Test
     public void testNonExistingSchemaMetadata() {
-        SchemaInfo schemaInfo = schemaRegistry.getSchemaVersionInfo(INVALIDSCHEMA_METADATA_KEY);
+        SchemaInfo schemaInfo = schemaRegistry.getSchemaInfo(INVALIDSCHEMA_METADATA_KEY);
         Assert.assertNull(schemaInfo);
     }
 

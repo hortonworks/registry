@@ -23,14 +23,14 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import java.io.Serializable;
 
 /**
- *
+ * This class is about representing detailed information about a version of the schema.
  */
-public class SchemaDetails implements Serializable {
+public class SchemaInstanceDetails implements Serializable {
 
     /**
      * Description about the schema.
      */
-    private String schemaMetadataDescription;
+    private String schemaDescription;
 
     /**
      * Compatibility to be supported for all versions of this evolving schema.
@@ -40,20 +40,20 @@ public class SchemaDetails implements Serializable {
     private SchemaVersion schemaVersion;
 
     @SuppressWarnings("unused")
-    private SchemaDetails() { /** Private constructor for Jackson JSON mapping */ }
+    private SchemaInstanceDetails() { /** Private constructor for Jackson JSON mapping */}
 
-    public SchemaDetails(SchemaVersion schemaVersion) {
+    public SchemaInstanceDetails(SchemaVersion schemaVersion) {
         this(null, null, schemaVersion);
     }
 
-    public SchemaDetails(String schemaMetadataDescription, SchemaProvider.Compatibility compatibility, SchemaVersion schemaVersion) {
-        this.schemaMetadataDescription = schemaMetadataDescription;
+    public SchemaInstanceDetails(String schemaDescription, SchemaProvider.Compatibility compatibility, SchemaVersion schemaVersion) {
+        this.schemaDescription = schemaDescription;
         this.compatibility = compatibility;
         this.schemaVersion = schemaVersion;
     }
 
-    public String getSchemaMetadataDescription() {
-        return schemaMetadataDescription;
+    public String getSchemaDescription() {
+        return schemaDescription;
     }
 
     public SchemaProvider.Compatibility getCompatibility() {
@@ -62,5 +62,14 @@ public class SchemaDetails implements Serializable {
 
     public SchemaVersion getSchemaVersion() {
         return schemaVersion;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaInstanceDetails{" +
+                "schemaDescription='" + schemaDescription + '\'' +
+                ", compatibility=" + compatibility +
+                ", schemaVersion=" + schemaVersion +
+                '}';
     }
 }

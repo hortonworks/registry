@@ -35,7 +35,7 @@ public interface ISchemaRegistry {
 
     Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException;
 
-    SchemaInfo getSchemaVersionInfo(SchemaKey schemaKey);
+    SchemaInfo getSchemaInfo(SchemaKey schemaKey);
 
     Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
