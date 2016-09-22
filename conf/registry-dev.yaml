@@ -8,11 +8,10 @@ schemaProviderClasses:
   - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
 
 # schema cache properties
-schemaCache:
-  # inmemory schema versions cache size
-  maxSize: 10000
-  # inmemory schema version cache entry expiry interval after access
-  expiryIntervalMillis: 36000000
+# inmemory schema versions cache size
+schemaCacheSize: 10000
+# inmemory schema version cache entry expiry interval after access
+schemaCacheExpiryInterval: 3600
 
 storageProviderConfiguration:
  providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"

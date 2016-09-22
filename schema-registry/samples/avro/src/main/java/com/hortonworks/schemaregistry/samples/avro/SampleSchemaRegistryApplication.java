@@ -239,9 +239,9 @@ public class SampleSchemaRegistryApplication {
         Map<String, Object> config = new HashMap<>();
         config.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, schemaRegistryUrl);
         config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_SIZE, 10);
-        config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS, 5000L);
+        config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS, 5000L);
         config.put(SchemaRegistryClient.Options.SCHEMA_CACHE_SIZE, 1000);
-        config.put(SchemaRegistryClient.Options.SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS, 60 * 60 * 1000L);
+        config.put(SchemaRegistryClient.Options.SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, 60 * 60 * 1000L);
         return config;
     }
 

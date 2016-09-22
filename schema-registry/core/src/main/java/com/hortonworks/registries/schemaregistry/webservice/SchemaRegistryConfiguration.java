@@ -45,7 +45,10 @@ public class SchemaRegistryConfiguration extends Configuration {
     private boolean enableCors;
 
     @JsonProperty
-    private SchemaCache schemaCache;
+    private Integer schemaCacheSize;
+
+    @JsonProperty
+    private Long schemaCacheExpiryInterval;
 
     public StorageProviderConfiguration getStorageProviderConfiguration() {
         return storageProviderConfiguration;
@@ -75,25 +78,11 @@ public class SchemaRegistryConfiguration extends Configuration {
         return enableCors;
     }
 
-    public SchemaCache getSchemaCache() {
-        return schemaCache;
+    public Integer getSchemaCacheSize() {
+        return schemaCacheSize;
     }
 
-    public static class SchemaCache {
-        private final int maxSize;
-        private final int expiryIntervalMillis;
-
-        public SchemaCache(int maxSize, int expiryIntervalMillis) {
-            this.maxSize = maxSize;
-            this.expiryIntervalMillis = expiryIntervalMillis;
-        }
-
-        public int getMaxSize() {
-            return maxSize;
-        }
-
-        public int getExpiryIntervalMillis() {
-            return expiryIntervalMillis;
-        }
+    public Long getSchemaCacheExpiryInterval() {
+        return schemaCacheExpiryInterval;
     }
 }
