@@ -47,7 +47,6 @@ import javax.annotation.Nullable;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,25 +65,19 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         Collection<? extends SchemaProvider> schemaProviders = getSchemaProviders(configuration.getSchemaProviderClasses());
         ISchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
 
-        initializeSchemaRegistry(schemaRegistry, configuration.getSchemaCache());
+        initializeSchemaRegistry(schemaRegistry, configuration);
 
         registerResources(environment, new SchemaRegistryResource(schemaRegistry));
 
         if (configuration.isEnableCors()) {
             enableCORS(environment);
         }
-
     }
 
-    private void initializeSchemaRegistry(ISchemaRegistry schemaRegistry, SchemaRegistryConfiguration.SchemaCache schemaCache) {
-        Map<String, Object> config = null;
-        if (schemaCache != null) {
-            new HashMap<>();
-            config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_SIZE, schemaCache.getMaxSize());
-            config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_EXPIRY_INTERVAL_MILLIS, schemaCache.getExpiryIntervalMillis());
-        } else {
-            config = Collections.emptyMap();
-        }
+    private void initializeSchemaRegistry(ISchemaRegistry schemaRegistry, SchemaRegistryConfiguration schemaRegistryConfiguration) {
+        Map<String, Object> config = new HashMap<>();
+        config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_SIZE, schemaRegistryConfiguration.getSchemaCacheSize());
+        config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, schemaRegistryConfiguration.getSchemaCacheExpiryInterval());
         schemaRegistry.init(config);
     }
 

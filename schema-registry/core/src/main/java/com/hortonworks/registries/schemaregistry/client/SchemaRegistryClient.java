@@ -110,7 +110,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         classLoaderCache = new ClassLoaderCache(this);
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> _getSchema(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInMillis());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> _getSchema(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
     }
 
     public Options getOptions() {
@@ -372,14 +372,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
         public static final String LOCAL_JAR_PATH = "schema.registry.client.local.jars.path";
         public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.client.class.loader.cache.size";
-        public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS = "schema.registry.client.class.loader.cache.expiry.interval";
+        public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.class.loader.cache.expiry.interval";
         public static final int DEFAULT_CLASS_LOADER_CACHE_SIZE = 1024;
-        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
+        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
         public static final String SCHEMA_CACHE_SIZE = "schema.registry.client.schema.cache.size";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS = "schema.registry.client.schema.cache.expiry.interval";
+        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.cache.expiry.interval";
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS = 5 * 60 * 1000L;
+        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
 
         private final Map<String, ?> config;
 
@@ -396,8 +396,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASS_LOADER_CACHE_SIZE);
         }
 
-        public long getClassLoaderCacheExpiryInMilliSecs() {
-            return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS, DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS);
+        public long getClassLoaderCacheExpiryInSecs() {
+            return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS);
         }
 
         public String getLocalJarPath() {
@@ -408,8 +408,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
         }
 
-        public long getSchemaExpiryInMillis() {
-            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS);
+        public long getSchemaExpiryInSecs() {
+            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
         }
     }
 }

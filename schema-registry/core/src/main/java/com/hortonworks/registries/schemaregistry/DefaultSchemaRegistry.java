@@ -67,7 +67,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         for (SchemaProvider schemaProvider : schemaProviders) {
             schemaTypeWithProviders.put(schemaProvider.getType(), schemaProvider);
         }
-        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> retrieveSchemaVersionInfo(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInMillis());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> retrieveSchemaVersionInfo(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
     }
 
     @Override
@@ -543,14 +543,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         storageManager.add(schemaSerDesMapping);
     }
 
-
     public static class Options {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
-        public static final String SCHEMA_CACHE_SIZE = "schema.registry.schema.cache.size";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_MILLIS = "schema.registry.schema.cache.expiry.interval.millis";
-        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS = 60 * 60 * 1000L;
+        public static final String SCHEMA_CACHE_SIZE = "schema.cache.size";
+        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schema.cache.expiry.interval";
+        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
+        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
 
         private final Map<String, ?> config;
 
@@ -567,8 +566,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             return (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
         }
 
-        public long getSchemaExpiryInMillis() {
-            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_MILLIS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS);
+        public long getSchemaExpiryInSecs() {
+            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
         }
     }
 
