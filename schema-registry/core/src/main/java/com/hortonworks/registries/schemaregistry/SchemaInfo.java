@@ -31,21 +31,24 @@ public final class SchemaInfo implements Serializable {
     /**
      * Unique key to identify a schema
      */
-    private final SchemaKey schemaKey;
+    private SchemaKey schemaKey;
 
-    private final Long id;
+    private Long id;
 
     /**
      * Description about the schema metadata.
      */
-    private final String description;
+    private String description;
 
     /**
      * Compatibility to be supported for all versions of this evolving schema.
      */
-    private final SchemaProvider.Compatibility compatibility;
+    private SchemaProvider.Compatibility compatibility;
 
-    private final Long timestamp;
+    private Long timestamp;
+
+    @SuppressWarnings("unused")
+    private SchemaInfo() { /* Private constructor for Jackson JSON mapping */}
 
     public SchemaInfo(SchemaKey schemaKey,
                       String description,
@@ -79,7 +82,7 @@ public final class SchemaInfo implements Serializable {
         return id;
     }
 
-    public long getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
@@ -115,8 +118,8 @@ public final class SchemaInfo implements Serializable {
 
     @Override
     public String toString() {
-        return "SchemaMetadata{" +
-                "schemaMetadataKey=" + schemaKey +
+        return "SchemaInfo{" +
+                "schemaKey=" + schemaKey +
                 ", id=" + id +
                 ", description='" + description + '\'' +
                 ", compatibility=" + compatibility +

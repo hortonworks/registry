@@ -134,9 +134,15 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
+        //create schemainfo
+        boolean success = registerSchemaInfo(schemaInfo);
+        if(!success) {
+            throw new RuntimeException("Given SchemaInfo could not be registered.");
+        }
+
+        // add version
         SchemaKey schemaKey = schemaInfo.getSchemaKey();
-        SchemaInstanceDetails schemaInstanceDetails = new SchemaInstanceDetails(schemaInfo.getDescription(), schemaInfo.getCompatibility(), schemaVersion);
-        return addSchemaVersion(schemaKey, schemaInstanceDetails);
+        return addSchemaVersion(schemaKey, schemaVersion);
     }
 
     private WebTarget schemaInfoPath(SchemaKey schemaKey) {
@@ -147,13 +153,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
-        SchemaInstanceDetails schemaInstanceDetails = new SchemaInstanceDetails(schemaVersion);
-        return addSchemaVersion(schemaKey, schemaInstanceDetails);
-    }
-
-    private Integer addSchemaVersion(SchemaKey schemaKey, SchemaInstanceDetails schemaInstanceDetails) throws IncompatibleSchemaException, InvalidSchemaException {
-        WebTarget target = schemaInfoPath(schemaKey);
-        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaInstanceDetails), Response.class);
+        WebTarget target = schemaInfoPath(schemaKey).path("/versions");
+        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
         String msg = response.readEntity(String.class);
         if (status == Response.Status.BAD_REQUEST.getStatusCode() || status == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
