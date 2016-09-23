@@ -29,7 +29,7 @@ public final class Utils {
     private Utils() {
     }
 
-    public static SchemaKey getSchemaMetadataKey(String topic, boolean isKey) {
+    public static SchemaKey getSchemaKey(String topic, boolean isKey) {
         String name = topic + ":" + (isKey ? "k" : "v");
         return new SchemaKey(AvroSchemaProvider.TYPE, GROUP_ID, name);
     }

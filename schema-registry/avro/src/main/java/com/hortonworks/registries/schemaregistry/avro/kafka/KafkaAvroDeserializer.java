@@ -17,7 +17,9 @@
  */
 package com.hortonworks.registries.schemaregistry.avro.kafka;
 
+import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer;
+import org.apache.avro.Schema;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.io.ByteArrayInputStream;
@@ -43,9 +45,18 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
 
     @Override
     public Object deserialize(String topic, byte[] data) {
+        SchemaKey schemaKey = getSchemaKey(topic, isKey);
         return avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(data),
-                Utils.getSchemaMetadataKey(topic, isKey),
-                null);
+                schemaKey,
+                getReaderSchema(schemaKey));
+    }
+
+    protected SchemaKey getSchemaKey(String topic, boolean isKey) {
+        return Utils.getSchemaKey(topic, isKey);
+    }
+
+    protected Schema getReaderSchema(SchemaKey schemaKey) {
+        return null;
     }
 
     @Override

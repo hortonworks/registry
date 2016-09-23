@@ -53,7 +53,7 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
     public static final Long DEFAULT_DESERIALIZER_CACHE_EXPIRY_IN_MILLS = 60 * 5 * 1000L;
 
     private SchemaRegistryClient schemaRegistryClient;
-    private LoadingCache<SchemaVersionKey, Schema> schemaCache;
+    protected LoadingCache<SchemaVersionKey, Schema> schemaCache;
 
     @Override
     public void init(Map<String, ?> config) {
