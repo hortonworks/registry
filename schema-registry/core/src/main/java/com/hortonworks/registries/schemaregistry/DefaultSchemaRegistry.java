@@ -209,12 +209,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaVersionKey> findSchemas(Map<String, String> filters) {
+    public Collection<SchemaKey> findSchemas(Map<String, String> filters) {
         // todo get only few selected columns instead of getting the whole row.
-        Collection<SchemaVersionStorable> storables;
+        Collection<SchemaInfoStorable> storables;
 
         if (filters == null || filters.isEmpty()) {
-            storables = storageManager.list(SchemaVersionStorable.NAME_SPACE);
+            storables = storageManager.list(SchemaInfoStorable.NAME_SPACE);
         } else {
             List<QueryParam> queryParams =
                     filters.entrySet()
@@ -225,7 +225,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         return storables != null && !storables.isEmpty()
-                ? storables.stream().map(schemaVersionStorable -> getSchemaKey(schemaVersionStorable)).collect(Collectors.toList())
+                ? storables.stream().map(schemaInfoStorable ->
+                                                    new SchemaKey(schemaInfoStorable.getType(),
+                                                                    schemaInfoStorable.getSchemaGroup(),
+                                                                    schemaInfoStorable.getName()))
+                                        .collect(Collectors.toList())
                 : Collections.emptyList();
     }
 

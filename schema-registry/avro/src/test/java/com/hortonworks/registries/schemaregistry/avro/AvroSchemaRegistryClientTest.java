@@ -60,6 +60,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         SchemaInfo schemaInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaProvider.Compatibility.BOTH);
         SchemaKey schemaKey = schemaInfo.getSchemaKey();
 
+        boolean success = schemaRegistryClient.registerSchemaInfo(schemaInfo);
+        Assert.assertTrue(success);
+
         // registering a new schema
         Integer v1 = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema1, "Initial version of the schema"));
 

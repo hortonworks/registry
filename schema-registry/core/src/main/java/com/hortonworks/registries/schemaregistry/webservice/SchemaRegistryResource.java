@@ -27,10 +27,10 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaInfo;
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.client.SchemaInstanceDetails;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -93,7 +93,7 @@ public class SchemaRegistryResource {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             Map<String, String> filters = new HashMap<>();
             queryParameters.forEach((key, values) -> filters.put(key, values != null && !values.isEmpty() ? values.get(0) : null));
-            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemas(filters);
+            Collection<SchemaKey> schemaVersionKeys = schemaRegistry.findSchemas(filters);
 
             return WSUtils.respond(schemaVersionKeys, OK, SUCCESS);
         } catch (Exception ex) {
@@ -144,7 +144,7 @@ public class SchemaRegistryResource {
             notes = "Registers the given schema information and multiple versions of the schema can be registered for the given SchemaInfo's SchemaKey",
             response = Boolean.class)
     @Timed
-    public Response addSchemaInfo(@ApiParam(value = "SchemaInfo needs to be added to the registry", required = true) SchemaInfo schemaInfo) {
+    public Response addSchemaInfo(@ApiParam(value = "SchemaInfo to be added to the registry", required = true) SchemaInfo schemaInfo) {
         Response response;
         try {
             schemaRegistry.addSchemaInfo(schemaInfo);
@@ -179,7 +179,7 @@ public class SchemaRegistryResource {
     }
 
     @POST
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}")
+    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/versions")
     @ApiOperation(value = "Registers the given schema version to schema with (type, schemaGroup, name) and returns respective version number",
             notes = "Registers the given schema version to schema with (type, schemaGroup, name) if the given schemaText is not registered as a version for this schema, " +
                     "and returns respective version number",
@@ -188,23 +188,21 @@ public class SchemaRegistryResource {
     public Response addSchema(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
                               @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
                               @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name,
-                              @ApiParam(value = "Details about the schema", required = true) SchemaInstanceDetails schemaInstanceDetails) {
+                              @ApiParam(value = "Details about the schema", required = true) SchemaVersion schemaVersion) {
         SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
-        SchemaInfo schemaInfo = new SchemaInfo(schemaKey,
-                schemaInstanceDetails.getSchemaDescription(),
-                schemaInstanceDetails.getCompatibility());
+
         Response response;
         try {
-            Integer version = schemaRegistry.addSchemaVersion(schemaInfo, schemaInstanceDetails.getSchemaVersion());
+            Integer version = schemaRegistry.addSchemaVersion(schemaKey, schemaVersion);
             response = WSUtils.respond(version, CREATED, SUCCESS);
         } catch (InvalidSchemaException ex) {
-            LOG.error("Invalid schema error encountered while adding schema [{}]", schemaInfo, ex);
+            LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaKey, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, INVALID_SCHEMA, ex.getMessage());
         } catch (IncompatibleSchemaException ex) {
-            LOG.error("Incompatible schema error encountered while adding schema [{}]", schemaInfo, ex);
+            LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaKey, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, INCOMPATIBLE_SCHEMA, ex.getMessage());
         } catch (Exception ex) {
-            LOG.error("Encountered error while adding schema: [{}]", schemaInfo, ex);
+            LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaKey, ex, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -293,7 +291,7 @@ public class SchemaRegistryResource {
         return response;
     }
 
-    @GET
+    @POST
     @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/compatibility")
     @ApiOperation(value = "Checks whether the given schema text is compatible with all versions of the schema with (type, schemaGroup, name)",
             response = Boolean.class)
