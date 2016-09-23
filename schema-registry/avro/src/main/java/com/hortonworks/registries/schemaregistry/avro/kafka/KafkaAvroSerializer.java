@@ -30,6 +30,11 @@ import java.util.Map;
  */
 public class KafkaAvroSerializer implements Serializer<Object> {
 
+    /**
+     * Compatibility property to be set on configs for registering message's schema to schema registry.
+     */
+    public static final String SCHEMA_COMPATIBILITY = "schema.compatibility";
+
     private final AvroSnapshotSerializer avroSnapshotSerializer;
     private boolean isKey;
     private SchemaProvider.Compatibility compatibility;
@@ -40,7 +45,7 @@ public class KafkaAvroSerializer implements Serializer<Object> {
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
-        compatibility = (SchemaProvider.Compatibility) configs.get("compatibility");
+        compatibility = (SchemaProvider.Compatibility) configs.get(SCHEMA_COMPATIBILITY);
         this.isKey = isKey;
 
         avroSnapshotSerializer.init(configs);
@@ -52,8 +57,13 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     }
 
     private SchemaInfo createSchemaMetadata(String topic) {
-        SchemaKey schemaKey = Utils.getSchemaMetadataKey(topic, isKey);
-        return new SchemaInfo(schemaKey, null, compatibility);
+        SchemaKey schemaKey = getSchemaKey(topic, isKey);
+        String description = "Schema registered by KafkaAvroSerializer for topic: [" + topic + "] iskey: [" + isKey + "]";
+        return new SchemaInfo(schemaKey, description, compatibility);
+    }
+
+    protected SchemaKey getSchemaKey(String topic, boolean isKey) {
+        return Utils.getSchemaKey(topic, isKey);
     }
 
     @Override
