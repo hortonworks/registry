@@ -18,6 +18,7 @@
 package com.hortonworks.registries.storage.atlas;
 
 import com.google.common.base.Preconditions;
+import com.hortonworks.registries.storage.DeviceInfo;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.types.AttributeDefinition;
@@ -91,10 +92,10 @@ public class AtlasMetadataServiceTest {
 
         Assert.assertEquals(deviceInfo, storedDeviceInfo);
 
-        String timestamp = "" + (Long.parseLong(deviceInfo.getTimestamp()) + 1000);
+        String timestamp = "" + (deviceInfo.getTimestamp() + 1000);
         entity.set(DeviceInfo.TIMESTAMP, timestamp);
         atlasMetadataService.addOrUpdateEntity(entity);
-        Assert.assertEquals(atlasMetadataService.getEntity(instanceId).get(DeviceInfo.TIMESTAMP), timestamp);
+        Assert.assertEquals(atlasMetadataService.getEntity(instanceId).get(DeviceInfo.TIMESTAMP).toString(), timestamp);
 
         atlasMetadataService.remove(DeviceInfo.NAME_SPACE, Collections.<String, Object>singletonMap(DeviceInfo.XID, deviceInfo.getXid()));
         try {
@@ -116,7 +117,8 @@ public class AtlasMetadataServiceTest {
                 DeviceInfo.NAME_SPACE, null,
                 attrDef(DeviceInfo.NAME, DataTypes.STRING_TYPE),
                 TypesUtil.createUniqueRequiredAttrDef(DeviceInfo.XID, DataTypes.STRING_TYPE),
-                attrDef(DeviceInfo.TIMESTAMP, DataTypes.STRING_TYPE),
+                attrDef(DeviceInfo.ID, DataTypes.LONG_TYPE),
+                attrDef(DeviceInfo.TIMESTAMP, DataTypes.LONG_TYPE),
                 attrDef(DeviceInfo.VERSION, DataTypes.STRING_TYPE)
         );
     }
@@ -134,10 +136,10 @@ public class AtlasMetadataServiceTest {
 
     private DeviceInfo fromReferenceable(Referenceable referenceable) {
         DeviceInfo deviceInfo = new DeviceInfo();
-
+        deviceInfo.setId(Long.valueOf(referenceable.get(DeviceInfo.ID).toString()));
         deviceInfo.setXid(referenceable.get(DeviceInfo.XID).toString());
         deviceInfo.setName(referenceable.get(DeviceInfo.NAME).toString());
-        deviceInfo.setTimestamp(referenceable.get(DeviceInfo.TIMESTAMP).toString());
+        deviceInfo.setTimestamp(Long.valueOf(referenceable.get(DeviceInfo.TIMESTAMP).toString()));
         deviceInfo.setVersion(referenceable.get(DeviceInfo.VERSION).toString());
 
         return deviceInfo;
@@ -147,9 +149,10 @@ public class AtlasMetadataServiceTest {
         DeviceInfo deviceInfo = new DeviceInfo();
         long t = System.currentTimeMillis();
         deviceInfo.setName("device-" + t);
+        deviceInfo.setId(new Random().nextLong());
         deviceInfo.setXid("" + t);
         deviceInfo.setVersion("" + new Random().nextInt() % 10L);
-        deviceInfo.setTimestamp("" + t);
+        deviceInfo.setTimestamp(t);
 
         return deviceInfo;
     }

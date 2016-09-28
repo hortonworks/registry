@@ -18,6 +18,7 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.mysql;
 
+import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManagerIntegrationTest;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.config.HikariBasicConfig;
@@ -29,9 +30,9 @@ import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
-public abstract class MySqlStorageManagerNoCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
+public abstract class AbstractMySqlStorageManagerWithCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
 
-    public MySqlStorageManagerNoCacheIntegrationTest() {
+    public AbstractMySqlStorageManagerWithCacheIntegrationTest() {
         //MySql DB Configuration. Useful for local testing
         //setFields(new HikariCPConnectionBuilder(HikariBasicConfig.getMySqlHikariConfig()), Database.MYSQL);
         //H2 DB Configuration. Useful for testing as part of the build
@@ -48,10 +49,16 @@ public abstract class MySqlStorageManagerNoCacheIntegrationTest extends JdbcStor
         super.tearDown();
     }
 
-
     private void setFields(ConnectionBuilder connectionBuilder, Database db) {
         JdbcStorageManagerIntegrationTest.connectionBuilder = connectionBuilder;
-        jdbcStorageManager = createJdbcStorageManager(new MySqlExecutorForTest(new ExecutionConfig(-1), connectionBuilder));
+        jdbcStorageManager =  createJdbcStorageManager(new MySqlExecutorForTest(newGuavaCacheBuilder(),
+                new ExecutionConfig(-1), connectionBuilder));
         database = db;
     }
+
+    private static CacheBuilder newGuavaCacheBuilder() {
+        final long maxSize = 3;
+        return  CacheBuilder.newBuilder().maximumSize(maxSize);
+    }
+
 }

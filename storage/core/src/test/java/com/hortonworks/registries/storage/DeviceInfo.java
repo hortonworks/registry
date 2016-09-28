@@ -15,28 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.storage.atlas;
+package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.storage.PrimaryKey;
-import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
 import java.util.Collections;
+import java.util.Random;
 
 /**
  *
  */
 public class DeviceInfo extends AbstractStorable {
 
+    public static final String ID = "id";
     public static final String XID = "xid";
     public static final String NAME = "name";
     public static final String TIMESTAMP = "timestamp";
     public static final String VERSION = "version";
-    public static final String NAME_SPACE = "tests.device_info";
+    public static final String NAME_SPACE = "device_info";
 
+    private Long id;
     private String name;
-    private String timestamp;
+    private Long timestamp;
     private String version;
     private String xid;
 
@@ -48,9 +49,10 @@ public class DeviceInfo extends AbstractStorable {
     @Override
     public Schema getSchema() {
         return Schema.of(Schema.Field.of(XID, Schema.Type.STRING),
+                Schema.Field.of(ID, Schema.Type.LONG),
                 Schema.Field.of(NAME, Schema.Type.STRING),
                 Schema.Field.optional(VERSION, Schema.Type.STRING),
-                Schema.Field.optional(TIMESTAMP, Schema.Type.STRING)
+                Schema.Field.optional(TIMESTAMP, Schema.Type.LONG)
         );
     }
 
@@ -72,11 +74,11 @@ public class DeviceInfo extends AbstractStorable {
         this.name = name;
     }
 
-    public String getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -97,12 +99,33 @@ public class DeviceInfo extends AbstractStorable {
     }
 
     @Override
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "DeviceInfo{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", timestamp=" + timestamp +
+                ", version='" + version + '\'' +
+                ", xid='" + xid + '\'' +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         DeviceInfo that = (DeviceInfo) o;
 
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
@@ -112,20 +135,11 @@ public class DeviceInfo extends AbstractStorable {
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (xid != null ? xid.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "DeviceInfo{" +
-                "name='" + name + '\'' +
-                ", timestamp=" + timestamp +
-                ", version=" + version +
-                ", xid=" + xid +
-                '}';
     }
 }

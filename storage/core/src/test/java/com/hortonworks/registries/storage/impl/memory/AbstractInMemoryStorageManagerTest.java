@@ -19,13 +19,15 @@ package com.hortonworks.registries.storage.impl.memory;
 
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
 import com.hortonworks.registries.storage.Storable;
+import com.hortonworks.registries.storage.StorableTest;
 import com.hortonworks.registries.storage.StorageManager;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
-public abstract class InMemoryStorageManagerTest extends AbstractStoreManagerTest {
+public abstract class AbstractInMemoryStorageManagerTest extends AbstractStoreManagerTest {
     private final StorageManager storageManager = new InMemoryStorageManager();
 
     @Override
@@ -37,6 +39,19 @@ public abstract class InMemoryStorageManagerTest extends AbstractStoreManagerTes
     public void testList_NonexistentNameSpace_StorageException() {
         Collection<Storable> found = getStorageManager().list("NONEXISTENT_NAME_SPACE");
         Assert.assertTrue(found.isEmpty());
+    }
+
+    protected void doTestNextId_AutoincrementColumn_IdPlusOne(StorableTest test) throws SQLException {
+        Long actualNextId = getStorageManager().nextId(test.getNameSpace());
+        Long expectedNextId = actualNextId;
+        // increment two numbers for InmemoryManager as nextId() always increments.
+        expectedNextId += 2;
+        addAndAssertNextId(test, 0, expectedNextId);
+        expectedNextId += 2;
+        addAndAssertNextId(test, 2, expectedNextId);
+        addAndAssertNextId(test, 2, ++expectedNextId);
+        expectedNextId += 2;
+        addAndAssertNextId(test, 3, expectedNextId);
     }
 
 }

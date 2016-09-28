@@ -39,7 +39,7 @@ public abstract class AbstractStoreManagerTest {
     @Before
     public void setup() {
         setStorableTests();
-        for (StorableTest test : storableTests ){
+        for (StorableTest test : storableTests) {
             test.setStorageManager(getStorageManager());
         }
     }

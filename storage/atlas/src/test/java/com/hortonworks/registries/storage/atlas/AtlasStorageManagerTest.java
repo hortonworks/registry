@@ -17,73 +17,71 @@
  */
 package com.hortonworks.registries.storage.atlas;
 
+import com.google.common.io.Files;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
+import com.hortonworks.registries.storage.DeviceInfo;
+import com.hortonworks.registries.storage.DeviceInfoTest;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableTest;
 import com.hortonworks.registries.storage.StorageManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
  */
 @Category(IntegrationTest.class)
-@Ignore
+//@Ignore
 public class AtlasStorageManagerTest extends AbstractStoreManagerTest {
     private static AtlasStorageManager atlasStorageManager;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        // cleanup existing graphdb dir
-        AtlasMetadataServiceTest.cleanupGraphDbDir();
         atlasStorageManager = new AtlasStorageManager();
-        atlasStorageManager.init(null);
+        atlasStorageManager.init(createProps());
         atlasStorageManager.registerStorables(Collections.singletonList(DeviceInfo.class));
+    }
+
+    private static Map<String, Object> createProps() {
+        Map<String, Object> props = new HashMap<>();
+        Path tempDir = Files.createTempDir().toPath();
+
+        props.put("atlas.graph.storage.backend", "berkleyje");
+        props.put("atlas.graph.storage.directory", Paths.get(tempDir.toString(), "berkley"));
+        props.put("atlas.graph.index.search.backend", "elasticsearch");
+        props.put("atlas.graph.index.search.directory", Paths.get(tempDir.toString(), "elasticsearch"));
+
+        props.put("atlas.graph.index.search.elasticsearch.client-only", false);
+        props.put("atlas.graph.index.search.elasticsearch.local-mode", true);
+        props.put("atlas.graph.index.search.elasticsearch.create.sleep", 4000);
+        props.put("atlas.DeleteHandler.impl", "org.apache.atlas.repository.graph.HardDeleteHandler");
+        props.put("atlas.EntityAuditRepository.impl", "org.apache.atlas.repository.audit.NoopEntityAuditRepository");
+
+        return props;
     }
 
     @Override
     protected void setStorableTests() {
         storableTests = new ArrayList<>();
-        storableTests.add(new StorableTest() {
-                              {
-                                  storableList = new ArrayList<Storable>() {
-                                      {
-                                          long x = System.currentTimeMillis();
-                                          int version = 0;
-                                          add(createDeviceInfo(x, "" + version));
-                                          add(createDeviceInfo(x, "deviceinfo-" + (version + 1)));
-                                          add(createDeviceInfo(++x, "" + version));
-                                          add(createDeviceInfo(++x, "" + version));
-                                      }
-                                  };
-                              }
-
-                              private Storable createDeviceInfo(long id, String version) {
-                                  DeviceInfo deviceInfo = new DeviceInfo();
-                                  deviceInfo.setXid("" + id);
-                                  deviceInfo.setName("deviceinfo-" + id);
-                                  deviceInfo.setTimestamp("" + System.currentTimeMillis());
-                                  deviceInfo.setVersion(version);
-                                  return deviceInfo;
-                              }
-                          }
-        );
+        storableTests.add(new DeviceInfoTest());
     }
 
     @Override
     protected StorageManager getStorageManager() {
         return atlasStorageManager;
     }
-
 
     @Before
     public void setup() {

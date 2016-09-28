@@ -40,6 +40,7 @@ import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.utils.TypesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.math.BigInt;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -131,7 +132,7 @@ public class AtlasStorageManager implements StorageManager {
             if (instances.size() > 1) {
                 LOG.warn("Expected one entity with the given key: [{}] but returning first entry.", key);
             }
-            removedEntity = (T) storableFactory.create(key.getNameSpace()).fromMap(instances.iterator().next().getValuesMap());
+            removedEntity = (T) storableFactory.create(key.getNameSpace()).fromMap(getValuesMap(instances.iterator().next()));
         }
 
         return removedEntity;
@@ -168,7 +169,18 @@ public class AtlasStorageManager implements StorageManager {
     private <T extends Storable> T storableOf(String nameSpace, Referenceable referenceable) {
         Preconditions.checkArgument(nameSpace != null, "nameSpace can not be null");
 
-        return referenceable != null ? (T) storableFactory.create(nameSpace).fromMap(referenceable.getValuesMap()) : null;
+        return referenceable != null ? (T) storableFactory.create(nameSpace).fromMap(getValuesMap(referenceable)) : null;
+    }
+
+    private Map<String, Object> getValuesMap(Referenceable referenceable) {
+        Map<String, Object> valuesMap = referenceable.getValuesMap();
+        for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
+            Object value = entry.getValue();
+            if(value instanceof BigInt) {
+                entry.setValue(((BigInt) value).longValue());
+            }
+        }
+        return valuesMap;
     }
 
     @Override
