@@ -18,8 +18,8 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hortonworks.iotas.common.FileStorageConfiguration;
-import com.hortonworks.iotas.storage.StorageProviderConfiguration;
+import com.hortonworks.registries.common.FileStorageConfiguration;
+import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
 import org.hibernate.validator.constraints.NotEmpty;
 

@@ -19,10 +19,10 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.hortonworks.iotas.common.QueryParam;
-import com.hortonworks.iotas.common.util.FileStorage;
-import com.hortonworks.iotas.storage.Storable;
-import com.hortonworks.iotas.storage.StorageManager;
+import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.common.util.FileStorage;
+import com.hortonworks.registries.storage.Storable;
+import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;

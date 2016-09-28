@@ -8,6 +8,9 @@
     <artifactId>registries</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <modules>
+        <module>common</module>
+        <module>cache</module>
+        <module>storage</module>
         <module>schema-registry</module>
     </modules>
     <packaging>pom</packaging>
@@ -262,20 +265,24 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
                 </plugin>
 
                 <!-- Test plugins -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven-surefire.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
+                    <version>${maven-surefire.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

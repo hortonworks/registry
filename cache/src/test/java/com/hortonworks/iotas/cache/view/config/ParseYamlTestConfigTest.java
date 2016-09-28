@@ -16,7 +16,7 @@
  *   limitations under the License.
  */
 
-package com.hortonworks.iotas.cache.view.config;
+package com.hortonworks.registries.cache.view.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;

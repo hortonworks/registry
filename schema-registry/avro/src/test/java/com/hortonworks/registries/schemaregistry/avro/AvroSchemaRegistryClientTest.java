@@ -17,7 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.iotas.common.test.IntegrationTest;
+import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -188,7 +188,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
                 .name("avro serializer")
                 .description("avro serializer")
                 .fileId(fileId)
-                .className("con.hwx.iotas.serializer.AvroSnapshotSerializer")
+                .className("con.hwx.registries.serializer.AvroSnapshotSerializer")
                 .buildSerializerInfo();
     }
 

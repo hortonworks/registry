@@ -18,7 +18,7 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hortonworks.iotas.common.util.WSUtils;
+import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
@@ -58,11 +58,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND;
-import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.EXCEPTION;
-import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA;
-import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.INVALID_SCHEMA;
-import static com.hortonworks.iotas.common.catalog.CatalogResponse.ResponseMessage.SUCCESS;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.EXCEPTION;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.INVALID_SCHEMA;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.SUCCESS;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
