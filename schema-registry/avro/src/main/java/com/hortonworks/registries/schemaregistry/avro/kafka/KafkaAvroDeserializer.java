@@ -19,7 +19,7 @@ package com.hortonworks.registries.schemaregistry.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer;
-import org.apache.avro.Schema;
+import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.io.ByteArrayInputStream;
@@ -32,6 +32,7 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     private final AvroSnapshotDeserializer avroSnapshotDeserializer;
 
     private boolean isKey;
+    private Integer readerVersion;
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
@@ -41,6 +42,7 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     public void configure(Map<String, ?> configs, boolean isKey) {
         this.isKey = isKey;
         avroSnapshotDeserializer.init(configs);
+        readerVersion = (Integer) configs.get(SnapshotDeserializer.READER_VERSION);
     }
 
     @Override
@@ -48,15 +50,11 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
         SchemaKey schemaKey = getSchemaKey(topic, isKey);
         return avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(data),
                 schemaKey,
-                getReaderSchema(schemaKey));
+                readerVersion);
     }
 
     protected SchemaKey getSchemaKey(String topic, boolean isKey) {
         return Utils.getSchemaKey(topic, isKey);
-    }
-
-    protected Schema getReaderSchema(SchemaKey schemaKey) {
-        return null;
     }
 
     @Override

@@ -31,6 +31,11 @@ import com.hortonworks.registries.schemaregistry.Resourceable;
 public interface SnapshotDeserializer<I, O, WS, RS> extends Resourceable {
 
     /**
+     * This property represents the version of a reader schema to be used in deserialization.
+     */
+    String READER_VERSION = "schemaregistry.reader.schema.version";
+
+    /**
      * Returns output {@code O} after deserializing the given {@code input} according to the writer schema {@code WS} and
      * it may be projected if reader schema {@code RS} is given.
      *

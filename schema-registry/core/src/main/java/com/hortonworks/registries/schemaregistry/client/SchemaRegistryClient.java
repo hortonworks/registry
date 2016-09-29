@@ -40,6 +40,7 @@ import com.hortonworks.registries.schemaregistry.serde.pull.PullDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullSerializer;
 import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -51,6 +52,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -63,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_CONNECTION_TIMEOUT;
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_READ_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
 
 /**
@@ -101,8 +105,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
 
-        client = ClientBuilder.newClient(new ClientConfig());
+        ClientConfig config = createClientConfig(conf);
+        client = ClientBuilder.newBuilder().withConfig(config).build();
         client.register(MultiPartFeature.class);
+
         String rootCatalogURL = (String) conf.get(SCHEMA_REGISTRY_URL);
         rootTarget = client.target(rootCatalogURL);
         schemasTarget = rootTarget.path(SCHEMAS_PATH);
@@ -111,6 +117,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         classLoaderCache = new ClassLoaderCache(this);
 
         schemaVersionInfoCache = new SchemaVersionInfoCache(key -> _getSchema(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
+    }
+
+    protected ClientConfig createClientConfig(Map<String, ?> conf) {
+        ClientConfig config = new ClientConfig();
+        config.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
+        config.property(ClientProperties.READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
+        config.property(ClientProperties.FOLLOW_REDIRECTS, true);
+        for (Map.Entry<String, ?> entry : conf.entrySet()) {
+            config.property(entry.getKey(), entry.getValue());
+        }
+        return config;
     }
 
     public Options getOptions() {
@@ -382,6 +399,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
 
+        // connection properties
+        public static final int DEFAULT_CONNECTION_TIMEOUT = 30*1000;
+        public static final int DEFAULT_READ_TIMEOUT = 30*1000;
+
         private final Map<String, ?> config;
 
         public Options(Map<String, ?> config) {
@@ -394,11 +415,15 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         public int getClassLoaderCacheSize() {
-            return (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASS_LOADER_CACHE_SIZE);
+            Integer value = (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASS_LOADER_CACHE_SIZE);
+            checkPositiveNumber(value);
+            return value;
         }
 
         public long getClassLoaderCacheExpiryInSecs() {
-            return (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS);
+            Long value = (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS);
+            checkPositiveNumber(value);
+            return value;
         }
 
         public String getLocalJarPath() {
@@ -406,11 +431,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         public int getMaxSchemaCacheSize() {
-            return (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+            Integer value = (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+            checkPositiveNumber(value);
+            return value;
         }
 
         public long getSchemaExpiryInSecs() {
-            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
+            Long value = (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
+            checkPositiveNumber(value);
+            return value;
         }
+
+        private void checkPositiveNumber(Number number) {
+            if(number.doubleValue() <= 0) {
+                throw new IllegalArgumentException("Given value must be a positive number");
+            }
+        }
+
     }
 }

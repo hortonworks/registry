@@ -44,13 +44,28 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStream, Object, SchemaKey, Schema> {
+public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStream, Object, SchemaKey, Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
 
-    public static final String DESERIALIZER_CACHE_MAX_SIZE = "schemaregistry.deserializer.cache.size";
+    /**
+     * Maximum inmemory cache size maintained in deserializer instance.
+     */
+    public static final String DESERIALIZER_SCHEMA_CACHE_MAX_SIZE = "schemaregistry.deserializer.schema.cache.size";
+
+    /**
+     * Default schema cache max size.
+     */
     public static final Integer DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-    public static final String DESERIALIZER_CACHE_EXPIRY_IN_MILLS = "schemaregistry.deserializer.cache.expiry";
-    public static final Long DEFAULT_DESERIALIZER_CACHE_EXPIRY_IN_MILLS = 60 * 5 * 1000L;
+
+    /**
+     * Expiry interval(in milli seconds) after an access for an entry in schema cache
+     */
+    public static final String DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS = "schemaregistry.deserializer.schema.cache.expiry.secs";
+
+    /**
+     * Default schema cache entry access expiration interval
+     */
+    public static final Long DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS = 60 * 5L;
 
     private SchemaRegistryClient schemaRegistryClient;
     protected LoadingCache<SchemaVersionKey, Schema> schemaCache;
@@ -73,17 +88,17 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
     }
 
     private Long getCacheExpiryInMillis(Map<String, ?> config) {
-        Long value = (Long) getValue(config, DESERIALIZER_CACHE_EXPIRY_IN_MILLS, DEFAULT_DESERIALIZER_CACHE_EXPIRY_IN_MILLS);
+        Long value = (Long) getValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS);
         if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_CACHE_EXPIRY_IN_MILLS + "must be non negative.");
+            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + "must be non negative.");
         }
         return value;
     }
 
     private Integer getCacheMaxSize(Map<String, ?> config) {
-        Integer value = (Integer) getValue(config, DESERIALIZER_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+        Integer value = (Integer) getValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
         if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_CACHE_MAX_SIZE + "must be non negative.");
+            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + "must be non negative.");
         }
         return value;
     }
@@ -97,15 +112,15 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
     }
 
     @Override
-    public Object deserialize(InputStream payloadInputStream, SchemaKey writerSchemaKey, Schema readerSchema) throws SerDesException {
+    public Object deserialize(InputStream payloadInputStream, SchemaKey schemaKey, Integer readerSchemaVersion) throws SerDesException {
         Object deserializedObj = null;
         try {
-            int version = readVersion(payloadInputStream);
-            SchemaVersionKey schemaVersionKey = new SchemaVersionKey(writerSchemaKey, version);
-            LOG.debug("SchemaKey: [{}] for the received payload", schemaVersionKey);
-            Schema writerSchema = schemaCache.get(schemaVersionKey);
+            int writerSchemaVersion = readVersion(payloadInputStream);
+            SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaKey, writerSchemaVersion);
+            LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
+            Schema writerSchema = schemaCache.get(writerSchemaVersionKey);
             if (writerSchema == null) {
-                throw new SerDesException("No schema exists with metadata-key: " + writerSchemaKey + " and version: " + version);
+                throw new SerDesException("No schema exists with metadata-key: " + schemaKey + " and writerSchemaVersion: " + writerSchemaVersion);
             }
 
             Schema.Type writerSchemaType = writerSchema.getType();
@@ -119,6 +134,9 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
                 int recordType = payloadInputStream.read();
                 LOG.debug("Received record type: [{}]", recordType);
                 GenericDatumReader datumReader = null;
+                Schema readerSchema = readerSchemaVersion != null
+                                        ? schemaCache.get(new SchemaVersionKey(schemaKey, readerSchemaVersion)) : null;
+
                 if (recordType == AvroUtils.GENERIC_RECORD) {
                     datumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema)
                             : new GenericDatumReader(writerSchema);
@@ -140,7 +158,6 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
         payloadInputStream.read(byteBuffer.array());
         return byteBuffer.getInt();
     }
-
 
     @Override
     public void close() throws Exception {

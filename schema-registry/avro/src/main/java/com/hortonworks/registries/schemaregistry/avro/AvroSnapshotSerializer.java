@@ -17,11 +17,8 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersion;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -32,36 +29,23 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecord;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 /**
  *
  */
-public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[], SchemaInfo> {
-
-    private SchemaRegistryClient schemaRegistryClient;
+public class AvroSnapshotSerializer extends AbstractSnapshotSerializer<Object, byte[]> {
 
     public AvroSnapshotSerializer() {
     }
 
-    @Override
-    public void init(Map<String, ?> config) {
-        schemaRegistryClient = new SchemaRegistryClient(config);
-    }
-
-    @Override
-    public byte[] serialize(Object input, SchemaInfo schemaInfo) throws SerDesException {
-
-        Schema schema = getSchema(input);
-
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();) {
-            // register given schema
-            Integer version = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema.toString(), "Schema registered by serializer:" + this.getClass()));
-
+    protected byte[] doSerialize(Object input, Integer version) throws SerDesException {
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
             byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(version).array());
 
+            Schema schema = computeSchema(input);
             Schema.Type schemaType = schema.getType();
             if (Schema.Type.BYTES.equals(schemaType)) {
                 // incase of byte arrays, no need to go through avro as there is not much to optimize and avro is expecting
@@ -86,24 +70,24 @@ public class AvroSnapshotSerializer implements SnapshotSerializer<Object, byte[]
             }
 
             return byteArrayOutputStream.toByteArray();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new SerDesException(e);
         }
     }
 
-    private Schema getSchema(Object input) {
+    protected String getSchemaText(Object input) {
+        Schema schema = computeSchema(input);
+        return schema.toString();
+    }
+
+    private Schema computeSchema(Object input) {
         Schema schema = null;
         if (input instanceof GenericContainer) {
             schema = ((GenericContainer) input).getSchema();
         } else {
             schema = AvroUtils.getSchemaForPrimitives(input);
         }
-
         return schema;
     }
 
-    @Override
-    public void close() throws Exception {
-        schemaRegistryClient.close();
-    }
 }
