@@ -28,9 +28,13 @@ import org.apache.atlas.RequestContext;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
+import org.apache.atlas.typesystem.TypesDef;
 import org.apache.atlas.typesystem.json.InstanceSerialization;
 import org.apache.atlas.typesystem.json.TypesSerialization;
+import org.apache.atlas.typesystem.types.AttributeDefinition;
 import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
+import org.apache.atlas.typesystem.types.IDataType;
+import org.apache.atlas.typesystem.types.TypeSystem;
 import org.apache.atlas.typesystem.types.cache.TypeCache;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
@@ -329,6 +333,26 @@ public class AtlasMetadataService {
             attributes.put(entry.getKey().getName(), entry.getValue());
         }
         return attributes;
+    }
+
+    public Object getValue(String namespace, String attribName, String attribValue) throws AtlasException {
+        TypesDef typesDef = TypesSerialization.fromJson(metadataService.getTypeDefinition(namespace));
+        AttributeDefinition[] attributeDefinitions = typesDef.classTypesAsJavaList().get(0).attributeDefinitions;
+        Object convertedValue = null;
+
+        for (AttributeDefinition attributeDefinition : attributeDefinitions) {
+            if (attributeDefinition.name.equals(attribName)) {
+                String dataTypeName = attributeDefinition.dataTypeName;
+                IDataType dataType = TypeSystem.getInstance().getDataType(IDataType.class, dataTypeName);
+                if (dataType == null) {
+                    throw new RuntimeException("Could not find builtin data type for " + dataTypeName);
+                }
+                convertedValue = dataType.convert(attribValue, null);
+                break;
+            }
+        }
+
+        return convertedValue;
     }
 
 }

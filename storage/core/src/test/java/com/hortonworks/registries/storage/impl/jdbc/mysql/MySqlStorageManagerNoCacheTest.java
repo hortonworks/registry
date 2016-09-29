@@ -15,21 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.storage;
+package com.hortonworks.registries.storage.impl.jdbc.mysql;
 
 import com.hortonworks.registries.storage.DeviceInfoTest;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
-import com.hortonworks.registries.storage.impl.jdbc.mysql.AbstractMySqlStorageManagerWithCacheIntegrationTest;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
-import org.junit.Ignore;
 
 import java.util.Collections;
 
 /**
  *
  */
-@Ignore
-public class SchemaRegistryMySqlStorageTest extends AbstractMySqlStorageManagerWithCacheIntegrationTest {
+public class MySqlStorageManagerNoCacheTest extends AbstractMySqlStorageManagerNoCacheIntegrationTest {
 
     @Override
     protected void setStorableTests() {

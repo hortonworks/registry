@@ -116,8 +116,8 @@ public class AtlasMetadataServiceTest {
         return TypesUtil.createClassTypeDef(
                 DeviceInfo.NAME_SPACE, null,
                 attrDef(DeviceInfo.NAME, DataTypes.STRING_TYPE),
-                TypesUtil.createUniqueRequiredAttrDef(DeviceInfo.XID, DataTypes.STRING_TYPE),
-                attrDef(DeviceInfo.ID, DataTypes.LONG_TYPE),
+                attrDef(DeviceInfo.XID, DataTypes.STRING_TYPE),
+                TypesUtil.createUniqueRequiredAttrDef(DeviceInfo.ID, DataTypes.LONG_TYPE),
                 attrDef(DeviceInfo.TIMESTAMP, DataTypes.LONG_TYPE),
                 attrDef(DeviceInfo.VERSION, DataTypes.STRING_TYPE)
         );

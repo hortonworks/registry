@@ -5,5 +5,5 @@
      name VARCHAR(256) NOT NULL,
      version VARCHAR(256) NOT NULL,
      timestamp  BIGINT,
-     PRIMARY KEY (xid)
+     PRIMARY KEY (id)
  );

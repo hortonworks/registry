@@ -107,8 +107,8 @@
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>storage-core</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
             <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

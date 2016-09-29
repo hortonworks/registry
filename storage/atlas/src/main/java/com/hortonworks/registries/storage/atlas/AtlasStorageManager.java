@@ -122,7 +122,7 @@ public class AtlasStorageManager implements StorageManager {
         try {
             // returned instances does not have actual entity info, Atlas should fix this!!
             instances = atlasMetadataService.remove(key.getNameSpace(),
-                                            atlasMetadataService.createAttributes(key.getPrimaryKey().getFieldsToVal()));
+                    atlasMetadataService.createAttributes(key.getPrimaryKey().getFieldsToVal()));
         } catch (AtlasException e) {
             throw new StorageException(e);
         }
@@ -176,7 +176,7 @@ public class AtlasStorageManager implements StorageManager {
         Map<String, Object> valuesMap = referenceable.getValuesMap();
         for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
             Object value = entry.getValue();
-            if(value instanceof BigInt) {
+            if (value instanceof BigInt) {
                 entry.setValue(((BigInt) value).longValue());
             }
         }
@@ -193,7 +193,14 @@ public class AtlasStorageManager implements StorageManager {
         } else {
             attributes = new HashMap<>();
             for (QueryParam queryParam : queryParams) {
-                attributes.put(queryParam.getName(), queryParam.getValue());
+                //get type for that attribute
+                Object value = null;
+                try {
+                    value = atlasMetadataService.getValue(namespace, queryParam.getName(), queryParam.getValue());
+                } catch (AtlasException e) {
+                    throw new StorageException(e);
+                }
+                attributes.put(queryParam.getName(), value);
             }
         }
 
@@ -208,12 +215,12 @@ public class AtlasStorageManager implements StorageManager {
                 ? Collections.<T>emptyList()
                 // wrapping in ArrayList as the transformed collection does not implement equals/hashCode
                 : new ArrayList<>(Collections2.transform(entities, new Function<Referenceable, T>() {
-                    @Nullable
-                    @Override
-                    public T apply(@Nullable Referenceable referenceable) {
-                        return storableOf(namespace, referenceable);
-                    }
-                }));
+            @Nullable
+            @Override
+            public T apply(@Nullable Referenceable referenceable) {
+                return storableOf(namespace, referenceable);
+            }
+        }));
     }
 
     @Override

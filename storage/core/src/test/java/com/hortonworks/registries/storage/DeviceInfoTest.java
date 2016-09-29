@@ -29,7 +29,7 @@ public class DeviceInfoTest extends StorableTest {
     public DeviceInfoTest() {
         storableList = new ArrayList<Storable>() {
             {
-                long x = System.currentTimeMillis();
+                long x = 1L;
                 int version = 0;
                 add(createDeviceInfo(x, "" + version));
                 add(createDeviceInfo(x, "deviceinfo-" + (version + 1)));
@@ -39,11 +39,12 @@ public class DeviceInfoTest extends StorableTest {
         };
     }
 
-    private Storable createDeviceInfo(long xid, String version) {
+    private Storable createDeviceInfo(long id, String version) {
         DeviceInfo deviceInfo = new DeviceInfo();
-        deviceInfo.setId(xid);
-        deviceInfo.setXid("" + xid);
-        deviceInfo.setName("deviceinfo-" + xid);
+        deviceInfo.setId(id);
+        long now = System.currentTimeMillis();
+        deviceInfo.setXid("" + now);
+        deviceInfo.setName("deviceinfo-" + now);
         deviceInfo.setTimestamp(System.currentTimeMillis());
         deviceInfo.setVersion(version);
         return deviceInfo;

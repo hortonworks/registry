@@ -2,11 +2,14 @@ package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.storage.Storable;
-import com.hortonworks.registries.storage.StorageManager;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class StorableTest {
     protected List<Storable> storableList;
@@ -16,7 +19,8 @@ public class StorableTest {
      * Performs any initialization steps that are required to test this storable instance, for example,
      * initialize the a parent table that a child table refers to (e.g. DataSource and Device)
      */
-    public void init() { }
+    public void init() {
+    }
 
     public StorageManager getStorageManager() {
         return storageManager;
@@ -66,7 +70,7 @@ public class StorableTest {
             add(storable2);
             add(storable3);
         }};
-        final HashSet allExisting = new HashSet(getStorageManager().list(getNameSpace()));
+        final HashSet<Storable> allExisting = new HashSet<>(getStorageManager().list(getNameSpace()));
         Assert.assertEquals(expected, allExisting);
 
         //Test method with query parameters(filter) matching only the item storable3

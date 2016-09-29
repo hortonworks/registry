@@ -21,7 +21,6 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
 import java.util.Collections;
-import java.util.Random;
 
 /**
  *
@@ -58,7 +57,7 @@ public class DeviceInfo extends AbstractStorable {
 
     @Override
     public PrimaryKey getPrimaryKey() {
-        return new PrimaryKey(Collections.<Schema.Field, Object>singletonMap(Schema.Field.of(XID, Schema.Type.STRING), xid));
+        return new PrimaryKey(Collections.<Schema.Field, Object>singletonMap(Schema.Field.of(ID, Schema.Type.LONG), id));
     }
 
     @Override
