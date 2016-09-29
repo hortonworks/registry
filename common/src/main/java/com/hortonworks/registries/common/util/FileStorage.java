@@ -43,9 +43,9 @@ public interface FileStorage {
      * be used later for {@link #downloadFile(String)} or {@link #deleteFile(String)}.
      *
      * @param inputStream stream to read the file content from
-     * @param name identifier of the file to be used later to retrieve
-     *             using {@link #downloadFile(String)}
-     * @throws java.io.IOException  if any IO error occurs
+     * @param name        identifier of the file to be used later to retrieve
+     *                    using {@link #downloadFile(String)}
+     * @throws java.io.IOException if any IO error occurs
      */
     String uploadFile(InputStream inputStream, String name) throws IOException;
 

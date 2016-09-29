@@ -56,7 +56,7 @@ public class ProxyUtil<O> {
     private ClassLoader getJarAddedClassLoader(String jarPath) throws MalformedURLException {
         ClassLoader classLoader = new MutableURLClassLoader(new URL[0], parentClassLoader);
         URL u = (new File(jarPath).toURI().toURL());
-        ((MutableURLClassLoader)classLoader).addURL(u);
+        ((MutableURLClassLoader) classLoader).addURL(u);
         ClassLoader oldCl = cachedClassLoaders.putIfAbsent(jarPath, classLoader);
         if (oldCl != null) {
             // discard and pick old thing

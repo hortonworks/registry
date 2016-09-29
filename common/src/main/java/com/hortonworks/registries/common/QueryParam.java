@@ -1,10 +1,11 @@
 package com.hortonworks.registries.common;
 
 
-public  class QueryParam {
+public class QueryParam {
 
     public final String name;
     public final String value;
+
     public QueryParam(String name, String value) {
         this.name = name;
         this.value = value;

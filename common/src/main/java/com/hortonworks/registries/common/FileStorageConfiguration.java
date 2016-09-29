@@ -6,7 +6,6 @@ import java.util.Map;
 
 /**
  * The configuration for jar storage.
- *
  */
 public class FileStorageConfiguration {
 

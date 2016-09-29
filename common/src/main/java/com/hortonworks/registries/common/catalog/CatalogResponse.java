@@ -9,7 +9,6 @@ import java.util.Collection;
  * <p>
  * A wrapper entity for passing entities and status back to the client.
  * </p>
- *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CatalogResponse {
@@ -76,7 +75,8 @@ public class CatalogResponse {
      */
     private Collection<?> entities;
 
-    private CatalogResponse() {}
+    private CatalogResponse() {
+    }
 
     public static class Builder {
         private final ResponseMessage responseMessage;
@@ -102,7 +102,7 @@ public class CatalogResponse {
             CatalogResponse response = new CatalogResponse();
             response.responseCode = responseMessage.code;
             StringBuilder msg = new StringBuilder(ResponseMessage.format(responseMessage, args));
-            if(responseMessage.isError()) {
+            if (responseMessage.isError()) {
                 msg.append(DOC_LINK_MESSAGE);
             }
             response.responseMessage = msg.toString();
@@ -128,10 +128,8 @@ public class CatalogResponse {
         return entity;
     }
 
-
     public Collection<?> getEntities() {
         return entities;
     }
-
 
 }

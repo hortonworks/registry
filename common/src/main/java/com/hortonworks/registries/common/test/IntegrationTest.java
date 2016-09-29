@@ -26,16 +26,15 @@ package com.hortonworks.registries.common.test;
  * add the annotation @Category(IntegrationTest.class) to the class definition. For example:
  * <p/>
  *
- *
  * @ Category(IntegrationTest.class)<br/>
  * public class MyIntegrationTest {<br/>
- *  ...<br/>
+ * ...<br/>
  * }
- *
+ * <p>
  * Please consult the  @see <a href="file:///../../../../../../README.md">README.md</a> for info on how to add the dependencies
  * to the Maven project POM files of the projects that include integration tests
- *
- *
+ * <p>
+ * <p>
  * <pre>
  * {@code
  * <dependency>

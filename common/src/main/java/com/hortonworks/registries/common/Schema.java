@@ -21,7 +21,12 @@ import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.exception.ParserException;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 //TODO Make this class Jackson Compatible.
 public class Schema implements Serializable {
@@ -55,6 +60,7 @@ public class Schema implements Serializable {
 
         /**
          * Determines the {@link Type} of the value specified
+         *
          * @param val value for which to determine the type
          * @return {@link Type} of the value
          */
@@ -105,21 +111,21 @@ public class Schema implements Serializable {
         }
 
         // TODO: make it private after refactoring the usages
-        public Field(String name, Type type){
+        public Field(String name, Type type) {
             this(name, type, false);
         }
 
-        private Field(String name, Type type, boolean optional){
+        private Field(String name, Type type, boolean optional) {
             this.name = name;
             this.type = type;
             this.optional = optional;
         }
 
-        public String getName(){
+        public String getName() {
             return this.name;
         }
 
-        public Type getType(){
+        public Type getType() {
             return this.type;
         }
 
@@ -169,7 +175,7 @@ public class Schema implements Serializable {
         // Removes the prime symbols that are in the beginning and end of the String,
         // e.g. 'device', device', 'device will be converted to device
         private static String removePrimeSymbols(String in) {
-            return in.replaceAll("'?(\\w+)'?","$1");
+            return in.replaceAll("'?(\\w+)'?", "$1");
         }
     }
 
@@ -178,10 +184,12 @@ public class Schema implements Serializable {
      */
     public static class SchemaBuilder {
         private final List<Field> fields = new ArrayList<Field>();
+
         public SchemaBuilder field(Field field) {
             fields.add(field);
             return this;
         }
+
         public SchemaBuilder fields(Field... fields) {
             Collections.addAll(this.fields, fields);
             return this;
@@ -193,7 +201,7 @@ public class Schema implements Serializable {
         }
 
         public Schema build() {
-            if(fields.isEmpty()) {
+            if (fields.isEmpty()) {
                 throw new IllegalArgumentException("Parser schema with empty fields!");
             }
             return new Schema(fields);
@@ -333,7 +341,7 @@ public class Schema implements Serializable {
     }
 
     // use the static factory or the builder
-    private Schema(List<Field> fields){
+    private Schema(List<Field> fields) {
         setFields(fields);
     }
 
@@ -360,12 +368,12 @@ public class Schema implements Serializable {
 
     // for jackson
     public void setFields(List<Field> fields) {
-        for (Field field: fields) {
+        for (Field field : fields) {
             this.fields.put(field.getName().toUpperCase(), field);
         }
     }
 
-    public List<Field> getFields(){
+    public List<Field> getFields() {
         return new ArrayList<>(this.fields.values());
     }
 
@@ -380,14 +388,14 @@ public class Schema implements Serializable {
     //TODO: need to replace with actual ToJson from Json
     //TODO: this can be simplified to fields.toString() a
     public String toString() {
-        if(fields == null) return "null";
-        if(fields.isEmpty()) return "{}";
+        if (fields == null) return "null";
+        if (fields.isEmpty()) return "{}";
         StringBuilder sb = new StringBuilder();
         sb.append("{");
-        for(Field field : fields.values()) {
+        for (Field field : fields.values()) {
             sb.append(field.toString()).append(",");
         }
-        sb.setLength(sb.length() -1 );  // remove last, orphan ','
+        sb.setLength(sb.length() - 1);  // remove last, orphan ','
         return sb.append("}").toString();
     }
 
@@ -408,7 +416,7 @@ public class Schema implements Serializable {
 
         String[] split = str.split("},");
         List<Field> fields = new ArrayList<Field>();
-        for(String fieldStr : split) {
+        for (String fieldStr : split) {
             fields.add(Field.fromString(fieldStr));
         }
         return new Schema(fields);
@@ -429,7 +437,7 @@ public class Schema implements Serializable {
 
     private static List<Field> parseFields(Map<String, Object> fieldMap) throws ParserException {
         List<Field> fields = new ArrayList<Field>();
-        for(Map.Entry<String, Object> entry: fieldMap.entrySet()) {
+        for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
             fields.add(parseField(entry.getKey(), entry.getValue()));
         }
         return fields;
@@ -438,10 +446,10 @@ public class Schema implements Serializable {
     private static Field parseField(String fieldName, Object fieldValue) throws ParserException {
         Field field;
         Type fieldType = fromJavaType(fieldValue);
-        if(fieldType == Type.NESTED) {
-            field = new NestedField(fieldName, parseFields((Map<String, Object>)fieldValue));
-        } else if(fieldType == Type.ARRAY) {
-            field = new ArrayField(fieldName, parseArray((List<Object>)fieldValue));
+        if (fieldType == Type.NESTED) {
+            field = new NestedField(fieldName, parseFields((Map<String, Object>) fieldValue));
+        } else if (fieldType == Type.ARRAY) {
+            field = new ArrayField(fieldName, parseArray((List<Object>) fieldValue));
         } else {
             field = new Field(fieldName, fieldType);
         }
@@ -450,7 +458,7 @@ public class Schema implements Serializable {
 
     private static List<Field> parseArray(List<Object> array) throws ParserException {
         List<Field> arrayMembers = new ArrayList<Field>();
-        for(Object member: array) {
+        for (Object member : array) {
             arrayMembers.add(parseField(null, member));
         }
         return arrayMembers;
@@ -458,7 +466,7 @@ public class Schema implements Serializable {
 
     //TODO: complete this and move into some parser utility class
     public static Type fromJavaType(Object value) throws ParserException {
-        if(value instanceof String) {
+        if (value instanceof String) {
             return Type.STRING;
         } else if (value instanceof Short) {
             return Type.SHORT;
@@ -484,7 +492,7 @@ public class Schema implements Serializable {
     }
 
     public static Type fromJavaType(Class clazz) throws ParserException {
-        if(clazz.equals(String.class)) {
+        if (clazz.equals(String.class)) {
             return Type.STRING;
         } else if (clazz.equals(Short.class)) {
             return Type.SHORT;
