@@ -12,8 +12,6 @@
     <artifactId>schema-registry</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>iotas-dep</module>
-        <module>storage</module>
         <module>core</module>
         <module>avro</module>
         <module>samples</module>

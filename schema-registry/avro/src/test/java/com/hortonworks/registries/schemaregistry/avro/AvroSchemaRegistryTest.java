@@ -17,8 +17,8 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.iotas.storage.StorageManager;
-import com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager;
+import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;

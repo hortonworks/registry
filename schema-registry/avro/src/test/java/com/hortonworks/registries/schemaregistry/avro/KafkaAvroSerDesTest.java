@@ -18,7 +18,7 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.iot.Device;
-import com.hortonworks.iotas.common.test.IntegrationTest;
+import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroSerializer;
 import org.junit.Assert;

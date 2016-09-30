@@ -18,7 +18,7 @@
  */
 package com.hortonworks.registries.schemaregistry.serde;
 
-import com.hortonworks.iotas.common.Schema;
+import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullEventContext;
 import org.junit.Assert;
 import org.junit.Test;

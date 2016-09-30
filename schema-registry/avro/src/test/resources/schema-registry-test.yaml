@@ -4,7 +4,7 @@ schemaProviderClasses:
   - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
 
 fileStorageConfiguration:
-  className: "com.hortonworks.iotas.common.util.LocalFileSystemStorage"
+  className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
     directory: "/tmp/storage"
 
@@ -13,11 +13,11 @@ fileStorageConfiguration:
 #
 # Example configuration for inmemory is:
 #storageProviderConfiguration:
-# providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
+# providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 #
 # Example configuration for phoenix based JDBC driver
 #storageProviderConfiguration:
-# providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
 # properties:
 #   db.type: "phoenix"
 #   queryTimeoutInSecs: 30
@@ -27,7 +27,7 @@ fileStorageConfiguration:
 #
 # MySQL based jdbc provider configuration is:
 #storageProviderConfiguration:
-#  providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+#  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
 #  properties:
 #    db.type: "mysql"
 #    queryTimeoutInSecs: 30
@@ -36,7 +36,7 @@ fileStorageConfiguration:
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
 
 storageProviderConfiguration:
-  providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
+  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 
 # schema cache properties
 # inmemory schema versions cache size
@@ -91,7 +91,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.iotas: DEBUG
+    com.hortonworks.registries: DEBUG
 
 
   appenders:

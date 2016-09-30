@@ -1,6 +1,6 @@
 # Filesystem based jar storage
 fileStorageConfiguration:
-  className: "com.hortonworks.iotas.common.util.LocalFileSystemStorage"
+  className: "LocalFileSystemStorage"
   properties:
     directory: "/tmp"
 
@@ -14,7 +14,7 @@ schemaCacheSize: 10000
 schemaCacheExpiryInterval: 3600
 
 storageProviderConfiguration:
- providerClass: "com.hortonworks.iotas.storage.impl.memory.InMemoryStorageManager"
+ providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 
 #enable CORS, may want to disable in production
 enableCors: true
@@ -56,7 +56,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.iotas: DEBUG
+    com.hortonworks.registries: DEBUG
 
 
   appenders:

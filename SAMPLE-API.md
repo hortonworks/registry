@@ -39,7 +39,7 @@ Configuration file is located at conf/registry-dev.yaml. By default it uses inme
 ```
 # MySQL based jdbc provider configuration is:
 storageProviderConfiguration:
-  providerClass: "com.hortonworks.iotas.storage.impl.jdbc.JdbcStorageManager"
+  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
   properties:
     db.type: "mysql"
     queryTimeoutInSecs: 30

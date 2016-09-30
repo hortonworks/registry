@@ -18,8 +18,8 @@
  */
 package com.hortonworks.registries.schemaregistry.serde;
 
-import com.hortonworks.iotas.common.Schema;
-import com.hortonworks.iotas.common.exception.ParserException;
+import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.common.exception.ParserException;
 import com.hortonworks.registries.schemaregistry.serde.pull.EndFieldContext;
 import com.hortonworks.registries.schemaregistry.serde.pull.EndRecordContext;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullDeserializer;

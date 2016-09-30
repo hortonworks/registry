@@ -18,7 +18,7 @@
  */
 package com.hortonworks.registries.schemaregistry.serde.pull;
 
-import com.hortonworks.iotas.common.exception.ParserException;
+import com.hortonworks.registries.common.exception.ParserException;
 import com.hortonworks.registries.schemaregistry.Resourceable;
 
 /**
