@@ -17,15 +17,11 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.hortonworks.registries.schemaregistry.SchemaKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DecoderFactory;
@@ -36,76 +32,30 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStream, Object, SchemaKey, Schema> {
+public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Object, Schema> {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
 
-    public static final String DESERIALIZER_CACHE_MAX_SIZE = "schemaregistry.deserializer.cache.size";
-    public static final Integer DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-    public static final String DESERIALIZER_CACHE_EXPIRY_IN_MILLS = "schemaregistry.deserializer.cache.expiry";
-    public static final Long DEFAULT_DESERIALIZER_CACHE_EXPIRY_IN_MILLS = 60 * 5 * 1000L;
-
-    private SchemaRegistryClient schemaRegistryClient;
-    protected LoadingCache<SchemaVersionKey, Schema> schemaCache;
-
     @Override
-    public void init(Map<String, ?> config) {
-        LOG.debug("Initialized with config: [{}]", config);
-        schemaRegistryClient = new SchemaRegistryClient(config);
-
-        schemaCache = CacheBuilder.newBuilder()
-                .maximumSize(getCacheMaxSize(config))
-                .expireAfterAccess(getCacheExpiryInMillis(config), TimeUnit.MILLISECONDS)
-                .build(new CacheLoader<SchemaVersionKey, Schema>() {
-                    @Override
-                    public Schema load(SchemaVersionKey schemaVersionKey) throws Exception {
-                        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaVersionKey);
-                        return schemaVersionInfo != null ? new Schema.Parser().parse(schemaVersionInfo.getSchemaText()) : null;
-                    }
-                });
+    protected Schema getParsedSchema(SchemaVersionInfo schemaVersionInfo) {
+        return new Schema.Parser().parse(schemaVersionInfo.getSchemaText());
     }
 
-    private Long getCacheExpiryInMillis(Map<String, ?> config) {
-        Long value = (Long) getValue(config, DESERIALIZER_CACHE_EXPIRY_IN_MILLS, DEFAULT_DESERIALIZER_CACHE_EXPIRY_IN_MILLS);
-        if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_CACHE_EXPIRY_IN_MILLS + "must be non negative.");
-        }
-        return value;
-    }
-
-    private Integer getCacheMaxSize(Map<String, ?> config) {
-        Integer value = (Integer) getValue(config, DESERIALIZER_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
-        if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_CACHE_MAX_SIZE + "must be non negative.");
-        }
-        return value;
-    }
-
-    private Object getValue(Map<String, ?> config, String key, Object defaultValue) {
-        Object value = config.get(key);
-        if (value == null) {
-            value = defaultValue;
-        }
-        return value;
-    }
-
-    @Override
-    public Object deserialize(InputStream payloadInputStream, SchemaKey writerSchemaKey, Schema readerSchema) throws SerDesException {
-        Object deserializedObj = null;
+    protected Object doDeserialize(InputStream payloadInputStream,
+                                   SchemaKey schemaKey,
+                                   Integer readerSchemaVersion,
+                                   int writerSchemaVersion) throws SerDesException {
+        Object deserializedObj;
+        SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaKey, writerSchemaVersion);
+        LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
         try {
-            int version = readVersion(payloadInputStream);
-            SchemaVersionKey schemaVersionKey = new SchemaVersionKey(writerSchemaKey, version);
-            LOG.debug("SchemaKey: [{}] for the received payload", schemaVersionKey);
-            Schema writerSchema = schemaCache.get(schemaVersionKey);
+            Schema writerSchema = schemaCache.get(writerSchemaVersionKey);
             if (writerSchema == null) {
-                throw new SerDesException("No schema exists with metadata-key: " + writerSchemaKey + " and version: " + version);
+                throw new SerDesException("No schema exists with metadata-key: " + schemaKey + " and writerSchemaVersion: " + writerSchemaVersion);
             }
 
             Schema.Type writerSchemaType = writerSchema.getType();
@@ -119,6 +69,9 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
                 int recordType = payloadInputStream.read();
                 LOG.debug("Received record type: [{}]", recordType);
                 GenericDatumReader datumReader = null;
+                Schema readerSchema = readerSchemaVersion != null
+                        ? schemaCache.get(new SchemaVersionKey(schemaKey, readerSchemaVersion)) : null;
+
                 if (recordType == AvroUtils.GENERIC_RECORD) {
                     datumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema)
                             : new GenericDatumReader(writerSchema);
@@ -128,22 +81,11 @@ public class AvroSnapshotDeserializer implements SnapshotDeserializer<InputStrea
                 }
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
-        } catch (IOException | ExecutionException e) {
+        } catch (ExecutionException | IOException e) {
             throw new SerDesException(e);
         }
 
         return deserializedObj;
     }
 
-    private int readVersion(InputStream payloadInputStream) throws IOException {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4);
-        payloadInputStream.read(byteBuffer.array());
-        return byteBuffer.getInt();
-    }
-
-
-    @Override
-    public void close() throws Exception {
-        schemaRegistryClient.close();
-    }
 }
