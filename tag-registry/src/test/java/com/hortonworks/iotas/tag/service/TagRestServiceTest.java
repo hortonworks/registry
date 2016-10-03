@@ -20,14 +20,14 @@ package com.hortonworks.iotas.tag.service;
 
 
 import com.google.common.collect.ImmutableList;
+import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.iotas.registries.tag.Tag;
 import com.hortonworks.registries.iotas.registries.tag.TaggedEntity;
 import com.hortonworks.registries.iotas.registries.tag.client.TagClient;
-import com.hortonworks.registries.common.test.IntegrationTest;
+import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -36,13 +36,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @Category(IntegrationTest.class)
-@Ignore
 public class TagRestServiceTest {
 
     @ClassRule
-    public static final DropwizardAppRule RULE = null;
+    public static final  DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<>(TestApplication.class, ResourceHelpers.resourceFilePath("tag-test.yaml"));
 
     private String catalogRootUrl = String.format("http://localhost:%d/api/v1/catalog", RULE.getLocalPort());
 
