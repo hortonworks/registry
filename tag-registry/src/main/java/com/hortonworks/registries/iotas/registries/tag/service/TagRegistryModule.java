@@ -1,5 +1,6 @@
 package com.hortonworks.registries.iotas.registries.tag.service;
 
+import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -11,18 +12,18 @@ import java.util.Map;
 /**
  * Implementation for the tag-registry module for registration with web service module
  */
-public class TagRegistryModule implements StorageManagerAware {
+public class TagRegistryModule implements ModuleRegistration, StorageManagerAware {
     private FileStorage fileStorage;
     private Map<String, Object> config;
     private StorageManager storageManager;
 
-//    @Override
+    @Override
     public void init(Map<String, Object> config, FileStorage fileStorage) {
         this.config = config;
         this.fileStorage = fileStorage;
     }
 
-//    @Override
+    @Override
     public List<Object> getResources() {
         List<Object> result = new ArrayList<>();
         TagService tagService = new CatalogTagService(storageManager);
@@ -31,7 +32,7 @@ public class TagRegistryModule implements StorageManagerAware {
         return result;
     }
 
-//    @Override
+    @Override
     public void setStorageManager(StorageManager storageManager) {
         this.storageManager = storageManager;
     }
