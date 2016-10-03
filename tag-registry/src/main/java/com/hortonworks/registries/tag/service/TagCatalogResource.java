@@ -1,9 +1,9 @@
-package com.hortonworks.registries.iotas.registries.tag.service;
+package com.hortonworks.registries.tag.service;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hortonworks.registries.iotas.registries.tag.Tag;
-import com.hortonworks.registries.iotas.registries.tag.TaggedEntity;
-import com.hortonworks.registries.iotas.registries.tag.dto.TagDto;
+import com.hortonworks.registries.tag.Tag;
+import com.hortonworks.registries.tag.TaggedEntity;
+import com.hortonworks.registries.tag.dto.TagDto;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.WSUtils;
 

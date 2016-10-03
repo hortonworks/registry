@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hortonworks.registries.iotas.registries.tag;
+package com.hortonworks.registries.tag;
 
 import com.hortonworks.registries.storage.Storable;
 

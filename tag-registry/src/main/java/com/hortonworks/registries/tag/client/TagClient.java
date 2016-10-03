@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.hortonworks.registries.iotas.registries.tag.client;
+package com.hortonworks.registries.tag.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.hortonworks.registries.iotas.registries.tag.Tag;
-import com.hortonworks.registries.iotas.registries.tag.TaggedEntity;
-import com.hortonworks.registries.iotas.registries.tag.dto.TagDto;
+import com.hortonworks.registries.tag.Tag;
+import com.hortonworks.registries.tag.TaggedEntity;
+import com.hortonworks.registries.tag.dto.TagDto;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;

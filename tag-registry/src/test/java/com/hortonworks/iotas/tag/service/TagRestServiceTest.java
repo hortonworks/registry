@@ -21,9 +21,9 @@ package com.hortonworks.iotas.tag.service;
 
 import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.test.IntegrationTest;
-import com.hortonworks.registries.iotas.registries.tag.Tag;
-import com.hortonworks.registries.iotas.registries.tag.TaggedEntity;
-import com.hortonworks.registries.iotas.registries.tag.client.TagClient;
+import com.hortonworks.registries.tag.Tag;
+import com.hortonworks.registries.tag.TaggedEntity;
+import com.hortonworks.registries.tag.client.TagClient;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.Assert;

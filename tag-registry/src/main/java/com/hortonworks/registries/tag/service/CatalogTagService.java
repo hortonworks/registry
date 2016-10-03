@@ -1,13 +1,13 @@
-package com.hortonworks.registries.iotas.registries.tag.service;
+package com.hortonworks.registries.tag.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.hortonworks.registries.common.QueryParam;
-import com.hortonworks.registries.iotas.registries.tag.TaggedEntity;
-import com.hortonworks.registries.iotas.registries.tag.Tag;
-import com.hortonworks.registries.iotas.registries.tag.TagStorableMapping;
+import com.hortonworks.registries.tag.TaggedEntity;
+import com.hortonworks.registries.tag.Tag;
+import com.hortonworks.registries.tag.TagStorableMapping;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;

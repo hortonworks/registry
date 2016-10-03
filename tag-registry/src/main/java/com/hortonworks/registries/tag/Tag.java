@@ -1,4 +1,4 @@
-package com.hortonworks.registries.iotas.registries.tag;
+package com.hortonworks.registries.tag;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.registries.common.Schema;

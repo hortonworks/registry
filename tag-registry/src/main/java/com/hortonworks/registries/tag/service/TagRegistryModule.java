@@ -1,4 +1,4 @@
-package com.hortonworks.registries.iotas.registries.tag.service;
+package com.hortonworks.registries.tag.service;
 
 import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.util.FileStorage;

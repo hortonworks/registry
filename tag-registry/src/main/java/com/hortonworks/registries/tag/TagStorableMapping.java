@@ -1,4 +1,4 @@
-package com.hortonworks.registries.iotas.registries.tag;
+package com.hortonworks.registries.tag;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;

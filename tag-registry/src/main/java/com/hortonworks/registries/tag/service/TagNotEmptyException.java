@@ -1,4 +1,4 @@
-package com.hortonworks.registries.iotas.registries.tag.service;
+package com.hortonworks.registries.tag.service;
 
 public class TagNotEmptyException extends RuntimeException {
     public TagNotEmptyException(String message) {

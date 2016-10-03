@@ -22,9 +22,9 @@ package com.hortonworks.iotas.tag.service;
 
 import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.cache.Cache;
-import com.hortonworks.registries.iotas.registries.tag.service.CatalogTagService;
-import com.hortonworks.registries.iotas.registries.tag.service.TagCatalogResource;
-import com.hortonworks.registries.iotas.registries.tag.service.TagService;
+import com.hortonworks.registries.tag.service.CatalogTagService;
+import com.hortonworks.registries.tag.service.TagCatalogResource;
+import com.hortonworks.registries.tag.service.TagService;
 import com.hortonworks.registries.storage.CacheBackedStorageManager;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
