@@ -19,16 +19,21 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.io.ByteStreams;
+import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Utility methods for the webservice.
@@ -69,5 +74,18 @@ public final class WSUtils {
             }
         };
     }
+
+    public static List<QueryParam> buildQueryParameters(MultivaluedMap<String, String> params) {
+        if (params == null || params.isEmpty()) {
+            return Collections.<QueryParam>emptyList();
+        }
+
+        List<QueryParam> queryParams = new ArrayList<>();
+        for (String param : params.keySet()) {
+            queryParams.add(new QueryParam(param, params.getFirst(param)));
+        }
+        return queryParams;
+    }
+
 
 }
