@@ -110,10 +110,8 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     boolean registerSchemaMetadata(SchemaMetadata schemaMetadata);
 
     /**
-     * Returns information about given {@link SchemaMetadata}
-     *
-     * @param schemaName
-     * @return
+     * @param schemaName name identifying a schema
+     * @return information about given schema identified by {@code schemaName}
      */
     SchemaMetadataInfo getSchemaMetadataInfo(String schemaName);
 
@@ -137,7 +135,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Adds the given {@code schemaVersion} and returns the corresponding version number.
      *
-     * @param schemaName    name identifying a schema
+     * @param schemaName name identifying a schema
      * @param schemaVersion new version of the schema to be added
      * @return version number of the schema added
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
@@ -158,29 +156,29 @@ public interface ISchemaRegistryClient extends AutoCloseable {
 
 
     /**
-     * @param schemaName key identifying schema
-     * @return latest version of the schema for the given {@param schemaMetadataKey}
+     * @param schemaName name identifying a schema
+     * @return latest version of the schema for the given {@param schemaName}
      */
     SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
     /**
-     * @param schemaName key identifying schema
-     * @return all versions of the schemas for given {@param schemaMetadataKey}
+     * @param schemaName name identifying a schema
+     * @return all versions of the schemas for given {@param schemaName}
      */
     Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException;
 
 
     /**
-     * @param schemaName   key identifying a schema
+     * @param schemaName name identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
-     * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
+     * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaName}.
      */
     boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * TODO: needs better description. What bytes are being uploaded?
      *
-     * @param inputStream
+     * @param inputStream input stream
      * @return unique id for the uploaded bytes read from input stream to file storage.
      */
     String uploadFile(InputStream inputStream) throws SerDesException;
@@ -189,47 +187,40 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * Downloads the content of file stored with the given {@code fileId}.
      * TODO need description on what these files are
      *
-     * @param fileId
+     * @param fileId file identifier
      * @return
      */
     InputStream downloadFile(String fileId) throws FileNotFoundException;
 
     /**
-     * Returns unique id for the added Serializer for the given {@code schemaSerializerInfo}
      *
-     * @param serializerInfo
-     * @return
+     * @param serializerInfo serializer information
+     * @return unique id for the added Serializer for the given {@code serializerInfo}
      */
     Long addSerializer(SerDesInfo serializerInfo);
 
     /**
-     * Returns unique id for the added Serializer for the given {@code schemaSerializerInfo}
-     *
-     * @param deserializerInfo
-     * @return
+     * @param deserializerInfo deserializer information
+     * @return unique id for the added Serializer for the given {@code schemaSerializerInfo}
      */
     Long addDeserializer(SerDesInfo deserializerInfo);
 
     /**
-     * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaMetadataKey}
-     *  @param schemaName
-     * @param serDesId
+     * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaName}
+     *  @param schemaName name identifying a schema
+     * @param serDesId serializer/deserializer
      */
     void mapSchemaWithSerDes(String schemaName, Long serDesId);
 
     /**
-     * Returns Collection of Serializers registered for the schema with {@code schemaMetadataKey}
-     *
-     * @param schemaName
-     * @return
+     * @param schemaName name identifying a schema
+     * @return Collection of Serializers registered for the schema with {@code schemaName}
      */
     Collection<SerDesInfo> getSerializers(String schemaName);
 
     /**
-     * Returns Collection of Deserializers registered for the schema with {@code schemaMetadataKey}
-     *
-     * @param schemaName
-     * @return
+     * @param schemaName name identifying a schema
+     * @return collection of Deserializers registered for the schema with {@code schemaName}
      */
     Collection<SerDesInfo> getDeserializers(String schemaName);
 
@@ -237,7 +228,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * Returns a new instance of the respective Serializer class for the given {@code serializerInfo}
      *
      * @param <T>            type of the instance to be created
-     * @param serializerInfo
+     * @param serializerInfo serializer information
      * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createSerializerInstance(SerDesInfo serializerInfo);
@@ -246,7 +237,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * Returns a new instance of the respective Deserializer class for the given {@code deserializerInfo}
      *
      * @param <T>              type of the instance to be created
-     * @param deserializerInfo
+     * @param deserializerInfo deserializer information
      * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createDeserializerInstance(SerDesInfo deserializerInfo);
