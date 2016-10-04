@@ -146,7 +146,7 @@ public class SchemaMetadata implements Serializable {
 
     public static class Builder {
 
-        private String name;
+        private final String name;
         private String type;
         private String schemaGroup;
         private String description;

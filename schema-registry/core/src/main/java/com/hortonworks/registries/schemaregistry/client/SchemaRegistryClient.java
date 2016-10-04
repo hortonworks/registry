@@ -99,7 +99,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private final Options options;
     private final ClassLoaderCache classLoaderCache;
-    private SchemaVersionInfoCache schemaVersionInfoCache;
+    private final SchemaVersionInfoCache schemaVersionInfoCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);

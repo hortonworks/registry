@@ -42,7 +42,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 @Path("/api/v1/catalog")
 @Produces(MediaType.APPLICATION_JSON)
 public class TagCatalogResource {
-    private TagService tagService;
+    private final TagService tagService;
 
     public TagCatalogResource(TagService tagService) {
         this.tagService = tagService;
