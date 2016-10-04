@@ -153,8 +153,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         schemaVersionStorable.setFingerprint(fingerprint);
 
-        schemaVersionStorable.setType(type);
-        schemaVersionStorable.setSchemaGroup(schemaMetadata.getSchemaGroup());
         schemaVersionStorable.setName(schemaName);
 
         schemaVersionStorable.setSchemaText(schemaText);

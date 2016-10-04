@@ -2,7 +2,7 @@
 -- USE schema_registry;
 
 -- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
-CREATE TABLE IF NOT EXISTS schema_info (
+CREATE TABLE IF NOT EXISTS schema_metadata_info (
   id            BIGINT AUTO_INCREMENT NOT NULL,
   type          VARCHAR(256)          NOT NULL,
   schemaGroup   VARCHAR(256)          NOT NULL,
@@ -10,9 +10,8 @@ CREATE TABLE IF NOT EXISTS schema_info (
   compatibility VARCHAR(256)          NOT NULL,
   description   TEXT,
   timestamp     BIGINT                NOT NULL,
-  PRIMARY KEY (type, schemaGroup, name),
-  UNIQUE KEY (id),
-  UNIQUE KEY `UK_TYPE_GROUP_NAME` (type, schemaGroup, name)
+  PRIMARY KEY (name),
+  UNIQUE KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
@@ -23,13 +22,11 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  type             VARCHAR(256)          NOT NULL,
-  schemaGroup      VARCHAR(256)          NOT NULL,
   name             VARCHAR(256)          NOT NULL,
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
-  PRIMARY KEY (version, type, schemaGroup, name),
-  FOREIGN KEY (schemaMetadataId, type, schemaGroup, name) REFERENCES schema_info (id, type, schemaGroup, name)
+  PRIMARY KEY (name, version),
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (

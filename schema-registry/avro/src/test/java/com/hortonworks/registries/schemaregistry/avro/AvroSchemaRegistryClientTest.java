@@ -92,7 +92,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     }
 
     @Test(expected = InvalidSchemaException.class)
-    public void testInvalisSchema() throws Exception {
+    public void testInvalidSchema() throws Exception {
         String schema = "--- invalid schema ---";
 
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaProvider.Compatibility.BACKWARD);
@@ -145,7 +145,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     }
 
     @Test
-    public void testAvroSerDePrimtives() throws Exception {
+    public void testAvroSerDePrimitives() throws Exception {
         Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
         AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
         avroSnapshotSerializer.init(config);
@@ -177,8 +177,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         SerDesInfo serializerInfo = createSerDesInfo(fileId);
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
-        schemaRegistryClient.mapSchemaWithSerDes(schemaMetadata, serializerId);
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadata);
+        String schemaName = schemaMetadata.getName();
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaName);
 
         Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
     }

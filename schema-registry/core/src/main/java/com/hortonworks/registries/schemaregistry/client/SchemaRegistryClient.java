@@ -265,22 +265,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public void mapSchemaWithSerDes(SchemaMetadata schemaMetadata, Long serDesId) {
-        String path = String.format("%s/mapping/%s", schemaMetadata.getName(), serDesId.toString());
+    public void mapSchemaWithSerDes(String schemaName, Long serDesId) {
+        String path = String.format("%s/mapping/%s", schemaName, serDesId.toString());
 
         Boolean success = postEntity(schemasTarget.path(path), null, Boolean.class);
-        LOG.info("Received response while mapping schemaMetadataKey [{}] with serialzer/deserializer [{}] : [{}]", schemaMetadata, serDesId, success);
+        LOG.info("Received response while mapping schema [{}] with serialzer/deserializer [{}] : [{}]", schemaName, serDesId, success);
     }
 
     @Override
-    public Collection<SerDesInfo> getSerializers(SchemaMetadata schemaMetadata) {
-        String path = schemaMetadata.getName() + "/serializers/";
+    public Collection<SerDesInfo> getSerializers(String schemaName) {
+        String path = schemaName + "/serializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 
     @Override
-    public Collection<SerDesInfo> getDeserializers(SchemaMetadata schemaMetadata) {
-        String path = schemaMetadata.getName() + "/deserializers/";
+    public Collection<SerDesInfo> getDeserializers(String schemaName) {
+        String path = schemaName + "/deserializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 

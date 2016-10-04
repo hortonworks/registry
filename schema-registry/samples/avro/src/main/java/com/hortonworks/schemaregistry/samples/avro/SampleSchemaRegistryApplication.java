@@ -172,8 +172,9 @@ public class SampleSchemaRegistryApplication {
 
         // map serializer and deserializer with schemakey
         // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
-        schemaRegistryClient.mapSchemaWithSerDes(schemaMetadata, serializerId);
-        schemaRegistryClient.mapSchemaWithSerDes(schemaMetadata, deserializerId);
+        String schemaName = schemaMetadata.getName();
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, deserializerId);
 
         SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaMetadata);
         String payload = "Random text: " + new Random().nextLong();
@@ -208,7 +209,7 @@ public class SampleSchemaRegistryApplication {
     }
 
     private SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> getSnapshotDeserializer(SchemaMetadata schemaMetadata) {
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getDeserializers(schemaMetadata);
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getDeserializers(schemaMetadata.getName());
         if (serializers.isEmpty()) {
             throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }
@@ -217,7 +218,7 @@ public class SampleSchemaRegistryApplication {
     }
 
     private SnapshotSerializer<Object, byte[], SchemaMetadata> getSnapshotSerializer(SchemaMetadata schemaMetadata) {
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadata);
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadata.getName());
         if (serializers.isEmpty()) {
             throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }

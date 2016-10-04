@@ -13,7 +13,7 @@ fileStorageConfiguration:
 #
 # Example configuration for inmemory is:
 #storageProviderConfiguration:
-# providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+#  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 #
 # Example configuration for phoenix based JDBC driver
 #storageProviderConfiguration:
@@ -32,7 +32,7 @@ fileStorageConfiguration:
 #    db.type: "mysql"
 #    queryTimeoutInSecs: 30
 #    db.properties:
-#      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+#      dataSourceClassName: "com.mysql.cj.jdbc.MysqlDataSource"
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
 
 storageProviderConfiguration:

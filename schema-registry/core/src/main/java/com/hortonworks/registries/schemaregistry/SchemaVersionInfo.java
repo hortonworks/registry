@@ -78,6 +78,16 @@ public final class SchemaVersionInfo implements Serializable {
     }
 
     @Override
+    public String toString() {
+        return "SchemaVersionInfo{" +
+                "description='" + description + '\'' +
+                ", version=" + version +
+                ", schemaText='" + schemaText + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -89,16 +99,6 @@ public final class SchemaVersionInfo implements Serializable {
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
-    }
-
-    @Override
-    public String toString() {
-        return "SchemaInfo{" +
-                "description='" + description + '\'' +
-                ", version=" + version +
-                ", schemaText='" + schemaText + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
     }
 
     @Override

@@ -30,7 +30,7 @@ import java.util.Map;
  *
  */
 public class SchemaMetadataStorable extends AbstractStorable {
-    public static final String NAME_SPACE = "schema_info";
+    public static final String NAME_SPACE = "schema_metadata_info";
     public static final String ID = "id";
     public static final String NAME = "name";
     public static final String SCHEMA_GROUP = "schemaGroup";
