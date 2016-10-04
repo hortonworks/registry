@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An interface expected to be implemented by indepenedent modules so that they can be registered with web service module on startup
+ * An interface expected to be implemented by independent modules so that they can be registered with web service module on startup
  */
 public interface ModuleRegistration {
 
