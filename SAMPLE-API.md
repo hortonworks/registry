@@ -1,18 +1,16 @@
 # Introduction
  
-Each Schema is mainly represented by 
+Each Schema is mainly represented with metadata like 
+- name
+  - name of the schema which is unique across the schema registry. 
 - type
   - Represents the type of schema. For ex Avro, ProtoBuf, Json etc
 - schemaGroup
   - group of schemas in which this schema belongs to. It can be like Kafka, Hive, Spark or system log etc
-- name
-  - name of the schema. 
 - compatibility
   - Compatibility between different versions of the schema.
 - description
   - Description about the different versions of a schema.
-
- (type, schemaGroup, name) represents unique constraint for schemas in SchemaRegistry.
 
 
 Each of these schemas can evolve with multiple versions. Each version of the Schema can have 
@@ -44,7 +42,7 @@ storageProviderConfiguration:
     db.type: "mysql"
     queryTimeoutInSecs: 30
     db.properties:
-      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+      dataSourceClassName: "com.mysql.cj.jdbc.MysqlDataSource"
       dataSource.url: "jdbc:mysql://localhost:3307/schema_registry"
 
 ```
@@ -52,10 +50,11 @@ storageProviderConfiguration:
 Before starting the SchemaRegistry server, below script should be run with configured database names.
 
 ```mysql
-CREATE DATABASE IF NOT EXISTS schema_registry;
-USE schema_registry;
+-- CREATE DATABASE IF NOT EXISTS schema_registry;
+-- USE schema_registry;
 
-CREATE TABLE IF NOT EXISTS schema_info (
+-- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
+CREATE TABLE IF NOT EXISTS schema_metadata_info (
   id            BIGINT AUTO_INCREMENT NOT NULL,
   type          VARCHAR(256)          NOT NULL,
   schemaGroup   VARCHAR(256)          NOT NULL,
@@ -63,9 +62,8 @@ CREATE TABLE IF NOT EXISTS schema_info (
   compatibility VARCHAR(256)          NOT NULL,
   description   TEXT,
   timestamp     BIGINT                NOT NULL,
-  PRIMARY KEY (type, schemaGroup, name),
-  UNIQUE KEY (id),
-  UNIQUE KEY `UK_TYPE_GROUP_NAME` (type, schemaGroup, name)
+  PRIMARY KEY (name),
+  UNIQUE KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
@@ -76,13 +74,11 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  type             VARCHAR(256)          NOT NULL,
-  schemaGroup      VARCHAR(256)          NOT NULL,
   name             VARCHAR(256)          NOT NULL,
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
-  PRIMARY KEY (version, type, schemaGroup, name),
-  FOREIGN KEY (schemaMetadataId, type, schemaGroup, name) REFERENCES schema_info (id, type, schemaGroup, name)
+  PRIMARY KEY (name, version),
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
@@ -137,33 +133,33 @@ schemaRegistryClient = new SchemaRegistryClient(config);
 
 String schemaFileName = "/device.avsc";
 String schema1 = getSchema(schemaFileName);
-SchemaInfo schemaInfo = createSchemaInfo("com.hwx.schemas.sample-"+System.currentTimeMillis());
-SchemaKey schemaKey = schemaInfo.getSchemaKey();
+SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
 // registering a new schema
-Integer v1 = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema1, "Initial version of the schema"));
+Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
 LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
 
 // adding a new version of the schema
 String schema2 = getSchema("/device-next.avsc");
 SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
-Integer v2 = schemaRegistryClient.addSchemaVersion(schemaKey, schemaInfo2);
+Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
 LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
 
 //adding same schema returns the earlier registered version
-Integer version = schemaRegistryClient.addSchemaVersion(schemaKey, schemaInfo2);
+Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
 LOG.info("");
 
 // get a specific version of the schema
-SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaKey, v2));
+String schemaName = schemaMetadata.getName();
+SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
 
 // get latest version of the schema
-SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaKey);
-LOG.info("Latest schema with schema key [{}] is : [{}]", schemaKey, latest);
+SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
 
 // get all versions of the schema
-Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaKey);
-LOG.info("All versions of schema key [{}] is : [{}]", schemaKey, allVersions);
+Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
+LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
 
 // finding schemas containing a specific field
 SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
@@ -228,21 +224,21 @@ Long deserializerId = schemaRegistryClient.addDeserializer(deserializerInfo);
 
 // map serializer and deserializer with schemakey
 // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
-SchemaKey schemaKey = schemaInfo.getSchemaKey();
-schemaRegistryClient.mapSchemaWithSerDes(schemaKey, serializerId);
-schemaRegistryClient.mapSchemaWithSerDes(schemaKey, deserializerId);
+String schemaName = ...
+schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
+schemaRegistryClient.mapSchemaWithSerDes(schemaName, deserializerId);
 
 ```
 
 ##### Marshal and unmarshal using the registered serializer and deserializer for a schema
 
 ```java
-SnapshotSerializer<Object, byte[], SchemaInfo> snapshotSerializer = getSnapshotSerializer(schemaKey);
+SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaKey);
 String payload = "Random text: " + new Random().nextLong();
 byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaInfo);
 
-SnapshotDeserializer<byte[], Object, SchemaInfo, SchemaInfo> snapshotdeserializer = getSnapshotDeserializer(schemaKey);
-Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, schemaInfo, schemaInfo);
+SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> snapshotDeserializer = getSnapshotDeserializer(schemaKey);
+Object deserializedObject = snapshotDeserializer.deserialize(serializedBytes, schemaInfo, schemaInfo);
 
 LOG.info("Given payload and deserialized object are equal: "+ payload.equals(deserializedObject));
 
