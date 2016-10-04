@@ -24,8 +24,8 @@ import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfoStorable;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -86,16 +86,16 @@ public class SchemaRegistryResource {
     @GET
     @Path("/schemas")
     @ApiOperation(value = "List of schemas registered by filtering with the given query parameters",
-            response = SchemaVersionKey.class, responseContainer = "Collection")
+            response = SchemaMetadata.class, responseContainer = "Collection")
     @Timed
     public Response listSchemas(@Context UriInfo uriInfo) {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             Map<String, String> filters = new HashMap<>();
             queryParameters.forEach((key, values) -> filters.put(key, values != null && !values.isEmpty() ? values.get(0) : null));
-            Collection<SchemaKey> schemaVersionKeys = schemaRegistry.findSchemas(filters);
+            Collection<SchemaMetadata> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
 
-            return WSUtils.respond(schemaVersionKeys, OK, SUCCESS);
+            return WSUtils.respond(schemaMetadatas, OK, SUCCESS);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
@@ -144,13 +144,13 @@ public class SchemaRegistryResource {
             notes = "Registers the given schema information and multiple versions of the schema can be registered for the given SchemaInfo's SchemaKey",
             response = Boolean.class)
     @Timed
-    public Response addSchemaInfo(@ApiParam(value = "SchemaInfo to be added to the registry", required = true) SchemaInfo schemaInfo) {
+    public Response addSchemaInfo(@ApiParam(value = "SchemaInfo to be added to the registry", required = true) SchemaMetadata schemaMetadataInfo) {
         Response response;
         try {
-            schemaRegistry.addSchemaInfo(schemaInfo);
+            schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
             response = WSUtils.respond(true, CREATED, SUCCESS);
         } catch (Exception ex) {
-            LOG.error("Error encountered while adding schema info [{}] ", schemaInfo, ex);
+            LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -158,20 +158,17 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}")
+    @Path("/schemas/{name}")
     @ApiOperation(value = "Returns schema information with (type, schemaGroup, name)",
-            response = SchemaInfo.class)
+            response = SchemaMetadataInfo.class)
     @Timed
-    public Response getSchemaInfo(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                  @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                  @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
+    public Response getSchemaInfo(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
-            SchemaInfo schemaInfo = schemaRegistry.getSchemaInfo(schemaKey);
-            response = WSUtils.respond(schemaInfo, OK, SUCCESS);
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
+            response = WSUtils.respond(schemaMetadataInfo, OK, SUCCESS);
         } catch (Exception ex) {
-            LOG.error("Encountered error while retrieving SchemaInfo for SchemaKey: [{}]", schemaKey, ex);
+            LOG.error("Encountered error while retrieving SchemaInfo for SchemaKey: [{}]", schemaName, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -179,30 +176,27 @@ public class SchemaRegistryResource {
     }
 
     @POST
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/versions")
-    @ApiOperation(value = "Registers the given schema version to schema with (type, schemaGroup, name) and returns respective version number",
-            notes = "Registers the given schema version to schema with (type, schemaGroup, name) if the given schemaText is not registered as a version for this schema, " +
+    @Path("/schemas/{name}/versions")
+    @ApiOperation(value = "Registers the given schema version to schema with name and returns respective version number",
+            notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
                     "and returns respective version number",
             response = Integer.class)
     @Timed
-    public Response addSchema(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                              @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                              @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name,
+    public Response addSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
                               @ApiParam(value = "Details about the schema", required = true) SchemaVersion schemaVersion) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
 
         Response response;
         try {
-            Integer version = schemaRegistry.addSchemaVersion(schemaKey, schemaVersion);
+            Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
             response = WSUtils.respond(version, CREATED, SUCCESS);
         } catch (InvalidSchemaException ex) {
-            LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaKey, ex);
+            LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, INVALID_SCHEMA, ex.getMessage());
         } catch (IncompatibleSchemaException ex) {
-            LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaKey, ex);
+            LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, INCOMPATIBLE_SCHEMA, ex.getMessage());
         } catch (Exception ex) {
-            LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaKey, ex, ex);
+            LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -210,26 +204,23 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/versions/latest")
+    @Path("/schemas/{name}/versions/latest")
     @ApiOperation(value = "Returns the latest version of a schema with (type, schemaGroup, name)",
             response = SchemaVersionInfo.class)
     @Timed
-    public Response getLatestSchemaVersion(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                           @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                           @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
+    public Response getLatestSchemaVersion(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
 
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaKey);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaName);
             if (schemaVersionInfo != null) {
                 response = WSUtils.respond(schemaVersionInfo, OK, SUCCESS);
             } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaKey);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
             }
         } catch (Exception ex) {
-            LOG.error("Encountered error while getting latest schema version for schemakey [{}]", schemaKey, ex);
+            LOG.error("Encountered error while getting latest schema version for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -238,26 +229,23 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/versions")
-    @ApiOperation(value = "Returns all version of a schema with (type, schemaGroup, name)",
+    @Path("/schemas/{name}/versions")
+    @ApiOperation(value = "Returns all version of a schema with the give unique name)",
             response = SchemaVersionInfo.class, responseContainer = "Collection")
     @Timed
-    public Response getAllSchemaVersions(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                         @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                         @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
+    public Response getAllSchemaVersions(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
 
         Response response;
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.findAllVersions(schemaKey);
+            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.findAllVersions(schemaName);
             if (schemaVersionInfos != null) {
                 response = WSUtils.respond(schemaVersionInfos, OK, SUCCESS);
             } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaKey);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
             }
         } catch (Exception ex) {
-            LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaKey, ex);
+            LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -265,16 +253,13 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/versions/{version}")
-    @ApiOperation(value = "Returns the given version of a schema with (type, schemaGroup, name)",
+    @Path("/schemas/{name}/versions/{version}")
+    @ApiOperation(value = "Returns the given version of a schema with the given unque name",
             response = SchemaVersionInfo.class)
     @Timed
-    public Response getSchemaVersion(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                     @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                     @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name,
+    public Response getSchemaVersion(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaMetadata,
                                      @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer version) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
-        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaKey, version);
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, version);
 
         Response response;
         try {
@@ -284,7 +269,7 @@ public class SchemaRegistryResource {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
             response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaVersionKey.toString());
         } catch (Exception ex) {
-            LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaKey, ex);
+            LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaMetadata, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -292,24 +277,21 @@ public class SchemaRegistryResource {
     }
 
     @POST
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/compatibility")
-    @ApiOperation(value = "Checks whether the given schema text is compatible with all versions of the schema with (type, schemaGroup, name)",
+    @Path("/schemas/{name}/compatibility")
+    @ApiOperation(value = "Checks whether the given schema text is compatible with all versions of the schema with unique name",
             response = Boolean.class)
     @Timed
-    public Response isCompatibleWithSchema(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                           @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                           @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name,
+    public Response isCompatibleWithSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
                                            @ApiParam(value = "schema text", required = true) String schemaText) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            boolean compatible = schemaRegistry.isCompatible(schemaKey, schemaText);
+            boolean compatible = schemaRegistry.isCompatible(schemaName, schemaText);
             response = WSUtils.respond(compatible, OK, SUCCESS);
         } catch (SchemaNotFoundException e) {
-            LOG.error("No schemas found with schemakey: [{}]", schemaKey, e);
-            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
+            LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
         } catch (Exception ex) {
-            LOG.error("Encountered error while checking compatibility with versions of schema with [{}] for given schema text [{}]", schemaKey, schemaText, ex);
+            LOG.error("Encountered error while checking compatibility with versions of schema with [{}] for given schema text [{}]", schemaName, schemaText, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -317,26 +299,23 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/serializers")
+    @Path("/schemas/{name}/serializers")
     @ApiOperation(value = "Returns Serializers registered for schema with (type, schemaGroup, name)",
             response = SerDesInfo.class, responseContainer = "Collection")
     @Timed
-    public Response getSerializers(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                   @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                   @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
+    public Response getSerializers(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaInfo(schemaKey);
-            if (schemaInfoStorable != null) {
-                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaInfoStorable.getId());
+            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
+            if (schemaMetadataInfoStorable != null) {
+                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaMetadataInfoStorable.getId());
                 response = WSUtils.respond(schemaSerializers, OK, SUCCESS);
             } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaKey);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
             }
         } catch (Exception ex) {
-            LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaKey, ex);
+            LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaName, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -344,26 +323,23 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/deserializers")
+    @Path("/schemas/{name}/deserializers")
     @ApiOperation(value = "Returns Deserializers registered for schema with (type, schemaGroup, name)",
             response = SerDesInfo.class, responseContainer = "Collection")
     @Timed
-    public Response getDeserializers(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                                     @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                                     @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
+    public Response getDeserializers(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaMetadata) {
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaInfo(schemaKey);
-            if (schemaInfoStorable != null) {
-                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaInfoStorable.getId());
+            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaMetadata);
+            if (schemaMetadataInfoStorable != null) {
+                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaMetadataInfoStorable.getId());
                 response = WSUtils.respond(schemaSerializers, OK, SUCCESS);
             } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaKey);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaKey.toString());
+                LOG.info("No schemas found with schemakey: [{}]", schemaMetadata);
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadata.toString());
             }
         } catch (Exception ex) {
-            LOG.error("Encountered error while getting deserializers for schemaKey [{}]", schemaKey, ex);
+            LOG.error("Encountered error while getting deserializers for schemaKey [{}]", schemaMetadata, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
         }
 
@@ -470,18 +446,15 @@ public class SchemaRegistryResource {
     }
 
     @POST
-    @Path("/schemas/types/{type}/groups/{schemaGroup}/names/{name}/mapping/{serDesId}")
+    @Path("/schemas/{name}/mapping/{serDesId}")
     @ApiOperation(value = "Maps the given serializer/deserializer id to the schema represented with (type, schemaGroup, name)")
     @Timed
-    public Response mapSerDes(@ApiParam(value = "Type of the schema", required = true) @PathParam("type") String type,
-                              @ApiParam(value = "Group of the schema", required = true) @PathParam("schemaGroup") String schemaGroup,
-                              @ApiParam(value = "Name of the schema", required = true) @PathParam("name") String name,
+    public Response mapSerDes(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
                               @ApiParam(value = "identifier of serializer/deserializer", required = true) @PathParam("serDesId") Long serDesId) {
-        SchemaKey schemaKey = new SchemaKey(type, schemaGroup, name);
         Response response;
         try {
-            SchemaInfo schemaInfoStorable = schemaRegistry.getSchemaInfo(schemaKey);
-            schemaRegistry.mapSerDesWithSchema(schemaInfoStorable.getId(), serDesId);
+            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
+            schemaRegistry.mapSerDesWithSchema(schemaMetadataInfoStorable.getId(), serDesId);
             response = WSUtils.respond(true, OK, SUCCESS);
         } catch (Exception ex) {
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());

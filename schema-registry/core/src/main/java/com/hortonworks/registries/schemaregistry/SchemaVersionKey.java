@@ -22,27 +22,64 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains the schema metadata. This key can be used to find a given version
- * of a schema in the schema repository.
+ * This class represents key to fetch versioned schema from schema repository.
  */
 public class SchemaVersionKey implements Serializable {
-    private SchemaKey schemaKey;
+
+    private String schemaName;
     private Integer version;
 
     /** Private contructor for Jackson JSON mapping */
     @SuppressWarnings("unused")
     private SchemaVersionKey() { }
 
-    public SchemaVersionKey(SchemaKey schemaKey, Integer version) {
-        Preconditions.checkNotNull(schemaKey, "schemaMetadataKey can not be null");
+    /**
+     * @param schemaName Unique schema name
+     * @param version version of the schema
+     */
+    public SchemaVersionKey(String schemaName, Integer version) {
+        Preconditions.checkNotNull(schemaName, "schemaMetadataKey can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
-        this.schemaKey = schemaKey;
+        this.schemaName = schemaName;
         this.version = version;
     }
 
-    public SchemaKey getSchemaKey() {
-        return schemaKey;
+    /**
+     * @return unique schema name
+     */
+    public String getSchemaName() {
+        return schemaName;
     }
 
+    /**
+     * @return version of the schema
+     */
     public Integer getVersion() { return version; }
+
+    @Override
+    public String toString() {
+        return "SchemaVersionKey{" +
+                "schemaName='" + schemaName + '\'' +
+                ", version=" + version +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SchemaVersionKey that = (SchemaVersionKey) o;
+
+        if (schemaName != null ? !schemaName.equals(that.schemaName) : that.schemaName != null) return false;
+        return version != null ? version.equals(that.version) : that.version == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = schemaName != null ? schemaName.hashCode() : 0;
+        result = 31 * result + (version != null ? version.hashCode() : 0);
+        return result;
+    }
 }

@@ -29,29 +29,29 @@ public interface ISchemaRegistry {
 
     void init(Map<String, Object> props);
 
-    Long addSchemaInfo(SchemaInfo schemaInfo);
+    Long addSchemaMetadata(SchemaMetadata schemaMetadata);
 
-    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException;
+    Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException;
 
-    Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException;
+    Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException;
 
-    SchemaInfo getSchemaInfo(SchemaKey schemaKey);
+    SchemaMetadataInfo getSchemaMetadata(String schemaName);
 
-    Integer getSchemaVersion(SchemaKey schemaKey, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
+    Integer getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
-    Collection<SchemaVersionInfo> findAllVersions(SchemaKey schemaKey);
+    Collection<SchemaVersionInfo> findAllVersions(String schemaName);
 
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
-    SchemaVersionInfo getLatestSchemaVersionInfo(SchemaKey schemaKey) throws SchemaNotFoundException;
+    SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
-    Collection<SchemaKey> findSchemas(Map<String, String> filters);
+    Collection<SchemaMetadata> findSchemaMetadata(Map<String, String> filters);
 
     Collection<SchemaVersionKey> findSchemasWithFields(SchemaFieldQuery schemaFieldQuery);
 
     boolean isCompatible(SchemaVersionKey schemaVersionKey, String schema) throws SchemaNotFoundException;
 
-    boolean isCompatible(SchemaKey schemaKey, String toSchema) throws SchemaNotFoundException;
+    boolean isCompatible(String schemaName, String toSchema) throws SchemaNotFoundException;
 
     /**
      * Uploads the given input stream in the configured file storage and returns a unique identifier to access that file later.

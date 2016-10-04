@@ -17,8 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro.kafka;
 
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer;
 import org.apache.kafka.common.serialization.Serializer;
@@ -56,13 +55,13 @@ public class KafkaAvroSerializer implements Serializer<Object> {
         return avroSnapshotSerializer.serialize(data, createSchemaMetadata(topic));
     }
 
-    private SchemaInfo createSchemaMetadata(String topic) {
-        SchemaKey schemaKey = getSchemaKey(topic, isKey);
+    private SchemaMetadata createSchemaMetadata(String topic) {
+        SchemaMetadata schemaMetadata = getSchemaKey(topic, isKey);
         String description = "Schema registered by KafkaAvroSerializer for topic: [" + topic + "] iskey: [" + isKey + "]";
-        return new SchemaInfo(schemaKey, description, compatibility);
+        return new SchemaMetadata.Builder(schemaMetadata).description(description).compatibility(compatibility).build();
     }
 
-    protected SchemaKey getSchemaKey(String topic, boolean isKey) {
+    protected SchemaMetadata getSchemaKey(String topic, boolean isKey) {
         return Utils.getSchemaKey(topic, isKey);
     }
 

@@ -17,7 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro.kafka;
 
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 
 /**
@@ -29,9 +29,9 @@ public final class Utils {
     private Utils() {
     }
 
-    public static SchemaKey getSchemaKey(String topic, boolean isKey) {
+    public static SchemaMetadata getSchemaKey(String topic, boolean isKey) {
         String name = topic + ":" + (isKey ? "k" : "v");
-        return new SchemaKey(AvroSchemaProvider.TYPE, GROUP_ID, name);
+        return new SchemaMetadata.Builder(name).type(AvroSchemaProvider.TYPE).schemaGroup(GROUP_ID).build();
     }
 
 }

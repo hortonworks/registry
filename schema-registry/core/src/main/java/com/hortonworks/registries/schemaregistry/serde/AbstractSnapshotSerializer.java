@@ -19,7 +19,8 @@ package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 
@@ -28,7 +29,7 @@ import java.util.Map;
 /**
  *
  */
-public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerializer<I, O, SchemaInfo> {
+public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerializer<I, O, SchemaMetadata> {
     private SchemaRegistryClient schemaRegistryClient;
 
     public AbstractSnapshotSerializer() {
@@ -40,14 +41,14 @@ public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerial
     }
 
     @Override
-    public final O serialize(I input, SchemaInfo schemaInfo) throws SerDesException {
+    public final O serialize(I input, SchemaMetadata schemaMetadata) throws SerDesException {
 
         // compute schema based on input object
         String schema = getSchemaText(input);
 
         // register that schema and get the version
         try {
-            Integer version = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+            Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
             // write the version and given object to the output
             return doSerialize(input, version);
         } catch (InvalidSchemaException | IncompatibleSchemaException e) {

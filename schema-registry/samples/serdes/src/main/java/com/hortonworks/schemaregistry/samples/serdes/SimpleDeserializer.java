@@ -17,7 +17,8 @@
  */
 package com.hortonworks.schemaregistry.samples.serdes;
 
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.slf4j.Logger;
@@ -33,9 +34,10 @@ import java.util.Map;
  * is used to demonstrate how this serializer can be uploaded/retrieved from schema registry.
  * <p>
  * You can look at {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer} implementation to look
- * at how schema registry client can be used to register writer schemas which are used while deserializing messages from the respective {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer}.
+ * at how schema registry client can be used to register writer schemas which are used while deserializing messages from
+ * the respective {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer}.
  */
-public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, SchemaInfo, SchemaInfo> {
+public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleDeserializer.class);
 
     @Override
@@ -44,8 +46,8 @@ public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, 
     }
 
     @Override
-    public Object deserialize(byte[] input, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws SerDesException {
-        LOG.info("Received payload [{}] to be deserialized with writer schema [{}] and reader schema: [{}]", input, writerSchemaInfo, readerSchemaInfo);
+    public Object deserialize(byte[] input, SchemaMetadata writerSchemaMetadataInfo, Integer readerSchemaVersion) throws SerDesException {
+        LOG.info("Received payload [{}] to be deserialized with writer schema [{}] and reader schema: [{}]", input, writerSchemaMetadataInfo, readerSchemaVersion);
 
         try {
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(input));

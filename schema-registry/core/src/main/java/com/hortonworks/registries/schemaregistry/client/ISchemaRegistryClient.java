@@ -20,8 +20,8 @@ package com.hortonworks.registries.schemaregistry.client;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -98,46 +98,46 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Registers information about a schema.
      *
-     * @param schemaInfo information about schema.
+     * @param schemaMetadata information about schema.
      * @return true if the given {@code schemaInfo} is successfully registered.
      */
-    boolean registerSchemaInfo(SchemaInfo schemaInfo);
+    boolean registerSchemaMetadata(SchemaMetadata schemaMetadata);
 
     /**
-     * Returns information about given {@link SchemaKey}
+     * Returns information about given {@link SchemaMetadata}
      *
-     * @param schemaKey
+     * @param schemaName
      * @return
      */
-    SchemaInfo getSchemaInfo(SchemaKey schemaKey);
+    SchemaMetadataInfo getSchemaMetadataInfo(String schemaName);
 
     /**
      * Returns version of the schema added with the given schemaInfo.
      * <pre>
      * It tries to fetch an existing schema or register the given schema with the below conditions
-     *  - Checks whether there exists a schema with the given schemaText, and schemaInfo#getSchemaKey()
+     *  - Checks whether there exists a schema with the given name and schemaText
      *      - returns respective schemaVersionKey if it exists.
      *      - Creates a schema for the given name and returns respective schemaVersionKey if it does not exist.
      * </pre>
      *
-     * @param schemaInfo    information about the schema
+     * @param schemaMetadata    information about the schema
      * @param schemaVersion new version of the schema to be registered
      * @return version of the schema added.
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
-    Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
+    Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
      * Adds the given {@code schemaVersion} and returns the corresponding version number.
      *
-     * @param schemaKey     key identifying a schema
+     * @param schemaName    name identifying a schema
      * @param schemaVersion new version of the schema to be added
      * @return version number of the schema added
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
-    Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
+    Integer addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
 
     /**
      * @return schema versions matching the fields specified in the query
@@ -152,24 +152,24 @@ public interface ISchemaRegistryClient extends AutoCloseable {
 
 
     /**
-     * @param schemaKey key identifying schema
+     * @param schemaName key identifying schema
      * @return latest version of the schema for the given {@param schemaMetadataKey}
      */
-    SchemaVersionInfo getLatestSchemaVersionInfo(SchemaKey schemaKey) throws SchemaNotFoundException;
+    SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
     /**
-     * @param schemaKey key identifying schema
+     * @param schemaName key identifying schema
      * @return all versions of the schemas for given {@param schemaMetadataKey}
      */
-    Collection<SchemaVersionInfo> getAllVersions(SchemaKey schemaKey) throws SchemaNotFoundException;
+    Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException;
 
 
     /**
-     * @param schemaKey    key identifying a schema
+     * @param schemaName    key identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
      * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaMetadataKey}.
      */
-    boolean isCompatibleWithAllVersions(SchemaKey schemaKey, String toSchemaText) throws SchemaNotFoundException;
+    boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * TODO: needs better description. What bytes are being uploaded?
@@ -207,26 +207,26 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaMetadataKey}
      *
-     * @param schemaKey
+     * @param schemaMetadata
      * @param serDesId
      */
-    void mapSchemaWithSerDes(SchemaKey schemaKey, Long serDesId);
+    void mapSchemaWithSerDes(SchemaMetadata schemaMetadata, Long serDesId);
 
     /**
      * Returns Collection of Serializers registered for the schema with {@code schemaMetadataKey}
      *
-     * @param schemaKey
+     * @param schemaMetadata
      * @return
      */
-    Collection<SerDesInfo> getSerializers(SchemaKey schemaKey);
+    Collection<SerDesInfo> getSerializers(SchemaMetadata schemaMetadata);
 
     /**
      * Returns Collection of Deserializers registered for the schema with {@code schemaMetadataKey}
      *
-     * @param schemaKey
+     * @param schemaMetadata
      * @return
      */
-    Collection<SerDesInfo> getDeserializers(SchemaKey schemaKey);
+    Collection<SerDesInfo> getDeserializers(SchemaMetadata schemaMetadata);
 
     /**
      * Returns a new instance of the respective Serializer class for the given {@code serializerInfo}

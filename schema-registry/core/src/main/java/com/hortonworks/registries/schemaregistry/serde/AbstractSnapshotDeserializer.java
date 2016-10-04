@@ -20,7 +20,7 @@ package com.hortonworks.registries.schemaregistry.serde;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @param <O> deserialized representation of the received payload
  * @param <S> parsed schema representation to be stored in local cache
  */
-public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDeserializer<InputStream, O, SchemaKey, Integer> {
+public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDeserializer<InputStream, O, SchemaMetadata, Integer> {
     private static Logger LOG = LoggerFactory.getLogger(AbstractSnapshotDeserializer.class);
     /**
      * Maximum inmemory cache size maintained in deserializer instance.
@@ -104,18 +104,18 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
 
     @Override
     public O deserialize(InputStream payloadInputStream,
-                         SchemaKey schemaKey,
+                         SchemaMetadata schemaMetadata,
                          Integer readerSchemaVersion) throws SerDesException {
         try {
             int writerSchemaVersion = readVersion(payloadInputStream);
-            return doDeserialize(payloadInputStream, schemaKey, readerSchemaVersion, writerSchemaVersion);
+            return doDeserialize(payloadInputStream, schemaMetadata, readerSchemaVersion, writerSchemaVersion);
         } catch (IOException e) {
             throw new SerDesException(e);
         }
     }
 
     protected abstract O doDeserialize(InputStream payloadInputStream,
-                                       SchemaKey schemaKey,
+                                       SchemaMetadata schemaMetadata,
                                        Integer readerSchemaVersion,
                                        int writerSchemaVersion) throws SerDesException;
 
