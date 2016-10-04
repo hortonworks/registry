@@ -19,11 +19,7 @@
 package com.hortonworks.registries.cache.view.service;
 
 import com.hortonworks.registries.cache.view.Factory;
-import com.hortonworks.registries.cache.view.config.CacheConfig;
-import com.hortonworks.registries.cache.view.config.ConnectionConfig;
-import com.hortonworks.registries.cache.view.config.DataStoreConfig;
-import com.hortonworks.registries.cache.view.config.ExpiryPolicy;
-import com.hortonworks.registries.cache.view.config.TypeConfig;
+import com.hortonworks.registries.cache.view.config.*;
 import com.hortonworks.registries.cache.view.datastore.DataStoreReader;
 import com.hortonworks.registries.cache.view.datastore.DataStoreWriter;
 import com.hortonworks.registries.cache.view.datastore.phoenix.PhoenixDataStore;

@@ -23,10 +23,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.tag.Tag;
 import com.hortonworks.registries.tag.TaggedEntity;
 import com.hortonworks.registries.tag.dto.TagDto;
-import com.hortonworks.registries.common.catalog.CatalogResponse;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
@@ -135,8 +135,8 @@ public class TagClient {
 
     /**
      *
-     * @param queryParams
-     * @return
+     * @param queryParams map of query parameters
+     * @return query string
      */
     private String getQueryString(Map<String, Object> queryParams) {
         StringBuilder sb = new StringBuilder();
@@ -199,17 +199,17 @@ public class TagClient {
     /**
      * Removes the given tag from the entity.
      *
-     * @param taggedEntity
-     * @param tag
+     * @param taggedEntity entity for which tag should be removed
+     * @param tag tag to remove
      */
     public void removeTagForEntity(TaggedEntity taggedEntity, Tag tag) {
-            removeTagForEntity(taggedEntity , tag.getId());
+        removeTagForEntity(taggedEntity , tag.getId());
     }
 
     /**
-     *
-     * @param taggedEntity
-     * @param tags
+     * Removes the given tags from the entity.
+     * @param taggedEntity entity for which tags to be removed
+     * @param tags tags to remove
      */
     public void removeTagsForEntity(TaggedEntity taggedEntity, List<Tag> tags) {
         for (Tag tag: tags) {

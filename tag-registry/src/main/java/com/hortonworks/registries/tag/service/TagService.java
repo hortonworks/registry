@@ -1,8 +1,8 @@
 package com.hortonworks.registries.tag.service;
 
 import com.hortonworks.registries.common.QueryParam;
-import com.hortonworks.registries.tag.TaggedEntity;
 import com.hortonworks.registries.tag.Tag;
+import com.hortonworks.registries.tag.TaggedEntity;
 
 import java.util.Collection;
 import java.util.List;

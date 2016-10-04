@@ -1,7 +1,7 @@
 package com.hortonworks.registries.storage;
 
-import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.cache.Cache;
+import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.cache.impl.GuavaCache;
 import com.hortonworks.registries.storage.cache.writer.StorageWriter;
 import com.hortonworks.registries.storage.exception.StorageException;

@@ -20,7 +20,6 @@ package com.hortonworks.registries.cache.view.service.registry;
 
 import com.hortonworks.registries.cache.view.service.CacheService;
 import com.hortonworks.registries.cache.view.service.CacheServiceId;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

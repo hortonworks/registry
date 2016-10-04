@@ -20,11 +20,7 @@ package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.storage.PrimaryKey;
-import com.hortonworks.registries.storage.Storable;
-import com.hortonworks.registries.storage.StorableFactory;
-import com.hortonworks.registries.storage.StorableKey;
-import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.*;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.StorageException;
@@ -37,11 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
 public class JdbcStorageManager implements StorageManager {
