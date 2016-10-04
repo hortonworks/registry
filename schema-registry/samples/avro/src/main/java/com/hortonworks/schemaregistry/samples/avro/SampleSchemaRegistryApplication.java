@@ -17,7 +17,13 @@
  */
 package com.hortonworks.schemaregistry.samples.avro;
 
-import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaProvider;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer;

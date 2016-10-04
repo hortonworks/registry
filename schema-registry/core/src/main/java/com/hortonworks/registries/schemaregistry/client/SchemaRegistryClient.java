@@ -22,7 +22,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
-import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -47,9 +57,16 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.*;
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_CONNECTION_TIMEOUT;
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_READ_TIMEOUT;
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
 
 /**
  * This is the default implementation of {@link ISchemaRegistryClient} which connects to the given {@code rootCatalogURL}.
