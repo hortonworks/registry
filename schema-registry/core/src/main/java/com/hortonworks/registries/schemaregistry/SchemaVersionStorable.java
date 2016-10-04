@@ -33,8 +33,6 @@ public class SchemaVersionStorable extends AbstractStorable {
     public static final String ID = "id";
     public static final String SCHEMA_METADATA_ID = "schemaMetadataId";
     public static final String DESCRIPTION = "description";
-    public static final String TYPE = "type";
-    public static final String SCHEMA_GROUP = "schemaGroup";
     public static final String NAME = "name";
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String VERSION = "version";
@@ -47,12 +45,13 @@ public class SchemaVersionStorable extends AbstractStorable {
     private Long id;
 
     /**
-     * Id of the SchemaMetadata instance.
+     * Id of the {@link SchemaMetadataStorable} instance.
      */
     private Long schemaMetadataId;
 
-    private String type;
-    private String schemaGroup;
+    /**
+     * unique name of the schema from {@link SchemaMetadataStorable} instance.
+     */
     private String name;
 
     /**
@@ -104,8 +103,6 @@ public class SchemaVersionStorable extends AbstractStorable {
                 Schema.Field.of(ID, Schema.Type.LONG),
                 Schema.Field.of(SCHEMA_METADATA_ID, Schema.Type.LONG),
                 Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
-                Schema.Field.of(TYPE, Schema.Type.STRING),
-                Schema.Field.of(SCHEMA_GROUP, Schema.Type.STRING),
                 Schema.Field.of(NAME, Schema.Type.STRING),
                 Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
                 Schema.Field.of(VERSION, Schema.Type.INTEGER),
@@ -171,22 +168,6 @@ public class SchemaVersionStorable extends AbstractStorable {
         this.fingerprint = fingerprint;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getSchemaGroup() {
-        return schemaGroup;
-    }
-
-    public void setSchemaGroup(String schemaGroup) {
-        this.schemaGroup = schemaGroup;
-    }
-
     public String getName() {
         return name;
     }
@@ -197,11 +178,9 @@ public class SchemaVersionStorable extends AbstractStorable {
 
     @Override
     public String toString() {
-        return "SchemaInfoStorable{" +
+        return "SchemaVersionStorable{" +
                 "id=" + id +
                 ", schemaMetadataId=" + schemaMetadataId +
-                ", type='" + type + '\'' +
-                ", schemaGroup='" + schemaGroup + '\'' +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", schemaText='" + schemaText + '\'' +
@@ -221,8 +200,6 @@ public class SchemaVersionStorable extends AbstractStorable {
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
             return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
@@ -236,8 +213,6 @@ public class SchemaVersionStorable extends AbstractStorable {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (schemaMetadataId != null ? schemaMetadataId.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (schemaGroup != null ? schemaGroup.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);

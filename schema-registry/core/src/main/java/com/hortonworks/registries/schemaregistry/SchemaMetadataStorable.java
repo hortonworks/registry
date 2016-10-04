@@ -23,14 +23,14 @@ import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 /**
  *
  */
-public class SchemaInfoStorable extends AbstractStorable {
-    public static final String NAME_SPACE = "schema_info";
+public class SchemaMetadataStorable extends AbstractStorable {
+    public static final String NAME_SPACE = "schema_metadata_info";
     public static final String ID = "id";
     public static final String NAME = "name";
     public static final String SCHEMA_GROUP = "schemaGroup";
@@ -79,7 +79,7 @@ public class SchemaInfoStorable extends AbstractStorable {
      */
     private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
 
-    public SchemaInfoStorable() {
+    public SchemaMetadataStorable() {
     }
 
     @Override
@@ -91,12 +91,7 @@ public class SchemaInfoStorable extends AbstractStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        Map<Schema.Field, Object> fieldValues = new HashMap<Schema.Field, Object>() {{
-            put(NAME_FIELD, name);
-            put(SCHEMA_GROUP_FIELD, schemaGroup);
-            put(TYPE_FIELD, type);
-        }};
-        return new PrimaryKey(fieldValues);
+        return new PrimaryKey(Collections.singletonMap(NAME_FIELD, name));
     }
 
     @Override
@@ -189,7 +184,7 @@ public class SchemaInfoStorable extends AbstractStorable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SchemaInfoStorable that = (SchemaInfoStorable) o;
+        SchemaMetadataStorable that = (SchemaMetadataStorable) o;
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;

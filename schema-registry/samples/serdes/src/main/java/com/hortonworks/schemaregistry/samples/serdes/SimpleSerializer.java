@@ -17,7 +17,7 @@
  */
 package com.hortonworks.schemaregistry.samples.serdes;
 
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.slf4j.Logger;
@@ -35,12 +35,12 @@ import java.util.Map;
  * You can look at {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer} implementation to look
  * at how schema registry client can be used to register writer schemas which are used while deserializing messages from the respective {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer}.
  */
-public class SimpleSerializer implements SnapshotSerializer<Object, byte[], SchemaInfo> {
+public class SimpleSerializer implements SnapshotSerializer<Object, byte[], SchemaMetadataInfo> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleSerializer.class);
 
     @Override
-    public byte[] serialize(Object input, SchemaInfo schemaInfo) throws SerDesException {
-        LOG.info("Received payload: [{}] with schema info: [{}]", input, schemaInfo);
+    public byte[] serialize(Object input, SchemaMetadataInfo schemaMetadataInfo) throws SerDesException {
+        LOG.info("Received payload: [{}] with schema info: [{}]", input, schemaMetadataInfo);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
             objectOutputStream.writeObject(input);

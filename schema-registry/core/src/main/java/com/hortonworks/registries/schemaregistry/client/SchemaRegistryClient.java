@@ -25,8 +25,8 @@ import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
 import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -52,7 +52,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -140,37 +139,30 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean registerSchemaInfo(SchemaInfo schemaInfo) {
-        return postEntity(schemasTarget, schemaInfo, Boolean.class);
+    public boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) {
+        return postEntity(schemasTarget, schemaMetadata, Boolean.class);
     }
 
     @Override
-    public SchemaInfo getSchemaInfo(SchemaKey schemaKey) {
-        return getEntity(schemaInfoPath(schemaKey), SchemaInfo.class);
+    public SchemaMetadataInfo getSchemaMetadataInfo(String schemaName) {
+        return getEntity(schemasTarget.path(schemaName), SchemaMetadataInfo.class);
     }
 
     @Override
-    public Integer addSchemaVersion(SchemaInfo schemaInfo, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
+    public Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
         //create schemainfo
-        boolean success = registerSchemaInfo(schemaInfo);
-        if(!success) {
+        boolean success = registerSchemaMetadata(schemaMetadata);
+        if (!success) {
             throw new RuntimeException("Given SchemaInfo could not be registered.");
         }
 
         // add version
-        SchemaKey schemaKey = schemaInfo.getSchemaKey();
-        return addSchemaVersion(schemaKey, schemaVersion);
-    }
-
-    private WebTarget schemaInfoPath(SchemaKey schemaKey) {
-        return schemasTarget.path(
-                String.format("types/%s/groups/%s/names/%s",
-                        schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName()));
+        return addSchemaVersion(schemaMetadata.getName(), schemaVersion);
     }
 
     @Override
-    public Integer addSchemaVersion(SchemaKey schemaKey, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
-        WebTarget target = schemaInfoPath(schemaKey).path("/versions");
+    public Integer addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
+        WebTarget target = schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
         String msg = response.readEntity(String.class);
@@ -212,35 +204,27 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private SchemaVersionInfo _getSchema(SchemaVersionKey schemaVersionKey) {
-        SchemaKey schemaKey = schemaVersionKey.getSchemaKey();
-        WebTarget webTarget = schemasTarget.path(
-                String.format("types/%s/groups/%s/names/%s/versions/%d",
-                        schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName(), schemaVersionKey.getVersion()));
+        String schemaName = schemaVersionKey.getSchemaName();
+        WebTarget webTarget = schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey.getVersion()));
 
         return getEntity(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
-    public SchemaVersionInfo getLatestSchemaVersionInfo(SchemaKey schemaKey) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(
-                String.format("types/%s/groups/%s/names/%s/versions/latest",
-                        schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName()));
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
+        WebTarget webTarget = schemasTarget.path(schemaName + "/versions/latest");
         return getEntity(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(SchemaKey schemaKey) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(
-                String.format("types/%s/groups/%s/names/%s/versions",
-                        schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName()));
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
+        WebTarget webTarget = schemasTarget.path(schemaName + "/versions");
         return getEntities(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(SchemaKey schemaKey, String toSchemaText) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(
-                String.format("types/%s/groups/%s/names/%s/compatibility",
-                        schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName()));
+    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+        WebTarget webTarget = schemasTarget.path(schemaName + "/compatibility");
         String response = webTarget.request().post(Entity.text(toSchemaText), String.class);
         return readEntity(response, Boolean.class);
     }
@@ -281,22 +265,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public void mapSchemaWithSerDes(SchemaKey schemaKey, Long serDesId) {
-        String path = String.format("types/%s/groups/%s/names/%s/mapping/%s", schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName(), serDesId.toString());
+    public void mapSchemaWithSerDes(String schemaName, Long serDesId) {
+        String path = String.format("%s/mapping/%s", schemaName, serDesId.toString());
 
         Boolean success = postEntity(schemasTarget.path(path), null, Boolean.class);
-        LOG.info("Received response while mapping schemaMetadataKey [{}] with serialzer/deserializer [{}] : [{}]", schemaKey, serDesId, success);
+        LOG.info("Received response while mapping schema [{}] with serialzer/deserializer [{}] : [{}]", schemaName, serDesId, success);
     }
 
     @Override
-    public Collection<SerDesInfo> getSerializers(SchemaKey schemaKey) {
-        String path = String.format("types/%s/groups/%s/names/%s/serializers/", schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName());
+    public Collection<SerDesInfo> getSerializers(String schemaName) {
+        String path = schemaName + "/serializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 
     @Override
-    public Collection<SerDesInfo> getDeserializers(SchemaKey schemaKey) {
-        String path = String.format("types/%s/groups/%s/names/%s/deserializers/", schemaKey.getType(), schemaKey.getSchemaGroup(), schemaKey.getName());
+    public Collection<SerDesInfo> getDeserializers(String schemaName) {
+        String path = schemaName + "/deserializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 
@@ -400,8 +384,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
 
         // connection properties
-        public static final int DEFAULT_CONNECTION_TIMEOUT = 30*1000;
-        public static final int DEFAULT_READ_TIMEOUT = 30*1000;
+        public static final int DEFAULT_CONNECTION_TIMEOUT = 30 * 1000;
+        public static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
 
         private final Map<String, ?> config;
 
@@ -443,7 +427,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         private void checkPositiveNumber(Number number) {
-            if(number.doubleValue() <= 0) {
+            if (number.doubleValue() <= 0) {
                 throw new IllegalArgumentException("Given value must be a positive number");
             }
         }

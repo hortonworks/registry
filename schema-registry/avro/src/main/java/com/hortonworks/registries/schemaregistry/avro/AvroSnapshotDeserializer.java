@@ -17,7 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
@@ -46,16 +46,17 @@ public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Objec
     }
 
     protected Object doDeserialize(InputStream payloadInputStream,
-                                   SchemaKey schemaKey,
+                                   SchemaMetadata schemaMetadata,
                                    Integer readerSchemaVersion,
                                    int writerSchemaVersion) throws SerDesException {
         Object deserializedObj;
-        SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaKey, writerSchemaVersion);
+        String schemaName = schemaMetadata.getName();
+        SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
         try {
             Schema writerSchema = schemaCache.get(writerSchemaVersionKey);
             if (writerSchema == null) {
-                throw new SerDesException("No schema exists with metadata-key: " + schemaKey + " and writerSchemaVersion: " + writerSchemaVersion);
+                throw new SerDesException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
             }
 
             Schema.Type writerSchemaType = writerSchema.getType();
@@ -70,7 +71,7 @@ public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Objec
                 LOG.debug("Received record type: [{}]", recordType);
                 GenericDatumReader datumReader = null;
                 Schema readerSchema = readerSchemaVersion != null
-                        ? schemaCache.get(new SchemaVersionKey(schemaKey, readerSchemaVersion)) : null;
+                        ? schemaCache.get(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 
                 if (recordType == AvroUtils.GENERIC_RECORD) {
                     datumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema)

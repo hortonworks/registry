@@ -18,8 +18,7 @@
 package com.hortonworks.schemaregistry.samples.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaInfo;
-import com.hortonworks.registries.schemaregistry.SchemaKey;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -64,33 +63,33 @@ public class SampleSchemaRegistryApplication {
 
         String schemaFileName = "/device.avsc";
         String schema1 = getSchema(schemaFileName);
-        SchemaInfo schemaInfo = createSchemaInfo("com.hwx.schemas.sample-" + System.currentTimeMillis());
-        SchemaKey schemaKey = schemaInfo.getSchemaKey();
+        SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
         // registering a new schema
-        Integer v1 = schemaRegistryClient.addSchemaVersion(schemaInfo, new SchemaVersion(schema1, "Initial version of the schema"));
+        Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
         LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
 
         // adding a new version of the schema
         String schema2 = getSchema("/device-next.avsc");
         SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
-        Integer v2 = schemaRegistryClient.addSchemaVersion(schemaKey, schemaInfo2);
+        Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
         LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
 
         //adding same schema returns the earlier registered version
-        Integer version = schemaRegistryClient.addSchemaVersion(schemaKey, schemaInfo2);
+        Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
         LOG.info("");
 
         // get a specific version of the schema
-        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaKey, v2));
+        String schemaName = schemaMetadata.getName();
+        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
 
         // get latest version of the schema
-        SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaKey);
-        LOG.info("Latest schema with schema key [{}] is : [{}]", schemaKey, latest);
+        SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+        LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
 
         // get all versions of the schema
-        Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaKey);
-        LOG.info("All versions of schema key [{}] is : [{}]", schemaKey, allVersions);
+        Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
+        LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
 
         // finding schemas containing a specific field
         SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
@@ -112,9 +111,9 @@ public class SampleSchemaRegistryApplication {
 
         Object deviceObject = createGenericRecordForDevice("/device.avsc");
 
-        SchemaInfo schemaInfo = createSchemaInfo("avro-serializer-schema-" + System.currentTimeMillis());
-        byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaInfo);
-        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaInfo.getSchemaKey(), null);
+        SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + System.currentTimeMillis());
+        byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
+        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
 
         Log.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
     }
@@ -132,9 +131,13 @@ public class SampleSchemaRegistryApplication {
         return avroRecord;
     }
 
-    private SchemaInfo createSchemaInfo(String name) {
-        SchemaKey schemaKey = new SchemaKey(AvroSchemaProvider.TYPE, "sample-group", name);
-        return new SchemaInfo(schemaKey, "Sample schema", SchemaProvider.Compatibility.BACKWARD);
+    private SchemaMetadata createSchemaMetadata(String name) {
+        return new SchemaMetadata.Builder(name)
+                .type(AvroSchemaProvider.TYPE)
+                .schemaGroup("sample-group")
+                .description("Sample schema")
+                .compatibility(SchemaProvider.Compatibility.BACKWARD)
+                .build();
     }
 
     private String getSchema(String schemaFileName) throws IOException {
@@ -156,8 +159,8 @@ public class SampleSchemaRegistryApplication {
         }
         String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
 
-        SchemaInfo schemaInfo = createSchemaInfo("serdes-device-" + System.currentTimeMillis());
-        Integer v1 = schemaRegistryClient.addSchemaVersion(schemaInfo,
+        SchemaMetadata schemaMetadata = createSchemaMetadata("serdes-device-" + System.currentTimeMillis());
+        Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata,
                 new SchemaVersion(getSchema("/device.avsc"),
                         "Initial version of the schema"));
 
@@ -169,16 +172,16 @@ public class SampleSchemaRegistryApplication {
 
         // map serializer and deserializer with schemakey
         // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
-        SchemaKey schemaKey = schemaInfo.getSchemaKey();
-        schemaRegistryClient.mapSchemaWithSerDes(schemaKey, serializerId);
-        schemaRegistryClient.mapSchemaWithSerDes(schemaKey, deserializerId);
+        String schemaName = schemaMetadata.getName();
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, deserializerId);
 
-        SnapshotSerializer<Object, byte[], SchemaInfo> snapshotSerializer = getSnapshotSerializer(schemaKey);
+        SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaMetadata);
         String payload = "Random text: " + new Random().nextLong();
-        byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaInfo);
+        byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaMetadata);
 
-        SnapshotDeserializer<byte[], Object, SchemaInfo, SchemaInfo> snapshotdeserializer = getSnapshotDeserializer(schemaKey);
-        Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, schemaInfo, schemaInfo);
+        SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> snapshotdeserializer = getSnapshotDeserializer(schemaMetadata);
+        Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, schemaMetadata, null);
 
         LOG.info("Given payload and deserialized object are equal: " + payload.equals(deserializedObject));
     }
@@ -205,19 +208,19 @@ public class SampleSchemaRegistryApplication {
         return schemaRegistryClient.addDeserializer(deserializerInfo);
     }
 
-    private SnapshotDeserializer<byte[], Object, SchemaInfo, SchemaInfo> getSnapshotDeserializer(SchemaKey schemaKey) {
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getDeserializers(schemaKey);
+    private SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> getSnapshotDeserializer(SchemaMetadata schemaMetadata) {
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getDeserializers(schemaMetadata.getName());
         if (serializers.isEmpty()) {
-            throw new RuntimeException("Serializer for schemaKey:" + schemaKey + " must exist");
+            throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }
         SerDesInfo serdesInfo = serializers.iterator().next();
         return schemaRegistryClient.createDeserializerInstance(serdesInfo);
     }
 
-    private SnapshotSerializer<Object, byte[], SchemaInfo> getSnapshotSerializer(SchemaKey schemaKey) {
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaKey);
+    private SnapshotSerializer<Object, byte[], SchemaMetadata> getSnapshotSerializer(SchemaMetadata schemaMetadata) {
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadata.getName());
         if (serializers.isEmpty()) {
-            throw new RuntimeException("Serializer for schemaKey:" + schemaKey + " must exist");
+            throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }
         SerDesInfo serdesInfo = serializers.iterator().next();
         return schemaRegistryClient.createSerializerInstance(serdesInfo);

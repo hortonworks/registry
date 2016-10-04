@@ -13,6 +13,7 @@
     <properties>
         <swagger.version>1.5.0</swagger.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+        <mysql-connector-version>6.0.4</mysql-connector-version>
     </properties>
 
     <dependencies>
@@ -95,6 +96,11 @@
                     <artifactId>jersey-container-servlet-core</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql-connector-version}</version>
         </dependency>
 
         <!-- test dependencies -->
