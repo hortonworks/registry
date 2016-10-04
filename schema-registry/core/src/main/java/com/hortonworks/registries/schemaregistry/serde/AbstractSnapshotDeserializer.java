@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * @param <S> parsed schema representation to be stored in local cache
  */
 public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDeserializer<InputStream, O, SchemaMetadata, Integer> {
-    private static Logger LOG = LoggerFactory.getLogger(AbstractSnapshotDeserializer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSnapshotDeserializer.class);
     /**
      * Maximum inmemory cache size maintained in deserializer instance.
      */

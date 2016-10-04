@@ -44,9 +44,9 @@ import java.util.Map;
 
 public class TagClient {
 
-    private Client client;
-    private String catalogRootUrl;
-    private String tagRootUrl;
+    private final Client client;
+    private final String catalogRootUrl;
+    private final String tagRootUrl;
 
     public TagClient(String catalogRootUrl) {
         this(catalogRootUrl, new ClientConfig());
