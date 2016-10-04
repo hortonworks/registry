@@ -217,7 +217,7 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(schemaVersionInfo, OK, SUCCESS);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName);
             }
         } catch (Exception ex) {
             LOG.error("Encountered error while getting latest schema version for schemakey [{}]", schemaName, ex);
@@ -242,7 +242,7 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(schemaVersionInfos, OK, SUCCESS);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName);
             }
         } catch (Exception ex) {
             LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
@@ -289,7 +289,7 @@ public class SchemaRegistryResource {
             response = WSUtils.respond(compatible, OK, SUCCESS);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
-            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
+            response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName);
         } catch (Exception ex) {
             LOG.error("Encountered error while checking compatibility with versions of schema with [{}] for given schema text [{}]", schemaName, schemaText, ex);
             response = WSUtils.respond(INTERNAL_SERVER_ERROR, EXCEPTION, ex.getMessage());
@@ -312,7 +312,7 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(schemaSerializers, OK, SUCCESS);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName.toString());
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaName);
             }
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaName, ex);
@@ -336,7 +336,7 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(schemaSerializers, OK, SUCCESS);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaMetadata);
-                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadata.toString());
+                response = WSUtils.respond(NOT_FOUND, ENTITY_NOT_FOUND, schemaMetadata);
             }
         } catch (Exception ex) {
             LOG.error("Encountered error while getting deserializers for schemaKey [{}]", schemaMetadata, ex);
