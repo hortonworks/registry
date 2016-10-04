@@ -1,9 +1,9 @@
 package com.hortonworks.registries.storage.impl.jdbc.phoenix;
 
 import com.google.common.cache.CacheBuilder;
+import com.hortonworks.registries.common.test.HBaseIntegrationTest;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.factory.PhoenixExecutor;
-import com.hortonworks.registries.common.test.HBaseIntegrationTest;
 import org.junit.experimental.categories.Category;
 
 /**

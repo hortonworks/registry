@@ -1,13 +1,12 @@
 package com.hortonworks.registries.cache;
 
 import com.google.common.cache.CacheBuilder;
-import com.hortonworks.registries.cache.Cache;
-import com.hortonworks.registries.storage.cache.impl.GuavaCache;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.cache.impl.GuavaCache;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.junit.Assert;

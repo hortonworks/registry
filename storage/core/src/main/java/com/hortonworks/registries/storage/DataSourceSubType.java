@@ -1,8 +1,8 @@
 package com.hortonworks.registries.storage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
 import java.util.HashMap;
 import java.util.Map;

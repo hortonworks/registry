@@ -21,14 +21,13 @@ package com.hortonworks.registries.cache.view;
 import com.hortonworks.registries.cache.AbstractCache;
 import com.hortonworks.registries.cache.Cache;
 import com.hortonworks.registries.cache.LoadableCache;
+import com.hortonworks.registries.cache.exception.CacheException;
 import com.hortonworks.registries.cache.stats.CacheStats;
 import com.hortonworks.registries.cache.view.datastore.DataStoreReader;
 import com.hortonworks.registries.cache.view.datastore.DataStoreWriter;
 import com.hortonworks.registries.cache.view.io.loader.CacheLoader;
 import com.hortonworks.registries.cache.view.io.loader.CacheLoaderCallback;
 import com.hortonworks.registries.cache.view.io.writer.CacheWriter;
-import com.hortonworks.registries.cache.exception.CacheException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

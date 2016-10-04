@@ -1,38 +1,22 @@
 package com.hortonworks.registries.tag.service;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.tag.Tag;
 import com.hortonworks.registries.tag.TaggedEntity;
 import com.hortonworks.registries.tag.dto.TagDto;
-import com.hortonworks.registries.common.QueryParam;
-import com.hortonworks.registries.common.util.WSUtils;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND;
-import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND_FOR_FILTER;
-import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.EXCEPTION;
-import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.SUCCESS;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.*;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.*;
 
 /**
  * REST resource for managing hierarchical tags in the Iotas system.

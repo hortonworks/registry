@@ -5,25 +5,17 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.hortonworks.registries.common.QueryParam;
-import com.hortonworks.registries.tag.TaggedEntity;
-import com.hortonworks.registries.tag.Tag;
-import com.hortonworks.registries.tag.TagStorableMapping;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.tag.Tag;
+import com.hortonworks.registries.tag.TagStorableMapping;
+import com.hortonworks.registries.tag.TaggedEntity;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Catalog db based tag service.

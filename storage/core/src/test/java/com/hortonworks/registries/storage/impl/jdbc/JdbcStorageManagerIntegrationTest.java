@@ -19,6 +19,7 @@
 package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.google.common.cache.CacheBuilder;
+import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableTest;
@@ -30,7 +31,6 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlQu
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.common.test.IntegrationTest;
 import org.h2.tools.RunScript;
 import org.junit.After;
 import org.junit.Assert;

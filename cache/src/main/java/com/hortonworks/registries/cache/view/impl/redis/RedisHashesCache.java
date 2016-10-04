@@ -19,11 +19,10 @@
 package com.hortonworks.registries.cache.view.impl.redis;
 
 import com.hortonworks.registries.cache.Cache;
+import com.hortonworks.registries.cache.exception.CacheException;
 import com.hortonworks.registries.cache.stats.CacheStats;
 import com.hortonworks.registries.cache.view.config.ExpiryPolicy;
-import com.hortonworks.registries.cache.exception.CacheException;
 import com.lambdaworks.redis.RedisConnection;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -20,12 +20,7 @@ package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.common.exception.ParserException;
-import com.hortonworks.registries.schemaregistry.serde.pull.EndFieldContext;
-import com.hortonworks.registries.schemaregistry.serde.pull.EndRecordContext;
-import com.hortonworks.registries.schemaregistry.serde.pull.PullDeserializer;
-import com.hortonworks.registries.schemaregistry.serde.pull.PullEventContext;
-import com.hortonworks.registries.schemaregistry.serde.pull.StartFieldContext;
-import com.hortonworks.registries.schemaregistry.serde.pull.StartRecordContext;
+import com.hortonworks.registries.schemaregistry.serde.pull.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;

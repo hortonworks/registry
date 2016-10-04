@@ -20,7 +20,6 @@ package com.hortonworks.registries.cache.view.test;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
