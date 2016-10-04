@@ -1,6 +1,6 @@
 # Filesystem based jar storage
 fileStorageConfiguration:
-  className: "LocalFileSystemStorage"
+  className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
     directory: "/tmp"
 

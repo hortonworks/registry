@@ -31,7 +31,7 @@
         <jersey-media-multipart.version>2.22.1</jersey-media-multipart.version>
         <jmockit.version>1.19</jmockit.version>
         <groovy.version>2.4.5</groovy.version>
-        <hbase.version>1.1.2.2.3.98.0-44</hbase.version>
+        <hbase.version>1.1.2.2.5.0.0-1245</hbase.version>
         <jsonschemavalidator.version>2.2.6</jsonschemavalidator.version>
         <kryo.version>2.21</kryo.version>
         <logback.version>1.1.7</logback.version>
