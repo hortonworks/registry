@@ -45,8 +45,8 @@ public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, 
     }
 
     @Override
-    public Object deserialize(byte[] input, SchemaMetadata writerSchemaMetadataInfo, Integer readerSchemaVersion) throws SerDesException {
-        LOG.info("Received payload [{}] to be deserialized with writer schema [{}] and reader schema: [{}]", input, writerSchemaMetadataInfo, readerSchemaVersion);
+    public Object deserialize(byte[] input, SchemaMetadata writerSchemaMetadata, Integer readerSchemaVersion) throws SerDesException {
+        LOG.info("Received payload [{}] to be deserialized with writer schema [{}] and reader schema: [{}]", input, writerSchemaMetadata, readerSchemaVersion);
 
         try {
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(input));
