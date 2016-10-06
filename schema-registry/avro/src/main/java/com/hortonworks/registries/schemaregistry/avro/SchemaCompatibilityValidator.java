@@ -18,7 +18,9 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
+import org.apache.avro.Schema;
 import org.apache.avro.SchemaValidationException;
+import org.apache.avro.SchemaValidationStrategy;
 import org.apache.avro.SchemaValidator;
 import org.apache.avro.SchemaValidatorBuilder;
 
@@ -38,8 +40,11 @@ public final class SchemaCompatibilityValidator {
         validators.put(SchemaProvider.Compatibility.BACKWARD, new SchemaValidatorBuilder().canReadStrategy().validateAll());
         validators.put(SchemaProvider.Compatibility.FORWARD, new SchemaValidatorBuilder().canBeReadStrategy().validateAll());
         validators.put(SchemaProvider.Compatibility.BOTH, new SchemaValidatorBuilder().mutualReadStrategy().validateAll());
-        validators.put(SchemaProvider.Compatibility.NONE, new SchemaValidatorBuilder().strategy((toValidate, existing) -> {
-            throw new SchemaValidationException(toValidate, existing);
+        validators.put(SchemaProvider.Compatibility.NONE, new SchemaValidatorBuilder().strategy(new SchemaValidationStrategy() {
+            @Override
+            public void validate(Schema toValidate, Schema existing) throws SchemaValidationException {
+                throw new SchemaValidationException(toValidate, existing);
+            }
         }).validateAll());
         COMPATIBILITY_VALIDATORS = Collections.unmodifiableMap(validators);
     }

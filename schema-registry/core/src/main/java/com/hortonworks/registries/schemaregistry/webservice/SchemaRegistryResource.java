@@ -92,7 +92,11 @@ public class SchemaRegistryResource {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             Map<String, String> filters = new HashMap<>();
-            queryParameters.forEach((key, values) -> filters.put(key, values != null && !values.isEmpty() ? values.get(0) : null));
+            for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
+                List<String> value = entry.getValue();
+                filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
+            }
+
             Collection<SchemaMetadata> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
 
             return WSUtils.respond(schemaMetadatas, OK, SUCCESS);

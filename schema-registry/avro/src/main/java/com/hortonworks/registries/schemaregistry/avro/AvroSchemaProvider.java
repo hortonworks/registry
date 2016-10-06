@@ -26,10 +26,10 @@ import org.apache.avro.SchemaParseException;
 import org.apache.avro.SchemaValidationException;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -51,10 +51,10 @@ public class AvroSchemaProvider implements SchemaProvider {
     public boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility) {
         Schema toSchema = new Schema.Parser().parse(toSchemaText);
 
-        Iterable<Schema> existingSchemas = existingSchemaTexts
-                                            .stream()
-                                            .map(input -> new Schema.Parser().parse(input))
-                                            .collect(Collectors.toList());
+        Collection<Schema> existingSchemas = new ArrayList<>();
+        for (String schemaText : existingSchemaTexts) {
+            existingSchemas.add(new Schema.Parser().parse(schemaText));
+        }
 
         try {
             SchemaCompatibilityValidator.of(existingSchemaCompatibility).validate(toSchema, existingSchemas);

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,7 +57,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
      */
     public static final Long DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS = 60 * 5L;
 
-    protected LoadingCache<SchemaVersionKey, S> schemaCache;
+    private LoadingCache<SchemaVersionKey, S> schemaCache;
     private SchemaRegistryClient schemaRegistryClient;
 
     @Override
@@ -108,7 +109,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
                          Integer readerSchemaVersion) throws SerDesException {
         try {
             int writerSchemaVersion = readVersion(payloadInputStream);
-            return doDeserialize(payloadInputStream, schemaMetadata, readerSchemaVersion, writerSchemaVersion);
+            return doDeserialize(payloadInputStream, schemaMetadata, writerSchemaVersion, readerSchemaVersion);
         } catch (IOException e) {
             throw new SerDesException(e);
         }
@@ -116,13 +117,21 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
 
     protected abstract O doDeserialize(InputStream payloadInputStream,
                                        SchemaMetadata schemaMetadata,
-                                       Integer readerSchemaVersion,
-                                       int writerSchemaVersion) throws SerDesException;
+                                       Integer writerSchemaVersion,
+                                       Integer readerSchemaVersion) throws SerDesException;
 
     private int readVersion(InputStream payloadInputStream) throws IOException {
         ByteBuffer byteBuffer = ByteBuffer.allocate(4);
         payloadInputStream.read(byteBuffer.array());
         return byteBuffer.getInt();
+    }
+
+    protected S getSchema(SchemaVersionKey schemaVersionKey) {
+        try {
+            return schemaCache.get(schemaVersionKey);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

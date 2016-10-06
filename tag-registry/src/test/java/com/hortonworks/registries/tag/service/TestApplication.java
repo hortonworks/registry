@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.hortonworks.iotas.tag.service;
+package com.hortonworks.registries.tag.service;
 
 
 import com.google.common.cache.CacheBuilder;
@@ -29,9 +29,6 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.cache.impl.GuavaCache;
 import com.hortonworks.registries.storage.cache.writer.StorageWriteThrough;
 import com.hortonworks.registries.storage.cache.writer.StorageWriter;
-import com.hortonworks.registries.tag.service.CatalogTagService;
-import com.hortonworks.registries.tag.service.TagCatalogResource;
-import com.hortonworks.registries.tag.service.TagService;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;

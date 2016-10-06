@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.hortonworks.iotas.tag.service;
+package com.hortonworks.registries.tag.service;
 
 
 import com.google.common.collect.ImmutableList;

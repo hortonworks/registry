@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.hortonworks.iotas.tag.service;
+package com.hortonworks.registries.tag.service;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;

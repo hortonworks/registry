@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
 
 /**
  *
@@ -47,14 +46,14 @@ public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Objec
 
     protected Object doDeserialize(InputStream payloadInputStream,
                                    SchemaMetadata schemaMetadata,
-                                   Integer readerSchemaVersion,
-                                   int writerSchemaVersion) throws SerDesException {
+                                   Integer writerSchemaVersion,
+                                   Integer readerSchemaVersion) throws SerDesException {
         Object deserializedObj;
         String schemaName = schemaMetadata.getName();
         SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
         try {
-            Schema writerSchema = schemaCache.get(writerSchemaVersionKey);
+            Schema writerSchema = getSchema(writerSchemaVersionKey);
             if (writerSchema == null) {
                 throw new SerDesException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
             }
@@ -71,7 +70,7 @@ public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Objec
                 LOG.debug("Received record type: [{}]", recordType);
                 GenericDatumReader datumReader = null;
                 Schema readerSchema = readerSchemaVersion != null
-                        ? schemaCache.get(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
+                        ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 
                 if (recordType == AvroUtils.GENERIC_RECORD) {
                     datumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema)
@@ -82,7 +81,7 @@ public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Objec
                 }
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
-        } catch (ExecutionException | IOException e) {
+        } catch (IOException e) {
             throw new SerDesException(e);
         }
 

@@ -89,8 +89,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
     private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
-    private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
-    private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotSerializer.class, PullSerializer.class);
+    private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
+    private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
 
     private final Client client;
     private final WebTarget rootTarget;
@@ -115,7 +115,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         classLoaderCache = new ClassLoaderCache(this);
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> _getSchema(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionInfoCache.SchemaRetriever() {
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                return _getSchema(key);
+            }
+        }, options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
     }
 
     protected ClientConfig createClientConfig(Map<String, ?> conf) {

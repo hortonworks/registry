@@ -70,7 +70,7 @@ public class AbstractRestIntegrationTest {
     }
 
     protected <T> List<T> getEntities(String response, Class<T> clazz) {
-        return getEntities(response, clazz, Collections.emptyList());
+        return getEntities(response, clazz, Collections.<String>emptyList());
     }
 
     /**
@@ -98,7 +98,7 @@ public class AbstractRestIntegrationTest {
     }
 
     protected <T> T getEntity(String response, Class<T> clazz) {
-        return getEntity(response, clazz, Collections.emptyList());
+        return getEntity(response, clazz, Collections.<String>emptyList());
     }
 
     /**

@@ -30,6 +30,7 @@ import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaSerDesMapping;
 import com.hortonworks.registries.schemaregistry.SchemaVersionStorable;
 import com.hortonworks.registries.schemaregistry.SerDesInfoStorable;
+import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
@@ -148,7 +149,7 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         }
         storageManager.init(storageProviderConfiguration.getProperties());
         storageManager.registerStorables(
-                Lists.newArrayList(SchemaMetadataStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
+                Lists.<Class<? extends Storable>>newArrayList(SchemaMetadataStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
                         SerDesInfoStorable.class, SchemaSerDesMapping.class));
         return storageManager;
     }

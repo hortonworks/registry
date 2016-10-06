@@ -51,7 +51,7 @@ public class DeviceInfoTest extends StorableTest {
     }
 
     public static Collection<Class<? extends Storable>> getStorableClasses() {
-        return Collections.singletonList(DeviceInfo.class);
+        return Collections.<Class<? extends Storable>>singletonList(DeviceInfo.class);
     }
 
 }
