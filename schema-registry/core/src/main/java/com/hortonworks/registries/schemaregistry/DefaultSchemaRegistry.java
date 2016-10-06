@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation for schema registry.
@@ -67,7 +66,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         for (SchemaProvider schemaProvider : schemaProviders) {
             schemaTypeWithProviders.put(schemaProvider.getType(), schemaProvider);
         }
-        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> retrieveSchemaVersionInfo(key), options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionInfoCache.SchemaRetriever() {
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                return retrieveSchemaVersionInfo(key);
+            }
+        }, options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
     }
 
     @Override
@@ -215,23 +219,26 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (filters == null || filters.isEmpty()) {
             storables = storageManager.list(SchemaMetadataStorable.NAME_SPACE);
         } else {
-            List<QueryParam> queryParams =
-                    filters.entrySet()
-                            .stream()
-                            .map(entry -> new QueryParam(entry.getKey(), entry.getValue()))
-                            .collect(Collectors.toList());
+            List<QueryParam> queryParams = new ArrayList<>(filters.size());
+            for (Map.Entry<String, String> entry : filters.entrySet()) {
+                queryParams.add(new QueryParam(entry.getKey(), entry.getValue()));
+            }
             storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
         }
+        List<SchemaMetadata> result;
+        if (storables != null && !storables.isEmpty()) {
+            result = new ArrayList<>();
+            for (SchemaMetadataStorable storable : storables) {
+                result.add(new SchemaMetadata.Builder(storable.getName())
+                        .type(storable.getType())
+                        .schemaGroup(storable.getSchemaGroup())
+                        .build());
+            }
+        } else {
+            result = Collections.emptyList();
+        }
 
-        return storables != null && !storables.isEmpty()
-                ? storables.stream().map(schemaMetadataStorable ->
-                new SchemaMetadata.Builder(schemaMetadataStorable.getName())
-                        .type(schemaMetadataStorable.getType())
-                        .schemaGroup(schemaMetadataStorable.getSchemaGroup())
-                        .build()
-        )
-                .collect(Collectors.toList())
-                : Collections.emptyList();
+        return result;
     }
 
     @Override
@@ -241,9 +248,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Collection<SchemaFieldInfoStorable> fieldInfos = storageManager.find(SchemaFieldInfoStorable.STORABLE_NAME_SPACE, queryParams);
         Collection<SchemaVersionKey> schemaVersionKeys;
         if (fieldInfos != null && !fieldInfos.isEmpty()) {
-            List<Long> schemaIds = fieldInfos.stream()
-                    .map(schemaFieldInfoStorable -> schemaFieldInfoStorable.getSchemaInstanceId())
-                    .collect(Collectors.toList());
+            List<Long> schemaIds = new ArrayList<>();
+            for (SchemaFieldInfoStorable fieldInfo : fieldInfos) {
+                schemaIds.add(fieldInfo.getSchemaInstanceId());
+            }
 
             // todo get only few selected columns instead of getting the whole row.
             // add OR query to find items from store
@@ -294,10 +302,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
 
         Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
-
-        return (storables != null && !storables.isEmpty())
-                ? storables.stream().map(schemaVersionStorable -> new SchemaVersionInfo(schemaVersionStorable)).collect(Collectors.toList())
-                : Collections.emptyList();
+        List<SchemaVersionInfo> schemaVersionInfos;
+        if (storables != null && !storables.isEmpty()) {
+            schemaVersionInfos = new ArrayList<>(storables.size());
+            for (SchemaVersionStorable storable : storables) {
+                schemaVersionInfos.add(new SchemaVersionInfo(storable));
+            }
+        } else {
+            schemaVersionInfos = Collections.emptyList();
+        }
+        return schemaVersionInfos;
     }
 
     @Override
@@ -408,10 +422,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public boolean isCompatible(String schemaName, String toSchema) throws SchemaNotFoundException {
-        Collection<SchemaVersionInfo> existingSchemaVersionInfoStorable = findAllVersions(schemaName);
-        Collection<String> schemaTexts =
-                existingSchemaVersionInfoStorable.stream()
-                        .map(schemaInfoStorable -> schemaInfoStorable.getSchemaText()).collect(Collectors.toList());
+        Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaName);
+        Collection<String> schemaTexts = new ArrayList<>(schemaVersionInfos.size());
+        for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
+            schemaTexts.add(schemaVersionInfo.getSchemaText());
+        }
 
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
 

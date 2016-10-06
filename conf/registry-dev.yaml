@@ -6,6 +6,7 @@ fileStorageConfiguration:
 
 schemaProviderClasses:
   - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+  - "com.hortonworks.registries.schemaregistry.streams.StreamsSchemaProvider"
 
 # schema cache properties
 # inmemory schema versions cache size
@@ -25,7 +26,7 @@ server:
 #  hardNofileLimit: 1000
   applicationConnectors:
     - type: http
-      port: 8080
+      port: 9090
 #    - type: https
 #      port: 8443
 #      keyStorePath: example.keystore

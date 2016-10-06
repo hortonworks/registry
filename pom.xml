@@ -26,7 +26,7 @@
         <kafka.version>0.10.0.1</kafka.version>
         <kafkaArtifact>kafka_2.10</kafkaArtifact>
         <scalaVersion>2.10.5</scalaVersion>
-        <dropwizard.version>1.0.0</dropwizard.version>
+        <dropwizard.version>0.9.0-rc4</dropwizard.version>
         <jersey.version>2.22.1</jersey.version>
         <jersey-media-multipart.version>2.22.1</jersey-media-multipart.version>
         <jmockit.version>1.19</jmockit.version>
@@ -300,8 +300,8 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <source>1.7</source>
+                        <target>1.7</target>
                     </configuration>
                 </plugin>
                 <plugin>

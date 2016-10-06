@@ -41,7 +41,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.iotas: TRACE
+    com.hortonworks.registries: TRACE
 
 
   appenders:

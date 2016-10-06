@@ -18,6 +18,7 @@
 package com.hortonworks.registries.storage.impl.jdbc.mysql;
 
 import com.hortonworks.registries.storage.DeviceInfoTest;
+import com.hortonworks.registries.storage.StorableTest;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 
@@ -30,7 +31,7 @@ public class MySqlStorageManagerCacheTest extends AbstractMySqlStorageManagerWit
 
     @Override
     protected void setStorableTests() {
-        storableTests = Collections.singletonList(new DeviceInfoTest());
+        storableTests = Collections.<StorableTest>singletonList(new DeviceInfoTest());
     }
 
     @Override

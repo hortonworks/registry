@@ -91,7 +91,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        return new PrimaryKey(Collections.singletonMap(NAME_FIELD, name));
+        return new PrimaryKey(Collections.<Schema.Field, Object>singletonMap(NAME_FIELD, name));
     }
 
     @Override
