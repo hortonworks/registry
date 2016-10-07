@@ -17,11 +17,14 @@
  */
 package com.hortonworks.registries.schemaregistry.streams;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,7 +71,13 @@ public class StreamsSchemaProvider implements SchemaProvider {
 
     @Override
     public List<SchemaFieldInfo> generateFields(String rootSchema) {
-        Schema schema = Schema.fromString(rootSchema);
+        // schema should be in json form.
+        Schema schema = null;
+        try {
+            schema = new ObjectMapper().readValue(rootSchema, new TypeReference<List<Schema.Field>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         List<Schema.Field> fields = schema.getFields();
         List<SchemaFieldInfo> fieldInfos = new ArrayList<>(fields.size());
         for (Schema.Field field : fields) {
