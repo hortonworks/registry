@@ -15,6 +15,7 @@
         <module>webservice</module>
         <module>tag-registry</module>
         <module>schema-registry</module>
+        <module>examples</module>
     </modules>
 
     <packaging>pom</packaging>

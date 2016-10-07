@@ -161,7 +161,11 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
-            response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            if(schemaMetadataInfo != null) {
+                response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            } else {
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo for SchemaKey: [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());

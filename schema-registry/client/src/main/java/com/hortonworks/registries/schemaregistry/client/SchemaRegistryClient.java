@@ -19,6 +19,9 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
@@ -48,6 +51,7 @@ import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -63,6 +67,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_READ_TIMEOUT;
@@ -100,6 +106,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final Options options;
     private final ClassLoaderCache classLoaderCache;
     private final SchemaVersionInfoCache schemaVersionInfoCache;
+    private final LoadingCache<String, SchemaMetadataInfo> schemaMetadataCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
@@ -121,6 +128,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return _getSchema(key);
             }
         }, options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
+
+        schemaMetadataCache = CacheBuilder.newBuilder()
+                .maximumSize(options.getMaxSchemaCacheSize())
+                .expireAfterAccess(options.getSchemaExpiryInSecs(), TimeUnit.MILLISECONDS)
+                .build(new CacheLoader<String, SchemaMetadataInfo>() {
+                    @Override
+                    public SchemaMetadataInfo load(String schemaName) throws Exception {
+                        return getEntity(schemasTarget.path(schemaName), SchemaMetadataInfo.class);
+                    }
+                });
     }
 
     protected ClientConfig createClientConfig(Map<String, ?> conf) {
@@ -145,16 +162,30 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) {
-        return postEntity(schemasTarget, schemaMetadata, Boolean.class);
+        SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(schemaMetadata.getName());
+        if (schemaMetadataInfo == null) {
+            return postEntity(schemasTarget, schemaMetadata, Boolean.class);
+        }
+
+        return false;
     }
 
     @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(String schemaName) {
-        return getEntity(schemasTarget.path(schemaName), SchemaMetadataInfo.class);
+        try {
+            return schemaMetadataCache.get(schemaName);
+        } catch (ExecutionException e) {
+            LOG.error("Error occurred while retrieving schema metadata for [{}]", schemaName, e);
+            if (!(e.getCause() instanceof NotFoundException)) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
     }
 
     @Override
-    public Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
+    public Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
+            InvalidSchemaException, IncompatibleSchemaException {
         //create schemainfo
         boolean success = registerSchemaMetadata(schemaMetadata);
         if (!success) {
@@ -166,7 +197,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Integer addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException {
+    public Integer addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
+            throws InvalidSchemaException, IncompatibleSchemaException {
         WebTarget target = schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
@@ -322,12 +354,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
             if (classes.isEmpty()) {
                 throw new RuntimeException("Given Serialize/Deserializer " + className + " class does not implement any " +
-                        "one of the registered interfaces: " + interfaceClasses);
+                                                   "one of the registered interfaces: " + interfaceClasses);
             }
 
             Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                    classes.toArray(new Class[classes.size()]),
-                    new ClassLoaderAwareInvocationHandler(classLoader, t));
+                                   classes.toArray(new Class[classes.size()]),
+                                   new ClassLoaderAwareInvocationHandler(classLoader, t));
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new SerDesException(e);
         }

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.schemaregistry.samples.avro;
+package com.hortonworks.registries.schemaregistry.examples.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -25,8 +25,8 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
-import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer;
-import com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -157,7 +157,7 @@ public class SampleSchemaRegistryClientApp {
 
     public void runCustomSerDesApi() throws Exception {
         // upload jar file
-        String serdesJarName = "/samples-serdes.jar";
+        String serdesJarName = "/serdes-examples.jar";
         InputStream serdesJarInputStream = SampleSchemaRegistryClientApp.class.getResourceAsStream(serdesJarName);
         if (serdesJarInputStream == null) {
             throw new RuntimeException("Jar " + serdesJarName + " could not be loaded");
@@ -243,7 +243,7 @@ public class SampleSchemaRegistryClientApp {
         sampleSchemaRegistryClientApp.runAvroSerDesApis();
     }
 
-    static Map<String, Object> createConfig(String schemaRegistryUrl) {
+    public static Map<String, Object> createConfig(String schemaRegistryUrl) {
         Map<String, Object> config = new HashMap<>();
         config.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, schemaRegistryUrl);
         config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_SIZE, 10);
