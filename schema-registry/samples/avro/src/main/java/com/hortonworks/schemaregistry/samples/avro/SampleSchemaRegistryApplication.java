@@ -17,9 +17,9 @@
  */
 package com.hortonworks.schemaregistry.samples.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
@@ -136,7 +136,7 @@ public class SampleSchemaRegistryApplication {
                 .type(AvroSchemaProvider.TYPE)
                 .schemaGroup("sample-group")
                 .description("Sample schema")
-                .compatibility(SchemaProvider.Compatibility.BACKWARD)
+                .compatibility(SchemaCompatibility.BACKWARD)
                 .build();
     }
 

@@ -77,7 +77,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     /**
      * Compatibility of this schema instance
      */
-    private SchemaProvider.Compatibility compatibility = SchemaProvider.DEFAULT_COMPATIBILITY;
+    private SchemaCompatibility compatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY;
 
     public SchemaMetadataStorable() {
     }
@@ -117,7 +117,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     @Override
     public Storable fromMap(Map<String, Object> map) {
         String compatibilityName = (String) map.remove(COMPATIBILITY);
-        compatibility = SchemaProvider.Compatibility.valueOf(compatibilityName);
+        compatibility = SchemaCompatibility.valueOf(compatibilityName);
         super.fromMap(map);
         return this;
     }
@@ -155,11 +155,11 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.timestamp = timestamp;
     }
 
-    public SchemaProvider.Compatibility getCompatibility() {
+    public SchemaCompatibility getCompatibility() {
         return compatibility;
     }
 
-    public void setCompatibility(SchemaProvider.Compatibility compatibility) {
+    public void setCompatibility(SchemaCompatibility compatibility) {
         this.compatibility = compatibility;
     }
 
@@ -178,6 +178,35 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public static SchemaMetadataStorable fromSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {
+        SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+        SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
+        schemaMetadataStorable.setId(schemaMetadataInfo.getId());
+        schemaMetadataStorable.setType(schemaMetadata.getType());
+        schemaMetadataStorable.setSchemaGroup(schemaMetadata.getSchemaGroup());
+        schemaMetadataStorable.setName(schemaMetadata.getName());
+        schemaMetadataStorable.setDescription(schemaMetadata.getDescription());
+        schemaMetadataStorable.setCompatibility(schemaMetadata.getCompatibility());
+        schemaMetadataStorable.setTimestamp(schemaMetadataInfo.getTimestamp());
+
+        return schemaMetadataStorable;
+    }
+
+    public static SchemaMetadataInfo toSchemaMetadataInfo(SchemaMetadataStorable schemaMetadataStorable) {
+        SchemaMetadata schemaMetadata =
+                new SchemaMetadata.Builder(schemaMetadataStorable.getName())
+                        .type(schemaMetadataStorable.getType())
+                        .schemaGroup(schemaMetadataStorable.getSchemaGroup())
+                        .compatibility(schemaMetadataStorable.getCompatibility())
+                        .description(schemaMetadataStorable.getDescription())
+                        .build();
+
+        return new SchemaMetadataInfo(schemaMetadata,
+                schemaMetadataStorable.getId(),
+                schemaMetadataStorable.getTimestamp());
+    }
+
 
     @Override
     public boolean equals(Object o) {

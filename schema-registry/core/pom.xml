@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>schema-registry-core</artifactId>
+
     <properties>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
         <mysql-connector-version>6.0.4</mysql-connector-version>
@@ -17,6 +18,11 @@
 
     <dependencies>
         <!-- module dependency -->
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>schema-registry-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>common</artifactId>

@@ -12,9 +12,12 @@
     <artifactId>schema-registry</artifactId>
     <packaging>pom</packaging>
     <modules>
+        <module>common</module>
+        <module>client</module>
         <module>core</module>
-        <module>avro</module>
+        <module>providers</module>
         <module>samples</module>
+        <module>webservice</module>
     </modules>
 
 </project>

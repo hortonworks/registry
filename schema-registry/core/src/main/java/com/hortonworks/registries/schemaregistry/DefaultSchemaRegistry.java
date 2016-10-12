@@ -76,7 +76,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata) {
-        SchemaMetadataStorable givenSchemaMetadataStorable = new SchemaMetadataInfo(schemaMetadata).toSchemaInfoStorable();
+        SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata));
 
         Long id;
         synchronized (addOrUpdateLock) {
@@ -192,7 +192,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             List<SchemaFieldInfo> schemaFieldInfos = schemaTypeWithProviders.get(type).generateFields(schemaVersionStorable.getSchemaText());
             for (SchemaFieldInfo schemaFieldInfo : schemaFieldInfos) {
                 final Long fieldInstanceId = storageManager.nextId(storableNamespace);
-                SchemaFieldInfoStorable schemaFieldInfoStorable = schemaFieldInfo.toFieldInfoStorable(fieldInstanceId);
+                SchemaFieldInfoStorable schemaFieldInfoStorable = SchemaFieldInfoStorable.fromSchemaFieldInfo(schemaFieldInfo, fieldInstanceId);
                 schemaFieldInfoStorable.setSchemaInstanceId(schemaInstanceId);
                 schemaFieldInfoStorable.setTimestamp(System.currentTimeMillis());
                 storageManager.add(schemaFieldInfoStorable);
@@ -208,7 +208,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setName(schemaName);
 
         SchemaMetadataStorable schemaMetadataStorable1 = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
-        return schemaMetadataStorable1 != null ? SchemaMetadataInfo.fromSchemaInfoStorable(schemaMetadataStorable1) : null;
+        return schemaMetadataStorable1 != null ? SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorable1) : null;
     }
 
     @Override
@@ -285,13 +285,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private List<QueryParam> buildQueryParam(SchemaFieldQuery schemaFieldQuery) {
         List<QueryParam> queryParams = new ArrayList<>(3);
         if (schemaFieldQuery.getNamespace() != null) {
-            queryParams.add(new QueryParam(SchemaFieldInfoStorable.FIELD_NAMESPACE, schemaFieldQuery.getNamespace()));
+            queryParams.add(new QueryParam(SchemaFieldInfo.FIELD_NAMESPACE, schemaFieldQuery.getNamespace()));
         }
         if (schemaFieldQuery.getName() != null) {
-            queryParams.add(new QueryParam(SchemaFieldInfoStorable.NAME, schemaFieldQuery.getName()));
+            queryParams.add(new QueryParam(SchemaFieldInfo.NAME, schemaFieldQuery.getName()));
         }
         if (schemaFieldQuery.getType() != null) {
-            queryParams.add(new QueryParam(SchemaFieldInfoStorable.TYPE, schemaFieldQuery.getType()));
+            queryParams.add(new QueryParam(SchemaFieldInfo.TYPE, schemaFieldQuery.getType()));
         }
 
         return queryParams;
@@ -306,7 +306,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (storables != null && !storables.isEmpty()) {
             schemaVersionInfos = new ArrayList<>(storables.size());
             for (SchemaVersionStorable storable : storables) {
-                schemaVersionInfos.add(new SchemaVersionInfo(storable));
+                schemaVersionInfos.add(storable.toSchemaVersionInfo());
             }
         } else {
             schemaVersionInfos = Collections.emptyList();
@@ -378,7 +378,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 if (versionedSchemas.size() > 1) {
                     LOG.warn("More than one schema exists with metadataId: [{}] and version [{}]", schemaMetadataId, version);
                 }
-                return new SchemaVersionInfo(versionedSchemas.iterator().next());
+                return versionedSchemas.iterator().next().toSchemaVersionInfo();
             } else {
                 throw new SchemaNotFoundException("No Schema version exists with schemaMetadataId " + schemaMetadataId + " and version " + version);
             }
@@ -448,7 +448,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private boolean isCompatible(String type,
                                  String toSchema,
                                  Collection<String> existingSchemas,
-                                 SchemaProvider.Compatibility compatibility) {
+                                 SchemaCompatibility compatibility) {
         SchemaProvider schemaProvider = schemaTypeWithProviders.get(type);
         if (schemaProvider == null) {
             throw new IllegalStateException("No SchemaProvider registered for type: " + type);
@@ -557,8 +557,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public static class Options {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
-        public static final String SCHEMA_CACHE_SIZE = "schema.cache.size";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schema.cache.expiry.interval";
+        public static final String SCHEMA_CACHE_SIZE = "schemaCacheSize";
+        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schemaCacheExpiryInterval";
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
 
@@ -574,11 +574,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         public int getMaxSchemaCacheSize() {
-            return (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+            return Integer.valueOf(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString());
         }
 
         public long getSchemaExpiryInSecs() {
-            return (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
+            return Long.valueOf(getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS).toString());
         }
     }
 

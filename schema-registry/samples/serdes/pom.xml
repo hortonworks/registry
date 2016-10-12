@@ -14,7 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-core</artifactId>
+            <artifactId>schema-registry-common</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

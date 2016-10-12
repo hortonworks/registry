@@ -176,6 +176,10 @@ public class SchemaVersionStorable extends AbstractStorable {
         this.name = name;
     }
 
+    public SchemaVersionInfo toSchemaVersionInfo() {
+        return new SchemaVersionInfo(version, schemaText, timestamp, description);
+    }
+
     @Override
     public String toString() {
         return "SchemaVersionStorable{" +
