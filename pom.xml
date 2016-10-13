@@ -7,13 +7,16 @@
     <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+
     <modules>
         <module>common</module>
         <module>cache</module>
         <module>storage</module>
+        <module>webservice</module>
         <module>tag-registry</module>
         <module>schema-registry</module>
     </modules>
+
     <packaging>pom</packaging>
 
     <properties>

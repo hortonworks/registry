@@ -19,8 +19,8 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.iot.Device;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryApplication;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryConfiguration;
+import com.hortonworks.registries.webservice.RegistryApplication;
+import com.hortonworks.registries.webservice.RegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.avro.Schema;
@@ -44,8 +44,8 @@ import java.util.Random;
 public abstract class AbstractAvroSchemaRegistryCientTest {
 
     @ClassRule
-    public static final DropwizardAppRule<SchemaRegistryConfiguration> DROPWIZARD_APP_RULE
-            = new DropwizardAppRule<>(SchemaRegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
+    public static final DropwizardAppRule<RegistryConfiguration> DROPWIZARD_APP_RULE
+            = new DropwizardAppRule<>(RegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
 
     protected final String rootUrl = String.format("http://localhost:%d/api/v1", DROPWIZARD_APP_RULE.getLocalPort());
     protected final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
@@ -89,7 +89,7 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
         avroRecord.put("xid", now);
         avroRecord.put("name", "foo-" + now);
         avroRecord.put("version", new Random().nextInt());
-        avroRecord.put("mfr", "mfr-"+now);
+        avroRecord.put("mfr", "mfr-" + now);
 
         return avroRecord;
     }

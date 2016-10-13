@@ -54,7 +54,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private Options options;
     private SchemaVersionInfoCache schemaVersionInfoCache;
 
-    public DefaultSchemaRegistry(StorageManager storageManager, FileStorage fileStorage, Collection<? extends SchemaProvider> schemaProviders) {
+    public DefaultSchemaRegistry(StorageManager storageManager,
+                                 FileStorage fileStorage,
+                                 Collection<? extends SchemaProvider> schemaProviders) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaProviders = schemaProviders;
@@ -72,6 +74,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 return retrieveSchemaVersionInfo(key);
             }
         }, options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
+        storageManager.registerStorables(
+                Lists.<Class<? extends Storable>>newArrayList(SchemaMetadataStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
+                                                              SerDesInfoStorable.class, SchemaSerDesMapping.class));
+
     }
 
     @Override
@@ -95,7 +101,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return id;
     }
 
-    public Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException {
+    public Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description)
+            throws IncompatibleSchemaException, InvalidSchemaException {
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
@@ -118,7 +125,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    public Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException {
+    public Integer addSchemaVersion(String schemaName, String schemaText, String description)
+            throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException {
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
@@ -139,7 +147,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return version;
     }
 
-    private Integer createSchemaVersion(SchemaMetadata schemaMetadata, Long schemaMetadataId, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException {
+    private Integer createSchemaVersion(SchemaMetadata schemaMetadata, Long schemaMetadataId, String schemaText,
+                                        String description)
+            throws IncompatibleSchemaException, InvalidSchemaException {
 
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
@@ -230,9 +240,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             result = new ArrayList<>();
             for (SchemaMetadataStorable storable : storables) {
                 result.add(new SchemaMetadata.Builder(storable.getName())
-                        .type(storable.getType())
-                        .schemaGroup(storable.getSchemaGroup())
-                        .build());
+                                   .type(storable.getType())
+                                   .schemaGroup(storable.getSchemaGroup())
+                                   .build());
             }
         } else {
             result = Collections.emptyList();
@@ -518,8 +528,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             serDesInfos = new ArrayList<>();
             for (SchemaSerDesMapping schemaSerDesMapping : schemaSerDesMappings) {
                 SerDesInfo serDesInfo = getSerDesInfo(schemaSerDesMapping.getSerDesId());
-                if ((isSerializer && serDesInfo.getIsSerializer())
-                        || !serDesInfo.getIsSerializer()) {
+                if (isSerializer) {
+                    if (serDesInfo.getIsSerializer()) {
+                        serDesInfos.add(serDesInfo);
+                    }
+                } else if (!serDesInfo.getIsSerializer()) {
                     serDesInfos.add(serDesInfo);
                 }
             }

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.webservice;
+package com.hortonworks.registries.webservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.common.FileStorageConfiguration;
@@ -23,16 +23,14 @@ import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
  */
-public class SchemaRegistryConfiguration extends Configuration {
+public class RegistryConfiguration extends Configuration {
 
     @NotNull
     private StorageProviderConfiguration storageProviderConfiguration;

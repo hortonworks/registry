@@ -13,7 +13,6 @@
 
     <properties>
         <swagger.version>1.5.0</swagger.version>
-        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
     </properties>
 
     <dependencies>
@@ -28,28 +27,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-annotation</artifactId>
-            <version>${dropwizard.metrics.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>${swagger.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.glassfish.jersey.media</groupId>
-                    <artifactId>jersey-media-multipart</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.glassfish.jersey.containers</groupId>
-                    <artifactId>jersey-container-servlet-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>registry-webservice</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- test dependencies -->

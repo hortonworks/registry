@@ -32,23 +32,13 @@
     <dependencies>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-avro</artifactId>
+            <artifactId>schema-registry-webservice</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>storage-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>com.hortonworks.registries</groupId>
-          <artifactId>storage-core</artifactId>
-          <version>${project.version}</version>
+            <version>0.1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

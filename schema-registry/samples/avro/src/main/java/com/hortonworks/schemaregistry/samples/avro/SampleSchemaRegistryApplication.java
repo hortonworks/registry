@@ -209,11 +209,11 @@ public class SampleSchemaRegistryApplication {
     }
 
     private SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> getSnapshotDeserializer(SchemaMetadata schemaMetadata) {
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getDeserializers(schemaMetadata.getName());
-        if (serializers.isEmpty()) {
+        Collection<SerDesInfo> deserializers = schemaRegistryClient.getDeserializers(schemaMetadata.getName());
+        if (deserializers.isEmpty()) {
             throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }
-        SerDesInfo serdesInfo = serializers.iterator().next();
+        SerDesInfo serdesInfo = deserializers.iterator().next();
         return schemaRegistryClient.createDeserializerInstance(serdesInfo);
     }
 
@@ -227,7 +227,7 @@ public class SampleSchemaRegistryApplication {
     }
 
     public static void main(String[] args) throws Exception {
-        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, "http://localhost:8080/api/v1");
+        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, "http://localhost:9090/api/v1");
         Map<String, Object> config = createConfig(schemaRegistryUrl);
         SampleSchemaRegistryApplication sampleSchemaRegistryApplication = new SampleSchemaRegistryApplication(config);
 
