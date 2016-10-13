@@ -49,12 +49,17 @@ import java.util.Random;
 /**
  *
  */
-public class SampleSchemaRegistryApplication {
-    private static final Logger LOG = LoggerFactory.getLogger(SampleSchemaRegistryApplication.class);
+public class SampleSchemaRegistryClientApp {
+    private static final Logger LOG = LoggerFactory.getLogger(SampleSchemaRegistryClientApp.class);
+    public static final String DEFAULT_SCHEMA_REG_URL = "http://localhost:9090/api/v1";
     private final Map<String, Object> config;
     private final SchemaRegistryClient schemaRegistryClient;
 
-    public SampleSchemaRegistryApplication(Map<String, Object> config) {
+    public SampleSchemaRegistryClientApp() {
+        this(createConfig(DEFAULT_SCHEMA_REG_URL));
+    }
+
+    public SampleSchemaRegistryClientApp(Map<String, Object> config) {
         this.config = config;
         schemaRegistryClient = new SchemaRegistryClient(config);
     }
@@ -102,7 +107,7 @@ public class SampleSchemaRegistryApplication {
 
     }
 
-    private void runAvroSerDesApis() throws IOException {
+    public void runAvroSerDesApis() throws IOException {
         //using builtin avro serializer/deserializer
         AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
         avroSnapshotSerializer.init(config);
@@ -141,7 +146,7 @@ public class SampleSchemaRegistryApplication {
     }
 
     private String getSchema(String schemaFileName) throws IOException {
-        InputStream schemaResourceStream = SampleSchemaRegistryApplication.class.getResourceAsStream(schemaFileName);
+        InputStream schemaResourceStream = SampleSchemaRegistryClientApp.class.getResourceAsStream(schemaFileName);
         if (schemaResourceStream == null) {
             throw new IllegalArgumentException("Given schema file [" + schemaFileName + "] does not exist");
         }
@@ -150,10 +155,10 @@ public class SampleSchemaRegistryApplication {
     }
 
 
-    public void runSerDesApi() throws Exception {
+    public void runCustomSerDesApi() throws Exception {
         // upload jar file
         String serdesJarName = "/samples-serdes.jar";
-        InputStream serdesJarInputStream = SampleSchemaRegistryApplication.class.getResourceAsStream(serdesJarName);
+        InputStream serdesJarInputStream = SampleSchemaRegistryClientApp.class.getResourceAsStream(serdesJarName);
         if (serdesJarInputStream == null) {
             throw new RuntimeException("Jar " + serdesJarName + " could not be loaded");
         }
@@ -227,18 +232,18 @@ public class SampleSchemaRegistryApplication {
     }
 
     public static void main(String[] args) throws Exception {
-        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, "http://localhost:9090/api/v1");
+        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, DEFAULT_SCHEMA_REG_URL);
         Map<String, Object> config = createConfig(schemaRegistryUrl);
-        SampleSchemaRegistryApplication sampleSchemaRegistryApplication = new SampleSchemaRegistryApplication(config);
+        SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(config);
 
-        sampleSchemaRegistryApplication.runSchemaApis();
+        sampleSchemaRegistryClientApp.runSchemaApis();
 
-        sampleSchemaRegistryApplication.runSerDesApi();
+        sampleSchemaRegistryClientApp.runCustomSerDesApi();
 
-        sampleSchemaRegistryApplication.runAvroSerDesApis();
+        sampleSchemaRegistryClientApp.runAvroSerDesApis();
     }
 
-    private static Map<String, Object> createConfig(String schemaRegistryUrl) {
+    static Map<String, Object> createConfig(String schemaRegistryUrl) {
         Map<String, Object> config = new HashMap<>();
         config.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, schemaRegistryUrl);
         config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_SIZE, 10);

@@ -11,6 +11,7 @@
 
     <artifactId>schema-registry-samples</artifactId>
     <packaging>pom</packaging>
+
     <modules>
         <module>serdes</module>
         <module>avro</module>

@@ -16,8 +16,8 @@
         <module>client</module>
         <module>core</module>
         <module>providers</module>
-        <module>samples</module>
         <module>webservice</module>
+        <module>samples</module>
     </modules>
 
 </project>
