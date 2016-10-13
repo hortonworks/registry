@@ -39,7 +39,6 @@
         <calcite.version>1.4.0-incubating</calcite.version>
         <commons-lang3.version>3.3</commons-lang3.version>
         <commons-lang.version>2.5</commons-lang.version>
-
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-surefire.version>2.18.1</maven-surefire.version>
         <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>

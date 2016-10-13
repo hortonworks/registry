@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
@@ -49,6 +50,9 @@ public class SchemaRegistryConfiguration extends Configuration {
 
     @JsonProperty
     private Long schemaCacheExpiryInterval;
+
+    @JsonProperty("swagger")
+    private SwaggerBundleConfiguration swaggerBundleConfiguration;
 
     public StorageProviderConfiguration getStorageProviderConfiguration() {
         return storageProviderConfiguration;
@@ -84,5 +88,13 @@ public class SchemaRegistryConfiguration extends Configuration {
 
     public Long getSchemaCacheExpiryInterval() {
         return schemaCacheExpiryInterval;
+    }
+
+    public void setSwaggerBundleConfiguration(SwaggerBundleConfiguration swaggerBundleConfiguration) {
+        this.swaggerBundleConfiguration = swaggerBundleConfiguration;
+    }
+
+    public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
+        return swaggerBundleConfiguration;
     }
 }

@@ -47,6 +47,10 @@ schemaCacheExpiryInterval: 3600
 #enable CORS, may want to disable in production
 enableCors: true
 
+## swagger configuration
+swagger:
+  resourcePackage: com.hortonworks.registries.schemaregistry.webservice
+
 # use the simple server factory if you only want to run on a single port
 #server:
 #  type: simple

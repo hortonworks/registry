@@ -17,6 +17,8 @@ schemaCacheExpiryInterval: 3600
 storageProviderConfiguration:
  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 
+swagger:
+  resourcePackage: com.hortonworks.registries.schemaregistry.webservice
 #enable CORS, may want to disable in production
 enableCors: true
 

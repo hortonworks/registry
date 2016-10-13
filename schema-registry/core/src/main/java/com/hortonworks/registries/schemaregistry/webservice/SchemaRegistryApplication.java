@@ -35,10 +35,10 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.jaxrs.listing.ApiListingResource;
-import io.swagger.jaxrs.listing.SwaggerSerializers;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -75,6 +75,16 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         }
     }
 
+    @Override
+    public void initialize(Bootstrap<SchemaRegistryConfiguration> bootstrap) {
+        bootstrap.addBundle(new SwaggerBundle<SchemaRegistryConfiguration>() {
+                @Override
+                protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(SchemaRegistryConfiguration schemaRegistryConfiguration) {
+                    return schemaRegistryConfiguration.getSwaggerBundleConfiguration();
+                }
+            });
+    }
+
     private void initializeSchemaRegistry(ISchemaRegistry schemaRegistry, SchemaRegistryConfiguration schemaRegistryConfiguration) {
         Map<String, Object> config = new HashMap<>();
         config.put(DefaultSchemaRegistry.Options.SCHEMA_CACHE_SIZE, schemaRegistryConfiguration.getSchemaCacheSize());
@@ -86,17 +96,6 @@ public class SchemaRegistryApplication extends Application<SchemaRegistryConfigu
         JerseyEnvironment jersey = environment.jersey();
         jersey.register(MultiPartFeature.class);
         jersey.register(schemaRegistryResource);
-
-        // register swagger resources
-        jersey.register(ApiListingResource.class);
-        jersey.register(SwaggerSerializers.class);
-
-        // this is required to set ScanFactory and scanning enabled for given packages.
-        BeanConfig config = new BeanConfig();
-        config.setTitle("SchemaRegistry Application");
-        config.setVersion("0.1.0");
-        config.setResourcePackage("com.hortonworks.registries.schemaregistry.webservice");
-        config.setScan(true);
     }
 
     private void enableCORS(Environment environment) {
