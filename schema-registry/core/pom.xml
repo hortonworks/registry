@@ -11,7 +11,6 @@
 
     <artifactId>schema-registry-core</artifactId>
     <properties>
-        <swagger.version>1.5.0</swagger.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
         <mysql-connector-version>6.0.4</mysql-connector-version>
     </properties>
@@ -104,19 +103,15 @@
             <version>${dropwizard.metrics.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>${swagger.version}</version>
-            <exclusions>
+              <groupId>com.smoketurner</groupId>
+              <artifactId>dropwizard-swagger</artifactId>
+              <version>0.9.3-2</version>
+              <exclusions>
                 <exclusion>
-                    <groupId>org.glassfish.jersey.media</groupId>
-                    <artifactId>jersey-media-multipart</artifactId>
+                  <groupId>io.dropwizard</groupId>
+                  <artifactId>dropwizard-core</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.glassfish.jersey.containers</groupId>
-                    <artifactId>jersey-container-servlet-core</artifactId>
-                </exclusion>
-            </exclusions>
+              </exclusions>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
