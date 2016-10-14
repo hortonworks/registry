@@ -15,7 +15,7 @@
         <module>common</module>
         <module>client</module>
         <module>core</module>
-        <module>providers</module>
+        <module>serdes</module>
         <module>webservice</module>
         <module>samples</module>
     </modules>

@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-providers</artifactId>
+            <artifactId>schema-registry-serdes</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -52,7 +52,7 @@
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-providers</artifactId>
+            <artifactId>schema-registry-serdes</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
