@@ -42,7 +42,7 @@ server:
 #      validateCerts: false
   adminConnectors:
     - type: http
-      port: 8081
+      port: 9091
 #    - type: https
 #      port: 8444
 #      keyStorePath: example.keystore
