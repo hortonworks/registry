@@ -24,26 +24,15 @@ import java.util.List;
  * Different types of Schema providers such as AVRO, Protobuf etc.
  */
 public interface SchemaProvider {
-    SchemaProvider.Compatibility DEFAULT_COMPATIBILITY = SchemaProvider.Compatibility.BACKWARD;
-
-    /**
-     * Compatibility across different versions of a given schema
-     */
-    enum Compatibility {
-        NONE,
-        BACKWARD,
-        FORWARD,
-        BOTH
-    }
 
     /**
      * @return type of this provider. This should be unique among all the registered providers.
      */
     String getType();
 
-    boolean isCompatible(String toSchema, String existingSchema, Compatibility compatibility);
+    boolean isCompatible(String toSchema, String existingSchema, SchemaCompatibility compatibility);
 
-    boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, Compatibility existingSchemaCompatibility);
+    boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility);
 
     /**
      * @param schemaText textual representation of schema

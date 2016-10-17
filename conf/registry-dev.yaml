@@ -1,26 +1,36 @@
+# registries configuration
+modules:
+# tag-registry configuration
+#  - name: tag-registry
+#    className: com.hortonworks.iotas.registries.tag.service.TagRegistryModule
+#
+# schema-registry configuration
+  - name: schema-registry
+    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
+    config:
+      schemaProviderClasses:
+        - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+      # schema cache properties
+      # inmemory schema versions cache size
+      schemaCacheSize: 10000
+      # inmemory schema version cache entry expiry interval after access
+      schemaCacheExpiryInterval: 3600
+
 # Filesystem based jar storage
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
     directory: "/tmp"
-
-schemaProviderClasses:
-  - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
-  - "com.hortonworks.registries.schemaregistry.streams.StreamsSchemaProvider"
-
-# schema cache properties
-# inmemory schema versions cache size
-schemaCacheSize: 10000
-# inmemory schema version cache entry expiry interval after access
-schemaCacheExpiryInterval: 3600
-
+# storage provider configuration
 storageProviderConfiguration:
  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 
+#swagger configuration
 swagger:
   resourcePackage: com.hortonworks.registries.schemaregistry.webservice
+
 #enable CORS, may want to disable in production
-enableCors: true
+enableCors: false
 
 server:
   rootPath: '/*'

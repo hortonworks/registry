@@ -30,12 +30,6 @@ import java.util.Map;
  */
 public class SchemaFieldInfoStorable extends AbstractStorable {
     public static final String STORABLE_NAME_SPACE = "schema_field_info";
-    public static final String ID = "id";
-    public static final String SCHEMA_INSTANCE_ID = "schemaInstanceId";
-    public static final String FIELD_NAMESPACE = "fieldNamespace";
-    public static final String NAME = "name";
-    public static final String TYPE = "type";
-    public static final String TIMESTAMP = "timestamp";
 
     private Long id;
     private String fieldNamespace;
@@ -60,19 +54,19 @@ public class SchemaFieldInfoStorable extends AbstractStorable {
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
         Map<Schema.Field, Object> values = new HashMap<>();
-        values.put(new Schema.Field(ID, Schema.Type.LONG), id);
+        values.put(new Schema.Field(SchemaFieldInfo.ID, Schema.Type.LONG), id);
         return new PrimaryKey(values);
     }
 
     @Override
     public Schema getSchema() {
         return Schema.of(
-                Schema.Field.of(ID, Schema.Type.LONG),
-                Schema.Field.of(SCHEMA_INSTANCE_ID, Schema.Type.LONG),
-                Schema.Field.optional(FIELD_NAMESPACE, Schema.Type.STRING),
-                Schema.Field.of(NAME, Schema.Type.STRING),
-                Schema.Field.of(TYPE, Schema.Type.STRING),
-                Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
+                Schema.Field.of(SchemaFieldInfo.ID, Schema.Type.LONG),
+                Schema.Field.of(SchemaFieldInfo.SCHEMA_INSTANCE_ID, Schema.Type.LONG),
+                Schema.Field.optional(SchemaFieldInfo.FIELD_NAMESPACE, Schema.Type.STRING),
+                Schema.Field.of(SchemaFieldInfo.NAME, Schema.Type.STRING),
+                Schema.Field.of(SchemaFieldInfo.TYPE, Schema.Type.STRING),
+                Schema.Field.of(SchemaFieldInfo.TIMESTAMP, Schema.Type.LONG)
         );
 
     }
@@ -124,6 +118,16 @@ public class SchemaFieldInfoStorable extends AbstractStorable {
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public static SchemaFieldInfoStorable fromSchemaFieldInfo(SchemaFieldInfo schemaFieldInfo, Long id) {
+        SchemaFieldInfoStorable schemaFieldInfoStorable = new SchemaFieldInfoStorable(id);
+        schemaFieldInfoStorable.setFieldNamespace(schemaFieldInfo.getNamespace());
+        schemaFieldInfoStorable.setName(schemaFieldInfo.getName());
+        schemaFieldInfoStorable.setType(schemaFieldInfo.getType());
+
+        return schemaFieldInfoStorable;
+
     }
 
     @Override

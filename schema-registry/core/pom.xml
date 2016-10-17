@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>schema-registry-core</artifactId>
+
     <properties>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
         <mysql-connector-version>6.0.4</mysql-connector-version>
@@ -17,6 +18,11 @@
 
     <dependencies>
         <!-- module dependency -->
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>schema-registry-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>common</artifactId>
@@ -76,42 +82,13 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>${avro.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-annotation</artifactId>
-            <version>${dropwizard.metrics.version}</version>
-        </dependency>
-        <dependency>
-              <groupId>com.smoketurner</groupId>
-              <artifactId>dropwizard-swagger</artifactId>
-              <version>0.9.3-2</version>
-              <exclusions>
-                <exclusion>
-                  <groupId>io.dropwizard</groupId>
-                  <artifactId>dropwizard-core</artifactId>
-                </exclusion>
-              </exclusions>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
