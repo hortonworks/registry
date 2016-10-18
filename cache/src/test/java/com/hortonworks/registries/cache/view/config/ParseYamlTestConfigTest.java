@@ -39,6 +39,5 @@ public class ParseYamlTestConfigTest {
     private Reader load(String fileName) throws IOException {
         return new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(fileName));
     }
-
-
+    
 }
