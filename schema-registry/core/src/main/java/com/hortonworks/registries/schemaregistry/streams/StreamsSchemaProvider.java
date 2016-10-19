@@ -73,13 +73,12 @@ public class StreamsSchemaProvider implements SchemaProvider {
     @Override
     public List<SchemaFieldInfo> generateFields(String rootSchema) {
         // schema should be in json form.
-        Schema schema = null;
+        List<Schema.Field> fields;
         try {
-            schema = new ObjectMapper().readValue(rootSchema, new TypeReference<List<Schema.Field>>() {});
+            fields = new ObjectMapper().readValue(rootSchema, new TypeReference<List<Schema.Field>>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        List<Schema.Field> fields = schema.getFields();
         List<SchemaFieldInfo> fieldInfos = new ArrayList<>(fields.size());
         for (Schema.Field field : fields) {
             // currently internal schema implementation does not have namespace.

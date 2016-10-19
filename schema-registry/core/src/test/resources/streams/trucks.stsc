@@ -1,0 +1,57 @@
+[
+  {
+    "name": "driverId",
+    "type": "INTEGER",
+    "optional": true
+  },
+  {
+    "name": "truckId",
+    "type": "INTEGER",
+    "optional": true
+  },
+  {
+    "name": "eventTime",
+    "type": "STRING",
+    "optional": true
+  },
+  {
+    "name": "eventType",
+    "type": "STRING",
+    "optional": true
+  },
+  {
+    "name": "longitude",
+    "type": "DOUBLE",
+    "optional": true
+  },
+  {
+    "name": "latitude",
+    "type": "DOUBLE",
+    "optional": true
+  },
+  {
+    "name": "eventKey",
+    "type": "STRING",
+    "optional": true
+  },
+  {
+    "name": "correlationId",
+    "type": "DOUBLE",
+    "optional": true
+  },
+  {
+    "name": "driverName",
+    "type": "STRING",
+    "optional": true
+  },
+  {
+    "name": "routeId",
+    "type": "INTEGER",
+    "optional": true
+  },
+  {
+    "name": "routeName",
+    "type": "STRING",
+    "optional": true
+  }
+]
