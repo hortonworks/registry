@@ -3,19 +3,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>samples</artifactId>
+        <artifactId>schema-registry-examples</artifactId>
         <groupId>com.hortonworks.registries</groupId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>samples-avro</artifactId>
+    <artifactId>avro-examples</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-serdes</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-csv</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- test dependencies -->
@@ -62,13 +67,7 @@
                                 <resource>
                                     <directory>${basedir}/../serdes/target/</directory>
                                     <includes>
-                                        <include>samples-serdes.jar</include>
-                                    </includes>
-                                </resource>
-                                <resource>
-                                    <directory>${basedir}/../../../schema-registry/webservice/src/test/resources/</directory>
-                                    <includes>
-                                        <include>schema-registry-test.yaml</include>
+                                        <include>serdes-examples.jar</include>
                                     </includes>
                                 </resource>
                             </resources>

@@ -183,7 +183,7 @@ Registering serializer and deserializer is donw with the below steps
 
 ```java
 
-String serdesJarName = "/samples-serdes.jar";
+String serdesJarName = "/serdes-examples.jar";
 InputStream serdesJarInputStream = SampleSchemaRegistryApplication.class.getResourceAsStream(serdesJarName);
 if (serdesJarInputStream == null) {
     throw new RuntimeException("Jar " + serdesJarName + " could not be loaded");
