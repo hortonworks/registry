@@ -18,8 +18,8 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.common.test.IntegrationTest;
-import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer;
-import com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroSerializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
 import kafka.common.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
