@@ -15,29 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry;
+package com.hortonworks.registries.schemaregistry.errors;
 
 /**
- * Indicates that schema is not found in the repository.
+ *
  */
-public class SchemaNotFoundException extends Exception {
-
-    public SchemaNotFoundException() {
+public class IncompatibleSchemaException extends Exception {
+    public IncompatibleSchemaException() {
     }
 
-    public SchemaNotFoundException(String message) {
+    public IncompatibleSchemaException(String message) {
         super(message);
     }
 
-    public SchemaNotFoundException(String message, Throwable cause) {
+    public IncompatibleSchemaException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public SchemaNotFoundException(Throwable cause) {
+    public IncompatibleSchemaException(Throwable cause) {
         super(cause);
     }
 
-    public SchemaNotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public IncompatibleSchemaException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

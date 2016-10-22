@@ -17,6 +17,8 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+
 import java.util.Collection;
 import java.util.List;
 

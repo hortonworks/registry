@@ -17,6 +17,11 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -29,11 +34,11 @@ public interface ISchemaRegistry {
 
     void init(Map<String, Object> props);
 
-    Long addSchemaMetadata(SchemaMetadata schemaMetadata);
+    Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException;
 
-    Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException;
+    Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
 
-    Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException;
+    Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
 
     SchemaMetadataInfo getSchemaMetadata(String schemaName);
 
