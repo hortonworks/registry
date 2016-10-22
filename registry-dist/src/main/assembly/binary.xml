@@ -45,6 +45,23 @@
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>
+        <!--
+            EXAMPLES
+        -->
+        <fileSet>
+            <directory>${project.basedir}./examples/schema-registry/avro/target</directory>
+            <outputDirectory>examples/schema-registry/avro</outputDirectory>
+            <includes>
+                <include>avro*jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./examples/schema-registry/serdes/target</directory>
+            <outputDirectory>examples/schema-registry/serdes</outputDirectory>
+            <includes>
+                <include>serdes*jar</include>
+            </includes>
+        </fileSet>
     </fileSets>
 
     <files>
