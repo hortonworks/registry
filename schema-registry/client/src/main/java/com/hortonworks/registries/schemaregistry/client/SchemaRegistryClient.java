@@ -19,6 +19,8 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -60,13 +62,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Proxy;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -78,7 +85,7 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
  * This is the default implementation of {@link ISchemaRegistryClient} which connects to the given {@code rootCatalogURL}.
  * <pre>
  * This can be used to
- *      - register schemas
+ *      - register schema metadatas
  *      - add new versions of a schema
  *      - fetch different versions of schema
  *      - fetch latest version of a schema
@@ -107,6 +114,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final ClassLoaderCache classLoaderCache;
     private final SchemaVersionInfoCache schemaVersionInfoCache;
     private final LoadingCache<String, SchemaMetadataInfo> schemaMetadataCache;
+    private final Cache<SchemaDigestEntry, Integer> schemaTextCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
@@ -127,17 +135,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
                 return _getSchema(key);
             }
-        }, options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
+        }, options.getMaxSchemaVersionCacheSize(), options.getSchemaVersionCacheExpiryInSecs());
 
         schemaMetadataCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getMaxSchemaCacheSize())
-                .expireAfterAccess(options.getSchemaExpiryInSecs(), TimeUnit.MILLISECONDS)
+                .maximumSize(options.getMaxSchemaMetadataCacheSize())
+                .expireAfterAccess(options.getSchemaMetadataCacheExpiryInSecs(), TimeUnit.MILLISECONDS)
                 .build(new CacheLoader<String, SchemaMetadataInfo>() {
                     @Override
                     public SchemaMetadataInfo load(String schemaName) throws Exception {
                         return getEntity(schemasTarget.path(schemaName), SchemaMetadataInfo.class);
                     }
                 });
+
+        schemaTextCache = CacheBuilder.newBuilder()
+                .maximumSize(options.getMaxSchemaTextCacheSize())
+                .expireAfterAccess(options.getSchemaTextCacheExpiryInSecs(), TimeUnit.MILLISECONDS)
+                .build();
     }
 
     protected ClientConfig createClientConfig(Map<String, ?> conf) {
@@ -164,10 +177,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) {
         SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(schemaMetadata.getName());
         if (schemaMetadataInfo == null) {
-            return postEntity(schemasTarget, schemaMetadata, Boolean.class);
+            return _registerSchemaMetadata(schemaMetadata, schemasTarget);
         }
 
-        return false;
+        return true;
+    }
+
+    private Boolean _registerSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
+        return postEntity(schemasTarget, schemaMetadata, Boolean.class);
     }
 
     @Override
@@ -176,8 +193,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return schemaMetadataCache.get(schemaName);
         } catch (ExecutionException e) {
             LOG.error("Error occurred while retrieving schema metadata for [{}]", schemaName, e);
-            if (!(e.getCause() instanceof NotFoundException)) {
-                throw new RuntimeException(e);
+            Throwable cause = e.getCause();
+            if (!(cause instanceof NotFoundException)) {
+                throw new RuntimeException(cause.getMessage(), cause);
             }
         }
         return null;
@@ -186,19 +204,65 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
             InvalidSchemaException, IncompatibleSchemaException {
-        //create schemainfo
+        // get it, if it exists in cache
+        SchemaDigestEntry schemaDigestEntry = buildSchemaTextEntry(schemaVersion, schemaMetadata.getName());
+        Integer version = schemaTextCache.getIfPresent(schemaDigestEntry);
+        if (version != null) {
+            return version;
+        }
+
+        //register schema metadata if it does not exist
         boolean success = registerSchemaMetadata(schemaMetadata);
         if (!success) {
-            throw new RuntimeException("Given SchemaInfo could not be registered.");
+            LOG.error("Schema Metadata [{}] is not registered successfully", schemaMetadata);
+            throw new RuntimeException("Given SchemaInfo could not be registered: "+schemaMetadata);
         }
 
         // add version
-        return addSchemaVersion(schemaMetadata.getName(), schemaVersion);
+        version = addSchemaVersion(schemaMetadata.getName(), schemaVersion);
+        return version;
+    }
+
+    private SchemaDigestEntry buildSchemaTextEntry(SchemaVersion schemaVersion, String name) {
+        byte[] digest;
+        try {
+            digest = MessageDigest.getInstance("MD5").digest(schemaVersion.getSchemaText().getBytes("UTF-8"));
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        // storing schema text string is expensive, so storing digest.
+        return new SchemaDigestEntry(name, digest);
     }
 
     @Override
-    public Integer addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
+    public Integer addSchemaVersion(final String schemaName, final SchemaVersion schemaVersion)
             throws InvalidSchemaException, IncompatibleSchemaException {
+
+        try {
+            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName), new Callable<Integer>() {
+                @Override
+                public Integer call() throws Exception {
+                    return _addSchemaVersion(schemaName, schemaVersion);
+                }
+            });
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            LOG.error("Encountered error while adding new version [{}] of schema [{}] and error [{}]", schemaVersion, schemaName, e);
+            if(cause != null) {
+                if (cause instanceof InvalidSchemaException)
+                    throw (InvalidSchemaException) cause;
+                else if(cause instanceof IncompatibleSchemaException) {
+                    throw (IncompatibleSchemaException) cause;
+                } else {
+                    throw new RuntimeException(cause.getMessage(), cause);
+                }
+            } else {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+    }
+
+    private Integer _addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException {
         WebTarget target = schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
@@ -410,13 +474,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         // given by client.
         public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
         public static final String LOCAL_JAR_PATH = "schema.registry.client.local.jars.path";
+
         public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.client.class.loader.cache.size";
         public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.class.loader.cache.expiry.interval";
         public static final int DEFAULT_CLASS_LOADER_CACHE_SIZE = 1024;
         public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60;
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
-        public static final String SCHEMA_CACHE_SIZE = "schema.registry.client.schema.cache.size";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.cache.expiry.interval";
+
+        public static final String SCHEMA_VERSION_CACHE_SIZE = "schema.registry.client.schema.version.cache.size";
+        public static final String SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.version.cache.expiry.interval";
+
+        public static final String SCHEMA_METADATA_CACHE_SIZE = "schema.registry.client.schema.metadata.cache.size";
+        public static final String SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.metadata.cache.expiry.interval";
+
+        public static final String SCHEMA_TEXT_CACHE_SIZE = "schema.registry.client.schema.text.cache.size";
+        public static final String SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.text.cache.expiry.interval";
+
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
 
@@ -451,14 +524,38 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return (String) getPropertyValue(LOCAL_JAR_PATH, DEFAULT_LOCAL_JARS_PATH);
         }
 
-        public int getMaxSchemaCacheSize() {
-            Integer value = (Integer) getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+        public int getMaxSchemaVersionCacheSize() {
+            Integer value = (Integer) getPropertyValue(SCHEMA_VERSION_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
             checkPositiveNumber(value);
             return value;
         }
 
-        public long getSchemaExpiryInSecs() {
-            Long value = (Long) getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
+        public long getSchemaVersionCacheExpiryInSecs() {
+            Long value = (Long) getPropertyValue(SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
+            checkPositiveNumber(value);
+            return value;
+        }
+
+        public int getMaxSchemaTextCacheSize() {
+            Integer value = (Integer) getPropertyValue(SCHEMA_TEXT_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+            checkPositiveNumber(value);
+            return value;
+        }
+
+        public long getSchemaTextCacheExpiryInSecs() {
+            Long value = (Long) getPropertyValue(SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
+            checkPositiveNumber(value);
+            return value;
+        }
+
+        public int getMaxSchemaMetadataCacheSize() {
+            Integer value = (Integer) getPropertyValue(SCHEMA_METADATA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+            checkPositiveNumber(value);
+            return value;
+        }
+
+        public long getSchemaMetadataCacheExpiryInSecs() {
+            Long value = (Long) getPropertyValue(SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
             checkPositiveNumber(value);
             return value;
         }
@@ -469,5 +566,37 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             }
         }
 
+    }
+
+    private static class SchemaDigestEntry {
+        private final String name;
+        private final byte[] schemaDigest;
+
+        SchemaDigestEntry(String name, byte[] schemaDigest) {
+            Preconditions.checkNotNull(name, "name can not be null");
+            Preconditions.checkNotNull(schemaDigest, "schema digest can not be null");
+
+            this.name = name;
+            this.schemaDigest = schemaDigest;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SchemaDigestEntry that = (SchemaDigestEntry) o;
+
+            if (name != null ? !name.equals(that.name) : that.name != null) return false;
+            return Arrays.equals(schemaDigest, that.schemaDigest);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + Arrays.hashCode(schemaDigest);
+            return result;
+        }
     }
 }

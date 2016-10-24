@@ -114,7 +114,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * Registers information about a schema.
      *
      * @param schemaMetadata information about schema.
-     * @return true if the given {@code schemaInfo} is successfully registered.
+     * @return true if the given {@code schemaInfo} is successfully registered now or earlier.
      */
     boolean registerSchemaMetadata(SchemaMetadata schemaMetadata);
 
