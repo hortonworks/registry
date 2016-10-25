@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.samples.avro;
+package com.hortonworks.registries.schemaregistry.examples.avro;
 
 import com.hortonworks.registries.schemaregistry.examples.avro.SampleSchemaRegistryClientApp;
 import com.hortonworks.registries.webservice.RegistryApplication;
