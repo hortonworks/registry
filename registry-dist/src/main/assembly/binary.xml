@@ -62,8 +62,14 @@
                 <include>serdes*jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./examples/schema-registry/avro/src/main/resources</directory>
+            <outputDirectory>examples/schema-registry/avro/data</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+        </fileSet>
     </fileSets>
-
     <files>
         <!--
             $REGISTRY_HOME/conf

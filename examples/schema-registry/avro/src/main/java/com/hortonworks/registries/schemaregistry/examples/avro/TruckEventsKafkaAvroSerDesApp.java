@@ -24,6 +24,16 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -31,9 +41,11 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,19 +63,28 @@ public class TruckEventsKafkaAvroSerDesApp {
 
     public static final String MSGS_LIMIT = "msgsLimit";
     public static final String TOPIC = "topic";
+    String producerProps;
+    String registryURL;
+    String schemaFile;
+
+    public TruckEventsKafkaAvroSerDesApp(String producerProps, String registryURL, String schemaFile) {
+        this.producerProps = producerProps;
+        this.registryURL = registryURL;
+        this.schemaFile = schemaFile;
+    }
 
     public void sendMessages(String payloadFile) throws Exception {
         Properties props = new Properties();
-        props.load(TruckEventsKafkaAvroSerDesApp.class.getResourceAsStream("/kafka-producer.props"));
+        props.load(new FileInputStream(this.producerProps));
         int limit = Integer.parseInt(props.getProperty(MSGS_LIMIT, 50 + ""));
 
         // convert the payload from csv to json records
         TruckEventsCsvConverter truckEventsCsvConverter = new TruckEventsCsvConverter();
-        InputStream payloadResourceStream = TruckEventsKafkaAvroSerDesApp.class.getResourceAsStream(payloadFile);
+        InputStream payloadResourceStream = new FileInputStream(payloadFile);
         List<String> jsonRecords = truckEventsCsvConverter.convertToJsonRecords(payloadResourceStream, limit);
 
         // convert json to avro records
-        Schema schema = new Schema.Parser().parse(TruckEventsKafkaAvroSerDesApp.class.getResourceAsStream("/truck_events.avsc"));
+        Schema schema = new Schema.Parser().parse(new FileInputStream(this.schemaFile));
         List<Object> avrorecords = new ArrayList<>();
         for (String jsonRecord : jsonRecords) {
             avrorecords.add(jsonToAvro(jsonRecord, schema));
@@ -80,11 +101,9 @@ public class TruckEventsKafkaAvroSerDesApp {
 
     private Map<String, Object> createProducerConfig(Properties props) {
         String bootstrapServers = props.getProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
-        String schemaRegistryUrl = props.getProperty(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL);
-
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.putAll(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, schemaRegistryUrl));
+        config.putAll(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, this.registryURL));
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         return config;
@@ -101,6 +120,7 @@ public class TruckEventsKafkaAvroSerDesApp {
     }
 
     private void produceMessage(String topicName, List<Object> msgs, Map<String, Object> producerConfig) {
+        LOG.info("inside produce Message " + msgs.size());
         final Producer<String, Object> producer = new KafkaProducer<>(producerConfig);
         final Callback callback = new MyProducerCallback();
         for (Object msg : msgs) {
@@ -120,8 +140,54 @@ public class TruckEventsKafkaAvroSerDesApp {
         }
     }
 
+    /**
+     * Print the command line options help message and exit application.
+     */
+    @SuppressWarnings("static-access")
+    private static void showHelpMessage(String[] args, Options options) {
+        Options helpOptions = new Options();
+        helpOptions.addOption(Option.builder("h").longOpt("help")
+                .desc("print this message").build());
+        try {
+            CommandLine helpLine = new DefaultParser().parse(helpOptions, args, true);
+            if (helpLine.hasOption("help") || args.length == 1) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("truck-events-kafka-ingest", options);
+                System.exit(0);
+            }
+        } catch (ParseException ex) {
+            LOG.error("Parsing failed.  Reason: " + ex.getMessage());
+            System.exit(1);
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-        TruckEventsKafkaAvroSerDesApp truckEventsKafkaAvroSerDesApp = new TruckEventsKafkaAvroSerDesApp();
-        truckEventsKafkaAvroSerDesApp.sendMessages("/truck_events.csv");
+        Option dataFileOption = Option.builder("d").longOpt("data-file").hasArg().desc("Provide a data file").required().type(String.class).build();
+        Option producerFileOption = Option.builder("p").longOpt("producer-config").hasArg().desc("Provide a Kafka producer config file").required().type(String.class).build();
+        Option registryUrlOption = Option.builder("r").longOpt("registry-url").hasArg().desc("Provide the registry URL").required().type(String.class).build();
+        Option schemaOption = Option.builder("s").longOpt("schema-file").hasArg().desc("Provide a schema file").required().type(String.class).build();
+
+        Options options = new Options();
+        options.addOption(dataFileOption);
+        options.addOption(producerFileOption);
+        options.addOption(registryUrlOption);
+        options.addOption(schemaOption);
+        showHelpMessage(args, options);
+
+        CommandLineParser parser = new DefaultParser();
+        CommandLine commandLine;
+
+        try {
+            commandLine = parser.parse(options, args);
+            TruckEventsKafkaAvroSerDesApp truckEventsKafkaAvroSerDesApp = new TruckEventsKafkaAvroSerDesApp(commandLine.getOptionValue("p"),
+                            commandLine.getOptionValue("r"), commandLine.getOptionValue("s"));
+            truckEventsKafkaAvroSerDesApp.sendMessages(commandLine.getOptionValue("d"));
+
+        } catch(ParseException e) {
+            LOG.error("Please provide all the options ", e);
+        } catch(Exception e) {
+            LOG.error("Failed to send messages ", e);
+        }
+
     }
 }
