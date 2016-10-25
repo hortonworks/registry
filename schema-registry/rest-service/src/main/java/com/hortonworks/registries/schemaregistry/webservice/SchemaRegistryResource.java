@@ -21,17 +21,18 @@ import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
-import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -144,6 +145,9 @@ public class SchemaRegistryResource {
         try {
             schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
             response = WSUtils.respond(true, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
+        }  catch (UnsupportedSchemaTypeException ex) {
+            LOG.error("Unsupported schema type encountered while adding schema metadata [{}]",schemaMetadataInfo, ex);
+            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -186,6 +190,7 @@ public class SchemaRegistryResource {
 
         Response response;
         try {
+            LOG.info("schemaVersion for [{}] is [{}]", schemaName, schemaVersion);
             Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
             response = WSUtils.respond(version, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
         } catch (InvalidSchemaException ex) {
@@ -194,6 +199,9 @@ public class SchemaRegistryResource {
         } catch (IncompatibleSchemaException ex) {
             LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, ex.getMessage());
+        } catch (UnsupportedSchemaTypeException ex) {
+            LOG.error("Unsupported schema type encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
+            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());

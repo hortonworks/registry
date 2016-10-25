@@ -20,7 +20,7 @@ package com.hortonworks.registries.schemaregistry.streams;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;

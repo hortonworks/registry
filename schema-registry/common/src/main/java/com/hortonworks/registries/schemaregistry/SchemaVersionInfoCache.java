@@ -20,6 +20,7 @@ package com.hortonworks.registries.schemaregistry;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

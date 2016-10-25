@@ -21,6 +21,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.FileStorage;
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
@@ -81,9 +85,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Long addSchemaMetadata(SchemaMetadata schemaMetadata) {
+    public Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException {
         SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata));
-
+        String type = schemaMetadata.getType();
+        if (schemaTypeWithProviders.get(type) == null) {
+            throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
+        }
         Long id;
         synchronized (addOrUpdateLock) {
             Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
@@ -102,7 +109,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description)
-            throws IncompatibleSchemaException, InvalidSchemaException {
+            throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException {
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
@@ -126,7 +133,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public Integer addSchemaVersion(String schemaName, String schemaText, String description)
-            throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException {
+            throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException,
+            UnsupportedSchemaTypeException {
         Integer version;
         // todo handle with minimal lock usage.
         synchronized (addOrUpdateLock) {
@@ -149,12 +157,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     private Integer createSchemaVersion(SchemaMetadata schemaMetadata, Long schemaMetadataId, String schemaText,
                                         String description)
-            throws IncompatibleSchemaException, InvalidSchemaException {
+            throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException {
 
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
         String type = schemaMetadata.getType();
-
+        if (schemaTypeWithProviders.get(type) == null) {
+            throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
+        }
         // generate fingerprint, it parses the schema and checks for semantic validation.
         // throws InvalidSchemaException for invalid schemas.
         final String fingerprint = getFingerprint(type, schemaText);

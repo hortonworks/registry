@@ -18,14 +18,15 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.IncompatibleSchemaException;
-import com.hortonworks.registries.schemaregistry.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
@@ -117,12 +118,12 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test(expected = SchemaNotFoundException.class)
-    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException {
+    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException {
         schemaRegistry.addSchemaVersion(INVALIDSCHEMA_METADATA_KEY, "foo", "dummy");
     }
 
     @Test(expected = InvalidSchemaException.class)
-    public void testInvalisSchema() throws Exception {
+    public void testInvalidSchema() throws Exception {
         String schema = "--- random invalid schema ---" + new Date();
 
         SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
@@ -130,6 +131,7 @@ public class AvroSchemaRegistryTest {
         // registering a new schema
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo, schema, "Initial version of the schema");
     }
+
 
     @Test(expected = IncompatibleSchemaException.class)
     public void testIncompatibleSchemas() throws Exception {
