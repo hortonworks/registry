@@ -46,7 +46,7 @@ public class SchemaRegistryClientTest {
             invoke(schemaRegistryClient, "registerSchemaMetadata", schemaMetaData);
             result = true;
 
-            invoke(schemaRegistryClient, "_addSchemaVersion", schemaName, schemaVersion);
+            invoke(schemaRegistryClient, "doAddSchemaVersion", schemaName, schemaVersion);
             result = 1;
             times = 1; // this should be invoked only once as this should have been cached
 

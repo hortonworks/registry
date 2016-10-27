@@ -27,17 +27,17 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
-import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
-import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -83,6 +83,24 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
 
 /**
  * This is the default implementation of {@link ISchemaRegistryClient} which connects to the given {@code rootCatalogURL}.
+ * <p>
+ * An instance of SchemaRegistryClient can be instantiated by passing configuration properties like below.
+ * <pre>
+ *     SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(config);
+ * </pre>
+ *
+ * There are different options available as mentioned in {@link Options} like
+ * <pre>
+ * - {@link Options#SCHEMA_REGISTRY_URL}.
+ * - {@link Options#SCHEMA_METADATA_CACHE_SIZE}.
+ * - {@link Options#SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS}.
+ * - {@link Options#SCHEMA_VERSION_CACHE_SIZE}.
+ * - {@link Options#SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS}.
+ * - {@link Options#SCHEMA_TEXT_CACHE_SIZE}.
+ * - {@link Options#SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS}.
+ *
+ * and many other properties like {@link ClientProperties}
+ * </pre>
  * <pre>
  * This can be used to
  *      - register schema metadatas
@@ -215,7 +233,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         boolean success = registerSchemaMetadata(schemaMetadata);
         if (!success) {
             LOG.error("Schema Metadata [{}] is not registered successfully", schemaMetadata);
-            throw new RuntimeException("Given SchemaInfo could not be registered: "+schemaMetadata);
+            throw new RuntimeException("Given SchemaInfo could not be registered: " + schemaMetadata);
         }
 
         // add version
@@ -230,7 +248,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-        // storing schema text string is expensive, so storing digest.
+
+        // storing schema text string is expensive, so storing digest in cache's key.
         return new SchemaDigestEntry(name, digest);
     }
 
@@ -242,16 +261,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName), new Callable<Integer>() {
                 @Override
                 public Integer call() throws Exception {
-                    return _addSchemaVersion(schemaName, schemaVersion);
+                    return doAddSchemaVersion(schemaName, schemaVersion);
                 }
             });
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             LOG.error("Encountered error while adding new version [{}] of schema [{}] and error [{}]", schemaVersion, schemaName, e);
-            if(cause != null) {
+            if (cause != null) {
                 if (cause instanceof InvalidSchemaException)
                     throw (InvalidSchemaException) cause;
-                else if(cause instanceof IncompatibleSchemaException) {
+                else if (cause instanceof IncompatibleSchemaException) {
                     throw (IncompatibleSchemaException) cause;
                 } else {
                     throw new RuntimeException(cause.getMessage(), cause);
@@ -262,7 +281,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    private Integer _addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException {
+    private Integer doAddSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException {
         WebTarget target = schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
@@ -469,32 +488,89 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return readEntity(response, clazz);
     }
 
-    public static class Options {
+    public static final class Options {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
+        /**
+         * URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1
+         */
         public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
+
+        /**
+         * Local directory path to which downloaded jars should be copied to. For ex: /tmp/schema-registry/local-jars
+         */
         public static final String LOCAL_JAR_PATH = "schema.registry.client.local.jars.path";
 
+        /**
+         * Maximum size of classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_SIZE}
+         * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
+         */
         public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.client.class.loader.cache.size";
+
+        /**
+         * Expiry interval(in seconds) of an entry in classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS}
+         * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
+         */
         public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.class.loader.cache.expiry.interval";
-        public static final int DEFAULT_CLASS_LOADER_CACHE_SIZE = 1024;
+
+        /**
+         * Default value for classloader cache size.
+         */
+        public static final int DEFAULT_CLASSLOADER_CACHE_SIZE = 1024;
+
+        /**
+         * Default value for cache expiry interval in seconds.
+         */
         public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60;
+
+        /**
+         * Default path for downloaded jars to be stored.
+         */
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
 
+        /**
+         * Maximum size of schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}
+         */
         public static final String SCHEMA_VERSION_CACHE_SIZE = "schema.registry.client.schema.version.cache.size";
+
+        /**
+         * Expiry interval(in seconds) of an entry in schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
+         */
         public static final String SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.version.cache.expiry.interval";
 
+        /**
+         * Maximum size of schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}
+         */
         public static final String SCHEMA_METADATA_CACHE_SIZE = "schema.registry.client.schema.metadata.cache.size";
+
+        /**
+         * Expiry interval(in seconds) of an entry in schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
+         */
         public static final String SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.metadata.cache.expiry.interval";
 
+        /**
+         * Maximum size of schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}.
+         * This cache has ability to store/get entries with same schema name and schema text.
+         */
         public static final String SCHEMA_TEXT_CACHE_SIZE = "schema.registry.client.schema.text.cache.size";
+
+        /**
+         * Expiry interval(in seconds) of an entry in schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
+         */
         public static final String SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.text.cache.expiry.interval";
 
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
 
         // connection properties
+        /**
+         * Default connection timeout on connections created while connecting to schema registry.
+         */
         public static final int DEFAULT_CONNECTION_TIMEOUT = 30 * 1000;
+
+        /**
+         * Default read timeout on connections created while connecting to schema registry.
+         */
         public static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
 
         private final Map<String, ?> config;
@@ -509,7 +585,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         public int getClassLoaderCacheSize() {
-            Integer value = (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASS_LOADER_CACHE_SIZE);
+            Integer value = (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASSLOADER_CACHE_SIZE);
             checkPositiveNumber(value);
             return value;
         }
