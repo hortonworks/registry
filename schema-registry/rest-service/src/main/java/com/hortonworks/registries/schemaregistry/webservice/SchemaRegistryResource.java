@@ -136,15 +136,15 @@ public class SchemaRegistryResource {
 
     @POST
     @Path("/schemas")
-    @ApiOperation(value = "Registers the given schema information if it does not exists and returns true if it succeeds",
+    @ApiOperation(value = "Registers the given schema information if it does not exist and returns respective schema metadata id",
             notes = "Registers the given schema information and multiple versions of the schema can be registered for the given SchemaInfo's SchemaKey",
-            response = Boolean.class)
+            response = Long.class)
     @Timed
     public Response addSchemaInfo(@ApiParam(value = "SchemaInfo to be added to the registry", required = true) SchemaMetadata schemaMetadataInfo) {
         Response response;
         try {
-            schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
-            response = WSUtils.respond(true, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
+            Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
+            response = WSUtils.respond(schemaMetadataId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
         }  catch (UnsupportedSchemaTypeException ex) {
             LOG.error("Unsupported schema type encountered while adding schema metadata [{}]",schemaMetadataInfo, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
@@ -158,7 +158,7 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}")
-    @ApiOperation(value = "Returns schema information with (type, schemaGroup, name)",
+    @ApiOperation(value = "Returns schema metadata information for the given schema name",
             response = SchemaMetadataInfo.class)
     @Timed
     public Response getSchemaInfo(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
@@ -171,7 +171,29 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
         } catch (Exception ex) {
-            LOG.error("Encountered error while retrieving SchemaInfo for SchemaKey: [{}]", schemaName, ex);
+            LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
+            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+
+        return response;
+    }
+
+    @GET
+    @Path("/schemasById/{schemaMetadataId}")
+    @ApiOperation(value = "Returns schema metadata information for the given schemaMetadataId",
+            response = SchemaMetadataInfo.class)
+    @Timed
+    public Response getSchemaInfo(@ApiParam(value = "Name of the schema", required = true) @PathParam("schemaMetadataId") Long schemaMetadataId) {
+        Response response;
+        try {
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaMetadataId);
+            if(schemaMetadataInfo != null) {
+                response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            } else {
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaMetadataId.toString());
+            }
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving SchemaInfo with schemaMetadataId: [{}]", schemaMetadataId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
 

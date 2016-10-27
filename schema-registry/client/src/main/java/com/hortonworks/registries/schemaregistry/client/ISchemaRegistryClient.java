@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -116,13 +117,20 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaMetadata information about schema.
      * @return true if the given {@code schemaInfo} is successfully registered now or earlier.
      */
-    boolean registerSchemaMetadata(SchemaMetadata schemaMetadata);
+    Long registerSchemaMetadata(SchemaMetadata schemaMetadata);
 
     /**
      * @param schemaName name identifying a schema
      * @return information about given schema identified by {@code schemaName}
      */
     SchemaMetadataInfo getSchemaMetadataInfo(String schemaName);
+
+
+    /**
+     * @param schemaMetadataId id of schema metadata
+     * @return information about given schema identified by {@code schemaMetadataId}
+     */
+    SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId);
 
     /**
      * Returns version of the schema added with the given schemaInfo.
@@ -139,7 +147,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
-    Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
+    SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
      * Adds the given {@code schemaVersion} and returns the corresponding version number.
@@ -150,7 +158,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      */
-    Integer addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException;
+    SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
      * @return schema versions matching the fields specified in the query

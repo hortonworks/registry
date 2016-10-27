@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
@@ -40,10 +41,10 @@ public class AvroSnapshotSerializer extends AbstractSnapshotSerializer<Object, b
     public AvroSnapshotSerializer() {
     }
 
-    protected byte[] doSerialize(Object input, Integer version) throws SerDesException {
+    protected byte[] doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
-            byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(version).array());
+            byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(schemaIdVersion.getVersion()).array());
 
             Schema schema = computeSchema(input);
             Schema.Type schemaType = schema.getType();

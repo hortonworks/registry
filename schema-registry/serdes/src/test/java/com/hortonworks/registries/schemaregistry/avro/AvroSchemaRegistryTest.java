@@ -85,7 +85,7 @@ public class AvroSchemaRegistryTest {
                 .compatibility(compatibility)
                 .schemaGroup(SCHEMA_GROUP).build();
 
-        schemaRegistry.addSchemaMetadata(schemaMetadata);
+        Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadata);
 
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadata, schema1, "initial version of the schema");
         Integer v2 = schemaRegistry.addSchemaVersion(schemaName, schema2, "second version of the the schema");

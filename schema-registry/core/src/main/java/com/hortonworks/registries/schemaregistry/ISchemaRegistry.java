@@ -40,6 +40,8 @@ public interface ISchemaRegistry {
 
     Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
 
+    SchemaMetadataInfo getSchemaMetadata(Long schemaMetadataId);
+
     SchemaMetadataInfo getSchemaMetadata(String schemaName);
 
     Integer getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;

@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import mockit.Expectations;
@@ -41,18 +42,19 @@ public class SchemaRegistryClientTest {
         final String schemaName = "foo";
         final SchemaMetadata schemaMetaData = new SchemaMetadata.Builder(schemaName).schemaGroup("group").type("type").build();
         final SchemaVersion schemaVersion = new SchemaVersion("schema-text", "desc");
+        final SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1);
 
         new Expectations(schemaRegistryClient) {{
             invoke(schemaRegistryClient, "registerSchemaMetadata", schemaMetaData);
-            result = true;
+            result = 1L;
 
             invoke(schemaRegistryClient, "doAddSchemaVersion", schemaName, schemaVersion);
-            result = 1;
+            result = schemaIdVersion;
             times = 1; // this should be invoked only once as this should have been cached
 
         }};
 
-        schemaRegistryClient.registerSchemaMetadata(schemaMetaData);
+        Long metadataId = schemaRegistryClient.registerSchemaMetadata(schemaMetaData);
         schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
         schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
         schemaRegistryClient.addSchemaVersion(schemaName, schemaVersion);

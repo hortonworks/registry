@@ -19,17 +19,18 @@ package com.hortonworks.registries.schemaregistry.examples.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
-import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -71,22 +72,23 @@ public class SampleSchemaRegistryClientApp {
         SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
         // registering a new schema
-        Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
-        LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
+        SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
+        LOG.info("Registered schema metadata [{}] and returned version [{}]", schema1, v1);
 
         // adding a new version of the schema
         String schema2 = getSchema("/device-next.avsc");
         SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
-        Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-        LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
+        SchemaIdVersion v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+        LOG.info("Registered schema metadata [{}] and returned version [{}]", schema2, v2);
 
         //adding same schema returns the earlier registered version
-        Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-        LOG.info("");
+        SchemaIdVersion version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+        LOG.info("Received version [{}] for schema metadata [{}]", version, schemaMetadata);
 
         // get a specific version of the schema
         String schemaName = schemaMetadata.getName();
-        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
+        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2.getVersion()));
+        LOG.info("Received schema version info [{}] for schema metadata [{}]", schemaVersionInfo, schemaMetadata);
 
         // get latest version of the schema
         SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
@@ -165,9 +167,9 @@ public class SampleSchemaRegistryClientApp {
         String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
 
         SchemaMetadata schemaMetadata = createSchemaMetadata("serdes-device-" + System.currentTimeMillis());
-        Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata,
-                new SchemaVersion(getSchema("/device.avsc"),
-                        "Initial version of the schema"));
+        SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata,
+                                                                   new SchemaVersion(getSchema("/device.avsc"),
+                                                                                     "Initial version of the schema"));
 
         // register serializer
         Long serializerId = registerSimpleSerializer(fileId);
