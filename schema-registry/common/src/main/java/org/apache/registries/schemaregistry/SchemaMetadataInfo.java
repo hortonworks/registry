@@ -68,4 +68,34 @@ public final class SchemaMetadataInfo implements Serializable {
         return schemaMetadata;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SchemaMetadataInfo that = (SchemaMetadataInfo) o;
+
+        if (schemaMetadata != null ? !schemaMetadata.equals(that.schemaMetadata) : that.schemaMetadata != null)
+            return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = schemaMetadata != null ? schemaMetadata.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaMetadataInfo{" +
+                "schemaMetadata=" + schemaMetadata +
+                ", id=" + id +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }

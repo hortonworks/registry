@@ -223,12 +223,31 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public SchemaMetadataInfo getSchemaMetadata(Long schemaMetadataId) {
+        SchemaMetadataStorable givenSchemaMetadataStorable = new SchemaMetadataStorable();
+        givenSchemaMetadataStorable.setId(schemaMetadataId);
+
+        List<QueryParam> params = Collections.singletonList(new QueryParam(SchemaMetadataStorable.ID, schemaMetadataId.toString()));
+        Collection<SchemaMetadataStorable> schemaMetadataStorables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, params);
+        SchemaMetadataInfo schemaMetadataInfo = null;
+        if (schemaMetadataStorables != null && !schemaMetadataStorables.isEmpty()) {
+            schemaMetadataInfo = SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorables.iterator().next());
+            if (schemaMetadataStorables.size() > 1) {
+                LOG.warn("No unique entry with schemaMetatadataId: [{}]", schemaMetadataId);
+            }
+            LOG.info("SchemaMetadata entries with id [{}] is [{}]", schemaMetadataStorables);
+        }
+
+        return schemaMetadataInfo;
+    }
+
+    @Override
     public SchemaMetadataInfo getSchemaMetadata(String schemaName) {
         SchemaMetadataStorable givenSchemaMetadataStorable = new SchemaMetadataStorable();
         givenSchemaMetadataStorable.setName(schemaName);
 
-        SchemaMetadataStorable schemaMetadataStorable1 = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
-        return schemaMetadataStorable1 != null ? SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorable1) : null;
+        SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
+        return schemaMetadataStorable != null ? SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorable) : null;
     }
 
     @Override

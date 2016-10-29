@@ -22,43 +22,46 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class contains schema name and version.
+ * This class represents schemaMetadataId and version.
  */
-public final class SchemaVersionKey implements Serializable {
+public final class SchemaIdVersion implements Serializable {
 
-    private String schemaName;
+    private Long schemaMetadataId;
     private Integer version;
 
-    /**
-     * Private constructor for Jackson JSON mapping
-     */
+    /** Private constructor for Jackson JSON mapping */
     @SuppressWarnings("unused")
-    private SchemaVersionKey() {
-    }
+    private SchemaIdVersion() { }
 
     /**
-     * @param schemaName unique schema name
-     * @param version    version of the schema
+     * @param schemaMetadataId unique id of schema metadata
+     * @param version version of the schema
      */
-    public SchemaVersionKey(String schemaName, Integer version) {
-        Preconditions.checkNotNull(schemaName, "schemaMetadataKey can not be null");
+    public SchemaIdVersion(Long schemaMetadataId, Integer version) {
+        Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
-        this.schemaName = schemaName;
+        this.schemaMetadataId = schemaMetadataId;
         this.version = version;
-    }
-
-    /**
-     * @return unique schema name
-     */
-    public String getSchemaName() {
-        return schemaName;
     }
 
     /**
      * @return version of the schema
      */
-    public Integer getVersion() {
-        return version;
+    public Integer getVersion() { return version; }
+
+    /**
+     * @return unique id of the schema metadata.
+     */
+    public Long getSchemaMetadataId() {
+        return schemaMetadataId;
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaIdVersion{" +
+                "schemaMetadataId=" + schemaMetadataId +
+                ", version=" + version +
+                '}';
     }
 
     @Override
@@ -66,25 +69,18 @@ public final class SchemaVersionKey implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SchemaVersionKey that = (SchemaVersionKey) o;
+        SchemaIdVersion that = (SchemaIdVersion) o;
 
-        if (schemaName != null ? !schemaName.equals(that.schemaName) : that.schemaName != null) return false;
+        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
+            return false;
         return version != null ? version.equals(that.version) : that.version == null;
 
     }
 
     @Override
     public int hashCode() {
-        int result = schemaName != null ? schemaName.hashCode() : 0;
+        int result = schemaMetadataId != null ? schemaMetadataId.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "SchemaVersionKey{" +
-                "schemaName='" + schemaName + '\'' +
-                ", version=" + version +
-                '}';
     }
 }

@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
+
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.ClassLoaderAwareInvocationHandler;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
@@ -88,7 +88,7 @@ import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.O
  * <pre>
  *     SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(config);
  * </pre>
- *
+ * <p>
  * There are different options available as mentioned in {@link Options} like
  * <pre>
  * - {@link Options#SCHEMA_REGISTRY_URL}.
@@ -103,7 +103,7 @@ import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.O
  * </pre>
  * <pre>
  * This can be used to
- *      - register schema metadatas
+ *      - register schema metadata
  *      - add new versions of a schema
  *      - fetch different versions of schema
  *      - fetch latest version of a schema
@@ -117,6 +117,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
     private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
+    private static final String SCHEMAS_BY_ID_PATH = SCHEMA_REGISTRY_PATH + "/schemasById/";
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
     private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
@@ -126,13 +127,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final Client client;
     private final WebTarget rootTarget;
     private final WebTarget schemasTarget;
+    private final WebTarget schemasByIdTarget;
     private final WebTarget searchFieldsTarget;
 
     private final Options options;
     private final ClassLoaderCache classLoaderCache;
     private final SchemaVersionInfoCache schemaVersionInfoCache;
-    private final LoadingCache<String, SchemaMetadataInfo> schemaMetadataCache;
-    private final Cache<SchemaDigestEntry, Integer> schemaTextCache;
+    private final SchemaMetadataCache schemaMetadataCache;
+    private final Cache<SchemaDigestEntry, SchemaIdVersion> schemaTextCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         options = new Options(conf);
@@ -144,6 +146,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         String rootCatalogURL = (String) conf.get(SCHEMA_REGISTRY_URL);
         rootTarget = client.target(rootCatalogURL);
         schemasTarget = rootTarget.path(SCHEMAS_PATH);
+        schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
         searchFieldsTarget = schemasTarget.path("search/fields");
 
         classLoaderCache = new ClassLoaderCache(this);
@@ -151,24 +154,41 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionInfoCache.SchemaRetriever() {
             @Override
             public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
-                return _getSchema(key);
+                return doGetSchemaVersionInfo(key);
             }
-        }, options.getMaxSchemaVersionCacheSize(), options.getSchemaVersionCacheExpiryInSecs());
+        }, options.getSchemaVersionCacheSize(), options.getSchemaVersionCacheExpiryInSecs());
 
-        schemaMetadataCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getMaxSchemaMetadataCacheSize())
-                .expireAfterAccess(options.getSchemaMetadataCacheExpiryInSecs(), TimeUnit.MILLISECONDS)
-                .build(new CacheLoader<String, SchemaMetadataInfo>() {
-                    @Override
-                    public SchemaMetadataInfo load(String schemaName) throws Exception {
-                        return getEntity(schemasTarget.path(schemaName), SchemaMetadataInfo.class);
-                    }
-                });
+        SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
+        schemaMetadataCache = new SchemaMetadataCache(options.getSchemaMetadataCacheSize(),
+                                                      options.getSchemaMetadataCacheExpiryInSecs(),
+                                                      schemaMetadataFetcher);
 
         schemaTextCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getMaxSchemaTextCacheSize())
+                .maximumSize(options.getSchemaTextCacheSize())
                 .expireAfterAccess(options.getSchemaTextCacheExpiryInSecs(), TimeUnit.MILLISECONDS)
                 .build();
+    }
+
+    private SchemaMetadataCache.SchemaMetadataFetcher createSchemaMetadataFetcher() {
+        return new SchemaMetadataCache.SchemaMetadataFetcher() {
+            @Override
+            public SchemaMetadataInfo fetch(String name) throws SchemaNotFoundException {
+                try {
+                    return getEntity(schemasTarget.path(name), SchemaMetadataInfo.class);
+                } catch (NotFoundException e) {
+                    throw new SchemaNotFoundException(e);
+                }
+            }
+
+            @Override
+            public SchemaMetadataInfo fetch(Long id) throws SchemaNotFoundException {
+                try {
+                    return getEntity(schemasByIdTarget.path(id.toString()), SchemaMetadataInfo.class);
+                } catch (NotFoundException e) {
+                    throw new SchemaNotFoundException(e);
+                }
+            }
+        };
     }
 
     protected ClientConfig createClientConfig(Map<String, ?> conf) {
@@ -192,53 +212,49 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean registerSchemaMetadata(SchemaMetadata schemaMetadata) {
-        SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(schemaMetadata.getName());
+    public Long registerSchemaMetadata(SchemaMetadata schemaMetadata) {
+        SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(SchemaMetadataCache.Key.of(schemaMetadata.getName()));
         if (schemaMetadataInfo == null) {
-            return _registerSchemaMetadata(schemaMetadata, schemasTarget);
+            return doRegisterSchemaMetadata(schemaMetadata, schemasTarget);
         }
 
-        return true;
+        return schemaMetadataInfo.getId();
     }
 
-    private Boolean _registerSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
-        return postEntity(schemasTarget, schemaMetadata, Boolean.class);
+    private Long doRegisterSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
+        return postEntity(schemasTarget, schemaMetadata, Long.class);
     }
 
     @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(String schemaName) {
-        try {
-            return schemaMetadataCache.get(schemaName);
-        } catch (ExecutionException e) {
-            LOG.error("Error occurred while retrieving schema metadata for [{}]", schemaName, e);
-            Throwable cause = e.getCause();
-            if (!(cause instanceof NotFoundException)) {
-                throw new RuntimeException(cause.getMessage(), cause);
-            }
-        }
-        return null;
+        return schemaMetadataCache.get(SchemaMetadataCache.Key.of(schemaName));
     }
 
     @Override
-    public Integer addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
-            InvalidSchemaException, IncompatibleSchemaException {
+    public SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId) {
+        return schemaMetadataCache.get(SchemaMetadataCache.Key.of(schemaMetadataId));
+    }
+
+    @Override
+    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
+            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         // get it, if it exists in cache
         SchemaDigestEntry schemaDigestEntry = buildSchemaTextEntry(schemaVersion, schemaMetadata.getName());
-        Integer version = schemaTextCache.getIfPresent(schemaDigestEntry);
-        if (version != null) {
-            return version;
+        SchemaIdVersion schemaIdVersion = schemaTextCache.getIfPresent(schemaDigestEntry);
+
+        if (schemaIdVersion == null) {
+            //register schema metadata if it does not exist
+            Long metadataId = registerSchemaMetadata(schemaMetadata);
+            if (metadataId == null) {
+                LOG.error("Schema Metadata [{}] is not registered successfully", schemaMetadata);
+                throw new RuntimeException("Given SchemaMetadata could not be registered: " + schemaMetadata);
+            }
+
+            // add schemaIdVersion
+            schemaIdVersion = addSchemaVersion(schemaMetadata.getName(), schemaVersion);
         }
 
-        //register schema metadata if it does not exist
-        boolean success = registerSchemaMetadata(schemaMetadata);
-        if (!success) {
-            LOG.error("Schema Metadata [{}] is not registered successfully", schemaMetadata);
-            throw new RuntimeException("Given SchemaInfo could not be registered: " + schemaMetadata);
-        }
-
-        // add version
-        version = addSchemaVersion(schemaMetadata.getName(), schemaVersion);
-        return version;
+        return schemaIdVersion;
     }
 
     private SchemaDigestEntry buildSchemaTextEntry(SchemaVersion schemaVersion, String name) {
@@ -254,13 +270,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Integer addSchemaVersion(final String schemaName, final SchemaVersion schemaVersion)
-            throws InvalidSchemaException, IncompatibleSchemaException {
+    public SchemaIdVersion addSchemaVersion(final String schemaName, final SchemaVersion schemaVersion)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
 
         try {
-            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName), new Callable<Integer>() {
+            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName), new Callable<SchemaIdVersion>() {
                 @Override
-                public Integer call() throws Exception {
+                public SchemaIdVersion call() throws Exception {
                     return doAddSchemaVersion(schemaName, schemaVersion);
                 }
             });
@@ -272,6 +288,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                     throw (InvalidSchemaException) cause;
                 else if (cause instanceof IncompatibleSchemaException) {
                     throw (IncompatibleSchemaException) cause;
+                } else if (cause instanceof SchemaNotFoundException) {
+                    throw (SchemaNotFoundException) cause;
                 } else {
                     throw new RuntimeException(cause.getMessage(), cause);
                 }
@@ -281,7 +299,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    private Integer doAddSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException {
+    private SchemaIdVersion doAddSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
+        if (schemaMetadataInfo == null) {
+            throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
+        }
+
         WebTarget target = schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
@@ -298,7 +321,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         }
 
-        return readEntity(msg, Integer.class);
+        return new SchemaIdVersion(schemaMetadataInfo.getId(), readEntity(msg, Integer.class));
     }
 
     private CatalogResponse readCatalogResponse(String msg) {
@@ -323,7 +346,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    private SchemaVersionInfo _getSchema(SchemaVersionKey schemaVersionKey) {
+    private SchemaVersionInfo doGetSchemaVersionInfo(SchemaVersionKey schemaVersionKey) {
         String schemaName = schemaVersionKey.getSchemaName();
         WebTarget webTarget = schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey.getVersion()));
 
@@ -600,7 +623,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return (String) getPropertyValue(LOCAL_JAR_PATH, DEFAULT_LOCAL_JARS_PATH);
         }
 
-        public int getMaxSchemaVersionCacheSize() {
+        public int getSchemaVersionCacheSize() {
             Integer value = (Integer) getPropertyValue(SCHEMA_VERSION_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
             checkPositiveNumber(value);
             return value;
@@ -612,7 +635,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return value;
         }
 
-        public int getMaxSchemaTextCacheSize() {
+        public int getSchemaTextCacheSize() {
             Integer value = (Integer) getPropertyValue(SCHEMA_TEXT_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
             checkPositiveNumber(value);
             return value;
@@ -624,7 +647,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return value;
         }
 
-        public int getMaxSchemaMetadataCacheSize() {
+        public int getSchemaMetadataCacheSize() {
             Integer value = (Integer) getPropertyValue(SCHEMA_METADATA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
             checkPositiveNumber(value);
             return value;

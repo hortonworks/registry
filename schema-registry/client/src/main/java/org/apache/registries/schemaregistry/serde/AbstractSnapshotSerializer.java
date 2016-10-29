@@ -17,11 +17,13 @@
  */
 package org.apache.registries.schemaregistry.serde;
 
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaMetadata;
 import org.apache.registries.schemaregistry.SchemaVersion;
 import org.apache.registries.schemaregistry.client.SchemaRegistryClient;
+import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.Map;
 
@@ -47,17 +49,17 @@ public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerial
 
         // register that schema and get the version
         try {
-            Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+            SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
             // write the version and given object to the output
-            return doSerialize(input, version);
-        } catch (InvalidSchemaException | IncompatibleSchemaException e) {
+            return doSerialize(input, schemaIdVersion);
+        } catch (InvalidSchemaException | IncompatibleSchemaException | SchemaNotFoundException e) {
             throw new SerDesException(e);
         }
     }
 
     protected abstract String getSchemaText(I input);
 
-    protected abstract O doSerialize(I input, Integer version) throws SerDesException;
+    protected abstract O doSerialize(I input, SchemaIdVersion schemaIdVersion) throws SerDesException;
 
     @Override
     public void close() throws Exception {
