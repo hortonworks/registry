@@ -1,2 +1,2 @@
-com.hortonworks.registries.tag.Tag
-com.hortonworks.registries.tag.TagStorableMapping
+org.apache.registries.tag.Tag
+org.apache.registries.tag.TagStorableMapping

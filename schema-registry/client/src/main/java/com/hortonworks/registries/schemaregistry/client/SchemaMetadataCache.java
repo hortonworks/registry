@@ -21,8 +21,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.registries.schemaregistry.SchemaMetadataInfo;
+import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

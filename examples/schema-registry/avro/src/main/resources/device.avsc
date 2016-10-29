@@ -1,6 +1,6 @@
 {
    "type" : "record",
-   "namespace" : "com.hortonworks.iot",
+   "namespace" : "org.apache.iot",
    "name" : "device",
    "fields" : [
       { "name" : "xid" , "type" : "long" },

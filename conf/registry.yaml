@@ -2,14 +2,14 @@
 modules:
 # tag-registry configuration
 #  - name: tag-registry
-#    className: com.hortonworks.iotas.registries.tag.service.TagRegistryModule
+#    className: org.apache.iotas.registries.tag.service.TagRegistryModule
 #
 # schema-registry configuration
   - name: schema-registry
-    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
+    className: org.apache.registries.schemaregistry.webservice.SchemaRegistryModule
     config:
       schemaProviderClasses:
-        - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+        - "org.apache.registries.schemaregistry.avro.AvroSchemaProvider"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
@@ -18,17 +18,17 @@ modules:
 
 # Filesystem based jar storage
 fileStorageConfiguration:
-  className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
+  className: "org.apache.registries.common.util.LocalFileSystemStorage"
   properties:
     directory: "/tmp"
 
 # storage provider configuration
 storageProviderConfiguration:
- providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+ providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
 
 #swagger configuration
 swagger:
-  resourcePackage: com.hortonworks.registries.schemaregistry.webservice
+  resourcePackage: org.apache.registries.schemaregistry.webservice
 
 #enable CORS, may want to disable in production
 enableCors: true
@@ -53,7 +53,7 @@ server:
 #      validateCerts: false
   adminConnectors:
     - type: http
-      port: 8081
+      port: 9091
 #    - type: https
 #      port: 8444
 #      keyStorePath: example.keystore
@@ -70,7 +70,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.registries: DEBUG
+    org.apache.registries: DEBUG
 
 
   appenders:

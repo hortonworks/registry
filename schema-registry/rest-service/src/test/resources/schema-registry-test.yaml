@@ -1,12 +1,12 @@
 # registries configuration
 modules:
 #  - name: tag-registry
-#    className: com.hortonworks.iotas.registries.tag.service.TagRegistryModule
+#    className: org.apache.iotas.registries.tag.service.TagRegistryModule
   - name: schema-registry
-    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
+    className: org.apache.registries.schemaregistry.webservice.SchemaRegistryModule
     config:
       schemaProviderClasses:
-        - "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+        - "org.apache.registries.schemaregistry.avro.AvroSchemaProvider"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
@@ -14,7 +14,7 @@ modules:
       schemaCacheExpiryInterval: 3600
 
 fileStorageConfiguration:
-  className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
+  className: "org.apache.registries.common.util.LocalFileSystemStorage"
   properties:
     directory: "/tmp/storage"
 
@@ -23,11 +23,11 @@ fileStorageConfiguration:
 #
 # Example configuration for inmemory is:
 #storageProviderConfiguration:
-#  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+#  providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
 #
 # Example configuration for phoenix based JDBC driver
 #storageProviderConfiguration:
-# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+# providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
 # properties:
 #   db.type: "phoenix"
 #   queryTimeoutInSecs: 30
@@ -37,7 +37,7 @@ fileStorageConfiguration:
 #
 # MySQL based jdbc provider configuration is:
 #storageProviderConfiguration:
-#  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+#  providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
 #  properties:
 #    db.type: "mysql"
 #    queryTimeoutInSecs: 30
@@ -46,14 +46,14 @@ fileStorageConfiguration:
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
 
 storageProviderConfiguration:
-  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+  providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
 
 #enable CORS, may want to disable in production
 enableCors: true
 
 ## swagger configuration
 swagger:
-  resourcePackage: com.hortonworks.registries.schemaregistry.webservice
+  resourcePackage: org.apache.registries.schemaregistry.webservice
 
 # use the simple server factory if you only want to run on a single port
 #server:
@@ -99,7 +99,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.registries: DEBUG
+    org.apache.registries: DEBUG
 
 
   appenders:

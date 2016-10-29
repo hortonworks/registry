@@ -37,7 +37,7 @@ Configuration file is located at conf/registry-dev.yaml. By default it uses inme
 ```
 # MySQL based jdbc provider configuration is:
 storageProviderConfiguration:
-  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+  providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
   properties:
     db.type: "mysql"
     queryTimeoutInSecs: 30
@@ -197,7 +197,7 @@ String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
 
 ```java
 
-String simpleSerializerClassName = "com.hortonworks.schemaregistry.samples.serdes.SimpleSerializer";
+String simpleSerializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleSerializer";
 SerDesInfo serializerInfo = new SerDesInfo.Builder()
                                             .name("simple-serializer")
                                             .description("simple serializer")
@@ -206,7 +206,7 @@ SerDesInfo serializerInfo = new SerDesInfo.Builder()
                                             .buildSerializerInfo();
 Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
-String simpleDeserializerClassName = "com.hortonworks.schemaregistry.samples.serdes.SimpleDeserializer";
+String simpleDeserializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleDeserializer";
 SerDesInfo deserializerInfo = new SerDesInfo.Builder()
         .name("simple-deserializer")
         .description("simple deserializer")
@@ -247,8 +247,8 @@ LOG.info("Given payload and deserialized object are equal: "+ payload.equals(des
 ## Using inbuilt Kafka Avro serializer and deserializer
 
 Below Serializer and Deserializer can be used for avro records as respective Kafka avro serializer and deserializer respectively.
-`com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroSerializer`
-`com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer`
+`org.apache.registries.schemaregistry.avro.kafka.KafkaAvroSerializer`
+`org.apache.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer`
 
 Following properties can be configured for producer/consumer
 
