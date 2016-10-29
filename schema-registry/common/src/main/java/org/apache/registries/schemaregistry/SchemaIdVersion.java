@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry;
+package org.apache.registries.schemaregistry;
 
 import com.google.common.base.Preconditions;
 

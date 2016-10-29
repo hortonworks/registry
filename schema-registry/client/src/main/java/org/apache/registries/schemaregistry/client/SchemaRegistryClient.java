@@ -24,8 +24,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.client.SchemaMetadataCache;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.ClassLoaderAwareInvocationHandler;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;

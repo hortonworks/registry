@@ -18,7 +18,7 @@
 
 package org.apache.registries.schemaregistry.examples.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaCompatibility;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
 import org.apache.registries.schemaregistry.SchemaMetadata;

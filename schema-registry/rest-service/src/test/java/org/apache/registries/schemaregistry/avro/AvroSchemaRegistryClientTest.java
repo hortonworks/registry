@@ -17,7 +17,7 @@
  */
 package org.apache.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.common.test.IntegrationTest;
 import org.apache.registries.schemaregistry.SchemaMetadataInfo;
 import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;

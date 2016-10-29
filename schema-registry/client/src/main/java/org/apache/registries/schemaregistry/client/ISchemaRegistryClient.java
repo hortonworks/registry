@@ -18,7 +18,7 @@
 
 package org.apache.registries.schemaregistry.client;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;

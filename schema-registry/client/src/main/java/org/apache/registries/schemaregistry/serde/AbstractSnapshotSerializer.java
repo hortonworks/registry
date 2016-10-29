@@ -17,7 +17,7 @@
  */
 package org.apache.registries.schemaregistry.serde;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaMetadata;

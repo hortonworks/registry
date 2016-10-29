@@ -17,7 +17,7 @@
  */
 package org.apache.registries.schemaregistry.client;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaMetadata;
 import org.apache.registries.schemaregistry.SchemaVersion;
 import mockit.Expectations;

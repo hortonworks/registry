@@ -17,7 +17,7 @@
  */
 package org.apache.registries.schemaregistry.serdes.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.serde.AbstractSnapshotSerializer;
 import org.apache.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
