@@ -18,6 +18,7 @@
 package org.apache.registries.schemaregistry.avro;
 
 import com.google.common.io.Resources;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaMetadata;
 import org.apache.registries.schemaregistry.SchemaVersion;
 import org.apache.registries.schemaregistry.client.SchemaRegistryClient;
@@ -45,13 +46,13 @@ public class LocalRegistryServerTest {
 
             // registering schema metadata
             SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("foo").type("avro").build();
-            boolean success = schemaRegistryClient.registerSchemaMetadata(schemaMetadata);
-            Assert.assertTrue(success);
+            Long schemaId = schemaRegistryClient.registerSchemaMetadata(schemaMetadata);
+            Assert.assertNotNull(schemaId);
 
             // registering a new schema
             String schemaName = schemaMetadata.getName();
             String schema1 = IOUtils.toString(LocalRegistryServerTest.class.getResourceAsStream("/schema-1.avsc"), "UTF-8");
-            Integer v1 = schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(schema1, "Initial version of the schema"));
+            SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(schema1, "Initial version of the schema"));
         } finally {
             localSchemaRegistryServer.stop();
         }
