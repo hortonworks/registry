@@ -46,6 +46,13 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <!--
+            $REGISTRY_HOME/bin
+        -->
+        <fileSet>
+            <directory>${project.basedir}./bootstrap</directory>
+            <outputDirectory>bootstrap</outputDirectory>
+        </fileSet>
+        <!--
             EXAMPLES
         -->
         <fileSet>
