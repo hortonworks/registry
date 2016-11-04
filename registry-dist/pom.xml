@@ -32,13 +32,38 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.registries</groupId>
+            <artifactId>registry-webservice</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.registries</groupId>
+            <artifactId>schema-registry-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.registries</groupId>
+            <artifactId>schema-registry-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.registries</groupId>
+            <artifactId>schema-registry-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.registries</groupId>
             <artifactId>schema-registry-webservice</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.registries</groupId>
+            <artifactId>schema-registry-serdes</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.registries</groupId>
             <artifactId>storage-core</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

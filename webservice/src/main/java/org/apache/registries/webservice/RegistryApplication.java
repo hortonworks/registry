@@ -17,6 +17,7 @@
  */
 package org.apache.registries.webservice;
 
+import io.dropwizard.assets.AssetsBundle;
 import org.apache.registries.common.FileStorageConfiguration;
 import org.apache.registries.common.ModuleConfiguration;
 import org.apache.registries.common.ModuleRegistration;
@@ -58,13 +59,21 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     }
 
     @Override
+    public String getName() {
+        return "Schema Registry";
+    }
+
+
+    @Override
     public void initialize(Bootstrap<RegistryConfiguration> bootstrap) {
+        bootstrap.addBundle(new AssetsBundle("/assets", "/", "index.html", "static"));
         bootstrap.addBundle(new SwaggerBundle<RegistryConfiguration>() {
             @Override
             protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(RegistryConfiguration registryConfiguration) {
                 return registryConfiguration.getSwaggerBundleConfiguration();
             }
         });
+        super.initialize(bootstrap);
     }
 
     private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)

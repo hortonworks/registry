@@ -63,7 +63,7 @@ swagger:
 #    port: 8080
 
 server:
-  rootPath: '/*'
+  rootPath: '/api/*'
 #  softNofileLimit: 1000
 #  hardNofileLimit: 1000
   applicationConnectors:

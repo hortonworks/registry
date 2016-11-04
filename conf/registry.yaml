@@ -34,7 +34,7 @@ swagger:
 enableCors: true
 
 server:
-  rootPath: '/*'
+  rootPath: '/api/*'
 #  softNofileLimit: 1000
 #  hardNofileLimit: 1000
   applicationConnectors:

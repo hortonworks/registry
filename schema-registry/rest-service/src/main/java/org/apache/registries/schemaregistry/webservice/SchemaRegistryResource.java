@@ -63,7 +63,7 @@ import java.util.Map;
 /**
  *
  */
-@Path("/api/v1/schemaregistry")
+@Path("/v1/schemaregistry")
 @Api(value = "/api/v1/schemaregistry", tags = "schemaregistry", description = "This service is about schema registry operations")
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryResource {
