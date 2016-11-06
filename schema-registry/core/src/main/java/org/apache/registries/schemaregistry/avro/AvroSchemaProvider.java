@@ -17,6 +17,7 @@
  */
 package org.apache.registries.schemaregistry.avro;
 
+import org.apache.registries.schemaregistry.AbstractSchemaProvider;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaCompatibility;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
@@ -31,13 +32,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
  */
-public class AvroSchemaProvider implements SchemaProvider {
-
+public class AvroSchemaProvider extends AbstractSchemaProvider {
     public static final String TYPE = "avro";
+
+    @Override
+    public String getName() {
+        return "Avro schema provider";
+    }
+
+    @Override
+    public String getDescription() {
+        return "This provider supports avro schemas. You can find more information about avro at http://avro.apache.org";
+    }
 
     @Override
     public String getType() {
@@ -80,9 +91,9 @@ public class AvroSchemaProvider implements SchemaProvider {
     }
 
     @Override
-    public List<SchemaFieldInfo> generateFields(String rootSchema) {
+    public List<SchemaFieldInfo> generateFields(String schemaText) {
         AvroFieldsGenerator avroFieldsGenerator = new AvroFieldsGenerator();
-        return avroFieldsGenerator.generateFields(new Schema.Parser().parse(rootSchema));
+        return avroFieldsGenerator.generateFields(new Schema.Parser().parse(schemaText));
     }
 
 }

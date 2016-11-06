@@ -20,6 +20,7 @@ package org.apache.registries.schemaregistry.streams;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.registries.common.Schema;
+import org.apache.registries.schemaregistry.AbstractSchemaProvider;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaCompatibility;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
@@ -34,12 +35,22 @@ import java.util.List;
 /**
  *
  */
-public class StreamsSchemaProvider implements SchemaProvider {
+public class StreamsSchemaProvider extends AbstractSchemaProvider {
     public static final String TYPE = "streams";
     public static final String UTF_8 = "UTF-8";
     public static final String MD5 = "MD5";
 
     public StreamsSchemaProvider() {
+    }
+
+    @Override
+    public String getName() {
+        return null;
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
     }
 
     @Override
@@ -71,11 +82,11 @@ public class StreamsSchemaProvider implements SchemaProvider {
     }
 
     @Override
-    public List<SchemaFieldInfo> generateFields(String rootSchema) {
+    public List<SchemaFieldInfo> generateFields(String schemaText) {
         // schema should be in json form.
         List<Schema.Field> fields;
         try {
-            fields = new ObjectMapper().readValue(rootSchema, new TypeReference<List<Schema.Field>>() {});
+            fields = new ObjectMapper().readValue(schemaText, new TypeReference<List<Schema.Field>>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

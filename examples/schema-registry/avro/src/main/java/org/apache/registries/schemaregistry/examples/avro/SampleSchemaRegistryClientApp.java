@@ -157,6 +157,23 @@ public class SampleSchemaRegistryClientApp {
         return IOUtils.toString(schemaResourceStream, "UTF-8");
     }
 
+    public void runDefaultSerDesApi() throws Exception {
+        String type = AvroSchemaProvider.TYPE;
+
+        AvroSnapshotSerializer serializer = schemaRegistryClient.getDefaultSerializer(type);
+        serializer.init(config);
+        AvroSnapshotDeserializer deserializer = schemaRegistryClient.getDefaultDeserializer(type);
+        deserializer.init(config);
+
+        Object deviceObject = createGenericRecordForDevice("/device.avsc");
+
+        SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + System.currentTimeMillis());
+        byte[] serializedData = serializer.serialize(deviceObject, schemaMetadata);
+        Object deserializedObj = deserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
+
+        Log.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
+
+    }
 
     public void runCustomSerDesApi() throws Exception {
         // upload jar file
