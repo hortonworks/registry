@@ -43,13 +43,21 @@ const SchemaREST = {
                 options = options || {};
                 options.method = options.method || 'POST';
                 options.headers = options.headers || {
-          'Content-Type' : 'application/json',
-          'Accept' : 'application/json'
-        };
+                  'Content-Type' : 'application/json',
+                  'Accept' : 'application/json'
+                };
                 return fetch(baseUrl+'schemaregistry/schemas/'+name+'/versions', options)
                         .then( (response) => {
 				return response.json();
 			})
+        },
+        getSchemaProviders(options){
+            options = options || {};
+            options.method = options.method || 'GET';
+            return fetch(baseUrl+'schemaregistry/schemaproviders', options)
+                .then( (response) => {
+                    return response.json();
+                })
         }
 }
 

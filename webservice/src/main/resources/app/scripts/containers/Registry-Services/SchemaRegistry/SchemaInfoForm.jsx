@@ -17,18 +17,34 @@ export default class SchemaFormContainer extends Component {
                                 {value: 'NONE', label: 'NONE'}
                         ],
                         type: 'avro',
+                        typeArr: [],
                         schemaGroup: 'Kafka',
                         description: '',
                         showError: false,
                         showErrorLabel: false,
                         changedFields: []
                 };
+                this.fetchData();
+        }
+        fetchData(){
+            SchemaREST.getSchemaProviders()
+                .then((results)=>{
+                    this.setState({typeArr: results.entities});
+                })
         }
 
         handleValueChange(e){
                 let obj = {};
                 obj[e.target.name] = e.target.value;
                 this.setState(obj);
+        }
+
+        handleTypeChange(obj) {
+                if(obj){
+                        this.setState({type: obj.type});
+                } else {
+                        this.setState({type: ''});
+                }
         }
 
         handleCompatibilityChange(obj) {
@@ -109,15 +125,12 @@ export default class SchemaFormContainer extends Component {
                                 <div className="form-group">
                                         <label className="col-sm-3 control-label">Type*</label>
                                         <div className="col-sm-5">
-                                                <input
-                                                        name="type"
-                                                        placeholder="Type"
-                                                        onChange={this.handleValueChange.bind(this)}
-                                                        type="text"
-                                                        className={showError && changedFields.indexOf("type") !== -1 && this.state.type === '' ? "form-control invalidInput" : "form-control"}
+                                                <Select
                                                         value={this.state.type}
-                                                    required={true}
-                                                    disabled={true}
+                                                        options={this.state.typeArr}
+                                                        onChange={this.handleTypeChange.bind(this)}
+                                                        valueKey="type"
+                                                        labelKey="name"
                                                 />
                                         </div>
                                 </div>
@@ -125,14 +138,13 @@ export default class SchemaFormContainer extends Component {
                                         <label className="col-sm-3 control-label">Schema Group*</label>
                                         <div className="col-sm-5">
                                                 <input
-                                                        name="schemaGroup"
-                                                        placeholder="schemaGroup"
-                                                        onChange={this.handleValueChange.bind(this)}
-                                                        type="text"
-                                                        className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === '' ? "form-control invalidInput" : "form-control"}
-                                                        value={this.state.schemaGroup}
+                                                    name="schemaGroup"
+                                                    placeholder="schemaGroup"
+                                                    onChange={this.handleValueChange.bind(this)}
+                                                    type="text"
+                                                    className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === '' ? "form-control invalidInput" : "form-control"}
+                                                    value={this.state.schemaGroup}
                                                     required={true}
-                                                    disabled={true}
                                                 />
                                         </div>
                                 </div>
