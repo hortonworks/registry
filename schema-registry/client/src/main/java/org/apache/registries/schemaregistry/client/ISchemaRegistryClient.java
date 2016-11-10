@@ -18,17 +18,18 @@
 
 package org.apache.registries.schemaregistry.client;
 
-import org.apache.registries.schemaregistry.SchemaIdVersion;
-import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
-import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaMetadata;
 import org.apache.registries.schemaregistry.SchemaMetadataInfo;
-import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.registries.schemaregistry.SchemaProviderInfo;
 import org.apache.registries.schemaregistry.SchemaVersion;
 import org.apache.registries.schemaregistry.SchemaVersionInfo;
 import org.apache.registries.schemaregistry.SchemaVersionKey;
 import org.apache.registries.schemaregistry.SerDesInfo;
+import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
+import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
+import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.registries.schemaregistry.serde.SerDesException;
 
 import java.io.FileNotFoundException;
@@ -82,6 +83,11 @@ import java.util.Collection;
  * SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
  * Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
  * LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
+ *
+ * // Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
+ * // for avro,
+ * AvroSnapshotSerializer serializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
+ * AvroSnapshotDeserializer deserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
  * </pre>
  * <p>
  * Below code describes how to register serializer and deserializers, map them with a schema etc.
@@ -111,6 +117,11 @@ import java.util.Collection;
  * </pre>
  */
 public interface ISchemaRegistryClient extends AutoCloseable {
+
+    /**
+     * @return Collection of supported schema providers. For ex: avro.
+     */
+    Collection<SchemaProviderInfo> getSupportedSchemaProviders();
 
     /**
      * Registers information about a schema.
@@ -153,7 +164,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * Adds the given {@code schemaVersion} and returns the corresponding version number.
      *
-     * @param schemaName name identifying a schema
+     * @param schemaName    name identifying a schema
      * @param schemaVersion new version of the schema to be added
      * @return version number of the schema added
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
@@ -187,7 +198,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
 
 
     /**
-     * @param schemaName name identifying a schema
+     * @param schemaName   name identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
      * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaName}.
      */
@@ -211,7 +222,6 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     InputStream downloadFile(String fileId) throws FileNotFoundException;
 
     /**
-     *
      * @param serializerInfo serializer information
      * @return unique id for the added Serializer for the given {@code serializerInfo}
      */
@@ -225,10 +235,32 @@ public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
      * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaName}
-     *  @param schemaName name identifying a schema
-     * @param serDesId serializer/deserializer
+     *
+     * @param schemaName name identifying a schema
+     * @param serDesId   serializer/deserializer
      */
     void mapSchemaWithSerDes(String schemaName, Long serDesId);
+
+    /**
+     * Returns a new instance of default serializer configured for the given type of schema.
+     *
+     * @param type type of the schema like avro.
+     * @param <T>  class type of the serializer instance.
+     * @return a new instance of default serializer configured
+     * @throws SerDesException          if the serializer class is not found or any error while creating an instance of serializer class.
+     * @throws IllegalArgumentException if the given {@code type} is not registered as schema provider in the target schema registry.
+     */
+    public <T> T getDefaultSerializer(String type) throws SerDesException;
+
+
+    /**
+     * @param type type of the schema, For ex: avro.
+     * @param <T>  class type of the deserializer instance.
+     * @return a new instance of default deserializer configured for given {@code type}
+     * @throws SerDesException          if the deserializer class is not found or any error while creating an instance of deserializer class.
+     * @throws IllegalArgumentException if the given {@code type} is not registered as schema provider in the target schema registry.
+     */
+    public <T> T getDefaultDeserializer(String type) throws SerDesException;
 
     /**
      * @param schemaName name identifying a schema

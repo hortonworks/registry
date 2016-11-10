@@ -21,6 +21,7 @@ import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Different types of Schema providers such as AVRO, Protobuf etc.
@@ -28,12 +29,52 @@ import java.util.List;
 public interface SchemaProvider {
 
     /**
+     * Initializes with the given {@code config}.
+     * @param config
+     */
+    public void init(Map<String, Object> config);
+
+    /**
+     * @return Name of this provider
+     */
+    String getName();
+
+    /**
+     * @return descirption about this provider.
+     */
+    String getDescription();
+
+    /**
+     * @return Fully qualified class name of the default serializer.
+     */
+    String getDefaultSerializerClassName();
+
+    /**
+     * @return Fully qualified class name of the default serializer.
+     */
+    String getDefaultDeserializerClassName();
+
+    /**
      * @return type of this provider. This should be unique among all the registered providers.
      */
     String getType();
 
+    /**
+     * Returns true if the given {@code schemaText} is compatible with the given {@code existingSchema} according to {@code existingSchemaCompatibility}
+     *
+     * @param toSchema
+     * @param existingSchema
+     * @param compatibility
+     */
     boolean isCompatible(String toSchema, String existingSchema, SchemaCompatibility compatibility);
 
+    /**
+     * Returns true if the given {@code schemaText} is compatible with all the given {@code existingSchemaTexts} according to {@code existingSchemaCompatibility}
+     *
+     * @param toSchemaText
+     * @param existingSchemaTexts
+     * @param existingSchemaCompatibility
+     */
     boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility);
 
     /**
@@ -43,9 +84,10 @@ public interface SchemaProvider {
     byte[] getFingerprint(String schemaText) throws InvalidSchemaException;
 
     /**
-     * TODO why is this called rootSchema? Is this same as schemaText above?
-     * @param rootSchema
-     * @return all the fields in the given schema
+     * Returns all the fields in the given {@code schemaText} by traversing the whole schema including nested/complex types.
+     *
+     * @param schemaText
+     * @return all the fields in the given {@code schemaText}
      */
-    List<SchemaFieldInfo> generateFields(String rootSchema);
+    List<SchemaFieldInfo> generateFields(String schemaText);
 }

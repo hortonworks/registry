@@ -3,8 +3,10 @@ modules:
   - name: schema-registry
     className: org.apache.registries.schemaregistry.webservice.SchemaRegistryModule
     config:
-      schemaProviderClasses:
-        - "org.apache.registries.schemaregistry.avro.AvroSchemaProvider"
+      schemaProviders:
+        - providerClass: "org.apache.registries.schemaregistry.avro.AvroSchemaProvider"
+          defaultSerializerClass: "org.apache.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+          defaultDeserializerClass: "org.apache.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000

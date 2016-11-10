@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
-    public static final String SCHEMA_PROVIDER_CLASSES = "schemaProviderClasses";
+    public static final String SCHEMA_PROVIDERS = "schemaProviders";
 
     private Map<String, Object> config;
     private FileStorage fileStorage;
@@ -66,17 +66,23 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     }
 
     private Collection<? extends SchemaProvider> getSchemaProviders() {
-        Collection<String> schemaProviderClassNames = (Collection<String>) config.get(SCHEMA_PROVIDER_CLASSES);
-        if (schemaProviderClassNames == null || schemaProviderClassNames.isEmpty()) {
-            throw new IllegalArgumentException("No " + SCHEMA_PROVIDER_CLASSES + " property is configured");
+        Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
+        if (schemaProviders == null || schemaProviders.isEmpty()) {
+            throw new IllegalArgumentException("No [" + SCHEMA_PROVIDERS + "] property is configured in schema registry configuration file.");
         }
 
-        return Collections2.transform(schemaProviderClassNames, new Function<String, SchemaProvider>() {
+        return Collections2.transform(schemaProviders, new Function<Map<String, Object>, SchemaProvider>() {
             @Nullable
             @Override
-            public SchemaProvider apply(@Nullable String className) {
+            public SchemaProvider apply(@Nullable Map<String, Object> schemaProviderConfig) {
+                String className = (String) schemaProviderConfig.get("providerClass");
+                if (className == null || className.isEmpty()) {
+                    throw new IllegalArgumentException("Schema provider class name must be non empty, Invalid provider class name [" + className + "]");
+                }
                 try {
-                    return (SchemaProvider) Class.forName(className, true, Thread.currentThread().getContextClassLoader()).newInstance();
+                    SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, true, Thread.currentThread().getContextClassLoader()).newInstance();
+                    schemaProvider.init(schemaProviderConfig);
+                    return schemaProvider;
                 } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                     LOG.error("Error encountered while loading SchemaProvider [{}] ", className, e);
                     throw new IllegalArgumentException(e);

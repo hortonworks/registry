@@ -172,8 +172,16 @@ LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchem
 
 ```
 
+### Default serializer and deserializer APIs.
+Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
+```java
+// for avro,
+AvroSnapshotSerializer serializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
+AvroSnapshotDeserializer deserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
+```
+
 ### Using serializer and deserializer related APIs
-Registering serializer and deserializer is donw with the below steps
+Registering serializer and deserializer is done with the below steps
  - Upload jar file which contains serializer and deserializer classes and its dependencies
  - Register serializer/deserializer
  - Map serializer/deserializer with a registered schema.

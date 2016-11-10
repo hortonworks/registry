@@ -23,13 +23,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
-
-import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.ClassLoaderAwareInvocationHandler;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaMetadata;
 import org.apache.registries.schemaregistry.SchemaMetadataInfo;
+import org.apache.registries.schemaregistry.SchemaProviderInfo;
 import org.apache.registries.schemaregistry.SchemaVersion;
 import org.apache.registries.schemaregistry.SchemaVersionInfo;
 import org.apache.registries.schemaregistry.SchemaVersionInfoCache;
@@ -117,6 +117,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private static final String SCHEMA_REGISTRY_PATH = "/schemaregistry";
     private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
+    private static final String SCHEMA_PROVIDERS_PATH = SCHEMA_REGISTRY_PATH + "/schemaproviders/";
     private static final String SCHEMAS_BY_ID_PATH = SCHEMA_REGISTRY_PATH + "/schemasById/";
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
@@ -129,6 +130,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final WebTarget schemasTarget;
     private final WebTarget schemasByIdTarget;
     private final WebTarget searchFieldsTarget;
+    private final WebTarget schemaProvidersTarget;
 
     private final Options options;
     private final ClassLoaderCache classLoaderCache;
@@ -145,6 +147,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         String rootCatalogURL = (String) conf.get(SCHEMA_REGISTRY_URL);
         rootTarget = client.target(rootCatalogURL);
+        schemaProvidersTarget = rootTarget.path(SCHEMA_PROVIDERS_PATH);
         schemasTarget = rootTarget.path(SCHEMAS_PATH);
         schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
         searchFieldsTarget = schemasTarget.path("search/fields");
@@ -207,8 +210,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public void close() {
-        client.close();
+    public Collection<SchemaProviderInfo> getSupportedSchemaProviders() {
+        return getEntities(schemaProvidersTarget, SchemaProviderInfo.class);
     }
 
     @Override
@@ -416,6 +419,38 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public <T> T getDefaultSerializer(String type) throws SerDesException {
+        Collection<SchemaProviderInfo> supportedSchemaProviders = getSupportedSchemaProviders();
+        for (SchemaProviderInfo schemaProvider : supportedSchemaProviders) {
+            if (schemaProvider.getType().equals(type)) {
+                try {
+                    return (T) Class.forName(schemaProvider.getDefaultSerializerClassName()).newInstance();
+                } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                    throw new SerDesException(e);
+                }
+            }
+        }
+
+        throw new IllegalArgumentException("No schema provider registered for the given type " + type);
+    }
+
+    @Override
+    public <T> T getDefaultDeserializer(String type) throws SerDesException {
+        Collection<SchemaProviderInfo> supportedSchemaProviders = getSupportedSchemaProviders();
+        for (SchemaProviderInfo schemaProvider : supportedSchemaProviders) {
+            if (schemaProvider.getType().equals(type)) {
+                try {
+                    return (T) Class.forName(schemaProvider.getDefaultDeserializerClassName()).newInstance();
+                } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                    throw new SerDesException(e);
+                }
+            }
+        }
+
+        throw new IllegalArgumentException("No schema provider registered for the given type " + type);
+    }
+
+    @Override
     public Collection<SerDesInfo> getSerializers(String schemaName) {
         String path = schemaName + "/serializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
@@ -434,6 +469,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public <T> T createDeserializerInstance(SerDesInfo deserializerInfo) {
         return createInstance(deserializerInfo, DESERIALIZER_INTERFACE_CLASSES);
+    }
+
+    @Override
+    public void close() {
+        client.close();
     }
 
     private <T> T createInstance(SerDesInfo serDesInfo, Set<Class<?>> interfaceClasses) {

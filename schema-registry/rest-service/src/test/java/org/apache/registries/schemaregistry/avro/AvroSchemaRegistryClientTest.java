@@ -56,6 +56,8 @@ import java.util.UUID;
 @Category(IntegrationTest.class)
 public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCientTest {
 
+    private static final String INVALID_SCHEMA_PROVIDER_TYPE = "invalid-schema-provider-type";
+
     @Test
     public void testSchemaOps() throws Exception {
         String schema1 = getSchema("/schema-1.avsc");
@@ -133,6 +135,26 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
                 .description("Schema for " + schemaDesc)
                 .compatibility(compatibility)
                 .build();
+    }
+
+    @Test
+    public void testDefaultSerDes() throws Exception {
+        Object defaultSerializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
+        Object defaultDeserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
+
+        Assert.assertEquals(AvroSnapshotDeserializer.class , defaultDeserializer.getClass());
+        Assert.assertEquals(AvroSnapshotSerializer.class, defaultSerializer.getClass());
+    }
+
+    @Test(expected = Exception.class)
+    public void testInvalidTypeForDefaultSer() throws Exception {
+
+        Object defaultSerializer = schemaRegistryClient.getDefaultSerializer(INVALID_SCHEMA_PROVIDER_TYPE);
+    }
+
+    @Test(expected = Exception.class)
+    public void testInvalidTypeForDefaultDes() throws Exception {
+        Object defaultDeserializer = schemaRegistryClient.getDefaultDeserializer(INVALID_SCHEMA_PROVIDER_TYPE);
     }
 
     @Test

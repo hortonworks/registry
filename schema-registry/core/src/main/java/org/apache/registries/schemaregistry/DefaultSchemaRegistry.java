@@ -41,6 +41,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for schema registry.
@@ -57,6 +59,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private final Object addOrUpdateLock = new Object();
     private Options options;
     private SchemaVersionInfoCache schemaVersionInfoCache;
+    private List<SchemaProviderInfo> schemaProviderInfos;
 
     public DefaultSchemaRegistry(StorageManager storageManager,
                                  FileStorage fileStorage,
@@ -72,16 +75,29 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         for (SchemaProvider schemaProvider : schemaProviders) {
             schemaTypeWithProviders.put(schemaProvider.getType(), schemaProvider);
         }
-        schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionInfoCache.SchemaRetriever() {
-            @Override
-            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
-                return retrieveSchemaVersionInfo(key);
-            }
-        }, options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs());
-        storageManager.registerStorables(
-                Lists.<Class<? extends Storable>>newArrayList(SchemaMetadataStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
-                                                              SerDesInfoStorable.class, SchemaSerDesMapping.class));
 
+        schemaProviderInfos = schemaProviders.stream()
+                .map(schemaProvider
+                             -> new SchemaProviderInfo(schemaProvider.getType(),
+                                                       schemaProvider.getName(),
+                                                       schemaProvider.getDescription(),
+                                                       schemaProvider.getDefaultSerializerClassName(),
+                                                       schemaProvider.getDefaultDeserializerClassName()
+                                                       )
+                ).collect(Collectors.toList());
+
+        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> retrieveSchemaVersionInfo(key),
+                                                            options.getMaxSchemaCacheSize(),
+                                                            options.getSchemaExpiryInSecs());
+        storageManager.registerStorables(
+                Lists.newArrayList(SchemaMetadataStorable.class, SchemaVersionStorable.class, SchemaFieldInfoStorable.class,
+                                   SerDesInfoStorable.class, SchemaSerDesMapping.class));
+
+    }
+
+    @Override
+    public Collection<SchemaProviderInfo> getRegisteredSchemaProviderInfos() {
+        return schemaProviderInfos;
     }
 
     @Override

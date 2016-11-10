@@ -18,24 +18,25 @@
 package org.apache.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.WSUtils;
 import org.apache.registries.schemaregistry.ISchemaRegistry;
-import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
-import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
 import org.apache.registries.schemaregistry.SchemaMetadata;
 import org.apache.registries.schemaregistry.SchemaMetadataInfo;
-import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.registries.schemaregistry.SchemaProviderInfo;
 import org.apache.registries.schemaregistry.SchemaVersion;
 import org.apache.registries.schemaregistry.SchemaVersionInfo;
 import org.apache.registries.schemaregistry.SchemaVersionKey;
 import org.apache.registries.schemaregistry.SerDesInfo;
+import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
+import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
+import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -73,6 +74,21 @@ public class SchemaRegistryResource {
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry) {
         this.schemaRegistry = schemaRegistry;
+    }
+
+    @GET
+    @Path("/schemaproviders")
+    @ApiOperation(value = "List of registered schema providers ",
+            response = SchemaProviderInfo.class, responseContainer = "Collection")
+    @Timed
+    public Response getRegisteredSchemaProviderInfos() {
+        try {
+            Collection<SchemaProviderInfo> schemaProviderInfos = schemaRegistry.getRegisteredSchemaProviderInfos();
+            return WSUtils.respond(schemaProviderInfos, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while listing schemas", ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
     }
 
     @GET
@@ -145,8 +161,8 @@ public class SchemaRegistryResource {
         try {
             Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
             response = WSUtils.respond(schemaMetadataId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
-        }  catch (UnsupportedSchemaTypeException ex) {
-            LOG.error("Unsupported schema type encountered while adding schema metadata [{}]",schemaMetadataInfo, ex);
+        } catch (UnsupportedSchemaTypeException ex) {
+            LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadataInfo, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
         } catch (Exception ex) {
             LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
@@ -165,7 +181,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
-            if(schemaMetadataInfo != null) {
+            if (schemaMetadataInfo != null) {
                 response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -187,7 +203,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaMetadataId);
-            if(schemaMetadataInfo != null) {
+            if (schemaMetadataInfo != null) {
                 response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaMetadataId.toString());
