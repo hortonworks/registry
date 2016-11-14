@@ -10,9 +10,9 @@ mvn clean package
 
 cd target
 
-unzip hortonworks-registry-0.1.0-SNAPSHOT.zip
+unzip hortonworks-registry-0.1.0.zip
 
-cd hortonworks-registry-0.1.0-SNAPSHOT
+cd hortonworks-registry-0.1.0
 
 ./bin/registry-server-start.sh conf/registry-dev.yaml 
 
