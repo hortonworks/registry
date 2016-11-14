@@ -49,6 +49,14 @@
         <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>${repoid}</id>
+            <name>${reponame}</name>
+            <url>${repourl}</url>
+        </repository>
+    </distributionManagement>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
