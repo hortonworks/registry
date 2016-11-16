@@ -13,7 +13,7 @@
 
     <properties>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
-        <dropwizard.swagger.version>0.9.3-2</dropwizard.swagger.version>
+        <dropwizard.swagger.version>1.0.0-1</dropwizard.swagger.version>
     </properties>
 
     <dependencies>
