@@ -60,7 +60,7 @@ public class LocalRegistryServerTest {
 
     private SchemaRegistryClient createSchemaRegistryClient(int localPort) {
         final String rootUrl = String.format("http://localhost:%d/api/v1", localPort);
-        final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+        final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
         return new SchemaRegistryClient(SCHEMA_REGISTRY_CLIENT_CONF);
     }
 }

@@ -25,6 +25,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.ClassLoaderAwareInvocationHandler;
+import org.apache.registries.schemaregistry.ConfigEntry;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
 import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaMetadata;
@@ -63,12 +64,15 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,9 +81,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_CONNECTION_TIMEOUT;
-import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.Options.DEFAULT_READ_TIMEOUT;
-import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL;
+import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
+import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
+import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL;
 
 /**
  * This is the default implementation of {@link ISchemaRegistryClient} which connects to the given {@code rootCatalogURL}.
@@ -89,15 +93,15 @@ import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.O
  *     SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(config);
  * </pre>
  * <p>
- * There are different options available as mentioned in {@link Options} like
+ * There are different options available as mentioned in {@link Configuration} like
  * <pre>
- * - {@link Options#SCHEMA_REGISTRY_URL}.
- * - {@link Options#SCHEMA_METADATA_CACHE_SIZE}.
- * - {@link Options#SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS}.
- * - {@link Options#SCHEMA_VERSION_CACHE_SIZE}.
- * - {@link Options#SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS}.
- * - {@link Options#SCHEMA_TEXT_CACHE_SIZE}.
- * - {@link Options#SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS}.
+ * - {@link Configuration#SCHEMA_REGISTRY_URL}.
+ * - {@link Configuration#SCHEMA_METADATA_CACHE_SIZE}.
+ * - {@link Configuration#SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS}.
+ * - {@link Configuration#SCHEMA_VERSION_CACHE_SIZE}.
+ * - {@link Configuration#SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS}.
+ * - {@link Configuration#SCHEMA_TEXT_CACHE_SIZE}.
+ * - {@link Configuration#SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS}.
  *
  * and many other properties like {@link ClientProperties}
  * </pre>
@@ -132,20 +136,20 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final WebTarget searchFieldsTarget;
     private final WebTarget schemaProvidersTarget;
 
-    private final Options options;
+    private final Configuration configuration;
     private final ClassLoaderCache classLoaderCache;
     private final SchemaVersionInfoCache schemaVersionInfoCache;
     private final SchemaMetadataCache schemaMetadataCache;
     private final Cache<SchemaDigestEntry, SchemaIdVersion> schemaTextCache;
 
     public SchemaRegistryClient(Map<String, ?> conf) {
-        options = new Options(conf);
+        configuration = new Configuration(conf);
 
         ClientConfig config = createClientConfig(conf);
         client = ClientBuilder.newBuilder().withConfig(config).build();
         client.register(MultiPartFeature.class);
 
-        String rootCatalogURL = (String) conf.get(SCHEMA_REGISTRY_URL);
+        String rootCatalogURL = configuration.getValue(SCHEMA_REGISTRY_URL.name());
         rootTarget = client.target(rootCatalogURL);
         schemaProvidersTarget = rootTarget.path(SCHEMA_PROVIDERS_PATH);
         schemasTarget = rootTarget.path(SCHEMAS_PATH);
@@ -154,21 +158,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         classLoaderCache = new ClassLoaderCache(this);
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionInfoCache.SchemaRetriever() {
-            @Override
-            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
-                return doGetSchemaVersionInfo(key);
-            }
-        }, options.getSchemaVersionCacheSize(), options.getSchemaVersionCacheExpiryInSecs());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> doGetSchemaVersionInfo(key),
+                                                            configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name()),
+                                                            configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name()));
 
         SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
-        schemaMetadataCache = new SchemaMetadataCache(options.getSchemaMetadataCacheSize(),
-                                                      options.getSchemaMetadataCacheExpiryInSecs(),
+        schemaMetadataCache = new SchemaMetadataCache(configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE.name()),
+                                                      configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS.name()),
                                                       schemaMetadataFetcher);
 
         schemaTextCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getSchemaTextCacheSize())
-                .expireAfterAccess(options.getSchemaTextCacheExpiryInSecs(), TimeUnit.MILLISECONDS)
+                .maximumSize(configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE.name()))
+                .expireAfterAccess(configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS.name()), TimeUnit.MILLISECONDS)
                 .build();
     }
 
@@ -205,8 +206,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return config;
     }
 
-    public Options getOptions() {
-        return options;
+    public Configuration getConfiguration() {
+        return configuration;
     }
 
     @Override
@@ -551,40 +552,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return readEntity(response, clazz);
     }
 
-    public static final class Options {
+    public static final class Configuration {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
         /**
          * URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1
          */
-        public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
-
-        /**
-         * Local directory path to which downloaded jars should be copied to. For ex: /tmp/schema-registry/local-jars
-         */
-        public static final String LOCAL_JAR_PATH = "schema.registry.client.local.jars.path";
-
-        /**
-         * Maximum size of classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_SIZE}
-         * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
-         */
-        public static final String CLASSLOADER_CACHE_SIZE = "schema.registry.client.class.loader.cache.size";
-
-        /**
-         * Expiry interval(in seconds) of an entry in classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS}
-         * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
-         */
-        public static final String CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.class.loader.cache.expiry.interval";
-
-        /**
-         * Default value for classloader cache size.
-         */
-        public static final int DEFAULT_CLASSLOADER_CACHE_SIZE = 1024;
-
-        /**
-         * Default value for cache expiry interval in seconds.
-         */
-        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60;
+        public static final ConfigEntry<String> SCHEMA_REGISTRY_URL =
+                ConfigEntry.mandatory("schema.registry.url",
+                                      String.class,
+                                      "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
+                                      "http://localhost:9090/api/v1",
+                                      ConfigEntry.NonEmptyStringValidator.get());
 
         /**
          * Default path for downloaded jars to be stored.
@@ -592,38 +571,110 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final String DEFAULT_LOCAL_JARS_PATH = "/tmp/schema-registry/local-jars";
 
         /**
+         * Local directory path to which downloaded jars should be copied to. For ex: /tmp/schema-registry/local-jars
+         */
+        public static final ConfigEntry<String> LOCAL_JAR_PATH =
+                ConfigEntry.optional("schema.registry.client.local.jars.path",
+                                     String.class,
+                                     "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
+                                     DEFAULT_LOCAL_JARS_PATH,
+                                     ConfigEntry.NonEmptyStringValidator.get());
+
+        /**
+         * Default value for classloader cache size.
+         */
+        public static final long DEFAULT_CLASSLOADER_CACHE_SIZE = 1024L;
+
+        /**
+         * Default value for cache expiry interval in seconds.
+         */
+        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
+
+        /**
+         * Maximum size of classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_SIZE}
+         * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
+         */
+        public static final ConfigEntry<Number> CLASSLOADER_CACHE_SIZE =
+                ConfigEntry.optional("schema.registry.client.class.loader.cache.size",
+                                     Long.class,
+                                     "Maximum size of classloader cache",
+                                     DEFAULT_CLASSLOADER_CACHE_SIZE,
+                                     ConfigEntry.PositiveNumberValidator.get());
+
+        /**
+         * Expiry interval(in seconds) of an entry in classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS}
+         * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
+         */
+        public static final ConfigEntry<Number> CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS =
+                ConfigEntry.optional("schema.registry.client.class.loader.cache.expiry.interval",
+                                     Long.class,
+                                     "Expiry interval(in seconds) of an entry in classloader cache",
+                                     DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.PositiveNumberValidator.get());
+
+        public static final long DEFAULT_SCHEMA_CACHE_SIZE = 1024L;
+        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60L;
+
+        /**
          * Maximum size of schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}
          */
-        public static final String SCHEMA_VERSION_CACHE_SIZE = "schema.registry.client.schema.version.cache.size";
+        public static final ConfigEntry<Number> SCHEMA_VERSION_CACHE_SIZE =
+                ConfigEntry.optional("schema.registry.client.schema.version.cache.size",
+                                     Long.class,
+                                     "Maximum size of schema version cache",
+                                     DEFAULT_SCHEMA_CACHE_SIZE,
+                                     ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
-        public static final String SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.version.cache.expiry.interval";
+        public static final ConfigEntry<Number> SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS =
+                ConfigEntry.optional("schema.registry.client.schema.version.cache.expiry.interval",
+                                     Long.class,
+                                     "Expiry interval(in seconds) of an entry in schema version cache",
+                                     DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Maximum size of schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}
          */
-        public static final String SCHEMA_METADATA_CACHE_SIZE = "schema.registry.client.schema.metadata.cache.size";
+        public static final ConfigEntry<Number> SCHEMA_METADATA_CACHE_SIZE =
+                ConfigEntry.optional("schema.registry.client.schema.metadata.cache.size",
+                                     Long.class,
+                                     "Maximum size of schema metadata cache",
+                                     DEFAULT_SCHEMA_CACHE_SIZE,
+                                     ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
-        public static final String SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.metadata.cache.expiry.interval";
+        public static final ConfigEntry<Number> SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS =
+                ConfigEntry.optional("schema.registry.client.schema.metadata.cache.expiry.interval",
+                                     Long.class,
+                                     "Expiry interval(in seconds) of an entry in schema metadata cache",
+                                     DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Maximum size of schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}.
          * This cache has ability to store/get entries with same schema name and schema text.
          */
-        public static final String SCHEMA_TEXT_CACHE_SIZE = "schema.registry.client.schema.text.cache.size";
+        public static final ConfigEntry<Number> SCHEMA_TEXT_CACHE_SIZE =
+                ConfigEntry.optional("schema.registry.client.schema.text.cache.size",
+                                     Long.class,
+                                     "Maximum size of schema text cache",
+                                     DEFAULT_SCHEMA_CACHE_SIZE,
+                                     ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
-        public static final String SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS = "schema.registry.client.schema.text.cache.expiry.interval";
-
-        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
+        public static final ConfigEntry<Number> SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS =
+                ConfigEntry.optional("schema.registry.client.schema.text.cache.expiry.interval",
+                                     Long.class,
+                                     "Expiry interval(in seconds) of an entry in schema text cache.",
+                                     DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.PositiveNumberValidator.get());
 
         // connection properties
         /**
@@ -637,72 +688,58 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
 
         private final Map<String, ?> config;
+        private final Map<String, ConfigEntry<?>> options;
 
-        public Options(Map<String, ?> config) {
-            this.config = config;
+        public Configuration(Map<String, ?> config) {
+            Field[] fields = this.getClass().getDeclaredFields();
+            this.options = Collections.unmodifiableMap(buildOptions(fields));
+            this.config = buildConfig(config);
         }
 
-        private Object getPropertyValue(String propertyKey, Object defaultValue) {
-            Object value = config.get(propertyKey);
-            return value != null ? value : defaultValue;
-        }
+        private Map<String, ?> buildConfig(Map<String, ?> config) {
+            Map<String, Object> result = new HashMap<>();
+            for (Map.Entry<String, ?> entry : config.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
 
-        public int getClassLoaderCacheSize() {
-            Integer value = (Integer) getPropertyValue(CLASSLOADER_CACHE_SIZE, DEFAULT_CLASSLOADER_CACHE_SIZE);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public long getClassLoaderCacheExpiryInSecs() {
-            Long value = (Long) getPropertyValue(CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public String getLocalJarPath() {
-            return (String) getPropertyValue(LOCAL_JAR_PATH, DEFAULT_LOCAL_JARS_PATH);
-        }
-
-        public int getSchemaVersionCacheSize() {
-            Integer value = (Integer) getPropertyValue(SCHEMA_VERSION_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public long getSchemaVersionCacheExpiryInSecs() {
-            Long value = (Long) getPropertyValue(SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public int getSchemaTextCacheSize() {
-            Integer value = (Integer) getPropertyValue(SCHEMA_TEXT_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public long getSchemaTextCacheExpiryInSecs() {
-            Long value = (Long) getPropertyValue(SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public int getSchemaMetadataCacheSize() {
-            Integer value = (Integer) getPropertyValue(SCHEMA_METADATA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        public long getSchemaMetadataCacheExpiryInSecs() {
-            Long value = (Long) getPropertyValue(SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS);
-            checkPositiveNumber(value);
-            return value;
-        }
-
-        private void checkPositiveNumber(Number number) {
-            if (number.doubleValue() <= 0) {
-                throw new IllegalArgumentException("Given value must be a positive number");
+                ConfigEntry configEntry = options.get(key);
+                if (configEntry != null) {
+                    if (value != null) {
+                        configEntry.validator().validate((value));
+                    } else {
+                        value = configEntry.defaultValue();
+                    }
+                }
+                result.put(key, value);
             }
+
+            return result;
+        }
+
+        private Map<String, ConfigEntry<?>> buildOptions(Field[] fields) {
+            Map<String, ConfigEntry<?>> options = new HashMap<>();
+            for (Field field : fields) {
+                Class<?> type = field.getType();
+
+                if (type.isAssignableFrom(ConfigEntry.class)) {
+                    field.setAccessible(true);
+                    try {
+                        ConfigEntry configEntry = (ConfigEntry) field.get(this);
+                        options.put(configEntry.name(), configEntry);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+            return options;
+        }
+
+        public <T> T getValue(String propertyKey) {
+            return (T) (config.containsKey(propertyKey) ? config.get(propertyKey) : options.get(propertyKey).defaultValue());
+        }
+
+        public Collection<ConfigEntry<?>> getAvailableConfigEntries() {
+            return options.values();
         }
 
     }

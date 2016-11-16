@@ -252,7 +252,7 @@ public class SampleSchemaRegistryClientApp {
     }
 
     public static void main(String[] args) throws Exception {
-        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, DEFAULT_SCHEMA_REG_URL);
+        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), DEFAULT_SCHEMA_REG_URL);
         Map<String, Object> config = createConfig(schemaRegistryUrl);
         SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(config);
 
@@ -265,11 +265,11 @@ public class SampleSchemaRegistryClientApp {
 
     public static Map<String, Object> createConfig(String schemaRegistryUrl) {
         Map<String, Object> config = new HashMap<>();
-        config.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, schemaRegistryUrl);
-        config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_SIZE, 10);
-        config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS, 5000L);
-        config.put(SchemaRegistryClient.Options.SCHEMA_VERSION_CACHE_SIZE, 1000);
-        config.put(SchemaRegistryClient.Options.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS, 60 * 60 * 1000L);
+        config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), schemaRegistryUrl);
+        config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 10L);
+        config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 5000L);
+        config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000L);
+        config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(), 60 * 60 * 1000L);
         return config;
     }
 

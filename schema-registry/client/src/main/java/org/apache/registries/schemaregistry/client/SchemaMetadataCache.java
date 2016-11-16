@@ -37,7 +37,7 @@ public class SchemaMetadataCache {
 
     private final LoadingCache<Key, SchemaMetadataInfo> loadingCache;
 
-    public SchemaMetadataCache(Integer size, Long expiryInSecs, final SchemaMetadataFetcher schemaMetadataFetcher) {
+    public SchemaMetadataCache(Long size, Long expiryInSecs, final SchemaMetadataFetcher schemaMetadataFetcher) {
         loadingCache = CacheBuilder.newBuilder()
                 .maximumSize(size)
                 .expireAfterAccess(expiryInSecs, TimeUnit.SECONDS)
