@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.WSUtils;
+import org.apache.registries.schemaregistry.CompatibilityResult;
 import org.apache.registries.schemaregistry.ISchemaRegistry;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
@@ -220,7 +221,7 @@ public class SchemaRegistryResource {
     @Path("/schemas/{name}/versions")
     @ApiOperation(value = "Registers the given schema version to schema with name and returns respective version number",
             notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
-                    "and returns respective version number",
+                    "and returns respective version number." + "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Integer.class)
     @Timed
     public Response addSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
@@ -324,13 +325,13 @@ public class SchemaRegistryResource {
     @POST
     @Path("/schemas/{name}/compatibility")
     @ApiOperation(value = "Checks whether the given schema text is compatible with all versions of the schema with unique name",
-            response = Boolean.class)
+            response = CompatibilityResult.class)
     @Timed
-    public Response isCompatibleWithSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
-                                           @ApiParam(value = "schema text", required = true) String schemaText) {
+    public Response checkCompatibilityWithSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
+                                                 @ApiParam(value = "schema text", required = true) String schemaText) {
         Response response;
         try {
-            boolean compatible = schemaRegistry.isCompatible(schemaName, schemaText);
+            CompatibilityResult compatible = schemaRegistry.checkCompatibility(schemaName, schemaText);
             response = WSUtils.respond(compatible, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);

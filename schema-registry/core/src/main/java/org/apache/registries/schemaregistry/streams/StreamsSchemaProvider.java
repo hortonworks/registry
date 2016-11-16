@@ -21,10 +21,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.registries.common.Schema;
 import org.apache.registries.schemaregistry.AbstractSchemaProvider;
+import org.apache.registries.schemaregistry.CompatibilityResult;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaCompatibility;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
-import org.apache.registries.schemaregistry.SchemaProvider;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -59,17 +59,17 @@ public class StreamsSchemaProvider extends AbstractSchemaProvider {
     }
 
     @Override
-    public boolean isCompatible(String toSchema,
-                                String existingSchema,
-                                SchemaCompatibility compatibility) {
-        return true;
+    public CompatibilityResult checkCompatibility(String toSchema,
+                                                  String existingSchema,
+                                                  SchemaCompatibility compatibility) {
+        return CompatibilityResult.SUCCESS;
     }
 
     @Override
-    public boolean isCompatible(String toSchemaText,
-                                Collection<String> existingSchemaTexts,
-                                SchemaCompatibility existingSchemaCompatibility) {
-        return true;
+    public CompatibilityResult checkCompatibility(String toSchemaText,
+                                                  Collection<String> existingSchemaTexts,
+                                                  SchemaCompatibility existingSchemaCompatibility) {
+        return CompatibilityResult.SUCCESS;
     }
 
     @Override

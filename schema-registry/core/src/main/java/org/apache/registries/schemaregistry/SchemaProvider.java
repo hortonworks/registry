@@ -60,22 +60,28 @@ public interface SchemaProvider {
     String getType();
 
     /**
-     * Returns true if the given {@code schemaText} is compatible with the given {@code existingSchema} according to {@code existingSchemaCompatibility}
+     * Returns CompatibilityResult with {@link CompatibilityResult#isCompatible} as true if the given {@code schemaText}
+     * is compatible with all the given {@code existingSchema} according to {@code existingSchemaCompatibility} else
+     * CompatibilityResult with {@link CompatibilityResult#isCompatible} as false and {@link CompatibilityResult#errorMessage}
+     * with respective errorMessage
      *
      * @param toSchema
      * @param existingSchema
      * @param compatibility
      */
-    boolean isCompatible(String toSchema, String existingSchema, SchemaCompatibility compatibility);
+    CompatibilityResult checkCompatibility(String toSchema, String existingSchema, SchemaCompatibility compatibility);
 
     /**
-     * Returns true if the given {@code schemaText} is compatible with all the given {@code existingSchemaTexts} according to {@code existingSchemaCompatibility}
+     * Returns CompatibilityResult with {@link CompatibilityResult#isCompatible} as true if the given {@code schemaText}
+     * is compatible with all the given {@code existingSchemaTexts} according to {@code existingSchemaCompatibility} else
+     * CompatibilityResult with {@link CompatibilityResult#isCompatible} as false and {@link CompatibilityResult#errorMessage}
+     * with respective errorMessage
      *
-     * @param toSchemaText
+     *  @param toSchemaText
      * @param existingSchemaTexts
      * @param existingSchemaCompatibility
      */
-    boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility);
+    CompatibilityResult checkCompatibility(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility);
 
     /**
      * @param schemaText textual representation of schema

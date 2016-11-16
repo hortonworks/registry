@@ -18,26 +18,29 @@
 package org.apache.registries.schemaregistry.avro;
 
 import org.apache.registries.schemaregistry.AbstractSchemaProvider;
+import org.apache.registries.schemaregistry.CompatibilityResult;
 import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
 import org.apache.registries.schemaregistry.SchemaCompatibility;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
-import org.apache.registries.schemaregistry.SchemaProvider;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.SchemaValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
  */
 public class AvroSchemaProvider extends AbstractSchemaProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaProvider.class);
+
     public static final String TYPE = "avro";
 
     @Override
@@ -56,11 +59,11 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     }
 
     @Override
-    public boolean isCompatible(String toSchemaText, String existingSchemaText, SchemaCompatibility existingSchemaCompatibility) {
-        return isCompatible(toSchemaText, Collections.singleton(existingSchemaText), existingSchemaCompatibility);
+    public CompatibilityResult checkCompatibility(String toSchemaText, String existingSchemaText, SchemaCompatibility existingSchemaCompatibility) {
+        return checkCompatibility(toSchemaText, Collections.singleton(existingSchemaText), existingSchemaCompatibility);
     }
 
-    public boolean isCompatible(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility) {
+    public CompatibilityResult checkCompatibility(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility) {
         Schema toSchema = new Schema.Parser().parse(toSchemaText);
 
         Collection<Schema> existingSchemas = new ArrayList<>();
@@ -71,10 +74,11 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         try {
             SchemaCompatibilityValidator.of(existingSchemaCompatibility).validate(toSchema, existingSchemas);
         } catch (SchemaValidationException e) {
-            return false;
+            LOG.error("Schema compatibility failed", e);
+            return CompatibilityResult.createIncompatibleResult(e.getMessage());
         }
 
-        return true;
+        return CompatibilityResult.SUCCESS;
     }
 
     @Override

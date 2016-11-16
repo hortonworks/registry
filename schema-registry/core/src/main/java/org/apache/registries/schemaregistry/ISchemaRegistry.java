@@ -58,9 +58,9 @@ public interface ISchemaRegistry {
 
     Collection<SchemaVersionKey> findSchemasWithFields(SchemaFieldQuery schemaFieldQuery);
 
-    boolean isCompatible(SchemaVersionKey schemaVersionKey, String schema) throws SchemaNotFoundException;
+    CompatibilityResult checkCompatibility(SchemaVersionKey schemaVersionKey, String schema) throws SchemaNotFoundException;
 
-    boolean isCompatible(String schemaName, String toSchema) throws SchemaNotFoundException;
+    CompatibilityResult checkCompatibility(String schemaName, String toSchema) throws SchemaNotFoundException;
 
     /**
      * Uploads the given input stream in the configured file storage and returns a unique identifier to access that file later.
