@@ -17,10 +17,12 @@
  */
 package org.apache.registries.schemaregistry;
 
+import java.io.Serializable;
+
 /**
  *
  */
-public final class CompatibilityResult {
+public final class CompatibilityResult implements Serializable {
     public static final CompatibilityResult SUCCESS = new CompatibilityResult(true, null);
 
     private boolean compatible;
