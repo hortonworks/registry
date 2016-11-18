@@ -56,13 +56,13 @@ public class ClassLoaderCache {
             }
         };
 
-        SchemaRegistryClient.Options options = schemaRegistryClient.getOptions();
+        SchemaRegistryClient.Configuration configuration = schemaRegistryClient.getConfiguration();
         loadingCache = CacheBuilder.newBuilder()
-                .maximumSize(options.getClassLoaderCacheSize())
-                .expireAfterAccess(options.getClassLoaderCacheExpiryInSecs(), TimeUnit.SECONDS)
+                .maximumSize(configuration.getValue(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name()))
+                .expireAfterAccess(configuration.getValue(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name()), TimeUnit.SECONDS)
                 .build(cacheLoader);
 
-        localJarsDir = new File(schemaRegistryClient.getOptions().getLocalJarPath());
+        localJarsDir = new File((String) schemaRegistryClient.getConfiguration().getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
         if (!localJarsDir.exists()) {
             if (!localJarsDir.mkdirs()) {
                 throw new RuntimeException("Could not create given local jar storage dir: [" + localJarsDir.getAbsolutePath() + "]");

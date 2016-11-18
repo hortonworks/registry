@@ -159,7 +159,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     @Test
     public void testAvroSerDeGenericObj() throws Exception {
-        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
         AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
         avroSnapshotSerializer.init(config);
         AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();
@@ -179,7 +179,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     @Test
     public void testAvroSerDePrimitives() throws Exception {
-        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
         AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
         avroSnapshotSerializer.init(config);
         AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();

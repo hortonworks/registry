@@ -34,7 +34,7 @@ import static mockit.Deencapsulation.invoke;
 public class SchemaRegistryClientTest {
 
     @Tested
-    private SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, "some-url"));
+    private SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), "some-url"));
 
     @Test
     public void testClientWithCache() throws Exception {

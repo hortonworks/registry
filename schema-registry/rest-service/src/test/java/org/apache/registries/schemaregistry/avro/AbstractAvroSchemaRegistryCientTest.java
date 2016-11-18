@@ -48,7 +48,7 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
             = new DropwizardAppRule<>(RegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
 
     protected final String rootUrl = String.format("http://localhost:%d/api/v1", DROPWIZARD_APP_RULE.getLocalPort());
-    protected final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, rootUrl);
+    protected final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
 
     @Rule
     public TestName TEST_NAME_RULE = new TestName();
