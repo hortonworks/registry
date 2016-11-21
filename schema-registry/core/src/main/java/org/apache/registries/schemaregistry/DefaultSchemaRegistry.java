@@ -235,7 +235,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 storageManager.add(schemaFieldInfoStorable);
             }
         } finally {
-            slotSynchronizer.unlock(slotLock);
+            slotLock.unlock();
         }
 
         return schemaVersionStorable.getVersion();

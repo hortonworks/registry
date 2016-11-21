@@ -17,63 +17,129 @@
  */
 package org.apache.registries.common;
 
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * A synchronization utility that allows a thread to take a mutual exclusion lock on a specific slot which is for a given Key <K>.
+ * <p>
+ * Each instance of this class can have multiple slots and one can take a lock on a specific slot, execute statements and unlock.
+ * So, there can be contention for each slot but no contention among different slots.
+ * <p>
+ * Locking and unlocking a slot using {@link SlotSynchronizer} can be done using try/finally block like below.
+ * <pre>
+ * class Service {
+ *   private final SlotSynchronizer&lt;K> slotSynchronizer = new SlotSynchronizer&lt;>();
+ *   // ...
  *
+ *   public void invoke() {
+ *     K key = ...
+ *     Lock lock = slotSynchronizer.runInSlot(key)
+ *     try {
+ *       //  ... block of code
+ *     } finally {
+ *         lock.unlock();
+ *     }
+ *   }
+ * }
+ * </pre>
+ * <p>
+ * There is a way to run a block of code wrapped in {@link Runnable} with {@link #runInSlot(Object, Runnable)} like below.
+ * <p>
+ * <pre>
+ * class Service {
+ *   private final SlotSynchronizer&lt;K> slotSynchronizer = new SlotSynchronizer&lt;>();
+ *   // ...
+ *
+ *   public void invoke() {
+ *     K key = ...
+ *     slotSynchronizer.runInSlot(key, new Runnable() {
+ *       public void run() {
+ *          // ... block of code
+ *       }
+ *     }
+ *   }
+ * }
+ * </pre>
+ *
+ * @param <K> the type of keys for a slot
  */
 public class SlotSynchronizer<K> {
+    private static final Logger LOG = LoggerFactory.getLogger(SlotSynchronizer.class);
 
     private final ConcurrentHashMap<K, Lock> locks = new ConcurrentHashMap<>();
 
-    public static final class Lock<K> {
+    public final class Lock {
         private final K k;
         private AtomicInteger count = new AtomicInteger();
         private ReentrantLock reentrantLock = new ReentrantLock();
 
         public Lock(K k) {
+            Preconditions.checkNotNull(k, "Key k must not be null");
             this.k = k;
         }
 
-        private void increment() {
-            count.incrementAndGet();
-        }
-
-        private void decrement() {
-            count.decrementAndGet();
-        }
-
         private void lock() {
+            count.incrementAndGet();
             reentrantLock.lock();
         }
 
-        private void unlock() {
+        /**
+         * Unlocks this lock for respective slot if the current thread holds this lock.
+         *
+         * <p>Current thread should have hold this lock earlier with {@link SlotSynchronizer#lockSlot(K k)} for key {@code k}.
+         *
+         * @throws IllegalStateException if the current thread does not hold this lock.
+         */
+        public void unlock() {
+            if (!reentrantLock.isHeldByCurrentThread()) {
+                String msg = String.format("Current thread [%s] does not hold the lock, unlock should have been called by " +
+                                                   "the thread which invoked lock earlier.", Thread.currentThread());
+                LOG.error(msg);
+                throw new IllegalStateException(msg);
+            }
+
+            count.decrementAndGet();
+
+            // remove this slot if it's count is zero.
+            if(count.get() == 0) {
+                locks.remove(k, this);
+            }
+
             reentrantLock.unlock();
         }
     }
 
     /**
-     * Returns the lock for the given slot {@code k}
-     * @param k
-     * @return
+     * Returns the lock for the given slot {@code k} after taking a lock for the current thread if it available.
+     *
+     * <p>If the lock is held by another thread then the current thread becomes disabled for thread scheduling
+     * purposes and lies dormant until the lock has been acquired.
+     *
+     * @param k slot key for which lock to be taken.
      */
     public Lock lockSlot(K k) {
+        Preconditions.checkNotNull(k, "Key k must not be null");
+
         while (true) {
-            Lock<K> newLock = new Lock<>(k);
+            Lock newLock = new Lock(k);
             Lock lock = locks.putIfAbsent(k, newLock);
             if (lock == null) {
                 lock = newLock;
             }
 
-            // increment and wait to acquire lock
-            lock.increment();
+            // wait to acquire lock
             lock.lock();
 
-            // below is possible when current lock is incremented after removing that from slot by earlier unlock
-            // if acquired lock is not same as the current lock, retry again.
+            // below is possible when current lock is incremented after removing that from slot by earlier {@link #unlock} operation.
+            // if acquired lock for that slot is not same as the current lock, unlock the acquired lock and retry again to get a new lock.
             if (locks.get(k) != lock) {
+                lock.unlock();
                 continue;
             }
 
@@ -82,18 +148,19 @@ public class SlotSynchronizer<K> {
     }
 
     /**
-     * Unlocks the given slot and blocks till it is unlocked.
-     * @param lock
+     * @return no of slots currently used.
      */
-    public void unlock(Lock lock) {
-        // decrement the count and remove this slot if none is registered now.
-        lock.decrement();
-        if (lock.count.get() == 0) {
-            locks.remove(lock.k, lock);
-        }
+    public int occupiedSlots() {
+        return locks.size();
+    }
 
-        // may be possible some one registered to take lock after removing the slot and calling unlock below.
-        lock.unlock();
+    public void runInSlot(K k, Runnable runnable) {
+        Lock lock = lockSlot(k);
+        try {
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
     }
 
 }
