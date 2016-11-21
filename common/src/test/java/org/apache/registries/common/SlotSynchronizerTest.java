@@ -21,9 +21,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -53,6 +55,42 @@ public class SlotSynchronizerTest {
         Assert.assertEquals(limit * size, aggregatedCount.get());
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalUnlock() throws Exception {
+        SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
+        int key = new Random().nextInt();
+
+        // complete lock/unlock for that slot.
+        SlotSynchronizer<Integer>.Lock lock = slotSynchronizer.lockSlot(key);
+        lock.unlock();
+
+        // call again unlock which should throw an Exception
+        lock.unlock();
+    }
+
+    @Test(expected = Exception.class)
+    public void testNullKey() throws Exception {
+        SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
+
+        slotSynchronizer.lockSlot(null);
+    }
+
+    @Test
+    public void testCountSlots() throws Exception {
+        SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
+        int count = new Random().nextInt(1000) + 1;
+
+        Collection<SlotSynchronizer<Integer>.Lock> locks = new ArrayList<>();
+        IntStream keysStream = IntStream.range(0, count);
+        keysStream.forEach(value -> locks.add(slotSynchronizer.lockSlot(value)));
+
+        Assert.assertEquals(count, slotSynchronizer.occupiedSlots());
+
+        locks.forEach(lock -> lock.unlock());
+        Assert.assertEquals(0, slotSynchronizer.occupiedSlots());
+
+    }
+
     private static class Work implements Runnable {
         private final int k;
         private final SlotSynchronizer<Integer> slotSynchronizer;
@@ -69,9 +107,9 @@ public class SlotSynchronizerTest {
         @Override
         public void run() {
             for (int i = 0; i < limit; i++) {
-                SlotSynchronizer.Lock lock = slotSynchronizer.lockSlot(k);
-                count.incrementAndGet();
-                slotSynchronizer.unlock(lock);
+                slotSynchronizer.runInSlot(k, () -> {
+                    count.incrementAndGet();
+                });
             }
         }
     }
