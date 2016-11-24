@@ -26,6 +26,7 @@ const SchemaREST = {
         getSchemaInfo(name, options) {
                 options = options || {};
                 options.method = options.method || 'GET';
+                name = encodeURIComponent(name);
                 return fetch(baseUrl+'schemaregistry/schemas/'+name, options)
                         .then( (response) => {
                                 return response.json();
@@ -34,6 +35,7 @@ const SchemaREST = {
         getSchemaVersions(name, options) {
                 options = options || {};
                 options.method = options.method || 'GET';
+                name = encodeURIComponent(name);
                 return fetch(baseUrl+'schemaregistry/schemas/'+name+'/versions', options)
                         .then( (response) => {
                                 return response.json();
@@ -46,6 +48,7 @@ const SchemaREST = {
                   'Content-Type' : 'application/json',
                   'Accept' : 'application/json'
                 };
+                name = encodeURIComponent(name);
                 return fetch(baseUrl+'schemaregistry/schemas/'+name+'/versions', options)
                         .then( (response) => {
 				return response.json();
