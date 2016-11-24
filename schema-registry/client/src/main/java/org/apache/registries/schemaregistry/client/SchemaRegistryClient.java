@@ -66,6 +66,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -359,19 +360,27 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(schemaName + "/versions/latest");
+        WebTarget webTarget = schemasTarget.path(encode(schemaName) + "/versions/latest");
         return getEntity(webTarget, SchemaVersionInfo.class);
+    }
+
+    private static String encode(String schemaName) {
+        try {
+            return URLEncoder.encode(schemaName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(schemaName + "/versions");
+        WebTarget webTarget = schemasTarget.path(encode(schemaName) + "/versions");
         return getEntities(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(schemaName + "/compatibility");
+        WebTarget webTarget = schemasTarget.path(encode(schemaName) + "/compatibility");
         String response = webTarget.request().post(Entity.text(toSchemaText), String.class);
         return readEntity(response, Boolean.class);
     }
@@ -398,7 +407,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public InputStream downloadFile(String fileId) {
-        return rootTarget.path(FILES_PATH).path("download/" + fileId).request().get(InputStream.class);
+        return rootTarget.path(FILES_PATH).path("download/" + encode(fileId)).request().get(InputStream.class);
     }
 
     @Override
@@ -413,7 +422,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void mapSchemaWithSerDes(String schemaName, Long serDesId) {
-        String path = String.format("%s/mapping/%s", schemaName, serDesId.toString());
+        String path = String.format("%s/mapping/%s", encode(schemaName), serDesId.toString());
 
         Boolean success = postEntity(schemasTarget.path(path), null, Boolean.class);
         LOG.info("Received response while mapping schema [{}] with serialzer/deserializer [{}] : [{}]", schemaName, serDesId, success);
@@ -453,13 +462,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SerDesInfo> getSerializers(String schemaName) {
-        String path = schemaName + "/serializers/";
+        String path = encode(schemaName)  + "/serializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 
     @Override
     public Collection<SerDesInfo> getDeserializers(String schemaName) {
-        String path = schemaName + "/deserializers/";
+        String path = encode(schemaName)  + "/deserializers/";
         return getEntities(schemasTarget.path(path), SerDesInfo.class);
     }
 
