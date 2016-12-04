@@ -18,6 +18,7 @@
 package org.apache.registries.schemaregistry.serdes.avro;
 
 import org.apache.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.avro.AvroSchemaProvider;
 import org.apache.registries.schemaregistry.serde.AbstractSnapshotSerializer;
 import org.apache.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
@@ -43,8 +44,8 @@ public class AvroSnapshotSerializer extends AbstractSnapshotSerializer<Object, b
 
     protected byte[] doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
-            byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(schemaIdVersion.getVersion()).array());
+            writeProtocolMsg(schemaIdVersion, byteArrayOutputStream);
+
 
             Schema schema = computeSchema(input);
             Schema.Type schemaType = schema.getType();
@@ -74,6 +75,19 @@ public class AvroSnapshotSerializer extends AbstractSnapshotSerializer<Object, b
         } catch (IOException e) {
             throw new SerDesException(e);
         }
+    }
+
+    private void writeProtocolMsg(SchemaIdVersion schemaIdVersion, ByteArrayOutputStream byteArrayOutputStream) throws IOException {
+        // it can be enhanced to have respective protocol handlers for different versions
+        // first byte is protocol version/id.
+        // protocol format:
+        // 1 byte  : protocol version
+        // 8 bytes : schema metadata Id
+        // 4 bytes : schema version
+        byteArrayOutputStream.write(ByteBuffer.allocate(13)
+                                            .put(AvroSchemaProvider.CURRENT_PROTOCOL_VERSION)
+                                            .putLong(schemaIdVersion.getSchemaMetadataId())
+                                            .putInt(schemaIdVersion.getVersion()).array());
     }
 
     protected String getSchemaText(Object input) {

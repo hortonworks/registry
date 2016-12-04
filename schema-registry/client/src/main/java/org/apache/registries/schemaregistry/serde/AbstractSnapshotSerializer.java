@@ -31,7 +31,7 @@ import java.util.Map;
  *
  */
 public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerializer<I, O, SchemaMetadata> {
-    private SchemaRegistryClient schemaRegistryClient;
+    protected SchemaRegistryClient schemaRegistryClient;
 
     public AbstractSnapshotSerializer() {
     }

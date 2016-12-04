@@ -17,21 +17,24 @@
  */
 package org.apache.registries.schemaregistry.serdes.avro;
 
-import org.apache.registries.schemaregistry.SchemaMetadata;
-import org.apache.registries.schemaregistry.SchemaVersionInfo;
-import org.apache.registries.schemaregistry.SchemaVersionKey;
-import org.apache.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
-import org.apache.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.io.IOUtils;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaMetadata;
+import org.apache.registries.schemaregistry.SchemaVersionInfo;
+import org.apache.registries.schemaregistry.SchemaVersionKey;
+import org.apache.registries.schemaregistry.avro.AvroSchemaProvider;
+import org.apache.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
+import org.apache.registries.schemaregistry.serde.SerDesException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 /**
  *
@@ -42,6 +45,30 @@ public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Objec
     @Override
     protected Schema getParsedSchema(SchemaVersionInfo schemaVersionInfo) {
         return new Schema.Parser().parse(schemaVersionInfo.getSchemaText());
+    }
+
+    protected SchemaIdVersion retrieveSchemaIdVersion(InputStream payloadInputStream) throws SerDesException {
+        // it can be enhanced to have respective protocol handlers for different versions
+        // first byte is protocol version/id.
+        // protocol format:
+        // 1 byte  : protocol version
+        // 8 bytes : schema metadata Id
+        // 4 bytes : schema version
+        ByteBuffer byteBuffer = ByteBuffer.allocate(13);
+        try {
+            payloadInputStream.read(byteBuffer.array());
+        } catch (IOException e) {
+            throw new SerDesException(e);
+        }
+
+        byte protocolId = byteBuffer.get();
+        if (protocolId != AvroSchemaProvider.CURRENT_PROTOCOL_VERSION) {
+            throw new SerDesException("Unknown protocol id [" + protocolId + "] received while deserializing the payload");
+        }
+        long schemaMetadataId = byteBuffer.getLong();
+        int schemaVersion = byteBuffer.getInt();
+
+        return new SchemaIdVersion(schemaMetadataId, schemaVersion);
     }
 
     protected Object doDeserialize(InputStream payloadInputStream,

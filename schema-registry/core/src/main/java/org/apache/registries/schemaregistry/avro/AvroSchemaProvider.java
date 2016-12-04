@@ -43,6 +43,9 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
 
     public static final String TYPE = "avro";
 
+    // todo have protocol handlers for each version
+    public static final byte CURRENT_PROTOCOL_VERSION = 0x1;
+
     @Override
     public String getName() {
         return "Avro schema provider";

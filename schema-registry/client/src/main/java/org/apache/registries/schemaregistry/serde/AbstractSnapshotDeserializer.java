@@ -20,7 +20,9 @@ package org.apache.registries.schemaregistry.serde;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.schemaregistry.SchemaMetadata;
+import org.apache.registries.schemaregistry.SchemaMetadataInfo;
 import org.apache.registries.schemaregistry.SchemaVersionInfo;
 import org.apache.registries.schemaregistry.SchemaVersionKey;
 import org.apache.registries.schemaregistry.client.SchemaRegistryClient;
@@ -58,6 +60,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
     public static final Long DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS = 60 * 5L;
 
     private LoadingCache<SchemaVersionKey, S> schemaCache;
+    private LoadingCache<Long, SchemaMetadata> schemaMetadataCache;
     private SchemaRegistryClient schemaRegistryClient;
 
     @Override
@@ -75,6 +78,17 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
                         return schemaVersionInfo != null ? getParsedSchema(schemaVersionInfo) : null;
                     }
                 });
+
+        schemaMetadataCache = CacheBuilder.newBuilder()
+                .maximumSize(getCacheMaxSize(config))
+                .expireAfterAccess(getCacheExpiryInMillis(config), TimeUnit.MILLISECONDS)
+                .build(new CacheLoader<Long, SchemaMetadata>() {
+                    @Override
+                    public SchemaMetadata load(Long schemaVersionKey) throws Exception {
+                        return schemaRegistryClient.getSchemaMetadataInfo(schemaVersionKey).getSchemaMetadata();
+                    }
+                });
+
     }
 
     private Long getCacheExpiryInMillis(Map<String, ?> config) {
@@ -108,9 +122,13 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
                          SchemaMetadata schemaMetadata,
                          Integer readerSchemaVersion) throws SerDesException {
         try {
-            int writerSchemaVersion = readVersion(payloadInputStream);
-            return doDeserialize(payloadInputStream, schemaMetadata, writerSchemaVersion, readerSchemaVersion);
-        } catch (IOException e) {
+            SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(payloadInputStream);
+
+            if(schemaMetadata == null) {
+                schemaMetadata = schemaMetadataCache.get(schemaIdVersion.getSchemaMetadataId());
+            }
+            return doDeserialize(payloadInputStream, schemaMetadata, schemaIdVersion.getVersion(), readerSchemaVersion);
+        } catch (ExecutionException e) {
             throw new SerDesException(e);
         }
     }
@@ -120,11 +138,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
                                        Integer writerSchemaVersion,
                                        Integer readerSchemaVersion) throws SerDesException;
 
-    private int readVersion(InputStream payloadInputStream) throws IOException {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4);
-        payloadInputStream.read(byteBuffer.array());
-        return byteBuffer.getInt();
-    }
+    protected abstract SchemaIdVersion retrieveSchemaIdVersion(InputStream payloadInputStream) throws SerDesException;
 
     protected S getSchema(SchemaVersionKey schemaVersionKey) {
         try {
