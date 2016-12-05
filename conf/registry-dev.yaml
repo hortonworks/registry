@@ -27,6 +27,27 @@ fileStorageConfiguration:
 # storage provider configuration
 storageProviderConfiguration:
  providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
+# Example configuration for phoenix based JDBC driver
+#storageProviderConfiguration:
+# providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "phoenix"
+#   queryTimeoutInSecs: 30
+#   db.properties:
+#     jdbcDriverClass: "org.apache.phoenix.jdbc.PhoenixDriver"
+#     jdbcUrl: "jdbc:phoenix:localhost:2181"
+#
+# MySQL based jdbc provider configuration is:
+#storageProviderConfiguration:
+# providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "mysql"
+#   queryTimeoutInSecs: 30
+#   db.properties:
+#     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+#     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+#     dataSource.user: ""
+#     dataSource.password: ""
 
 #swagger configuration
 swagger:
@@ -102,3 +123,4 @@ logging:
 #  keepAlive: 0ms
 #  retries: 10
 #  userAgent: Storm-Client
+

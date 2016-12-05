@@ -1,7 +1,8 @@
 -- CREATE DATABASE IF NOT EXISTS schema_registry;
--- USE schema_registry;
+USE schema_registry;
 
 -- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
+
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
   id            BIGINT AUTO_INCREMENT NOT NULL,
   type          VARCHAR(256)          NOT NULL,
