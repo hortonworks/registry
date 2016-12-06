@@ -19,17 +19,9 @@ fileStorageConfiguration:
   properties:
     directory: "/tmp/schema-registry/jars"
 
-# MySQL based jdbc provider configuration is:
+# storage provider configuration
 storageProviderConfiguration:
- providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
- properties:
-   db.type: "mysql"
-   queryTimeoutInSecs: 30
-   db.properties:
-     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
-     dataSource.url: "jdbc:mysql://localhost/schema_registry"
-     dataSource.user: ""
-     dataSource.password: ""
+ providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
 
 #swagger configuration
 swagger:
@@ -49,3 +41,5 @@ logging:
   level: INFO
   loggers:
     org.apache.registries: INFO
+
+  
