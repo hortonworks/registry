@@ -25,7 +25,7 @@ fi
 
 CONF_READER_MAIN_CLASS=org.apache.registries.storage.tool.StorageProviderConfigurationReader
 SCRIPT_RUNNER_MAIN_CLASS=org.apache.registries.storage.tool.SQLScriptRunner
-CLASSPATH=${BOOTSTRAP_DIR}/../libs/storage-tool-0.1.0-SNAPSHOT.jar
+CLASSPATH=${BOOTSTRAP_DIR}/lib/storage-tool-0.1.0-SNAPSHOT.jar
 
 echo "Configuration file: ${CONFIG_FILE_PATH}"
 

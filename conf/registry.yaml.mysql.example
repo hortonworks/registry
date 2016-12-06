@@ -1,0 +1,54 @@
+# registries configuration
+modules:
+  - name: schema-registry
+    className: org.apache.registries.schemaregistry.webservice.SchemaRegistryModule
+    config:
+      schemaProviderClasses:
+        - "org.apache.registries.schemaregistry.avro.AvroSchemaProvider"
+      # schema cache properties
+      # inmemory schema versions cache size
+      schemaCacheSize: 10000
+      # inmemory schema version cache entry expiry interval after access
+      schemaCacheExpiryInterval: 3600
+
+# Filesystem based jar storage
+fileStorageConfiguration:
+  className: "org.apache.registries.common.util.LocalFileSystemStorage"
+  properties:
+    directory: "/schema-registry/jars"
+
+
+# MySQL based jdbc provider configuration is:
+storageProviderConfiguration:
+ providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+ properties:
+   db.type: "mysql"
+   queryTimeoutInSecs: 30
+   db.properties:
+     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+     dataSource.user: ""
+     dataSource.password: ""
+
+#swagger configuration
+swagger:
+  resourcePackage: org.apache.registries.schemaregistry.webservice
+
+#enable CORS, may want to disable in production
+enableCors: true
+
+server:
+  rootPath: '/api/*'
+  softNofileLimit: 10000
+  hardNofileLimit: 10000
+  applicationConnectors:
+    - type: http
+      port: 9090
+
+# Logging settings.
+logging:
+  level: INFO
+  loggers:
+    org.apache.registries: INFO
+
+  
