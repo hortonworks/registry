@@ -20,6 +20,8 @@ SchemaRegistry provides a central repository for a message’s metadata. A schem
   
 4. Access the UI at http://host.name:9090
 
+![SchemaRegistry UI](https://github.com/hortonworks/registry/blob/master/docs/images/registry-homepage.png)
+
 ## Running Kafka Example
 SchemaRegistry makes it very easy to integrate with Kafka, Storm and Nifi and any other systems.
 We've an example code on how to integrate with kafka [here] (https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/org/apache/registries/schemaregistry/examples/avro/TruckEventsKafkaAvroSerDesApp.java)
