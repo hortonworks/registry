@@ -7,7 +7,7 @@ SchemaRegistry provides a central repository for a message’s metadata. A schem
 
 ## Installation
 1. Download the latest release from here https://github.com/hortonworks/registry/releases
-2. registry server can start with in-memory store or a persistent store like mysql. To setup with mysql please follow the instructions here.
+2. registry server can start with in-memory store or a persistent store like mysql. To setup with mysql please follow the instructions [here](https://github.com/hortonworks/registry/blob/master/SETUP.md).
 3. To start with in-memory store.
   
   ```
