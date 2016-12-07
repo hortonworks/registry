@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiParam;
 import org.apache.registries.common.catalog.CatalogResponse;
 import org.apache.registries.common.util.WSUtils;
 import org.apache.registries.schemaregistry.CompatibilityResult;
+
 import org.apache.registries.schemaregistry.ISchemaRegistry;
 import org.apache.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.registries.schemaregistry.SchemaFieldQuery;
