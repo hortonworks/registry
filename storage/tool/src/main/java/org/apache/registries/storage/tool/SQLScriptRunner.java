@@ -101,8 +101,6 @@ public class SQLScriptRunner {
         String[] scripts = commandLine.getOptionValues(OPTION_SCRIPT_PATH);
         String delimiter = commandLine.getOptionValue(OPTION_QUERY_DELIMITER);
 
-        System.out.println("user " + user);
-        System.out.println("password " + password);
 
         try {
             Class.forName(driver);
