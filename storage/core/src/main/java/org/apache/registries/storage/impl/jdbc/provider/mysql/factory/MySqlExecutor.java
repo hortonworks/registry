@@ -95,16 +95,11 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         Util.validateJDBCProperties(jdbcProps, Lists.newArrayList("dataSourceClassName", "dataSource.url"));
 
         String dataSourceClassName = (String) jdbcProps.get("dataSourceClassName");
-        log.info("data source class: [{}]", dataSourceClassName);
+        log.debug("data source class: [{}]", dataSourceClassName);
 
         String jdbcUrl = (String) jdbcProps.get("dataSource.url");
-        log.info("dataSource.url is: [{}] ", jdbcUrl);
+        log.debug("dataSource.url is: [{}] ", jdbcUrl);
 
-        String userName = (String) jdbcProps.get("dataSource.user");
-        log.info("datasource user is : [{}]", userName);
-
-        String passWord = (String) jdbcProps.get("dataSource.password");
-        log.info("datasource user is : [{}]", passWord);
         int queryTimeOutInSecs = -1;
         if(jdbcProps.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) jdbcProps.get("queryTimeoutInSecs");
