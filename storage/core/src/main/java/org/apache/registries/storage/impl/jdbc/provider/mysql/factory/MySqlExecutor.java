@@ -100,6 +100,11 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         String jdbcUrl = (String) jdbcProps.get("dataSource.url");
         log.info("dataSource.url is: [{}] ", jdbcUrl);
 
+        String userName = (String) jdbcProps.get("dataSource.user");
+        log.info("datasource user is : [{}]", userName);
+
+        String passWord = (String) jdbcProps.get("dataSource.password");
+        log.info("datasource user is : [{}]", passWord);
         int queryTimeOutInSecs = -1;
         if(jdbcProps.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) jdbcProps.get("queryTimeoutInSecs");

@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 
 public class SQLScriptRunner {
@@ -20,11 +21,24 @@ public class SQLScriptRunner {
     private static final String OPTION_JDBC_DRIVER_CLASS = "driver";
     private static final String OPTION_SCRIPT_PATH = "file";
     private static final String OPTION_QUERY_DELIMITER = "delimiter";
+    private static final String OPTION_JDBC_USER = "user";
+    private static final String OPTION_JDBC_PASSWORD = "password";
+
 
     private final String url;
+    private final String user;
+    private final String password;
 
     public SQLScriptRunner(String url) {
         this.url = url;
+        this.user = "";
+        this.password = "";
+    }
+
+    public SQLScriptRunner(String url, String user, String password) {
+        this.url = url;
+        this.user = user;
+        this.password = password;
     }
 
     public void runScript(String path, String delimiter) throws Exception {
@@ -36,7 +50,14 @@ public class SQLScriptRunner {
 
         String content = new String(Files.readAllBytes(Paths.get(file.getAbsolutePath())), StandardCharsets.UTF_8);
 
-        Connection connection = DriverManager.getConnection(url);
+
+        Connection connection;
+        if ((user == null && password == null) || (user.equals("") && password.equals(""))) {
+            connection = DriverManager.getConnection(url);
+        } else {
+            connection = DriverManager.getConnection(url, user, password);
+        }
+
         connection.setAutoCommit(true);
 
         String[] queries = content.split(delimiter);
@@ -56,6 +77,8 @@ public class SQLScriptRunner {
 
         options.addOption(option(1, "u", OPTION_JDBC_URL, "JDBC Connect URL"));
         options.addOption(option(1, "c", OPTION_JDBC_DRIVER_CLASS, "JDBC Driver class"));
+        options.addOption(option(1, "l", OPTION_JDBC_USER, "JDBC User Name"));
+        options.addOption(option(1, "p", OPTION_JDBC_PASSWORD, "JDBC Password"));
         options.addOption(option(Option.UNLIMITED_VALUES, "f", OPTION_SCRIPT_PATH, "Script path to execute"));
         options.addOption(option(1, "d", OPTION_QUERY_DELIMITER, "Query delimiter"));
 
@@ -73,8 +96,13 @@ public class SQLScriptRunner {
 
         String url = commandLine.getOptionValue(OPTION_JDBC_URL);
         String driver = commandLine.getOptionValue(OPTION_JDBC_DRIVER_CLASS);
+        String user = commandLine.getOptionValue(OPTION_JDBC_USER);
+        String password = commandLine.getOptionValue(OPTION_JDBC_PASSWORD);
         String[] scripts = commandLine.getOptionValues(OPTION_SCRIPT_PATH);
         String delimiter = commandLine.getOptionValue(OPTION_QUERY_DELIMITER);
+
+        System.out.println("user " + user);
+        System.out.println("password " + password);
 
         try {
             Class.forName(driver);
@@ -83,7 +111,7 @@ public class SQLScriptRunner {
             System.exit(2);
         }
 
-        SQLScriptRunner SQLScriptRunner = new SQLScriptRunner(url);
+        SQLScriptRunner SQLScriptRunner = new SQLScriptRunner(url, user, password);
 
         for (String script : scripts) {
             SQLScriptRunner.runScript(script, delimiter);
