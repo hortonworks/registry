@@ -2,7 +2,7 @@
 catalogRootUrl: "http://localhost:8080/api/v1/catalog"
 
 storageProviderConfiguration:
- providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
+ providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 
 server:
   rootPath: '/api/*'
@@ -41,7 +41,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    org.apache.registries: TRACE
+    com.hortonworks.registries: TRACE
 
 
   appenders:

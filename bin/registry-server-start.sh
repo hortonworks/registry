@@ -76,7 +76,7 @@ if [ -z "$REGISTRY_JVM_PERFORMANCE_OPTS" ]; then
 fi
 
 #Application classname
-APP_CLASS="org.apache.registries.webservice.RegistryApplication"
+APP_CLASS="com.hortonworks.registries.webservice.RegistryApplication"
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then

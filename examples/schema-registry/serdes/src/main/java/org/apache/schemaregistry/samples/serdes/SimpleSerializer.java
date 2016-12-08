@@ -17,9 +17,9 @@
  */
 package org.apache.schemaregistry.samples.serdes;
 
-import org.apache.registries.schemaregistry.SchemaMetadata;
-import org.apache.registries.schemaregistry.serde.SerDesException;
-import org.apache.registries.schemaregistry.serde.SnapshotSerializer;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +32,8 @@ import java.util.Map;
  * This is a very simple serializer, it does not really connect to schema-registry and register schemas. This
  * is used to demonstrate how this serializer can be uploaded/retrieved from schema registry.
  * <p>
- * You can look at {@link org.apache.registries.schemaregistry.avro.AvroSnapshotSerializer} implementation to look
- * at how schema registry client can be used to register writer schemas which are used while deserializing messages from the respective {@link org.apache.registries.schemaregistry.avro.AvroSnapshotDeserializer}.
+ * You can look at {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer} implementation to look
+ * at how schema registry client can be used to register writer schemas which are used while deserializing messages from the respective {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer}.
  */
 public class SimpleSerializer implements SnapshotSerializer<Object, byte[], SchemaMetadata> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleSerializer.class);

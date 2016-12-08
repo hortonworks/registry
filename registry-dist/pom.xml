@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>registries</artifactId>
-        <groupId>org.apache.registries</groupId>
+        <groupId>com.hortonworks.registries</groupId>
         <version>0.1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -31,37 +31,37 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>registry-webservice</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-webservice</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-serdes</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>storage-core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -95,7 +95,7 @@
                 </configuration>
             </plugin>
             <!--plugin>
-                <groupId>org.apache.maven.plugins</groupId>
+                <groupId>com.hortonworks.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <executions>
                     <execution>
