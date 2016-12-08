@@ -37,7 +37,7 @@ Configuration file is located at conf/registry-dev.yaml. By default it uses inme
 ```
 # MySQL based jdbc provider configuration is:
 storageProviderConfiguration:
-  providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
   properties:
     db.type: "mysql"
     queryTimeoutInSecs: 30
@@ -255,8 +255,8 @@ LOG.info("Given payload and deserialized object are equal: "+ payload.equals(des
 ## Using inbuilt Kafka Avro serializer and deserializer
 
 Below Serializer and Deserializer can be used for avro records as respective Kafka avro serializer and deserializer respectively.
-`org.apache.registries.schemaregistry.avro.kafka.KafkaAvroSerializer`
-`org.apache.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer`
+`com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroSerializer`
+`com.hortonworks.registries.schemaregistry.avro.kafka.KafkaAvroDeserializer`
 
 Following properties can be configured for producer/consumer
 

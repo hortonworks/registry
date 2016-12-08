@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.apache.registries</groupId>
+    <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -364,7 +364,7 @@
                                             implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                     <transformer
                                             implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                        <mainClass>org.apache.registries.webservice.RegistryApplication</mainClass>
+                                        <mainClass>com.hortonworks.registries.webservice.RegistryApplication</mainClass>
                                     </transformer>
                                 </transformers>
                             </configuration>

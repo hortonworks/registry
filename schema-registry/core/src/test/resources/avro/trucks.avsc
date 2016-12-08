@@ -1,6 +1,6 @@
 {
   "type" : "record",
-  "namespace" : "org.apache.registries",
+  "namespace" : "com.hortonworks.registries",
   "name" : "trucks",
   "fields" : [
     { "name" : "driverId" , "type" : "int" },

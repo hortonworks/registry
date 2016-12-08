@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>schema-registry-examples</artifactId>
-        <groupId>org.apache.registries</groupId>
+        <groupId>com.hortonworks.registries</groupId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -12,7 +12,7 @@
     <artifactId>avro-examples</artifactId>
 
     <properties>
-        <mainClass>org.apache.registries.schemaregistry.examples.avro.TruckEventsKafkaAvroSerDesApp</mainClass>
+        <mainClass>com.hortonworks.registries.schemaregistry.examples.avro.TruckEventsKafkaAvroSerDesApp</mainClass>
     </properties>
 
     <dependencies>
@@ -22,9 +22,20 @@
             <version>1.3.1</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-serdes</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.hortonworks.avro</groupId>
+                    <artifactId>avro</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -62,13 +73,13 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.avro</groupId>
+                    <groupId>com.hortonworks.avro</groupId>
                     <artifactId>avro</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.registries</groupId>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-webservice</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>

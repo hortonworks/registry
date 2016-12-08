@@ -49,7 +49,7 @@
    
    ```
    storageProviderConfiguration:
-     providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+     providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
      properties:
    		db.type: "mysql"
    		queryTimeoutInSecs: 30
@@ -108,7 +108,7 @@
    
    ```
    storageProviderConfiguration:
-     providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+     providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
      properties:
    		db.type: "mysql"
    		queryTimeoutInSecs: 30

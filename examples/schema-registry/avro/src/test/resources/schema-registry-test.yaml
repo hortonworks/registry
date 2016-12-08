@@ -1,12 +1,12 @@
 # registries configuration
 modules:
   - name: schema-registry
-    className: org.apache.registries.schemaregistry.webservice.SchemaRegistryModule
+    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
     config:
       schemaProviders:
-        - providerClass: "org.apache.registries.schemaregistry.avro.AvroSchemaProvider"
-          defaultSerializerClass: "org.apache.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
-          defaultDeserializerClass: "org.apache.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
+        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
@@ -14,7 +14,7 @@ modules:
       schemaCacheExpiryInterval: 3600
 
 fileStorageConfiguration:
-  className: "org.apache.registries.common.util.LocalFileSystemStorage"
+  className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
     directory: "/tmp/storage"
 
@@ -23,21 +23,21 @@ fileStorageConfiguration:
 #
 # Example configuration for inmemory is:
 #storageProviderConfiguration:
-#  providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
+#  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 #
 # Example configuration for phoenix based JDBC driver
 #storageProviderConfiguration:
-# providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
 # properties:
 #   db.type: "phoenix"
 #   queryTimeoutInSecs: 30
 #   db.properties:
-#     jdbcDriverClass: "org.apache.phoenix.jdbc.PhoenixDriver"
+#     jdbcDriverClass: "com.hortonworks.phoenix.jdbc.PhoenixDriver"
 #     jdbcUrl: "jdbc:phoenix:localhost:2181"
 #
 # MySQL based jdbc provider configuration is:
 #storageProviderConfiguration:
-#  providerClass: "org.apache.registries.storage.impl.jdbc.JdbcStorageManager"
+#  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
 #  properties:
 #    db.type: "mysql"
 #    queryTimeoutInSecs: 30
@@ -46,14 +46,14 @@ fileStorageConfiguration:
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
 
 storageProviderConfiguration:
-  providerClass: "org.apache.registries.storage.impl.memory.InMemoryStorageManager"
+  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
 
 #enable CORS, may want to disable in production
 enableCors: true
 
 ## swagger configuration
 swagger:
-  resourcePackage: org.apache.registries.schemaregistry.webservice
+  resourcePackage: com.hortonworks.registries.schemaregistry.webservice
 
 # use the simple server factory if you only want to run on a single port
 #server:
@@ -99,7 +99,7 @@ logging:
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
-    org.apache.registries: DEBUG
+    com.hortonworks.registries: DEBUG
 
 
   appenders:
