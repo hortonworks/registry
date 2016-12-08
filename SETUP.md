@@ -14,7 +14,7 @@
 2. edit $REGISTRY_HOME/conf/registry-env.sh, add the following
 
 	```
-		export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
+		export JAVA_HOME=/opt/jdk1.8.0_111/
 	```
 
 3. Setup Database
