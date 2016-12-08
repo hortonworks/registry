@@ -38,7 +38,7 @@ fi
 
 CONF_READER_MAIN_CLASS=com.hortonworks.registries.storage.tool.StorageProviderConfigurationReader
 SCRIPT_RUNNER_MAIN_CLASS=com.hortonworks.registries.storage.tool.SQLScriptRunner
-CLASSPATH=${BOOTSTRAP_DIR}/lib/storage-tool-0.1.0-SNAPSHOT.jar
+CLASSPATH=${BOOTSTRAP_DIR}/lib/storage-tool-*.jar
 
 echo "Configuration file: ${CONFIG_FILE_PATH}"
 
