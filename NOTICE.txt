@@ -1,0 +1,21 @@
+The following libraries are included in packaged versions of this project:
+
+* Apache Avro
+ * COPYRIGHT: Copyright 2010 The Apache Software Foundation
+ * LICENSE: licenses/LICENSE.apache2.txt
+ * NOTICE: licenses/NOTICE.avro.txt
+ * HOMEPAGE: http://avro.apache.org
+
+* Apache Kafka
+ * COPYRIGHT: Copyright 2012 The Apache Software Foundation.
+ * LICENSE: licenses/LICENSE.apache2.txt
+ * NOTICE: licenses/NOTICE.kafka.txt
+ * HOMEPAGE: http://kafka.apache.org
+
+* Apache log4j
+ * COPYRIGHT: Copyright 2010 The Apache Software Foundation
+ * LICENSE: licenses/LICENSE.apache2.txt
+ * NOTICE: licenses/NOTICE.log4j.txt
+ * HOMEPAGE: http://logging.apache.org/log4j/1.2/
+
+
