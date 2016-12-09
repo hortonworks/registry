@@ -54,7 +54,7 @@
    		db.type: "mysql"
    		queryTimeoutInSecs: 30
    		db.properties:
-   		  dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+   		  dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
    		  dataSource.url: "jdbc:mysql://localhost/registry_db"
    		  dataSource.user: "registry_user"
    		  dataSource.password: "registry_password"
@@ -113,7 +113,7 @@
    		db.type: "mysql"
    		queryTimeoutInSecs: 30
    		db.properties:
-   		  dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+          dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
    		  dataSource.url: "jdbc:mysql://localhost/registry_db"
    		  dataSource.user: "registry_user"
    		  dataSource.password: "registry_password"

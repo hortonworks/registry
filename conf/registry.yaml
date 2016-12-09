@@ -28,10 +28,10 @@ storageProviderConfiguration:
    db.type: "mysql"
    queryTimeoutInSecs: 30
    db.properties:
-     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+     dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
      dataSource.url: "jdbc:mysql://localhost/schema_registry"
-     dataSource.user: ""
-     dataSource.password: ""
+     dataSource.user: "registry_user"
+     dataSource.password: "registry_password"
 
 #swagger configuration
 swagger:
@@ -42,8 +42,6 @@ enableCors: true
 
 server:
   rootPath: '/api/*'
-  softNofileLimit: 10000
-  hardNofileLimit: 10000
   applicationConnectors:
     - type: http
       port: 9090
