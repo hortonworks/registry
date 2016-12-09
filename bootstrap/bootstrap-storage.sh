@@ -26,7 +26,7 @@ while [ -h "${PRG}" ]; do
   fi
 done
 
-BOOTSTRAP_DIR=`dirname ${PRG}`
+BOOTSTRAP_DIR=$(dirname $0)
 CONFIG_FILE_PATH=${BOOTSTRAP_DIR}/../conf/registry.yaml
 
 # Which java to use
@@ -38,7 +38,12 @@ fi
 
 CONF_READER_MAIN_CLASS=com.hortonworks.registries.storage.tool.StorageProviderConfigurationReader
 SCRIPT_RUNNER_MAIN_CLASS=com.hortonworks.registries.storage.tool.SQLScriptRunner
-CLASSPATH=${BOOTSTRAP_DIR}/lib/storage-tool-*.jar
+
+for file in "${BOOTSTRAP_DIR}"/lib/*.jar;
+do
+  CLASSPATH="$CLASSPATH":"$file"
+done
+echo $CLASSPATH
 
 echo "Configuration file: ${CONFIG_FILE_PATH}"
 

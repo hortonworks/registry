@@ -34,7 +34,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.IOUtils;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +120,7 @@ public class SampleSchemaRegistryClientApp {
         byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
         Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
 
-        Log.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
+        LOG.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
     }
 
     protected Object createGenericRecordForDevice(String schemaFileName) throws IOException {
@@ -169,7 +168,7 @@ public class SampleSchemaRegistryClientApp {
         byte[] serializedData = serializer.serialize(deviceObject, schemaMetadata);
         Object deserializedObj = deserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
 
-        Log.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
+        LOG.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
 
     }
 

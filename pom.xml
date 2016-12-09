@@ -53,7 +53,7 @@
         <kryo.version>2.21</kryo.version>
         <logback.version>1.1.7</logback.version>
         <phoenix.version>4.4.0-HBase-1.1</phoenix.version>
-        <mysql-connector-java.version>5.1.38</mysql-connector-java.version>
+        <mariadb-java-client.version>1.5.5</mariadb-java-client.version>
         <calcite.version>1.4.0-incubating</calcite.version>
         <commons-lang3.version>3.3</commons-lang3.version>
         <commons-lang.version>2.5</commons-lang.version>
@@ -118,9 +118,9 @@
                 <version>${guava.version}</version>
             </dependency>
             <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql-connector-java.version}</version>
+              <groupId>org.mariadb.jdbc</groupId>
+              <artifactId>mariadb-java-client</artifactId>
+              <version>${mariadb-java-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
