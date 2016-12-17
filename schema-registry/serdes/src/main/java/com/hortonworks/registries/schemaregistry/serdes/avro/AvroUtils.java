@@ -52,7 +52,7 @@ public final class AvroUtils {
             type = Schema.Type.NULL;
         } else if (input instanceof byte[]) {
             type = Schema.Type.BYTES;
-        } else if (input instanceof Integer || input instanceof Short) {
+        } else if (input instanceof Integer || input instanceof Short || input instanceof Byte) {
             type = Schema.Type.INT;
         } else if (input instanceof Float) {
             type = Schema.Type.FLOAT;
