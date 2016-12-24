@@ -62,10 +62,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Schema Registry resource that provides schema registry REST service.
  */
 @Path("/v1/schemaregistry")
-@Api(value = "/api/v1/schemaregistry", tags = "schemaregistry", description = "This service is about schema registry operations")
+@Api(value = "/api/v1/schemaregistry", description = "Endpoint for Schema Registry service")
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
@@ -76,10 +76,20 @@ public class SchemaRegistryResource {
         this.schemaRegistry = schemaRegistry;
     }
 
+    // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
+    private static final String OPERATION_GROUP_SCHEMA = "1. Schema";
+    private static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
+    private static final String OPERATION_GROUP_OTHER = "3. Other";
+
     @GET
     @Path("/schemaproviders")
-    @ApiOperation(value = "List of registered schema providers ",
-            response = SchemaProviderInfo.class, responseContainer = "Collection")
+    @ApiOperation(value = "Get list of registered Schema Providers",
+            notes = "The Schema Registry supports different types of schemas, such as Avro, JSON etc. " + "" +
+                    "A Schema Provider is needed for each type of schema supported by the Schema Registry. " +
+                    "Schema Provider supports defining schema, serializing and deserializing data using the schema, " +
+                    " and checking compatibility between different versions of the schema.",
+            response = SchemaProviderInfo.class, responseContainer = "Collection",
+            tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response getRegisteredSchemaProviderInfos() {
         try {
@@ -93,8 +103,8 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas")
-    @ApiOperation(value = "List of schemas registered by filtering with the given query parameters",
-            response = SchemaMetadata.class, responseContainer = "Collection")
+    @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
+            response = SchemaMetadata.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response listSchemas(@Context UriInfo uriInfo) {
         try {
@@ -116,8 +126,9 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/search/fields")
-    @ApiOperation(value = "List of schemas containing the given fields",
-            response = SchemaVersionKey.class, responseContainer = "Collection")
+    @ApiOperation(value = "Search for schemas containing the given field names",
+            notes = "Search the schemas for given field names and return a list of schemas that contain the field.",
+            response = SchemaVersionKey.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response findSchemasByFields(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
@@ -152,15 +163,16 @@ public class SchemaRegistryResource {
 
     @POST
     @Path("/schemas")
-    @ApiOperation(value = "Registers the given schema information if it does not exist and returns respective schema metadata id",
-            notes = "Registers the given schema information and multiple versions of the schema can be registered for the given SchemaInfo's SchemaKey",
-            response = Long.class)
+    @ApiOperation(value = "Create a schema if it does not already exist",
+            notes = "Creates a schema with the given schema information if it does not already exist." +
+            " A unique schema identifier is returned.",
+            response = Long.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response addSchemaInfo(@ApiParam(value = "SchemaInfo to be added to the registry", required = true) SchemaMetadata schemaMetadataInfo) {
+    public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true) SchemaMetadata schemaMetadataInfo) {
         Response response;
         try {
-            Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
-            response = WSUtils.respond(schemaMetadataId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
+            Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
+            response = WSUtils.respond(schemaId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
         } catch (UnsupportedSchemaTypeException ex) {
             LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadataInfo, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
@@ -174,10 +186,10 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}")
-    @ApiOperation(value = "Returns schema metadata information for the given schema name",
-            response = SchemaMetadataInfo.class)
+    @ApiOperation(value = "Get schema information for the given schema name",
+            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response getSchemaInfo(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
+    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
@@ -195,21 +207,21 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemasById/{schemaMetadataId}")
-    @ApiOperation(value = "Returns schema metadata information for the given schemaMetadataId",
-            response = SchemaMetadataInfo.class)
+    @Path("/schemasById/{schemaId}")
+    @ApiOperation(value = "Get schema for a given schema identifier",
+            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response getSchemaInfo(@ApiParam(value = "Name of the schema", required = true) @PathParam("schemaMetadataId") Long schemaMetadataId) {
+    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaMetadataId);
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaId);
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
             } else {
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaMetadataId.toString());
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
             }
         } catch (Exception ex) {
-            LOG.error("Encountered error while retrieving SchemaInfo with schemaMetadataId: [{}]", schemaMetadataId, ex);
+            LOG.error("Encountered error while retrieving SchemaInfo with schemaId: [{}]", schemaId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
 
@@ -218,12 +230,12 @@ public class SchemaRegistryResource {
 
     @POST
     @Path("/schemas/{name}/versions")
-    @ApiOperation(value = "Registers the given schema version to schema with name and returns respective version number",
+    @ApiOperation(value = "Register a new version of the schema",
             notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
                     "and returns respective version number." + "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
-            response = Integer.class)
+            response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response addSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
+    public Response addSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                               @ApiParam(value = "Details about the schema", required = true) SchemaVersion schemaVersion) {
 
         Response response;
@@ -250,10 +262,10 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}/versions/latest")
-    @ApiOperation(value = "Returns the latest version of a schema with (type, schemaGroup, name)",
-            response = SchemaVersionInfo.class)
+    @ApiOperation(value = "Get the latest version of the schema for the given schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response getLatestSchemaVersion(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
+    public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
 
         Response response;
         try {
@@ -275,10 +287,10 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}/versions")
-    @ApiOperation(value = "Returns all version of a schema with the give unique name)",
-            response = SchemaVersionInfo.class, responseContainer = "Collection")
+    @ApiOperation(value = "Get all the versions of the schema for the given schema name)",
+            response = SchemaVersionInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response getAllSchemaVersions(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
+    public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
 
         Response response;
         try {
@@ -299,10 +311,10 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}/versions/{version}")
-    @ApiOperation(value = "Returns the given version of a schema with the given unque name",
-            response = SchemaVersionInfo.class)
+    @ApiOperation(value = "Get a version of the schema identified by the schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response getSchemaVersion(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaMetadata,
+    public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
                                      @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer version) {
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, version);
 
@@ -323,10 +335,10 @@ public class SchemaRegistryResource {
 
     @POST
     @Path("/schemas/{name}/compatibility")
-    @ApiOperation(value = "Checks whether the given schema text is compatible with all versions of the schema with unique name",
-            response = CompatibilityResult.class)
+    @ApiOperation(value = "Checks if the given schema text is compatible with all the versions of the schema identified by the name",
+            response = CompatibilityResult.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response checkCompatibilityWithSchema(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
+    public Response checkCompatibilityWithSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                                  @ApiParam(value = "schema text", required = true) String schemaText) {
         Response response;
         try {
@@ -345,10 +357,10 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}/serializers")
-    @ApiOperation(value = "Returns Serializers registered for schema with (type, schemaGroup, name)",
-            response = SerDesInfo.class, responseContainer = "Collection")
+    @ApiOperation(value = "Get list of Serializers registered for the given schema name",
+            response = SerDesInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response getSerializers(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName) {
+    public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
@@ -369,10 +381,10 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/schemas/{name}/deserializers")
-    @ApiOperation(value = "Returns Deserializers registered for schema with (type, schemaGroup, name)",
-            response = SerDesInfo.class, responseContainer = "Collection")
+    @ApiOperation(value = "Get list of Deserializers registered for the given schema name",
+            response = SerDesInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response getDeserializers(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaMetadata) {
+    public Response getDeserializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata) {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaMetadata);
@@ -394,7 +406,7 @@ public class SchemaRegistryResource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("/files")
-    @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class)
+    @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response uploadFile(@FormDataParam("file") final InputStream inputStream,
                                @FormDataParam("file") final FormDataContentDisposition contentDispositionHeader) {
@@ -414,7 +426,7 @@ public class SchemaRegistryResource {
     @GET
     @Produces({"application/octet-stream", "application/json"})
     @Path("/files/download/{fileId}")
-    @ApiOperation(value = "Downloads the respective for the given fileId if it exists", response = StreamingOutput.class)
+    @ApiOperation(value = "Downloads the respective for the given fileId if it exists", response = StreamingOutput.class, tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response downloadFile(@ApiParam(value = "Identifier of the file to be downloaded", required = true) @PathParam("fileId") String fileId) {
         Response response;
@@ -435,7 +447,7 @@ public class SchemaRegistryResource {
 
     @POST
     @Path("/serializers")
-    @ApiOperation(value = "Adds given serialized into registry and returns respective identifier", response = Long.class)
+    @ApiOperation(value = "Add a Serializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
     public Response addSerializer(@ApiParam(value = "Serializer information to be registered", required = true) SerDesInfo serDesInfo) {
         return _addSerDesInfo(serDesInfo);
@@ -443,15 +455,15 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/serializers/{id}")
-    @ApiOperation(value = "Returns Serializer for the given serializer id.")
+    @ApiOperation(value = "Get a Serializer for the given serializer id", tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response getSerializer(@ApiParam(value = "serializer identifier", required = true) @PathParam("id") Long serializerId) {
+    public Response getSerializer(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId) {
         return _getSerDesInfo(serializerId);
     }
 
     @POST
     @Path("/deserializers")
-    @ApiOperation(value = "Adds given deserializer into registry and returns respective identifier", response = Long.class)
+    @ApiOperation(value = "Add a Deserializer into Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
     public Response addDeserializer(@ApiParam(value = "Deserializer information to be registered", required = true) SerDesInfo serDesInfo) {
         return _addSerDesInfo(serDesInfo);
@@ -472,9 +484,9 @@ public class SchemaRegistryResource {
 
     @GET
     @Path("/deserializers/{id}")
-    @ApiOperation(value = "Returns Serializer for the given serializer id.")
+    @ApiOperation(value = "Get a Deserializer for the given deserializer id", tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response getDeserializer(@ApiParam(value = "deserializer identifier", required = true) @PathParam("id") Long deserializerId) {
+    public Response getDeserializer(@ApiParam(value = "Deserializer identifier", required = true) @PathParam("id") Long deserializerId) {
         return _getSerDesInfo(deserializerId);
     }
 
@@ -492,10 +504,10 @@ public class SchemaRegistryResource {
 
     @POST
     @Path("/schemas/{name}/mapping/{serDesId}")
-    @ApiOperation(value = "Maps the given serializer/deserializer id to the schema represented with (type, schemaGroup, name)")
+    @ApiOperation(value = "Bind the given Serializer/Deserializer to the schema identified by the schema name", tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response mapSerDes(@ApiParam(value = "Name of the schema", required = true) @PathParam("name") String schemaName,
-                              @ApiParam(value = "identifier of serializer/deserializer", required = true) @PathParam("serDesId") Long serDesId) {
+    public Response mapSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                              @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId) {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
@@ -507,5 +519,4 @@ public class SchemaRegistryResource {
 
         return response;
     }
-
 }
