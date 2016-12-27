@@ -102,7 +102,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException {
         SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata));
+        String name = schemaMetadata.getName();
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Schema name is empty");
+        }
         String type = schemaMetadata.getType();
+        if (type == null || type.isEmpty()) {
+            throw new IllegalArgumentException("Schema type is empty");
+        }
         if (schemaTypeWithProviders.get(type) == null) {
             throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
         }

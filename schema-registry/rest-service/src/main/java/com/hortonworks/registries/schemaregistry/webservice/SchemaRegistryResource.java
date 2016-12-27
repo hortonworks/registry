@@ -173,6 +173,9 @@ public class SchemaRegistryResource {
         try {
             Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
             response = WSUtils.respond(schemaId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
+        } catch (IllegalArgumentException ex) {
+            LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
+            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
         } catch (UnsupportedSchemaTypeException ex) {
             LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadataInfo, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());

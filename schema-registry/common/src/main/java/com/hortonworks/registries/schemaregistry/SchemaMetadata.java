@@ -63,8 +63,8 @@ public class SchemaMetadata implements Serializable {
         Preconditions.checkNotNull(name, "name can not be null");
         Preconditions.checkNotNull(type, "type can not be null");
 
-        this.name = name;
-        this.type = type;
+        this.name = name.trim();
+        this.type = type.trim();
         this.schemaGroup = schemaGroup;
         this.description = description;
         this.compatibility = (compatibility != null) ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
