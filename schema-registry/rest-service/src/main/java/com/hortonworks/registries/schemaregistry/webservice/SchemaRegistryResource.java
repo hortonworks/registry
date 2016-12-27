@@ -171,6 +171,9 @@ public class SchemaRegistryResource {
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true) SchemaMetadata schemaMetadataInfo) {
         Response response;
         try {
+            schemaMetadataInfo.trim();
+            checkNullOrEmpty("Schema name", schemaMetadataInfo.getName());
+            checkNullOrEmpty("Schema type", schemaMetadataInfo.getType());
             Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
             response = WSUtils.respond(schemaId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
         } catch (IllegalArgumentException ex) {
@@ -521,5 +524,14 @@ public class SchemaRegistryResource {
         }
 
         return response;
+    }
+
+    private static void checkNullOrEmpty(String name, String value) throws IllegalArgumentException {
+        if (value == null) {
+            throw new IllegalArgumentException("Parameter " + name + " is null");
+        }
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException("Parameter " + name + " is empty");
+        }
     }
 }

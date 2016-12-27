@@ -63,8 +63,8 @@ public class SchemaMetadata implements Serializable {
         Preconditions.checkNotNull(name, "name can not be null");
         Preconditions.checkNotNull(type, "type can not be null");
 
-        this.name = name.trim();
-        this.type = type.trim();
+        this.name = name;
+        this.type = type;
         this.schemaGroup = schemaGroup;
         this.description = description;
         this.compatibility = (compatibility != null) ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
@@ -139,6 +139,11 @@ public class SchemaMetadata implements Serializable {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
         return result;
+    }
+
+    public void trim() {
+        name = (name != null) ? name.trim() : name;
+        type = (type != null) ? type.trim() : type;
     }
 
     public static class Builder {

@@ -38,14 +38,14 @@ public class CatalogResponse {
         /* 1101 onwards for error messages */
         ENTITY_NOT_FOUND(1101, "Entity with id [%s] not found.", 1),
         EXCEPTION(1102, "An exception with message [%s] was thrown while processing request.", 1),
-        BAD_REQUEST_PARAM_MISSING(1103, "Bad request. Param [%s] is missing or empty.", 1),
+        BAD_REQUEST_PARAM_MISSING(1103, "Bad request - %s.", 1),
         DATASOURCE_TYPE_FILTER_NOT_FOUND(1104, "Datasource not found for type [%s], query params [%s].", 2),
         ENTITY_NOT_FOUND_FOR_FILTER(1105, "Entity not found for query params [%s].", 1),
         INCOMPATIBLE_SCHEMA(1106, "Given schema is incompatible.", 0),
         INVALID_SCHEMA(1107, "Given schema is invalid.", 0),
-        UNSUPPORTED_SCHEMA_TYPE(1108, "Given scheam type is not supported", 0),
-        UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type", 0),
-        BAD_REQUEST(1110, "Bad Request", 0);
+        UNSUPPORTED_SCHEMA_TYPE(1108, "Given schema type is not supported.", 0),
+        UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type.", 0),
+        BAD_REQUEST(1110, "Bad Request.", 0);
 
         private final int code;
         private final String msg;
