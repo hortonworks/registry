@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * TODO document this
  */
 public class SchemaFieldQuery {
     private final String name;

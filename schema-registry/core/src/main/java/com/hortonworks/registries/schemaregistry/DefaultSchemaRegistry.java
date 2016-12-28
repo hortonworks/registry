@@ -288,6 +288,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 result.add(new SchemaMetadata.Builder(storable.getName())
                                    .type(storable.getType())
                                    .schemaGroup(storable.getSchemaGroup())
+                                   .description(storable.getDescription())
                                    .build());
             }
         } else {
