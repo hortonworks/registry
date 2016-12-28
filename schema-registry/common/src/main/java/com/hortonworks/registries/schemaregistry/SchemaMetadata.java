@@ -141,6 +141,11 @@ public class SchemaMetadata implements Serializable {
         return result;
     }
 
+    public void trim() {
+        name = (name != null) ? name.trim() : name;
+        type = (type != null) ? type.trim() : type;
+    }
+
     public static class Builder {
 
         private final String name;

@@ -327,7 +327,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return new SchemaIdVersion(schemaMetadataInfo.getId(), readEntity(msg, Integer.class));
     }
 
-    private CatalogResponse readCatalogResponse(String msg) {
+    public static CatalogResponse readCatalogResponse(String msg) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             JsonNode node = objectMapper.readTree(msg);
@@ -539,7 +539,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
         String response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
-
         return readEntity(response, responseType);
     }
 
