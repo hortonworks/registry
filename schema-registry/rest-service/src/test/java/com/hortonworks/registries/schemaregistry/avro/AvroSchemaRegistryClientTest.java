@@ -136,15 +136,15 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         // Add first version of the schema
         String schemaName = schemaMetadata.getName();
         int expectedVersion = 1;
-        String schemaTxt1 = getSchemaTxt("/schema-1.avsc");
+        String schemaText1 = getSchemaText("/schema-1.avsc");
         String descriptionV1 = schemaName + "v1";
-        SchemaIdVersion v1 = addSchemaVersion(schemaRegistryClient, schemaName, schemaTxt1, descriptionV1, expectedVersion);
+        SchemaIdVersion v1 = addSchemaVersion(schemaRegistryClient, schemaName, schemaText1, descriptionV1, expectedVersion);
 
         // Add a new version of the schema
-        String schemaTxt2 = getSchemaTxt("/schema-2.avsc");
+        String schemaText2 = getSchemaText("/schema-2.avsc");
         expectedVersion = v1.getVersion() + 1;
         String descriptionV2 = schemaName + "v2";
-        SchemaIdVersion v2 = addSchemaVersion(schemaRegistryClient, schemaName, schemaTxt2, descriptionV2, expectedVersion);
+        SchemaIdVersion v2 = addSchemaVersion(schemaRegistryClient, schemaName, schemaText2, descriptionV2, expectedVersion);
 
         // Get all the versions of the schema and check the returned values
         Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
@@ -152,14 +152,14 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         for (SchemaVersionInfo versionInfo : allVersions) {
             int version = versionInfo.getVersion();
             if (version == v1.getVersion()) {
-                assertEquals(versionInfo, schemaTxt1, descriptionV1);
+                assertEquals(versionInfo, schemaText1, descriptionV1);
             } else {
                 Assert.assertEquals(v2.getVersion().intValue(), version);
-                assertEquals(versionInfo, schemaTxt2, descriptionV2);
+                assertEquals(versionInfo, schemaText2, descriptionV2);
             }
         }
 
-        // Search for field "md5". It exists in both schemaTxt1 (version v1) and schemaTxt2 (version v2)
+        // Search for field "md5". It exists in both schemaText1 (version v1) and schemaText2 (version v2)
         Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("md5").build());
         Assert.assertEquals(2, md5SchemaVersionKeys.size());
         for (SchemaVersionKey key : md5SchemaVersionKeys) {
@@ -168,7 +168,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
             Assert.assertEquals(schemaName, key.getSchemaName());
         }
 
-        // Search for field "txid". It exists in schemaTxt2
+        // Search for field "txid". It exists in schemaText2
         Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
         Assert.assertEquals(1, txidSchemaVersionKeys.size());
         SchemaVersionKey key = Iterables.get(txidSchemaVersionKeys, 0);
@@ -178,23 +178,23 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     @Test(expected = InvalidSchemaException.class)
     public void testInvalidSchema() throws Exception {
-        String schemaTxt = "--- invalid schema ---";
+        String schemaText = "--- invalid schema ---";
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
-        schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schemaTxt, "Initial version of the schema"));
+        schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schemaText, "Initial version of the schema"));
     }
 
     @Test(expected = IncompatibleSchemaException.class)
     public void testIncompatibleSchemas() throws Exception {
-        String schemaTxt = getSchemaTxt("/device.avsc");
-        String incompatSchemaTxt = getSchemaTxt("/device-incompat.avsc");
+        String schemaText = getSchemaText("/device.avsc");
+        String incompatSchemaText = getSchemaText("/device-incompat.avsc");
 
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
 
         // Add a new version of the schema
-        schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schemaTxt, "Initial version of the schema"));
+        schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schemaText, "Initial version of the schema"));
 
         // Adding incompatible new version of the schema and check exception is thrown
-        SchemaVersion incompatSchemaInfo = new SchemaVersion(incompatSchemaTxt, "second version");
+        SchemaVersion incompatSchemaInfo = new SchemaVersion(incompatSchemaText, "second version");
         schemaRegistryClient.addSchemaVersion(schemaMetadata, incompatSchemaInfo);
     }
 
@@ -233,9 +233,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();
         avroSnapshotDeserializer.init(config);
 
-        String deviceSchemaTxt = getSchemaTxt("/device.avsc");
+        String deviceSchemaText = getSchemaText("/device.avsc");
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
-        SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(deviceSchemaTxt, "Initial version of the schema"));
+        SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(deviceSchemaText, "Initial version of the schema"));
         Assert.assertNotNull(v1);
 
         Object deviceObject = createGenericRecordForDevice();
@@ -274,7 +274,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         String fileId = uploadFile();
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
 
-        schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchemaTxt("/device.avsc"), "Initial version of the schema"));
+        schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchemaText("/device.avsc"), "Initial version of the schema"));
         SerDesInfo serializerInfo = createSerDesInfo(fileId);
         Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
 
@@ -328,20 +328,20 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         return id;
     }
 
-    private static SchemaIdVersion addSchemaVersion(SchemaRegistryClient client, String name, String schemaTxt,
+    private static SchemaIdVersion addSchemaVersion(SchemaRegistryClient client, String name, String schemaText,
                                                     String description, int expectedVersion) throws Exception {
         // Registering a new schema version
-        SchemaIdVersion version = client.addSchemaVersion(name, new SchemaVersion(schemaTxt, description));
+        SchemaIdVersion version = client.addSchemaVersion(name, new SchemaVersion(schemaText, description));
         Assert.assertNotNull(version.getSchemaMetadataId());
         Assert.assertEquals(expectedVersion, version.getVersion().intValue());
 
         // Create the same schema version again by schema name and ensure the existing schema version is returned
-        SchemaIdVersion version1 = client.addSchemaVersion(name, new SchemaVersion(schemaTxt, "already added schema"));
+        SchemaIdVersion version1 = client.addSchemaVersion(name, new SchemaVersion(schemaText, "already added schema"));
         Assert.assertEquals(version, version1);
 
         // Ensure schema created is as expected
         SchemaVersionInfo schemaVersionInfo = client.getSchemaVersionInfo(new SchemaVersionKey(name, version.getVersion()));
-        Assert.assertEquals(schemaVersionInfo.getSchemaText(), schemaTxt);
+        Assert.assertEquals(schemaVersionInfo.getSchemaText(), schemaText);
         Assert.assertEquals(schemaVersionInfo.getDescription(), description);
 
         // Ensure newly created schema is the latest version
@@ -350,8 +350,8 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         return version;
     }
 
-    private static void assertEquals(SchemaVersionInfo versionInfo, String schemaTxt, String description) {
-        Assert.assertEquals(schemaTxt, versionInfo.getSchemaText());
+    private static void assertEquals(SchemaVersionInfo versionInfo, String schemaText, String description) {
+        Assert.assertEquals(schemaText, versionInfo.getSchemaText());
         Assert.assertEquals(description, versionInfo.getDescription());
     }
 }

@@ -66,9 +66,8 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
     }
 
     protected Object createGenericRecordForCompatDevice() throws IOException {
-        Schema schemaTxt = new Schema.Parser().parse(getSchemaTxt("/device-compat.avsc"));
-
-        GenericRecord avroRecord = new GenericData.Record(schemaTxt);
+        Schema schemaText = new Schema.Parser().parse(getSchemaText("/device-compat.avsc"));
+        GenericRecord avroRecord = new GenericData.Record(schemaText);
         long now = System.currentTimeMillis();
         avroRecord.put("xid", now);
         avroRecord.put("name", "foo-" + now);
@@ -80,9 +79,8 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
     }
 
     protected Object createGenericRecordForIncompatDevice() throws IOException {
-        Schema schemaTxt = new Schema.Parser().parse(getSchemaTxt("/device-incompat.avsc"));
-
-        GenericRecord avroRecord = new GenericData.Record(schemaTxt);
+        Schema schemaText = new Schema.Parser().parse(getSchemaText("/device-incompat.avsc"));
+        GenericRecord avroRecord = new GenericData.Record(schemaText);
         long now = System.currentTimeMillis();
         avroRecord.put("xid", now);
         avroRecord.put("name", "foo-" + now);
@@ -93,8 +91,8 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
     }
 
     protected Object createGenericRecordForDevice() throws IOException {
-        Schema schemaTxt = new Schema.Parser().parse(getSchemaTxt("/device.avsc"));
-        GenericRecord avroRecord = new GenericData.Record(schemaTxt);
+        Schema schemaText = new Schema.Parser().parse(getSchemaText("/device.avsc"));
+        GenericRecord avroRecord = new GenericData.Record(schemaText);
         long now = System.currentTimeMillis();
         avroRecord.put("xid", now);
         avroRecord.put("name", "foo-" + now);
@@ -104,7 +102,7 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
         return avroRecord;
     }
 
-    protected String getSchemaTxt(String schemaFileName) throws IOException {
+    protected String getSchemaText(String schemaFileName) throws IOException {
         InputStream avroSchemaStream = AvroSchemaRegistryClientTest.class.getResourceAsStream(schemaFileName);
         org.apache.avro.Schema.Parser parser = new org.apache.avro.Schema.Parser();
         return parser.parse(avroSchemaStream).toString();
