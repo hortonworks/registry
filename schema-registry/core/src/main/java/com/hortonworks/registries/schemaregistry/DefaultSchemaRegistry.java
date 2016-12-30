@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.common.ha.LeadershipClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;

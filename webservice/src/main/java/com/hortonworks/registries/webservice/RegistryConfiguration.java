@@ -18,6 +18,7 @@ package com.hortonworks.registries.webservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.common.FileStorageConfiguration;
+import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
@@ -25,6 +26,7 @@ import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -40,6 +42,9 @@ public class RegistryConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private List<ModuleConfiguration> modules;
+
+    @JsonProperty
+    private HAConfiguration haConfig;
 
     @JsonProperty
     private boolean enableCors;
@@ -81,5 +86,13 @@ public class RegistryConfiguration extends Configuration {
 
     public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
         return swaggerBundleConfiguration;
+    }
+
+    public HAConfiguration getHaConfig() {
+        return haConfig;
+    }
+
+    public void setHaConfig(HAConfiguration haConfig) {
+        this.haConfig = haConfig;
     }
 }

@@ -16,18 +16,18 @@ modules:
       schemaCacheExpiryInterval: 3600
 
 # HA configuration
-#haConfig:
-#  className: com.hortonworks.registries.ha.zk.ZKLeadershipClient
-#  config:
-#    # This url is a list of ZK servers separated by ,
-#    connect.url: "localhost:2181"
-#    # root node prefix in ZK for this instance
-#    root: "/registry"
-#    session.timeout.ms: 30000
-#    connection.timeout.ms: 20000
-#    retry.limit: 5
-#    retry.base.sleep.time.ms: 1000
-#    retry.max.sleep.time.ms: 5000
+haConfig:
+  className: com.hortonworks.registries.ha.zk.ZKLeadershipClient
+  config:
+    # This url is a list of ZK servers separated by ,
+    connect.url: "__zk_connect_url__"
+    # root node prefix in ZK for this instance
+    root: "/registry"
+    session.timeout.ms: 30000
+    connection.timeout.ms: 20000
+    retry.limit: 5
+    retry.base.sleep.time.ms: 1000
+    retry.max.sleep.time.ms: 5000
 
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
@@ -62,7 +62,7 @@ fileStorageConfiguration:
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
 
 storageProviderConfiguration:
-  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+  providerClass: "com.hortonworks.registries.schemaregistry.avro.SingletonInmemoryStore"
 
 #enable CORS, may want to disable in production
 enableCors: true
