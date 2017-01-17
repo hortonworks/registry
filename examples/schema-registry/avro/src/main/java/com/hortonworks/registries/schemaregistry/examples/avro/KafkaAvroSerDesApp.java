@@ -1,28 +1,21 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 
 package com.hortonworks.registries.schemaregistry.examples.avro;
 
-import com.hortonworks.registries.schemaregistry.examples.TruckEventsCsvConverter;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
@@ -30,87 +23,99 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
-
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
+import java.io.FileReader;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Below class can be used to send messages to a given topic in kafka-producer.props like below.
  *
+ * KafkaAvroSerDesApp -sm -d yelp_review_json -s yelp_review.avsc -p kafka-producer.props
  */
-public class TruckEventsKafkaAvroSerDesApp {
-    private static final Logger LOG = LoggerFactory.getLogger(TruckEventsKafkaAvroSerDesApp.class);
+public class KafkaAvroSerDesApp {
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesApp.class);
 
     public static final String MSGS_LIMIT = "msgsLimit";
     public static final String TOPIC = "topic";
     public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
+    public static final int DEFAULT_MSGS_LIMIT = 50;
 
-    String producerProps;
-    String schemaFile;
-    String consumerProps;
+    private String producerProps;
+    private String schemaFile;
+    private String consumerProps;
 
-    public TruckEventsKafkaAvroSerDesApp(String producerProps, String schemaFile) {
+    public KafkaAvroSerDesApp(String producerProps, String schemaFile) {
         this.producerProps = producerProps;
         this.schemaFile = schemaFile;
     }
 
-    public TruckEventsKafkaAvroSerDesApp(String consumerProps) {
+    public KafkaAvroSerDesApp(String consumerProps) {
         this.consumerProps = consumerProps;
     }
 
-
-
-    public void sendMessages(String payloadFile) throws Exception {
+    public void sendMessages(String payloadJsonFile) throws Exception {
         Properties props = new Properties();
-        props.load(new FileInputStream(this.producerProps));
-        int limit = Integer.parseInt(props.getProperty(MSGS_LIMIT, 50 + ""));
-
-        // convert the payload from csv to json records
-        TruckEventsCsvConverter truckEventsCsvConverter = new TruckEventsCsvConverter();
-        InputStream payloadResourceStream = new FileInputStream(payloadFile);
-        List<String> jsonRecords = truckEventsCsvConverter.convertToJsonRecords(payloadResourceStream, limit);
-
-        // convert json to avro records
-        Schema schema = new Schema.Parser().parse(new FileInputStream(this.schemaFile));
-        List<Object> avrorecords = new ArrayList<>();
-        for (String jsonRecord : jsonRecords) {
-            avrorecords.add(jsonToAvro(jsonRecord, schema));
+        try (FileInputStream fileInputStream = new FileInputStream(this.producerProps)) {
+            props.load(fileInputStream);
         }
+        int limit = Integer.parseInt(props.getProperty(MSGS_LIMIT, DEFAULT_MSGS_LIMIT + ""));
 
-        // send avro messages to given topic using KafkaAvroSerializer which registers payload schema if it does not exist
-        // with schema name as "<topic-name>:v", type as "avro" and schemaGroup as "kafka".
-        // schema registry should be running so that KafkaAvroSerializer can register the schema.
+        int current = 0;
+        Schema schema = new Schema.Parser().parse(new File(this.schemaFile));
         Map<String, Object> producerConfig = createProducerConfig(props);
-
         String topicName = props.getProperty(TOPIC);
-        produceMessage(topicName, avrorecords, producerConfig);
+
+        final Producer<String, Object> producer = new KafkaProducer<>(producerConfig);
+        final Callback callback = new MyProducerCallback();
+
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(payloadJsonFile))) {
+            String line;
+            while (current++ < limit && (line = bufferedReader.readLine()) != null) {
+                // convert json to avro records
+                Object avroMsg = jsonToAvro(line, schema);
+
+                // send avro messages to given topic using KafkaAvroSerializer which registers payload schema if it does not exist
+                // with schema name as "<topic-name>:v", type as "avro" and schemaGroup as "kafka".
+                // schema registry should be running so that KafkaAvroSerializer can register the schema.
+                LOG.info("Sending message: [{}] to topic: [{}]", avroMsg, topicName);
+                ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(topicName, avroMsg);
+                producer.send(producerRecord, callback);
+            }
+        } finally {
+            producer.flush();
+            LOG.info("All message are successfully sent to topic: [{}]", topicName);
+            producer.close(5, TimeUnit.SECONDS);
+        }
     }
 
     private Map<String, Object> createProducerConfig(Properties props) {
@@ -120,6 +125,7 @@ public class TruckEventsKafkaAvroSerDesApp {
         config.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL)));
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 1024);
         return config;
     }
 
@@ -133,20 +139,6 @@ public class TruckEventsKafkaAvroSerDesApp {
         return object;
     }
 
-    private void produceMessage(String topicName, List<Object> msgs, Map<String, Object> producerConfig) {
-        LOG.info("inside produce Message " + msgs.size());
-        final Producer<String, Object> producer = new KafkaProducer<>(producerConfig);
-        final Callback callback = new MyProducerCallback();
-        for (Object msg : msgs) {
-            LOG.info("Sending message: [{}] to topic: [{}]", msg, topicName);
-            ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(topicName, msg);
-            producer.send(producerRecord, callback);
-        }
-        producer.flush();
-        LOG.info("Message successfully sent to topic: [{}]", topicName);
-        producer.close(5, TimeUnit.SECONDS);
-    }
-
     private static class MyProducerCallback implements Callback {
         @Override
         public void onCompletion(RecordMetadata recordMetadata, Exception e) {
@@ -154,17 +146,18 @@ public class TruckEventsKafkaAvroSerDesApp {
         }
     }
 
-
     public void consumeMessages() throws Exception {
         Properties props = new Properties();
-        props.load(new FileInputStream(this.consumerProps));
+        try (FileInputStream inputStream = new FileInputStream(this.consumerProps);) {
+            props.load(inputStream);
+        }
         String topicName = props.getProperty(TOPIC);
         Map<String, Object> consumerConfig = createConsumerConfig(props);
 
         KafkaConsumer consumer = new KafkaConsumer<>(consumerConfig);
         consumer.subscribe(Collections.singletonList(topicName));
 
-        while(true) {
+        while (true) {
             ConsumerRecords<String, Object> records = consumer.poll(1000);
             LOG.info("records size " + records.count());
             for (ConsumerRecord<String, Object> record : records) {
@@ -188,6 +181,7 @@ public class TruckEventsKafkaAvroSerDesApp {
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return config;
     }
+
     /**
      * Print the command line options help message and exit application.
      */
@@ -195,7 +189,7 @@ public class TruckEventsKafkaAvroSerDesApp {
     private static void showHelpMessage(String[] args, Options options) {
         Options helpOptions = new Options();
         helpOptions.addOption(Option.builder("h").longOpt("help")
-                .desc("print this message").build());
+                                      .desc("print this message").build());
         try {
             CommandLine helpLine = new DefaultParser().parse(helpOptions, args, true);
             if (helpLine.hasOption("help") || args.length == 1) {
@@ -242,9 +236,9 @@ public class TruckEventsKafkaAvroSerDesApp {
             commandLine = parser.parse(options, args);
             if (commandLine.hasOption("sm")) {
                 if (commandLine.hasOption("p") && commandLine.hasOption("d") && commandLine.hasOption("s")) {
-                    TruckEventsKafkaAvroSerDesApp truckEventsKafkaAvroSerDesApp = new TruckEventsKafkaAvroSerDesApp(commandLine.getOptionValue("p"),
-                                                                                                                    commandLine.getOptionValue("s"));
-                    truckEventsKafkaAvroSerDesApp.sendMessages(commandLine.getOptionValue("d"));
+                    KafkaAvroSerDesApp kafkaAvroSerDesApp = new KafkaAvroSerDesApp(commandLine.getOptionValue("p"),
+                                                                                   commandLine.getOptionValue("s"));
+                    kafkaAvroSerDesApp.sendMessages(commandLine.getOptionValue("d"));
                 } else {
                     LOG.error("please provide following options for sending messages to Kafka");
                     LOG.error("-d or --data-file");
@@ -253,16 +247,16 @@ public class TruckEventsKafkaAvroSerDesApp {
                 }
             } else if (commandLine.hasOption("cm")) {
                 if (commandLine.hasOption("c")) {
-                    TruckEventsKafkaAvroSerDesApp truckEventsKafkaAvroSerDesApp = new TruckEventsKafkaAvroSerDesApp(commandLine.getOptionValue("c"));
-                    truckEventsKafkaAvroSerDesApp.consumeMessages();
+                    KafkaAvroSerDesApp kafkaAvroSerDesApp = new KafkaAvroSerDesApp(commandLine.getOptionValue("c"));
+                    kafkaAvroSerDesApp.consumeMessages();
                 } else {
                     LOG.error("please provide following options for consuming messages from Kafka");
                     LOG.error("-c or --consumer-config");
                 }
             }
-        } catch(ParseException e) {
+        } catch (ParseException e) {
             LOG.error("Please provide all the options ", e);
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOG.error("Failed to send/receive messages ", e);
         }
 
