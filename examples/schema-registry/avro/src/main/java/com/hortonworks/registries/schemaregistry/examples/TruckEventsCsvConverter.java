@@ -40,8 +40,8 @@ public class TruckEventsCsvConverter {
             System.exit(1);
         }
 
-        String outputFilePath = args[0];
-        String payloadFilePath = args[1];
+        String payloadFilePath = args[0];
+        String outputFilePath = args[1];
         TruckEventsCsvConverter truckEventsCsvConverter = new TruckEventsCsvConverter();
         truckEventsCsvConverter.convertToJsonRecords(payloadFilePath, outputFilePath);
     }
