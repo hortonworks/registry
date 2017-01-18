@@ -4,6 +4,27 @@
   "name": "yelp_reviews",
   "fields": [
     {
+      "name": "votes",
+      "type": {
+        "name": "votes_entry",
+        "type": "record",
+        "fields": [
+          {
+            "name": "funny",
+            "type": "int"
+          },
+          {
+            "name": "useful",
+            "type": "int"
+          },
+          {
+            "name": "cool",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
       "name": "user_id",
       "type": "string"
     },
@@ -20,7 +41,7 @@
       "type": "string"
     },
     {
-      "name": "business_id",
+      "name": "text",
       "type": "string"
     },
     {
@@ -28,22 +49,35 @@
       "type": "string"
     },
     {
-      "name": "votes",
+      "name": "business_id",
+      "type": "string"
+    },
+    {
+      "name": "attributes",
       "type": {
-        "name" : "votes_entry",
-        "type" : "record",
+        "name": "attribute_entries",
+        "type": "record",
         "fields": [
           {
-            "name": "funny",
-            "type": "int"
+            "name": "take_out",
+            "type": "boolean"
           },
           {
-            "name": "useful",
-            "type": "int"
-          },
-          {
-            "name": "cool",
-            "type": "int"
+            "name": "good_for",
+            "type": {
+              "name": "good_for_entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "dessert",
+                  "type": "boolean"
+                },
+                {
+                  "name": "breakfast",
+                  "type": "boolean"
+                }
+              ]
+            }
           }
         ]
       }
