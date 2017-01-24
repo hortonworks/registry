@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "book",
+  "namespace": "registry.example",
+  "fields": [
+    {
+      "name": "color",
+      "type": "string",
+      "default": "blue"
+    },
+    {
+      "name": "pages",
+      "type": "int"
+    }
+  ]
+}

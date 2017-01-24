@@ -41,7 +41,8 @@ public final class SchemaCompatibilityValidator {
         validators.put(SchemaCompatibility.NONE, new SchemaValidatorBuilder().strategy(new SchemaValidationStrategy() {
             @Override
             public void validate(Schema toValidate, Schema existing) throws SchemaValidationException {
-                throw new SchemaValidationException(toValidate, existing);
+                // ignore as this would allow any valid avro schema, there is any compatibility required with earlier
+                // or future schemas.
             }
         }).validateAll());
         COMPATIBILITY_VALIDATORS = Collections.unmodifiableMap(validators);

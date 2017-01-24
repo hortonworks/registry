@@ -42,6 +42,14 @@ public final class CompatibilityResult implements Serializable {
         return errorMessage;
     }
 
+    @Override
+    public String toString() {
+        return "CompatibilityResult{" +
+                "compatible=" + compatible +
+                ", errorMessage='" + errorMessage + '\'' +
+                '}';
+    }
+
     /**
      * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#compatible} as false and {@link CompatibilityResult#errorMessage} as given {@code errorMessage}
      *
