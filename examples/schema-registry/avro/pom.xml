@@ -12,7 +12,7 @@
     <artifactId>avro-examples</artifactId>
 
     <properties>
-        <mainClass>com.hortonworks.registries.schemaregistry.examples.avro.TruckEventsKafkaAvroSerDesApp</mainClass>
+        <mainClass>com.hortonworks.registries.schemaregistry.examples.avro.KafkaAvroSerDesApp</mainClass>
     </properties>
 
     <dependencies>
