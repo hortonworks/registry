@@ -1,0 +1,86 @@
+{
+  "type": "record",
+  "namespace": "com.hortonworks.registries",
+  "name": "yelp_reviews",
+  "fields": [
+    {
+      "name": "votes",
+      "type": {
+        "name": "votes_entry",
+        "type": "record",
+        "fields": [
+          {
+            "name": "funny",
+            "type": "int"
+          },
+          {
+            "name": "useful",
+            "type": "int"
+          },
+          {
+            "name": "cool",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "name": "user_id",
+      "type": "string"
+    },
+    {
+      "name": "review_id",
+      "type": "string"
+    },
+    {
+      "name": "stars",
+      "type": "int"
+    },
+    {
+      "name": "date",
+      "type": "string"
+    },
+    {
+      "name": "text",
+      "type": "string"
+    },
+    {
+      "name": "type",
+      "type": "string"
+    },
+    {
+      "name": "business_id",
+      "type": "string"
+    },
+    {
+      "name": "attributes",
+      "type": {
+        "name": "attribute_entries",
+        "type": "record",
+        "fields": [
+          {
+            "name": "take_out",
+            "type": "boolean"
+          },
+          {
+            "name": "good_for",
+            "type": {
+              "name": "good_for_entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "dessert",
+                  "type": "boolean"
+                },
+                {
+                  "name": "breakfast",
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

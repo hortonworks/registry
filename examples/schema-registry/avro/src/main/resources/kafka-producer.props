@@ -1,3 +1,3 @@
-topic=truck_events_stream
+topic=yelp_review_stream
 bootstrap.servers=localhost:9092
 schema.registry.url=http://localhost:9090/api/v1
