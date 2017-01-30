@@ -872,3 +872,6 @@ label {
 .invalidInput {
   border-color: #d81010;
 }
+.cm-s-no-cursor .CodeMirror-cursor {
+  display: none !important;
+}

@@ -261,7 +261,8 @@ export default class SchemaRegistryContainer extends Component {
                         styleActiveLine: true,
                         gutters: ["CodeMirror-lint-markers"],
                         lint: false,
-                        readOnly: 'nocursor'
+                        readOnly: true,
+                        theme: 'default no-cursor'
                 };
                 let schemaObj = this.state.currentSchema;
                 let showSchema = !schemaObj.schemaText;
