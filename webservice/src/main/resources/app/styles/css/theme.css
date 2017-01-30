@@ -867,7 +867,7 @@ label {
   z-index: 9999;
 }
 .ReactCodeMirror {
-  width: 600px;
+  width: 100%;
 }
 .invalidInput {
   border-color: #d81010;

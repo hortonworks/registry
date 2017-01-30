@@ -396,7 +396,7 @@ export default class SchemaRegistryContainer extends Component {
                                                                                         )}
                                                                                 </ul>
                                                                                 {schema.children.length > 1 ? <p><a href="javascript:void(0);">COMPARE VERSIONS</a></p>:null}
-                                                                        <p><a href="javascript:void(0);" onClick={this.handleAddVersion.bind(this)}>ADD VERSION</a></p>
+                                                                        {showSchema ? <p><a href="javascript:void(0);" onClick={this.handleAddVersion.bind(this)}>ADD VERSION</a></p>: ''}
                                                                         </div>
                                                             </div>
                                                         </div>
