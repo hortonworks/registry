@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
@@ -37,12 +38,11 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullSerializer;
 import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
-import com.hortonworks.registries.schemaregistry.SchemaVersion;
-import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.multipart.BodyPart;
@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
@@ -77,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -127,13 +129,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
+    public static final String SEARCH_FIELDS = "search/fields";
 
     private final Client client;
-    private final WebTarget rootTarget;
-    private final WebTarget schemasTarget;
-    private final WebTarget schemasByIdTarget;
-    private final WebTarget searchFieldsTarget;
-    private final WebTarget schemaProvidersTarget;
+    private final UrlSelector urlSelector;
+    private final Map<String, SchemaRegistryTargets> urlWithTargets;
 
     private final Configuration configuration;
     private final ClassLoaderCache classLoaderCache;
@@ -151,13 +151,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 .build();
         client.register(MultiPartFeature.class);
 
-        String rootCatalogURL = configuration.getValue(SCHEMA_REGISTRY_URL.name());
-        rootTarget = client.target(rootCatalogURL);
-        schemaProvidersTarget = rootTarget.path(SCHEMA_PROVIDERS_PATH);
-        schemasTarget = rootTarget.path(SCHEMAS_PATH);
-        schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
-        searchFieldsTarget = schemasTarget.path("search/fields");
-
+        // get list of urls and create given or default UrlSelector.
+        urlSelector = createUrlSelector();
+        urlWithTargets = new ConcurrentHashMap<>();
+        
         classLoaderCache = new ClassLoaderCache(this);
 
         schemaVersionInfoCache = new SchemaVersionInfoCache(key -> doGetSchemaVersionInfo(key),
@@ -175,12 +172,58 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 .build();
     }
 
+    private SchemaRegistryTargets currentSchemaRegistryTargets() {
+        String url = urlSelector.select();
+        urlWithTargets.computeIfAbsent(url, s -> new SchemaRegistryTargets(client.target(s)));
+        return urlWithTargets.get(url);
+    }
+    
+    private static class SchemaRegistryTargets {
+        private final WebTarget schemaProvidersTarget;
+        private final WebTarget schemasTarget;
+        private final WebTarget schemasByIdTarget;
+        private final WebTarget searchFieldsTarget;
+        private final WebTarget serializersTarget;
+        private final WebTarget deserializersTarget;
+        private final WebTarget filesTarget;
+
+        SchemaRegistryTargets(WebTarget rootTarget) {
+            schemaProvidersTarget = rootTarget.path(SCHEMA_PROVIDERS_PATH);
+            schemasTarget = rootTarget.path(SCHEMAS_PATH);
+            schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
+            searchFieldsTarget = schemasTarget.path(SEARCH_FIELDS);
+            serializersTarget = rootTarget.path(SERIALIZERS_PATH);
+            deserializersTarget = rootTarget.path(DESERIALIZERS_PATH);
+            filesTarget = rootTarget.path(FILES_PATH);
+        }
+
+    }
+
+    private UrlSelector createUrlSelector() {
+        UrlSelector urlSelector = null;
+        String rootCatalogURL = configuration.getValue(SCHEMA_REGISTRY_URL.name());
+        String urlSelectorClass = configuration.getValue(Configuration.URL_SELECTOR_CLASS.name());
+        if (urlSelectorClass == null) {
+            urlSelector = new LoadBalancedFailoverUrlSelector(rootCatalogURL);
+        } else {
+            try {
+                urlSelector = (UrlSelector) Class.forName(urlSelectorClass).getConstructor(String.class).newInstance(rootCatalogURL);
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException
+                    | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        urlSelector.init(configuration.getConfig());
+
+        return urlSelector;
+    }
+
     private SchemaMetadataCache.SchemaMetadataFetcher createSchemaMetadataFetcher() {
         return new SchemaMetadataCache.SchemaMetadataFetcher() {
             @Override
             public SchemaMetadataInfo fetch(String name) throws SchemaNotFoundException {
                 try {
-                    return getEntity(schemasTarget.path(name), SchemaMetadataInfo.class);
+                    return getEntity(currentSchemaRegistryTargets().schemasTarget.path(name), SchemaMetadataInfo.class);
                 } catch (NotFoundException e) {
                     throw new SchemaNotFoundException(e);
                 }
@@ -189,7 +232,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             @Override
             public SchemaMetadataInfo fetch(Long id) throws SchemaNotFoundException {
                 try {
-                    return getEntity(schemasByIdTarget.path(id.toString()), SchemaMetadataInfo.class);
+                    return getEntity(currentSchemaRegistryTargets().schemasByIdTarget.path(id.toString()), SchemaMetadataInfo.class);
                 } catch (NotFoundException e) {
                     throw new SchemaNotFoundException(e);
                 }
@@ -214,14 +257,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaProviderInfo> getSupportedSchemaProviders() {
-        return getEntities(schemaProvidersTarget, SchemaProviderInfo.class);
+        return getEntities(currentSchemaRegistryTargets().schemaProvidersTarget, SchemaProviderInfo.class);
     }
 
     @Override
     public Long registerSchemaMetadata(SchemaMetadata schemaMetadata) {
         SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(SchemaMetadataCache.Key.of(schemaMetadata.getName()));
         if (schemaMetadataInfo == null) {
-            return doRegisterSchemaMetadata(schemaMetadata, schemasTarget);
+            return doRegisterSchemaMetadata(schemaMetadata, currentSchemaRegistryTargets().schemasTarget);
         }
 
         return schemaMetadataInfo.getId();
@@ -311,7 +354,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
         }
 
-        WebTarget target = schemasTarget.path(schemaName).path("/versions");
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
         int status = response.getStatus();
         String msg = response.readEntity(String.class);
@@ -354,14 +397,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaVersionKey schemaVersionKey) {
         String schemaName = schemaVersionKey.getSchemaName();
-        WebTarget webTarget = schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey.getVersion()));
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey.getVersion()));
 
         return getEntity(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(encode(schemaName) + "/versions/latest");
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions/latest");
         return getEntity(webTarget, SchemaVersionInfo.class);
     }
 
@@ -375,20 +418,20 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(encode(schemaName) + "/versions");
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions");
         return getEntities(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        WebTarget webTarget = schemasTarget.path(encode(schemaName) + "/compatibility");
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
         String response = webTarget.request().post(Entity.text(toSchemaText), String.class);
         return readEntity(response, Boolean.class);
     }
 
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
-        WebTarget target = searchFieldsTarget;
+        WebTarget target = currentSchemaRegistryTargets().searchFieldsTarget;
         for (Map.Entry<String, String> entry : schemaFieldQuery.toQueryMap().entrySet()) {
             target = target.queryParam(entry.getKey(), entry.getValue());
         }
@@ -402,30 +445,30 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         BodyPart filePart = new StreamDataBodyPart("file", inputStream, "file");
         multiPart.bodyPart(filePart);
 
-        return rootTarget.path(FILES_PATH).request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA),
+        return currentSchemaRegistryTargets().filesTarget.request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA),
                                                           String.class);
     }
 
     @Override
     public InputStream downloadFile(String fileId) {
-        return rootTarget.path(FILES_PATH).path("download/" + encode(fileId)).request().get(InputStream.class);
+        return currentSchemaRegistryTargets().filesTarget.path("download/" + encode(fileId)).request().get(InputStream.class);
     }
 
     @Override
     public Long addSerializer(SerDesInfo serializerInfo) {
-        return postEntity(rootTarget.path(SERIALIZERS_PATH), serializerInfo, Long.class);
+        return postEntity(currentSchemaRegistryTargets().serializersTarget, serializerInfo, Long.class);
     }
 
     @Override
     public Long addDeserializer(SerDesInfo deserializerInfo) {
-        return postEntity(rootTarget.path(DESERIALIZERS_PATH), deserializerInfo, Long.class);
+        return postEntity(currentSchemaRegistryTargets().deserializersTarget, deserializerInfo, Long.class);
     }
 
     @Override
     public void mapSchemaWithSerDes(String schemaName, Long serDesId) {
         String path = String.format("%s/mapping/%s", encode(schemaName), serDesId.toString());
 
-        Boolean success = postEntity(schemasTarget.path(path), null, Boolean.class);
+        Boolean success = postEntity(currentSchemaRegistryTargets().schemasTarget.path(path), null, Boolean.class);
         LOG.info("Received response while mapping schema [{}] with serialzer/deserializer [{}] : [{}]", schemaName, serDesId, success);
     }
 
@@ -463,14 +506,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SerDesInfo> getSerializers(String schemaName) {
-        String path = encode(schemaName)  + "/serializers/";
-        return getEntities(schemasTarget.path(path), SerDesInfo.class);
+        String path = encode(schemaName) + "/serializers/";
+        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(path), SerDesInfo.class);
     }
 
     @Override
     public Collection<SerDesInfo> getDeserializers(String schemaName) {
-        String path = encode(schemaName)  + "/deserializers/";
-        return getEntities(schemasTarget.path(path), SerDesInfo.class);
+        String path = encode(schemaName) + "/deserializers/";
+        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(path), SerDesInfo.class);
     }
 
     public <T> T createSerializerInstance(SerDesInfo serializerInfo) {
@@ -684,6 +727,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
                                      ConfigEntry.PositiveNumberValidator.get());
 
+        /**
+         *
+         */
+        public static final ConfigEntry<String> URL_SELECTOR_CLASS =
+                ConfigEntry.optional("schema.registry.client.url.selector",
+                                     String.class,
+                                     "Schema Registry URL selector class.",
+                                     FailoverUrlSelector.class.getName(),
+                                     ConfigEntry.NonEmptyStringValidator.get());
+
         // connection properties
         /**
          * Default connection timeout on connections created while connecting to schema registry.
@@ -744,6 +797,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         public <T> T getValue(String propertyKey) {
             return (T) (config.containsKey(propertyKey) ? config.get(propertyKey) : options.get(propertyKey).defaultValue());
+        }
+
+        public Map<String, Object> getConfig() {
+            return Collections.unmodifiableMap(config);
         }
 
         public Collection<ConfigEntry<?>> getAvailableConfigEntries() {
