@@ -21,9 +21,9 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Client to connect to target systems(like ZooKeeper) which give a way to elect a leader among the participants.
+ * Participant to connect to target systems(like ZooKeeper) which give a way to elect a leader among the participants.
  */
-public interface LeadershipClient {
+public interface LeadershipParticipant {
 
     /**
      * Initializes with the given {@code config} and {@code participantId}.
@@ -35,7 +35,7 @@ public interface LeadershipClient {
     void init(Map<String, Object> config, String participantId);
 
     /**
-     * Participates for leader lock with the given configuration.
+     * Participates for leadership with the given configuration.
      *
      * @throws Exception if any errors encountered.
      */
@@ -48,7 +48,7 @@ public interface LeadershipClient {
     String getCurrentLeader() throws Exception;
 
     /**
-     * Exits the current leader latch by closing it. Thi smay thro an Exception if the current latch is not yet started
+     * Exits from leadership participation. This may throw an Exception if the current latch is not yet started
      * or it has already been closed.
      *
      * @throws IOException if any IO related errors occur.
@@ -58,7 +58,7 @@ public interface LeadershipClient {
     /**
      * Returns true if the current participant is a leader
      */
-    boolean hasLeadership();
+    boolean isLeader();
 
     /**
      * Closes the underlying ZK client resources.

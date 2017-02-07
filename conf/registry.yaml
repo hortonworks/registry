@@ -15,8 +15,9 @@ modules:
       schemaCacheExpiryInterval: 3600
 
 ## HA configuration
+## When no configuration is set, then all the nodes in schema registry cluster are eligible to write to the backend storage.
 #haConfig:
-#  className: com.hortonworks.registries.ha.zk.ZKLeadershipClient
+#  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
 #  config:
 #    # This url is a list of ZK servers separated by ,
 #    connect.url: "localhost:2181"

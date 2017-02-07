@@ -20,7 +20,7 @@ import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ha.LeadershipAware;
-import com.hortonworks.registries.common.ha.LeadershipClient;
+import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.ha.LocalLeader;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
-    protected AtomicReference<LeadershipClient> leadershipClientRef = new AtomicReference<>();
+    protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
@@ -77,28 +77,28 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                     LOG.info("HA configuration: [{}]", haConfiguration);
                     String className = haConfiguration.getClassName();
 
-                    LeadershipClient leadershipClient = null;
+                    LeadershipParticipant leadershipParticipant = null;
                     try {
-                        leadershipClient = (LeadershipClient) Class.forName(className).newInstance();
+                        leadershipParticipant = (LeadershipParticipant) Class.forName(className).newInstance();
                     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
-                    leadershipClient.init(haConfiguration.getConfig(), serverUrl);
+                    leadershipParticipant.init(haConfiguration.getConfig(), serverUrl);
 
-                    leadershipClientRef.set(leadershipClient);
-                    LOG.info("Registering for leadership with participant [{}]", leadershipClient);
+                    leadershipParticipantRef.set(leadershipParticipant);
+                    LOG.info("Registering for leadership with participant [{}]", leadershipParticipant);
                     try {
-                        leadershipClientRef.get().participateForLeadership();
+                        leadershipParticipantRef.get().participateForLeadership();
                     } catch (Exception e) {
                         LOG.error("Error occurred while participating for leadership with serverUrl [{}]", serverUrl, e);
                         throw new RuntimeException(e);
                     }
-                    LOG.info("Registered for leadership with participant [{}]", leadershipClient);
+                    LOG.info("Registered for leadership with participant [{}]", leadershipParticipant);
                 }
             });
         } else {
-            leadershipClientRef.set(LocalLeader.getInstance());
-            LOG.info("No HA configuration exists, using [{}]", leadershipClientRef);
+            leadershipParticipantRef.set(LocalLeader.getInstance());
+            LOG.info("No HA configuration exists, using [{}]", leadershipParticipantRef);
         }
     }
 
@@ -143,9 +143,9 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             }
 
             if(moduleRegistration instanceof LeadershipAware) {
-                LOG.info("Module [{}] is registered for LeadershipClient registration.");
+                LOG.info("Module [{}] is registered for LeadershipParticipant registration.");
                 LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
-                leadershipAware.setLeadershipClient(leadershipClientRef);
+                leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
             }
 
             resourcesToRegister.addAll(moduleRegistration.getResources());

@@ -18,7 +18,7 @@ package com.hortonworks.registries.schemaregistry.webservice;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
-import com.hortonworks.registries.common.ha.LeadershipClient;
+import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -75,14 +75,14 @@ public class SchemaRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
 
     private final ISchemaRegistry schemaRegistry;
-    private final AtomicReference<LeadershipClient> leadershipClient;
+    private final AtomicReference<LeadershipParticipant> leadershipParticipant;
 
-    public SchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipClient> leadershipClient) {
+    public SchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         Preconditions.checkNotNull(schemaRegistry, "SchemaRegistry can not be null");
-        Preconditions.checkNotNull(leadershipClient, "LeadershipClient can not be null");
+        Preconditions.checkNotNull(leadershipParticipant, "LeadershipParticipant can not be null");
 
         this.schemaRegistry = schemaRegistry;
-        this.leadershipClient = leadershipClient;
+        this.leadershipParticipant = leadershipParticipant;
     }
 
     // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
@@ -120,10 +120,10 @@ public class SchemaRegistryResource {
      */
     private Response handleLeaderAction(UriInfo uriInfo, Supplier<Response> supplier) {
         LOG.info("URI info [{}]", uriInfo.getRequestUri());
-        if (!leadershipClient.get().hasLeadership()) {
+        if (!leadershipParticipant.get().isLeader()) {
             URI location = null;
             try {
-                String currentLeaderLoc = leadershipClient.get().getCurrentLeader();
+                String currentLeaderLoc = leadershipParticipant.get().getCurrentLeader();
                 URI leaderServerUrl = new URI(currentLeaderLoc);
                 URI requestUri = uriInfo.getRequestUri();
                 location = new URI(leaderServerUrl.getScheme(), leaderServerUrl.getAuthority(),

@@ -17,7 +17,7 @@ modules:
 
 # HA configuration
 haConfig:
-  className: com.hortonworks.registries.ha.zk.ZKLeadershipClient
+  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
   config:
     # This url is a list of ZK servers separated by ,
     connect.url: "__zk_connect_url__"

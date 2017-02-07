@@ -20,7 +20,7 @@ package com.hortonworks.registries.common.ha;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * This should be implemented by modules which need awareness of {@link LeadershipClient} registration and they can
+ * This should be implemented by modules which need awareness of {@link LeadershipParticipant} registration and they can
  * participate in leader election.
  */
 public interface LeadershipAware {
@@ -28,5 +28,5 @@ public interface LeadershipAware {
     /**
      * Sets the configured leadership client instance.
      */
-    public void setLeadershipClient(AtomicReference<LeadershipClient> leadershipClient);
+    public void setLeadershipParticipant(AtomicReference<LeadershipParticipant> leadershipParticipant);
 }

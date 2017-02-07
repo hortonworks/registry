@@ -32,8 +32,8 @@ import java.util.Map;
 /**
  *
  */
-public class ZKLeadershipClientTest {
-    private static final Logger LOG = LoggerFactory.getLogger(ZKLeadershipClientTest.class);
+public class ZKLeadershipParticipantTest {
+    private static final Logger LOG = LoggerFactory.getLogger(ZKLeadershipParticipantTest.class);
     private TestingServer testingServer;
 
     @Before
@@ -51,33 +51,33 @@ public class ZKLeadershipClientTest {
         Map<String, Object> conf = createConf();
 
         String participant1 = "foo-1";
-        ZKLeadershipClient zkLeadershipClient1 = new ZKLeadershipClient();
-        zkLeadershipClient1.init(conf, participant1);
+        ZKLeadershipParticipant zkLeadershipParticipant = new ZKLeadershipParticipant();
+        zkLeadershipParticipant.init(conf, participant1);
 
         String participant2 = "foo-2";
-        ZKLeadershipClient zkLeadershipClient2 = new ZKLeadershipClient();
-        zkLeadershipClient2.init(conf, participant2);
+        ZKLeadershipParticipant zkLeadershipParticipant2 = new ZKLeadershipParticipant();
+        zkLeadershipParticipant2.init(conf, participant2);
 
-        zkLeadershipClient1.participateForLeadership();
-        zkLeadershipClient2.participateForLeadership();
+        zkLeadershipParticipant.participateForLeadership();
+        zkLeadershipParticipant2.participateForLeadership();
 
-        waitForLeaderLatchNodeCreation(zkLeadershipClient1, 10_000);
+        waitForLeaderLatchNodeCreation(zkLeadershipParticipant, 10_000);
 
-        String currentLeader = zkLeadershipClient1.getCurrentLeader();
+        String currentLeader = zkLeadershipParticipant.getCurrentLeader();
         LOG.info("########### currentLeader [{}] " + currentLeader);
-        zkLeadershipClient1.exitFromLeaderParticipation();
+        zkLeadershipParticipant.exitFromLeaderParticipation();
         LOG.info("Exiting from leader participation: [{}]", participant1);
 
-        currentLeader = zkLeadershipClient2.getCurrentLeader();
+        currentLeader = zkLeadershipParticipant2.getCurrentLeader();
         LOG.info("########### currentLeader [{}] " + currentLeader);
         Assert.assertEquals(participant2, currentLeader);
     }
 
-    private void waitForLeaderLatchNodeCreation(ZKLeadershipClient zkLeadershipClient1, long waitTimeMillis) throws Exception {
+    private void waitForLeaderLatchNodeCreation(ZKLeadershipParticipant zkLeadershipParticipant, long waitTimeMillis) throws Exception {
         long startTime = System.currentTimeMillis();
 
         while(System.currentTimeMillis() - startTime < waitTimeMillis) {
-            if(zkLeadershipClient1.checkLeaderLatchPathExists()) {
+            if(zkLeadershipParticipant.checkLeaderLatchPathExists()) {
                 return;
             }
             Thread.sleep(100);

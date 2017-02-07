@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ha.LeadershipAware;
-import com.hortonworks.registries.common.ha.LeadershipClient;
+import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
@@ -46,7 +46,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     private Map<String, Object> config;
     private FileStorage fileStorage;
     private StorageManager storageManager;
-    private AtomicReference<LeadershipClient> leadershipClient;
+    private AtomicReference<LeadershipParticipant> leadershipParticipant;
 
     @Override
     public void setStorageManager(StorageManager storageManager) {
@@ -64,7 +64,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         Collection<? extends SchemaProvider> schemaProviders = getSchemaProviders();
         DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
         schemaRegistry.init(config);
-        SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipClient);
+        SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipParticipant);
         return Collections.<Object>singletonList(schemaRegistryResource);
     }
 
@@ -95,8 +95,8 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     }
 
     @Override
-    public void setLeadershipClient(AtomicReference<LeadershipClient> leadershipClient) {
-        Preconditions.checkState(this.leadershipClient == null, "leadershipClient " + leadershipClient + " is already set!!");
-        this.leadershipClient = leadershipClient;
+    public void setLeadershipParticipant(AtomicReference<LeadershipParticipant> leadershipParticipant) {
+        Preconditions.checkState(this.leadershipParticipant == null, "leadershipParticipant " + leadershipParticipant + " is already set!!");
+        this.leadershipParticipant = leadershipParticipant;
     }
 }

@@ -21,10 +21,10 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * This is an implementation for {@link LeadershipClient} which considers itself as the leader. This is used when HA is
+ * This is an implementation for {@link LeadershipParticipant} which considers itself as the leader. This is used when HA is
  * not enabled on registry instances to consider the registry instance as leader.
  */
-public final class LocalLeader implements LeadershipClient {
+public final class LocalLeader implements LeadershipParticipant {
     private static final LocalLeader instance = new LocalLeader();
 
     public static LocalLeader getInstance() {
@@ -55,7 +55,7 @@ public final class LocalLeader implements LeadershipClient {
      * Always returns true as it considers the current instance is always the leader.
      */
     @Override
-    public boolean hasLeadership() {
+    public boolean isLeader() {
         return true;
     }
 

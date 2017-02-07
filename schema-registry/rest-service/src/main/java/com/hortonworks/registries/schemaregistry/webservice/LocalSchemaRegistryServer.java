@@ -128,7 +128,7 @@ public class LocalSchemaRegistryServer {
         void stop() throws Exception {
             if (localServer != null) {
                 localServer.stop();
-                leadershipClientRef.get().close();
+                leadershipParticipantRef.get().close();
                 LOG.info("Local schema registry instance is stopped.");
             } else {
                 LOG.info("No local schema registry instance is running to be stopped.");
@@ -144,7 +144,7 @@ public class LocalSchemaRegistryServer {
         }
 
         boolean hasLeadership() {
-            return leadershipClientRef.get().hasLeadership();
+            return leadershipParticipantRef.get().isLeader();
         }
 
     }

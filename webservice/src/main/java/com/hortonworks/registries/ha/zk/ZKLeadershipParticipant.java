@@ -18,7 +18,7 @@
 package com.hortonworks.registries.ha.zk;
 
 import com.google.common.base.Preconditions;
-import com.hortonworks.registries.common.ha.LeadershipClient;
+import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * {@link LeadershipClient} implementation for ZooKeeper.
+ * {@link LeadershipParticipant} implementation for ZooKeeper.
  */
-public class ZKLeadershipClient implements LeadershipClient {
+public class ZKLeadershipParticipant implements LeadershipParticipant {
 
     public static final String LEADER_LOCK_NODE_PATH = "-leader-lock";
     public static final int DEFAULT_CONN_TIMOUT = 20_1000;
@@ -43,7 +43,7 @@ public class ZKLeadershipClient implements LeadershipClient {
     public static final int DEFAULT_MAX_SLEEP_TIME = 5000;
     public static final int DEFAULT_RETRY_LIMIT = 5;
 
-    private static final Logger LOG = LoggerFactory.getLogger(ZKLeadershipClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZKLeadershipParticipant.class);
     public static final String CONNECT_URL = "connect.url";
     public static final String CONNECTION_TIMEOUT_MS = "connection.timeout.ms";
     public static final String SESSION_TIMEOUT_MS = "session.timeout.ms";
@@ -166,7 +166,7 @@ public class ZKLeadershipClient implements LeadershipClient {
      * Returns true if the current participant is a leader
      */
     @Override
-    public boolean hasLeadership() {
+    public boolean isLeader() {
         return leaderLatchRef.get().hasLeadership();
     }
 
@@ -183,7 +183,7 @@ public class ZKLeadershipClient implements LeadershipClient {
 
     @Override
     public String toString() {
-        return "ZKLeadershipClient{" +
+        return "ZKLeadershipParticipant{" +
                 "conf=" + conf +
                 ", serverUrl='" + serverUrl + '\'' +
                 ", leaderLatchPath='" + leaderLatchPath + '\'' +
