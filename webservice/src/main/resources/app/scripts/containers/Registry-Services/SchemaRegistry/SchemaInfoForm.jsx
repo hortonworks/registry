@@ -13,7 +13,7 @@ export default class SchemaFormContainer extends Component {
                         compatibilityArr: [
                                 {value: 'BACKWARD', label: 'BACKWARD'},
                                 {value: 'FORWARD', label: 'FORWARD'},
-                                {value: 'FULL', label: 'FULL'},
+                                {value: 'BOTH', label: 'BOTH'},
                                 {value: 'NONE', label: 'NONE'}
                         ],
                         type: 'avro',
@@ -113,7 +113,7 @@ export default class SchemaFormContainer extends Component {
                                         <div className="col-sm-5">
                                                 <input
                                                         name="description"
-                                                        placeholder="description"
+                                                        placeholder="Description"
                                                         onChange={this.handleValueChange.bind(this)}
                                                         type="text"
                                                         className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === '' ? "form-control invalidInput" : "form-control"}
@@ -139,7 +139,7 @@ export default class SchemaFormContainer extends Component {
                                         <div className="col-sm-5">
                                                 <input
                                                     name="schemaGroup"
-                                                    placeholder="schemaGroup"
+                                                    placeholder="Schema Group"
                                                     onChange={this.handleValueChange.bind(this)}
                                                     type="text"
                                                     className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === '' ? "form-control invalidInput" : "form-control"}
@@ -155,7 +155,6 @@ export default class SchemaFormContainer extends Component {
                                                         value={this.state.compatibility}
                                                         options={this.state.compatibilityArr}
                                                         onChange={this.handleCompatibilityChange.bind(this)}
-                                                        disabled={true}
                                                 />
                                         </div>
                                 </div>

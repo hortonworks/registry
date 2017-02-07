@@ -205,8 +205,14 @@ export default class SchemaRegistryContainer extends Component {
         onToggle(node, toggled) {
                 if(this.state.currentSchema){this.state.currentSchema.active = false;}
                 node.active = true;
-                if(node.children){ node.toggled = toggled; this.schemaName = node.name;}
-                this.setState({ currentSchema: node });
+                let schemaName = this.schemaName || this.state.currentSchema.name;
+                let schemaObj = _.find(this.state.schemaData, (obj)=>{return obj.name === schemaName});
+                if(schemaObj && node.children && schemaObj.name !== node.name) {
+                    schemaObj.active = false;
+                    schemaObj.toggled = false;
+                }
+                if(node.children){ node.toggled = toggled; this.schemaName = node.name; }
+                this.setState({ currentSchema: node, schemaData: this.state.schemaData });
         }
         showSchema() {
                 let {schemaData} = this.state;
@@ -261,7 +267,8 @@ export default class SchemaRegistryContainer extends Component {
                         styleActiveLine: true,
                         gutters: ["CodeMirror-lint-markers"],
                         lint: false,
-                        readOnly: 'nocursor'
+                        readOnly: true,
+                        theme: 'default no-cursor'
                 };
                 let schemaObj = this.state.currentSchema;
                 let showSchema = !schemaObj.schemaText;
@@ -304,7 +311,7 @@ export default class SchemaRegistryContainer extends Component {
                                                                                                                                     Header: (props) => {
                                                                                                                                         if(props.node.children)
                                                                                                                                         return (
-                                                                                                                                        <span> <i className={props.node.toggled ? 'fa fa-folder-open-o' :'fa fa-folder-o'}></i> {props.node.name}</span>
+                                                                                                                                        <span> <i className={props.node.toggled && props.node.children.length > 0 ? 'fa fa-folder-open-o' :'fa fa-folder-o'}></i> {props.node.name}</span>
                                                                                                                                         );
                                                                                                                                         else
                                                                                                                                                 return (
@@ -395,7 +402,7 @@ export default class SchemaRegistryContainer extends Component {
                                                                                         )}
                                                                                 </ul>
                                                                                 {schema.children.length > 1 ? <p><a href="javascript:void(0);">COMPARE VERSIONS</a></p>:null}
-                                                                        <p><a href="javascript:void(0);" onClick={this.handleAddVersion.bind(this)}>ADD VERSION</a></p>
+                                                                        {showSchema ? <p><a href="javascript:void(0);" onClick={this.handleAddVersion.bind(this)}>ADD VERSION</a></p>: ''}
                                                                         </div>
                                                             </div>
                                                         </div>

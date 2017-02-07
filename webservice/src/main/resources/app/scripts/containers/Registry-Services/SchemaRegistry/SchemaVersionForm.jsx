@@ -81,7 +81,7 @@ export default class SchemaVersionForm extends Component {
                                         <div className="col-sm-5">
                                                 <input
                                                         name="description"
-                                                        placeholder="description"
+                                                        placeholder="Description"
                                                         onChange={this.handleValueChange.bind(this)}
                                                         type="text"
                                                         className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === '' ? "form-control invalidInput" : "form-control"}
