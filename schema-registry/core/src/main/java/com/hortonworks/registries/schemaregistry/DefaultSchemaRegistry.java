@@ -198,26 +198,28 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // take a lock for a schema with same name.
         SlotSynchronizer.Lock slotLock = slotSynchronizer.lockSlot(schemaName);
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaName);
             Integer version = 0;
-            if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
-                SchemaVersionInfo latestSchemaVersionInfo = null;
-                SchemaCompatibility compatibility = schemaMetadata.getCompatibility();
-                for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-                    // check for compatibility
-                    CompatibilityResult compatibilityResult = schemaTypeWithProviders.get(type).checkCompatibility(schemaText, schemaVersionInfo.getSchemaText(), compatibility);
-                    if (!compatibilityResult.isCompatible()) {
-                        throw new IncompatibleSchemaException("Given schema is not compatible with earlier schema versions. Error encountered is: " + compatibilityResult.getErrorMessage());
+            if(schemaMetadata.isEvolve()) {
+                Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaName);
+                if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
+                    SchemaVersionInfo latestSchemaVersionInfo = null;
+                    SchemaCompatibility compatibility = schemaMetadata.getCompatibility();
+                    for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
+                        // check for compatibility
+                        CompatibilityResult compatibilityResult = schemaTypeWithProviders.get(type).checkCompatibility(schemaText, schemaVersionInfo.getSchemaText(), compatibility);
+                        if (!compatibilityResult.isCompatible()) {
+                            throw new IncompatibleSchemaException("Given schema is not compatible with earlier schema versions. Error encountered is: " + compatibilityResult.getErrorMessage());
+                        }
+
+                        Integer curVersion = schemaVersionInfo.getVersion();
+                        if (curVersion >= version) {
+                            latestSchemaVersionInfo = schemaVersionInfo;
+                            version = curVersion;
+                        }
                     }
 
-                    Integer curVersion = schemaVersionInfo.getVersion();
-                    if (curVersion >= version) {
-                        latestSchemaVersionInfo = schemaVersionInfo;
-                        version = curVersion;
-                    }
+                    version = latestSchemaVersionInfo.getVersion();
                 }
-
-                version = latestSchemaVersionInfo.getVersion();
             }
             schemaVersionStorable.setVersion(version + 1);
 
