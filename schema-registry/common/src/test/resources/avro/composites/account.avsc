@@ -1,0 +1,20 @@
+{
+  "name": "account",
+  "namespace": "com.hortonworks.types",
+  "includeSchemas": [
+    {
+      "name": "utils"
+    }
+  ],
+  "type": "record",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "id",
+      "type": "com.hortonworks.datatypes.uuid"
+    }
+  ]
+}

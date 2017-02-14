@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.hortonworks.registries.schemaregistry;
+
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.Map;
 
@@ -25,10 +28,12 @@ public abstract class AbstractSchemaProvider implements SchemaProvider {
     protected Map<String, Object> config;
     private String defaultSerializerClassName;
     private String defaultDeserializerClassName;
+    private SchemaVersionRetriever schemaVersionRetriever;
 
     @Override
     public void init(Map<String, Object> config) {
         this.config = config;
+        schemaVersionRetriever = (SchemaVersionRetriever) config.get(SchemaProvider.SCHEMA_VERSION_RETRIEVER_CONFIG);
         defaultSerializerClassName = (String) config.get("defaultSerializerClass");
         defaultDeserializerClassName = (String) config.get("defaultDeserializerClass");
     }
@@ -42,4 +47,14 @@ public abstract class AbstractSchemaProvider implements SchemaProvider {
     public String getDefaultDeserializerClassName() {
         return defaultDeserializerClassName;
     }
+
+    @Override
+    public String getResultantSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException {
+        return schemaText;
+    }
+
+    public SchemaVersionRetriever getSchemaVersionRetriever() {
+        return schemaVersionRetriever;
+    }
+
 }

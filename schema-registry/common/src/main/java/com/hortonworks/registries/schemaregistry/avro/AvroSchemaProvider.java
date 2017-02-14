@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
 import org.apache.avro.SchemaParseException;
@@ -60,11 +61,15 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String toSchemaText, String existingSchemaText, SchemaCompatibility existingSchemaCompatibility) {
+    public CompatibilityResult checkCompatibility(String toSchemaText,
+                                                  String existingSchemaText,
+                                                  SchemaCompatibility existingSchemaCompatibility) {
         return checkCompatibility(toSchemaText, Collections.singleton(existingSchemaText), existingSchemaCompatibility);
     }
 
-    public CompatibilityResult checkCompatibility(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility) {
+    public CompatibilityResult checkCompatibility(String toSchemaText,
+                                                  Collection<String> existingSchemaTexts,
+                                                  SchemaCompatibility existingSchemaCompatibility) {
         Schema toSchema = new Schema.Parser().parse(toSchemaText);
 
         Collection<Schema> existingSchemas = new ArrayList<>();
@@ -83,10 +88,10 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     }
 
     @Override
-    public byte[] getFingerprint(String schemaText) throws InvalidSchemaException {
+    public byte[] getFingerprint(String schemaText) throws InvalidSchemaException, SchemaNotFoundException {
         try {
             // generates fingerprint of canonical form of the given schema.
-            Schema schema = new Schema.Parser().parse(schemaText);
+            Schema schema = new Schema.Parser().parse(getResultantSchema(schemaText));
             return SchemaNormalization.parsingFingerprint("MD5", schema);
         } catch (SchemaParseException e) {
             throw new InvalidSchemaException("Given schema is invalid", e);
@@ -96,9 +101,15 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     }
 
     @Override
-    public List<SchemaFieldInfo> generateFields(String schemaText) {
+    public String getResultantSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException {
+        AvroSchemaResolver avroSchemaResolver = new AvroSchemaResolver(getSchemaVersionRetriever());
+        return avroSchemaResolver.resolveSchema(schemaText);
+    }
+
+    @Override
+    public List<SchemaFieldInfo> generateFields(String schemaText) throws InvalidSchemaException, SchemaNotFoundException {
         AvroFieldsGenerator avroFieldsGenerator = new AvroFieldsGenerator();
-        return avroFieldsGenerator.generateFields(new Schema.Parser().parse(schemaText));
+        return avroFieldsGenerator.generateFields(new Schema.Parser().parse(getResultantSchema(schemaText)));
     }
 
 }

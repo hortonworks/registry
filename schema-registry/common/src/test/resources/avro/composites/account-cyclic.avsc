@@ -1,0 +1,23 @@
+{
+  "name": "account_cyclic",
+  "namespace": "com.hortonworks.types",
+  "includeSchemas": [
+    {
+      "name": "account-dep"
+    },
+    {
+      "name": "utils"
+    }
+  ],
+  "type": "record",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "id",
+      "type": "com.hortonworks.datatypes.uuid"
+    }
+  ]
+}
