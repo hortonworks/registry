@@ -33,6 +33,7 @@ import org.h2.tools.RunScript;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -83,6 +84,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     }
 
     @Test
+    @Ignore
     public void testNextId_AutoincrementColumn_IdPlusOne() throws Exception {
 
         for (StorableTest test : storableTests) {
