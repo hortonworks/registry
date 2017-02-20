@@ -23,6 +23,7 @@ import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.config.HikariBasicConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
@@ -49,8 +50,7 @@ public abstract class AbstractMySqlStorageManagerWithCacheIntegrationTest extend
 
     private void setFields(ConnectionBuilder connectionBuilder, Database db) {
         JdbcStorageManagerIntegrationTest.connectionBuilder = connectionBuilder;
-        jdbcStorageManager =  createJdbcStorageManager(new MySqlExecutorForTest(newGuavaCacheBuilder(),
-                new ExecutionConfig(-1), connectionBuilder));
+        jdbcStorageManager =  createJdbcStorageManager(new MySqlExecutor(new ExecutionConfig(-1), connectionBuilder, newGuavaCacheBuilder()));
         database = db;
     }
 

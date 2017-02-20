@@ -110,29 +110,6 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
         }
     }
 
-    // ========= Class that overrides the getNextId() method to allow testing using MySql and H2 databases ==========
-
-    protected static class MySqlExecutorForTest extends MySqlExecutor {
-        public MySqlExecutorForTest(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
-            super(config, connectionBuilder);
-        }
-
-        public MySqlExecutorForTest(CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder,
-            ExecutionConfig config, ConnectionBuilder connectionBuilder) {
-            super(config, connectionBuilder, cacheBuilder);
-        }
-
-        @Override
-        protected Long getNextId(Connection connection, String namespace) throws SQLException {
-            if (database.equals(Database.MYSQL)) {
-                return super.nextId(namespace);
-            } else {
-                return MySqlQueryUtils.nextIdH2(connection, namespace, getConfig().getQueryTimeoutSecs());
-            }
-        }
-    }
-
-
     // ========= Private helper methods  ==========
 
     private void createTables() throws SQLException, IOException {
