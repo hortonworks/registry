@@ -5,17 +5,17 @@ import { Router, browserHistory, hashHistory } from 'react-router';
 
 class App extends Component {
 	constructor(){
-		super()
+                super();
 	}
   render() {
     return (
       <Router ref="router" history={hashHistory} routes={routes} />
-    )
+    );
   }
 }
 
-const app = render(
-  <App />, document.getElementById('app_container')
-)
+// const app = render(
+//   <App />, document.getElementById('app_container')
+// )
 
-export default app
+export default App;

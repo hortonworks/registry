@@ -4,15 +4,6 @@ import Footer from '../components/Footer';
 import {Link} from 'react-router';
 import {Confirm} from '../components/FSModal'
 
-import 'animate.css/animate.css';
-import 'styles/css/bootstrap.css';
-import 'react-select/dist/react-select.css';
-import 'react-bootstrap-switch/dist/css/bootstrap3/react-bootstrap-switch.min.css';
-import 'styles/css/toastr.min.css';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/addon/lint/lint.css';
-import 'styles/css/theme.css';
-
 export default class BaseContainer extends Component {
 
   constructor(props) {
