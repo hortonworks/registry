@@ -23,6 +23,7 @@ import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.util.StorageUtils;
 import com.hortonworks.registries.tag.Tag;
 import com.hortonworks.registries.tag.TaggedEntity;
 import com.hortonworks.registries.tag.TagStorableMapping;
@@ -69,6 +70,11 @@ public class CatalogTagService implements TagService {
         return classes;
     }
 
+    // handle this check at application layer since in-memory storage etc does not contain unique key constraint
+    private void validateTag(Tag tag) {
+        StorageUtils.ensureUnique(tag, this::listTags, QueryParam.params("name", tag.getName()));
+    }
+
     @Override
     public Tag addTag(Tag tag) {
         if (tag.getId() == null) {
@@ -77,6 +83,7 @@ public class CatalogTagService implements TagService {
         if (tag.getTimestamp() == null) {
             tag.setTimestamp(System.currentTimeMillis());
         }
+        validateTag(tag);
         checkCycles(tag, tag.getTags());
         dao.add(tag);
         addTagsForStorable(getTaggedEntity(tag), tag.getTags());
@@ -87,7 +94,7 @@ public class CatalogTagService implements TagService {
         for (Tag tag : tags) {
             if (tag.equals(current) || flatten(getTags(getTaggedEntity(tag))).contains(current)) {
                 throw new IllegalArgumentException("Tagging " + current +
-                        " with " + tag + " would result in a cycle.");
+                                                           " with " + tag + " would result in a cycle.");
             }
         }
     }
@@ -118,6 +125,7 @@ public class CatalogTagService implements TagService {
         if (tag.getTimestamp() == null) {
             tag.setTimestamp(System.currentTimeMillis());
         }
+        validateTag(tag);
         List<Tag> existingTags = getTags(getTaggedEntity(tag));
         List<Tag> tagsToBeAdded = getTagsToBeAdded(existingTags, tag.getTags());
         List<Tag> tagsToBeRemoved = getTagsToBeRemoved(existingTags, tag.getTags());
@@ -131,7 +139,7 @@ public class CatalogTagService implements TagService {
     public Tag getTag(Long tagId) {
         Tag tag = new Tag();
         tag.setId(tagId);
-        Tag result = this.dao.<Tag>get(new StorableKey(TAG_NAMESPACE, tag.getPrimaryKey()));
+        Tag result = this.dao.get(new StorableKey(TAG_NAMESPACE, tag.getPrimaryKey()));
         if (result != null) {
             result.setTags(getTags(getTaggedEntity(result)));
         }
@@ -259,7 +267,7 @@ public class CatalogTagService implements TagService {
     }
 
     private Collection<TagStorableMapping> listTagStorableMapping(List<QueryParam> params) {
-        return dao.<TagStorableMapping>find(TAG_STORABLE_MAPPING_NAMESPACE, params);
+        return dao.find(TAG_STORABLE_MAPPING_NAMESPACE, params);
     }
 
     private Collection<Tag> makeTags(Collection<Tag> tags) {

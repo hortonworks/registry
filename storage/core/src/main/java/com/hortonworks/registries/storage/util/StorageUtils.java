@@ -16,17 +16,22 @@
 package com.hortonworks.registries.storage.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.common.exception.DuplicateEntityException;
 import com.hortonworks.registries.storage.Storable;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Utility methods for the core package.
  */
-public final class CoreUtils {
+public final class StorageUtils {
 
-
-    private CoreUtils() {
+    private StorageUtils() {
     }
 
     public static <T extends Storable> T jsonToStorable(String json, Class<T> clazz) throws IOException {
@@ -38,4 +43,16 @@ public final class CoreUtils {
         return storable != null ? new ObjectMapper().writeValueAsString(storable) : null;
     }
 
+    public static void ensureUnique(Storable storable,
+                                    Function<List<QueryParam>, Collection<? extends Storable>> listFn,
+                                    List<QueryParam> queryParams) {
+        Collection<? extends Storable> storables = listFn.apply(queryParams);
+        Optional<Long> entities = storables.stream()
+                .map(Storable::getId)
+                .filter(x -> !x.equals(storable.getId()))
+                .findAny();
+        if (entities.isPresent()) {
+            throw new DuplicateEntityException("Entity with '" + queryParams + "' already exists");
+        }
+    }
 }

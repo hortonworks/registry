@@ -108,10 +108,10 @@ public class JdbcStorageManager implements StorageManager {
             throws StorageException {
         log.debug("Searching for entries in table [{}] that match queryParams [{}]", namespace, queryParams);
 
-        if (queryParams == null) {
+        if (queryParams == null || queryParams.isEmpty()) {
             return list(namespace);
         }
-        Collection<T> entries = Collections.EMPTY_LIST;
+        Collection<T> entries = Collections.emptyList();
 
         try {
             StorableKey storableKey = buildStorableKey(namespace, queryParams);

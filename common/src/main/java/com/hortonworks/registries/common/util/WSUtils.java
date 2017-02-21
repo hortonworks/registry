@@ -16,6 +16,7 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.io.ByteStreams;
+import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 
@@ -39,15 +40,15 @@ public final class WSUtils {
     private WSUtils() {
     }
 
-    public static Response respond(Collection<?> entities, Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
+    public static Response respondEntities(Collection<?> entities, Response.Status status) {
         return Response.status(status)
-                .entity(CatalogResponse.newResponse(msg).entities(entities).format(formatArgs))
+                .entity(CollectionResponse.newResponse().entities(entities).build())
                 .build();
     }
 
-    public static Response respond(Object entity, Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
+    public static Response respondEntity(Object entity, Response.Status status) {
         return Response.status(status)
-                .entity(CatalogResponse.newResponse(msg).entity(entity).format(formatArgs))
+                .entity(entity)
                 .build();
     }
 
