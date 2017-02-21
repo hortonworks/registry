@@ -94,7 +94,7 @@ public class SchemaRegistryResource {
     public Response getRegisteredSchemaProviderInfos() {
         try {
             Collection<SchemaProviderInfo> schemaProviderInfos = schemaRegistry.getRegisteredSchemaProviderInfos();
-            return WSUtils.respond(schemaProviderInfos, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            return WSUtils.respondEntities(schemaProviderInfos, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -117,7 +117,7 @@ public class SchemaRegistryResource {
 
             Collection<SchemaMetadata> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
 
-            return WSUtils.respond(schemaMetadatas, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -135,7 +135,7 @@ public class SchemaRegistryResource {
         try {
             Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasWithFields(buildSchemaFieldQuery(queryParameters));
 
-            return WSUtils.respond(schemaVersionKeys, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -175,7 +175,7 @@ public class SchemaRegistryResource {
             checkNullOrEmpty("Schema name", schemaMetadataInfo.getName());
             checkNullOrEmpty("Schema type", schemaMetadataInfo.getType());
             Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
-            response = WSUtils.respond(schemaId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
         } catch (IllegalArgumentException ex) {
             LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
@@ -200,7 +200,7 @@ public class SchemaRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
             if (schemaMetadataInfo != null) {
-                response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
@@ -222,7 +222,7 @@ public class SchemaRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaId);
             if (schemaMetadataInfo != null) {
-                response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
             }
@@ -248,7 +248,7 @@ public class SchemaRegistryResource {
         try {
             LOG.info("schemaVersion for [{}] is [{}]", schemaName, schemaVersion);
             Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
-            response = WSUtils.respond(version, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(version, Response.Status.CREATED);
         } catch (InvalidSchemaException ex) {
             LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
@@ -277,7 +277,7 @@ public class SchemaRegistryResource {
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaName);
             if (schemaVersionInfo != null) {
-                response = WSUtils.respond(schemaVersionInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -302,7 +302,7 @@ public class SchemaRegistryResource {
         try {
             Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.findAllVersions(schemaName);
             if (schemaVersionInfos != null) {
-                response = WSUtils.respond(schemaVersionInfos, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -327,7 +327,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
-            response = WSUtils.respond(schemaVersionInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
@@ -349,7 +349,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             CompatibilityResult compatible = schemaRegistry.checkCompatibility(schemaName, schemaText);
-            response = WSUtils.respond(compatible, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(compatible, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -372,7 +372,7 @@ public class SchemaRegistryResource {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
             if (schemaMetadataInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaMetadataInfoStorable.getId());
-                response = WSUtils.respond(schemaSerializers, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -396,7 +396,7 @@ public class SchemaRegistryResource {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaMetadata);
             if (schemaMetadataInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaMetadataInfoStorable.getId());
-                response = WSUtils.respond(schemaSerializers, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaMetadata);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaMetadata);
@@ -420,7 +420,7 @@ public class SchemaRegistryResource {
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
             String uploadedFileId = schemaRegistry.uploadFile(inputStream);
-            response = WSUtils.respond(uploadedFileId, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while uploading file", ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -442,7 +442,7 @@ public class SchemaRegistryResource {
             return response;
         } catch (FileNotFoundException e) {
             LOG.error("No file found for fileId [{}]", fileId, e);
-            response = WSUtils.respond(fileId, Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND);
+            response = WSUtils.respondEntity(fileId, Response.Status.NOT_FOUND);
         } catch (Exception ex) {
             LOG.error("Encountered error while downloading file [{}]", fileId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -479,7 +479,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             Long serializerId = schemaRegistry.addSerDesInfo(serDesInfo);
-            response = WSUtils.respond(serializerId, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(serializerId, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while adding serializer/deserializer  [{}]", serDesInfo, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -500,7 +500,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SerDesInfo serializerInfo = schemaRegistry.getSerDesInfo(serializerId);
-            response = WSUtils.respond(serializerInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializer/deserializer [{}]", serializerId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -518,7 +518,7 @@ public class SchemaRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
             schemaRegistry.mapSerDesWithSchema(schemaMetadataInfoStorable.getId(), serDesId);
-            response = WSUtils.respond(true, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (Exception ex) {
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }

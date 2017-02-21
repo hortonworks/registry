@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.webservice;
 
+import com.hortonworks.registries.common.GenericExceptionMapper;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
@@ -50,6 +51,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
 
         registerResources(environment, registryConfiguration);
+
+        environment.jersey().register(GenericExceptionMapper.class);
 
         if (registryConfiguration.isEnableCors()) {
             enableCORS(environment);

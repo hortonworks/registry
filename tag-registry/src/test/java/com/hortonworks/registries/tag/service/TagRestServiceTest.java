@@ -37,7 +37,7 @@ import java.util.Map;
 public class TagRestServiceTest {
 
     @ClassRule
-    public static final  DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<>(TestApplication.class, ResourceHelpers.resourceFilePath("tag-test.yaml"));
+    public static final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<>(TestApplication.class, ResourceHelpers.resourceFilePath("tag-test.yaml"));
 
     private String catalogRootUrl = String.format("http://localhost:%d/api/v1/catalog", RULE.getLocalPort());
 
@@ -64,8 +64,13 @@ public class TagRestServiceTest {
         Tag tag= tagClient.getTag(parentTagId);
         Assert.assertTrue("Tag Id is different" , tag.getId() == parentTagId);
 
-        //get a unkonwn tag by Id
-        tag= tagClient.getTag(100L);
+        long unknownTagId = 100L;
+        //get an unknown tag by Id
+        try {
+            tag = tagClient.getTag(unknownTagId);
+            Assert.fail("This should have thrown an error as entity" + unknownTagId + " does not exist");
+        } catch (Exception e) {
+        }
 
         //add another tag
         Tag testTag = createTag(12L, "to-delete-tag");
@@ -112,18 +117,16 @@ public class TagRestServiceTest {
 
         //try adding unknown tag for a Entity
         try {
-            tagClient.addTagForEntity(new TaggedEntity("Device", 1L), 100L);
-             Assert.fail("should have thrown error");
-        }
-        catch (RuntimeException e) {
+            tagClient.addTagForEntity(new TaggedEntity("Device", 1L), unknownTagId);
+            Assert.fail("should have thrown error");
+        } catch (RuntimeException e) {
         }
 
         //try removing unknown tag for a Entity
         try {
-            tagClient.removeTagForEntity(new TaggedEntity("Device", 1L), 100L);
+            tagClient.removeTagForEntity(new TaggedEntity("Device", 1L), unknownTagId);
             Assert.fail("should have thrown error");
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
         }
     }
 

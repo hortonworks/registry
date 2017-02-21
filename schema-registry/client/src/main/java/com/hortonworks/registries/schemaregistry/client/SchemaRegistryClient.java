@@ -399,8 +399,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         BodyPart filePart = new StreamDataBodyPart("file", inputStream, "file");
         multiPart.bodyPart(filePart);
 
-        String response = rootTarget.path(FILES_PATH).request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
-        return readEntity(response, String.class);
+        return rootTarget.path(FILES_PATH).request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA),
+                                                          String.class);
     }
 
     @Override
@@ -545,8 +545,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private <T> T readEntity(String response, Class<T> clazz) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(response);
-            return mapper.treeToValue(node.get("entity"), clazz);
+            return mapper.readValue(response, clazz);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
