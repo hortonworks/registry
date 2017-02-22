@@ -15,24 +15,24 @@ module.exports = {
     "react"
   ],
   "rules": {
-    // "comma-dangle": [
-    //   "error",
-    //   "never"
-    // ],
-    // "indent": [
-    //   "error",
-    //   2
-    // ],
-    // "linebreak-style": [
-    //   "error",
-    //   "unix"
-    // ],
-    // "semi": [
-    //   "error",
-    //   "always"
-    // ],
-    // /* Advanced Rules*/
-    // "no-unexpected-multiline": 2,
-    // "curly": [2,"all"]
+    "comma-dangle": [
+      "error",
+      "never"
+    ],
+    "indent": [
+      "error",
+      2
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    /* Advanced Rules*/
+    "no-unexpected-multiline": 2,
+    "curly": [2,"all"]
   }
 };

@@ -8,7 +8,7 @@
   "authors": [],
   "scripts": {
     "start": "node dev-server.js",
-    "build": "node_modules/.bin/webpack --config ./config/webpack.config.production.js --progress --bail"
+    "build": "webpack --config ./config/webpack.config.production.js --progress --bail"
   },
   "license": "MIT",
   "engines": {

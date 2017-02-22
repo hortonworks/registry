@@ -12,17 +12,18 @@
  * limitations under the License.
  **/
 
-const baseUrl = "/api/v1/";
-const notifyTextLimit = 90;
-const toastOpt = {
-  timeOut: 0,
-  closeButton: true,
-  tapToDismiss: false,
-  extendedTimeOut: 0
+import _ from 'lodash';
+
+const isValidJson = function(obj) {
+  try {
+    const valid = Json.parse(obj);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
-export {
-  baseUrl,
-  notifyTextLimit,
-  toastOpt
+
+export default {
+  isValidJson
 };
