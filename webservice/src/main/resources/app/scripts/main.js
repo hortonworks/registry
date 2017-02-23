@@ -21,6 +21,7 @@ import 'babel-polyfill';
 import App from './app';
 import {AppContainer} from 'react-hot-loader';
 
+import '../styles/css/font-awesome.min.css';
 import 'animate.css/animate.css';
 import '../styles/css/bootstrap.css';
 import 'react-select/dist/react-select.css';
