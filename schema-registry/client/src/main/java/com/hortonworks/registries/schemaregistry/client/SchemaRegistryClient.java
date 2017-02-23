@@ -145,7 +145,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         configuration = new Configuration(conf);
 
         ClientConfig config = createClientConfig(conf);
-        client = ClientBuilder.newBuilder().withConfig(config).build();
+        client = ClientBuilder.newBuilder()
+                .withConfig(config)
+                .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE)
+                .build();
         client.register(MultiPartFeature.class);
 
         String rootCatalogURL = configuration.getValue(SCHEMA_REGISTRY_URL.name());

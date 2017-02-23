@@ -22,6 +22,7 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.storage.exception.StorageException;
 import org.apache.commons.codec.binary.Hex;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.SlotSynchronizer;
@@ -49,6 +50,8 @@ import java.util.stream.Collectors;
  */
 public class DefaultSchemaRegistry implements ISchemaRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
+
+    private static final int DEFAULT_RETRY_CT = 5;
 
     private final StorageManager storageManager;
     private final FileStorage fileStorage;
@@ -198,30 +201,44 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // take a lock for a schema with same name.
         SlotSynchronizer.Lock slotLock = slotSynchronizer.lockSlot(schemaName);
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaName);
-            Integer version = 0;
-            if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
-                SchemaVersionInfo latestSchemaVersionInfo = null;
-                SchemaCompatibility compatibility = schemaMetadata.getCompatibility();
-                for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-                    // check for compatibility
-                    CompatibilityResult compatibilityResult = schemaTypeWithProviders.get(type).checkCompatibility(schemaText, schemaVersionInfo.getSchemaText(), compatibility);
-                    if (!compatibilityResult.isCompatible()) {
-                        throw new IncompatibleSchemaException("Given schema is not compatible with earlier schema versions. Error encountered is: " + compatibilityResult.getErrorMessage());
-                    }
+            int retryCt = 0;
+            while (true) {
+                try {
+                    Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaName);
+                    Integer version = 0;
+                    if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
+                        SchemaVersionInfo latestSchemaVersionInfo = null;
+                        SchemaCompatibility compatibility = schemaMetadata.getCompatibility();
+                        for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
+                            // check for compatibility
+                            CompatibilityResult compatibilityResult = schemaTypeWithProviders.get(type).checkCompatibility(schemaText, schemaVersionInfo.getSchemaText(), compatibility);
+                            if (!compatibilityResult.isCompatible()) {
+                                throw new IncompatibleSchemaException("Given schema is not compatible with earlier schema versions. Error encountered is: " + compatibilityResult.getErrorMessage());
+                            }
 
-                    Integer curVersion = schemaVersionInfo.getVersion();
-                    if (curVersion >= version) {
-                        latestSchemaVersionInfo = schemaVersionInfo;
-                        version = curVersion;
+                            Integer curVersion = schemaVersionInfo.getVersion();
+                            if (curVersion >= version) {
+                                latestSchemaVersionInfo = schemaVersionInfo;
+                                version = curVersion;
+                            }
+                        }
+
+                        version = latestSchemaVersionInfo.getVersion();
                     }
+                    schemaVersionStorable.setVersion(version + 1);
+
+                    storageManager.add(schemaVersionStorable);
+
+                    break;
+                } catch (StorageException e) {
+                    // optimistic to try the next try would be successful. When retr attemps are exhausted, throw error back to invoker.
+                    if(++retryCt == DEFAULT_RETRY_CT) {
+                        LOG.error("Giving up after retry attempts [{}] while trying to add new version of schema with metadata [{}]", retryCt, schemaMetadata, e);
+                        throw e;
+                    }
+                    LOG.debug("Encountered storage exception while trying to add a new version, attempting again : [{}] with error: [{}]", retryCt, e);
                 }
-
-                version = latestSchemaVersionInfo.getVersion();
             }
-            schemaVersionStorable.setVersion(version + 1);
-
-            storageManager.add(schemaVersionStorable);
 
             String storableNamespace = new SchemaFieldInfoStorable().getNameSpace();
             List<SchemaFieldInfo> schemaFieldInfos = schemaTypeWithProviders.get(type).generateFields(schemaVersionStorable.getSchemaText());
