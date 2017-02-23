@@ -33,6 +33,7 @@ import org.h2.tools.RunScript;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -83,6 +84,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     }
 
     @Test
+    @Ignore
     public void testNextId_AutoincrementColumn_IdPlusOne() throws Exception {
 
         for (StorableTest test : storableTests) {
@@ -109,29 +111,6 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
             }
         }
     }
-
-    // ========= Class that overrides the getNextId() method to allow testing using MySql and H2 databases ==========
-
-    protected static class MySqlExecutorForTest extends MySqlExecutor {
-        public MySqlExecutorForTest(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
-            super(config, connectionBuilder);
-        }
-
-        public MySqlExecutorForTest(CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder,
-            ExecutionConfig config, ConnectionBuilder connectionBuilder) {
-            super(config, connectionBuilder, cacheBuilder);
-        }
-
-        @Override
-        protected Long getNextId(Connection connection, String namespace) throws SQLException {
-            if (database.equals(Database.MYSQL)) {
-                return super.nextId(namespace);
-            } else {
-                return MySqlQueryUtils.nextIdH2(connection, namespace, getConfig().getQueryTimeoutSecs());
-            }
-        }
-    }
-
 
     // ========= Private helper methods  ==========
 

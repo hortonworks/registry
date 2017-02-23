@@ -37,6 +37,15 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * SQL query executor for MySQL DB.
+ *
+ * To issue the new ID to insert and get auto issued key in concurrent manner, MySqlExecutor utilizes MySQL's
+ * auto increment feature and JDBC's getGeneratedKeys() which is described to MySQL connector doc:
+ * https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-usagenotes-last-insert-id.html
+ *
+ * If the value of id is null, we let MySQL issue new ID and get the new ID. If the value of id is not null, we just use that value.
+ */
 public class MySqlExecutor extends AbstractQueryExecutor {
 
     /**
@@ -51,7 +60,7 @@ public class MySqlExecutor extends AbstractQueryExecutor {
      * @param config Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
      * @param connectionBuilder Object that establishes the connection to the database
      * @param cacheBuilder Guava cache configuration. The maximum number of entries in cache (open connections)
- *                     must not exceed the maximum number of open database connections allowed
+     *                     must not exceed the maximum number of open database connections allowed
      */
     public MySqlExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         super(config, connectionBuilder, cacheBuilder);
@@ -61,42 +70,28 @@ public class MySqlExecutor extends AbstractQueryExecutor {
 
     @Override
     public void insert(Storable storable) {
-        executeUpdate(new SqlInsertQuery(storable));
+        insertOrUpdateWithUniqueId(storable, new SqlInsertQuery(storable));
     }
 
     @Override
     public void insertOrUpdate(final Storable storable) {
-        executeUpdate(new MySqlInsertUpdateDuplicate(storable));
+        insertOrUpdateWithUniqueId(storable, new MySqlInsertUpdateDuplicate(storable));
     }
 
     @Override
     public Long nextId(String namespace) {
-        // This only works if the table has auto-increment. The TABLE_SCHEMA part is implicitly specified in the Connection object
-        // SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'temp' AND TABLE_SCHEMA = 'test'
-        Connection connection = null;
-        try {
-            connection = getConnection();
-            return getNextId(connection, namespace);
-        } catch (SQLException e) {
-            throw new StorageException(e);
-        } finally {
-            closeConnection(connection);
-        }
-    }
-
-    // Protected to be able to override it in the test framework
-    protected Long getNextId(Connection connection, String namespace) throws SQLException {
-        return MySqlQueryUtils.nextIdMySql(connection, namespace, queryTimeoutSecs);
+        // We intentionally return null. Please refer the class javadoc for more details.
+        return null;
     }
 
     public static MySqlExecutor createExecutor(Map<String, Object> jdbcProps) {
         Util.validateJDBCProperties(jdbcProps, Lists.newArrayList("dataSourceClassName", "dataSource.url"));
 
         String dataSourceClassName = (String) jdbcProps.get("dataSourceClassName");
-        log.debug("data source class: [{}]", dataSourceClassName);
+        log.info("data source class: [{}]", dataSourceClassName);
 
         String jdbcUrl = (String) jdbcProps.get("dataSource.url");
-        log.debug("dataSource.url is: [{}] ", jdbcUrl);
+        log.info("dataSource.url is: [{}] ", jdbcUrl);
 
         int queryTimeOutInSecs = -1;
         if(jdbcProps.containsKey("queryTimeoutInSecs")) {
@@ -113,6 +108,20 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         HikariCPConnectionBuilder connectionBuilder = new HikariCPConnectionBuilder(hikariConfig);
         ExecutionConfig executionConfig = new ExecutionConfig(queryTimeOutInSecs);
         return new MySqlExecutor(executionConfig, connectionBuilder);
+    }
+
+    private void insertOrUpdateWithUniqueId(final Storable storable, final SqlQuery sqlQuery) {
+        try {
+            Long id = storable.getId();
+            if (id == null) {
+                id = executeUpdateWithReturningGeneratedKey(sqlQuery);
+                storable.setId(id);
+            } else {
+                executeUpdate(sqlQuery);
+            }
+        } catch (UnsupportedOperationException e) {
+            executeUpdate(sqlQuery);
+        }
     }
 
 }

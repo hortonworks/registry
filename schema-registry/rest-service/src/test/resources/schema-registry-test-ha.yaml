@@ -1,10 +1,7 @@
 # registries configuration
 modules:
-# tag-registry configuration
 #  - name: tag-registry
 #    className: com.hortonworks.iotas.registries.tag.service.TagRegistryModule
-#
-# schema-registry configuration
   - name: schema-registry
     className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
     config:
@@ -12,7 +9,6 @@ modules:
         - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
           defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
-
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
@@ -20,28 +16,31 @@ modules:
       schemaCacheExpiryInterval: 3600
 
 # HA configuration
-## When no configuration is set, then all the nodes in schema registry cluster are eligible to write to the backend storage.
-#haConfig:
-#  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
-#  config:
-#    # This url is a list of ZK servers separated by ,
-#    connect.url: "localhost:2181"
-#    # root node prefix in ZK for this instance
-#    root: "/registry"
-#    session.timeout.ms: 30000
-#    connection.timeout.ms: 20000
-#    retry.limit: 5
-#    retry.base.sleep.time.ms: 1000
-#    retry.max.sleep.time.ms: 5000
+haConfig:
+  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
+  config:
+    # This url is a list of ZK servers separated by ,
+    connect.url: "__zk_connect_url__"
+    # root node prefix in ZK for this instance
+    root: "/registry"
+    session.timeout.ms: 30000
+    connection.timeout.ms: 20000
+    retry.limit: 5
+    retry.base.sleep.time.ms: 1000
+    retry.max.sleep.time.ms: 5000
 
-# Filesystem based jar storage
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
-    directory: "/tmp"
+    directory: "/tmp/storage"
+
 # storage provider configuration
-storageProviderConfiguration:
- providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+# providerClass can be inmemory and jdbc.
+#
+# Example configuration for inmemory is:
+#storageProviderConfiguration:
+#  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+#
 # Example configuration for phoenix based JDBC driver
 #storageProviderConfiguration:
 # providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
@@ -54,22 +53,30 @@ storageProviderConfiguration:
 #
 # MySQL based jdbc provider configuration is:
 #storageProviderConfiguration:
-# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
-# properties:
-#   db.type: "mysql"
-#   queryTimeoutInSecs: 30
-#   db.properties:
-#     dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
-#     dataSource.url: "jdbc:mysql://localhost/schema_registry"
-#     dataSource.user: ""
-#     dataSource.password: ""
+#  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+#  properties:
+#    db.type: "mysql"
+#    queryTimeoutInSecs: 30
+#    db.properties:
+#      dataSourceClassName: "com.mysql.cj.jdbc.MysqlDataSource"
+#      dataSource.url: "jdbc:mysql://localhost:3307/test"
 
-#swagger configuration
+storageProviderConfiguration:
+  providerClass: "com.hortonworks.registries.schemaregistry.avro.SingletonInmemoryStore"
+
+#enable CORS, may want to disable in production
+enableCors: true
+
+## swagger configuration
 swagger:
   resourcePackage: com.hortonworks.registries.schemaregistry.webservice
 
-#enable CORS, may want to disable in production
-enableCors: false
+# use the simple server factory if you only want to run on a single port
+#server:
+#  type: simple
+#  connector:
+#    type: http
+#    port: 8080
 
 server:
   rootPath: '/api/*'
@@ -77,7 +84,7 @@ server:
 #  hardNofileLimit: 1000
   applicationConnectors:
     - type: http
-      port: 9090
+      port: 0
 #    - type: https
 #      port: 8443
 #      keyStorePath: example.keystore
@@ -91,7 +98,7 @@ server:
 #      validateCerts: false
   adminConnectors:
     - type: http
-      port: 9091
+      port: 0
 #    - type: https
 #      port: 8444
 #      keyStorePath: example.keystore
@@ -138,4 +145,3 @@ logging:
 #  keepAlive: 0ms
 #  retries: 10
 #  userAgent: Storm-Client
-
