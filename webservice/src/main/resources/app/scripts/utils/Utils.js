@@ -12,18 +12,18 @@
   * limitations under the License.
 **/
 
-import React, {Component, PropTypes} from 'react';
-import routes from './routers/routes';
-import {render} from 'react-dom';
-import {Router, browserHistory, hashHistory} from 'react-router';
+import _ from 'lodash';
 
-class App extends Component {
-  constructor() {
-    super();
+const isValidJson = function(obj) {
+  try {
+    const valid = JSON.parse(obj);
+    return true;
+  } catch (e) {
+    return false;
   }
-  render() {
-    return (<Router ref="router" history={hashHistory} routes={routes}/>);
-  }
-}
+};
 
-export default App;
+
+export default {
+  isValidJson
+};
