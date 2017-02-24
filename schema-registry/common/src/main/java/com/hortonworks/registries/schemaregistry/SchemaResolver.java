@@ -21,11 +21,26 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 /**
- *
+ * This interface is defined for resolving schemas which have dependencies on other schemas. {@link com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException}
+ * is thrown when there are cyclic dependencies among set of schemas.
  */
 public interface SchemaResolver {
 
+    /**
+     * Returns resolved effective schema of the given schema after resolving all the dependencies.
+     *
+     * @param schemaText text of the schema for which dependencies should be resolved.
+     * @throws InvalidSchemaException  when the schema is semantically invalid or when there are cyclic dependencies.
+     * @throws SchemaNotFoundException when any of the dependent schemas is not found.
+     */
     String resolveSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
 
+    /**
+     * Returns resolved effective schema of the given schema after resolving all the dependencies.
+     *
+     * @param schemaVersionKey {@link SchemaVersionKey} of a specific schema version for which dependencies should be resolved.
+     * @throws InvalidSchemaException  when the schema is semantically invalid or when there are cyclic dependencies.
+     * @throws SchemaNotFoundException when any of the dependent schemas is not found.
+     */
     String resolveSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException;
 }

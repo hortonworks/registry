@@ -37,6 +37,60 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Avro implementation of {@link SchemaResolver} which resolves all the dependent schemas and builds an effective schema.
+ *
+ * List of dependent schemas can be added with `includeSchemas` attribute in avro schema. This contains name and version
+ * of each schema as mentioned below.
+ * - name       : unique name of that schema in schema registry which is {@link com.hortonworks.registries.schemaregistry.SchemaMetadata#name}.
+ * - version    : version number of the schema being used which is {@link SchemaVersionKey#version}.
+ *                When this property is not mentioned then it is considered to be latest version of that schema when
+ *                it builds effective schema.
+ *
+ * Example of Avro schema containing dependencies is given below.
+ *
+ * account schema:
+ * <pre> {@code
+ *
+    {
+        "name": "account",
+        "namespace": "com.hortonworks.types",
+        "includeSchemas": [
+            {
+                "name": "utils",
+                "version": "2",
+            }
+        ],
+        "type": "record",
+        "fields": [
+            {
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "name": "id",
+                "type": "com.hortonworks.datatypes.uuid"
+            }
+        ]
+    }
+ * }</pre>
+ *
+ * dependent utils schema:
+ * <pre> {@code
+ * {
+     "name": "uuid",
+     "type": "record",
+     "namespace": "com.hortonworks.datatypes",
+     "doc": "A Universally Unique Identifier, in canonical form in lowercase. This is generated from java.util.UUID Example: de305d54-75b4-431b-adb2-eb6b9e546014",
+     "fields": [
+         {
+             "name": "value",
+             "type": "string",
+             "default": ""
+         }
+     ]
+   }
+ *
+ * }</pre>
  *
  */
 public class AvroSchemaResolver implements SchemaResolver {
