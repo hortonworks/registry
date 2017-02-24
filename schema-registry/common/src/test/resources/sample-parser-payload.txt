@@ -1,3 +1,0 @@
-dev:nest,temp:78,loc:livingroom
-dev:hw,temp:74,loc:kitchen
-dev:nest,temp:72,loc:portico
