@@ -44,7 +44,6 @@ public interface StorageManager {
      * If the old and new instances are not the same it will throw {@code AlreadyExistsException}.
      * Will return true if no existing storable entity was found and the supplied entity gets added successfully.
      * @param storable
-     * @return
      * @throws StorageException
      */
     void add(Storable storable) throws StorageException;
@@ -62,7 +61,6 @@ public interface StorageManager {
     /**
      * Unlike add, if the storage entity already exists, it will be updated. If it does not exist, it will be created.
      * @param storable
-     * @return
      * @throws StorageException
      */
     void addOrUpdate(Storable storable) throws StorageException;
@@ -81,15 +79,15 @@ public interface StorageManager {
      * <pre>
      * E.g get a list of all devices with deviceId="nest" and version=1
      *
-     * List<QueryParam> params = Arrays.asList(new QueryParam("deviceId", "nest"), new QueryParam("version", "1");
+     * List&lt;QueryParam&gt; params = Arrays.asList(new QueryParam("deviceId", "nest"), new QueryParam("version", "1");
      *
-     * List<Device> devices = find(DEVICE_NAMESPACE, params);
+     * List&lt;Device&gt; devices = find(DEVICE_NAMESPACE, params);
      * </pre>
      *
      * @param namespace
      * @param queryParams
      * @return
-     * @throws Exception
+     * @throws StorageException
      */
     <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams) throws StorageException;
 

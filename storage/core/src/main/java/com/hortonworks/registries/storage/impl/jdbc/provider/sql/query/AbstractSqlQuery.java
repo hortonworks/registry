@@ -74,10 +74,10 @@ public abstract class AbstractSqlQuery implements SqlQuery {
 
     /**
      * if formatter != null applies the formatter to the column names. Examples of output are:
-     * <p/>
-     * formatter == null ==> [colName1, colName2]
-     * <p/>
-     * formatter == "%s = ?" ==> [colName1 = ?, colName2 = ?]
+     * <br>
+     * formatter == null ==&gt; [colName1, colName2]
+     * <br>
+     * formatter == "%s = ?" ==&gt; [colName1 = ?, colName2 = ?]
      */
     protected Collection<String> getColumnNames(Collection<Schema.Field> columns, final String formatter) {
         return Collections2.transform(columns, new Function<Schema.Field, String>() {

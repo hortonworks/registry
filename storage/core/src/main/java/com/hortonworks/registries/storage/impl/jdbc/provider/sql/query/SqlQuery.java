@@ -35,7 +35,7 @@ public interface SqlQuery {
     String getNamespace();
 
     /**
-     * @return The {@link PrimaryKey} used in the query construction process <br/>
+     * @return The {@link PrimaryKey} used in the query construction process <br>
      * null if no {@link PrimaryKey} used
      */
     PrimaryKey getPrimaryKey();
