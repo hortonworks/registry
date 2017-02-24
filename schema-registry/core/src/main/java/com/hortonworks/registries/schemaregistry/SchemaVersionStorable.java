@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.AbstractVersionedStorable;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
@@ -26,14 +27,15 @@ import java.util.Map;
 /**
  *
  */
-public class SchemaVersionStorable extends AbstractStorable {
+public class SchemaVersionStorable extends AbstractVersionedStorable {
     public static final String NAME_SPACE = "schema_version_info";
     public static final String ID = "id";
+    
+    // Maintaining this for backward compatibility as users may nto want to recreate DB schemas with the changes.
     public static final String SCHEMA_METADATA_ID = "schemaMetadataId";
-    public static final String DESCRIPTION = "description";
+
     public static final String NAME = "name";
     public static final String SCHEMA_TEXT = "schemaText";
-    public static final String VERSION = "version";
     public static final String TIMESTAMP = "timestamp";
     public static final String FINGERPRINT = "fingerprint";
 
@@ -44,6 +46,8 @@ public class SchemaVersionStorable extends AbstractStorable {
 
     /**
      * Id of the {@link SchemaMetadataStorable} instance.
+     *
+     * Maintaining this for backward compatibility as users may nto want to recreate DB schemas with the changes.
      */
     private Long schemaMetadataId;
 
@@ -143,11 +147,11 @@ public class SchemaVersionStorable extends AbstractStorable {
     }
 
     public Long getSchemaMetadataId() {
-        return schemaMetadataId;
+        return getRootEntityId();
     }
 
     public void setSchemaMetadataId(Long schemaMetadataId) {
-        this.schemaMetadataId = schemaMetadataId;
+        this.rootEntityId = schemaMetadataId;
     }
 
     public String getDescription() {
