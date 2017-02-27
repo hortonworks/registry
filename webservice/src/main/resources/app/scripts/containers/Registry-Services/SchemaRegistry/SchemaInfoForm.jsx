@@ -1,164 +1,168 @@
-import React, {Component}from 'react';
+/**
+  * Copyright 2017 Hortonworks.
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+**/
+
+import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import Select from 'react-select';
 import '../../../utils/Overrides';
 import SchemaREST from '../../../rest/SchemaREST';
 
 export default class SchemaFormContainer extends Component {
-        constructor(props){
-                super(props);
-                this.state = {
-                        name: '',
-                        compatibility: 'BACKWARD',
-                        compatibilityArr: [
-                                {value: 'BACKWARD', label: 'BACKWARD'},
-                                {value: 'FORWARD', label: 'FORWARD'},
-                                {value: 'BOTH', label: 'BOTH'},
-                                {value: 'NONE', label: 'NONE'}
-                        ],
-                        type: 'avro',
-                        typeArr: [],
-                        schemaGroup: 'Kafka',
-                        description: '',
-                        showError: false,
-                        showErrorLabel: false,
-                        changedFields: []
-                };
-                this.fetchData();
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: '',
+      compatibility: 'BACKWARD',
+      compatibilityArr: [
+        {
+          value: 'BACKWARD',
+          label: 'BACKWARD'
+        }, {
+          value: 'FORWARD',
+          label: 'FORWARD'
+        }, {
+          value: 'BOTH',
+          label: 'BOTH'
+        }, {
+          value: 'NONE',
+          label: 'NONE'
         }
-        fetchData(){
-            SchemaREST.getSchemaProviders()
-                .then((results)=>{
-                    this.setState({typeArr: results.entities});
-                })
-        }
+      ],
+      type: 'avro',
+      typeArr: [],
+      schemaGroup: 'Kafka',
+      description: '',
+      showError: false,
+      showErrorLabel: false,
+      changedFields: []
+    };
+    this.fetchData();
+  }
+  fetchData() {
+    SchemaREST.getSchemaProviders().then((results) => {
+      this.setState({typeArr: results.entities});
+    });
+  }
 
-        handleValueChange(e){
-                let obj = {};
-                obj[e.target.name] = e.target.value;
-                this.setState(obj);
-        }
+  handleValueChange(e) {
+    let obj = {};
+    obj[e.target.name] = e.target.value;
+    this.setState(obj);
+  }
 
-        handleTypeChange(obj) {
-                if(obj){
-                        this.setState({type: obj.type});
-                } else {
-                        this.setState({type: ''});
-                }
-        }
+  handleTypeChange(obj) {
+    if (obj) {
+      this.setState({type: obj.type});
+    } else {
+      this.setState({type: ''});
+    }
+  }
 
-        handleCompatibilityChange(obj) {
-                if(obj){
-                        this.setState({compatibility: obj.value});
-                } else {
-                        this.setState({compatibility: ''});
-                }
-        }
+  handleCompatibilityChange(obj) {
+    if (obj) {
+      this.setState({compatibility: obj.value});
+    } else {
+      this.setState({compatibility: ''});
+    }
+  }
 
-        validateData(){
-                let { name, type, schemaGroup, description, changedFields } = this.state;
-                if(name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '') {
-                        if(name.trim() === '' && changedFields.indexOf("name") === -1)
-                                changedFields.push("name");
-                        if(schemaGroup.trim() === '' && changedFields.indexOf("schemaGroup") === -1)
-                                changedFields.push("schemaGroup");
-                        if(type.trim() === '' && changedFields.indexOf("type") === -1)
-                                changedFields.push("type");
-                        if(description.trim() === '' && changedFields.indexOf("description") === -1)
-                                changedFields.push("description");
-                        this.setState({showError: true, showErrorLabel: true, changedFields: changedFields});
-                        return false;
-                } else {
-                        this.setState({showErrorLabel: true});
-                        return true;
-                }
-        }
+  validateData() {
+    let {name, type, schemaGroup, description, changedFields} = this.state;
+    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '') {
+      if (name.trim() === '' && changedFields.indexOf("name") === -1) {
+        changedFields.push("name");
+      };
+      if (schemaGroup.trim() === '' && changedFields.indexOf("schemaGroup") === -1) {
+        changedFields.push("schemaGroup");
+      }
+      if (type.trim() === '' && changedFields.indexOf("type") === -1) {
+        changedFields.push("type");
+      }
+      if (description.trim() === '' && changedFields.indexOf("description") === -1) {
+        changedFields.push("description");
+      }
+      this.setState({showError: true, showErrorLabel: true, changedFields: changedFields});
+      return false;
+    } else {
+      this.setState({showErrorLabel: true});
+      return true;
+    }
+  }
 
-        handleSave(){
-                let data = {};
-                let { name, type, schemaGroup, description, compatibility } = this.state;
-                data = {name, type, schemaGroup, description};
-                if(compatibility !== '')
-                        data.compatibility = compatibility;
-                return SchemaREST.postSchema({body: JSON.stringify(data)});
-        }
+  handleSave() {
+    let data = {};
+    let {name, type, schemaGroup, description, compatibility} = this.state;
+    data = {
+      name,
+      type,
+      schemaGroup,
+      description
+    };
+    if (compatibility !== '') {
+      data.compatibility = compatibility;
+    }
+    return SchemaREST.postSchema({body: JSON.stringify(data)});
+  }
 
-        render() {
-                const jsonoptions = {
-                        lineNumbers: true,
-                        mode: "application/json",
-                        styleActiveLine: true,
-                        gutters: ["CodeMirror-lint-markers"],
-                        lint: true
-                };
-                let {showError, changedFields} = this.state;
-                return (
-                        <form className="form-horizontal">
-                                <div className="form-group">
-                                        <label className="col-sm-3 control-label">Name*</label>
-                                        <div className="col-sm-5">
-                                                <input
-                                                        name="name"
-                                                        placeholder="Name"
-                                                        onChange={this.handleValueChange.bind(this)}
-                                                        type="text"
-                                                        className={showError && changedFields.indexOf("name") !== -1 && this.state.name.trim() === '' ? "form-control invalidInput" : "form-control"}
-                                                        value={this.state.name}
-                                                        required={true}
-                                                />
-                                        </div>
-                                </div>
-                                <div className="form-group">
-                                        <label className="col-sm-3 control-label">description*</label>
-                                        <div className="col-sm-5">
-                                                <input
-                                                        name="description"
-                                                        placeholder="Description"
-                                                        onChange={this.handleValueChange.bind(this)}
-                                                        type="text"
-                                                        className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === '' ? "form-control invalidInput" : "form-control"}
-                                                        value={this.state.description}
-                                                        required={true}
-                                                />
-                                        </div>
-                                </div>
-                                <div className="form-group">
-                                        <label className="col-sm-3 control-label">Type*</label>
-                                        <div className="col-sm-5">
-                                                <Select
-                                                        value={this.state.type}
-                                                        options={this.state.typeArr}
-                                                        onChange={this.handleTypeChange.bind(this)}
-                                                        valueKey="type"
-                                                        labelKey="name"
-                                                />
-                                        </div>
-                                </div>
-                                <div className="form-group">
-                                        <label className="col-sm-3 control-label">Schema Group*</label>
-                                        <div className="col-sm-5">
-                                                <input
-                                                    name="schemaGroup"
-                                                    placeholder="Schema Group"
-                                                    onChange={this.handleValueChange.bind(this)}
-                                                    type="text"
-                                                    className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === '' ? "form-control invalidInput" : "form-control"}
-                                                    value={this.state.schemaGroup}
-                                                    required={true}
-                                                />
-                                        </div>
-                                </div>
-                                <div className="form-group">
-                                        <label className="col-sm-3 control-label">Compatibility</label>
-                                        <div className="col-sm-5">
-                                                <Select
-                                                        value={this.state.compatibility}
-                                                        options={this.state.compatibilityArr}
-                                                        onChange={this.handleCompatibilityChange.bind(this)}
-                                                />
-                                        </div>
-                                </div>
-                        </form>
-                )
-        }
+  render() {
+    const jsonoptions = {
+      lineNumbers: true,
+      mode: "application/json",
+      styleActiveLine: true,
+      gutters: ["CodeMirror-lint-markers"],
+      lint: true
+    };
+    let {showError, changedFields} = this.state;
+    return (
+      <form className="form-horizontal">
+        <div className="form-group">
+          <label className="col-sm-3 control-label">Name*</label>
+          <div className="col-sm-5">
+            <input name="name" placeholder="Name" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("name") !== -1 && this.state.name.trim() === ''
+              ? "form-control invalidInput"
+              : "form-control"} value={this.state.name} required={true}/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="col-sm-3 control-label">description*</label>
+          <div className="col-sm-5">
+            <input name="description" placeholder="Description" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === ''
+              ? "form-control invalidInput"
+              : "form-control"} value={this.state.description} required={true}/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="col-sm-3 control-label">Type*</label>
+          <div className="col-sm-5">
+            <Select value={this.state.type} options={this.state.typeArr} onChange={this.handleTypeChange.bind(this)} valueKey="type" labelKey="name"/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="col-sm-3 control-label">Schema Group*</label>
+          <div className="col-sm-5">
+            <input name="schemaGroup" placeholder="Schema Group" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === ''
+              ? "form-control invalidInput"
+              : "form-control"} value={this.state.schemaGroup} required={true}/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="col-sm-3 control-label">Compatibility</label>
+          <div className="col-sm-5">
+            <Select value={this.state.compatibility} options={this.state.compatibilityArr} onChange={this.handleCompatibilityChange.bind(this)}/>
+          </div>
+        </div>
+      </form>
+    );
+  }
 }

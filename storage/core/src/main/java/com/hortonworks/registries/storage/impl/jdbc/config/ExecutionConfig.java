@@ -21,7 +21,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.Prepa
 
 /**
  * Wrapper object that serves has a placeholder for configuration (e.g. {@code query timeout}) that needs
- * to be passed to objects like {@link QueryExecutor} or {@link PreparedStatementBuilder}. <p/>
+ * to be passed to objects like {@link QueryExecutor} or {@link PreparedStatementBuilder}. <br>
  *
  * This class should be immutable as the configuration should not change after passed in to the configurable objects
  **/

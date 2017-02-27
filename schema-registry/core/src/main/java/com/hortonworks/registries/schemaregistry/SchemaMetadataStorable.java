@@ -35,6 +35,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public static final String COMPATIBILITY = "compatibility";
     public static final String TYPE = "type";
     public static final String TIMESTAMP = "timestamp";
+    public static final String EVOLVE = "evolve";
 
     public static final Schema.Field NAME_FIELD = Schema.Field.of(NAME, Schema.Type.STRING);
     public static final Schema.Field SCHEMA_GROUP_FIELD = Schema.Field.of(SCHEMA_GROUP, Schema.Type.STRING);
@@ -77,6 +78,8 @@ public class SchemaMetadataStorable extends AbstractStorable {
      */
     private SchemaCompatibility compatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY;
 
+    private boolean evolve;
+
     public SchemaMetadataStorable() {
     }
 
@@ -101,7 +104,8 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 SCHEMA_GROUP_FIELD,
                 TYPE_FIELD,
                 Schema.Field.of(COMPATIBILITY, Schema.Type.STRING),
-                Schema.Field.of(TIMESTAMP, Schema.Type.LONG)
+                Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
+                Schema.Field.of(EVOLVE, Schema.Type.BOOLEAN)
         );
     }
 
@@ -177,6 +181,15 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.description = description;
     }
 
+
+    public boolean isEvolve() {
+        return evolve;
+    }
+
+    public void setEvolve(boolean evolve) {
+        this.evolve = evolve;
+    }
+
     public static SchemaMetadataStorable fromSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
@@ -187,6 +200,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
         schemaMetadataStorable.setDescription(schemaMetadata.getDescription());
         schemaMetadataStorable.setCompatibility(schemaMetadata.getCompatibility());
         schemaMetadataStorable.setTimestamp(schemaMetadataInfo.getTimestamp());
+        schemaMetadataStorable.setEvolve(schemaMetadata.isEvolve());
 
         return schemaMetadataStorable;
     }
@@ -198,13 +212,13 @@ public class SchemaMetadataStorable extends AbstractStorable {
                         .schemaGroup(schemaMetadataStorable.getSchemaGroup())
                         .compatibility(schemaMetadataStorable.getCompatibility())
                         .description(schemaMetadataStorable.getDescription())
+                        .evolve(schemaMetadataStorable.isEvolve())
                         .build();
 
         return new SchemaMetadataInfo(schemaMetadata,
                 schemaMetadataStorable.getId(),
                 schemaMetadataStorable.getTimestamp());
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -213,6 +227,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
         SchemaMetadataStorable that = (SchemaMetadataStorable) o;
 
+        if (evolve != that.evolve) return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
@@ -220,7 +235,6 @@ public class SchemaMetadataStorable extends AbstractStorable {
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
         return compatibility == that.compatibility;
-
     }
 
     @Override
@@ -232,6 +246,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
+        result = 31 * result + (evolve ? 1 : 0);
         return result;
     }
 
@@ -239,13 +254,13 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public String toString() {
         return "SchemaMetadataStorable{" +
                 "id=" + id +
-                ", name='" + name + '\'' +
+                ", type='" + type + '\'' +
                 ", schemaGroup='" + schemaGroup + '\'' +
+                ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", timestamp=" + timestamp +
-                ", type='" + type + '\'' +
                 ", compatibility=" + compatibility +
+                ", evolve=" + evolve +
                 '}';
     }
-
 }

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A synchronization utility that allows a thread to take a mutual exclusion lock on a specific slot which is for a given Key <K>.
+ * A synchronization utility that allows a thread to take a mutual exclusion lock on a specific slot which is for a given Key K.
  * <p>
  * Each instance of this class can have multiple slots and one can take a lock on a specific slot, execute statements and unlock.
  * So, there can be contention for each slot but no contention among different slots.
@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Locking and unlocking a slot using {@link SlotSynchronizer} can be done using try/finally block like below.
  * <pre>
  * class Service {
- *   private final SlotSynchronizer&lt;K> slotSynchronizer = new SlotSynchronizer&lt;>();
+ *   private final SlotSynchronizer&lt;K&gt; slotSynchronizer = new SlotSynchronizer&lt;&gt;();
  *   // ...
  *
  *   public void invoke() {
@@ -52,7 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * <pre>
  * class Service {
- *   private final SlotSynchronizer&lt;K> slotSynchronizer = new SlotSynchronizer&lt;>();
+ *   private final SlotSynchronizer&lt;K&gt; slotSynchronizer = new SlotSynchronizer&lt;&gt;();
  *   // ...
  *
  *   public void invoke() {
@@ -91,7 +91,7 @@ public class SlotSynchronizer<K> {
         /**
          * Unlocks this lock for respective slot if the current thread holds this lock.
          *
-         * <p>Current thread should have hold this lock earlier with {@link SlotSynchronizer#lockSlot(K k)} for key {@code k}.
+         * Current thread should have hold this lock earlier with { SlotSynchronizer#lockSlot(K k)} for key {@code k}.
          *
          * @throws IllegalStateException if the current thread does not hold this lock.
          */
@@ -117,7 +117,7 @@ public class SlotSynchronizer<K> {
     /**
      * Returns the lock for the given slot {@code k} after taking a lock for the current thread if it available.
      *
-     * <p>If the lock is held by another thread then the current thread becomes disabled for thread scheduling
+     * If the lock is held by another thread then the current thread becomes disabled for thread scheduling
      * purposes and lies dormant until the lock has been acquired.
      *
      * @param k slot key for which lock to be taken.

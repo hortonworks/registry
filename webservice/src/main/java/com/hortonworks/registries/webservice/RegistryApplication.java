@@ -18,17 +18,24 @@ package com.hortonworks.registries.webservice;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
+import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ModuleRegistration;
+import com.hortonworks.registries.common.ha.LeadershipAware;
+import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.common.ha.LocalLeader;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -40,15 +47,20 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  */
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
+    protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
+
+        // handle HA if it is configured
+        registerHA(registryConfiguration.getHaConfig(), environment);
 
         registerResources(environment, registryConfiguration);
 
@@ -59,11 +71,45 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
     }
 
+    private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
+        if(haConfiguration != null) {
+            environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
+                @Override
+                public void serverStarted(Server server) {
+                    String serverUrl = server.getURI().toString();
+                    LOG.info("Received callback as server is started with server URL:[{}]", server);
+                    LOG.info("HA configuration: [{}]", haConfiguration);
+                    String className = haConfiguration.getClassName();
+
+                    LeadershipParticipant leadershipParticipant = null;
+                    try {
+                        leadershipParticipant = (LeadershipParticipant) Class.forName(className).newInstance();
+                    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                    leadershipParticipant.init(haConfiguration.getConfig(), serverUrl);
+
+                    leadershipParticipantRef.set(leadershipParticipant);
+                    LOG.info("Registering for leadership with participant [{}]", leadershipParticipant);
+                    try {
+                        leadershipParticipantRef.get().participateForLeadership();
+                    } catch (Exception e) {
+                        LOG.error("Error occurred while participating for leadership with serverUrl [{}]", serverUrl, e);
+                        throw new RuntimeException(e);
+                    }
+                    LOG.info("Registered for leadership with participant [{}]", leadershipParticipant);
+                }
+            });
+        } else {
+            leadershipParticipantRef.set(LocalLeader.getInstance());
+            LOG.info("No HA configuration exists, using [{}]", leadershipParticipantRef);
+        }
+    }
+
     @Override
     public String getName() {
         return "Schema Registry";
     }
-
 
     @Override
     public void initialize(Bootstrap<RegistryConfiguration> bootstrap) {
@@ -99,6 +145,13 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 StorageManagerAware storageManagerAware = (StorageManagerAware) moduleRegistration;
                 storageManagerAware.setStorageManager(storageManager);
             }
+
+            if(moduleRegistration instanceof LeadershipAware) {
+                LOG.info("Module [{}] is registered for LeadershipParticipant registration.");
+                LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
+                leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
+            }
+
             resourcesToRegister.addAll(moduleRegistration.getResources());
         }
 

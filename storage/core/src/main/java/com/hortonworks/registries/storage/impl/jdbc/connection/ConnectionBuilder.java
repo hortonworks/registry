@@ -19,7 +19,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 
 /**
- * Establishes the connection to a database, and exposes the connection configuration of the concrete implementation. <p/>
+ * Establishes the connection to a database, and exposes the connection configuration of the concrete implementation. <br>
  * The generic type {@code &lt;T&gt;} represents the implementation's configuration object. For example, for HikariCP
  * {@code T} would be {@code HikariConfig}
  *

@@ -70,16 +70,16 @@ import java.util.Collection;
  * LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
  *
  * // get all versions of the schema
- * Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
+ * Collection&lt;SchemaVersionInfo&gt; allVersions = schemaRegistryClient.getAllVersions(schemaName);
  * LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
  *
  * // finding schemas containing a specific field
  * SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
- * Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
+ * Collection&lt;SchemaVersionKey&gt; md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
  * LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaVersionKeys);
  *
  * SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
- * Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
+ * Collection&lt;SchemaVersionKey&gt; txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
  * LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
  *
  * // Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
@@ -102,12 +102,12 @@ import java.util.Collection;
  * schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
  *
  * // get registered serializers
- * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaName);
+ * Collection&lt;SerDesInfo&gt; serializers = schemaRegistryClient.getSerializers(schemaName);
  * SerDesInfo registeredSerializerInfo = serializers.iterator().next();
  *
  * //get serializer and serialize the given payload
  * try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
- * Map<String, Object> config = Collections.emptyMap();
+ * Map&lt;String, Object&gt; config = Collections.emptyMap();
  * snapshotSerializer.init(config);
  *
  * byte[] serializedData = snapshotSerializer.serialize(input, schemaInfo);
@@ -156,6 +156,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @return version of the schema added.
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
+     * @throws SchemaNotFoundException if the given schemaMetadata not found.
      */
     SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
@@ -167,6 +168,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @return version number of the schema added
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
+     * @throws SchemaNotFoundException if the given schemaMetadata not found.
      */
     SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
@@ -184,13 +186,13 @@ public interface ISchemaRegistryClient extends AutoCloseable {
 
     /**
      * @param schemaName name identifying a schema
-     * @return latest version of the schema for the given {@param schemaName}
+     * @return latest version of the schema for the given schemaName
      */
     SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
     /**
      * @param schemaName name identifying a schema
-     * @return all versions of the schemas for given {@param schemaName}
+     * @return all versions of the schemas for given schemaName
      */
     Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException;
 

@@ -31,7 +31,7 @@ public class ReflectionHelper {
     }
 
     /**
-     * Given a class, this method returns a map of names of all the instance (non static) fields -> type.
+     * Given a class, this method returns a map of names of all the instance (non static) fields -&gt; type.
      * if the class has any super class it also includes those fields.
      *
      * @param clazz , not null
