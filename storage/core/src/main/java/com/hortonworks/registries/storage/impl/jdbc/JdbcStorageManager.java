@@ -158,7 +158,7 @@ public class JdbcStorageManager implements StorageManager {
      * the {@link StorableKey} from the list of query parameters, and then can use {@link SqlSelectQuery} builder to generate the query using
      * the query parameters in the where clause
      *
-     * @return {@link StorableKey} with all query parameters that match database columns <br/>
+     * @return {@link StorableKey} with all query parameters that match database columns <br>
      * null if none of the query parameters specified matches a column in the DB
      */
     private StorableKey buildStorableKey(String namespace, List<QueryParam> queryParams) throws Exception {

@@ -24,7 +24,7 @@ import java.util.Collection;
 /**
  * A wrapper entity for passing collection (more than one resource) back to the client.
  * This response is used only for succeed requests.
- * <p/>
+ * <p>
  * This can be expanded to handle paged result.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

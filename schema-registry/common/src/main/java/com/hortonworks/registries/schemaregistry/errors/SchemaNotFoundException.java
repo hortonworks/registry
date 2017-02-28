@@ -16,7 +16,7 @@
 package com.hortonworks.registries.schemaregistry.errors;
 
 /**
- * Indicates that schema is not found in the repository.
+ * Indicates that schema information (which can be metadata or a specific version) is not found in the repository.
  */
 public class SchemaNotFoundException extends Exception {
 
