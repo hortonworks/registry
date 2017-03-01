@@ -186,8 +186,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         final String schemaName = schemaMetadata.getName();
 
         SchemaVersionStorable schemaVersionStorable = new SchemaVersionStorable();
-        final Long schemaInstanceId = storageManager.nextId(schemaVersionStorable.getNameSpace());
-        schemaVersionStorable.setId(schemaInstanceId);
+        final Long schemaVersionStorableId = storageManager.nextId(schemaVersionStorable.getNameSpace());
+        schemaVersionStorable.setId(schemaVersionStorableId);
         schemaVersionStorable.setSchemaMetadataId(schemaMetadataId);
 
         schemaVersionStorable.setFingerprint(fingerprint);
@@ -242,6 +242,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 }
             }
 
+            // fetching this as the ID may have been set by storage manager.
+            Long schemaInstanceId = schemaVersionStorable.getId();
             String storableNamespace = new SchemaFieldInfoStorable().getNameSpace();
             List<SchemaFieldInfo> schemaFieldInfos = schemaTypeWithProviders.get(type).generateFields(schemaVersionStorable.getSchemaText());
             for (SchemaFieldInfo schemaFieldInfo : schemaFieldInfos) {
