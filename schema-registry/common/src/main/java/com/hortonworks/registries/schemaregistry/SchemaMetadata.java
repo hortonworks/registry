@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
@@ -55,6 +56,7 @@ public class SchemaMetadata implements Serializable {
     /**
      * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
      */
+    @JsonProperty("evolve")
     public boolean evolve = true;
 
     /**

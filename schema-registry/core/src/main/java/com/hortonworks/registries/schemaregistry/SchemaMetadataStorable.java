@@ -78,6 +78,9 @@ public class SchemaMetadataStorable extends AbstractStorable {
      */
     private SchemaCompatibility compatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY;
 
+    /**
+     * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
+     */
     private boolean evolve;
 
     public SchemaMetadataStorable() {
@@ -181,8 +184,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.description = description;
     }
 
-
-    public boolean isEvolve() {
+    public boolean getEvolve() {
         return evolve;
     }
 
@@ -212,7 +214,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
                         .schemaGroup(schemaMetadataStorable.getSchemaGroup())
                         .compatibility(schemaMetadataStorable.getCompatibility())
                         .description(schemaMetadataStorable.getDescription())
-                        .evolve(schemaMetadataStorable.isEvolve())
+                        .evolve(schemaMetadataStorable.getEvolve())
                         .build();
 
         return new SchemaMetadataInfo(schemaMetadata,
