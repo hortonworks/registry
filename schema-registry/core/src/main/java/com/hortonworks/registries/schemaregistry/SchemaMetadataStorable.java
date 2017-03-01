@@ -81,7 +81,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     /**
      * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
      */
-    private boolean evolve;
+    private Boolean evolve;
 
     public SchemaMetadataStorable() {
     }
@@ -184,11 +184,11 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.description = description;
     }
 
-    public boolean getEvolve() {
+    public Boolean getEvolve() {
         return evolve;
     }
 
-    public void setEvolve(boolean evolve) {
+    public void setEvolve(Boolean evolve) {
         this.evolve = evolve;
     }
 
