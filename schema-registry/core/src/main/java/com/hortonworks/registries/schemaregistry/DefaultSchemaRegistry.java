@@ -550,15 +550,21 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public CompatibilityResult checkCompatibility(String schemaName, String toSchema) throws SchemaNotFoundException {
         Collection<SchemaVersionInfo> schemaVersionInfos = findAllVersions(schemaName);
-        Collection<String> schemaTexts = new ArrayList<>(schemaVersionInfos.size());
-        for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-            schemaTexts.add(schemaVersionInfo.getSchemaText());
-        }
-
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
 
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-        return checkCompatibility(schemaMetadata.getType(), toSchema, schemaTexts, schemaMetadata.getCompatibility());
+        for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
+            CompatibilityResult compatibilityResult = checkCompatibility(schemaMetadata.getType(),
+                                                                         toSchema,
+                                                                         schemaVersionInfo.getSchemaText(),
+                                                                         schemaMetadata.getCompatibility());
+            if(!compatibilityResult.isCompatible()) {
+                LOG.info("Received schema is not compatible with one of the schema versions [{}] with schema name [{}]", schemaVersionInfo.getVersion(), schemaName);
+                return compatibilityResult;
+            }
+        }
+
+        return CompatibilityResult.createCompatibleResult(toSchema);
     }
 
     public CompatibilityResult checkCompatibility(SchemaVersionKey schemaVersionKey,
@@ -569,19 +575,19 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         String schemaText = existingSchemaVersionInfo.getSchemaText();
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-        return checkCompatibility(schemaMetadata.getType(), toSchema, Collections.singletonList(schemaText), schemaMetadata.getCompatibility());
+        return checkCompatibility(schemaMetadata.getType(), toSchema, schemaText, schemaMetadata.getCompatibility());
     }
 
     private CompatibilityResult checkCompatibility(String type,
                                                    String toSchema,
-                                                   Collection<String> existingSchemas,
+                                                   String existingSchema,
                                                    SchemaCompatibility compatibility) {
         SchemaProvider schemaProvider = schemaTypeWithProviders.get(type);
         if (schemaProvider == null) {
             throw new IllegalStateException("No SchemaProvider registered for type: " + type);
         }
 
-        return schemaProvider.checkCompatibility(toSchema, existingSchemas, compatibility);
+        return schemaProvider.checkCompatibility(toSchema, existingSchema, compatibility);
     }
 
     @Override

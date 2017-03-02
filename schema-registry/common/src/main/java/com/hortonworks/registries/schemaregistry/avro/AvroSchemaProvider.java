@@ -81,7 +81,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
             SchemaCompatibilityValidator.of(existingSchemaCompatibility).validate(toSchema, existingSchemas);
         } catch (SchemaValidationException e) {
             LOG.error("Schema compatibility failed", e);
-            return CompatibilityResult.createIncompatibleResult(e.getMessage());
+            return CompatibilityResult.createIncompatibleResult(e.getMessage(), );
         }
 
         return CompatibilityResult.SUCCESS;
