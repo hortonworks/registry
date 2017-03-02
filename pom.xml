@@ -112,6 +112,7 @@
         <module>tag-registry</module>
         <module>schema-registry</module>
         <module>examples</module>
+        <module>docker</module>
     </modules>
 
     <profiles>
