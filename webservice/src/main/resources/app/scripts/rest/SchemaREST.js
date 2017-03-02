@@ -55,6 +55,15 @@ const SchemaREST = {
         return response.json();
       });
   },
+  getLatestVersion(name, options) {
+    options = options || {};
+    options.method = options.method || 'GET';
+    name = encodeURIComponent(name);
+    return fetch(baseUrl+'schemaregistry/schemas/'+name+'/versions/latest', options)
+      .then( (response) => {
+        return response.json();
+      });
+  },
   postVersion(name, options) {
     options = options || {};
     options.method = options.method || 'POST';
@@ -73,6 +82,19 @@ const SchemaREST = {
     options.method = options.method || 'GET';
     return fetch(baseUrl + 'schemaregistry/schemaproviders', options)
       .then((response) => {
+        return response.json();
+      });
+  },
+  getCompatibility(name, options) {
+    options = options || {};
+    options.method = options.method || 'POST';
+    options.headers = options.headers || {
+      'Content-Type' : 'application/json',
+      'Accept' : 'application/json'
+    };
+    name = encodeURIComponent(name);
+    return fetch(baseUrl+'schemaregistry/schemas/'+name+'/compatibility', options)
+      .then( (response) => {
         return response.json();
       });
   }

@@ -15,9 +15,16 @@
 import React, {Component} from 'react';
 
 const NoData = () => {
+  const divStyle = {
+    backgroundImage: 'url(\'styles/img/back-default.png\')',
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center top",
+    backgroundSize: "50%",
+    height: window.innerHeight - 124
+  };
   return (
-    <div className="col-sm-10 col-md-offset-1">
-      <img src="styles/img/data-not-found.jpg" className="img-responsive" alt="data not found"/>
+    <div className="col-sm-12 text-center" style={divStyle}>
+      <p className="noDataFound-text">No Data Found</p>
     </div>
   );
 };

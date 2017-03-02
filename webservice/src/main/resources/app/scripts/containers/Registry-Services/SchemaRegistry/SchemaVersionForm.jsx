@@ -43,9 +43,12 @@ CodeMirror.registerHelper("lint", "json", function(text) {
 export default class SchemaVersionForm extends Component {
   constructor(props) {
     super(props);
+    let schemaObj = this.props.schemaObj;
     this.state = {
       schemaText: '',
       description: '',
+      schemaText: schemaObj.schemaText || '',
+      description: schemaObj.description || '',
       showError: false,
       showErrorLabel: false,
       changedFields: []
@@ -82,7 +85,14 @@ export default class SchemaVersionForm extends Component {
       schemaText,
       description
     };
-    return SchemaREST.postVersion(this.props.schemaName, {body: JSON.stringify(data)});
+    return SchemaREST.getCompatibility(this.props.schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
+      .then((result)=>{
+        if(result.compatible){
+          return SchemaREST.postVersion(this.props.schemaObj.schemaName, {body: JSON.stringify(data)});
+        } else {
+          return result;
+        }
+      });
   }
 
   render() {
@@ -95,18 +105,18 @@ export default class SchemaVersionForm extends Component {
     };
     let {showError, changedFields} = this.state;
     return (
-      <form className="form-horizontal">
+      <form>
         <div className="form-group">
-          <label className="col-sm-3 control-label">Description*</label>
-          <div className="col-sm-5">
+          <label>Description <span className="text-danger">*</span></label>
+          <div>
             <input name="description" placeholder="Description" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === ''
               ? "form-control invalidInput"
               : "form-control"} value={this.state.description} required={true}/>
           </div>
         </div>
         <div className="form-group">
-          <label className="col-sm-3 control-label">Schema Text*</label>
-          <div className="col-sm-5">
+          <label>Schema Text <span className="text-danger">*</span></label>
+          <div>
             <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
           </div>
         </div>
