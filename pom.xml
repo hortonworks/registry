@@ -86,6 +86,15 @@
             </roles>
             <timezone>+5.5</timezone>
         </developer>
+        <developer>
+            <id>shahsank3t</id>
+            <name>Sanket Shah</name>
+            <email>sanket.shah@freestoneinfotech.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
     </developers>
 
     <scm>
