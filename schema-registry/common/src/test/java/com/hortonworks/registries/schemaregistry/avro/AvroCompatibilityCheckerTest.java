@@ -38,7 +38,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.NONE);
 
-        Assert.assertEquals(CompatibilityResult.SUCCESS, compatibilityResult);
+        Assert.assertTrue(compatibilityResult.isCompatible());
     }
 
     private String fetchResourceText(String resourceName) throws IOException {
@@ -56,7 +56,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.BACKWARD);
 
-        Assert.assertEquals(CompatibilityResult.SUCCESS, compatibilityResult);
+        Assert.assertTrue(compatibilityResult.isCompatible());
     }
 
     @Test
@@ -66,7 +66,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.FORWARD);
 
-        Assert.assertEquals(CompatibilityResult.SUCCESS, compatibilityResult);
+        Assert.assertTrue(compatibilityResult.isCompatible());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.BOTH);
 
-        Assert.assertEquals(CompatibilityResult.SUCCESS, compatibilityResult);
+        Assert.assertTrue(compatibilityResult.isCompatible());
     }
 
     @Test
