@@ -38,10 +38,9 @@ export default class BaseContainer extends Component {
         <Header onLandingPage={this.props.onLandingPage} headerContent={this.props.headerContent}/>
         <section className={this.props.onLandingPage === "true"
           ? "landing-wrapper container"
-          : "container-fluid wrapper animated fadeIn"}>
+          : "container wrapper animated fadeIn"}>
           {this.props.children}
         </section>
-        <Footer routes={routes} breadcrumbData={this.props.breadcrumbData}/>
         <Confirm ref="Confirm"/>
       </div>
     );

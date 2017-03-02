@@ -15,7 +15,15 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import Select from 'react-select';
+import ReactCodemirror from 'react-codemirror';
+import CodeMirror from 'codemirror';
+import 'codemirror/mode/javascript/javascript';
+import jsonlint from 'jsonlint';
+import lint from 'codemirror/addon/lint/lint';
 import '../../../utils/Overrides';
+import FSReactToastr from '../../../components/FSReactToastr';
+import CommonNotification from '../../../utils/CommonNotification';
+import {toastOpt} from '../../../utils/Constants';
 import SchemaREST from '../../../rest/SchemaREST';
 
 export default class SchemaFormContainer extends Component {
@@ -39,6 +47,8 @@ export default class SchemaFormContainer extends Component {
           label: 'NONE'
         }
       ],
+      evolve: true,
+      schemaText: '',
       type: 'avro',
       typeArr: [],
       schemaGroup: 'Kafka',
@@ -77,9 +87,19 @@ export default class SchemaFormContainer extends Component {
     }
   }
 
+  handleJSONChange(json){
+    this.setState({
+      schemaText: json
+    });
+  }
+
+  handleToggleEvolve(e) {
+    this.setState({evolve: e.target.checked});
+  }
+
   validateData() {
-    let {name, type, schemaGroup, description, changedFields} = this.state;
-    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '') {
+    let {name, type, schemaGroup, description, changedFields, schemaText} = this.state;
+    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '' || schemaText.trim() === '') {
       if (name.trim() === '' && changedFields.indexOf("name") === -1) {
         changedFields.push("name");
       };
@@ -102,17 +122,26 @@ export default class SchemaFormContainer extends Component {
 
   handleSave() {
     let data = {};
-    let {name, type, schemaGroup, description, compatibility} = this.state;
+    let {name, type, schemaGroup, description, compatibility, evolve, schemaText} = this.state;
     data = {
       name,
       type,
       schemaGroup,
-      description
+      description,
+      evolve
     };
     if (compatibility !== '') {
       data.compatibility = compatibility;
     }
-    return SchemaREST.postSchema({body: JSON.stringify(data)});
+    return SchemaREST.postSchema({body: JSON.stringify(data)})
+        .then((schemaResult)=>{
+          if(schemaResult.responseMessage !== undefined){
+            FSReactToastr.error(<CommonNotification flag="error" content={schemaResult.responseMessage}/>, '', toastOpt);
+          } else {
+            let versionData = { schemaText, description };
+            return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
+          }
+        });
   }
 
   render() {
@@ -127,41 +156,52 @@ export default class SchemaFormContainer extends Component {
     return (
       <form className="form-horizontal">
         <div className="form-group">
-          <label className="col-sm-3 control-label">Name*</label>
-          <div className="col-sm-5">
+          <label>Name <span className="text-danger">*</span></label>
+          <div>
             <input name="name" placeholder="Name" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("name") !== -1 && this.state.name.trim() === ''
               ? "form-control invalidInput"
               : "form-control"} value={this.state.name} required={true}/>
           </div>
         </div>
         <div className="form-group">
-          <label className="col-sm-3 control-label">description*</label>
-          <div className="col-sm-5">
+          <label>description <span className="text-danger">*</span></label>
+          <div>
             <input name="description" placeholder="Description" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === ''
               ? "form-control invalidInput"
               : "form-control"} value={this.state.description} required={true}/>
           </div>
         </div>
         <div className="form-group">
-          <label className="col-sm-3 control-label">Type*</label>
-          <div className="col-sm-5">
+          <label>Type <span className="text-danger">*</span></label>
+          <div>
             <Select value={this.state.type} options={this.state.typeArr} onChange={this.handleTypeChange.bind(this)} valueKey="type" labelKey="name"/>
           </div>
         </div>
         <div className="form-group">
-          <label className="col-sm-3 control-label">Schema Group*</label>
-          <div className="col-sm-5">
+          <label>Schema Group <span className="text-danger">*</span></label>
+          <div>
             <input name="schemaGroup" placeholder="Schema Group" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === ''
               ? "form-control invalidInput"
               : "form-control"} value={this.state.schemaGroup} required={true}/>
           </div>
         </div>
         <div className="form-group">
-          <label className="col-sm-3 control-label">Compatibility</label>
-          <div className="col-sm-5">
-            <Select value={this.state.compatibility} options={this.state.compatibilityArr} onChange={this.handleCompatibilityChange.bind(this)}/>
+          <label>Compatibility</label>
+          <div>
+            <Select value={this.state.compatibility} options={this.state.compatibilityArr} onChange={this.handleCompatibilityChange.bind(this)} clearable={false}/>
           </div>
         </div>
+        <div className="form-group">
+          <div className="checkbox">
+          <label><input name="evolve" onChange={this.handleToggleEvolve.bind(this)} type="checkbox" value={this.state.evolve} checked={this.state.evolve}/> Evolve</label>
+        </div>
+      </div>
+      <div className="form-group">
+          <label>Schema Text <span className="text-danger">*</span></label>
+          <div>
+            <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
+          </div>
+      </div>
       </form>
     );
   }

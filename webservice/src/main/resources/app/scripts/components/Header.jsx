@@ -42,19 +42,13 @@ export default class Header extends Component {
         <Navbar.Header>
           <Navbar.Brand>
             <a href="javascript:void(0);">
-              <strong>SCHEMA REGISTRY</strong>
+              <strong>SCHEMA</strong><br/> REGISTRY
             </a>
           </Navbar.Brand>
           <Navbar.Toggle/>
         </Navbar.Header>
         <Navbar.Collapse>
           <Nav onSelect={this.clickHandler}>
-            <NavDropdown id="dash_dropdown" eventKey="3" title={bigIcon} noCaret>
-              <MenuItem eventKey="3.2">
-                <i className="fa fa-file-code-o"></i>
-                &nbsp;Schema Registry
-              </MenuItem>
-            </NavDropdown>
           </Nav>
           <Navbar.Text pullLeft>
             {this.props.headerContent}
