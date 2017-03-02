@@ -36,12 +36,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_PROVIDERS;
+
 /**
  *
  */
 public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, LeadershipAware {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
-    public static final String SCHEMA_PROVIDERS = "schemaProviders";
 
     private Map<String, Object> config;
     private FileStorage fileStorage;
@@ -61,7 +62,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
 
     @Override
     public List<Object> getResources() {
-        Collection<? extends SchemaProvider> schemaProviders = getSchemaProviders();
+        Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
         DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
         schemaRegistry.init(config);
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipParticipant);
