@@ -16,6 +16,8 @@
 
 package com.hortonworks.registries.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DatabindContext;
 import com.fasterxml.jackson.databind.JavaType;
@@ -23,6 +25,8 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.LinkedHashMultiset;
+import com.google.common.collect.Multiset;
 import com.hortonworks.registries.common.exception.ParserException;
 
 import java.io.Serializable;
@@ -32,6 +36,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 //TODO Make this class Jackson Compatible.
 public class Schema implements Serializable {
@@ -65,7 +71,6 @@ public class Schema implements Serializable {
 
         /**
          * Determines the {@link Type} of the value specified
-         *
          * @param val value for which to determine the type
          * @return {@link Type} of the value
          */
@@ -157,7 +162,7 @@ public class Schema implements Serializable {
         }
     }
 
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+    @JsonTypeInfo(use= JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
     @JsonTypeIdResolver(SchemaJsonTypeIdResolver.class)
     public static class Field implements Serializable {
         String name;
@@ -169,6 +174,16 @@ public class Schema implements Serializable {
 
         }
 
+        public Field(Field other) {
+            name = other.getName();
+            type = other.getType();
+            optional = other.isOptional();
+        }
+
+        public Field copy() {
+            return new Field(this);
+        }
+
         public static Field of(String name, Type type) {
             return new Field(name, type);
         }
@@ -178,21 +193,21 @@ public class Schema implements Serializable {
         }
 
         // TODO: make it private after refactoring the usages
-        public Field(String name, Type type) {
+        public Field(String name, Type type){
             this(name, type, false);
         }
 
-        private Field(String name, Type type, boolean optional) {
+        private Field(String name, Type type, boolean optional){
             this.name = name;
             this.type = type;
             this.optional = optional;
         }
 
-        public String getName() {
+        public String getName(){
             return this.name;
         }
 
-        public Type getType() {
+        public Type getType(){
             return this.type;
         }
 
@@ -242,7 +257,7 @@ public class Schema implements Serializable {
         // Removes the prime symbols that are in the beginning and end of the String,
         // e.g. 'device', device', 'device will be converted to device
         private static String removePrimeSymbols(String in) {
-            return in.replaceAll("'?(\\w+)'?", "$1");
+            return in.replaceAll("'?(\\w+)'?","$1");
         }
     }
 
@@ -251,12 +266,10 @@ public class Schema implements Serializable {
      */
     public static class SchemaBuilder {
         private final List<Field> fields = new ArrayList<>();
-
         public SchemaBuilder field(Field field) {
             fields.add(field);
             return this;
         }
-
         public SchemaBuilder fields(Field... fields) {
             Collections.addAll(this.fields, fields);
             return this;
@@ -268,8 +281,8 @@ public class Schema implements Serializable {
         }
 
         public Schema build() {
-            if (fields.isEmpty()) {
-                throw new IllegalArgumentException("Parser schema with empty fields!");
+            if(fields.isEmpty()) {
+                throw new IllegalArgumentException("Schema with empty fields!");
             }
             return new Schema(fields);
         }
@@ -278,11 +291,17 @@ public class Schema implements Serializable {
     /**
      * A composite type for representing nested types.
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class NestedField extends Field {
+        private String namespace;
         private List<Field> fields;
 
         public static NestedField of(String name, List<Field> fields) {
             return new NestedField(name, fields);
+        }
+
+        public static NestedField of(String name, String namespace,  Field... fields) {
+            return new NestedField(name, namespace, Arrays.asList(fields), false);
         }
 
         public static NestedField of(String name, Field... fields) {
@@ -293,32 +312,55 @@ public class Schema implements Serializable {
             return new NestedField(name, fields, true);
         }
 
+        public static NestedField optional(String name, String namespace, Field... fields) {
+            return new NestedField(name, namespace, Arrays.asList(fields), true);
+        }
+
         public static NestedField optional(String name, Field... fields) {
             return new NestedField(name, Arrays.asList(fields), true);
         }
 
-        private NestedField() {
-        }
+        private NestedField() {}
 
         private NestedField(String name, List<Field> fields) {
             this(name, fields, false);
         }
 
         private NestedField(String name, List<Field> fields, boolean optional) {
+            this(name, null, fields, optional);
+        }
+
+        private NestedField(String name, String namespace, List<Field> fields, boolean optional) {
             super(name, Type.NESTED, optional);
+            this.namespace = namespace;
             this.fields = ImmutableList.copyOf(fields);
+        }
+
+        public NestedField(NestedField other) {
+            super(other);
+            if (other.fields != null) {
+                fields = other.fields.stream().map(Field::copy).collect(Collectors.toList());
+            }
+        }
+
+        public NestedField copy() {
+            return new NestedField(this);
         }
 
         public List<Field> getFields() {
             return fields;
         }
 
+        public String getNamespace() {
+            return namespace;
+        }
+
         @Override
         public String toString() {
             return "NestedField{" +
-                    "name='" + name + '\'' +
-                    "fields=" + fields +
-                    "} ";
+                    "namespace='" + namespace + '\'' +
+                    ", fields=" + fields +
+                    '}' + super.toString();
         }
 
         @Override
@@ -329,13 +371,14 @@ public class Schema implements Serializable {
 
             NestedField that = (NestedField) o;
 
-            return !(fields != null ? !fields.equals(that.fields) : that.fields != null);
-
+            if (namespace != null ? !namespace.equals(that.namespace) : that.namespace != null) return false;
+            return fields != null ? fields.equals(that.fields) : that.fields == null;
         }
 
         @Override
         public int hashCode() {
             int result = super.hashCode();
+            result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
             result = 31 * result + (fields != null ? fields.hashCode() : 0);
             return result;
         }
@@ -345,7 +388,11 @@ public class Schema implements Serializable {
      * A composite type that specifically represents an array or sequence of fields.
      */
     public static class ArrayField extends Field {
-        private final List<Field> members;
+        /*
+         * if members is a singleton it represents a homogeneous array of that type (e.g. Array[String])
+         * if not a heterogeneous array like a JSON array.
+         */
+        private List<Field> members;
 
         public static ArrayField of(String name, List<Field> fields) {
             return new ArrayField(name, fields);
@@ -363,6 +410,10 @@ public class Schema implements Serializable {
             return new ArrayField(name, Arrays.asList(fields), true);
         }
 
+        // for jackson
+        private ArrayField() {
+        }
+
         private ArrayField(String name, List<Field> members) {
             this(name, members, false);
         }
@@ -372,8 +423,24 @@ public class Schema implements Serializable {
             this.members = ImmutableList.copyOf(members);
         }
 
+        public ArrayField(ArrayField other) {
+            super(other);
+            if (other.members != null) {
+                members = other.members.stream().map(Field::copy).collect(Collectors.toList());
+            }
+        }
+
+        public ArrayField copy() {
+            return new ArrayField(this);
+        }
+
         public List<Field> getMembers() {
             return members;
+        }
+
+        @JsonIgnore
+        public boolean isHomogenous() {
+            return members != null && members.size() == 1;
         }
 
         @Override
@@ -411,7 +478,7 @@ public class Schema implements Serializable {
     }
 
     // use the static factory or the builder
-    private Schema(List<Field> fields) {
+    private Schema(List<Field> fields){
         setFields(fields);
     }
 
@@ -438,12 +505,12 @@ public class Schema implements Serializable {
 
     // for jackson
     public void setFields(List<Field> fields) {
-        for (Field field : fields) {
+        for (Field field: fields) {
             this.fields.put(field.getName().toUpperCase(), field);
         }
     }
 
-    public List<Field> getFields() {
+    public List<Field> getFields(){
         return new ArrayList<>(this.fields.values());
     }
 
@@ -458,14 +525,14 @@ public class Schema implements Serializable {
     //TODO: need to replace with actual ToJson from Json
     //TODO: this can be simplified to fields.toString() a
     public String toString() {
-        if (fields == null) return "null";
-        if (fields.isEmpty()) return "{}";
+        if(fields == null) return "null";
+        if(fields.isEmpty()) return "{}";
         StringBuilder sb = new StringBuilder();
         sb.append("{");
-        for (Field field : fields.values()) {
+        for(Field field : fields.values()) {
             sb.append(field.toString()).append(",");
         }
-        sb.setLength(sb.length() - 1);  // remove last, orphan ','
+        sb.setLength(sb.length() -1 );  // remove last, orphan ','
         return sb.append("}").toString();
     }
 
@@ -486,11 +553,12 @@ public class Schema implements Serializable {
 
         String[] split = str.split("},");
         List<Field> fields = new ArrayList<>();
-        for (String fieldStr : split) {
+        for(String fieldStr : split) {
             fields.add(Field.fromString(fieldStr));
         }
         return new Schema(fields);
     }
+
 
     /**
      * Constructs a schema object from a map of sample data.
@@ -506,7 +574,7 @@ public class Schema implements Serializable {
 
     private static List<Field> parseFields(Map<String, Object> fieldMap) throws ParserException {
         List<Field> fields = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
+        for(Map.Entry<String, Object> entry: fieldMap.entrySet()) {
             fields.add(parseField(entry.getKey(), entry.getValue()));
         }
         return fields;
@@ -515,27 +583,35 @@ public class Schema implements Serializable {
     private static Field parseField(String fieldName, Object fieldValue) throws ParserException {
         Field field = null;
         Type fieldType = fromJavaType(fieldValue);
-        if (fieldType == Type.NESTED) {
-            field = new NestedField(fieldName, parseFields((Map<String, Object>) fieldValue));
-        } else if (fieldType == Type.ARRAY) {
-            field = new ArrayField(fieldName, parseArray((List<Object>) fieldValue));
+        if(fieldType == Type.NESTED) {
+            field = new NestedField(fieldName, parseFields((Map<String, Object>)fieldValue));
+        } else if(fieldType == Type.ARRAY) {
+            Multiset<Field> members = parseArray((List<Object>)fieldValue);
+            Set<Field> fieldTypes = members.elementSet();
+            if (fieldTypes.size() > 1) {
+                field = new ArrayField(fieldName, new ArrayList<>(members));
+            } else if (fieldTypes.size() == 1) {
+                field = new ArrayField(fieldName, new ArrayList<>(members.elementSet()));
+            } else {
+                throw new IllegalArgumentException("Array should have at least one element");
+            }
         } else {
             field = new Field(fieldName, fieldType);
         }
         return field;
     }
 
-    private static List<Field> parseArray(List<Object> array) throws ParserException {
-        List<Field> arrayMembers = new ArrayList<>();
-        for (Object member : array) {
-            arrayMembers.add(parseField(null, member));
+    private static Multiset<Field> parseArray(List<Object> array) throws ParserException {
+        Multiset<Field> members = LinkedHashMultiset.create();
+        for(Object member: array) {
+            members.add(parseField(null, member));
         }
-        return arrayMembers;
+        return members;
     }
 
     //TODO: complete this and move into some parser utility class
     public static Type fromJavaType(Object value) throws ParserException {
-        if (value instanceof String) {
+        if(value instanceof String) {
             return Type.STRING;
         } else if (value instanceof Short) {
             return Type.SHORT;
@@ -551,6 +627,8 @@ public class Schema implements Serializable {
             return Type.INTEGER;
         } else if (value instanceof Boolean) {
             return Type.BOOLEAN;
+        } else if (value instanceof byte[]) {
+            return Type.BINARY;
         } else if (value instanceof List) {
             return Type.ARRAY;
         } else if (value instanceof Map) {
@@ -561,7 +639,7 @@ public class Schema implements Serializable {
     }
 
     public static Type fromJavaType(Class<?> clazz) throws ParserException {
-        if (clazz.equals(String.class)) {
+        if(clazz.equals(String.class)) {
             return Type.STRING;
         } else if (clazz.equals(Short.class)) {
             return Type.SHORT;
@@ -577,6 +655,8 @@ public class Schema implements Serializable {
             return Type.INTEGER;
         } else if (clazz.equals(Boolean.class)) {
             return Type.BOOLEAN;
+        } else if (clazz.equals(byte[].class)) {
+            return Type.BINARY;
         } else if (clazz.equals(List.class)) {
             return Type.ARRAY;
         } else if (clazz.equals(Map.class)) {
