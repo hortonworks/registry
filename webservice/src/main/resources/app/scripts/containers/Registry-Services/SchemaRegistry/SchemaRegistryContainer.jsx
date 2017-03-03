@@ -17,7 +17,7 @@ import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import BaseContainer from '../../BaseContainer';
 import {Link} from 'react-router';
-import Modal from '../../../components/FSModal';
+import FSModal from '../../../components/FSModal';
 import {
     DropdownButton,
     MenuItem,
@@ -26,7 +26,8 @@ import {
     FormControl,
     Button,
     PanelGroup,
-    Panel
+    Panel,
+    Modal
 } from 'react-bootstrap';
 import Utils from '../../../utils/Utils';
 import ReactCodemirror from 'react-codemirror';
@@ -83,9 +84,11 @@ export default class SchemaRegistryContainer extends Component {
       sorted : {
         key : 'last_updated',
         text : 'Last Updated'
-      }
+      },
+      expandSchema: false
     };
     this.schemaObj = {};
+    this.schemaText = '';
     this.fetchData();
   }
   componentDidUpdate(){
@@ -124,11 +127,10 @@ export default class SchemaRegistryContainer extends Component {
             let {name, schemaGroup, type, description, compatibility, evolve} = result.schemaMetadata;
             let {id} = result;
             let versionsArr = [];
-            let versionPromiseArr = [SchemaREST.getLatestVersion(name),
-              SchemaREST.getSchemaVersions(name)];
+            let versionPromiseArr = [SchemaREST.getSchemaVersions(name)];
             Promise.all(versionPromiseArr).then((versionResults)=>{
-              let latestVersion = versionResults[0];
-              let versions = versionResults[1];
+              let versions = versionResults[0];
+              let latestVersion = Utils.sortArray(versions.entities.slice(), 'timestamp', false)[0];
               versions.entities.map((v) => {
                 versionsArr.push({
                   versionId: v.version,
@@ -147,8 +149,8 @@ export default class SchemaRegistryContainer extends Component {
                 evolve: evolve,
                 collapsed: true,
                 versionsArr:  versionsArr,
-                timestamp: latestVersion.timestamp,
-                currentVersion: latestVersion.version
+                timestamp: latestVersion? latestVersion.timestamp : result.timestamp,
+                currentVersion: latestVersion ? latestVersion.version : null
               });
               schemaEntities = Utils.sortArray(schemaData.slice(), 'timestamp', false);
               this.setState({schemaData: schemaEntities, fetchLoader: false});
@@ -237,9 +239,7 @@ export default class SchemaRegistryContainer extends Component {
     let {schemaData} = this.state;
     let schema = _.find(schemaData,{id: s.id});
     let obj = {};
-    if(e.target.classList.contains("collapseBtn")) {
-      schema.collapsed = !s.collapsed;
-    }
+    schema.collapsed = !s.collapsed;
     obj.schemaData = schemaData;
     this.setState(obj);
   }
@@ -260,13 +260,23 @@ export default class SchemaRegistryContainer extends Component {
     let obj = _.find(schemaObj.versionsArr, {versionId: schemaObj.currentVersion});
     this.schemaObj = {
       schemaName: schemaObj.schemaName,
-      description: obj.description,
-      schemaText: obj.schemaText
+      description: obj ? obj.description : '',
+      schemaText: obj ? obj.schemaText : ''
     };
     this.setState({
       modalTitle: 'Add Version'
     }, () => {
       this.refs.versionModal.show();
+    });
+  }
+  handleExpandView(schemaObj) {
+    let obj = _.find(schemaObj.versionsArr, {versionId: schemaObj.currentVersion});
+    this.schemaText = obj.schemaText;
+    this.setState({
+      modalTitle: obj.schemaName,
+      expandSchema: true
+    }, () => {
+      this.setState({ expandSchema: true});
     });
   }
   handleSaveVersion() {
@@ -275,12 +285,12 @@ export default class SchemaRegistryContainer extends Component {
         if(versions && versions.compatible === false){
           FSReactToastr.error(<CommonNotification flag="error" content="Schema is not compatible with other versions."/>, '', toastOpt);
         } else {
-          this.fetchData();
-          this.refs.versionModal.hide();
           if (versions.responseMessage !== undefined) {
             FSReactToastr.error(
               <CommonNotification flag="error" content={versions.responseMessage}/>, '', toastOpt);
           } else {
+            this.refs.versionModal.hide();
+            this.fetchData();
             let msg = "Version added successfully";
             if (this.state.id) {
               msg = "Version updated successfully";
@@ -296,12 +306,12 @@ export default class SchemaRegistryContainer extends Component {
   handleSave() {
     if (this.refs.addSchema.validateData()) {
       this.refs.addSchema.handleSave().then((schemas) => {
-        this.fetchData();
-        this.refs.schemaModal.hide();
         if (schemas.responseMessage !== undefined) {
           FSReactToastr.error(
             <CommonNotification flag="error" content={schemas.responseMessage}/>, '', toastOpt);
         } else {
+          this.refs.schemaModal.hide();
+          this.fetchData();
           let msg = "Schema added successfully";
           if (this.state.id) {
             msg = "Schema updated successfully";
@@ -322,6 +332,15 @@ export default class SchemaRegistryContainer extends Component {
       lint: false,
       readOnly: true,
       theme: 'default no-cursor schema-editor'
+    };
+    const schemaViewOptions = {
+      lineNumbers: true,
+      mode: "application/json",
+      styleActiveLine: true,
+      gutters: ["CodeMirror-lint-markers"],
+      lint: false,
+      readOnly: true,
+      theme: 'default no-cursor schema-editor expand-schema'
     };
     const {filterValue, slideInput, fetchLoader, schemaData} = this.state;
     const sortTitle = <span>Sort:<span style={{color: "#006ea0"}}>&nbsp;{this.state.sorted.text}</span></span>;
@@ -386,8 +405,8 @@ export default class SchemaRegistryContainer extends Component {
                       var iconClass = this.getIconClass(s.compatibility);
                       var versionObj = _.find(s.versionsArr, {versionId: s.currentVersion});
                       var totalVersions = s.versionsArr.length;
-                      var versionIndex = _.findIndex(s.versionsArr, {versionId: s.currentVersion});
                       var sortedVersions =  Utils.sortArray(s.versionsArr.slice(), 'versionId', false);
+                      var versionIndex = _.findIndex(sortedVersions, {versionId: s.currentVersion});
                       var header = (
                         <div key={i}>
                         <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
@@ -445,7 +464,7 @@ export default class SchemaRegistryContainer extends Component {
                             onExited={this.handleOnExit.bind(this, s)}
                         >
                             {s.collapsed ?
-                            '': (<div className="panel-registry-body">
+                            '': (versionObj ? (<div className="panel-registry-body">
                                     <div className="row">
                                         <div className="col-sm-3">
                                             <h6 className="schema-th">Description</h6>
@@ -455,8 +474,13 @@ export default class SchemaRegistryContainer extends Component {
                                             {s.renderCodemirror ?
                                             (s.evolve ? ([<h6 className="version-number-text">VERSION&nbsp;{totalVersions - versionIndex}</h6>,
                                               <button type="button" className="btn btn-link btn-edit-schema" onClick={this.handleAddVersion.bind(this, s)}>
-                                              <i className="fa fa-pencil"></i>
-                                              </button>]) : '')
+                                                <i className="fa fa-pencil"></i>
+                                              </button>,
+                                              <button type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
+                                                <i className="fa fa-arrows-alt"></i>
+                                              </button>]) : (<button type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
+                                              <i className="fa fa-arrows-alt"></i>
+                                              </button>))
                                             : ''
                                             }
                                             {s.renderCodemirror ?
@@ -469,9 +493,9 @@ export default class SchemaRegistryContainer extends Component {
                                                     <div className="loading-img text-center" style={{marginTop : "50px"}}>
                                                         <img src="styles/img/start-loader.gif" alt="loading" />
                                                     </div>
-                              </div>)
-                  }
-                  </div>
+                                              </div>)
+                                            }
+                                        </div>
                                 <div className="col-sm-3">
                                     <h6 className="schema-th">Change Log</h6>
                                     <ul className="version-tree">
@@ -488,7 +512,42 @@ export default class SchemaRegistryContainer extends Component {
                                     </ul>
                                 </div>
                             </div>
-                    </div>)}
+                    </div>) :
+                    (<div className="panel-registry-body">
+                      <div className="row">
+                        {s.evolve ?
+                        ([<div className="col-sm-3">
+                            <h6 className="schema-th">Description</h6>
+                            <p></p>
+                        </div>,
+                          <div className="col-sm-6">
+                              {s.renderCodemirror ?
+                                <button type="button" className="btn btn-link btn-add-schema" onClick={this.handleAddVersion.bind(this, s)}>
+                                <i className="fa fa-pencil"></i>
+                                </button>
+                                : ''
+                              }
+                              {s.renderCodemirror ?
+                                (<ReactCodemirror
+                                  ref="JSONCodemirror"
+                                  value=""
+                                  options={jsonoptions}
+                                />)
+                                : (<div className="col-sm-12">
+                                    <div className="loading-img text-center" style={{marginTop : "50px"}}>
+                                      <img src="styles/img/start-loader.gif" alt="loading" />
+                                    </div>
+                                </div>)
+                              }
+                          </div>,
+                          <div className="col-sm-3">
+                            <h6 className="schema-th">Change Log</h6>
+                          </div>])
+                          : <div style={{'textAlign': 'center'}}>NO DATA FOUND</div>
+                        }
+                      </div>
+                    </div>)
+                            )}
                 </Panel>
                       );
                     })
@@ -502,11 +561,27 @@ export default class SchemaRegistryContainer extends Component {
 }
         </BaseContainer>
 
-        <Modal ref="schemaModal" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
+        <FSModal ref="schemaModal" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
           <SchemaInfoForm ref="addSchema"/>
-        </Modal>
-        <Modal ref="versionModal" data-title={this.state.modalTitle} data-resolve={this.handleSaveVersion.bind(this)}>
+        </FSModal>
+        <FSModal ref="versionModal" data-title={this.state.modalTitle} data-resolve={this.handleSaveVersion.bind(this)}>
           <SchemaVersionForm ref="addVersion" schemaObj={this.schemaObj}/>
+        </FSModal>
+        <Modal dialogClassName="modal-xl" ref="expandSchemaModal" bsSize="large" show={this.state.expandSchema} onHide={()=>{this.setState({ expandSchema: false });}}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.modalTitle}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {this.state.expandSchema ?
+            <ReactCodemirror
+              ref="JSONCodemirror"
+              value={JSON.stringify(JSON.parse(this.schemaText), null, ' ')}
+              options={schemaViewOptions}
+            /> : ''}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={()=>{this.setState({ expandSchema: false });}}>Close</Button>
+          </Modal.Footer>
         </Modal>
       </div>
     );
