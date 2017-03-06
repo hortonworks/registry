@@ -146,10 +146,10 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         SchemaMetadataInfo schemaMetadataInfoForName = schemaRegistryClient.getSchemaMetadataInfo(schemaName);
         Assert.assertEquals(schemaMetadataInfoForId, schemaMetadataInfoForName);
 
-        // adding a new version of the schema
-        String schema2 = getSchema("/schema-2.avsc");
-        SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
-        SchemaIdVersion v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+        // adding a new version of the schema using uploadSchemaVersion API
+        SchemaIdVersion v2 = schemaRegistryClient.uploadSchemaVersion(schemaMetadata.getName(),
+                                                                      "second version",
+                                                                      AvroSchemaRegistryClientTest.class.getResourceAsStream("/schema-2.avsc"));
         Assert.assertEquals(v1.getVersion() + 1, v2.getVersion().intValue());
 
         SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2.getVersion()));

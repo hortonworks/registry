@@ -47,8 +47,11 @@ import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +84,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -202,6 +204,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final WebTarget schemaProvidersTarget;
         private final WebTarget schemasTarget;
         private final WebTarget schemasByIdTarget;
+        private final WebTarget rootTarget;
         private final WebTarget searchFieldsTarget;
         private final WebTarget serializersTarget;
         private final WebTarget deserializersTarget;
@@ -211,6 +214,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             schemaProvidersTarget = rootTarget.path(SCHEMA_PROVIDERS_PATH);
             schemasTarget = rootTarget.path(SCHEMAS_PATH);
             schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
+            this.rootTarget = rootTarget;
             searchFieldsTarget = schemasTarget.path(SEARCH_FIELDS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
             deserializersTarget = rootTarget.path(DESERIALIZERS_PATH);
@@ -326,6 +330,30 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return schemaIdVersion;
     }
 
+    public SchemaIdVersion uploadSchemaVersion(final String schemaName,
+                                               final String description,
+                                               final InputStream schemaVersionInputStream)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
+        if (schemaMetadataInfo == null) {
+            throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
+        }
+
+        StreamDataBodyPart streamDataBodyPart = new StreamDataBodyPart("file", schemaVersionInputStream);
+
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions/upload");
+        MultiPart multipartEntity =
+                new FormDataMultiPart()
+                        .field("description", description, MediaType.APPLICATION_JSON_TYPE)
+                        .bodyPart(streamDataBodyPart);
+
+        Entity<MultiPart> multiPartEntity = Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA);
+        Response response = target.request().post(multiPartEntity, Response.class);
+
+        return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
+    }
+
     private SchemaDigestEntry buildSchemaTextEntry(SchemaVersion schemaVersion, String name) {
         byte[] digest;
         try {
@@ -343,12 +371,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
 
         try {
-            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName), new Callable<SchemaIdVersion>() {
-                @Override
-                public SchemaIdVersion call() throws Exception {
-                    return doAddSchemaVersion(schemaName, schemaVersion);
-                }
-            });
+            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName),
+                                       () -> doAddSchemaVersion(schemaName, schemaVersion));
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             LOG.error("Encountered error while adding new version [{}] of schema [{}] and error [{}]", schemaVersion, schemaName, e);
@@ -376,6 +400,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions");
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
+        return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
+    }
+
+    private SchemaIdVersion handleSchemaIdVersionResponse(SchemaMetadataInfo schemaMetadataInfo, Response response) throws IncompatibleSchemaException, InvalidSchemaException {
         int status = response.getStatus();
         String msg = response.readEntity(String.class);
         if (status == Response.Status.BAD_REQUEST.getStatusCode() || status == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {

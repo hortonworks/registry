@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -56,6 +57,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -100,7 +102,7 @@ public class SchemaRegistryResource {
             response = SchemaProviderInfo.class, responseContainer = "Collection",
             tags = OPERATION_GROUP_OTHER)
     @Timed
-    public Response getRegisteredSchemaProviderInfos( @Context UriInfo uriInfo) {
+    public Response getRegisteredSchemaProviderInfos(@Context UriInfo uriInfo) {
         try {
             Collection<SchemaProviderInfo> schemaProviderInfos = schemaRegistry.getRegisteredSchemaProviderInfos();
             return WSUtils.respondEntities(schemaProviderInfos, Response.Status.OK);
@@ -203,11 +205,11 @@ public class SchemaRegistryResource {
     @Path("/schemas")
     @ApiOperation(value = "Create a schema if it does not already exist",
             notes = "Creates a schema with the given schema information if it does not already exist." +
-            " A unique schema identifier is returned.",
+                    " A unique schema identifier is returned.",
             response = Long.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
-                                              SchemaMetadata schemaMetadataInfo,
+                                          SchemaMetadata schemaMetadataInfo,
                                   @Context UriInfo uriInfo) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
@@ -277,10 +279,43 @@ public class SchemaRegistryResource {
     }
 
     @POST
+    @Path("/schemas/{name}/versions/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation(value = "Register a new version of the schema by uploading schema version text",
+            notes = "Registers the given schema version to schema with name if the given file content is not registered as a version for this schema, " +
+                    "and returns respective version number." +
+                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
+            response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response uploadSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
+                                                String schemaName,
+                                        @ApiParam(value = "Schema version text file to be uploaded", required = true)
+                                        @FormDataParam("file") final InputStream inputStream,
+                                        @ApiParam(value = "Description about the schema version to be uploaded", required = true)
+                                        @FormDataParam("description") final String description,
+                                        @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            Response response;
+            SchemaVersion schemaVersion = null;
+            try {
+                schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, "UTF-8"),
+                                                  description);
+                response = addSchema(schemaName, schemaVersion, uriInfo);
+            } catch (IOException ex) {
+                LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            }
+
+            return response;
+        });
+    }
+
+    @POST
     @Path("/schemas/{name}/versions")
     @ApiOperation(value = "Register a new version of the schema",
             notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
-                    "and returns respective version number." + "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
+                    "and returns respective version number." +
+                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response addSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name")
@@ -304,7 +339,7 @@ public class SchemaRegistryResource {
                 LOG.error("Unsupported schema type encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
             } catch (Exception ex) {
-                LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
+                LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
             }
 
