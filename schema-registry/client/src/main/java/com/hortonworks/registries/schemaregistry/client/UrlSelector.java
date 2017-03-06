@@ -32,9 +32,9 @@ public interface UrlSelector {
     String select();
 
     /**
-     * Sets the given {@code url} is failed with the given Exception.
-     * @param url
-     * @param e
+     * Sets the given {@code url} is failed with the given Exception {@code ex}.
+     * @param url failed url
+     * @param ex exception encountered
      */
-    void urlWithError(String url, Exception e);
+    void urlWithError(String url, Exception ex);
 }

@@ -24,7 +24,7 @@ import java.util.PriorityQueue;
  */
 public class FailoverUrlSelector extends AbstractUrlSelector {
 
-    private final PriorityQueue<Entry> failedUrls;
+    private final PriorityQueue<UrlTimeEntry> failedUrls;
     private String current;
 
     public FailoverUrlSelector(String clusterUrl) {
@@ -42,12 +42,12 @@ public class FailoverUrlSelector extends AbstractUrlSelector {
     public void urlWithError(String url, Exception e) {
         if (failedError(e)) {
             synchronized (failedUrls) {
-                failedUrls.add(new Entry(url, System.currentTimeMillis()));
+                failedUrls.add(new UrlTimeEntry(url, System.currentTimeMillis()));
                 if (failedUrls.size() == urls.length) {
                     current = failedUrls.remove().url;
                 } else if (current.equals(url)) {
                     for (String s : urls) {
-                        if (!failedUrls.contains(new Entry(s, System.currentTimeMillis()))) {
+                        if (!failedUrls.contains(new UrlTimeEntry(s, System.currentTimeMillis()))) {
                             current = s;
                             break;
                         }
@@ -66,17 +66,17 @@ public class FailoverUrlSelector extends AbstractUrlSelector {
         return true;
     }
 
-    static class Entry implements Comparable<Entry> {
+    private static class UrlTimeEntry implements Comparable<UrlTimeEntry> {
         final String url;
         private final long time;
 
-        public Entry(String url, long time) {
+        public UrlTimeEntry(String url, long time) {
             this.url = url;
             this.time = time;
         }
 
         @Override
-        public int compareTo(Entry other) {
+        public int compareTo(UrlTimeEntry other) {
             int x = 0;
             if (this.time == other.time) {
                 x = 0;
@@ -94,9 +94,9 @@ public class FailoverUrlSelector extends AbstractUrlSelector {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Entry entry = (Entry) o;
+            UrlTimeEntry urlTimeEntry = (UrlTimeEntry) o;
 
-            return url != null ? url.equals(entry.url) : entry.url == null;
+            return url != null ? url.equals(urlTimeEntry.url) : urlTimeEntry.url == null;
         }
 
         @Override

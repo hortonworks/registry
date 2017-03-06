@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Map;
 public abstract class AbstractUrlSelector implements UrlSelector {
 
     protected final String[] urls;
-    private Map<String, Object> conf;
+    protected Map<String, Object> conf;
 
     public AbstractUrlSelector(String clusterUrl) {
         urls = clusterUrl.split(",");
@@ -33,6 +34,6 @@ public abstract class AbstractUrlSelector implements UrlSelector {
 
     @Override
     public void init(Map<String, Object> conf) {
-        this.conf = conf;
+        this.conf = Collections.unmodifiableMap(conf);
     }
 }
