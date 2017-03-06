@@ -51,7 +51,7 @@ public class MySqlQueryUtils {
 
     private static ResultSet getResultSet(Connection connection, int queryTimeoutSecs, String sql) throws SQLException {
         final MySqlQuery sqlBuilder = new MySqlQuery(sql);
-        return new PreparedStatementBuilder(connection, new ExecutionConfig(queryTimeoutSecs),
+        return PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs),
                 sqlBuilder).getPreparedStatement(sqlBuilder).executeQuery();
     }
 

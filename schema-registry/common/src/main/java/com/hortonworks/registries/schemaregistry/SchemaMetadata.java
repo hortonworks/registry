@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
@@ -53,13 +54,24 @@ public class SchemaMetadata implements Serializable {
     private SchemaCompatibility compatibility;
 
     /**
+     * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
+     */
+    @JsonProperty("evolve")
+    public boolean evolve = true;
+
+    /**
      * Private constructor for Jackson JSON mapping
      */
     @SuppressWarnings("unused")
     private SchemaMetadata() {
     }
 
-    private SchemaMetadata(String name, String type, String schemaGroup, String description, SchemaCompatibility compatibility) {
+    private SchemaMetadata(String name,
+                           String type,
+                           String schemaGroup,
+                           String description,
+                           SchemaCompatibility compatibility,
+                           boolean evolve) {
         Preconditions.checkNotNull(name, "name can not be null");
         Preconditions.checkNotNull(type, "type can not be null");
 
@@ -67,6 +79,7 @@ public class SchemaMetadata implements Serializable {
         this.type = type;
         this.schemaGroup = schemaGroup;
         this.description = description;
+        this.evolve = evolve;
         this.compatibility = (compatibility != null) ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
     }
 
@@ -105,6 +118,10 @@ public class SchemaMetadata implements Serializable {
         return compatibility;
     }
 
+    public boolean isEvolve() {
+        return evolve;
+    }
+
     @Override
     public String toString() {
         return "SchemaMetadata{" +
@@ -113,6 +130,7 @@ public class SchemaMetadata implements Serializable {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", compatibility=" + compatibility +
+                ", evolve=" + evolve +
                 '}';
     }
 
@@ -123,12 +141,12 @@ public class SchemaMetadata implements Serializable {
 
         SchemaMetadata that = (SchemaMetadata) o;
 
+        if (evolve != that.evolve) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         return compatibility == that.compatibility;
-
     }
 
     @Override
@@ -138,6 +156,7 @@ public class SchemaMetadata implements Serializable {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
+        result = 31 * result + (evolve ? 1 : 0);
         return result;
     }
 
@@ -154,6 +173,9 @@ public class SchemaMetadata implements Serializable {
         private String description;
         private SchemaCompatibility compatibility;
 
+        // default value is always true.
+        private boolean evolve = true;
+
         /**
          * @param name Unique name for all versions of a schema
          */
@@ -168,6 +190,7 @@ public class SchemaMetadata implements Serializable {
             schemaGroup = schemaMetadata.getSchemaGroup();
             description = schemaMetadata.getDescription();
             compatibility = schemaMetadata.getCompatibility();
+            evolve = schemaMetadata.evolve;
         }
 
         /**
@@ -204,8 +227,17 @@ public class SchemaMetadata implements Serializable {
             return this;
         }
 
+        /**
+         * @param evolve whether to support multiple version of a schema. If it is set to false then only one version
+         *               of the schema can be added.
+         */
+        public Builder evolve(boolean evolve) {
+            this.evolve = evolve;
+            return this;
+        }
+
         public SchemaMetadata build() {
-            return new SchemaMetadata(name, type, schemaGroup, description, compatibility);
+            return new SchemaMetadata(name, type, schemaGroup, description, compatibility, evolve);
         }
     }
 }

@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "user",
+  "includeSchemas": [{"name":"foo"}],
+  "namespace": "registry.example",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "next",
+      "type": "registry.example.user"
+    }
+  ]
+}

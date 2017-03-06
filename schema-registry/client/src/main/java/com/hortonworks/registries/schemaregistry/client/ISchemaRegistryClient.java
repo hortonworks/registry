@@ -17,18 +17,18 @@
 package com.hortonworks.registries.schemaregistry.client;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -70,16 +70,16 @@ import java.util.Collection;
  * LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
  *
  * // get all versions of the schema
- * Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
+ * Collection&lt;SchemaVersionInfo&gt; allVersions = schemaRegistryClient.getAllVersions(schemaName);
  * LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
  *
  * // finding schemas containing a specific field
  * SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
- * Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
+ * Collection&lt;SchemaVersionKey&gt; md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
  * LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaVersionKeys);
  *
  * SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
- * Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
+ * Collection&lt;SchemaVersionKey&gt; txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
  * LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
  *
  * // Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
@@ -102,12 +102,12 @@ import java.util.Collection;
  * schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
  *
  * // get registered serializers
- * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaName);
+ * Collection&lt;SerDesInfo&gt; serializers = schemaRegistryClient.getSerializers(schemaName);
  * SerDesInfo registeredSerializerInfo = serializers.iterator().next();
  *
  * //get serializer and serialize the given payload
  * try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
- * Map<String, Object> config = Collections.emptyMap();
+ * Map&lt;String, Object&gt; config = Collections.emptyMap();
  * snapshotSerializer.init(config);
  *
  * byte[] serializedData = snapshotSerializer.serialize(input, schemaInfo);
@@ -156,6 +156,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @return version of the schema added.
      * @throws InvalidSchemaException      if the given versionedSchema is not valid
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
+     * @throws SchemaNotFoundException if the given schemaMetadata not found.
      */
     SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
@@ -165,12 +166,14 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaName    name identifying a schema
      * @param schemaVersion new version of the schema to be added
      * @return version number of the schema added
-     * @throws InvalidSchemaException      if the given versionedSchema is not valid
-     * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
+     * @throws InvalidSchemaException      if the given schemaVersion is not valid
+     * @throws IncompatibleSchemaException if the given schemaVersion is incompatible according to the compatibility set.
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
     SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
+     * @param schemaFieldQuery {@link SchemaFieldQuery} instance to be run
      * @return schema versions matching the fields specified in the query
      */
     Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery);
@@ -178,19 +181,22 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     /**
      * @param schemaVersionKey key identifying a schema and a version
      * @return {@link SchemaVersionInfo} for the given {@link SchemaVersionKey}
+     * @throws SchemaNotFoundException when there is no schema version exists with the given {@code schemaVersionKey}
      */
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
 
     /**
      * @param schemaName name identifying a schema
-     * @return latest version of the schema for the given {@param schemaName}
+     * @return latest version of the schema for the given schemaName
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
     SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
     /**
      * @param schemaName name identifying a schema
-     * @return all versions of the schemas for given {@param schemaName}
+     * @return all versions of the schemas for given schemaName
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
     Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException;
 
@@ -199,23 +205,26 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaName   name identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
      * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaName}.
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
     boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException;
 
     /**
-     * TODO: needs better description. What bytes are being uploaded?
+     * Uploads the given {@code inputStream} of any file and returns the identifier for which it can be downloaded later
+     * with {@link #downloadFile(String)}.
      *
-     * @param inputStream input stream
+     * @param inputStream input stream of a file to be uploaded.
      * @return unique id for the uploaded bytes read from input stream to file storage.
+     * @throws SerDesException if any error occurs while this operation is being done.
      */
     String uploadFile(InputStream inputStream) throws SerDesException;
 
     /**
-     * Downloads the content of file stored with the given {@code fileId}.
-     * TODO need description on what these files are
+     * Downloads the content of file stored with the given {@code fileId} earlier uploaded using {@link #uploadFile(InputStream)}.
      *
      * @param fileId file identifier
-     * @return
+     * @return {@link InputStream} instance of the file stored earlier with {@code fileId}
+     * @throws FileNotFoundException when there is not file stored with the given {@code fileId}
      */
     InputStream downloadFile(String fileId) throws FileNotFoundException;
 
@@ -277,6 +286,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      *
      * @param <T>            type of the instance to be created
      * @param serializerInfo serializer information
+     * @return new instance of the respective Serializer class
      * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createSerializerInstance(SerDesInfo serializerInfo);
@@ -286,6 +296,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      *
      * @param <T>              type of the instance to be created
      * @param deserializerInfo deserializer information
+     * @return new instance of the respective Deserializer class
      * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createDeserializerInstance(SerDesInfo deserializerInfo);

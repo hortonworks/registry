@@ -30,13 +30,15 @@ import java.util.Map;
  */
 public interface ISchemaRegistry {
 
+    String SCHEMA_PROVIDERS = "schemaProviders";
+
     void init(Map<String, Object> props);
 
     Collection<SchemaProviderInfo> getRegisteredSchemaProviderInfos();
 
     Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException;
 
-    Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
+    Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException, SchemaNotFoundException;
 
     Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
 

@@ -65,7 +65,7 @@ public abstract class AbstractStoreManagerTest {
     /**
      * @return When we add a new implementation for StorageManager interface we will also add a corresponding test implementation
      * which will extends this class and implement this method.
-     * <p/>
+     * <p>
      * Essentially we are going to run the same test defined in this class for every single implementation of StorageManager.
      */
     protected abstract StorageManager getStorageManager();

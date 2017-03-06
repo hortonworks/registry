@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   name          VARCHAR(256)          NOT NULL,
   compatibility VARCHAR(256)          NOT NULL,
   description   TEXT,
+  evolve        BOOLEAN               NOT NULL,
   timestamp     BIGINT                NOT NULL,
   PRIMARY KEY (name),
   UNIQUE KEY (id)

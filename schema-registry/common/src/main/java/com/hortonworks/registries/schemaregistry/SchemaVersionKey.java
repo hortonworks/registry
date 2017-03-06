@@ -24,6 +24,8 @@ import java.io.Serializable;
  */
 public final class SchemaVersionKey implements Serializable {
 
+    public static final Integer LATEST_VERSION = -1;
+
     private String schemaName;
     private Integer version;
 

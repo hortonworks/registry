@@ -8,6 +8,101 @@
     <artifactId>registries</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>Registry</name>
+    <description>
+        Registry is a versioned entity framework that allows to build various
+        registry services such as Schema Registry, ML Model Registry etc..
+    </description>
+    <url>http://github.com/hortonworks/registry</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>satishd</id>
+            <name>Satish Duggana</name>
+            <email>satishd@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
+        <developer>
+            <id>harshach</id>
+            <name>Sriharsha Chintalapani</name>
+            <email>sriharsha@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>priyank5485</id>
+            <name>Priyank Shah</name>
+            <email>pshah@hortonworks.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>arunmahadevan</id>
+            <name>Arun Iyer</name>
+            <email>aiyer@hortonworks.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
+        <developer>
+            <id>hmcl</id>
+            <name>Hugo da Cruz Louro</name>
+            <email>hmcl@hortonworks.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>HeartSaVioR</id>
+            <name>Jungtaek Lim</name>
+            <email>jlim@hortonworks.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+9</timezone>
+        </developer>
+        <developer>
+            <id>omkreddy</id>
+            <name>Mani Kumar Reddy</name>
+            <email>omkreddy@hortonworks.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
+        <developer>
+            <id>shahsank3t</id>
+            <name>Sanket Shah</name>
+            <email>sanket.shah@freestoneinfotech.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/hortonworks/registry.git</connection>
+        <developerConnection>scm:git:git@github.com:harshach/registry.git</developerConnection>
+        <url>http://github.com/hortonworks/registry.git</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>common</module>
@@ -17,21 +112,82 @@
         <module>tag-registry</module>
         <module>schema-registry</module>
         <module>examples</module>
+        <module>docker</module>
     </modules>
 
     <profiles>
-      <profile>
-        <id>dist</id>
-        <activation>
-          <activeByDefault>false</activeByDefault>
-        </activation>
-        <modules>
-          <module>registry-dist</module>
-        </modules>
-      </profile>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.4</version>
+                        <configuration>
+                            <passphrase>${gpg.passphrase}</passphrase>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>sign</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>dist</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>registry-dist</module>
+            </modules>
+        </profile>
+        <profile>
+          <id>ossrh</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+          </activation>
+          <properties>
+            <gpg.executable>gpg2</gpg.executable>
+          </properties>
+        </profile>
     </profiles>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.11</junit.version>
         <snakeyaml.version>1.15</snakeyaml.version>
         <jackson.version>2.7.3</jackson.version>
@@ -41,6 +197,7 @@
         <hadoop.version>2.7.1</hadoop.version>
         <kafka.version>0.10.0.1</kafka.version>
         <kafkaArtifact>kafka_2.10</kafkaArtifact>
+        <curator.version>2.11.1</curator.version>
         <avro.version>1.7.7</avro.version>
         <dropwizard.version>1.0.2</dropwizard.version>
         <jersey.version>2.22.1</jersey.version>
@@ -59,16 +216,20 @@
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-surefire.version>2.18.1</maven-surefire.version>
         <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>
+        <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
     </properties>
 
     <distributionManagement>
-        <repository>
-            <id>${repoid}</id>
-            <name>${reponame}</name>
-            <url>${repourl}</url>
-        </repository>
+      <snapshotRepository>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </snapshotRepository>
+      <repository>
+        <id>${repoid}</id>
+        <name>${reponame}</name>
+        <url>${repourl}</url>
+      </repository>
     </distributionManagement>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -117,9 +278,9 @@
                 <version>${guava.version}</version>
             </dependency>
             <dependency>
-              <groupId>org.mariadb.jdbc</groupId>
-              <artifactId>mariadb-java-client</artifactId>
-              <version>${mariadb-java-client.version}</version>
+                <groupId>org.mariadb.jdbc</groupId>
+                <artifactId>mariadb-java-client</artifactId>
+                <version>${mariadb-java-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -331,6 +492,14 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5</version>
+                    <configuration>
+                        <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>${maven-shade-plugin.version}</version>
                     <configuration>
@@ -398,6 +567,63 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+            <!-- Generate Java doc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven-javadoc-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>javadoc</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-source-plugin</artifactId>
+              <version>2.2.1</version>
+              <executions>
+                <execution>
+                  <id>attach-sources</id>
+                  <goals>
+                    <goal>jar-no-fork</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <version>1.6.7</version>
+              <extensions>true</extensions>
+              <configuration>
+                <serverId>ossrh</serverId>
+                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                <autoReleaseAfterClose>false</autoReleaseAfterClose>
+              </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

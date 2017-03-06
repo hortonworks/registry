@@ -15,6 +15,9 @@
  **/
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaResolver;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -23,7 +26,6 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.io.IOUtils;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  *
@@ -40,9 +43,17 @@ import java.nio.ByteBuffer;
 public class AvroSnapshotDeserializer extends AbstractSnapshotDeserializer<Object, Schema> {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
 
+    private AvroSchemaResolver avroSchemaResolver;
+
     @Override
-    protected Schema getParsedSchema(SchemaVersionInfo schemaVersionInfo) {
-        return new Schema.Parser().parse(schemaVersionInfo.getSchemaText());
+    public void init(Map<String, ?> config) {
+        super.init(config);
+        avroSchemaResolver = new AvroSchemaResolver(key -> schemaRegistryClient.getSchemaVersionInfo(key));
+    }
+
+    @Override
+    protected Schema getParsedSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException {
+        return new Schema.Parser().parse(avroSchemaResolver.resolveSchema(schemaVersionKey));
     }
 
     protected SchemaIdVersion retrieveSchemaIdVersion(InputStream payloadInputStream) throws SerDesException {

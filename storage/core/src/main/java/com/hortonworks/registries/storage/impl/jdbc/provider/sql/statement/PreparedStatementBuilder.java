@@ -29,6 +29,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -55,31 +57,65 @@ public class PreparedStatementBuilder {
      * @param connection Connection used to prepare the statement
      * @param config Configuration that needs to be passed to the {@link PreparedStatement}
      * @param sqlBuilder Sql builder object for which to build the {@link PreparedStatement}
+     * @param returnGeneratedKeys Whether statement has option 'Statement.RETURN_GENERATED_KEYS' or not.
      * @throws SQLException
      */
-    public PreparedStatementBuilder(Connection connection, ExecutionConfig config,
-                                    SqlQuery sqlBuilder) throws SQLException {
+    protected PreparedStatementBuilder(Connection connection, ExecutionConfig config,
+                                       SqlQuery sqlBuilder, boolean returnGeneratedKeys) throws SQLException {
         this.connection = connection;
         this.config = config;
         this.sqlBuilder = sqlBuilder;
-        setPreparedStatement();
+        setPreparedStatement(returnGeneratedKeys);
         setNumPrepStmtParams();
     }
 
-    /** Creates the prepared statement with the parameters in place to be replaced */
-    private void setPreparedStatement() throws SQLException {
+    /**
+     * Creates a {@link PreparedStatement} for which calls to method {@code getPreparedStatement}
+     * return the {@link PreparedStatement} ready to be executed
+     *
+     * @param connection Connection used to prepare the statement
+     * @param config Configuration that needs to be passed to the {@link PreparedStatement}
+     * @param sqlBuilder Sql builder object for which to build the {@link PreparedStatement}
+     * @throws SQLException
+     */
+    public static PreparedStatementBuilder of(Connection connection, ExecutionConfig config,
+                                              SqlQuery sqlBuilder) throws SQLException {
+        return new PreparedStatementBuilder(connection, config, sqlBuilder, false);
+    }
 
+    /**
+     * Creates a {@link PreparedStatement} for which calls to method {@code getPreparedStatement}
+     * return the {@link PreparedStatement} ready to be executed.
+     * Please note that Statement.RETURN_GENERATED_KEYS is set while initializing {@link PreparedStatement}.
+     *
+     * @param connection Connection used to prepare the statement
+     * @param config Configuration that needs to be passed to the {@link PreparedStatement}
+     * @param sqlBuilder Sql builder object for which to build the {@link PreparedStatement}
+     * @throws SQLException
+     */
+    public static PreparedStatementBuilder supportReturnGeneratedKeys(Connection connection, ExecutionConfig config,
+                                                                      SqlQuery sqlBuilder) throws SQLException {
+        return new PreparedStatementBuilder(connection, config, sqlBuilder, true);
+    }
+
+    /** Creates the prepared statement with the parameters in place to be replaced */
+    private void setPreparedStatement(boolean returnGeneratedKeys) throws SQLException {
         final String parameterizedSql = sqlBuilder.getParametrizedSql();
         log.debug("Creating prepared statement for parameterized sql [{}]", parameterizedSql);
 
-        final PreparedStatement preparedStatement = connection.prepareStatement(parameterizedSql);
+        final PreparedStatement preparedStatement;
+        if (returnGeneratedKeys) {
+            preparedStatement = connection.prepareStatement(parameterizedSql, Statement.RETURN_GENERATED_KEYS);
+        } else {
+            preparedStatement = connection.prepareStatement(parameterizedSql);
+        }
+
         final int queryTimeoutSecs = config.getQueryTimeoutSecs();
         if (queryTimeoutSecs > 0) {
             preparedStatement.setQueryTimeout(queryTimeoutSecs);
         }
         this.preparedStatement = preparedStatement;
     }
-
     private void setNumPrepStmtParams() {
         Pattern p = Pattern.compile("[?]");
         Matcher m = p.matcher(sqlBuilder.getParametrizedSql());
@@ -182,6 +218,11 @@ public class PreparedStatementBuilder {
 
     private void setPreparedStatementParams(PreparedStatement preparedStatement,
                                               Schema.Type type, int index, Object val) throws SQLException {
+        if (val == null) {
+            preparedStatement.setNull(index, getSqlType(type));
+            return;
+        }
+
         switch (type) {
             case BOOLEAN:
                 preparedStatement.setBoolean(index, (Boolean) val);
@@ -214,6 +255,36 @@ public class PreparedStatementBuilder {
             case ARRAY:
                 preparedStatement.setObject(index, val);    //TODO check this
                 break;
+        }
+    }
+
+    private int getSqlType(Schema.Type type) {
+        switch (type) {
+            case BOOLEAN:
+                return Types.BOOLEAN;
+            case BYTE:
+                return Types.TINYINT;
+            case SHORT:
+                return Types.SMALLINT;
+            case INTEGER:
+                return Types.INTEGER;
+            case LONG:
+                return Types.BIGINT;
+            case FLOAT:
+                return Types.REAL;
+            case DOUBLE:
+                return Types.DOUBLE;
+            case STRING:
+                // it might be a VARCHAR or LONGVARCHAR
+                return Types.VARCHAR;
+            case BINARY:
+                // it might be a VARBINARY or LONGVARBINARY
+                return Types.VARBINARY;
+            case NESTED:
+            case ARRAY:
+                return Types.JAVA_OBJECT;
+            default:
+                throw new IllegalArgumentException("Not supported type: " + type);
         }
     }
 }

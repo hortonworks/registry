@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.Map;
  * Different types of Schema providers such as AVRO, Protobuf etc.
  */
 public interface SchemaProvider {
+
+    String SCHEMA_VERSION_RETRIEVER_CONFIG = "schemaVersionRetriever";
 
     /**
      * Initializes with the given {@code config}.
@@ -38,7 +41,7 @@ public interface SchemaProvider {
     String getName();
 
     /**
-     * @return descirption about this provider.
+     * @return description about this provider.
      */
     String getDescription();
 
@@ -85,7 +88,7 @@ public interface SchemaProvider {
      * @param schemaText textual representation of schema
      * @return fingerprint of canonicalized form of the given schema.
      */
-    byte[] getFingerprint(String schemaText) throws InvalidSchemaException;
+    byte[] getFingerprint(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
 
     /**
      * Returns all the fields in the given {@code schemaText} by traversing the whole schema including nested/complex types.
@@ -93,5 +96,15 @@ public interface SchemaProvider {
      * @param schemaText
      * @return all the fields in the given {@code schemaText}
      */
-    List<SchemaFieldInfo> generateFields(String schemaText);
+    List<SchemaFieldInfo> generateFields(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
+
+    /**
+     * Returns the resultant schema of the given {@code schemaText} after parsing and replacing any include references
+     * with the actual types.
+     *
+     * @throws InvalidSchemaException when the given schemaText does not represent a valid schema
+     * @throws SchemaNotFoundException when any of the dependent includedSchemas does not exist
+     * @param schemaText
+     */
+     String getResultantSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
 }

@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -46,8 +47,8 @@ import java.util.UUID;
  */
 public class AvroSchemaRegistryTest {
 
-    public static final String SCHEMA_GROUP = "test-group";
-    public static final String INVALIDSCHEMA_METADATA_KEY = "invalid-schema" + System.currentTimeMillis();
+    private static final String SCHEMA_GROUP = "test-group";
+    private static final String INVALID_SCHEMA_METADATA_KEY = "invalid-schema" + System.currentTimeMillis();
 
     private DefaultSchemaRegistry schemaRegistry;
 
@@ -60,7 +61,8 @@ public class AvroSchemaRegistryTest {
         schema2 = getSchema("/device-compat.avsc");
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
-        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, Collections.singleton(new AvroSchemaProvider()));
+        Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
+        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         schemaRegistry.init(Collections.<String, Object>emptyMap());
     }
 
@@ -111,13 +113,13 @@ public class AvroSchemaRegistryTest {
 
     @Test
     public void testNonExistingSchemaMetadata() {
-        SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(INVALIDSCHEMA_METADATA_KEY);
+        SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(INVALID_SCHEMA_METADATA_KEY);
         Assert.assertNull(schemaMetadataInfo);
     }
 
     @Test(expected = SchemaNotFoundException.class)
     public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException {
-        schemaRegistry.addSchemaVersion(INVALIDSCHEMA_METADATA_KEY, "foo", "dummy");
+        schemaRegistry.addSchemaVersion(INVALID_SCHEMA_METADATA_KEY, "foo", "dummy");
     }
 
     @Test(expected = InvalidSchemaException.class)

@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
 
     private LoadingCache<SchemaVersionKey, S> schemaCache;
     private LoadingCache<Long, SchemaMetadata> schemaMetadataCache;
-    private SchemaRegistryClient schemaRegistryClient;
+    protected SchemaRegistryClient schemaRegistryClient;
 
     @Override
     public void init(Map<String, ?> config) {
@@ -69,8 +70,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
                 .build(new CacheLoader<SchemaVersionKey, S>() {
                     @Override
                     public S load(SchemaVersionKey schemaVersionKey) throws Exception {
-                        SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaVersionKey);
-                        return schemaVersionInfo != null ? getParsedSchema(schemaVersionInfo) : null;
+                        return getParsedSchema(schemaVersionKey);
                     }
                 });
 
@@ -110,7 +110,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
         return value;
     }
 
-    protected abstract S getParsedSchema(SchemaVersionInfo schemaVersionInfo);
+    protected abstract S getParsedSchema(SchemaVersionKey schemaVersionInfo) throws InvalidSchemaException, SchemaNotFoundException;
 
     @Override
     public O deserialize(InputStream payloadInputStream,
@@ -119,7 +119,7 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
         try {
             SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(payloadInputStream);
 
-            if(schemaMetadata == null) {
+            if (schemaMetadata == null) {
                 schemaMetadata = schemaMetadataCache.get(schemaIdVersion.getSchemaMetadataId());
             }
             return doDeserialize(payloadInputStream, schemaMetadata, schemaIdVersion.getVersion(), readerSchemaVersion);

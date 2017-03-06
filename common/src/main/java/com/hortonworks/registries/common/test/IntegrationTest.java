@@ -19,15 +19,15 @@ package com.hortonworks.registries.common.test;
 /**
  * Marker interface used to mark integration tests. Integration tests will be run during the Maven
  * <b><i>integration-test</i></b> phase, whereas unit tests will be run during the Maven <b><i>test</i></b> phase.
- * <p/>
+ * <p></p>
  * Integration tests can be in the same package as unit tests. To mark a test as integration test,
 
  * add the annotation @Category(IntegrationTest.class) to the class definition. For example:
- * <p/>
+ * <p></p>
  *
- * @ Category(IntegrationTest.class)<br/>
- * public class MyIntegrationTest {<br/>
- * ...<br/>
+ * Category(IntegrationTest.class)<br>
+ * public class MyIntegrationTest {<br>
+ * ...<br>
  * }
  * <p>
  * Please consult the  @see <a href="file:///../../../../../../README.md">README.md</a> for info on how to add the dependencies
@@ -44,7 +44,7 @@ package com.hortonworks.registries.common.test;
  *  <scope>test</scope>
  * </dependency> }
  * </pre>
- * <br/>
+ * <br>
  * <pre>
  * {@code
  * <plugin>

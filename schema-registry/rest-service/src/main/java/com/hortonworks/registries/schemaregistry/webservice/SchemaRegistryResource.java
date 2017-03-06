@@ -16,15 +16,13 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
+import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
-
+import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
@@ -37,6 +35,9 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -56,10 +57,13 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -71,9 +75,14 @@ public class SchemaRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
 
     private final ISchemaRegistry schemaRegistry;
+    private final AtomicReference<LeadershipParticipant> leadershipParticipant;
 
-    public SchemaRegistryResource(ISchemaRegistry schemaRegistry) {
+    public SchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
+        Preconditions.checkNotNull(schemaRegistry, "SchemaRegistry can not be null");
+        Preconditions.checkNotNull(leadershipParticipant, "LeadershipParticipant can not be null");
+
         this.schemaRegistry = schemaRegistry;
+        this.leadershipParticipant = leadershipParticipant;
     }
 
     // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
@@ -91,13 +100,42 @@ public class SchemaRegistryResource {
             response = SchemaProviderInfo.class, responseContainer = "Collection",
             tags = OPERATION_GROUP_OTHER)
     @Timed
-    public Response getRegisteredSchemaProviderInfos() {
+    public Response getRegisteredSchemaProviderInfos( @Context UriInfo uriInfo) {
         try {
             Collection<SchemaProviderInfo> schemaProviderInfos = schemaRegistry.getRegisteredSchemaProviderInfos();
-            return WSUtils.respond(schemaProviderInfos, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            return WSUtils.respondEntities(schemaProviderInfos, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    /**
+     * Checks whether the current instance is a leader. If so, it invokes the given {@code supplier}, else current
+     * request is redirected to the leader node in registry cluster.
+     *
+     * @param uriInfo
+     * @param supplier
+     * @return
+     */
+    private Response handleLeaderAction(UriInfo uriInfo, Supplier<Response> supplier) {
+        LOG.info("URI info [{}]", uriInfo.getRequestUri());
+        if (!leadershipParticipant.get().isLeader()) {
+            URI location = null;
+            try {
+                String currentLeaderLoc = leadershipParticipant.get().getCurrentLeader();
+                URI leaderServerUrl = new URI(currentLeaderLoc);
+                URI requestUri = uriInfo.getRequestUri();
+                location = new URI(leaderServerUrl.getScheme(), leaderServerUrl.getAuthority(),
+                                   requestUri.getPath(), requestUri.getQuery(), requestUri.getFragment());
+                LOG.info("Redirecting to URI [{}] as this instance is not the leader", location);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return Response.temporaryRedirect(location).build();
+        } else {
+            LOG.info("Invoking here as this instance is the leader");
+            return supplier.get();
         }
     }
 
@@ -117,7 +155,7 @@ public class SchemaRegistryResource {
 
             Collection<SchemaMetadata> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
 
-            return WSUtils.respond(schemaMetadatas, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -135,7 +173,7 @@ public class SchemaRegistryResource {
         try {
             Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasWithFields(buildSchemaFieldQuery(queryParameters));
 
-            return WSUtils.respond(schemaVersionKeys, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -168,26 +206,30 @@ public class SchemaRegistryResource {
             " A unique schema identifier is returned.",
             response = Long.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true) SchemaMetadata schemaMetadataInfo) {
-        Response response;
-        try {
-            schemaMetadataInfo.trim();
-            checkNullOrEmpty("Schema name", schemaMetadataInfo.getName());
-            checkNullOrEmpty("Schema type", schemaMetadataInfo.getType());
-            Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
-            response = WSUtils.respond(schemaId, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
-        } catch (IllegalArgumentException ex) {
-            LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
-        } catch (UnsupportedSchemaTypeException ex) {
-            LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadataInfo, ex);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
-        } catch (Exception ex) {
-            LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
+    public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
+                                              SchemaMetadata schemaMetadataInfo,
+                                  @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            Response response;
+            try {
+                schemaMetadataInfo.trim();
+                checkValueAsNullOrEmpty("Schema name", schemaMetadataInfo.getName());
+                checkValueAsNullOrEmpty("Schema type", schemaMetadataInfo.getType());
+                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
+                response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
+            } catch (IllegalArgumentException ex) {
+                LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
+            } catch (UnsupportedSchemaTypeException ex) {
+                LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadataInfo, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
+            } catch (Exception ex) {
+                LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            }
 
-        return response;
+            return response;
+        });
     }
 
     @GET
@@ -200,7 +242,7 @@ public class SchemaRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
             if (schemaMetadataInfo != null) {
-                response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
@@ -222,7 +264,7 @@ public class SchemaRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaId);
             if (schemaMetadataInfo != null) {
-                response = WSUtils.respond(schemaMetadataInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
             }
@@ -241,29 +283,33 @@ public class SchemaRegistryResource {
                     "and returns respective version number." + "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response addSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                              @ApiParam(value = "Details about the schema", required = true) SchemaVersion schemaVersion) {
+    public Response addSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name")
+                                      String schemaName,
+                              @ApiParam(value = "Details about the schema", required = true)
+                                      SchemaVersion schemaVersion,
+                              @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            Response response;
+            try {
+                LOG.info("schemaVersion for [{}] is [{}]", schemaName, schemaVersion);
+                Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
+                response = WSUtils.respondEntity(version, Response.Status.CREATED);
+            } catch (InvalidSchemaException ex) {
+                LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
+            } catch (IncompatibleSchemaException ex) {
+                LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, ex.getMessage());
+            } catch (UnsupportedSchemaTypeException ex) {
+                LOG.error("Unsupported schema type encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
+            } catch (Exception ex) {
+                LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            }
 
-        Response response;
-        try {
-            LOG.info("schemaVersion for [{}] is [{}]", schemaName, schemaVersion);
-            Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
-            response = WSUtils.respond(version, Response.Status.CREATED, CatalogResponse.ResponseMessage.SUCCESS);
-        } catch (InvalidSchemaException ex) {
-            LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
-        } catch (IncompatibleSchemaException ex) {
-            LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, ex.getMessage());
-        } catch (UnsupportedSchemaTypeException ex) {
-            LOG.error("Unsupported schema type encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
-        } catch (Exception ex) {
-            LOG.error("Encountered error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
+            return response;
+        });
     }
 
     @GET
@@ -277,7 +323,7 @@ public class SchemaRegistryResource {
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaName);
             if (schemaVersionInfo != null) {
-                response = WSUtils.respond(schemaVersionInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -302,7 +348,7 @@ public class SchemaRegistryResource {
         try {
             Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.findAllVersions(schemaName);
             if (schemaVersionInfos != null) {
-                response = WSUtils.respond(schemaVersionInfos, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -327,7 +373,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
-            response = WSUtils.respond(schemaVersionInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
@@ -349,7 +395,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             CompatibilityResult compatible = schemaRegistry.checkCompatibility(schemaName, schemaText);
-            response = WSUtils.respond(compatible, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(compatible, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -372,7 +418,7 @@ public class SchemaRegistryResource {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
             if (schemaMetadataInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaSerializers(schemaMetadataInfoStorable.getId());
-                response = WSUtils.respond(schemaSerializers, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -396,7 +442,7 @@ public class SchemaRegistryResource {
             SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaMetadata);
             if (schemaMetadataInfoStorable != null) {
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaMetadataInfoStorable.getId());
-                response = WSUtils.respond(schemaSerializers, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+                response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaMetadata);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaMetadata);
@@ -420,7 +466,7 @@ public class SchemaRegistryResource {
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
             String uploadedFileId = schemaRegistry.uploadFile(inputStream);
-            response = WSUtils.respond(uploadedFileId, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while uploading file", ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -442,7 +488,7 @@ public class SchemaRegistryResource {
             return response;
         } catch (FileNotFoundException e) {
             LOG.error("No file found for fileId [{}]", fileId, e);
-            response = WSUtils.respond(fileId, Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND);
+            response = WSUtils.respondEntity(fileId, Response.Status.NOT_FOUND);
         } catch (Exception ex) {
             LOG.error("Encountered error while downloading file [{}]", fileId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -455,8 +501,11 @@ public class SchemaRegistryResource {
     @Path("/serializers")
     @ApiOperation(value = "Add a Serializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response addSerializer(@ApiParam(value = "Serializer information to be registered", required = true) SerDesInfo serDesInfo) {
-        return _addSerDesInfo(serDesInfo);
+    public Response addSerializer(@ApiParam(value = "Serializer information to be registered", required = true) SerDesInfo serDesInfo,
+                                  @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            return _addSerDesInfo(serDesInfo);
+        });
     }
 
     @GET
@@ -471,15 +520,18 @@ public class SchemaRegistryResource {
     @Path("/deserializers")
     @ApiOperation(value = "Add a Deserializer into Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response addDeserializer(@ApiParam(value = "Deserializer information to be registered", required = true) SerDesInfo serDesInfo) {
-        return _addSerDesInfo(serDesInfo);
+    public Response addDeserializer(@ApiParam(value = "Deserializer information to be registered", required = true) SerDesInfo serDesInfo,
+                                    @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            return _addSerDesInfo(serDesInfo);
+        });
     }
 
     private Response _addSerDesInfo(@ApiParam(value = "Deserializer information to be registered", required = true) SerDesInfo serDesInfo) {
         Response response;
         try {
             Long serializerId = schemaRegistry.addSerDesInfo(serDesInfo);
-            response = WSUtils.respond(serializerId, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(serializerId, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while adding serializer/deserializer  [{}]", serDesInfo, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -500,7 +552,7 @@ public class SchemaRegistryResource {
         Response response;
         try {
             SerDesInfo serializerInfo = schemaRegistry.getSerDesInfo(serializerId);
-            response = WSUtils.respond(serializerInfo, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
+            response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializer/deserializer [{}]", serializerId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -513,20 +565,23 @@ public class SchemaRegistryResource {
     @ApiOperation(value = "Bind the given Serializer/Deserializer to the schema identified by the schema name", tags = OPERATION_GROUP_SERDE)
     @Timed
     public Response mapSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                              @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId) {
-        Response response;
-        try {
-            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
-            schemaRegistry.mapSerDesWithSchema(schemaMetadataInfoStorable.getId(), serDesId);
-            response = WSUtils.respond(true, Response.Status.OK, CatalogResponse.ResponseMessage.SUCCESS);
-        } catch (Exception ex) {
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
+                              @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId,
+                              @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            Response response;
+            try {
+                SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaName);
+                schemaRegistry.mapSerDesWithSchema(schemaMetadataInfoStorable.getId(), serDesId);
+                response = WSUtils.respondEntity(true, Response.Status.OK);
+            } catch (Exception ex) {
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            }
 
-        return response;
+            return response;
+        });
     }
 
-    private static void checkNullOrEmpty(String name, String value) throws IllegalArgumentException {
+    private static void checkValueAsNullOrEmpty(String name, String value) throws IllegalArgumentException {
         if (value == null) {
             throw new IllegalArgumentException("Parameter " + name + " is null");
         }

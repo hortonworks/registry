@@ -108,10 +108,10 @@ public class JdbcStorageManager implements StorageManager {
             throws StorageException {
         log.debug("Searching for entries in table [{}] that match queryParams [{}]", namespace, queryParams);
 
-        if (queryParams == null) {
+        if (queryParams == null || queryParams.isEmpty()) {
             return list(namespace);
         }
-        Collection<T> entries = Collections.EMPTY_LIST;
+        Collection<T> entries = Collections.emptyList();
 
         try {
             StorableKey storableKey = buildStorableKey(namespace, queryParams);
@@ -158,7 +158,7 @@ public class JdbcStorageManager implements StorageManager {
      * the {@link StorableKey} from the list of query parameters, and then can use {@link SqlSelectQuery} builder to generate the query using
      * the query parameters in the where clause
      *
-     * @return {@link StorableKey} with all query parameters that match database columns <br/>
+     * @return {@link StorableKey} with all query parameters that match database columns <br>
      * null if none of the query parameters specified matches a column in the DB
      */
     private StorableKey buildStorableKey(String namespace, List<QueryParam> queryParams) throws Exception {

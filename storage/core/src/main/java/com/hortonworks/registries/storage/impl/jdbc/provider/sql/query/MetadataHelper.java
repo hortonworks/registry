@@ -32,7 +32,7 @@ public class MetadataHelper {
     private static final Logger log = LoggerFactory.getLogger(MetadataHelper.class);
 
     public static boolean isAutoIncrement(Connection connection, String namespace, int queryTimeoutSecs) throws SQLException {
-        final ResultSetMetaData rsMetadata = new PreparedStatementBuilder(connection, new ExecutionConfig(queryTimeoutSecs),
+        final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs),
                 new SqlSelectQuery(namespace)).getMetaData();
 
         final int columnCount = rsMetadata.getColumnCount();
@@ -46,7 +46,7 @@ public class MetadataHelper {
     }
 
     public static boolean isColumnInNamespace(Connection connection, int queryTimeoutSecs, String namespace, String columnName) throws SQLException {
-        final ResultSetMetaData rsMetadata = new PreparedStatementBuilder(connection, new ExecutionConfig(queryTimeoutSecs),
+        final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs),
                 new SqlSelectQuery(namespace)).getMetaData();
 
         final int columnCount = rsMetadata.getColumnCount();

@@ -30,11 +30,12 @@ import java.util.Map;
 /**
  * This is a very simple deserializer, it does not really connect to schema-registry and register schemas. This
  * is used to demonstrate how this serializer can be uploaded/retrieved from schema registry.
- * <p>
- * You can look at {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotSerializer} implementation to look
+ * <br>
+ * You can look at {com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer} implementation to look
  * at how schema registry client can be used to register writer schemas which are used while deserializing messages from
- * the respective {@link com.hortonworks.registries.schemaregistry.avro.AvroSnapshotDeserializer}.
+ * the respective {com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer}.
  */
+
 public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleDeserializer.class);
 

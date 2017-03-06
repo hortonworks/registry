@@ -30,7 +30,7 @@ public class SchemaVersionInfoCache {
 
     private final LoadingCache<SchemaVersionKey, SchemaVersionInfo> loadingCache;
 
-    public SchemaVersionInfoCache(final SchemaRetriever schemaRetriever, final long schemaCacheSize, final long schemaCacheExpiryInMilliSecs) {
+    public SchemaVersionInfoCache(final SchemaVersionRetriever schemaRetriever, final long schemaCacheSize, final long schemaCacheExpiryInMilliSecs) {
         loadingCache = CacheBuilder.newBuilder()
                 .maximumSize(schemaCacheSize)
                 .expireAfterAccess(schemaCacheExpiryInMilliSecs, TimeUnit.MILLISECONDS)
@@ -51,7 +51,4 @@ public class SchemaVersionInfoCache {
         }
     }
 
-    public interface SchemaRetriever {
-        SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException;
-    }
 }
