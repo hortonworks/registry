@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClassLoaderCache {
     private static final Logger LOG = LoggerFactory.getLogger(ClassLoaderCache.class);
+    public static final String CACHE_SIZE_KEY = SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name();
+    public static final String CACHE_EXPIRY_INTERVAL_KEY = SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name();
 
     private final LoadingCache<String, ClassLoader> loadingCache;
     private final SchemaRegistryClient schemaRegistryClient;
@@ -56,8 +58,9 @@ public class ClassLoaderCache {
 
         SchemaRegistryClient.Configuration configuration = schemaRegistryClient.getConfiguration();
         loadingCache = CacheBuilder.newBuilder()
-                .maximumSize(configuration.getValue(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name()))
-                .expireAfterAccess(configuration.getValue(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name()), TimeUnit.SECONDS)
+                .maximumSize(((Number) configuration.getValue(CACHE_SIZE_KEY)).longValue())
+                .expireAfterAccess(((Number) configuration.getValue(CACHE_EXPIRY_INTERVAL_KEY)).longValue(),
+                                   TimeUnit.SECONDS)
                 .build(cacheLoader);
 
         localJarsDir = new File((String) schemaRegistryClient.getConfiguration().getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
