@@ -45,12 +45,12 @@ export default class SchemaVersionForm extends Component {
     super(props);
     let schemaObj = this.props.schemaObj;
     this.state = {
-      schemaText: '',
-      description: '',
       schemaText: schemaObj.schemaText || '',
+      schemaTextFile: schemaObj.schemaTextFile || null,
       description: schemaObj.description || '',
+      validInput: false,
+      showFileError: false,
       showError: false,
-      showErrorLabel: false,
       changedFields: []
     };
   }
@@ -65,16 +65,33 @@ export default class SchemaVersionForm extends Component {
     this.setState({schemaText: json});
   }
 
+  handleOnFileChange(e) {
+    if (!e.target.files.length) {
+      this.setState({validInput: false, showFileError: true, schemaTextFile: null});
+    } else {
+      var file = e.target.files[0];
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        if(Utils.isValidJson(reader.result)) {
+          this.setState({validInput: true, showFileError: false, schemaTextFile: file, schemaText: reader.result});
+        } else {
+          this.setState({validInput: false, showFileError: true, schemaTextFile: null, schemaText: ''});
+        }
+      }.bind(this);
+      reader.readAsText(file);
+    }
+  }
+
   validateData() {
     let {schemaText, description, changedFields} = this.state;
-    if (schemaText.trim() === '' || description.trim() === '' || !Utils.isValidJson(schemaText.trim())) {
+    if (schemaText.trim() === '' || !Utils.isValidJson(schemaText.trim()) || description.trim() === '') {
       if (description.trim() === '' && changedFields.indexOf("description") === -1) {
         changedFields.push('description');
       }
-      this.setState({showError: true, showErrorLabel: true, changedFields: changedFields});
+      this.setState({showError: true, changedFields: changedFields});
       return false;
     } else {
-      this.setState({showErrorLabel: true});
+      this.setState({showError: false});
       return true;
     }
   }
@@ -103,7 +120,7 @@ export default class SchemaVersionForm extends Component {
       gutters: ["CodeMirror-lint-markers"],
       lint: true
     };
-    let {showError, changedFields} = this.state;
+    let {showError, changedFields, validInput, showFileError} = this.state;
     return (
       <form>
         <div className="form-group">
@@ -115,11 +132,21 @@ export default class SchemaVersionForm extends Component {
           </div>
         </div>
         <div className="form-group">
+          <label>Upload Schema from file </label>
+            <div>
+              <input type="file" className={showFileError
+              ? "form-control invalidInput"
+              : "form-control"} name="files" title="Upload File" onChange={this.handleOnFileChange.bind(this)}/>
+            </div>
+        </div>
+        {validInput ?
+        (<div className="form-group">
           <label>Schema Text <span className="text-danger">*</span></label>
           <div>
             <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
           </div>
-        </div>
+        </div>) : ''
+        }
       </form>
     );
   }

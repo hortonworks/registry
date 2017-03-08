@@ -30,6 +30,7 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -161,15 +162,31 @@ public interface ISchemaRegistryClient extends AutoCloseable {
     SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
-     * Adds the given {@code schemaVersion} and returns the corresponding version number.
+     * Uploads the given {@code schemaVersionTextFile} as a new version for the given schema with name {@code schemaName}
      *
      * @param schemaName    name identifying a schema
-     * @param schemaVersion new version of the schema to be added
-     * @return version number of the schema added
-     * @throws InvalidSchemaException      if the given schemaVersion is not valid
-     * @throws IncompatibleSchemaException if the given schemaVersion is incompatible according to the compatibility set.
-     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+     * @param description descirption about the version of this schema
+     * @param schemaVersionTextFile FIle containing new version of the schema content.
+     * @return version of the schema added.
+     * @throws InvalidSchemaException      if the given versionedSchema is not valid
+     * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
+     * @throws SchemaNotFoundException if the given schemaMetadata not found.
      */
+    public SchemaIdVersion uploadSchemaVersion(final String schemaName,
+                                               final String description,
+                                               final InputStream schemaVersionTextFile)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
+
+        /**
+         * Adds the given {@code schemaVersion} and returns the corresponding version number.
+         *
+         * @param schemaName    name identifying a schema
+         * @param schemaVersion new version of the schema to be added
+         * @return version number of the schema added
+         * @throws InvalidSchemaException      if the given schemaVersion is not valid
+         * @throws IncompatibleSchemaException if the given schemaVersion is incompatible according to the compatibility set.
+         * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+         */
     SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
     /**

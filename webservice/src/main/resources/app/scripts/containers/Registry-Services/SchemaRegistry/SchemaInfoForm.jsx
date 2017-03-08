@@ -21,6 +21,7 @@ import 'codemirror/mode/javascript/javascript';
 import jsonlint from 'jsonlint';
 import lint from 'codemirror/addon/lint/lint';
 import '../../../utils/Overrides';
+import Utils from '../../../utils/Utils';
 import FSReactToastr from '../../../components/FSReactToastr';
 import CommonNotification from '../../../utils/CommonNotification';
 import {toastOpt} from '../../../utils/Constants';
@@ -49,12 +50,14 @@ export default class SchemaFormContainer extends Component {
       ],
       evolve: true,
       schemaText: '',
+      schemaTextFile: null,
       type: 'avro',
       typeArr: [],
       schemaGroup: 'Kafka',
       description: '',
+      validInput: false,
+      showFileError: false,
       showError: false,
-      showErrorLabel: false,
       changedFields: []
     };
     this.fetchData();
@@ -93,13 +96,30 @@ export default class SchemaFormContainer extends Component {
     });
   }
 
+  handleOnFileChange(e) {
+    if (!e.target.files.length) {
+      this.setState({validInput: false, showFileError: true, schemaTextFile: null});
+    } else {
+      var file = e.target.files[0];
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        if(Utils.isValidJson(reader.result)) {
+          this.setState({validInput: true, showFileError: false, schemaTextFile: file, schemaText: reader.result});
+        } else {
+          this.setState({validInput: false, showFileError: true, schemaTextFile: null, schemaText: ''});
+        }
+      }.bind(this);
+      reader.readAsText(file);
+    }
+  }
+
   handleToggleEvolve(e) {
     this.setState({evolve: e.target.checked});
   }
 
   validateData() {
     let {name, type, schemaGroup, description, changedFields, schemaText} = this.state;
-    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '' || schemaText.trim() === '') {
+    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '' || schemaText.trim() === '' || !Utils.isValidJson(schemaText.trim())) {
       if (name.trim() === '' && changedFields.indexOf("name") === -1) {
         changedFields.push("name");
       };
@@ -112,10 +132,10 @@ export default class SchemaFormContainer extends Component {
       if (description.trim() === '' && changedFields.indexOf("description") === -1) {
         changedFields.push("description");
       }
-      this.setState({showError: true, showErrorLabel: true, changedFields: changedFields});
+      this.setState({showError: true, changedFields: changedFields});
       return false;
     } else {
-      this.setState({showErrorLabel: true});
+      this.setState({showError: false});
       return true;
     }
   }
@@ -152,7 +172,7 @@ export default class SchemaFormContainer extends Component {
       gutters: ["CodeMirror-lint-markers"],
       lint: true
     };
-    let {showError, changedFields} = this.state;
+    let {showError, changedFields, validInput, showFileError} = this.state;
     return (
       <form className="form-horizontal">
         <div className="form-group">
@@ -197,11 +217,21 @@ export default class SchemaFormContainer extends Component {
         </div>
       </div>
       <div className="form-group">
-          <label>Schema Text <span className="text-danger">*</span></label>
-          <div>
-            <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
-          </div>
+      <label>Upload Schema from file </label>
+        <div>
+          <input type="file" className={showFileError
+              ? "form-control invalidInput"
+              : "form-control"} name="files" title="Upload File" onChange={this.handleOnFileChange.bind(this)}/>
+        </div>
       </div>
+      {validInput ?
+      (<div className="form-group">
+        <label>Schema Text <span className="text-danger">*</span></label>
+        <div>
+          <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
+        </div>
+      </div>) : ''
+      }
       </form>
     );
   }
