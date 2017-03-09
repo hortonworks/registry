@@ -36,7 +36,7 @@ public final class CompatibilityResult implements Serializable {
         this.schema = schema;
     }
 
-    private CompatibilityResult(boolean compatible, String errorMessage, String schema) {
+    private CompatibilityResult(boolean compatible, String errorMessage, String errorLocation, String schema) {
         this.compatible = compatible;
         this.errorMessage = errorMessage;
         this.schema = schema;
@@ -63,17 +63,19 @@ public final class CompatibilityResult implements Serializable {
         return "CompatibilityResult{" +
                 "compatible=" + compatible +
                 ", errorMessage='" + errorMessage + '\'' +
+                ", errorLocation='" + errorLocation + '\'' +
+                ", schema='" + schema + '\'' +
                 '}';
     }
 
     /**
      * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#compatible} as false and {@link CompatibilityResult#errorMessage} as given {@code errorMessage}
-     *
-     * @param errorMessage
+     *  @param errorMessage
+     * @param errorLocation
      * @param schema
      */
-    public static CompatibilityResult createIncompatibleResult(String errorMessage, String schema) {
-        return new CompatibilityResult(false, errorMessage, schema);
+    public static CompatibilityResult createIncompatibleResult(String errorMessage, String errorLocation, String schema) {
+        return new CompatibilityResult(false, errorMessage, errorLocation, schema);
     }
 
     public static CompatibilityResult createCompatibleResult(String schema) {
