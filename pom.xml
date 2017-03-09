@@ -114,6 +114,7 @@
         <module>examples</module>
         <module>docker</module>
         <module>model-registry</module>
+        <module>schema-registry-auth</module>
     </modules>
 
     <profiles>

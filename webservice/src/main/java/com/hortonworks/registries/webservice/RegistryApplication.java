@@ -15,7 +15,9 @@
  **/
 package com.hortonworks.registries.webservice;
 
+import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.GenericExceptionMapper;
+import com.hortonworks.registries.common.ServletFilterConfiguration;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.HAConfiguration;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -68,6 +71,21 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         if (registryConfiguration.isEnableCors()) {
             enableCORS(environment);
+        }
+
+        List<ServletFilterConfiguration> servletFilterConfigurations = registryConfiguration.getServletFilters();
+        if (servletFilterConfigurations != null && !servletFilterConfigurations.isEmpty()) {
+            for (ServletFilterConfiguration servletFilterConfiguration: servletFilterConfigurations) {
+                try {
+                    FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(servletFilterConfiguration.getClassName(), (Class<? extends Filter>)
+                            Class.forName(servletFilterConfiguration.getClassName()));
+                    dynamic.setInitParameters(servletFilterConfiguration.getParams());
+                    dynamic.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+                } catch (Exception e) {
+                    LOG.error("Error registering servlet filter {}", servletFilterConfiguration);
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 

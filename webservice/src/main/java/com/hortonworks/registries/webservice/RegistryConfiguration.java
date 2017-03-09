@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
+import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
@@ -51,6 +52,8 @@ public class RegistryConfiguration extends Configuration {
 
     @JsonProperty("swagger")
     private SwaggerBundleConfiguration swaggerBundleConfiguration;
+
+    private List<ServletFilterConfiguration> servletFilters;
 
     public StorageProviderConfiguration getStorageProviderConfiguration() {
         return storageProviderConfiguration;
@@ -94,5 +97,13 @@ public class RegistryConfiguration extends Configuration {
 
     public void setHaConfig(HAConfiguration haConfig) {
         this.haConfig = haConfig;
+    }
+
+    public List<ServletFilterConfiguration> getServletFilters() {
+        return servletFilters;
+    }
+
+    public void setServletFilters(List<ServletFilterConfiguration> servletFilters) {
+        this.servletFilters = servletFilters;
     }
 }
