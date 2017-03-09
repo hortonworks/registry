@@ -22,7 +22,10 @@ import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 /**
  *
  */
-public interface SchemaCompatibilityValidator<T> {
+public class NoneCompatibilityValidator<T> implements SchemaCompatibilityValidator<T> {
 
-    CompatibilityResult validate(T toSchema, T existingSchema);
+    @Override
+    public CompatibilityResult validate(T toSchema, T existingSchema) {
+        return CompatibilityResult.createCompatibleResult(existingSchema.toString());
+    }
 }

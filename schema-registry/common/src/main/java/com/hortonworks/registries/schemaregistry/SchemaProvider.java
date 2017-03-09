@@ -63,7 +63,7 @@ public interface SchemaProvider {
     /**
      * Returns CompatibilityResult with {@link CompatibilityResult#isCompatible} as true if the given {@code schemaText}
      * is compatible with all the given {@code existingSchema} according to {@code existingSchemaCompatibility} else
-     * CompatibilityResult with {@link CompatibilityResult#isCompatible} as false and {@link CompatibilityResult#getErrorMessage()}
+     * CompatibilityResult with {@link CompatibilityResult#isCompatible} as false, {@link CompatibilityResult#getErrorMessage()}
      * with respective errorMessage
      *
      * @param toSchema
@@ -71,18 +71,6 @@ public interface SchemaProvider {
      * @param compatibility
      */
     CompatibilityResult checkCompatibility(String toSchema, String existingSchema, SchemaCompatibility compatibility);
-
-    /**
-     * Returns CompatibilityResult with {@link CompatibilityResult#isCompatible} as true if the given {@code schemaText}
-     * is compatible with all the given {@code existingSchemaTexts} according to {@code existingSchemaCompatibility} else
-     * CompatibilityResult with {@link CompatibilityResult#isCompatible} as false and {@link CompatibilityResult#getErrorMessage()}
-     * with respective errorMessage
-     *
-     *  @param toSchemaText
-     * @param existingSchemaTexts
-     * @param existingSchemaCompatibility
-     */
-    CompatibilityResult checkCompatibility(String toSchemaText, Collection<String> existingSchemaTexts, SchemaCompatibility existingSchemaCompatibility);
 
     /**
      * @param schemaText textual representation of schema
