@@ -18,7 +18,7 @@ package com.hortonworks.registries.storage.tool;
 import java.util.Map;
 
 public class StorageProviderConfigurationReader {
-  private static final String JDBC_STORAGE_MANAGER_CLASS = "com.hortonworks.streamline.storage.impl.jdbc.JdbcStorageManager";
+  private static final String JDBC_STORAGE_MANAGER_CLASS = "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager";
   private static final String STORAGE_PROVIDER_CONFIGURATION = "storageProviderConfiguration";
   private static final String PROPERTIES = "properties";
   private static final String PROVIDER_CLASS = "providerClass";
@@ -74,7 +74,7 @@ public class StorageProviderConfigurationReader {
 
   /**
    * storageProviderConfiguration:
-   *   providerClass: "com.hortonworks.streamline.storage.impl.jdbc.JdbcStorageManager"
+   *   providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
    *   properties:
    *     db.type: "mysql"
    *     queryTimeoutInSecs: 30
@@ -93,7 +93,7 @@ public class StorageProviderConfigurationReader {
 
   /**
    * storageProviderConfiguration:
-   *   providerClass: "com.hortonworks.streamline.storage.impl.jdbc.JdbcStorageManager"
+   *   providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
    *   properties:
    *     db.type: "phoenix"
    *     queryTimeoutInSecs: 30
@@ -110,7 +110,7 @@ public class StorageProviderConfigurationReader {
 
   /**
    * storageProviderConfiguration:
-   *   providerClass: "com.hortonworks.streamline.storage.impl.jdbc.JdbcStorageManager"
+   *   providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
    *   properties:
    *     db.type: "postgresql"
    *     queryTimeoutInSecs: 30

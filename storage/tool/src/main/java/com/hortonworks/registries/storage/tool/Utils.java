@@ -28,7 +28,7 @@ import java.net.URLClassLoader;
 import java.util.Map;
 
 public class Utils {
-    public static Map<String, Object> readStreamlineConfig(String configFilePath) throws IOException {
+    public static Map<String, Object> readConfig(String configFilePath) throws IOException {
         ObjectMapper objectMapper = new YAMLMapper();
         return objectMapper.readValue(new File(configFilePath), Map.class);
     }

@@ -123,7 +123,7 @@ public class SQLScriptRunner {
         String mysqlJarUrl = commandLine.getOptionValue(OPTION_MYSQL_JAR_URL_PATH);
 
         try {
-            Map<String, Object> conf = Utils.readStreamlineConfig(confFilePath);
+            Map<String, Object> conf = Utils.readConfig(confFilePath);
 
             StorageProviderConfigurationReader confReader = new StorageProviderConfigurationReader();
             StorageProviderConfiguration storageProperties = confReader.readStorageConfig(conf);

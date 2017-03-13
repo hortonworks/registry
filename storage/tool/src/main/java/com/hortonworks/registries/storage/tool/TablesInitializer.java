@@ -123,7 +123,7 @@ public class TablesInitializer {
 
         StorageProviderConfiguration storageProperties;
         try {
-            Map<String, Object> conf = Utils.readStreamlineConfig(confFilePath);
+            Map<String, Object> conf = Utils.readConfig(confFilePath);
 
             StorageProviderConfigurationReader confReader = new StorageProviderConfigurationReader();
             storageProperties = confReader.readStorageConfig(conf);
@@ -214,7 +214,7 @@ public class TablesInitializer {
 
     private static void usage(Options options) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("StreamlineTableInitializer [options]", options);
+        formatter.printHelp("Registry TableInitializer [options]", options);
     }
 
 }
