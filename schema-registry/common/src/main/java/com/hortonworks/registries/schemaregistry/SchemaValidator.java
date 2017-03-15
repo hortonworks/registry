@@ -15,14 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.avro;
-
-import com.hortonworks.registries.schemaregistry.CompatibilityResult;
+package com.hortonworks.registries.schemaregistry;
 
 /**
  *
  */
-public interface SchemaCompatibilityValidator<T> {
+public interface SchemaValidator<T> {
 
-    CompatibilityResult validate(T toSchema, T existingSchema);
+    /**
+     * validates the
+     *
+     * @param readerSchema
+     * @param writerSchema
+     * @return
+     */
+    CompatibilityResult validate(T readerSchema, T writerSchema);
 }

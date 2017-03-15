@@ -25,13 +25,21 @@ public final class CompatibilityResult implements Serializable {
 
     private boolean compatible;
     private String errorMessage;
+    private String errorLocation;
+    private String schema;
 
     private CompatibilityResult() {
     }
 
-    private CompatibilityResult(boolean compatible, String errorMessage) {
+    private CompatibilityResult(boolean compatible, String schema) {
+        this.compatible = compatible;
+        this.schema = schema;
+    }
+
+    private CompatibilityResult(boolean compatible, String errorMessage, String errorLocation, String schema) {
         this.compatible = compatible;
         this.errorMessage = errorMessage;
+        this.schema = schema;
     }
 
     public boolean isCompatible() {
@@ -42,20 +50,35 @@ public final class CompatibilityResult implements Serializable {
         return errorMessage;
     }
 
+    public String getSchema() {
+        return schema;
+    }
+
+    public String getErrorLocation() {
+        return errorLocation;
+    }
+
     @Override
     public String toString() {
         return "CompatibilityResult{" +
                 "compatible=" + compatible +
                 ", errorMessage='" + errorMessage + '\'' +
+                ", errorLocation='" + errorLocation + '\'' +
+                ", schema='" + schema + '\'' +
                 '}';
     }
 
     /**
      * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#compatible} as false and {@link CompatibilityResult#errorMessage} as given {@code errorMessage}
-     *
-     * @param errorMessage
+     *  @param errorMessage
+     * @param errorLocation
+     * @param schema
      */
-    public static CompatibilityResult createIncompatibleResult(String errorMessage) {
-        return new CompatibilityResult(false, errorMessage);
+    public static CompatibilityResult createIncompatibleResult(String errorMessage, String errorLocation, String schema) {
+        return new CompatibilityResult(false, errorMessage, errorLocation, schema);
+    }
+
+    public static CompatibilityResult createCompatibleResult(String schema) {
+        return new CompatibilityResult(true, schema);
     }
 }

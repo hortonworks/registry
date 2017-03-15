@@ -1,7 +1,7 @@
 {
    "type" : "record",
    "namespace" : "org.apache.iot",
-   "name" : "Device",
+   "name" : "device",
    "fields" : [
       { "name" : "xid" , "type" : "long" },
       { "name" : "name" , "type" : "string" },
