@@ -21,7 +21,7 @@
         <!-- module dependency -->
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>registry-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

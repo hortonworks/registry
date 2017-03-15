@@ -41,8 +41,8 @@ public class CatalogResponse {
         BAD_REQUEST_PARAM_MISSING(1103, "Bad request - %s.", 1),
         DATASOURCE_TYPE_FILTER_NOT_FOUND(1104, "Datasource not found for type [%s], query params [%s].", 2),
         ENTITY_NOT_FOUND_FOR_FILTER(1105, "Entity not found for query params [%s].", 1),
-        INCOMPATIBLE_SCHEMA(1106, "Given schema is incompatible.", 0),
-        INVALID_SCHEMA(1107, "Given schema is invalid.", 0),
+        INCOMPATIBLE_SCHEMA(1106, "%s", 1),
+        INVALID_SCHEMA(1107, "Given schema is invalid. %s", 1),
         UNSUPPORTED_SCHEMA_TYPE(1108, "Given schema type is not supported.", 0),
         UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type.", 0),
         BAD_REQUEST(1110, "Bad Request.", 0);
@@ -118,11 +118,7 @@ public class CatalogResponse {
         public CatalogResponse format(String... args) {
             CatalogResponse response = new CatalogResponse();
             response.responseCode = responseMessage.code;
-            StringBuilder msg = new StringBuilder(ResponseMessage.format(responseMessage, args));
-            if (responseMessage.isError()) {
-                msg.append(DOC_LINK_MESSAGE);
-            }
-            response.responseMessage = msg.toString();
+            response.responseMessage = ResponseMessage.format(responseMessage, args);
             response.entity = entity;
             response.entities = entities;
             return response;

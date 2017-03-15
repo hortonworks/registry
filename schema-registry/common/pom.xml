@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>registry-common</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

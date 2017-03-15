@@ -18,11 +18,24 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
+import com.hortonworks.registries.schemaregistry.SchemaValidator;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  */
-public interface SchemaCompatibilityValidator<T> {
+public class BackwardCompatibilityValidator<T> implements SchemaCompatibilityValidator<T> {
 
-    CompatibilityResult validate(T toSchema, T existingSchema);
+    private final SchemaValidator<T> schemaValidator;
+
+    public BackwardCompatibilityValidator(SchemaValidator<T> schemaValidator) {
+        this.schemaValidator = schemaValidator;
+    }
+
+    @Override
+    public CompatibilityResult validate(T toSchema, T existingSchema) {
+        return schemaValidator.validate(toSchema, existingSchema);
+    }
 }

@@ -24,14 +24,10 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
 import org.apache.avro.SchemaParseException;
-import org.apache.avro.SchemaValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,27 +60,10 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     public CompatibilityResult checkCompatibility(String toSchemaText,
                                                   String existingSchemaText,
                                                   SchemaCompatibility existingSchemaCompatibility) {
-        return checkCompatibility(toSchemaText, Collections.singleton(existingSchemaText), existingSchemaCompatibility);
-    }
-
-    public CompatibilityResult checkCompatibility(String toSchemaText,
-                                                  Collection<String> existingSchemaTexts,
-                                                  SchemaCompatibility existingSchemaCompatibility) {
-        Schema toSchema = new Schema.Parser().parse(toSchemaText);
-
-        Collection<Schema> existingSchemas = new ArrayList<>();
-        for (String schemaText : existingSchemaTexts) {
-            existingSchemas.add(new Schema.Parser().parse(schemaText));
-        }
-
-        try {
-            SchemaCompatibilityValidator.of(existingSchemaCompatibility).validate(toSchema, existingSchemas);
-        } catch (SchemaValidationException e) {
-            LOG.error("Schema compatibility failed", e);
-            return CompatibilityResult.createIncompatibleResult(e.getMessage());
-        }
-
-        return CompatibilityResult.SUCCESS;
+        return AvroSchemaValidator
+                .of(existingSchemaCompatibility)
+                .validate(new Schema.Parser().parse(toSchemaText),
+                          new Schema.Parser().parse(existingSchemaText));
     }
 
     @Override

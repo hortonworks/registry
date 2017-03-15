@@ -27,7 +27,6 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -60,13 +59,6 @@ public class StreamsSchemaProvider extends AbstractSchemaProvider {
     public CompatibilityResult checkCompatibility(String toSchema,
                                                   String existingSchema,
                                                   SchemaCompatibility compatibility) {
-        return CompatibilityResult.SUCCESS;
-    }
-
-    @Override
-    public CompatibilityResult checkCompatibility(String toSchemaText,
-                                                  Collection<String> existingSchemaTexts,
-                                                  SchemaCompatibility existingSchemaCompatibility) {
         return CompatibilityResult.SUCCESS;
     }
 
