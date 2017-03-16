@@ -183,11 +183,15 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     }
 
     protected Long executeUpdateWithReturningGeneratedKey(SqlQuery sqlBuilder) {
-        return new QueryExecution(sqlBuilder).executeUpdateWithReturningGeneratedKey();
+        return getQueryExecution(sqlBuilder).executeUpdateWithReturningGeneratedKey();
     }
 
     protected <T extends Storable> Collection<T> executeQuery(String namespace, SqlQuery sqlBuilder) {
-        return new QueryExecution(sqlBuilder).executeQuery(namespace);
+        return getQueryExecution(sqlBuilder).executeQuery(namespace);
+    }
+
+    protected QueryExecution getQueryExecution(SqlQuery sqlQuery) {
+        return new QueryExecution(sqlQuery);
     }
 
     protected class QueryExecution {
@@ -326,7 +330,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         }
 
         // returns null for empty ResultSet or ResultSet with no rows
-        private List<Map<String, Object>> getMapsFromResultSet(ResultSet resultSet) {
+        protected List<Map<String, Object>> getMapsFromResultSet(ResultSet resultSet) {
             List<Map<String, Object>> maps = null;
 
             try {

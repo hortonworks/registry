@@ -19,12 +19,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.exception.DuplicateEntityException;
 import com.hortonworks.registries.storage.Storable;
+import com.hortonworks.registries.storage.annotation.StorableEntity;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+
+import static com.hortonworks.registries.common.util.ReflectionHelper.getAnnotatedClasses;
 
 /**
  * Utility methods for the core package.
@@ -54,5 +59,16 @@ public final class StorageUtils {
         if (entities.isPresent()) {
             throw new DuplicateEntityException("Entity with '" + queryParams + "' already exists");
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Collection<Class<? extends Storable>> getStreamlineEntities() {
+        Set<Class<? extends Storable>> entities = new HashSet<>();
+        getAnnotatedClasses("com.hortonworks", StorableEntity.class).forEach(clazz -> {
+            if (Storable.class.isAssignableFrom(clazz)) {
+                entities.add((Class<? extends Storable>) clazz);
+            }
+        });
+        return entities;
     }
 }
