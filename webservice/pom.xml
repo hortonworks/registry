@@ -48,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-auth</artifactId>
+            <artifactId>common-auth</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
