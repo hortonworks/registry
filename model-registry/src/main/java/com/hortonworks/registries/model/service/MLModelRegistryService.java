@@ -1,27 +1,27 @@
 /**
-  * Copyright 2017 Hortonworks.
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-
-  *   http://www.apache.org/licenses/LICENSE-2.0
-
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+ * Copyright 2017 Hortonworks.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  **/
 
 package com.hortonworks.registries.model.service;
 
-import org.apache.commons.io.IOUtils;
-import com.hortonworks.streamline.common.QueryParam;
-import com.hortonworks.streamline.common.exception.service.exception.request.EntityNotFoundException;
+import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.common.exception.service.exception.request.EntityNotFoundException;
 import com.hortonworks.registries.model.data.MLModel;
-import com.hortonworks.streamline.storage.StorageManager;
-import com.hortonworks.streamline.storage.util.StorageUtils;
+import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.util.StorageUtils;
+import org.apache.commons.io.IOUtils;
 import org.dmg.pmml.Field;
 import org.dmg.pmml.FieldName;
 import org.dmg.pmml.IOUtil;
@@ -49,6 +49,7 @@ public final class MLModelRegistryService {
     private static final Logger LOG = LoggerFactory.getLogger(MLModelRegistryService.class);
     private static final String ML_MODEL_NAME_SPACE = new MLModel().getNameSpace();
     private final StorageManager storageManager;
+
     public MLModelRegistryService(StorageManager storageManager) {
         this.storageManager = storageManager;
     }
@@ -62,7 +63,7 @@ public final class MLModelRegistryService {
     }
 
     public MLModel addModelInfo(
-            MLModel modelInfo, InputStream pmmlInputStream, String fileName) throws IOException, SAXException, JAXBException{
+            MLModel modelInfo, InputStream pmmlInputStream, String fileName) throws IOException, SAXException, JAXBException {
         if (modelInfo.getId() == null) {
             modelInfo.setId(storageManager.nextId(ML_MODEL_NAME_SPACE));
         }
@@ -99,6 +100,7 @@ public final class MLModelRegistryService {
         }
         return modelInfos.iterator().next();
     }
+
     public MLModel getModelInfo(Long modelId) {
         MLModel modelInfo = new MLModel();
         modelInfo.setId(modelId);
@@ -151,7 +153,7 @@ public final class MLModelRegistryService {
         final List<MLModelField> fieldNames = new ArrayList<>();
         PMMLManager pmmlManager = new PMMLManager(IOUtil.unmarshal(new ByteArrayInputStream(pmmlContents.getBytes())));
         Evaluator modelEvaluator = (ModelEvaluator<?>) pmmlManager.getModelManager(null, ModelEvaluatorFactory.getInstance());
-        for (FieldName predictedField: modelEvaluator.getActiveFields()) {
+        for (FieldName predictedField : modelEvaluator.getActiveFields()) {
             fieldNames.add(getModelField(modelEvaluator.getDataField(predictedField)));
         }
         return fieldNames;
