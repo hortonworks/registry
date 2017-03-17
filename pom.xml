@@ -113,6 +113,7 @@
         <module>schema-registry</module>
         <module>examples</module>
         <module>docker</module>
+        <module>model-registry</module>
     </modules>
 
     <profiles>
