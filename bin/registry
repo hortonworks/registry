@@ -85,7 +85,7 @@ function registryStart {
 
    getPID
    registryIsRunning $PID
-   if [ $? -eq 0 ]; then
+   if [ $? -eq 1 ]; then
      printf "Registry is already running with PID=$PID.\n"
      exit 0
    fi
