@@ -29,7 +29,7 @@ if (servletFilterConfigurations != null && !servletFilterConfigurations.isEmpty(
 In the above code, ServletFilterConfiguration is a Java object representing the servlet filter specified using the registry YAML file as show in the example 
 below. However the general idea is that one needs to add com.hortonworks.registries.auth.server.AuthenticationFilter for enabling authentication 
 
-The configuration for that filter in yaml is represented in params property as follows.
+The filter configuration is passed using the params property in the YAML file, as follows:
 
 ```yaml
 servletFilters:
@@ -58,8 +58,8 @@ curl  -i --negotiate -u:anyUser  -b ~/cookiejar.txt -c ~/cookiejar.txt  http://<
    `google-chrome --auth-server-whitelist="*web-service-hostname" --auth-negotiate-delegate-whitelist="*web-service-hostname"`
 3. IE: Configure trusted websites to include "web-service-hostname" and allow negotiation for that website
 
-**Caution**: In AD MIT Kerberos setup, the key size is bigger than the default UI jetty server request header size. If using that, make sure you set 
-header buffer bytes to 65536
+**Caution**: In AD MIT Kerberos setup, the key size is bigger than the default UI jetty server request header size. If using MIT Kerberos with jettty server, 
+make sure you set HTTP header buffer bytes to 65536
 
 
 
