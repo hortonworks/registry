@@ -118,7 +118,7 @@ public class SampleSchemaRegistryClientApp {
 
         SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + System.currentTimeMillis());
         byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
-        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
+        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), null);
 
         LOG.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
     }
@@ -166,7 +166,7 @@ public class SampleSchemaRegistryClientApp {
 
         SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + System.currentTimeMillis());
         byte[] serializedData = serializer.serialize(deviceObject, schemaMetadata);
-        Object deserializedObj = deserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
+        Object deserializedObj = deserializer.deserialize(new ByteArrayInputStream(serializedData), null);
 
         LOG.info("Serialized and deserialized objects are equal: [{}] ", deviceObject.equals(deserializedObj));
 
@@ -202,8 +202,8 @@ public class SampleSchemaRegistryClientApp {
         String payload = "Random text: " + new Random().nextLong();
         byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaMetadata);
 
-        SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> snapshotdeserializer = getSnapshotDeserializer(schemaMetadata);
-        Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, schemaMetadata, null);
+        SnapshotDeserializer<byte[], Object, Integer> snapshotdeserializer = getSnapshotDeserializer(schemaMetadata);
+        Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, null);
 
         LOG.info("Given payload and deserialized object are equal: " + payload.equals(deserializedObject));
     }
@@ -230,7 +230,7 @@ public class SampleSchemaRegistryClientApp {
         return schemaRegistryClient.addDeserializer(deserializerInfo);
     }
 
-    private SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> getSnapshotDeserializer(SchemaMetadata schemaMetadata) {
+    private SnapshotDeserializer<byte[], Object, Integer> getSnapshotDeserializer(SchemaMetadata schemaMetadata) {
         Collection<SerDesInfo> deserializers = schemaRegistryClient.getDeserializers(schemaMetadata.getName());
         if (deserializers.isEmpty()) {
             throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");

@@ -19,7 +19,18 @@ import com.hortonworks.registries.schemaregistry.Resourceable;
 
 /**
  * Serializer interface for serializing input {@code I} into output {@code O} according to the Schema {@code S}.
+ * <p>Common way to use this serializer implementation is like below. </p>
+ * <pre>{@code
+ *     SnapshotSerializer serializer = ...
+ *     // initialize with given configuration
+ *     serializer.init(config);
  *
+ *     // this instance can be used for multiple serialization invocations
+ *     serializer.serialize(input, schema);
+ *
+ *     // close it to release any resources held
+ *     serializer.close();
+ * }</pre>
  * @param <I> Input type of the payload
  * @param <O> serialized output type. For ex: byte[], String etc.
  * @param <S> schema related information, which can be used for Input to be serialized as Output
