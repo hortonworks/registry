@@ -24,6 +24,7 @@ const SchemaREST = {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     };
+    options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemas', options)
       .then((response) => {
         return response.json();
@@ -32,6 +33,7 @@ const SchemaREST = {
   getAllSchemas(options) {
     options = options || {};
     options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemas', options)
       .then((response) => {
         return response.json();
@@ -40,6 +42,7 @@ const SchemaREST = {
   getSchemaInfo(name, options) {
     options = options || {};
     options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     return fetch(baseUrl + 'schemaregistry/schemas/' + name, options)
       .then((response) => {
@@ -49,6 +52,7 @@ const SchemaREST = {
   getSchemaVersions(name, options) {
     options = options || {};
     options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     return fetch(baseUrl + 'schemaregistry/schemas/' + name + '/versions', options)
       .then((response) => {
@@ -58,6 +62,7 @@ const SchemaREST = {
   getLatestVersion(name, options) {
     options = options || {};
     options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     return fetch(baseUrl+'schemaregistry/schemas/'+name+'/versions/latest', options)
       .then( (response) => {
@@ -71,6 +76,7 @@ const SchemaREST = {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     };
+    options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     return fetch(baseUrl + 'schemaregistry/schemas/' + name + '/versions', options)
       .then((response) => {
@@ -80,6 +86,7 @@ const SchemaREST = {
   getSchemaProviders(options) {
     options = options || {};
     options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemaproviders', options)
       .then((response) => {
         return response.json();
@@ -92,6 +99,7 @@ const SchemaREST = {
       'Content-Type' : 'application/json',
       'Accept' : 'application/json'
     };
+    options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     return fetch(baseUrl+'schemaregistry/schemas/'+name+'/compatibility', options)
       .then( (response) => {
