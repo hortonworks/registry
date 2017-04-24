@@ -235,7 +235,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         Object deviceObject = createGenericRecordForDevice();
 
         byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
-        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
+        Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), null);
         Assert.assertEquals(deviceObject, deserializedObj);
     }
 
@@ -253,7 +253,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
             SchemaMetadata schemaMetadata = createSchemaMetadata(name, SchemaCompatibility.BOTH);
             byte[] serializedData = avroSnapshotSerializer.serialize(obj, schemaMetadata);
 
-            Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), schemaMetadata, null);
+            Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), null);
 
             if (obj instanceof byte[]) {
                 Assert.assertArrayEquals((byte[]) obj, (byte[]) deserializedObj);

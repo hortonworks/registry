@@ -36,7 +36,7 @@ import java.util.Map;
  * the respective {com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer}.
  */
 
-public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> {
+public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleDeserializer.class);
 
     @Override
@@ -45,8 +45,8 @@ public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, 
     }
 
     @Override
-    public Object deserialize(byte[] input, SchemaMetadata writerSchemaMetadata, Integer readerSchemaVersion) throws SerDesException {
-        LOG.info("Received payload [{}] to be deserialized with writer schema [{}] and reader schema: [{}]", input, writerSchemaMetadata, readerSchemaVersion);
+    public Object deserialize(byte[] input, Integer readerSchemaVersion) throws SerDesException {
+        LOG.info("Received payload [{}] to be deserialized with reader schema: [{}]", input, readerSchemaVersion);
 
         try {
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(input));
