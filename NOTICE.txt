@@ -1,3 +1,6 @@
+Hortonworks Schema Registry
+Copyright 2016-2017 Hortonworks, Inc.
+
 The following libraries are included in packaged versions of this project:
 
 * Apache Avro

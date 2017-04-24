@@ -171,7 +171,7 @@
         <profile>
             <id>dist</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
                 <module>registry-dist</module>
@@ -179,6 +179,24 @@
         </profile>
         <profile>
           <id>ossrh</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+          </activation>
+          <properties>
+            <gpg.executable>gpg2</gpg.executable>
+          </properties>
+        </profile>
+        <profile>
+          <id>sonatype-nexus-staging</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+          </activation>
+          <properties>
+            <gpg.executable>gpg2</gpg.executable>
+          </properties>
+        </profile>
+        <profile>
+          <id>sonatype-nexus-snapshots</id>
           <activation>
             <activeByDefault>false</activeByDefault>
           </activation>
