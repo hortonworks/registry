@@ -61,9 +61,17 @@ const getDateTimeLabel = function(date){
   return (arr[1]+'-'+arr[2]+'-'+arr[3]+' at ' + time);
 };
 
+const ellipses = function(string, tagWidth) {
+  if (!string || tagWidth === undefined) {
+    return;
+  }
+  return string.length > (tagWidth/11.7) ? `${string.substr(0, tagWidth/11.7)}...` : string;
+};
+
 export default {
   isValidJson,
   sortArray,
   splitTimeStamp,
-  getDateTimeLabel
+  getDateTimeLabel,
+  ellipses
 };
