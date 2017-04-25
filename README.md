@@ -5,12 +5,12 @@ Registry is a framework to build metadata repositories. As part of Registy, we c
 Follow [@schemaregistry](https://twitter.com/schemaregistry) on Twitter for updates on the project.
 
 ## Documentation
-Documentation and tutorials can be found on the Registry docs [ReadMeDocs] (http://registry-project.readthedocs.io/en/latest/)
+Documentation and tutorials can be found on the [Registry docs](http://registry-project.readthedocs.io/en/latest/)
 
 
 ## Getting Help
 
-Registry users or devs should send a message to [Registry Google Group] (https://groups.google.com/forum/#!forum/registry)
+Registry users or devs should send a message to [Registry Google Group](https://groups.google.com/forum/#!forum/registry)
 
 ## License
 
