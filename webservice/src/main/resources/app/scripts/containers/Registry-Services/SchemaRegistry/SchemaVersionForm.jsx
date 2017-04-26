@@ -47,7 +47,7 @@ export default class SchemaVersionForm extends Component {
     this.state = {
       schemaText: schemaObj.schemaText || '',
       schemaTextFile: schemaObj.schemaTextFile || null,
-      description: schemaObj.description || '',
+      description: '',
       validInput: false,
       showFileError: false,
       showError: false,
