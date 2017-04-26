@@ -47,7 +47,7 @@ public class PostgresqlInsertUpdateDuplicate extends AbstractStorableSqlQuery {
 
     // "INSERT INTO DB.TABLE (name, age) VALUES("A", 19) ON DUPLICATE KEY UPDATE name="A", age=19";
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         Collection<String> columnNames = getColumnNames(columns, "\"%s\"");
         sql = "INSERT INTO " + tableName + " ("
                 + join(columnNames, ", ")

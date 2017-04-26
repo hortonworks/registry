@@ -25,7 +25,7 @@ public class MySqlInsertQuery extends AbstractStorableSqlQuery {
     }
 
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         sql = "INSERT INTO " + tableName + " ("
                 + join(getColumnNames(columns, "`%s`"), ", ")
                 + ") VALUES( " + getBindVariables("?,", columns.size()) + ")";

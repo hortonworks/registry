@@ -45,7 +45,7 @@ public class PostgresqlInsertQuery extends AbstractStorableSqlQuery {
     }
 
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         Collection<String> columnNames = getColumnNames(columns, "\"%s\"");;
         sql = "INSERT INTO " + tableName + " ("
                 + join(columnNames, ", ")

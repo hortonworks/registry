@@ -91,7 +91,7 @@ public class PhoenixSequenceIdQuery {
         }
 
         @Override
-        protected void setParameterizedSql() {
+        protected void initParameterizedSql() {
         }
     }
 }

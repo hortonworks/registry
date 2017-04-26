@@ -36,7 +36,7 @@ public abstract class AbstractSqlQuery implements SqlQuery {
     protected String sql;
 
     /** This method must be overridden and must initialize the field {@code sql} */
-    protected abstract void setParameterizedSql();
+    protected abstract void initParameterizedSql();
 
     @Override
     public String getParametrizedSql() {

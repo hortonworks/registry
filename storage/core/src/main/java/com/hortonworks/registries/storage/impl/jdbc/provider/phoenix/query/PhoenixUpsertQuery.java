@@ -28,7 +28,7 @@ public class PhoenixUpsertQuery extends AbstractStorableSqlQuery {
     }
 
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         sql = "UPSERT INTO " + tableName + " ("
                 + join(getColumnNames(columns, "\"%s\""), ", ")
                 + ") VALUES( " + getBindVariables("?,", columns.size()) + ")";
