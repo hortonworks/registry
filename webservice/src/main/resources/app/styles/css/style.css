@@ -997,11 +997,11 @@ label {
   box-shadow:none;
 }
 
-.page-title-box .input-group-addon {
+/*.page-title-box .input-group-addon {
   padding: 0;
   z-index: 10;
   border:none;
-}
+}*/
 
 /* Schema Registry Panels */
 .panel-registry {
@@ -1153,11 +1153,11 @@ label {
   border-color : #cacaca;
 }
 
-.page-title-box .input-group-addon {
+/*.page-title-box .input-group-addon {
   padding: 0;
   z-index: 10;
   border:none;
-}
+}*/
 
 .page-title-box input.inputAnimateOut {
   margin-left: 0 !important;
@@ -1243,4 +1243,11 @@ label {
   .modal-xl {
     width: 1170px;
   }
+}
+.fluid-width-15{
+  word-break: break-all;
+  width: 20% !important;
+}
+.font-blue-color{
+  color: #006ea0;
 }

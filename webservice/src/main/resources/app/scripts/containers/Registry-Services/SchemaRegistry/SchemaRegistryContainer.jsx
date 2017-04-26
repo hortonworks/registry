@@ -103,6 +103,11 @@ export default class SchemaRegistryContainer extends Component {
         const sortDropdown = document.querySelector('.sortDropdown');
         sortDropdown.setAttribute("class","sortDropdown");
         sortDropdown.parentElement.setAttribute("class","dropdown");
+        if(this.refs.schemaName && this.schemaNameTagWidth != this.refs.schemaName.offsetWidth){
+          this.schemaNameTagWidth = this.refs.schemaName.offsetWidth;
+          this.schemaGroupTagWidth= this.refs.schemaGroup.offsetWidth;
+          this.setState(this.state);
+        }
       }
     }
   }
@@ -261,10 +266,11 @@ export default class SchemaRegistryContainer extends Component {
     this.schemaObj = {
       schemaName: schemaObj.schemaName,
       description: obj ? obj.description : '',
-      schemaText: obj ? obj.schemaText : ''
+      schemaText: obj ? obj.schemaText : '',
+      versionId: obj ? obj.versionId : ''
     };
     this.setState({
-      modalTitle: 'Add Version'
+      modalTitle: 'Edit Version'
     }, () => {
       this.refs.versionModal.show();
     });
@@ -295,9 +301,16 @@ export default class SchemaRegistryContainer extends Component {
             if (this.state.id) {
               msg = "Version updated successfully";
             }
-            FSReactToastr.success(
-              <strong>{msg}</strong>
-            );
+            if(versions === this.schemaObj.versionId) {
+              msg = "The schema version is already present";
+              FSReactToastr.info(
+                <strong>{msg}</strong>
+              );
+            } else {
+              FSReactToastr.success(
+                <strong>{msg}</strong>
+              );
+            }
           }
         }
       });
@@ -343,7 +356,7 @@ export default class SchemaRegistryContainer extends Component {
       theme: 'default no-cursor schema-editor expand-schema'
     };
     const {filterValue, slideInput, fetchLoader, schemaData} = this.state;
-    const sortTitle = <span>Sort:<span style={{color: "#006ea0"}}>&nbsp;{this.state.sorted.text}</span></span>;
+    const sortTitle = <span>Sort:<span className="font-blue-color">&nbsp;{this.state.sorted.text}</span></span>;
     var schemaEntities = schemaData;
     if(filterValue.trim() !== ''){
       schemaEntities = this.filterSchema(schemaData, filterValue);
@@ -359,25 +372,15 @@ export default class SchemaRegistryContainer extends Component {
             {schemaData.length > 0 ?
             (<div className="wrapper animated fadeIn">
               <div className="page-title-box row no-margin">
-                  <div className="col-md-4 col-md-offset-5 text-right">
-                      <FormGroup>
-                          <InputGroup>
-                              <FormControl type="text"
-                                placeholder="Search by name"
-                                onKeyUp={this.onFilterChange}
-                                className={`inputAnimateIn ${(slideInput) ? "inputAnimateOut" : ''}`}
-                                onBlur={this.slideInputOut}
-                              />
-                              <InputGroup.Addon className="page-search">
-                                  <Button type="button"
-                                    className="searchBtn"
-                                    onClick={this.slideInput}
-                                  >
-                                    <i className="fa fa-search"></i>
-                                  </Button>
-                              </InputGroup.Addon>
-                          </InputGroup>
-                      </FormGroup>
+                  <div className="col-md-3 col-md-offset-6 text-right">
+                    <FormGroup>
+                       <InputGroup>
+                         <FormControl type="text" placeholder="Search by name" onKeyUp={this.onFilterChange} className="" />
+                           <InputGroup.Addon>
+                             <i className="fa fa-search"></i>
+                           </InputGroup.Addon>
+                         </InputGroup>
+                     </FormGroup>
                   </div>
                   <div className="col-md-2 text-center">
                     <DropdownButton title={sortTitle}
@@ -393,6 +396,7 @@ export default class SchemaRegistryContainer extends Component {
                     </DropdownButton>
                   </div>
               </div>
+            {schemaEntities.length === 0 ? <NoData /> : ''}
             {!fetchLoader ?
             <div className="row">
                 <div className="col-md-12">
@@ -410,45 +414,29 @@ export default class SchemaRegistryContainer extends Component {
                       var header = (
                         <div key={i}>
                         <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
-                        <div className="panel-sections first">
-                            <h4 className="schema-name">{s.schemaName}</h4>
+                        <div className="panel-sections first fluid-width-15">
+                            <h4 ref="schemaName" className="schema-name" title={s.schemaName}>{Utils.ellipses(s.schemaName, this.schemaNameTagWidth)}</h4>
                             <p className={`schema-status ${s.compatibility.toLowerCase()}`}>{s.compatibility}</p>
                         </div>
                         <div className="panel-sections">
-                            <h6 className="schema-th">Version</h6>
-                            <h4 className="schema-td">{s.versionsArr.length}</h4>
-                        </div>
-                        <div className="panel-sections">
                             <h6 className="schema-th">Type</h6>
-                            {s.collapsed ?
-                              <h4 className="schema-td">{s.type}</h4>
-                            : <h4 className="schema-td" style={{color: '#006ea0'}}>{s.type}</h4>
-                            }
+                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>{s.type}</h4>
                         </div>
                         <div className="panel-sections">
                             <h6 className="schema-th">Group</h6>
-                            {s.collapsed ?
-                              <h4 className="schema-td">{s.schemaGroup}</h4>
-                            : <h4 className="schema-td" style={{color: '#006ea0'}}>{s.schemaGroup}</h4>
-                            }
+                            <h4 ref="schemaGroup" className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`} title={s.schemaGroup}>{Utils.ellipses(s.schemaGroup, this.schemaGroupTagWidth)}</h4>
                         </div>
                         <div className="panel-sections">
                             <h6 className="schema-th">Serializer</h6>
-                            {s.collapsed ?
-                              <h4 className="schema-td">0</h4>
-                            : <h4 className="schema-td" style={{color: '#006ea0'}}>0</h4>
-                            }
+                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>0</h4>
                         </div>
                         <div className="panel-sections">
                             <h6 className="schema-th">Deserializer</h6>
-                            {s.collapsed ?
-                              <h4 className="schema-td">0</h4>
-                            : <h4 className="schema-td" style={{color: '#006ea0'}}>0</h4>
-                            }
+                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>0</h4>
                         </div>
                         <div className="panel-sections" style={{'textAlign': 'right'}}>
                             <a className="collapsed collapseBtn" role="button" aria-expanded="false">
-                                <i className={s.collapsed ? "collapseBtn fa fa-chevron-down" : "collapseBtn fa fa-chevron-up"}></i>
+                              <i className={s.collapsed ? "collapseBtn fa fa-chevron-down" : "collapseBtn fa fa-chevron-up"}></i>
                             </a>
                         </div>
                         </div>

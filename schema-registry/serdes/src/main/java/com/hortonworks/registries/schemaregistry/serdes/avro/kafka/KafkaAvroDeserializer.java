@@ -17,7 +17,6 @@ package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.io.ByteArrayInputStream;
@@ -27,6 +26,13 @@ import java.util.Map;
  *
  */
 public class KafkaAvroDeserializer implements Deserializer<Object> {
+
+    /**
+     * This property represents the version of a reader schema to be used in deserialization. This property can be
+     * passed to {@link #configure(Map, boolean)}.
+     */
+    String READER_VERSION = "schemaregistry.reader.schema.version";
+
     private final AvroSnapshotDeserializer avroSnapshotDeserializer;
 
     private boolean isKey;
@@ -40,15 +46,14 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     public void configure(Map<String, ?> configs, boolean isKey) {
         this.isKey = isKey;
         avroSnapshotDeserializer.init(configs);
-        readerVersion = (Integer) configs.get(SnapshotDeserializer.READER_VERSION);
+        readerVersion = (Integer) configs.get(READER_VERSION);
     }
 
     @Override
     public Object deserialize(String topic, byte[] data) {
         SchemaMetadata schemaMetadata = getSchemaKey(topic, isKey);
         return avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(data),
-                schemaMetadata,
-                readerVersion);
+                                                    readerVersion);
     }
 
     protected SchemaMetadata getSchemaKey(String topic, boolean isKey) {
