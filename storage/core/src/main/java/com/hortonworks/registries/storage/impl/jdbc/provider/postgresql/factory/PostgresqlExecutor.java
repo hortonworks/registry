@@ -18,29 +18,25 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory
 /**
  *
  */
+
 import com.google.common.cache.CacheBuilder;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixDeleteQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlInsertQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlInsertUpdateDuplicate;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlInsertQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 import com.zaxxer.hikari.HikariConfig;
-import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlInsertUpdateDuplicate;
 
-import javax.annotation.Nullable;
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.List;
@@ -49,16 +45,16 @@ import java.util.Properties;
 
 /**
  * SQL query executor for PostgreSQL
- *
+ * <p>
  * To issue the new ID to insert and get auto issued key in concurrent manner, PostgresExecutor utilizes Postgres's
  * SERIAL feature
- *
+ * <p>
  * If the value of id is null, we let Postgres issue new ID and get the new ID. If the value of id is not null, we just use that value.
  */
 public class PostgresqlExecutor extends AbstractQueryExecutor {
 
     /**
-     * @param config Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
+     * @param config            Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
      * @param connectionBuilder Object that establishes the connection to the database
      */
     public PostgresqlExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
@@ -66,10 +62,10 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     }
 
     /**
-     * @param config Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
+     * @param config            Object that contains arbitrary configuration that may be needed for any of the steps of the query execution process
      * @param connectionBuilder Object that establishes the connection to the database
-     * @param cacheBuilder Guava cache configuration. The maximum number of entries in cache (open connections)
-     *                     must not exceed the maximum number of open database connections allowed
+     * @param cacheBuilder      Guava cache configuration. The maximum number of entries in cache (open connections)
+     *                          must not exceed the maximum number of open database connections allowed
      */
     public PostgresqlExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         super(config, connectionBuilder, cacheBuilder);
@@ -93,8 +89,18 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     }
 
     @Override
+    public <T extends Storable> Collection<T> select(String namespace, List<OrderByField> orderByFields) {
+        return executeQuery(namespace, new PostgresqlSelectQuery(namespace, orderByFields));
+    }
+
+    @Override
     public <T extends Storable> Collection<T> select(StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new PostgresqlSelectQuery(storableKey));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields) {
+        return executeQuery(storableKey.getNameSpace(), new PostgresqlSelectQuery(storableKey, orderByFields));
     }
 
     @Override
@@ -118,9 +124,9 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
         log.info("dataSource.url is: [{}] ", jdbcUrl);
 
         int queryTimeOutInSecs = -1;
-        if(jdbcProps.containsKey("queryTimeoutInSecs")) {
+        if (jdbcProps.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) jdbcProps.get("queryTimeoutInSecs");
-            if(queryTimeOutInSecs < 0) {
+            if (queryTimeOutInSecs < 0) {
                 throw new IllegalArgumentException("queryTimeoutInSecs property can not be negative");
             }
         }
@@ -168,7 +174,6 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
             executeUpdate(sqlQuery);
         }
     }
-
 
 
 }

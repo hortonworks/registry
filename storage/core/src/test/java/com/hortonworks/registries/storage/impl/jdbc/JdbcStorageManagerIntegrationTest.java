@@ -84,6 +84,11 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     }
 
     @Test
+    public void testFindOrderBy() {
+        super.testFindOrderBy();
+    }
+    
+    @Test
     @Ignore
     public void testNextId_AutoincrementColumn_IdPlusOne() throws Exception {
 

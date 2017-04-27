@@ -16,12 +16,17 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query;
 
 import com.hortonworks.registries.storage.StorableKey;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractStorableKeyQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
  */
-public class PostgresqlSelectQuery extends AbstractStorableKeyQuery {
+public class PostgresqlSelectQuery extends AbstractSelectQuery {
+
     public PostgresqlSelectQuery(String nameSpace) {
         super(nameSpace);
     }
@@ -30,12 +35,33 @@ public class PostgresqlSelectQuery extends AbstractStorableKeyQuery {
         super(storableKey);
     }
 
+    public PostgresqlSelectQuery(String nameSpace, List<OrderByField> orderByFields) {
+        super(nameSpace, orderByFields);
+    }
+
+    public PostgresqlSelectQuery(StorableKey storableKey, List<OrderByField> orderByFields) {
+        super(storableKey, orderByFields);
+    }
+
     @Override
-    protected void setParameterizedSql() {
+    protected void addOrderByFieldsToParameterizedSql() {
+        if (orderByFields != null && !orderByFields.isEmpty()) {
+            sql += join(orderByFields.stream()
+                                .map(x -> " ORDER BY \"" + x.getFieldName() + "\" " + (x.isDescending() ? "DESC" : "ASC"))
+                                .collect(Collectors.toList()), ",");
+        }
+        log.debug("SQL after adding order by clause: [{}]", sql);
+    }
+
+    @Override
+    protected void initParameterizedSql() {
         sql = "SELECT * FROM " + tableName;
         if (columns != null) {
             sql += " WHERE " + join(getColumnNames(columns, "\"%s\" = ?"), " AND ");
         }
-        log.debug(sql);
+
+        log.debug("Parameterized sql: [{}]", sql);
     }
+
+
 }

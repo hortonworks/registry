@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,26 +18,23 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
-import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertUpdateDuplicate;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlInsertQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.Storable;
-import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlQueryUtils;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 import com.zaxxer.hikari.HikariConfig;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -98,6 +95,16 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         return executeQuery(storableKey.getNameSpace(), new MySqlSelectQuery(storableKey));
     }
 
+    @Override
+    public <T extends Storable> Collection<T> select(String namespace, List<OrderByField> orderByFields) {
+        return executeQuery(namespace, new MySqlSelectQuery(namespace, orderByFields));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields) {
+        return executeQuery(storableKey.getNameSpace(), new MySqlSelectQuery(storableKey, orderByFields));
+    }
+
     public static MySqlExecutor createExecutor(Map<String, Object> jdbcProps) {
         Util.validateJDBCProperties(jdbcProps, Lists.newArrayList("dataSourceClassName", "dataSource.url"));
 
@@ -108,9 +115,9 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         log.info("dataSource.url is: [{}] ", jdbcUrl);
 
         int queryTimeOutInSecs = -1;
-        if(jdbcProps.containsKey("queryTimeoutInSecs")) {
+        if (jdbcProps.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) jdbcProps.get("queryTimeoutInSecs");
-            if(queryTimeOutInSecs < 0) {
+            if (queryTimeOutInSecs < 0) {
                 throw new IllegalArgumentException("queryTimeoutInSecs property can not be negative");
             }
         }

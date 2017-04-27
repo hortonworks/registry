@@ -31,21 +31,25 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.factory.Pho
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory.PostgresqlExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.MetadataHelper;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
 public class JdbcStorageManager implements StorageManager {
     private static final Logger log = LoggerFactory.getLogger(StorageManager.class);
     public static final String DB_TYPE = "db.type";
+    public static final String ORDER_BY_FIELDS_PARAM_NAME = "_orderByFields";
 
     private final StorableFactory storableFactory = new StorableFactory();
     private QueryExecutor queryExecutor;
@@ -109,29 +113,74 @@ public class JdbcStorageManager implements StorageManager {
             throws StorageException {
         log.debug("Searching for entries in table [{}] that match queryParams [{}]", namespace, queryParams);
 
-        if (queryParams == null || queryParams.isEmpty()) {
-            return list(namespace);
-        }
-        Collection<T> entries = Collections.emptyList();
+        List<QueryParam> filteredQueryParams =
+                queryParams != null
+                        ? queryParams.stream().filter(param -> !ORDER_BY_FIELDS_PARAM_NAME.equals(param.getName()))
+                        .collect(Collectors.toList())
+                        : Collections.emptyList();
+        List<OrderByField> orderByFields = getOrderByFields(queryParams);
 
+        if (filteredQueryParams.isEmpty()) {
+            return list(namespace, orderByFields);
+        }
+
+        Collection<T> entries = Collections.emptyList();
         try {
-            StorableKey storableKey = buildStorableKey(namespace, queryParams);
+            StorableKey storableKey = buildStorableKey(namespace, filteredQueryParams);
             if (storableKey != null) {
-                entries = queryExecutor.select(storableKey);
+                entries = queryExecutor.select(storableKey, orderByFields);
             }
         } catch (Exception e) {
             throw new StorageException(e);
         }
+
         log.debug("Querying table = [{}]\n\t filter = [{}]\n\t returned [{}]", namespace, queryParams, entries);
+
         return entries;
+    }
+
+    private <T extends Storable> Collection<T> list(String namespace, List<OrderByField> orderByFields) {
+        log.debug("Listing entries for table [{}]", namespace);
+        final Collection<T> entries = queryExecutor.select(namespace, orderByFields);
+        log.debug("Querying table = [{}]\n\t returned [{}]", namespace, entries);
+        return entries;
+    }
+
+    private List<OrderByField> getOrderByFields(List<QueryParam> queryParams) {
+        if(queryParams == null || queryParams.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<OrderByField> orderByFields = new ArrayList<>();
+        for (QueryParam queryParam : queryParams) {
+            if (ORDER_BY_FIELDS_PARAM_NAME.equals(queryParam.getName())) {
+                // _orderByFields=[<field-name>,<a/d>,]*
+                // example can be : _orderByFields=foo,a,bar,d
+                // order by foo with ascending then bar with descending
+                String value = queryParam.getValue();
+                String[] splitStrings = value.split(",");
+                for (int i = 0; i < splitStrings.length; i += 2) {
+                    String ascStr = splitStrings[i+1];
+                    boolean descending;
+                    if("a".equals(ascStr)) {
+                        descending = false;
+                    } else if("d".equals(ascStr)) {
+                        descending = true;
+                    } else {
+                        throw new IllegalArgumentException("Ascending or Descending identifier can only be 'a' or 'd' respectively.");
+                    }
+
+                    orderByFields.add(OrderByField.of(splitStrings[i], descending));
+                }
+            }
+        }
+
+        return orderByFields;
     }
 
     @Override
     public <T extends Storable> Collection<T> list(String namespace) throws StorageException {
-        log.debug("Listing entries for table [{}]", namespace);
-        final Collection<T> entries = queryExecutor.select(namespace);
-        log.debug("Querying table = [{}]\n\t returned [{}]", namespace, entries);
-        return entries;
+        return list(namespace, Collections.emptyList());
     }
 
     @Override

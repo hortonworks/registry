@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.factory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
@@ -25,16 +26,17 @@ import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectio
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.JdbcClient;
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixSequenceIdQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixUpsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.Storable;
-import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixSequenceIdQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 import com.zaxxer.hikari.HikariConfig;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -68,12 +70,22 @@ public class PhoenixExecutor extends AbstractQueryExecutor {
 
     @Override
     public <T extends Storable> Collection<T> select(String namespace) {
+        return select(namespace, null);
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(String namespace, List<OrderByField> orderByFields) {
         return executeQuery(namespace, new PhoenixSelectQuery(namespace));
     }
 
     @Override
     public <T extends Storable> Collection<T> select(StorableKey storableKey) {
-        return executeQuery(storableKey.getNameSpace(), new PhoenixSelectQuery(storableKey));
+        return select(storableKey, null);
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields) {
+        return executeQuery(storableKey.getNameSpace(), new PhoenixSelectQuery(storableKey, orderByFields));
     }
 
     @Override
@@ -98,9 +110,9 @@ public class PhoenixExecutor extends AbstractQueryExecutor {
         log.info("jdbc url is: [{}] ", jdbcUrl);
 
         int queryTimeOutInSecs = -1;
-        if(jdbcProps.containsKey("queryTimeoutInSecs")) {
+        if (jdbcProps.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) jdbcProps.get("queryTimeoutInSecs");
-            if(queryTimeOutInSecs < 0) {
+            if (queryTimeOutInSecs < 0) {
                 throw new IllegalArgumentException("queryTimeoutInSecs property can not be negative");
             }
         }
@@ -116,8 +128,8 @@ public class PhoenixExecutor extends AbstractQueryExecutor {
         final HikariCPConnectionBuilder connectionBuilder = new HikariCPConnectionBuilder(hikariConfig);
         final ExecutionConfig executionConfig = new ExecutionConfig(queryTimeOutInSecs);
         CacheBuilder cacheBuilder = null;
-        if(jdbcProps.containsKey("cacheSize")) {
-            cacheBuilder = CacheBuilder.newBuilder().maximumSize((Integer)jdbcProps.get("cacheSize"));
+        if (jdbcProps.containsKey("cacheSize")) {
+            cacheBuilder = CacheBuilder.newBuilder().maximumSize((Integer) jdbcProps.get("cacheSize"));
         }
         return new PhoenixExecutor(executionConfig, connectionBuilder, cacheBuilder);
     }

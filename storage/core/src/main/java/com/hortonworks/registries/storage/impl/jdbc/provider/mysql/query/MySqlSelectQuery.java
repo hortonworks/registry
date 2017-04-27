@@ -16,9 +16,14 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
 
 import com.hortonworks.registries.storage.StorableKey;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractStorableKeyQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 
-public class MySqlSelectQuery extends AbstractStorableKeyQuery {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class MySqlSelectQuery extends AbstractSelectQuery {
+
     public MySqlSelectQuery(String nameSpace) {
         super(nameSpace);
     }
@@ -27,13 +32,32 @@ public class MySqlSelectQuery extends AbstractStorableKeyQuery {
         super(storableKey);
     }
 
+    public MySqlSelectQuery(String nameSpace, List<OrderByField> orderByFields) {
+        super(nameSpace, orderByFields);
+    }
+
+    public MySqlSelectQuery(StorableKey storableKey, List<OrderByField> orderByFields) {
+        super(storableKey, orderByFields);
+    }
+
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         sql = "SELECT * FROM " + tableName;
         //where clause is defined by columns specified in the PrimaryKey
         if (columns != null) {
             sql += " WHERE " + join(getColumnNames(columns, "`%s` = ?"), " AND ");
         }
-        log.debug(sql);
+
+        log.debug("Parameterized sql: [{}]", sql);
+    }
+
+    protected void addOrderByFieldsToParameterizedSql() {
+        if (orderByFields != null && !orderByFields.isEmpty()) {
+            sql += join(orderByFields.stream()
+                                .map(x -> " ORDER BY `" + x.getFieldName() + "` " + (x.isDescending() ? "DESC" : "ASC"))
+                                .collect(Collectors.toList()), ",");
+        }
+
+        log.debug("SQL after adding order by clause: [{}]", sql);
     }
 }
