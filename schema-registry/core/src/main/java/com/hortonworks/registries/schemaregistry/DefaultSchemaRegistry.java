@@ -350,8 +350,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 queryParams.add(new QueryParam(entry.getKey(), entry.getValue()));
             }
-            storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
+            storables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, queryParams);
         }
+
         List<SchemaMetadata> result;
         if (storables != null && !storables.isEmpty()) {
             result = new ArrayList<>();
