@@ -207,19 +207,20 @@ public class SchemaMetadataStorable extends AbstractStorable {
         return schemaMetadataStorable;
     }
 
-    public static SchemaMetadataInfo toSchemaMetadataInfo(SchemaMetadataStorable schemaMetadataStorable) {
-        SchemaMetadata schemaMetadata =
-                new SchemaMetadata.Builder(schemaMetadataStorable.getName())
-                        .type(schemaMetadataStorable.getType())
-                        .schemaGroup(schemaMetadataStorable.getSchemaGroup())
-                        .compatibility(schemaMetadataStorable.getCompatibility())
-                        .description(schemaMetadataStorable.getDescription())
-                        .evolve(schemaMetadataStorable.getEvolve())
-                        .build();
+    public SchemaMetadataInfo toSchemaMetadataInfo() {
+        SchemaMetadata schemaMetadata = toSchemaMetadata();
 
-        return new SchemaMetadataInfo(schemaMetadata,
-                schemaMetadataStorable.getId(),
-                schemaMetadataStorable.getTimestamp());
+        return new SchemaMetadataInfo(schemaMetadata, getId(), getTimestamp());
+    }
+
+    public SchemaMetadata toSchemaMetadata() {
+        return new SchemaMetadata.Builder(getName())
+                .type(getType())
+                .schemaGroup(getSchemaGroup())
+                .compatibility(getCompatibility())
+                .description(getDescription())
+                .evolve(getEvolve())
+                .build();
     }
 
     @Override
