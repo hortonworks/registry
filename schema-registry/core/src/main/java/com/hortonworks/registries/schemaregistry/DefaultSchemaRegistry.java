@@ -141,26 +141,29 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException {
+        return addSchemaMetadata(schemaMetadata, false);
+    }
+
+    public Long addSchemaMetadata(SchemaMetadata schemaMetadata, boolean throwErrorIfExists) throws UnsupportedSchemaTypeException {
         SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata));
         String type = schemaMetadata.getType();
         if (schemaTypeWithProviders.get(type) == null) {
             throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
         }
-        Long id;
-        synchronized (addOrUpdateLock) {
-            Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
-            if (schemaMetadataStorable != null) {
-                id = schemaMetadataStorable.getId();
-            } else {
-                final Long nextId = storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
-                givenSchemaMetadataStorable.setId(nextId);
-                givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
-                storageManager.add(givenSchemaMetadataStorable);
-                id = givenSchemaMetadataStorable.getId();
-            }
-        }
 
-        return id;
+        synchronized (addOrUpdateLock) {
+            if(!throwErrorIfExists) {
+                Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
+                if (schemaMetadataStorable != null) {
+                    return schemaMetadataStorable.getId();
+                }
+            }
+            final Long nextId = storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
+            givenSchemaMetadataStorable.setId(nextId);
+            givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
+            storageManager.add(givenSchemaMetadataStorable);
+            return givenSchemaMetadataStorable.getId();
+        }
     }
 
     public Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description)

@@ -38,6 +38,8 @@ public interface ISchemaRegistry {
 
     Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException;
 
+    Long addSchemaMetadata(SchemaMetadata schemaMetadata, boolean throwErrorIfExists) throws UnsupportedSchemaTypeException;
+
     Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException, SchemaNotFoundException;
 
     Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;

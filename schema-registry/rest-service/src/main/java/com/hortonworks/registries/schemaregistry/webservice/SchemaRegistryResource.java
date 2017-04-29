@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,7 +218,8 @@ public class SchemaRegistryResource {
                 schemaMetadataInfo.trim();
                 checkValueAsNullOrEmpty("Schema name", schemaMetadataInfo.getName());
                 checkValueAsNullOrEmpty("Schema type", schemaMetadataInfo.getType());
-                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
+                boolean throwErrorIfExists = isThrowErrorIfExists(uriInfo);
+                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
@@ -227,11 +229,23 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
             } catch (Exception ex) {
                 LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR,
+                                           CatalogResponse.ResponseMessage.EXCEPTION,
+                                           String.format("Storing the given SchemaMetadata [%s] is failed",schemaMetadataInfo.toString()));
             }
 
             return response;
         });
+    }
+
+    private boolean isThrowErrorIfExists(@Context UriInfo uriInfo) {
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        if(queryParameters == null) {
+            return false;
+        }
+
+        List<String> values = queryParameters.get("_throwErrorIfExists");
+        return values != null && !values.isEmpty() && Boolean.getBoolean(values.get(0));
     }
 
     @GET

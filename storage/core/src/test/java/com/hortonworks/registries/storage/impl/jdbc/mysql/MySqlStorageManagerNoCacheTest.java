@@ -29,7 +29,7 @@ public class MySqlStorageManagerNoCacheTest extends AbstractMySqlStorageManagerN
 
     @Override
     protected void setStorableTests() {
-        storableTests = Collections.<StorableTest>singletonList(new DeviceInfoTest());
+        storableTests = Collections.singletonList(new DeviceInfoTest());
     }
 
     @Override
