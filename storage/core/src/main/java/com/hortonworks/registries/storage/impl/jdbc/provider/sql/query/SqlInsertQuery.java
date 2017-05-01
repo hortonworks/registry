@@ -25,7 +25,7 @@ public class SqlInsertQuery extends AbstractStorableSqlQuery {
 
     // "INSERT INTO DB.TABLE (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE id=1, name="A", age=19";
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         sql = "INSERT INTO " + tableName + " ("
                 + join(getColumnNames(columns, null), ", ")
                 + ") VALUES( " + getBindVariables("?,", columns.size()) + ")";

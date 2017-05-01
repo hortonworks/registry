@@ -32,7 +32,7 @@ public class PhoenixDeleteQuery extends AbstractStorableKeyQuery {
     }
 
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         sql = "DELETE FROM  " + tableName + " WHERE " + join(getColumnNames(columns, "\"%s\" = ?"), " AND ");
         log.debug(sql);
     }

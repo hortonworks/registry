@@ -15,9 +15,11 @@
  **/
 package com.hortonworks.registries.storage;
 
+import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,6 +34,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public abstract class AbstractStoreManagerTest {
@@ -129,6 +132,24 @@ public abstract class AbstractStoreManagerTest {
             Collection<Storable> allExisting = getStorageManager().list(test.getNameSpace());
             Collection<Storable> allMatchingQueryParamsFilter = getStorageManager().find(test.getNameSpace(), null);
             Assert.assertEquals(allExisting, allMatchingQueryParamsFilter);
+        }
+    }
+
+    public void testFindOrderBy() {
+        for (StorableTest test : storableTests) {
+            test.addAllToStorage();
+            List<QueryParam> queryParams = Collections.singletonList(new QueryParam(JdbcStorageManager.ORDER_BY_FIELDS_PARAM_NAME, "id,d"));
+            Collection<? extends Storable> allExisting = getStorageManager().list(test.getNameSpace());
+
+            ArrayList<? extends Storable> sortedStorables = Lists.newArrayList(allExisting);
+            sortedStorables.sort((Comparator<Storable>) (storable1, storable2) -> (int) (storable2.getId() - storable1.getId()));
+
+            final Collection<Storable> allMatchingOrderByFilter = getStorageManager().find(test.getNameSpace(), queryParams);
+
+            System.out.println("allMatchingOrderByFilter = " + allMatchingOrderByFilter);
+            System.out.println("sortedStorables = " + sortedStorables);
+
+            Assert.assertEquals(sortedStorables, allMatchingOrderByFilter);
         }
     }
 

@@ -319,7 +319,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Collection<SchemaMetadataStorable> schemaMetadataStorables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, params);
         SchemaMetadataInfo schemaMetadataInfo = null;
         if (schemaMetadataStorables != null && !schemaMetadataStorables.isEmpty()) {
-            schemaMetadataInfo = SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorables.iterator().next());
+            schemaMetadataInfo = schemaMetadataStorables.iterator().next().toSchemaMetadataInfo();
             if (schemaMetadataStorables.size() > 1) {
                 LOG.warn("No unique entry with schemaMetatadataId: [{}]", schemaMetadataId);
             }
@@ -335,7 +335,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setName(schemaName);
 
         SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
-        return schemaMetadataStorable != null ? SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorable) : null;
+        return schemaMetadataStorable != null ? schemaMetadataStorable.toSchemaMetadataInfo() : null;
     }
 
     @Override
@@ -350,16 +350,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 queryParams.add(new QueryParam(entry.getKey(), entry.getValue()));
             }
-            storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
+            storables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, queryParams);
         }
+
         List<SchemaMetadata> result;
         if (storables != null && !storables.isEmpty()) {
             result = new ArrayList<>();
             for (SchemaMetadataStorable storable : storables) {
-                result.add(new SchemaMetadata.Builder(storable.getName())
-                                   .type(storable.getType())
-                                   .schemaGroup(storable.getSchemaGroup())
-                                   .build());
+                result.add(storable.toSchemaMetadata());
             }
         } else {
             result = Collections.emptyList();

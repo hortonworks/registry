@@ -28,7 +28,7 @@ public class SqlDeleteQuery extends AbstractStorableKeyQuery {
 
     // "DELETE FROM DB.TABLE WHERE id1 = val1 AND id2 = val2"
     @Override
-    protected void setParameterizedSql() {
+    protected void initParameterizedSql() {
         sql = "DELETE FROM  " + tableName + " WHERE "
                 + join(getColumnNames(columns, "%s = ?"), " AND ");
         log.debug(sql);

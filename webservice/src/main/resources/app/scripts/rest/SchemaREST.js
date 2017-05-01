@@ -30,11 +30,15 @@ const SchemaREST = {
         return response.json();
       });
   },
-  getAllSchemas(options) {
+  getAllSchemas(sortBy, options) {
     options = options || {};
     options.method = options.method || 'GET';
     options.credentials = 'same-origin';
-    return fetch(baseUrl + 'schemaregistry/schemas', options)
+    let url = baseUrl + 'schemaregistry/schemas';
+    if(sortBy){
+      url += '/?_orderByFields='+sortBy;
+    }
+    return fetch(url, options)
       .then((response) => {
         return response.json();
       });
