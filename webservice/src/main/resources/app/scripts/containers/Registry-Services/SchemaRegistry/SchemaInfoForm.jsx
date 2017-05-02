@@ -55,8 +55,6 @@ export default class SchemaFormContainer extends Component {
       typeArr: [],
       schemaGroup: 'Kafka',
       description: '',
-      validInput: false,
-      showFileError: false,
       showError: false,
       changedFields: []
     };
@@ -96,17 +94,19 @@ export default class SchemaFormContainer extends Component {
     });
   }
 
-  handleOnFileChange(e) {
-    if (!e.target.files.length) {
-      this.setState({validInput: false, showFileError: true, schemaTextFile: null});
+  handleOnDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.dataTransfer.files.length) {
+      this.setState({schemaTextFile: null});
     } else {
-      var file = e.target.files[0];
+      var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
         if(Utils.isValidJson(reader.result)) {
-          this.setState({validInput: true, showFileError: false, schemaTextFile: file, schemaText: reader.result});
+          this.setState({schemaTextFile: file, schemaText: reader.result});
         } else {
-          this.setState({validInput: false, showFileError: true, schemaTextFile: null, schemaText: ''});
+          this.setState({schemaTextFile: null, schemaText: ''});
         }
       }.bind(this);
       reader.readAsText(file);
@@ -172,7 +172,7 @@ export default class SchemaFormContainer extends Component {
       gutters: ["CodeMirror-lint-markers"],
       lint: true
     };
-    let {showError, changedFields, validInput, showFileError} = this.state;
+    let {showError, changedFields} = this.state;
     return (
       <form className="form-horizontal">
         <div className="form-group">
@@ -217,21 +217,11 @@ export default class SchemaFormContainer extends Component {
         </div>
       </div>
       <div className="form-group">
-      <label>Upload Schema from file </label>
-        <div>
-          <input type="file" className={showFileError
-              ? "form-control invalidInput"
-              : "form-control"} name="files" title="Upload File" onChange={this.handleOnFileChange.bind(this)}/>
-        </div>
-      </div>
-      {validInput ?
-      (<div className="form-group">
-        <label>Schema Text <span className="text-danger">*</span></label>
-        <div>
+        <label>Schema Text <span className="text-danger">*</span>&nbsp;<span style={{textTransform: 'none'}}>(Type or Drop a file)</span></label>
+        <div onDrop={this.handleOnDrop.bind(this)}>
           <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
         </div>
-      </div>) : ''
-      }
+      </div>
       </form>
     );
   }
