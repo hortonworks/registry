@@ -44,6 +44,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -51,6 +52,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -211,14 +213,15 @@ public class SchemaRegistryResource {
     @Timed
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
                                           SchemaMetadata schemaMetadataInfo,
-                                  @Context UriInfo uriInfo) {
+                                  @Context UriInfo uriInfo,
+                                  @Context HttpHeaders httpHeaders) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 schemaMetadataInfo.trim();
                 checkValueAsNullOrEmpty("Schema name", schemaMetadataInfo.getName());
                 checkValueAsNullOrEmpty("Schema type", schemaMetadataInfo.getType());
-                boolean throwErrorIfExists = isThrowErrorIfExists(uriInfo);
+                boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
                 Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (IllegalArgumentException ex) {
@@ -238,14 +241,9 @@ public class SchemaRegistryResource {
         });
     }
 
-    private boolean isThrowErrorIfExists(@Context UriInfo uriInfo) {
-        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
-        if(queryParameters == null) {
-            return false;
-        }
-
-        List<String> values = queryParameters.get("_throwErrorIfExists");
-        return values != null && !values.isEmpty() && Boolean.getBoolean(values.get(0));
+    private boolean isThrowErrorIfExists(HttpHeaders httpHeaders) {
+        List<String> values = httpHeaders.getRequestHeader("_throwErrorIfExists");
+        return values != null && !values.isEmpty() && Boolean.parseBoolean(values.get(0));
     }
 
     @GET
