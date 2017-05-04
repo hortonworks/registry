@@ -16,14 +16,16 @@
 package com.hortonworks.registries.storage.impl.memory;
 
 
+import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.ReflectionHelper;
-import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
+import com.hortonworks.registries.storage.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +97,7 @@ public class InMemoryStorageManager implements StorageManager {
      * Uses reflection to query the field or the method. Assumes
      * a public getXXX method is available to get the field value.
      */
-    private boolean matches(Storable val, List<QueryParam> queryParams, Class<?> clazz) {
+    private boolean matches(Storable val, List<QueryParam> queryParams) {
         Object fieldValue;
         boolean res = true;
             for (QueryParam qp : queryParams) {
@@ -112,26 +114,71 @@ public class InMemoryStorageManager implements StorageManager {
         return res;
     }
 
-    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams) throws StorageException {
-        Collection<T> result = new ArrayList<>();
+    public <T extends Storable> Collection<T> find(final String namespace,
+                                                   final List<QueryParam> queryParams) throws StorageException {
+        return find(namespace, queryParams, Collections.emptyList());
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> find(final String namespace,
+                                                   final List<QueryParam> queryParams,
+                                                   final List<OrderByField> orderByFields) throws StorageException {
+
+        List<T> storables = new ArrayList<>();
         if (queryParams == null) {
-            result = list(namespace);
+            Collection<T> collection = list(namespace);
+            storables = Lists.newArrayList(collection);
         } else {
             Class<?> clazz = nameSpaceClassMap.get(namespace);
             if (clazz != null) {
                 Map<PrimaryKey, Storable> storableMap = storageMap.get(namespace);
                 if (storableMap != null) {
                     for (Storable val : storableMap.values()) {
-                        if (matches(val, queryParams, clazz)) {
-                            result.add((T) val);
+                        if (matches(val, queryParams)) {
+                            storables.add((T) val);
                         }
                     }
                 }
             }
         }
-        return result;
-    }
 
+        if (orderByFields != null && !orderByFields.isEmpty()) {
+            storables.sort((storable1, storable2) -> {
+                try {
+                    for (OrderByField orderByField : orderByFields) {
+                        Comparable value1 = ReflectionHelper.invokeGetter(orderByField.getFieldName(), storable1);
+                        Comparable value2 = ReflectionHelper.invokeGetter(orderByField.getFieldName(), storable2);
+                        int compareTo;
+                        // same values continue
+                        if(value1 == value2) {
+                            continue;
+                        } else if(value1 == null) {
+                            // value2 is non null
+                            compareTo = -1;
+                        } else if(value2 == null) {
+                            // value1 is non null
+                            compareTo = 1;
+                        } else {
+                            // both value and value2 non null
+                            compareTo = value1.compareTo(value2);
+                        }
+
+                        if (compareTo == 0) {
+                            continue;
+                        }
+                        return orderByField.isDescending() ? -compareTo : compareTo;
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                // all group by fields are matched means equal
+                return 0;
+            });
+        }
+
+        return storables;
+    }
 
     @Override
     public <T extends Storable> Collection<T> list(String namespace) throws StorageException {

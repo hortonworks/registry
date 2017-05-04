@@ -17,6 +17,7 @@
  */
 package com.hortonworks.registries.storage.impl.jdbc.provider.sql.query;
 
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.StorableKey;
 
 import java.util.List;

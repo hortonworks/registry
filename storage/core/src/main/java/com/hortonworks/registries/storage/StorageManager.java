@@ -92,6 +92,19 @@ public interface StorageManager {
     <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams) throws StorageException;
 
     /**
+     * Returns the collection of storable entities in the given {@code namespace}, matching given {@code queryParams} and
+     * order by the given list of {@code orderByFields}
+     *
+     * @param namespace
+     * @param queryParams
+     * @param orderByFields
+     * @param <T>
+     * @return
+     * @throws StorageException when any storage error occurs
+     */
+    <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException;
+
+    /**
      * Lists all {@link Storable} objects existing in the given namespace. If no entity is found, and empty list will be returned.
      * @param namespace
      * @return
