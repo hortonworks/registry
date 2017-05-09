@@ -15,9 +15,9 @@
  */
 package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
 
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 
 import java.util.List;
 import java.util.stream.Collectors;

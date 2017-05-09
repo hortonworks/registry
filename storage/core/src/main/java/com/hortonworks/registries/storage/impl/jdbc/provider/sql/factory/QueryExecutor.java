@@ -16,12 +16,12 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory;
 
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

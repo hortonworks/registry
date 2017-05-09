@@ -15,11 +15,11 @@
  **/
 package com.hortonworks.registries.storage;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
-import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -131,25 +131,31 @@ public abstract class AbstractStoreManagerTest {
             test.addAllToStorage();
             Collection<Storable> allExisting = getStorageManager().list(test.getNameSpace());
             Collection<Storable> allMatchingQueryParamsFilter = getStorageManager().find(test.getNameSpace(), null);
-            Assert.assertEquals(allExisting, allMatchingQueryParamsFilter);
+            assertIterators(allExisting, allMatchingQueryParamsFilter);
         }
     }
 
+    public void assertIterators(Collection collection1, Collection collection2) {
+        Assert.assertTrue(Iterators.elementsEqual(collection1.iterator(), collection2.iterator()));
+    }
+
+    @Test
     public void testFindOrderBy() {
         for (StorableTest test : storableTests) {
             test.addAllToStorage();
-            List<QueryParam> queryParams = Collections.singletonList(new QueryParam(JdbcStorageManager.ORDER_BY_FIELDS_PARAM_NAME, "id,d"));
+            List<QueryParam> queryParams = Collections.emptyList();
             Collection<? extends Storable> allExisting = getStorageManager().list(test.getNameSpace());
 
             ArrayList<? extends Storable> sortedStorables = Lists.newArrayList(allExisting);
             sortedStorables.sort((Comparator<Storable>) (storable1, storable2) -> (int) (storable2.getId() - storable1.getId()));
 
-            final Collection<Storable> allMatchingOrderByFilter = getStorageManager().find(test.getNameSpace(), queryParams);
+            List<OrderByField> orderByFields = Lists.newArrayList(OrderByField.of("id", true));
+            final Collection<Storable> allMatchingOrderByFilter = getStorageManager().find(test.getNameSpace(), queryParams, orderByFields);
 
             System.out.println("allMatchingOrderByFilter = " + allMatchingOrderByFilter);
             System.out.println("sortedStorables = " + sortedStorables);
 
-            Assert.assertEquals(sortedStorables, allMatchingOrderByFilter);
+            assertIterators(sortedStorables, allMatchingOrderByFilter);
         }
     }
 
@@ -165,7 +171,7 @@ public abstract class AbstractStoreManagerTest {
             };
 
             final Collection<Storable> allMatchingQueryParamsFilter = getStorageManager().find(test.getNameSpace(), queryParams);
-            Assert.assertEquals(Collections.EMPTY_LIST, allMatchingQueryParamsFilter);
+            assertIterators(Collections.EMPTY_LIST, allMatchingQueryParamsFilter);
         }
     }
 
