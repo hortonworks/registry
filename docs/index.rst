@@ -9,3 +9,5 @@ Contents:
    install
    schema-registry
    security
+   roadmap
+   competition
