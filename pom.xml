@@ -289,6 +289,7 @@
         <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <spring.version>4.3.6.RELEASE</spring.version>
+        <postgresql.version>9.4.1212</postgresql.version>
     </properties>
 
     <distributionManagement>
@@ -512,6 +513,12 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
                 <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <!-- Test dependencies -->

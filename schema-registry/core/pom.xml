@@ -13,7 +13,6 @@
 
     <properties>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
-        <mysql-connector-version>6.0.4</mysql-connector-version>
     </properties>
 
     <dependencies>
@@ -89,11 +88,6 @@
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${mysql-connector-version}</version>
         </dependency>
 
         <!-- test dependencies -->

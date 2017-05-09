@@ -59,6 +59,14 @@
         </fileSet>
 
         <fileSet>
+            <directory>${project.basedir}./storage/core/target/dependency</directory>
+            <outputDirectory>/libs</outputDirectory>
+            <includes>
+                <include>postgresql*</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
             <directory>${project.basedir}./storage/tool/target/dependency</directory>
             <outputDirectory>/bootstrap/lib</outputDirectory>
             <includes>
@@ -89,36 +97,15 @@
                 <include>*</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./conf</directory>
+            <outputDirectory>/conf</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+        </fileSet>
     </fileSets>
     <files>
-        <!--
-            $REGISTRY_HOME/conf
-        -->
-        <file>
-            <source>${project.basedir}./conf/registry-dev.yaml</source>
-            <outputDirectory>/conf</outputDirectory>
-            <destName>registry-dev.yaml</destName>
-        </file>
-        <file>
-            <source>${project.basedir}./conf/registry.yaml</source>
-            <outputDirectory>/conf</outputDirectory>
-            <destName>registry.yaml</destName>
-        </file>
-        <file>
-            <source>${project.basedir}./conf/registry.yaml.inmemory.example</source>
-            <outputDirectory>/conf</outputDirectory>
-            <destName>registry.yaml.inmemory.example</destName>
-        </file>
-        <file>
-            <source>${project.basedir}./conf/registry.yaml.mysql.example</source>
-            <outputDirectory>/conf</outputDirectory>
-            <destName>registry.yaml.mysql.example</destName>
-        </file>
-        <file>
-            <source>${project.basedir}./conf/registry-env.sh</source>
-            <outputDirectory>/conf</outputDirectory>
-            <destName>registry-env.sh</destName>
-        </file>
         <file>
             <source>${project.basedir}./README.md</source>
             <outputDirectory>/</outputDirectory>
