@@ -18,11 +18,10 @@
 package com.hortonworks.registries.storage.impl.jdbc.postgres;
 
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.StorableKey;
-import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import org.junit.Assert;
 import org.junit.Test;
 

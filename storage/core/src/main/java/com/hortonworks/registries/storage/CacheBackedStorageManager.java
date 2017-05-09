@@ -80,6 +80,11 @@ public class CacheBackedStorageManager implements StorageManager {
     }
 
     @Override
+    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException {
+        return ((GuavaCache)cache).getDao().find(namespace, queryParams, orderByFields);
+    }
+
+    @Override
     public <T extends Storable> Collection<T> list(String namespace) throws StorageException {
         return dao.list(namespace);
     }

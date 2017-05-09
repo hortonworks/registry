@@ -77,6 +77,21 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test
+    public void testSchemaMetadataOps() throws Exception {
+        for (SchemaCompatibility schemaCompatibility : SchemaCompatibility.values()) {
+            SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("compatibility-"+schemaCompatibility)
+                    .type(AvroSchemaProvider.TYPE)
+                    .description("devices schema")
+                    .compatibility(schemaCompatibility)
+                    .schemaGroup(SCHEMA_GROUP).build();
+
+            Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadata);
+            SchemaMetadata schemaMetadataReturned = schemaRegistry.getSchemaMetadata(schemaMetadataId).getSchemaMetadata();
+            Assert.assertEquals(schemaMetadata, schemaMetadataReturned);
+        }
+    }
+
+    @Test
     public void testRegistrySchemaOps() throws Exception {
         SchemaCompatibility compatibility = SchemaCompatibility.BOTH;
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(schemaName)
@@ -86,6 +101,8 @@ public class AvroSchemaRegistryTest {
                 .schemaGroup(SCHEMA_GROUP).build();
 
         Long schemaMetadataId = schemaRegistry.addSchemaMetadata(schemaMetadata);
+        SchemaMetadata schemaMetadataReturned = schemaRegistry.getSchemaMetadata(schemaMetadataId).getSchemaMetadata();
+        Assert.assertEquals(schemaMetadata, schemaMetadataReturned);
 
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadata, schema1, "initial version of the schema");
         Integer v2 = schemaRegistry.addSchemaVersion(schemaName, schema2, "second version of the the schema");

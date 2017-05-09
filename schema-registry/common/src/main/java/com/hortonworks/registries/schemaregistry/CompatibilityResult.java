@@ -39,6 +39,7 @@ public final class CompatibilityResult implements Serializable {
     private CompatibilityResult(boolean compatible, String errorMessage, String errorLocation, String schema) {
         this.compatible = compatible;
         this.errorMessage = errorMessage;
+        this.errorLocation = errorLocation;
         this.schema = schema;
     }
 

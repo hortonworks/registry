@@ -495,17 +495,21 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
             for (final Schema.Field readerField : reader.getFields()) {
                 location.push(Integer.toString(readerField.pos()));
                 final Schema.Field writerField = lookupWriterField(writer, readerField);
+                Schema readerFieldSchema = readerField.schema();
                 if (writerField == null) {
                     // Reader field does not correspond to any field in the writer
                     // record schema, so the reader field must have a default value.
                     if (readerField.defaultValue() == null) {
-                        // reader field has no default value
-                        return SchemaCompatibilityResult.incompatible(
-                                SchemaIncompatibilityType.READER_FIELD_MISSING_DEFAULT_VALUE, reader, writer,
-                                readerField.name(), location);
+                        if(!isUnionWithFirstTypeAsNull(readerFieldSchema)) {
+                            // reader field has no default value
+                            String message = String.format("Reader schema missing default value for field: %s", readerField.name());
+                            return SchemaCompatibilityResult.incompatible(
+                                    SchemaIncompatibilityType.READER_FIELD_MISSING_DEFAULT_VALUE, reader, writer,
+                                    message, location);
+                        }
                     }
                 } else {
-                    SchemaCompatibilityResult compatibility = getCompatibility("type", readerField.schema(),
+                    SchemaCompatibilityResult compatibility = getCompatibility("type", readerFieldSchema,
                                                                                writerField.schema(), location);
                     if (compatibility.getCompatibility() == SchemaCompatibilityType.INCOMPATIBLE) {
                         return compatibility;
@@ -517,6 +521,11 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
             // record:
             location.pop();
             return SchemaCompatibilityResult.compatible();
+        }
+
+        private boolean isUnionWithFirstTypeAsNull(Schema readerFieldSchema) {
+            return readerFieldSchema.getType() == Schema.Type.UNION
+                    && readerFieldSchema.getTypes().get(0).getType() == Schema.Type.NULL;
         }
 
         private SchemaCompatibilityResult checkReaderEnumContainsAllWriterEnumSymbols(

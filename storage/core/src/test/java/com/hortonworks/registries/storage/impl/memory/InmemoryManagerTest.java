@@ -16,7 +16,6 @@
 package com.hortonworks.registries.storage.impl.memory;
 
 import com.hortonworks.registries.storage.DeviceInfoTest;
-import com.hortonworks.registries.storage.StorableTest;
 
 import java.util.Collections;
 
@@ -27,7 +26,7 @@ public class InmemoryManagerTest extends AbstractInMemoryStorageManagerTest {
 
     @Override
     protected void setStorableTests() {
-        storableTests = Collections.<StorableTest>singletonList(new DeviceInfoTest());
+        storableTests = Collections.singletonList(new DeviceInfoTest());
     }
 
 }

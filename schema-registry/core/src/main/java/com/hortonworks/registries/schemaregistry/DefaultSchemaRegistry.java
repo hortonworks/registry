@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.StorageException;
@@ -53,6 +54,8 @@ import java.util.stream.Collectors;
  */
 public class DefaultSchemaRegistry implements ISchemaRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
+
+    public static final String ORDER_BY_FIELDS_PARAM_NAME = "_orderByFields";
 
     private static final int DEFAULT_RETRY_CT = 5;
 
@@ -322,7 +325,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Collection<SchemaMetadataStorable> schemaMetadataStorables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, params);
         SchemaMetadataInfo schemaMetadataInfo = null;
         if (schemaMetadataStorables != null && !schemaMetadataStorables.isEmpty()) {
-            schemaMetadataInfo = SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorables.iterator().next());
+            schemaMetadataInfo = schemaMetadataStorables.iterator().next().toSchemaMetadataInfo();
             if (schemaMetadataStorables.size() > 1) {
                 LOG.warn("No unique entry with schemaMetatadataId: [{}]", schemaMetadataId);
             }
@@ -338,7 +341,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setName(schemaName);
 
         SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
-        return schemaMetadataStorable != null ? SchemaMetadataStorable.toSchemaMetadataInfo(schemaMetadataStorable) : null;
+        return schemaMetadataStorable != null ? schemaMetadataStorable.toSchemaMetadataInfo() : null;
     }
 
     @Override
@@ -349,27 +352,62 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (filters == null || filters.isEmpty()) {
             storables = storageManager.list(SchemaMetadataStorable.NAME_SPACE);
         } else {
+            List<QueryParam> orderByFieldQueryParams = new ArrayList<>();
             List<QueryParam> queryParams = new ArrayList<>(filters.size());
             for (Map.Entry<String, String> entry : filters.entrySet()) {
-                queryParams.add(new QueryParam(entry.getKey(), entry.getValue()));
+                QueryParam queryParam = new QueryParam(entry.getKey(), entry.getValue());
+                if(ORDER_BY_FIELDS_PARAM_NAME.equals(entry.getKey())) {
+                    orderByFieldQueryParams.add(queryParam);
+                } else{
+                    queryParams.add(queryParam);
+                }
             }
-            storables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, queryParams);
+            storables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, queryParams, getOrderByFields(orderByFieldQueryParams));
         }
 
         List<SchemaMetadata> result;
         if (storables != null && !storables.isEmpty()) {
             result = new ArrayList<>();
             for (SchemaMetadataStorable storable : storables) {
-                result.add(new SchemaMetadata.Builder(storable.getName())
-                                   .type(storable.getType())
-                                   .schemaGroup(storable.getSchemaGroup())
-                                   .build());
+                result.add(storable.toSchemaMetadata());
             }
         } else {
             result = Collections.emptyList();
         }
 
         return result;
+    }
+
+    private List<OrderByField> getOrderByFields(List<QueryParam> queryParams) {
+        if(queryParams == null || queryParams.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<OrderByField> orderByFields = new ArrayList<>();
+        for (QueryParam queryParam : queryParams) {
+            if (ORDER_BY_FIELDS_PARAM_NAME.equals(queryParam.getName())) {
+                // _orderByFields=[<field-name>,<a/d>,]*
+                // example can be : _orderByFields=foo,a,bar,d
+                // order by foo with ascending then bar with descending
+                String value = queryParam.getValue();
+                String[] splitStrings = value.split(",");
+                for (int i = 0; i < splitStrings.length; i += 2) {
+                    String ascStr = splitStrings[i+1];
+                    boolean descending;
+                    if("a".equals(ascStr)) {
+                        descending = false;
+                    } else if("d".equals(ascStr)) {
+                        descending = true;
+                    } else {
+                        throw new IllegalArgumentException("Ascending or Descending identifier can only be 'a' or 'd' respectively.");
+                    }
+
+                    orderByFields.add(OrderByField.of(splitStrings[i], descending));
+                }
+            }
+        }
+
+        return orderByFields;
     }
 
     @Override

@@ -21,6 +21,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
@@ -31,7 +32,6 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.Po
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlInsertUpdateDuplicate;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.OrderByField;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;

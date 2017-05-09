@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
@@ -62,6 +63,11 @@ public class SingletonInmemoryStore implements StorageManager {
     @Override
     public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams) throws StorageException {
         return inMemoryStorageManager.find(namespace, queryParams);
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException {
+        return inMemoryStorageManager.find(namespace, queryParams, orderByFields);
     }
 
     @Override
