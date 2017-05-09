@@ -22,7 +22,8 @@ const SchemaREST = {
     options.method = options.method || 'POST';
     options.headers = options.headers || {
       'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      '_throwErrorIfExists': 'true'
     };
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemas', options)

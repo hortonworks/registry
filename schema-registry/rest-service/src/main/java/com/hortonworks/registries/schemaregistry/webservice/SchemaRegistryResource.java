@@ -78,6 +78,8 @@ import java.util.function.Supplier;
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
+    public static final String THROW_ERROR_IF_EXISTS = "_throwErrorIfExists";
+    public static final String THROW_ERROR_IF_EXISTS_LOWER_CASE = THROW_ERROR_IF_EXISTS.toLowerCase();
 
     private final ISchemaRegistry schemaRegistry;
     private final AtomicReference<LeadershipParticipant> leadershipParticipant;
@@ -242,7 +244,10 @@ public class SchemaRegistryResource {
     }
 
     private boolean isThrowErrorIfExists(HttpHeaders httpHeaders) {
-        List<String> values = httpHeaders.getRequestHeader("_throwErrorIfExists");
+        List<String> values = httpHeaders.getRequestHeader(THROW_ERROR_IF_EXISTS);
+        if(values != null) {
+            values = httpHeaders.getRequestHeader(THROW_ERROR_IF_EXISTS_LOWER_CASE);
+        }
         return values != null && !values.isEmpty() && Boolean.parseBoolean(values.get(0));
     }
 
