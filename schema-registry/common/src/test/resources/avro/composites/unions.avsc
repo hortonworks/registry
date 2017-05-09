@@ -1,0 +1,46 @@
+{
+  "name": "unions",
+  "namespace": "com.hortonworks.types",
+  "type": "record",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "address",
+      "type": {
+        "name": "addressType",
+        "type": "record",
+        "fields": [
+          {
+            "name": "houseNo",
+            "type": "string"
+          },
+          {
+            "name": "street",
+            "type": "string"
+          },
+          {
+            "name": "pincode",
+            "type": [
+              "null",
+              "long"
+            ]
+          },
+          {
+            "name": "subAddress",
+            "type": "addressType"
+          }
+        ]
+      }
+    },
+    {
+      "name": "secondaryAddress",
+      "type": [
+        "null",
+        "addressType"
+      ]
+    }
+  ]
+}
