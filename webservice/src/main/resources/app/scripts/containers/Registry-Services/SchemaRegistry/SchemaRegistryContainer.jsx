@@ -439,6 +439,10 @@ export default class SchemaRegistryContainer extends Component {
                         </div>
                         </div>
                       );
+                      const expandButton = ' ' || <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
+                        <i className="fa fa-arrows-alt"></i>
+                      </button>;
+
                       return (<Panel
                             header={header}
                             headerRole="tabpanel"
@@ -462,11 +466,7 @@ export default class SchemaRegistryContainer extends Component {
                                               <button key="e.2" type="button" className="btn btn-link btn-edit-schema" onClick={this.handleAddVersion.bind(this, s)}>
                                                 <i className="fa fa-pencil"></i>
                                               </button>,
-                                              <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
-                                                <i className="fa fa-arrows-alt"></i>
-                                              </button>]) : (<button type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
-                                              <i className="fa fa-arrows-alt"></i>
-                                              </button>))
+                                              expandButton]) : expandButton)
                                             : ''
                                             }
                                             {s.renderCodemirror ?
@@ -554,7 +554,7 @@ export default class SchemaRegistryContainer extends Component {
 }
         </BaseContainer>
 
-        <FSModal ref="schemaModal" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
+        <FSModal ref="schemaModal" bsSize="large" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
           <SchemaInfoForm ref="addSchema"/>
         </FSModal>
         <FSModal ref="versionModal" data-title={this.state.modalTitle} data-resolve={this.handleSaveVersion.bind(this)}>

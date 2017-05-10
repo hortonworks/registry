@@ -49,7 +49,8 @@ export default class SchemaVersionForm extends Component {
       schemaTextFile: schemaObj.schemaTextFile || null,
       description: '',
       showError: false,
-      changedFields: []
+      changedFields: [],
+      showCodemirror: true
     };
   }
 
@@ -73,13 +74,25 @@ export default class SchemaVersionForm extends Component {
       var reader = new FileReader();
       reader.onload = function(e) {
         if(Utils.isValidJson(reader.result)) {
-          this.setState({schemaTextFile: file, schemaText: reader.result});
+          this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else {
-          this.setState({schemaTextFile: null, schemaText: ''});
+          this.setState({schemaTextFile: null, schemaText: '', showCodemirror: true});
         }
       }.bind(this);
       reader.readAsText(file);
     }
+  }
+
+  handleBrowseFile(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    var file = e.target.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
+    }.bind(this);
+    reader.readAsText(file);
   }
 
   validateData() {
@@ -120,7 +133,7 @@ export default class SchemaVersionForm extends Component {
       gutters: ["CodeMirror-lint-markers"],
       lint: true
     };
-    let {showError, changedFields} = this.state;
+    let {schemaText, showError, changedFields, showCodemirror} = this.state;
     return (
       <form>
         <div className="form-group">
@@ -131,10 +144,41 @@ export default class SchemaVersionForm extends Component {
               : "form-control"} value={this.state.description} required={true}/>
           </div>
         </div>
-        <div className="form-group">
-          <label>Schema Text <span className="text-danger">*</span>&nbsp;<span style={{textTransform: 'none'}}>(Type or Drop a file)</span></label>
-          <div onDrop={this.handleOnDrop.bind(this)}>
-            <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
+        <div className="form-group version-codemirror-container">
+          <label>Schema Text <span className="text-danger">*</span></label>
+          {showCodemirror
+            ? 
+            <a className="pull-right clear-link" href="javascript:void(0)" onClick={() => { this.setState({schemaText: '', showCodemirror: false}); }}> CLEAR </a>
+            : 
+            null
+          }
+          <div onDrop={this.handleOnDrop.bind(this)} onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}>
+            {showCodemirror
+              ?
+              <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
+              :
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+                <div onClick={(e) => {
+                  this.setState({showCodemirror: true});
+                }}>
+                  <div className="main-title">Copy & Paste</div>
+                  <div className="sub-title m-t-sm m-b-sm">OR</div>
+                  <div className="main-title">Drag & Drop</div>
+                  <div className="sub-title" style={{"marginTop": "-4px"}}>Files Here</div>
+                  <div className="sub-title m-t-sm m-b-sm">OR</div>
+                  <div  className="m-t-md">
+                    <input type="file" ref="browseFile" className="inputfile" onClick={(e) => {
+                      e.stopPropagation();
+                    }} onChange={this.handleBrowseFile.bind(this)}/>
+                    <label htmlFor="file" className="btn btn-success">BROWSE</label>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         </div>
       </form>
