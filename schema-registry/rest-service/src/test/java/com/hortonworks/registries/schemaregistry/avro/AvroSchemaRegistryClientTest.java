@@ -16,19 +16,20 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.common.catalog.CatalogResponse;
-import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.common.test.IntegrationTest;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
-import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import org.apache.commons.io.IOUtils;
@@ -47,9 +48,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING;
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE;
@@ -269,23 +270,27 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
 
         schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchema("/device.avsc"), "Initial version of the schema"));
-        SerDesInfo serializerInfo = createSerDesInfo(fileId);
-        Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
+        SerDesPair serializerInfo = createSerDesInfo(fileId);
+        Long serializerId = schemaRegistryClient.addSerDes(serializerInfo);
 
         String schemaName = schemaMetadata.getName();
         schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaName);
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerDes(schemaName);
 
-        Assert.assertTrue(new HashSet<>(serializers).contains(createSerializerInfo(serializerId, serializerInfo)));
+        Assert.assertTrue(serializers.stream()
+                                  .map(x -> x.getSerDesPair())
+                                  .collect(Collectors.toList())
+                                  .contains(serializerInfo));
     }
 
-    private SerDesInfo createSerDesInfo(String fileId) {
-        return new SerDesInfo.Builder()
-                .name("avro serializer")
-                .description("avro serializer")
-                .fileId(fileId)
-                .className("con.hwx.registries.serializer.AvroSnapshotSerializer")
-                .buildSerializerInfo();
+    private SerDesPair createSerDesInfo(String fileId) {
+        return new SerDesPair(
+                "avro serializer",
+                "avro serializer",
+                fileId,
+                "con.hwx.registries.serializer.AvroSnapshotSerializer",
+                "con.hwx.registries.serializer.AvroSnapshotDeserializer"
+                );
     }
 
     private String uploadFile() throws IOException {
@@ -300,13 +305,4 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         return schemaRegistryClient.uploadFile(inputStream);
     }
 
-    private SerDesInfo createSerializerInfo(Long serializerId, SerDesInfo serializerInfo) {
-        return new SerDesInfo.Builder()
-                .id(serializerId)
-                .description(serializerInfo.getDescription())
-                .name(serializerInfo.getName())
-                .fileId(serializerInfo.getFileId())
-                .className(serializerInfo.getClassName())
-                .buildSerializerInfo();
-    }
 }

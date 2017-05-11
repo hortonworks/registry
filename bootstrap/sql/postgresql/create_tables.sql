@@ -51,13 +51,13 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
-  "id"           SERIAL PRIMARY KEY,
-  "description"  TEXT,
-  "name"         TEXT                  NOT NULL,
-  "fileId"       TEXT                  NOT NULL,
-  "className"    TEXT                  NOT NULL,
-  "isSerializer" BOOLEAN               NOT NULL,
-  "timestamp"    BIGINT                NOT NULL
+  "id"                    SERIAL PRIMARY KEY,
+  "description"           TEXT,
+  "name"                  TEXT                  NOT NULL,
+  "fileId"                TEXT                  NOT NULL,
+  "serializerClassName"   TEXT                  NOT NULL,
+  "deserializerClassName" TEXT                  NOT NULL,
+  "timestamp"             BIGINT                NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_mapping (

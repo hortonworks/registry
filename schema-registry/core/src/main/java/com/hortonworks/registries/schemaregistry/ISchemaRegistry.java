@@ -87,13 +87,11 @@ public interface ISchemaRegistry {
      * @param serDesInfo
      * @return
      */
-    Long addSerDesInfo(SerDesInfo serDesInfo);
+    Long addSerDesInfo(SerDesPair serDesInfo);
 
     SerDesInfo getSerDesInfo(Long serDesId);
 
     Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId);
-
-    Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId);
 
     /**
      * Download the jar file which contains the classes required for respective serializer/deserializer for given {@code serDesId}

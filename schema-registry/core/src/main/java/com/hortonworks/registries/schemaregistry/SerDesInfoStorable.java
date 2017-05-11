@@ -30,9 +30,9 @@ public class SerDesInfoStorable extends AbstractStorable {
     public static final String ID = "id";
     public static final String DESCRIPTION = "description";
     public static final String NAME = "name";
-    public static final String CLASS_NAME = "className";
+    public static final String SERIALIZER_CLASS_NAME = "serializerClassName";
+    public static final String DESERIALIZER_CLASS_NAME = "deserializerClassName";
     public static final String FILE_ID = "fileId";
-    public static final String SERIALIZER = "isSerializer";
     public static final String TIMESTAMP = "timestamp";
 
     public static final Schema SCHEMA = Schema.of(
@@ -40,8 +40,8 @@ public class SerDesInfoStorable extends AbstractStorable {
             Schema.Field.of(NAME, Schema.Type.STRING),
             Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
             Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-            Schema.Field.of(SERIALIZER, Schema.Type.BOOLEAN),
-            Schema.Field.of(CLASS_NAME, Schema.Type.STRING),
+            Schema.Field.of(SERIALIZER_CLASS_NAME, Schema.Type.STRING),
+            Schema.Field.of(DESERIALIZER_CLASS_NAME, Schema.Type.STRING),
             Schema.Field.of(FILE_ID, Schema.Type.STRING)
     );
 
@@ -66,24 +66,26 @@ public class SerDesInfoStorable extends AbstractStorable {
     private String fileId;
 
     /**
-     * Class name of serializer or deserializer
+     * Class name of serializer
      */
-    private String className;
+    private String serializerClassName;
 
-    private Boolean isSerializer;
+    /**
+     * Class name of deserializer
+     */
+    private String deserializerClassName;
 
     private Long timestamp;
 
     public SerDesInfoStorable() {
     }
 
-    public SerDesInfoStorable(Long id, String description, String name, String fileId, String className, boolean isSerializer) {
-        this.id = id;
-        this.description = description;
-        this.name = name;
-        this.fileId = fileId;
-        this.className = className;
-        this.isSerializer = isSerializer;
+    public SerDesInfoStorable(SerDesPair serDesPair) {
+        name = serDesPair.getName();
+        description = serDesPair.getDescription();
+        fileId = serDesPair.getFileId();
+        serializerClassName = serDesPair.getSerializerClassName();
+        deserializerClassName = serDesPair.getDeserializerClassName();
     }
 
     @JsonIgnore
@@ -137,20 +139,20 @@ public class SerDesInfoStorable extends AbstractStorable {
         this.fileId = fileId;
     }
 
-    public String getClassName() {
-        return className;
+    public String getSerializerClassName() {
+        return serializerClassName;
     }
 
-    public void setClassName(String className) {
-        this.className = className;
+    public void setSerializerClassName(String serializerClassName) {
+        this.serializerClassName = serializerClassName;
     }
 
-    public Boolean getIsSerializer() {
-        return isSerializer;
+    public String getDeserializerClassName() {
+        return deserializerClassName;
     }
 
-    public void setIsSerializer(Boolean serializer) {
-        isSerializer = serializer;
+    public void setDeserializerClassName(String serializer) {
+        deserializerClassName = serializer;
     }
 
     public Long getTimestamp() {
@@ -161,19 +163,22 @@ public class SerDesInfoStorable extends AbstractStorable {
         this.timestamp = timestamp;
     }
 
-    public static SerDesInfoStorable fromSerDesInfo(SerDesInfo serDesInfo) {
-        return new SerDesInfoStorable(serDesInfo.getId(), serDesInfo.getDescription(), serDesInfo.getName(),
-                serDesInfo.getFileId(), serDesInfo.getClassName(), serDesInfo.getIsSerializer());
+    public SerDesInfo toSerDesInfo() {
+        return new SerDesInfo(id,
+                              timestamp,
+                              new SerDesPair(name, description, fileId, serializerClassName, deserializerClassName));
     }
 
-    public SerDesInfo toSerDesInfo() {
-        SerDesInfo.Builder builder = new SerDesInfo.Builder()
-                .id(getId())
-                .name(getName())
-                .description(getDescription())
-                .fileId(getFileId())
-                .className(getClassName());
-
-        return getIsSerializer() ? builder.buildSerializerInfo() : builder.buildDeserializerInfo();
+    @Override
+    public String toString() {
+        return "SerDesInfoStorable{" +
+                "id=" + id +
+                ", description='" + description + '\'' +
+                ", name='" + name + '\'' +
+                ", fileId='" + fileId + '\'' +
+                ", serializerClassName='" + serializerClassName + '\'' +
+                ", deserializerClassName='" + deserializerClassName + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }

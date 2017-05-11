@@ -16,20 +16,21 @@
 
 package com.hortonworks.registries.schemaregistry.examples.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
-import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -186,17 +187,13 @@ public class SampleSchemaRegistryClientApp {
                                                                    new SchemaVersion(getSchema("/device.avsc"),
                                                                                      "Initial version of the schema"));
 
-        // register serializer
-        Long serializerId = registerSimpleSerializer(fileId);
-
-        // register deserializer
-        Long deserializerId = registerSimpleDeserializer(fileId);
+        // register serializer/deserializer
+        Long serDesId = registerSimpleSerDes(fileId);
 
         // map serializer and deserializer with schemakey
         // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
         String schemaName = schemaMetadata.getName();
-        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
-        schemaRegistryClient.mapSchemaWithSerDes(schemaName, deserializerId);
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serDesId);
 
         SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaMetadata);
         String payload = "Random text: " + new Random().nextLong();
@@ -208,30 +205,21 @@ public class SampleSchemaRegistryClientApp {
         LOG.info("Given payload and deserialized object are equal: " + payload.equals(deserializedObject));
     }
 
-    private Long registerSimpleSerializer(String fileId) {
+    private Long registerSimpleSerDes(String fileId) {
         String simpleSerializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleSerializer";
-        SerDesInfo serializerInfo = new SerDesInfo.Builder()
-                .name("simple-serializer")
-                .description("simple serializer")
-                .fileId(fileId)
-                .className(simpleSerializerClassName)
-                .buildSerializerInfo();
-        return schemaRegistryClient.addSerializer(serializerInfo);
-    }
-
-    private Long registerSimpleDeserializer(String fileId) {
         String simpleDeserializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleDeserializer";
-        SerDesInfo deserializerInfo = new SerDesInfo.Builder()
-                .name("simple-deserializer")
-                .description("simple deserializer")
-                .fileId(fileId)
-                .className(simpleDeserializerClassName)
-                .buildDeserializerInfo();
-        return schemaRegistryClient.addDeserializer(deserializerInfo);
+
+        SerDesPair serializerInfo = new SerDesPair(
+                "simple-serializer",
+                "simple serializer",
+                fileId,
+                simpleSerializerClassName,
+                simpleDeserializerClassName);
+        return schemaRegistryClient.addSerDes(serializerInfo);
     }
 
     private SnapshotDeserializer<byte[], Object, Integer> getSnapshotDeserializer(SchemaMetadata schemaMetadata) {
-        Collection<SerDesInfo> deserializers = schemaRegistryClient.getDeserializers(schemaMetadata.getName());
+        Collection<SerDesInfo> deserializers = schemaRegistryClient.getSerDes(schemaMetadata.getName());
         if (deserializers.isEmpty()) {
             throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }
@@ -240,7 +228,7 @@ public class SampleSchemaRegistryClientApp {
     }
 
     private SnapshotSerializer<Object, byte[], SchemaMetadata> getSnapshotSerializer(SchemaMetadata schemaMetadata) {
-        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaMetadata.getName());
+        Collection<SerDesInfo> serializers = schemaRegistryClient.getSerDes(schemaMetadata.getName());
         if (serializers.isEmpty()) {
             throw new RuntimeException("Serializer for schemaKey:" + schemaMetadata + " must exist");
         }

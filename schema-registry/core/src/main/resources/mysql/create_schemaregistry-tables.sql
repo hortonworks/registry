@@ -1,7 +1,19 @@
--- CREATE DATABASE IF NOT EXISTS schema_registry;
--- USE schema_registry;
+-- Copyright 2016 Hortonworks.
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--    http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 -- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
+
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
   id            BIGINT AUTO_INCREMENT NOT NULL,
   type          VARCHAR(256)          NOT NULL,
@@ -46,8 +58,8 @@ CREATE TABLE IF NOT EXISTS schema_serdes_info (
   description  TEXT,
   name         TEXT                  NOT NULL,
   fileId       TEXT                  NOT NULL,
-  className    TEXT                  NOT NULL,
-  isSerializer BOOLEAN               NOT NULL,
+  serializerClassName    TEXT        NOT NULL,
+  deserializerClassName  TEXT        NOT NULL,
   timestamp    BIGINT                NOT NULL,
   PRIMARY KEY (id)
 );
