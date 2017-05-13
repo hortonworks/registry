@@ -25,12 +25,12 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -249,13 +249,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param serializerInfo serializer information
      * @return unique id for the added Serializer for the given {@code serializerInfo}
      */
-    Long addSerializer(SerDesInfo serializerInfo);
-
-    /**
-     * @param deserializerInfo deserializer information
-     * @return unique id for the added Serializer for the given {@code schemaSerializerInfo}
-     */
-    Long addDeserializer(SerDesInfo deserializerInfo);
+    Long addSerDes(SerDesPair serializerInfo);
 
     /**
      * Maps Serializer/Deserializer of the given {@code serDesId} to Schema with {@code schemaName}
@@ -290,13 +284,7 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      * @param schemaName name identifying a schema
      * @return Collection of Serializers registered for the schema with {@code schemaName}
      */
-    Collection<SerDesInfo> getSerializers(String schemaName);
-
-    /**
-     * @param schemaName name identifying a schema
-     * @return collection of Deserializers registered for the schema with {@code schemaName}
-     */
-    Collection<SerDesInfo> getDeserializers(String schemaName);
+    Collection<SerDesInfo> getSerDes(String schemaName);
 
     /**
      * Returns a new instance of the respective Serializer class for the given {@code serializerInfo}

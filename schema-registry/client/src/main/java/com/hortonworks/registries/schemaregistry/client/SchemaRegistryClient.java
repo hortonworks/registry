@@ -34,6 +34,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -47,11 +48,9 @@ import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.multipart.BodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,8 +130,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SCHEMA_PROVIDERS_PATH = SCHEMA_REGISTRY_PATH + "/schemaproviders/";
     private static final String SCHEMAS_BY_ID_PATH = SCHEMA_REGISTRY_PATH + "/schemasById/";
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
-    private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serializers/";
-    private static final String DESERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/deserializers/";
+    private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serdes/";
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
     public static final String SEARCH_FIELDS = "search/fields";
@@ -207,7 +205,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final WebTarget rootTarget;
         private final WebTarget searchFieldsTarget;
         private final WebTarget serializersTarget;
-        private final WebTarget deserializersTarget;
         private final WebTarget filesTarget;
 
         SchemaRegistryTargets(WebTarget rootTarget) {
@@ -217,7 +214,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             this.rootTarget = rootTarget;
             searchFieldsTarget = schemasTarget.path(SEARCH_FIELDS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
-            deserializersTarget = rootTarget.path(DESERIALIZERS_PATH);
             filesTarget = rootTarget.path(FILES_PATH);
         }
 
@@ -503,13 +499,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Long addSerializer(SerDesInfo serializerInfo) {
-        return postEntity(currentSchemaRegistryTargets().serializersTarget, serializerInfo, Long.class);
-    }
-
-    @Override
-    public Long addDeserializer(SerDesInfo deserializerInfo) {
-        return postEntity(currentSchemaRegistryTargets().deserializersTarget, deserializerInfo, Long.class);
+    public Long addSerDes(SerDesPair serDesPair) {
+        return postEntity(currentSchemaRegistryTargets().serializersTarget, serDesPair, Long.class);
     }
 
     @Override
@@ -553,24 +544,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SerDesInfo> getSerializers(String schemaName) {
-        String path = encode(schemaName) + "/serializers/";
+    public Collection<SerDesInfo> getSerDes(String schemaName) {
+        String path = encode(schemaName) + "/serdes/";
         return getEntities(currentSchemaRegistryTargets().schemasTarget.path(path), SerDesInfo.class);
     }
 
-    @Override
-    public Collection<SerDesInfo> getDeserializers(String schemaName) {
-        String path = encode(schemaName) + "/deserializers/";
-        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(path), SerDesInfo.class);
-    }
-
-    public <T> T createSerializerInstance(SerDesInfo serializerInfo) {
-        return createInstance(serializerInfo, SERIALIZER_INTERFACE_CLASSES);
+    public <T> T createSerializerInstance(SerDesInfo serDesInfo) {
+        return createInstance(serDesInfo, true);
     }
 
     @Override
-    public <T> T createDeserializerInstance(SerDesInfo deserializerInfo) {
-        return createInstance(deserializerInfo, DESERIALIZER_INTERFACE_CLASSES);
+    public <T> T createDeserializerInstance(SerDesInfo serDesInfo) {
+        return createInstance(serDesInfo, false);
     }
 
     @Override
@@ -578,19 +563,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         client.close();
     }
 
-    private <T> T createInstance(SerDesInfo serDesInfo, Set<Class<?>> interfaceClasses) {
+    private <T> T createInstance(SerDesInfo serDesInfo, boolean isSerializer) {
+        Set<Class<?>> interfaceClasses = isSerializer ? SERIALIZER_INTERFACE_CLASSES : DESERIALIZER_INTERFACE_CLASSES;
+
         if (interfaceClasses == null || interfaceClasses.isEmpty()) {
             throw new IllegalArgumentException("interfaceClasses array must be neither null nor empty.");
         }
 
         // loading serializer, create a class loader and and keep them in cache.
-        String fileId = serDesInfo.getFileId();
+        final SerDesPair serDesPair = serDesInfo.getSerDesPair();
+        String fileId = serDesPair.getFileId();
         // get class loader for this file ID
         ClassLoader classLoader = classLoaderCache.getClassLoader(fileId);
 
         T t;
         try {
-            String className = serDesInfo.getClassName();
+            String className = isSerializer ? serDesPair.getSerializerClassName() : serDesPair.getDeserializerClassName();
+
             Class<T> clazz = (Class<T>) Class.forName(className, true, classLoader);
             t = clazz.newInstance();
             List<Class<?>> classes = new ArrayList<>();
