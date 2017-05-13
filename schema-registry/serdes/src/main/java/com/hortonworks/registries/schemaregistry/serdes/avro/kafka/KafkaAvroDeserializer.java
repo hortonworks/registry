@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,27 +16,66 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
 import java.util.Map;
 
 /**
+ * This class can be configured as key or value deserializer for kafka consumer. This can be used like below with kafka consumers.
+ *
+ * <pre>{@code
+        // consumer configs
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+        props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1000");
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
+
+        // key deserializer
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+        // schema registry config
+        props.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl));
+
+        // configure reader versions for topics to be consumed.
+        Map<String, Integer> readerVersions = new HashMap<>();
+        readerVersions.put("clicks", 2);
+        readerVersions.put("users", 1);
+        props.put(KafkaAvroDeserializer.READER_VERSIONS, readerVersions);
+
+        // value deserializer
+        // current props are passed to KafkaAvroDeserializer instance by invoking #configure(Map, boolean) method.
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
+
+
+        KafkaConsumer<String, Object> consumer = new KafkaConsumer<>(props);
+
+ * }</pre>
  *
  */
 public class KafkaAvroDeserializer implements Deserializer<Object> {
 
     /**
-     * This property represents the version of a reader schema to be used in deserialization. This property can be
-     * passed to {@link #configure(Map, boolean)}.
+     * This property represents the version of a reader schema to be used in deserialization for each topic in
+     * {@link #deserialize(String, byte[])}. This property should be passed with configs argument to {@link #configure(Map, boolean)}.
+     * <p>
+     * For example, to set reader version of different topics which should be handled by this Deserializer.
+     * <pre>{@code
+     * Map<String, Object> configs = ...
+     * Map<String, Integer> readerVersions = new HashMap<>();
+     * readerVersions.put("clicks", 2);
+     * readerVersions.put("users", 1);
+     * configs.put(READER_VERSIONS, readerVersions);
+     * }</pre>
      */
-    String READER_VERSION = "schemaregistry.reader.schema.version";
+    public static final String READER_VERSIONS = "schemaregistry.reader.schema.versions";
 
     private final AvroSnapshotDeserializer avroSnapshotDeserializer;
-
-    private boolean isKey;
-    private Integer readerVersion;
+    private Map<String, Integer> readerVersions;
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
@@ -44,20 +83,14 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
-        this.isKey = isKey;
         avroSnapshotDeserializer.init(configs);
-        readerVersion = (Integer) configs.get(READER_VERSION);
+        Map<String, Integer> versions = (Map<String, Integer>) ((Map<String, Object>) configs).get(READER_VERSIONS);
+        readerVersions = versions != null ? versions : Collections.emptyMap();
     }
 
     @Override
     public Object deserialize(String topic, byte[] data) {
-        SchemaMetadata schemaMetadata = getSchemaKey(topic, isKey);
-        return avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(data),
-                                                    readerVersion);
-    }
-
-    protected SchemaMetadata getSchemaKey(String topic, boolean isKey) {
-        return Utils.getSchemaKey(topic, isKey);
+        return avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(data), readerVersions.get(topic));
     }
 
     @Override
