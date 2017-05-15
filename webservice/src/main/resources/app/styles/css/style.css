@@ -1339,3 +1339,27 @@ span.warning {
 .version-codemirror-container .CodeMirror{
   height: 450px;
 }
+
+.pagination {
+  font-size: 18px;
+}
+.pagination > li > a, .pagination > li > span {
+  background-color: #323544;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  margin-left: 5px;
+  padding: 3px 10px;
+}
+.pagination > .disabled > span, .pagination > .disabled > span:hover, .pagination > .disabled > span:focus, .pagination > .disabled > a, .pagination > .disabled > a:hover, .pagination > .disabled > a:focus {
+  background-color: #323544;
+  color:#a7a7a7;
+  opacity: 0.5;
+}
+.pagination > li > a:hover, .pagination > li > span:hover, .pagination > li > a:focus, .pagination > li > span:focus {
+  background-color:#323544;
+  color: #fff;
+}
+.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
+  background-color: #3eae4a;
+}

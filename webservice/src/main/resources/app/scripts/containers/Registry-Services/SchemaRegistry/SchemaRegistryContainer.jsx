@@ -27,7 +27,8 @@ import {
     Button,
     PanelGroup,
     Panel,
-    Modal
+    Modal,
+    Pagination
 } from 'react-bootstrap';
 import Utils from '../../../utils/Utils';
 import ReactCodemirror from 'react-codemirror';
@@ -85,11 +86,13 @@ export default class SchemaRegistryContainer extends Component {
         key : 'timestamp',
         text : 'Last Updated'
       },
-      expandSchema: false
+      expandSchema: false,
+      activePage: 1,
+      pageSize: 10
     };
     this.schemaObj = {};
     this.schemaText = '';
-    this.fetchData('timestamp,d'); //keyname,(a => ascending or d=> descending)
+    this.fetchData();
   }
   componentDidUpdate(){
     this.btnClassChange();
@@ -111,10 +114,14 @@ export default class SchemaRegistryContainer extends Component {
       }
     }
   }
-  fetchData(sortBy) {
+  fetchData() {
     let promiseArr = [],
       schemaData = [],
       schemaCount = 0;
+
+    const {key} = this.state.sorted;
+    const sortBy = (key === 'name') ? key+',a' : key+',d';
+
     SchemaREST.getAllSchemas(sortBy).then((schema) => {
       if (schema.responseMessage !== undefined) {
         FSReactToastr.error(
@@ -180,7 +187,7 @@ export default class SchemaRegistryContainer extends Component {
     (_.isEmpty(input.value)) ? this.setState({slideInput  : false}) : '';
   }
   onFilterChange = (e) => {
-    this.setState({filterValue: e.target.value.trim()});
+    this.setState({filterValue: e.target.value.trim(), activePage: 1});
   }
   filterSchema(entities, filterValue){
     let matchFilter = new RegExp(filterValue , 'i');
@@ -193,12 +200,13 @@ export default class SchemaRegistryContainer extends Component {
       liList[i].setAttribute('class','');
     }
     el.target.parentElement.setAttribute("class","active");
-    this.setState({fetchLoader: true});
     //if sorting by name, then in ascending order
     //if sorting by timestamp, then in descending order
-    this.fetchData(eventKey === 'name' ? eventKey+',a' : eventKey+',d');
+    
     const sortObj = {key : eventKey , text : this.sortByKey(eventKey)};
-    this.setState({sorted : sortObj});
+    this.setState({sorted : sortObj}, () => {
+      this.fetchData();
+    });
   }
   sortByKey = (string) => {
     switch (string) {
@@ -334,6 +342,19 @@ export default class SchemaRegistryContainer extends Component {
       });
     }
   }
+
+  handlePagination = (eventKey) => {
+    this.setState({
+      activePage: eventKey
+    });
+  }
+
+  getActivePageData = (allData, activePage, pageSize) => {
+    activePage = activePage - 1;
+    const startIndex = activePage*pageSize;
+    return allData.slice(startIndex, startIndex+pageSize);
+  }
+
   render() {
     const jsonoptions = {
       lineNumbers: true,
@@ -353,12 +374,13 @@ export default class SchemaRegistryContainer extends Component {
       readOnly: true,
       theme: 'default no-cursor schema-editor expand-schema'
     };
-    const {filterValue, slideInput, fetchLoader, schemaData} = this.state;
+    const {filterValue, slideInput, fetchLoader, schemaData, activePage, pageSize} = this.state;
     const sortTitle = <span>Sort:<span className="font-blue-color">&nbsp;{this.state.sorted.text}</span></span>;
     var schemaEntities = schemaData;
     if(filterValue.trim() !== ''){
       schemaEntities = this.filterSchema(schemaData, filterValue);
     }
+    const activePageData = this.getActivePageData(schemaEntities, activePage, pageSize);
     return (
       <div>
         <BaseContainer routes={this.props.routes} onLandingPage="false" breadcrumbData={this.breadcrumbData} headerContent={'All Schemas'}>
@@ -402,7 +424,7 @@ export default class SchemaRegistryContainer extends Component {
                         bsClass="panel-registry"
                         role="tablist"
                     >
-                    {schemaEntities.map((s, i)=>{
+                    {activePageData.map((s, i)=>{
                       var btnClass = this.getBtnClass(s.compatibility);
                       var iconClass = this.getIconClass(s.compatibility);
                       var versionObj = _.find(s.versionsArr, {versionId: s.currentVersion});
@@ -539,6 +561,24 @@ export default class SchemaRegistryContainer extends Component {
                     })
         }
         </PanelGroup>
+        {schemaEntities.length > pageSize
+          ?
+          <div className="text-center">
+            <Pagination
+              prev
+              next
+              first
+              last
+              ellipsis
+              boundaryLinks
+              items={Math.ceil(schemaEntities.length/pageSize)}
+              maxButtons={5}
+              activePage={this.state.activePage}
+              onSelect={this.handlePagination} />
+          </div>
+          : null
+         }
+
         </div>
     </div>
     : ''}
