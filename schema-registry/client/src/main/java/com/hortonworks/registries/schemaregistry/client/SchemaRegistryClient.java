@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
+import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
 import com.hortonworks.registries.schemaregistry.ConfigEntry;
@@ -56,6 +57,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -74,6 +77,7 @@ import java.lang.reflect.Proxy;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -131,9 +135,28 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SCHEMAS_BY_ID_PATH = SCHEMA_REGISTRY_PATH + "/schemasById/";
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serdes/";
+    private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
     public static final String SEARCH_FIELDS = "search/fields";
+    private static Subject subject;
+
+    static {
+        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
+        if (jaasConfigFile != null) {
+            KerberosLogin kerberosLogin = new KerberosLogin();
+            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
+            try {
+                subject = kerberosLogin.login().getSubject();
+            } catch (LoginException e) {
+                subject = null;
+                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
+            }
+        } else {
+            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
+            subject = null;
+        }
+    }
 
     private final Client client;
     private final UrlSelector urlSelector;
@@ -345,8 +368,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         .bodyPart(streamDataBodyPart);
 
         Entity<MultiPart> multiPartEntity = Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA);
-        Response response = target.request().post(multiPartEntity, Response.class);
-
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request().post(multiPartEntity, Response.class);
+            }
+        });
         return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
     }
 
@@ -395,7 +422,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions");
-        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
+            }
+        });
         return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
     }
 
@@ -469,7 +501,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
         WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
-        String response = webTarget.request().post(Entity.text(toSchemaText), String.class);
+        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return webTarget.request().post(Entity.text(toSchemaText), String.class);
+            }
+        });
         return readEntity(response, Boolean.class);
     }
 
@@ -488,14 +525,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         MultiPart multiPart = new MultiPart();
         BodyPart filePart = new StreamDataBodyPart("file", inputStream, "file");
         multiPart.bodyPart(filePart);
-
-        return currentSchemaRegistryTargets().filesTarget.request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA),
-                                                          String.class);
+        return Subject.doAs(subject, new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return currentSchemaRegistryTargets().filesTarget.request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
+            }
+        });
     }
 
     @Override
     public InputStream downloadFile(String fileId) {
-        return currentSchemaRegistryTargets().filesTarget.path("download/" + encode(fileId)).request().get(InputStream.class);
+        return Subject.doAs(subject, new PrivilegedAction<InputStream>() {
+            @Override
+            public InputStream run() {
+                return currentSchemaRegistryTargets().filesTarget.path("download/" + encode(fileId)).request().get(InputStream.class);
+            }
+        });
     }
 
     @Override
@@ -606,7 +651,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
         List<T> entities = new ArrayList<>();
-        String response = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+            }
+        });
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode node = mapper.readTree(response);
@@ -621,7 +671,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
-        String response = target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
+        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
+            }
+        });
         return readEntity(response, responseType);
     }
 
@@ -635,7 +690,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T getEntity(WebTarget target, Class<T> clazz) {
-        String response = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+            @Override
+            public String run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+            }
+        });
 
         return readEntity(response, clazz);
     }
