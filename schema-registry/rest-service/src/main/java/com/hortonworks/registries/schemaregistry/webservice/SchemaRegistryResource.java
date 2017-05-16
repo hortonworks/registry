@@ -26,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
 import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -36,6 +37,7 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.storage.search.WhereClause;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -45,7 +47,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -171,7 +172,41 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/search/fields")
+    @Path("/search/schemas")
+    @ApiOperation(value = "Search for schemas containing the given name and description",
+            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
+            response = SchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response findSchemas(@Context UriInfo uriInfo) {
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        try {
+            Collection<SchemaMetadataInfo> schemaMetadataInfos;
+            // name and description for now, complex queries are supported by backend and front end can send the json
+            // query for those complex queries.
+            if(queryParameters.containsKey(SchemaMetadataStorable.NAME)
+                    || queryParameters.containsKey(SchemaMetadataStorable.DESCRIPTION)) {
+                String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
+                String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
+                WhereClause whereClause = WhereClause.begin()
+                        .contains(SchemaMetadataStorable.NAME, name)
+                        .or()
+                        .contains(SchemaMetadataStorable.DESCRIPTION, description)
+                        .combine();
+
+                schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, Collections.emptyList());
+            } else {
+                schemaMetadataInfos = Collections.emptyList();
+            }
+
+            return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/search/schemas/fields")
     @ApiOperation(value = "Search for schemas containing the given field names",
             notes = "Search the schemas for given field names and return a list of schemas that contain the field.",
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)

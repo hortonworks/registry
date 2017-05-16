@@ -21,6 +21,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
@@ -35,6 +36,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.Abstrac
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
+import com.hortonworks.registries.storage.search.SearchQuery;
 import com.zaxxer.hikari.HikariConfig;
 
 import java.sql.ResultSet;
@@ -112,6 +114,12 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     public Long nextId(String namespace) {
         // We intentionally return null. Please refer the class javadoc for more details.
         return null;
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(SearchQuery searchQuery) {
+        Schema schema = storableFactory.create(searchQuery.getNameSpace()).getSchema();
+        return executeQuery(searchQuery.getNameSpace(), new PostgresqlSelectQuery(searchQuery, schema));
     }
 
     public static PostgresqlExecutor createExecutor(Map<String, Object> jdbcProps) {

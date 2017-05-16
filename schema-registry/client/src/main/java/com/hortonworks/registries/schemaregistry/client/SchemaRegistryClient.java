@@ -133,7 +133,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serdes/";
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
-    public static final String SEARCH_FIELDS = "search/fields";
+    public static final String SEARCH_FIELDS = "search/schemas/fields";
 
     private final Client client;
     private final UrlSelector urlSelector;
@@ -212,7 +212,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             schemasTarget = rootTarget.path(SCHEMAS_PATH);
             schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
             this.rootTarget = rootTarget;
-            searchFieldsTarget = schemasTarget.path(SEARCH_FIELDS);
+            searchFieldsTarget = rootTarget.path(SEARCH_FIELDS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
             filesTarget = rootTarget.path(FILES_PATH);
         }

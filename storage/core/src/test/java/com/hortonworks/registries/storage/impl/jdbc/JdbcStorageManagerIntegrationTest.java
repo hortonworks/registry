@@ -30,6 +30,9 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.Prepa
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableTest;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
+import com.hortonworks.registries.storage.search.OrderBy;
+import com.hortonworks.registries.storage.search.SearchQuery;
+import com.hortonworks.registries.storage.search.WhereClause;
 import org.h2.tools.RunScript;
 import org.junit.After;
 import org.junit.Assert;
@@ -93,6 +96,33 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
             Collection<Storable> found = getStorageManager().list(test.getStorableList().get(0).getStorableKey().getNameSpace());
             Assert.assertNotNull(found);
             Assert.assertTrue(found.isEmpty());
+        }
+    }
+
+    @Test
+    public void testSearchQueryApi() {
+        for (StorableTest storableTest : storableTests) {
+            storableTest.addAllToStorage();
+            String nameSpace = storableTest.getNameSpace();
+            SearchQuery searchQuery = SearchQuery
+                    .searchFrom(nameSpace)
+                    .where(WhereClause
+                                   .begin()
+                                   .contains("name", "info")
+                                   .and()
+                                   .gt("id", 1L)
+                                   .combine())
+                    .orderBy(OrderBy.asc("name"));
+            Collection<Storable> storablesWithIdGt1 = getStorageManager().search(searchQuery);
+            System.out.println("storablesWithIdGt1 = " + storablesWithIdGt1);
+            for (Storable storable : storablesWithIdGt1) {
+                Assert.assertTrue(storable.getId() > 1L);
+            }
+
+            Collection<Storable> allStorables = getStorageManager().list(searchQuery.getNameSpace());
+            System.out.println("list = " + allStorables);
+
+            Assert.assertEquals(allStorables.size()-1, storablesWithIdGt1.size());
         }
     }
 

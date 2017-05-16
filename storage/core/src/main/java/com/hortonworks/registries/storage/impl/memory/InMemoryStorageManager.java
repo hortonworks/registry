@@ -26,6 +26,7 @@ import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,6 +179,12 @@ public class InMemoryStorageManager implements StorageManager {
         }
 
         return storables;
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
+        LOG.warn("This storage manager does not support search query, returning all instances with the given namespace [{}]", searchQuery.getNameSpace());
+        return list(searchQuery.getNameSpace());
     }
 
     @Override

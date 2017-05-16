@@ -33,6 +33,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.Abstrac
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
+import com.hortonworks.registries.storage.search.SearchQuery;
 import com.zaxxer.hikari.HikariConfig;
 
 import java.util.Collection;
@@ -97,6 +98,11 @@ public class PhoenixExecutor extends AbstractQueryExecutor {
     public Long nextId(String namespace) {
         PhoenixSequenceIdQuery phoenixSequenceIdQuery = new PhoenixSequenceIdQuery(namespace, connectionBuilder, queryTimeoutSecs);
         return phoenixSequenceIdQuery.getNextID();
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(SearchQuery searchQuery) {
+        throw new UnsupportedOperationException("Pheonix does not support search for now!!");
     }
 
     public static PhoenixExecutor createExecutor(Map<String, Object> jdbcProps) throws Exception {

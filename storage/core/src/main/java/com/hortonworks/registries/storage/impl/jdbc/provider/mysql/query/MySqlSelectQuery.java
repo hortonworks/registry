@@ -15,9 +15,13 @@
  */
 package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
 
+import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
+import com.hortonworks.registries.storage.search.Predicate;
+import com.hortonworks.registries.storage.search.PredicateCombinerPair;
+import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +42,15 @@ public class MySqlSelectQuery extends AbstractSelectQuery {
 
     public MySqlSelectQuery(StorableKey storableKey, List<OrderByField> orderByFields) {
         super(storableKey, orderByFields);
+    }
+
+    public MySqlSelectQuery(SearchQuery searchQuery, Schema schema) {
+        super(searchQuery, schema);
+    }
+
+    @Override
+    protected String fieldEncloser() {
+        return "`";
     }
 
     @Override

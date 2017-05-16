@@ -31,6 +31,9 @@ import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.search.OrderBy;
+import com.hortonworks.registries.storage.search.SearchQuery;
+import com.hortonworks.registries.storage.search.WhereClause;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -728,6 +731,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaSerDesMapping schemaSerDesMapping = new SchemaSerDesMapping(schemaMetadataId, serDesId);
         storageManager.add(schemaSerDesMapping);
+    }
+
+    @Override
+    public Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields) {
+        SearchQuery searchQuery = SearchQuery.searchFrom(SchemaMetadataStorable.NAME_SPACE)
+                .where(whereClause)
+                .orderBy(orderByFields.toArray(new OrderBy[orderByFields.size()]));
+
+        return storageManager.search(searchQuery)
+                .stream()
+                .map(y -> ((SchemaMetadataStorable) y).toSchemaMetadataInfo())
+                .collect(Collectors.toList());
     }
 
     public static class Options {
