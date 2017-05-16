@@ -27,8 +27,12 @@ public final class Utils {
     private Utils() {
     }
 
-    public static SchemaMetadata getSchemaKey(String topic, boolean isKey) {
-        String name = topic + ":" + (isKey ? "k" : "v");
+    public static SchemaMetadata getSchemaKey(String topicName, boolean isKey) {
+        String name = topicName;
+        if(isKey) {
+            name += ":k";
+        }
+        // there wont be any naming collisions as kafka does not allow character `:` in a topic name.
         return new SchemaMetadata.Builder(name).type(AvroSchemaProvider.TYPE).schemaGroup(GROUP_ID).build();
     }
 

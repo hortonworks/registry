@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
@@ -73,6 +74,18 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
 
 
     // =============== TEST METHODS ===============
+
+    @Test(expected = Exception.class)
+    public void testAdd_UnequalExistingStorable_AlreadyExistsException() {
+        for (StorableTest test : storableTests) {
+            Storable storable1 = test.getStorableList().get(0);
+            Storable storable2 = test.getStorableList().get(1);
+            Assert.assertEquals(storable1.getStorableKey(), storable2.getStorableKey());
+            Assert.assertNotEquals(storable1, storable2);
+            getStorageManager().add(storable1);
+            getStorageManager().add(storable2);     // should throw exception
+        }
+    }
 
     @Test
     public void testList_EmptyDb_EmptyCollection() {

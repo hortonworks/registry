@@ -54,13 +54,13 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
-  id           BIGINT AUTO_INCREMENT NOT NULL,
-  description  TEXT,
-  name         TEXT                  NOT NULL,
-  fileId       TEXT                  NOT NULL,
-  className    TEXT                  NOT NULL,
-  isSerializer BOOLEAN               NOT NULL,
-  timestamp    BIGINT                NOT NULL,
+  id                     BIGINT AUTO_INCREMENT NOT NULL,
+  description            TEXT,
+  name                   TEXT                  NOT NULL,
+  fileId                 TEXT                  NOT NULL,
+  serializerClassName    TEXT                  NOT NULL,
+  deserializerClassName  TEXT                  NOT NULL,
+  timestamp              BIGINT                NOT NULL,
   PRIMARY KEY (id)
 );
 

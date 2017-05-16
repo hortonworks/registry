@@ -56,10 +56,35 @@ export default class SchemaFormContainer extends Component {
       schemaGroup: 'Kafka',
       description: '',
       showError: false,
-      changedFields: []
+      changedFields: [],
+      showCodemirror: false
     };
     this.fetchData();
   }
+
+  componentDidMount(){
+    this.setCodemirroSize();
+  }
+
+  componentDidUpdate(){
+    this.setCodemirroSize();
+  }
+
+  setCodemirroSize(){
+    const {JSONCodemirror, formLeftPanel, browseFileContainer} = this.refs;
+    const {expandCodemirror} = this.state;
+    const height = formLeftPanel.clientHeight - 50;
+    if(JSONCodemirror){
+      if(!expandCodemirror){
+        JSONCodemirror.codeMirror.setSize('100%', height);
+      }else{
+        JSONCodemirror.codeMirror.setSize('100%', '450px');
+      }
+    }else{
+      browseFileContainer.style.height = height+'px';
+    }
+  }
+
   fetchData() {
     SchemaREST.getSchemaProviders().then((results) => {
       this.setState({typeArr: results.entities});
@@ -104,13 +129,25 @@ export default class SchemaFormContainer extends Component {
       var reader = new FileReader();
       reader.onload = function(e) {
         if(Utils.isValidJson(reader.result)) {
-          this.setState({schemaTextFile: file, schemaText: reader.result});
+          this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else {
-          this.setState({schemaTextFile: null, schemaText: ''});
+          this.setState({schemaTextFile: null, schemaText: '', showCodemirror: true});
         }
       }.bind(this);
       reader.readAsText(file);
     }
+  }
+
+  handleBrowseFile(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    var file = e.target.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
+    }.bind(this);
+    reader.readAsText(file);
   }
 
   handleToggleEvolve(e) {
@@ -132,7 +169,7 @@ export default class SchemaFormContainer extends Component {
       if (description.trim() === '' && changedFields.indexOf("description") === -1) {
         changedFields.push("description");
       }
-      this.setState({showError: true, changedFields: changedFields});
+      this.setState({showError: true, changedFields: changedFields, expandCodemirror: false});
       return false;
     } else {
       this.setState({showError: false});
@@ -172,55 +209,104 @@ export default class SchemaFormContainer extends Component {
       gutters: ["CodeMirror-lint-markers"],
       lint: true
     };
-    let {showError, changedFields} = this.state;
+    let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror} = this.state;
     return (
       <form className="form-horizontal">
-        <div className="form-group">
-          <label>Name <span className="text-danger">*</span></label>
-          <div>
-            <input name="name" placeholder="Name" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("name") !== -1 && this.state.name.trim() === ''
-              ? "form-control invalidInput"
-              : "form-control"} value={this.state.name} required={true}/>
+      <div className="row">
+        <div className={expandCodemirror ? "hidden" : "col-md-6"} ref="formLeftPanel">
+          <div className="form-group">
+            <label>Name <span className="text-danger">*</span></label>
+            <div>
+              <input name="name" placeholder="Name" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("name") !== -1 && this.state.name.trim() === ''
+                ? "form-control invalidInput"
+                : "form-control"} value={this.state.name} required={true}/>
+            </div>
           </div>
-        </div>
-        <div className="form-group">
-          <label>description <span className="text-danger">*</span></label>
-          <div>
-            <input name="description" placeholder="Description" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === ''
-              ? "form-control invalidInput"
-              : "form-control"} value={this.state.description} required={true}/>
+          <div className="form-group">
+            <label>description <span className="text-danger">*</span></label>
+            <div>
+              <input name="description" placeholder="Description" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("description") !== -1 && this.state.description.trim() === ''
+                ? "form-control invalidInput"
+                : "form-control"} value={this.state.description} required={true}/>
+            </div>
           </div>
-        </div>
-        <div className="form-group">
-          <label>Type <span className="text-danger">*</span></label>
-          <div>
-            <Select value={this.state.type} options={this.state.typeArr} onChange={this.handleTypeChange.bind(this)} valueKey="type" labelKey="name"/>
+          <div className="form-group">
+            <label>Type <span className="text-danger">*</span></label>
+            <div>
+              <Select value={this.state.type} options={this.state.typeArr} onChange={this.handleTypeChange.bind(this)} valueKey="type" labelKey="name"/>
+            </div>
           </div>
-        </div>
-        <div className="form-group">
-          <label>Schema Group <span className="text-danger">*</span></label>
-          <div>
-            <input name="schemaGroup" placeholder="Schema Group" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === ''
-              ? "form-control invalidInput"
-              : "form-control"} value={this.state.schemaGroup} required={true}/>
+          <div className="form-group">
+            <label>Schema Group <span className="text-danger">*</span></label>
+            <div>
+              <input name="schemaGroup" placeholder="Schema Group" onChange={this.handleValueChange.bind(this)} type="text" className={showError && changedFields.indexOf("schemaGroup") !== -1 && this.state.schemaGroup === ''
+                ? "form-control invalidInput"
+                : "form-control"} value={this.state.schemaGroup} required={true}/>
+            </div>
           </div>
-        </div>
-        <div className="form-group">
-          <label>Compatibility</label>
-          <div>
-            <Select value={this.state.compatibility} options={this.state.compatibilityArr} onChange={this.handleCompatibilityChange.bind(this)} clearable={false}/>
+          <div className="form-group">
+            <label>Compatibility</label>
+            <div>
+              <Select value={this.state.compatibility} options={this.state.compatibilityArr} onChange={this.handleCompatibilityChange.bind(this)} clearable={false}/>
+            </div>
           </div>
-        </div>
-        <div className="form-group">
-          <div className="checkbox">
-          <label><input name="evolve" onChange={this.handleToggleEvolve.bind(this)} type="checkbox" value={this.state.evolve} checked={this.state.evolve}/> Evolve</label>
+          <div className="form-group">
+            <div className="checkbox">
+            <label><input name="evolve" onChange={this.handleToggleEvolve.bind(this)} type="checkbox" value={evolve} checked={evolve}/> Evolve</label>
+            {!evolve
+              ?
+              <span className="warning"> <i className="fa fa-exclamation-triangle" aria-hidden="true"></i> New schema versions cannot be added.</span>
+              :
+              null
+            }
+          </div>
         </div>
       </div>
-      <div className="form-group">
-        <label>Schema Text <span className="text-danger">*</span>&nbsp;<span style={{textTransform: 'none'}}>(Type or Drop a file)</span></label>
-        <div onDrop={this.handleOnDrop.bind(this)}>
-          <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
+      <div className={expandCodemirror ? "col-md-12" : "col-md-6"}>
+        <div className="form-group">
+          <label>
+            Schema Text <span className="text-danger">*</span>
+          </label>
+          {showCodemirror
+            ? [<a className="pull-right clear-link" href="javascript:void(0)" onClick={() => { this.setState({schemaText: '', showCodemirror: false, expandCodemirror: false}); }}> CLEAR </a>,
+              <span className="pull-right" style={{margin: '-1px 5px 0'}}>|</span>,
+              <a className="pull-right" href="javascript:void(0)" onClick={() => { this.setState({expandCodemirror: !expandCodemirror}); }}>
+                {expandCodemirror ? <i className="fa fa-compress"></i> : <i className="fa fa-expand"></i>}
+              </a>]
+            : 
+            null
+          }
+          <div onDrop={this.handleOnDrop.bind(this)} onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          >
+            {showCodemirror
+              ?
+              <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
+              :
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+                <div onClick={(e) => {
+                  this.setState({showCodemirror: true});
+                }}>
+                  <div className="main-title">Copy & Paste</div>
+                  <div className="sub-title m-t-sm m-b-sm">OR</div>
+                  <div className="main-title">Drag & Drop</div>
+                  <div className="sub-title" style={{"marginTop": "-4px"}}>Files Here</div>
+                  <div className="sub-title m-t-sm m-b-sm">OR</div>
+                  <div  className="m-t-md">
+                    <input type="file" ref="browseFile" className="inputfile" onClick={(e) => {
+                      e.stopPropagation();
+                    }} onChange={this.handleBrowseFile.bind(this)}/>
+                    <label htmlFor="file" className="btn btn-success">BROWSE</label>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
         </div>
+      </div>
       </div>
       </form>
     );

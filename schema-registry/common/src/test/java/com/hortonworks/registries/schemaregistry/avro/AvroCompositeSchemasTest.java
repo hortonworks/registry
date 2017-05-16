@@ -17,13 +17,11 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException;
-import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
-import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -32,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -78,5 +77,23 @@ public class AvroCompositeSchemasTest {
     @Test(expected = CyclicSchemaDependencyException.class)
     public void testCyclicSchema() throws Exception {
         String accountSchemaText = avroSchemaProvider.getResultantSchema(getResourceText("/avro/composites/account-ref-cyclic.avsc"));
+    }
+
+    @Test
+    public void testUnionSchemas() throws Exception {
+        AvroSchemaResolver avroSchemaResolver = new AvroSchemaResolver(null);
+        Schema schema = new Schema.Parser().parse(getResourceText("/avro/composites/unions.avsc"));
+        LOG.info("schema = %s", schema);
+
+        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
+        LOG.info("effectiveSchema = %s", effectiveSchema);
+        String returnedSchemaText = effectiveSchema.toString();
+        Assert.assertEquals(getResourceText("/avro/composites/expected-unions.avsc").replace(" ", ""),
+                            returnedSchemaText.replace(" ", ""));
+
+        // double check whether the effective schema is semantically right parsing
+        Schema.Parser parser = new Schema.Parser();
+        Schema parsedReturnedSchema = parser.parse(returnedSchemaText);
+        Assert.assertEquals(effectiveSchema, parsedReturnedSchema);
     }
 }

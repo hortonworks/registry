@@ -107,7 +107,7 @@ public abstract class AbstractStoreManagerTest {
         for (StorableTest test : storableTests) {
             Storable storable1 = test.getStorableList().get(0);
             getStorageManager().add(storable1);
-            getStorageManager().add(storable1);     // should throw exception
+            getStorageManager().addOrUpdate(storable1);
             Assert.assertEquals(storable1, getStorageManager().get(storable1.getStorableKey()));
         }
     }

@@ -959,7 +959,7 @@ label {
 }
 
 .invalidInput {
-  border-color: #d81010;
+  border-color: #d81010 !important;
 }
 
 .cm-s-no-cursor .CodeMirror-cursor {
@@ -1201,11 +1201,15 @@ label {
   z-index: 9;
 }
 
-.btn-edit-schema {
+.btn-edit-schema, .btn-edit-schema:hover, .btn-edit-schema:focus {
   position: absolute;
   top: 0px;
-  right: 50px;
+  right: 15px;
   z-index: 99;
+  background: #1290c0;
+  color: white;
+  border-bottom-left-radius: 27px;
+  padding: 4px 8px 9px 13px;
 }
 
 .btn-add-schema {
@@ -1225,7 +1229,7 @@ label {
 .version-number-text {
   position: absolute;
   top: 0px;
-  right: 80px;
+  right: 55px;
   z-index: 99;
 }
 
@@ -1250,4 +1254,112 @@ label {
 }
 .font-blue-color{
   color: #006ea0;
+}
+.addSchemaBrowseFileContainer{
+  border: 1px solid #e5e5e5;
+  padding: 15px;
+  height: 373px;
+  display: table;
+  width: 100%;
+}
+.addSchemaBrowseFileContainer > div {
+  border: 2px solid #83b2c3;
+  border-style: dashed;
+  border-radius: 5px;
+  height: 100%;
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+
+}
+.addSchemaBrowseFileContainer h4{
+  color: #606060;
+}
+
+.inputfile {
+  width: 89px;
+  height: 40px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  margin: auto;
+  display: inline-block !important;
+}
+.inputfile + label {
+  font-size: 1.00em;
+  color: white;
+  display: inline-block;
+  padding: 8px 15px;
+}
+.inputfile + label {
+  cursor: pointer; /* "hand" cursor */
+}
+.inputfile:focus + label {
+  outline: 1px dotted #000;
+  outline: -webkit-focus-ring-color auto 5px;
+}
+.clear-link, .clear-link:hover{
+  color: #006ea0;
+  cursor: pointer;
+  text-decoration: none;
+}
+.nomargin {
+  margin: 0;
+}
+
+.m-t-md {
+  margin-top: 20px;
+}
+
+.m-t-sm{
+  margin-top: 10px;
+}
+.m-t-xs{
+  margin-top: 5px;
+}
+
+.main-title{
+  font-size: 23px;
+  color: #606060;
+}
+
+.sub-title{
+  font-size: 17px;
+  color: #606060;
+}
+
+.m-b-sm {
+  margin-bottom: 10px;
+}
+
+span.warning {
+  color: #f0ad4e;
+}
+
+.version-codemirror-container .CodeMirror{
+  height: 450px;
+}
+
+.pagination {
+  font-size: 18px;
+}
+.pagination > li > a, .pagination > li > span {
+  background-color: #323544;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  margin-left: 5px;
+  padding: 3px 10px;
+}
+.pagination > .disabled > span, .pagination > .disabled > span:hover, .pagination > .disabled > span:focus, .pagination > .disabled > a, .pagination > .disabled > a:hover, .pagination > .disabled > a:focus {
+  background-color: #323544;
+  color:#a7a7a7;
+  opacity: 0.5;
+}
+.pagination > li > a:hover, .pagination > li > span:hover, .pagination > li > a:focus, .pagination > li > span:focus {
+  background-color:#323544;
+  color: #fff;
+}
+.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
+  background-color: #3eae4a;
 }

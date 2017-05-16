@@ -37,7 +37,7 @@ public class CatalogResponse {
         SUCCESS(1000, "Success", 0),
         /* 1101 onwards for error messages */
         ENTITY_NOT_FOUND(1101, "Entity with id [%s] not found.", 1),
-        EXCEPTION(1102, "An exception with message [%s] was thrown while processing request.", 1),
+        EXCEPTION(1102, "An exception was thrown while processing request with message: [%s]", 1),
         BAD_REQUEST_PARAM_MISSING(1103, "Bad request - %s.", 1),
         DATASOURCE_TYPE_FILTER_NOT_FOUND(1104, "Datasource not found for type [%s], query params [%s].", 2),
         ENTITY_NOT_FOUND_FOR_FILTER(1105, "Entity not found for query params [%s].", 1),

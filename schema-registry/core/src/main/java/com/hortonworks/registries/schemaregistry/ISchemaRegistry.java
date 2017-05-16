@@ -38,6 +38,8 @@ public interface ISchemaRegistry {
 
     Long addSchemaMetadata(SchemaMetadata schemaMetadata) throws UnsupportedSchemaTypeException;
 
+    Long addSchemaMetadata(SchemaMetadata schemaMetadata, boolean throwErrorIfExists) throws UnsupportedSchemaTypeException;
+
     Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException, SchemaNotFoundException;
 
     Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
@@ -85,13 +87,11 @@ public interface ISchemaRegistry {
      * @param serDesInfo
      * @return
      */
-    Long addSerDesInfo(SerDesInfo serDesInfo);
+    Long addSerDesInfo(SerDesPair serDesInfo);
 
     SerDesInfo getSerDesInfo(Long serDesId);
 
     Collection<SerDesInfo> getSchemaSerializers(Long schemaMetadataId);
-
-    Collection<SerDesInfo> getSchemaDeserializers(Long schemaMetadataId);
 
     /**
      * Download the jar file which contains the classes required for respective serializer/deserializer for given {@code serDesId}

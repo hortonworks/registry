@@ -31,6 +31,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
+import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -44,6 +45,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -51,6 +53,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -61,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +79,8 @@ import java.util.function.Supplier;
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
+    public static final String THROW_ERROR_IF_EXISTS = "_throwErrorIfExists";
+    public static final String THROW_ERROR_IF_EXISTS_LOWER_CASE = THROW_ERROR_IF_EXISTS.toLowerCase();
 
     private final ISchemaRegistry schemaRegistry;
     private final AtomicReference<LeadershipParticipant> leadershipParticipant;
@@ -99,7 +105,7 @@ public class SchemaRegistryResource {
                     "A Schema Provider is needed for each type of schema supported by the Schema Registry. " +
                     "Schema Provider supports defining schema, serializing and deserializing data using the schema, " +
                     " and checking compatibility between different versions of the schema.",
-            response = SchemaProviderInfo.class, responseContainer = "Collection",
+            response = SchemaProviderInfo.class, responseContainer = "List",
             tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response getRegisteredSchemaProviderInfos(@Context UriInfo uriInfo) {
@@ -144,7 +150,7 @@ public class SchemaRegistryResource {
     @GET
     @Path("/schemas")
     @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
-            response = SchemaMetadata.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+            response = SchemaMetadata.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response listSchemas(@Context UriInfo uriInfo) {
         try {
@@ -168,7 +174,7 @@ public class SchemaRegistryResource {
     @Path("/schemas/search/fields")
     @ApiOperation(value = "Search for schemas containing the given field names",
             notes = "Search the schemas for given field names and return a list of schemas that contain the field.",
-            response = SchemaVersionKey.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+            response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response findSchemasByFields(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
@@ -210,14 +216,16 @@ public class SchemaRegistryResource {
     @Timed
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
                                           SchemaMetadata schemaMetadataInfo,
-                                  @Context UriInfo uriInfo) {
+                                  @Context UriInfo uriInfo,
+                                  @Context HttpHeaders httpHeaders) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 schemaMetadataInfo.trim();
                 checkValueAsNullOrEmpty("Schema name", schemaMetadataInfo.getName());
                 checkValueAsNullOrEmpty("Schema type", schemaMetadataInfo.getType());
-                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo);
+                boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
+                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
@@ -227,11 +235,21 @@ public class SchemaRegistryResource {
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
             } catch (Exception ex) {
                 LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR,
+                                           CatalogResponse.ResponseMessage.EXCEPTION,
+                                           String.format("Storing the given SchemaMetadata [%s] is failed",schemaMetadataInfo.toString()));
             }
 
             return response;
         });
+    }
+
+    private boolean isThrowErrorIfExists(HttpHeaders httpHeaders) {
+        List<String> values = httpHeaders.getRequestHeader(THROW_ERROR_IF_EXISTS);
+        if(values != null) {
+            values = httpHeaders.getRequestHeader(THROW_ERROR_IF_EXISTS_LOWER_CASE);
+        }
+        return values != null && !values.isEmpty() && Boolean.parseBoolean(values.get(0));
     }
 
     @GET
@@ -375,7 +393,7 @@ public class SchemaRegistryResource {
     @GET
     @Path("/schemas/{name}/versions")
     @ApiOperation(value = "Get all the versions of the schema for the given schema name)",
-            response = SchemaVersionInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+            response = SchemaVersionInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
 
@@ -443,9 +461,9 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/{name}/serializers")
+    @Path("/schemas/{name}/serdes")
     @ApiOperation(value = "Get list of Serializers registered for the given schema name",
-            response = SerDesInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SERDE)
+            response = SerDesInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SERDE)
     @Timed
     public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
@@ -460,30 +478,6 @@ public class SchemaRegistryResource {
             }
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Path("/schemas/{name}/deserializers")
-    @ApiOperation(value = "Get list of Deserializers registered for the given schema name",
-            response = SerDesInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SERDE)
-    @Timed
-    public Response getDeserializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata) {
-        Response response;
-        try {
-            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadata(schemaMetadata);
-            if (schemaMetadataInfoStorable != null) {
-                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSchemaDeserializers(schemaMetadataInfoStorable.getId());
-                response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
-            } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaMetadata);
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaMetadata);
-            }
-        } catch (Exception ex) {
-            LOG.error("Encountered error while getting deserializers for schemaKey [{}]", schemaMetadata, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
 
@@ -533,36 +527,23 @@ public class SchemaRegistryResource {
     }
 
     @POST
-    @Path("/serializers")
-    @ApiOperation(value = "Add a Serializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
+    @Path("/serdes")
+    @ApiOperation(value = "Add a Serializer/Deserializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
-    public Response addSerializer(@ApiParam(value = "Serializer information to be registered", required = true) SerDesInfo serDesInfo,
+    public Response addSerializer(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) SerDesPair serDesPair,
                                   @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> {
-            return _addSerDesInfo(serDesInfo);
-        });
+        return handleLeaderAction(uriInfo, () -> _addSerDesInfo(serDesPair));
     }
 
     @GET
-    @Path("/serializers/{id}")
-    @ApiOperation(value = "Get a Serializer for the given serializer id", tags = OPERATION_GROUP_SERDE)
+    @Path("/serdes/{id}")
+    @ApiOperation(value = "Get a Serializer for the given serializer id", response = SerDesInfo.class, tags = OPERATION_GROUP_SERDE)
     @Timed
     public Response getSerializer(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId) {
         return _getSerDesInfo(serializerId);
     }
 
-    @POST
-    @Path("/deserializers")
-    @ApiOperation(value = "Add a Deserializer into Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
-    @Timed
-    public Response addDeserializer(@ApiParam(value = "Deserializer information to be registered", required = true) SerDesInfo serDesInfo,
-                                    @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> {
-            return _addSerDesInfo(serDesInfo);
-        });
-    }
-
-    private Response _addSerDesInfo(@ApiParam(value = "Deserializer information to be registered", required = true) SerDesInfo serDesInfo) {
+    private Response _addSerDesInfo(SerDesPair serDesInfo) {
         Response response;
         try {
             Long serializerId = schemaRegistry.addSerDesInfo(serDesInfo);
@@ -573,14 +554,6 @@ public class SchemaRegistryResource {
         }
 
         return response;
-    }
-
-    @GET
-    @Path("/deserializers/{id}")
-    @ApiOperation(value = "Get a Deserializer for the given deserializer id", tags = OPERATION_GROUP_SERDE)
-    @Timed
-    public Response getDeserializer(@ApiParam(value = "Deserializer identifier", required = true) @PathParam("id") Long deserializerId) {
-        return _getSerDesInfo(deserializerId);
     }
 
     private Response _getSerDesInfo(Long serializerId) {
