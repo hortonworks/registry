@@ -77,9 +77,21 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
             for (PredicateCombinerPair predicateCombinerPair : whereClause.getPredicateCombinerPairs()) {
                 WhereClauseCombiner.Operation combinerOperation = predicateCombinerPair.getCombinerOperation();
 
-                clauseString.append(generateClauseString(predicateCombinerPair, fieldsToValues, schema));
+                Predicate predicate = predicateCombinerPair.getPredicate();
+                clauseString.append(generateClauseString(predicate, fieldsToValues, schema));
                 if (combinerOperation != null) {
-                    clauseString.append(combinerOperation);
+                    String opStr;
+                    switch (combinerOperation) {
+                        case ENCL_START:
+                            opStr = " ( ";
+                            break;
+                        case ENCL_FINISH:
+                            opStr = " ) ";
+                            break;
+                        default:
+                            opStr = combinerOperation.toString();
+                    }
+                    clauseString.append(opStr);
                 }
             }
             sql += clauseString;
@@ -101,8 +113,11 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
 
     protected abstract String fieldEncloser();
 
-    private String generateClauseString(PredicateCombinerPair predicateCombinerPair, Map<Schema.Field, Object> fieldsToValues, Schema schema) {
-        Predicate predicate = predicateCombinerPair.getPredicate();
+    private String generateClauseString(Predicate predicate, Map<Schema.Field, Object> fieldsToValues, Schema schema) {
+        if(predicate == null) {
+            return "";
+        }
+
         String result;
         Predicate.Operation operation = predicate.getOperation();
         String fq = fieldEncloser();

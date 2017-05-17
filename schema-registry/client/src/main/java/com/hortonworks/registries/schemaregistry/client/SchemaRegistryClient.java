@@ -138,7 +138,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
-    private static final String SEARCH_FIELDS = "search/schemas/fields";
+    private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
     private static Subject subject;
 
     static {

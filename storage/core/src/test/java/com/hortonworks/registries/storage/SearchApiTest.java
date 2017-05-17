@@ -57,27 +57,32 @@ public class SearchApiTest {
                                        .gt("id", 0)
                                        .combine())
                         .orderBy(OrderBy.asc("name"));
+        simpleQueryMySql = "SELECT * FROM foo WHERE  `name` LIKE '%sato%' AND `id` > ?  ORDER BY `name` ASC";
+        simpleQueryPostgreSql = "SELECT * FROM foo WHERE  \"name\" LIKE '%sato%' AND \"id\" > ?  ORDER BY \"name\" ASC";
 
         complexQuery = SearchQuery.searchFrom("store")
                 .where(WhereClause.begin()
+                               .contains("name", "sato")
+                               .or()
                                .enclose(WhereClause.begin()
                                                 .eq("name", "foo")
                                                 .and()
-                                                .gt("amount", 500))
+                                                .enclose(WhereClause.begin()
+                                                                 .contains("description", " data").or()
+                                                                 .gt("amount", 500)))
                                .or()
                                .enclose(WhereClause.begin()
                                                 .contains("description", "bar")
                                                 .and()
                                                 .gt("count", 100))
                                .combine()
-
                 ).orderBy(OrderBy.asc("name"));
-        simpleQueryMySql = "SELECT * FROM foo WHERE  `name` LIKE '%sato%' AND `id` > ?  ORDER BY `name` ASC";
-        complexQueryMySql = "SELECT * FROM store WHERE  `description` LIKE '%bar%' AND `count` > ?  ORDER BY `name` ASC ";
 
-        simpleQueryPostgreSql = "SELECT * FROM foo WHERE  \"name\" LIKE '%sato%' AND \"id\" > ?  ORDER BY \"name\" ASC";
-        complexQueryPostgreSql = "SELECT * FROM store WHERE  \"description\" LIKE '%bar%' AND \"count\" > ?  ORDER BY \"name\" ASC ";
+        complexQueryMySql = "SELECT * FROM store WHERE  `name` LIKE '%sato%' OR (  `name` = ? AND " +
+                "(  `description` LIKE '% data%' OR `amount` > ?  )  ) OR (  `description` LIKE '%bar%' AND `count` > ?  )  ORDER BY `name` ASC ";
 
+        complexQueryPostgreSql = "SELECT * FROM store WHERE  \"name\" LIKE '%sato%' OR (  \"name\" = ? AND " +
+                "(  \"description\" LIKE '% data%' OR \"amount\" > ?  )  ) OR (  \"description\" LIKE '%bar%' AND \"count\" > ?  )  ORDER BY \"name\" ASC ";
     }
 
     @Test
@@ -88,10 +93,12 @@ public class SearchApiTest {
         for (Pair<SearchQuery, Pair<String, String>> pair : pairs) {
             MySqlSelectQuery mySqlSelectQuery = new MySqlSelectQuery(pair.getLeft(), schema);
             String parametrizedSql = mySqlSelectQuery.getParametrizedSql();
+            LOG.info("parametrizedSql = " + parametrizedSql);
             Assert.assertEquals(pair.getRight().getLeft().trim(), parametrizedSql.trim());
 
             PostgresqlSelectQuery postgresqlSelectQuery = new PostgresqlSelectQuery(pair.getLeft(),schema);
             String parametrizedPostgreSql = postgresqlSelectQuery.getParametrizedSql();
+            LOG.info("parametrizedPostgreSql = " + parametrizedPostgreSql);
             Assert.assertEquals(pair.getRight().getRight().trim(), parametrizedPostgreSql.trim());
         }
     }

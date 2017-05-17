@@ -21,10 +21,19 @@ package com.hortonworks.registries.storage.search;
  *
  */
 public class WhereClauseCombiner {
-    public enum Operation {AND, OR}
+    public enum Operation {AND, OR, ENCL_START, ENCL_FINISH}
 
     private WhereClause.Builder builder;
-    private final Predicate predicate;
+    private Predicate predicate;
+
+    public WhereClauseCombiner(WhereClause.Builder builder, WhereClauseCombiner whereClauseCombiner) {
+        this.builder = builder;
+        builder.addPredeicateCombiner(new PredicateCombinerPair(null, Operation.ENCL_START));
+        for (PredicateCombinerPair predicateCombinerPair : whereClauseCombiner.combine().getPredicateCombinerPairs()) {
+            builder.addPredeicateCombiner(predicateCombinerPair);
+        }
+        builder.addPredeicateCombiner(new PredicateCombinerPair(null, Operation.ENCL_FINISH));
+    }
 
     WhereClauseCombiner(WhereClause.Builder builder, Predicate predicate) {
         this.builder = builder;

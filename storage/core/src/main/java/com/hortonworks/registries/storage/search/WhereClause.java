@@ -86,7 +86,7 @@ public class WhereClause implements Serializable {
         }
 
         public WhereClauseCombiner enclose(WhereClauseCombiner whereClauseCombiner) {
-            return whereClauseCombiner;
+            return new WhereClauseCombiner(this, whereClauseCombiner);
         }
 
         public WhereClauseCombiner eq(String fieldName, Object value) {
