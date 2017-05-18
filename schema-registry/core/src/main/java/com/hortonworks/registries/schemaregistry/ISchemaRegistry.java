@@ -23,6 +23,7 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,13 +51,15 @@ public interface ISchemaRegistry {
 
     Integer getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
-    Collection<SchemaVersionInfo> findAllVersions(String schemaName);
+    List<SchemaVersionInfo> findAllVersions(String schemaName);
 
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
     SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
-    Collection<SchemaMetadata> findSchemaMetadata(Map<String, String> filters);
+    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> filters);
+
+    Collection<SchemaMetadataInfo> findSchemaMetadata(Map<String, String> filters);
 
     Collection<SchemaVersionKey> findSchemasWithFields(SchemaFieldQuery schemaFieldQuery);
 
@@ -103,4 +106,5 @@ public interface ISchemaRegistry {
 
     void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
 
+    AggregatedSchemaMetadataInfo getAggregatedSchemaMetadata(String schemaName);
 }
