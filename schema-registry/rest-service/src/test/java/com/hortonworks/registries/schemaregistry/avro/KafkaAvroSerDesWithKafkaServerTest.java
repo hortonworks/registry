@@ -18,7 +18,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
-import kafka.common.TopicExistsException;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -31,7 +31,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.streams.integration.utils.EmbeddedSingleNodeKafkaCluster;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -57,7 +57,7 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
     private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesWithKafkaServerTest.class);
 
     @ClassRule
-    public static final EmbeddedSingleNodeKafkaCluster CLUSTER = new EmbeddedSingleNodeKafkaCluster();
+    public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
 
     @Test
     public void testPrimitivesInKafkaCluster() throws Exception {
