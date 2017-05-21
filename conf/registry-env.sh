@@ -14,3 +14,6 @@
 #  limitations under the License.
 #
 export REGISTRY_USER=`whoami`
+
+#To pass jaas conf, edit below line.
+#export REGISTRY_KERBEROS_PARAMS="-Djava.auth.login.config=/etc/registry/conf/registry_jaas.conf"
