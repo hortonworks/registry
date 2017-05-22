@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import org.apache.kafka.common.serialization.Serializer;
@@ -32,9 +33,23 @@ public class KafkaAvroSerializer implements Serializer<Object> {
      */
     public static final String SCHEMA_COMPATIBILITY = "schema.compatibility";
 
+    public static final String SCHEMA_GROUP = "schema.group";
+    public static final String SCHEMA_NAME_KEY_SUFFIX_ = "schema.name.key.suffix";
+    public static final String SCHEMA_NAME_VALUE_SUFFIX_= "schema.name.value.suffix";
+
+    public static final String DEFAULT_SCHEMA_GROUP = "kafka";
+    public static final String DEFAULT_SCHEMA_NAME_KEY_SUFFIX = ":k";
+    public static final String DEFAULT_SCHEMA_NAME_VALUE_SUFFIX = null;
+
     private final AvroSnapshotSerializer avroSnapshotSerializer;
     private boolean isKey;
+
     private SchemaCompatibility compatibility;
+
+    private String schemaGroup;
+    private String schemaNameKeySuffix;
+    private String schemaNameValueSuffix;
+
 
     public KafkaAvroSerializer() {
         avroSnapshotSerializer = new AvroSnapshotSerializer();
@@ -43,9 +58,22 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
         compatibility = (SchemaCompatibility) configs.get(SCHEMA_COMPATIBILITY);
+
+        schemaGroup = getOrDefault(configs, SCHEMA_GROUP, DEFAULT_SCHEMA_GROUP);
+        schemaNameKeySuffix = getOrDefault(configs, SCHEMA_NAME_KEY_SUFFIX_, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
+        schemaNameValueSuffix = getOrDefault(configs, SCHEMA_NAME_VALUE_SUFFIX_, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
+
         this.isKey = isKey;
 
         avroSnapshotSerializer.init(configs);
+    }
+
+    private static String getOrDefault(Map<String, ?> configs, String key, String defaultValue) {
+        String value = (String) configs.get(key);
+        if (value == null || value.trim().isEmpty()) {
+            value = defaultValue;
+        }
+        return value;
     }
 
     @Override
@@ -60,7 +88,18 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     }
 
     protected SchemaMetadata getSchemaKey(String topic, boolean isKey) {
-        return Utils.getSchemaKey(topic, isKey);
+        String name = topic;
+        if(isKey) {
+            if (schemaNameKeySuffix != null ) {
+                name += schemaNameKeySuffix;
+            }
+        } else {
+            if (schemaNameValueSuffix != null ) {
+                name += schemaNameValueSuffix;
+            }
+        }
+        // there wont be any naming collisions as kafka does not allow character `:` in a topic name.
+        return new SchemaMetadata.Builder(name).type(AvroSchemaProvider.TYPE).schemaGroup(schemaGroup).build();
     }
 
     @Override
