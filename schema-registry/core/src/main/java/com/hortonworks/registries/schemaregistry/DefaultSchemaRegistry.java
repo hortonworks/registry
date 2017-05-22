@@ -671,7 +671,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         serDesInfoStorable.setTimestamp(System.currentTimeMillis());
         storageManager.add(serDesInfoStorable);
 
-        return nextId;
+        return serDesInfoStorable.getId();
     }
 
     @Override
