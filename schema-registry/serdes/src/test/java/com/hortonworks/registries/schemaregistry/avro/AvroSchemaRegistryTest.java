@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -126,6 +127,14 @@ public class AvroSchemaRegistryTest {
         // receive the same version as earlier without adding a new schema entry as it exists in the same schema group.
         Integer version = schemaRegistry.addSchemaVersion(schemaMetadata, schema1, "already added schema");
         Assert.assertEquals(version, v1);
+
+        //aggregate apis
+        AggregatedSchemaMetadataInfo aggregatedSchemaMetadata = schemaRegistry.getAggregatedSchemaMetadata(schemaName);
+        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getVersions().size());
+        Assert.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
+
+        Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());
+        Assert.assertEquals(1, aggregatedSchemaMetadataCollection.size());
     }
 
     @Test
