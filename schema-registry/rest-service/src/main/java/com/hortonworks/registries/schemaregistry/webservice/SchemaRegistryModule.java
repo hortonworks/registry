@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +68,9 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
         schemaRegistry.init(config);
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipParticipant);
-        return Collections.<Object>singletonList(schemaRegistryResource);
+        ConfluentSchemaRegistryResource confluentSchemaRegistryResource = new ConfluentSchemaRegistryResource(schemaRegistry, leadershipParticipant);
+        
+        return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource); 
     }
 
     private Collection<? extends SchemaProvider> getSchemaProviders() {

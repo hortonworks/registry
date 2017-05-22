@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.SlotSynchronizer;
 import com.hortonworks.registries.common.util.FileStorage;
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -29,6 +30,7 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
+import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.search.OrderBy;
@@ -182,11 +184,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             try {
                 version = getSchemaVersion(schemaName, schemaText);
             } catch (SchemaNotFoundException e) {
-                version = createSchemaVersion(schemaMetadata, retrievedschemaMetadataInfo.getId(), schemaText, description);
+                version = createSchemaVersion(schemaMetadata, retrievedschemaMetadataInfo.getId(), schemaText, description).getVersion();
             }
         } else {
             Long schemaMetadataId = addSchemaMetadata(schemaMetadata);
-            version = createSchemaVersion(schemaMetadata, schemaMetadataId, schemaText, description);
+            version = createSchemaVersion(schemaMetadata, schemaMetadataId, schemaText, description).getVersion();
         }
 
         return version;
@@ -195,7 +197,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public Integer addSchemaVersion(String schemaName, String schemaText, String description)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException {
 
-        Integer version;
+        SchemaVersionStorable version;
         // check whether there exists schema-metadata for schema-metadata-key
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
         if (schemaMetadataInfo != null) {
@@ -209,11 +211,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             throw new SchemaNotFoundException("Schema not found with the given schemaName: " + schemaName);
         }
 
-        return version;
+        return version.getVersion();
     }
 
 
-    private Integer createSchemaVersion(SchemaMetadata schemaMetadata,
+    private SchemaVersionStorable createSchemaVersion(SchemaMetadata schemaMetadata,
                                         Long schemaMetadataId,
                                         String schemaText,
                                         String description)
@@ -314,7 +316,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             slotLock.unlock();
         }
 
-        return schemaVersionStorable.getVersion();
+        return schemaVersionStorable;
     }
 
     @Override
@@ -497,16 +499,63 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         Long schemaMetadataId = schemaMetadataInfo.getId();
-        Integer result = findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
+        SchemaVersionStorable result = findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
 
         if (result == null) {
             throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
         }
 
-        return result;
+        return result.getVersion();
     }
 
-    private Integer findSchemaVersion(String type,
+    @Override
+    public SchemaNameVersionId getSchemaNameVersionId(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException {
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
+        if (schemaMetadataInfo == null) {
+            throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
+        }
+
+        Long schemaMetadataId = schemaMetadataInfo.getId();
+        SchemaVersionStorable result = findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
+
+        if (result == null) {
+            throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
+        }
+
+        return new SchemaNameVersionId(result.getName(), result.getVersion(), result.getId(), result.getSchemaText());
+    }
+
+    public Long registerSchema(String schemaName, String schemaText, String description)
+        throws UnsupportedSchemaTypeException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException {
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
+        if (schemaMetadataInfo == null) {
+            SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(schemaName).type(AvroSchemaProvider.TYPE).build();
+            addSchemaMetadata(schemaMetadata);
+            schemaMetadataInfo = getSchemaMetadata(schemaName);
+        }
+
+        SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+  
+            // check whether the same schema text exists
+        SchemaVersionStorable version = findSchemaVersion(schemaMetadata.getType(), schemaText, schemaMetadataInfo.getId());
+        if (version == null) {
+            version = createSchemaVersion(schemaMetadata, schemaMetadataInfo.getId(), schemaText, description);
+        }
+
+        return version.getId();
+    }
+    
+    public String getSchemaById(Long id) throws InvalidSchemaException, SchemaNotFoundException {
+        StorableKey storableKey = new StorableKey(SchemaVersionStorable.NAME_SPACE, SchemaVersionStorable.getPrimaryKey(id));
+
+        SchemaVersionStorable versionedSchema = storageManager.get(storableKey);
+        if (versionedSchema == null) {
+            throw new SchemaNotFoundException("No Schema version exists with id " + id);
+        }
+        return versionedSchema.getSchemaText();
+    }
+
+    private SchemaVersionStorable findSchemaVersion(String type,
                                       String schemaText,
                                       Long schemaMetadataId) throws InvalidSchemaException, SchemaNotFoundException {
         String fingerPrint = getFingerprint(type, schemaText);
@@ -517,17 +566,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         Collection<SchemaVersionStorable> versionedSchemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
 
-        Integer result = null;
+        SchemaVersionStorable schemaVersionStorable = null;
         if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
             if (versionedSchemas.size() > 1) {
                 LOG.warn("Exists more than one schema with schemaMetadataId: [{}] and schemaText [{}]", schemaMetadataId, schemaText);
             }
 
-            SchemaVersionStorable schemaVersionStorable = versionedSchemas.iterator().next();
-            result = schemaVersionStorable.getVersion();
+            schemaVersionStorable = versionedSchemas.iterator().next();
         }
 
-        return result;
+        return schemaVersionStorable;
     }
 
     private String getFingerprint(String type, String schemaText) throws InvalidSchemaException, SchemaNotFoundException {

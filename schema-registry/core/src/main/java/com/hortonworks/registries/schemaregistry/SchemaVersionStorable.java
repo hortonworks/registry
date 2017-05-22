@@ -28,6 +28,7 @@ import java.util.Map;
  *
  */
 public class SchemaVersionStorable extends AbstractVersionedStorable {
+    
     public static final String NAME_SPACE = "schema_version_info";
     public static final String ID = "id";
     
@@ -38,6 +39,20 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String TIMESTAMP = "timestamp";
     public static final String FINGERPRINT = "fingerprint";
+
+    public static final Schema.Field ID_FIELD = Schema.Field.of(ID, Schema.Type.LONG);
+
+    public static final Schema SCHEMA = Schema.of(
+        ID_FIELD,
+        Schema.Field.of(SCHEMA_METADATA_ID, Schema.Type.LONG),
+        Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
+        Schema.Field.of(NAME, Schema.Type.STRING),
+        Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
+        Schema.Field.of(VERSION, Schema.Type.INTEGER),
+        Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
+        Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
+    );
+    
 
     /**
      * Unique ID generated for this component.
@@ -93,24 +108,20 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        Map<Schema.Field, Object> values = new HashMap<>();
-        values.put(new Schema.Field(ID, Schema.Type.LONG), id);
-        return new PrimaryKey(values);
+        return getPrimaryKey(id);
     }
 
     @Override
     @JsonIgnore
     public Schema getSchema() {
-        return Schema.of(
-                Schema.Field.of(ID, Schema.Type.LONG),
-                Schema.Field.of(SCHEMA_METADATA_ID, Schema.Type.LONG),
-                Schema.Field.of(SCHEMA_TEXT, Schema.Type.STRING),
-                Schema.Field.of(NAME, Schema.Type.STRING),
-                Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
-                Schema.Field.of(VERSION, Schema.Type.INTEGER),
-                Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-                Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
-        );
+        return SCHEMA;
+    }
+    
+    @JsonIgnore
+    public static PrimaryKey getPrimaryKey(Long id) {
+        Map<Schema.Field, Object> values = new HashMap<>();
+        values.put(SCHEMA.getField(ID), id);
+        return new PrimaryKey(values);
     }
 
     @Override

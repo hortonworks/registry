@@ -53,6 +53,12 @@ public interface ISchemaRegistry {
 
     Integer getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
+    SchemaNameVersionId getSchemaNameVersionId(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
+
+    Long registerSchema(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
+
+    String getSchemaById(Long id) throws SchemaNotFoundException, InvalidSchemaException;
+
     List<SchemaVersionInfo> findAllVersions(String schemaName);
 
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
