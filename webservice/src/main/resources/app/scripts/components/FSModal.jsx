@@ -36,7 +36,7 @@ export default class FSModal extends Component {
     }
   }
   cancel() {
-    let {reject} = this.props;
+    let reject = this.props.reject || this.props["data-reject"];
     if (reject) {
       reject();
     } else {
