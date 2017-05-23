@@ -342,11 +342,19 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setName(schemaName);
 
         SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
+
         return schemaMetadataStorable != null ? schemaMetadataStorable.toSchemaMetadataInfo() : null;
     }
 
+    public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> filters) {
+        return findSchemaMetadata(filters)
+                .stream()
+                .map(this::buildAggregatedSchemaMetadataInfo)
+                .collect(Collectors.toList());
+    }
+
     @Override
-    public Collection<SchemaMetadata> findSchemaMetadata(Map<String, String> filters) {
+    public Collection<SchemaMetadataInfo> findSchemaMetadata(Map<String, String> filters) {
         // todo get only few selected columns instead of getting the whole row.
         Collection<SchemaMetadataStorable> storables;
 
@@ -366,12 +374,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             storables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, queryParams, getOrderByFields(orderByFieldQueryParams));
         }
 
-        List<SchemaMetadata> result;
+        List<SchemaMetadataInfo> result;
         if (storables != null && !storables.isEmpty()) {
-            result = new ArrayList<>();
-            for (SchemaMetadataStorable storable : storables) {
-                result.add(storable.toSchemaMetadata());
-            }
+            result = storables.stream().map(SchemaMetadataStorable::toSchemaMetadataInfo).collect(Collectors.toList());
         } else {
             result = Collections.emptyList();
         }
@@ -468,16 +473,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaVersionInfo> findAllVersions(final String schemaName) {
+    public List<SchemaVersionInfo> findAllVersions(final String schemaName) {
         List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
 
         Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
         List<SchemaVersionInfo> schemaVersionInfos;
         if (storables != null && !storables.isEmpty()) {
-            schemaVersionInfos = new ArrayList<>(storables.size());
-            for (SchemaVersionStorable storable : storables) {
-                schemaVersionInfos.add(storable.toSchemaVersionInfo());
-            }
+            schemaVersionInfos = storables
+                    .stream()
+                    .map(SchemaVersionStorable::toSchemaVersionInfo)
+                    .collect(Collectors.toList());
         } else {
             schemaVersionInfos = Collections.emptyList();
         }
@@ -669,7 +674,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         serDesInfoStorable.setTimestamp(System.currentTimeMillis());
         storageManager.add(serDesInfoStorable);
 
-        return nextId;
+        return serDesInfoStorable.getId();
     }
 
     @Override
@@ -743,6 +748,23 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 .stream()
                 .map(y -> ((SchemaMetadataStorable) y).toSchemaMetadataInfo())
                 .collect(Collectors.toList());
+
+    }
+
+    public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadata(String schemaName) {
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
+        return buildAggregatedSchemaMetadataInfo(schemaMetadataInfo);
+    }
+
+    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {
+        List<SchemaVersionInfo> allVersions = findAllVersions(schemaMetadataInfo.getSchemaMetadata().getName());
+        List<SerDesInfo> serDesInfos = getSerDesInfos(schemaMetadataInfo.getId());
+
+        return new AggregatedSchemaMetadataInfo(schemaMetadataInfo.getSchemaMetadata(),
+                                                schemaMetadataInfo.getId(),
+                                                schemaMetadataInfo.getTimestamp(),
+                                                allVersions,
+                                                serDesInfos);
     }
 
     public static class Options {

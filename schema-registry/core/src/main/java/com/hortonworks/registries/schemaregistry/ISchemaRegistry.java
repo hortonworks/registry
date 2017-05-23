@@ -53,13 +53,15 @@ public interface ISchemaRegistry {
 
     Integer getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
-    Collection<SchemaVersionInfo> findAllVersions(String schemaName);
+    List<SchemaVersionInfo> findAllVersions(String schemaName);
 
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
     SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
-    Collection<SchemaMetadata> findSchemaMetadata(Map<String, String> filters);
+    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> filters);
+
+    Collection<SchemaMetadataInfo> findSchemaMetadata(Map<String, String> filters);
 
     Collection<SchemaVersionKey> findSchemasWithFields(SchemaFieldQuery schemaFieldQuery);
 
@@ -107,4 +109,7 @@ public interface ISchemaRegistry {
     void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
 
     Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields);
+
+    AggregatedSchemaMetadataInfo getAggregatedSchemaMetadata(String schemaName);
+
 }

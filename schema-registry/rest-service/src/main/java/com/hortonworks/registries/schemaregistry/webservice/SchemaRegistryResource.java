@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
@@ -82,6 +83,9 @@ public class SchemaRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
     public static final String THROW_ERROR_IF_EXISTS = "_throwErrorIfExists";
     public static final String THROW_ERROR_IF_EXISTS_LOWER_CASE = THROW_ERROR_IF_EXISTS.toLowerCase();
+
+    // reserved as schema related paths use these strings
+    private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
 
     private final ISchemaRegistry schemaRegistry;
     private final AtomicReference<LeadershipParticipant> leadershipParticipant;
@@ -147,11 +151,55 @@ public class SchemaRegistryResource {
             return supplier.get();
         }
     }
+    @GET
+    @Path("/schemas/aggregated")
+    @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
+            response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response listAggregatedSchemas(@Context UriInfo uriInfo) {
+        try {
+            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+            Map<String, String> filters = new HashMap<>();
+            for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
+                List<String> value = entry.getValue();
+                filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
+            }
+
+            Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = schemaRegistry.findAggregatedSchemaMetadata(filters);
+
+            return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while listing schemas", ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/schemas/{name}/aggregated")
+    @ApiOperation(value = "Get aggregated schema information for the given schema name",
+            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+        Response response;
+        try {
+            AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadata(schemaName);
+            if (schemaMetadataInfo != null) {
+                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
+            } else {
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
+            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+
+        return response;
+    }
 
     @GET
     @Path("/schemas")
     @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
-            response = SchemaMetadata.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
+            response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response listSchemas(@Context UriInfo uriInfo) {
         try {
@@ -162,7 +210,7 @@ public class SchemaRegistryResource {
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
 
-            Collection<SchemaMetadata> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
+            Collection<SchemaMetadataInfo> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (Exception ex) {
@@ -250,33 +298,43 @@ public class SchemaRegistryResource {
             response = Long.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
-                                          SchemaMetadata schemaMetadataInfo,
+                                          SchemaMetadata schemaMetadata,
                                   @Context UriInfo uriInfo,
                                   @Context HttpHeaders httpHeaders) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
-                schemaMetadataInfo.trim();
-                checkValueAsNullOrEmpty("Schema name", schemaMetadataInfo.getName());
-                checkValueAsNullOrEmpty("Schema type", schemaMetadataInfo.getType());
+                schemaMetadata.trim();
+                checkValueAsNullOrEmpty("Schema name", schemaMetadata.getName());
+                checkValueAsNullOrEmpty("Schema type", schemaMetadata.getType());
+                checkValidNames(schemaMetadata.getName());
+
                 boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
-                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadataInfo, throwErrorIfExists);
+                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (IllegalArgumentException ex) {
-                LOG.error("Expected parameter is invalid", schemaMetadataInfo, ex);
+                LOG.error("Expected parameter is invalid", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
             } catch (UnsupportedSchemaTypeException ex) {
-                LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadataInfo, ex);
+                LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
             } catch (Exception ex) {
-                LOG.error("Error encountered while adding schema info [{}] ", schemaMetadataInfo, ex);
+                LOG.error("Error encountered while adding schema info [{}] ", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR,
                                            CatalogResponse.ResponseMessage.EXCEPTION,
-                                           String.format("Storing the given SchemaMetadata [%s] is failed",schemaMetadataInfo.toString()));
+                                           String.format("Storing the given SchemaMetadata [%s] is failed",schemaMetadata.toString()));
             }
 
             return response;
         });
+    }
+
+    private void checkValidNames(String name) {
+        for (String reservedName : reservedNames) {
+            if (reservedName.equalsIgnoreCase(name)) {
+                throw new IllegalArgumentException("schema name [" + reservedName + "] is reserved");
+            }
+        }
     }
 
     private boolean isThrowErrorIfExists(HttpHeaders httpHeaders) {

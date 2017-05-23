@@ -270,17 +270,17 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
 
         schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchema("/device.avsc"), "Initial version of the schema"));
-        SerDesPair serializerInfo = createSerDesInfo(fileId);
-        Long serializerId = schemaRegistryClient.addSerDes(serializerInfo);
-
+        SerDesPair serDesPair = createSerDesInfo(fileId);
+        Long serDesId = schemaRegistryClient.addSerDes(serDesPair);
+        Assert.assertNotNull("Returned serDesId can not be null", serDesId);
         String schemaName = schemaMetadata.getName();
-        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
+        schemaRegistryClient.mapSchemaWithSerDes(schemaName, serDesId);
         Collection<SerDesInfo> serializers = schemaRegistryClient.getSerDes(schemaName);
 
         Assert.assertTrue(serializers.stream()
                                   .map(x -> x.getSerDesPair())
                                   .collect(Collectors.toList())
-                                  .contains(serializerInfo));
+                                  .contains(serDesPair));
     }
 
     private SerDesPair createSerDesInfo(String fileId) {

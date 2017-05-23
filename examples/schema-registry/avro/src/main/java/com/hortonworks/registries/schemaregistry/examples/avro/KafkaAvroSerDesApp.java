@@ -92,10 +92,9 @@ public class KafkaAvroSerDesApp {
 
         int current = 0;
         Schema schema = new Schema.Parser().parse(new File(this.schemaFile));
-        Map<String, Object> producerConfig = createProducerConfig(props);
         String topicName = props.getProperty(TOPIC);
 
-        final Producer<String, Object> producer = new KafkaProducer<>(producerConfig);
+        final Producer<String, Object> producer = new KafkaProducer<>(props);
         final Callback callback = new MyProducerCallback();
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(payloadJsonFile))) {
@@ -116,17 +115,6 @@ public class KafkaAvroSerDesApp {
             LOG.info("All message are successfully sent to topic: [{}]", topicName);
             producer.close(5, TimeUnit.SECONDS);
         }
-    }
-
-    private Map<String, Object> createProducerConfig(Properties props) {
-        String bootstrapServers = props.getProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
-        Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL)));
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 1024);
-        return config;
     }
 
     private Object jsonToAvro(String jsonString, Schema schema) throws Exception {
@@ -152,9 +140,7 @@ public class KafkaAvroSerDesApp {
             props.load(inputStream);
         }
         String topicName = props.getProperty(TOPIC);
-        Map<String, Object> consumerConfig = createConsumerConfig(props);
-
-        KafkaConsumer consumer = new KafkaConsumer<>(consumerConfig);
+        KafkaConsumer consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(topicName));
 
         while (true) {
@@ -164,22 +150,6 @@ public class KafkaAvroSerDesApp {
                 LOG.info("Received message: (" + record.key() + ", " + record.value() + ") at offset " + record.offset());
             }
         }
-    }
-
-    private Map<String, Object> createConsumerConfig(Properties props) {
-        String bootstrapServers = props.getProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG);
-        Map<String, Object> config = new HashMap<>();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL)));
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
-        if (props.containsKey(ConsumerConfig.GROUP_ID_CONFIG)) {
-            config.put(ConsumerConfig.GROUP_ID_CONFIG, props.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
-        } else {
-            config.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());
-        }
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        return config;
     }
 
     /**

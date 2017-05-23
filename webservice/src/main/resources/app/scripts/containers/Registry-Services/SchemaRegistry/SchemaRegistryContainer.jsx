@@ -122,15 +122,31 @@ export default class SchemaRegistryContainer extends Component {
     const {key} = this.state.sorted;
     const sortBy = (key === 'name') ? key+',a' : key+',d';
 
-    SchemaREST.getAllSchemas(sortBy).then((schema) => {
+    SchemaREST.getAggregatedSchemas(sortBy).then((schema) => {
       if (schema.responseMessage !== undefined) {
         FSReactToastr.error(
           <CommonNotification flag="error" content={schema.responseMessage}/>, '', toastOpt);
       } else {
         let schemaEntities = [];
         schema.entities.map((obj, index) => {
-          let {name, schemaGroup, type, description, compatibility, evolve} = obj;
+          let {name, schemaGroup, type, description, compatibility, evolve} = obj.schemaMetadata;
           schemaCount++;
+
+          const versionsArr = [];
+          let currentVersion = 0;
+          if(obj.versions.length){
+            obj.versions.forEach((v) => {
+              versionsArr.push({
+                versionId: v.version,
+                description: v.description,
+                schemaText: v.schemaText,
+                schemaName: name,
+                timestamp: v.timestamp
+              });
+            });
+            currentVersion = Utils.sortArray(obj.versions.slice(), 'timestamp', false)[0].version;
+          }
+
           schemaData.push({
             id: (index + 1),
             type: type,
@@ -139,8 +155,9 @@ export default class SchemaRegistryContainer extends Component {
             schemaGroup: schemaGroup,
             evolve: evolve,
             collapsed: true,
-            versionsArr:  [],
-            currentVersion: null
+            versionsArr:  versionsArr,
+            currentVersion: currentVersion,
+            serDesInfos: obj.serDesInfos
           });
           schemaEntities = schemaData;
           this.setState({schemaData: schemaEntities, fetchLoader: (schemaCount == schemaEntities.length ? false : true)});
@@ -218,29 +235,8 @@ export default class SchemaRegistryContainer extends Component {
     }
   }
   handleOnEnter(s){
-    let versionsArr = [];
-    let {schemaData} = this.state;
-    let schema = _.find(schemaData,{id: s.id});
-    let obj = {};
-    SchemaREST.getSchemaVersions(schema.schemaName)
-      .then((versionResults)=>{
-        let versions = versionResults;
-        let latestVersion = Utils.sortArray(versions.entities.slice(), 'timestamp', false)[0];
-        versions.entities.map((v) => {
-          versionsArr.push({
-            versionId: v.version,
-            description: v.description,
-            schemaText: v.schemaText,
-            schemaName: schema.schemaName,
-            timestamp: v.timestamp
-          });
-        });
-        schema.versionsArr = versionsArr;
-        schema.currentVersion = latestVersion.version;
-        obj.schemaData = schemaData;
-        s.renderCodemirror = true;
-        this.setState(obj);
-      });
+    s.renderCodemirror = true;
+    this.forceUpdate();
   }
   handleOnExit(s){
     s.renderCodemirror = false;
@@ -447,12 +443,12 @@ export default class SchemaRegistryContainer extends Component {
                             <h4 ref="schemaGroup" className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`} title={s.schemaGroup}>{Utils.ellipses(s.schemaGroup, this.schemaGroupTagWidth)}</h4>
                         </div>
                         <div className="panel-sections">
-                            <h6 className="schema-th">Serializer</h6>
-                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>0</h4>
+                            <h6 className="schema-th">Version</h6>
+                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>{s.versionsArr.length}</h4>
                         </div>
                         <div className="panel-sections">
-                            <h6 className="schema-th">Deserializer</h6>
-                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>0</h4>
+                            <h6 className="schema-th">Serializer & Deserializer</h6>
+                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}><Link to={"/schemas/"+s.schemaName+'/serdes'} style={{display:'inline'}}>{s.serDesInfos.length}</Link></h4>
                         </div>
                         <div className="panel-sections" style={{'textAlign': 'right'}}>
                             <a className="collapsed collapseBtn" role="button" aria-expanded="false">
