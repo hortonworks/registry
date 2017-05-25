@@ -8,6 +8,7 @@ Contents:
 
    install
    schema-registry
+   examples
    security
    roadmap
    competition

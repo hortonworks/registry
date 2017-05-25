@@ -1363,3 +1363,14 @@ span.warning {
 .pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
   background-color: #3eae4a;
 }
+
+#add-serializer{
+  position: absolute;
+  right: 90px;
+  z-index: 1050;
+  top: 40px;
+}
+
+.white-bg {
+  background-color: #fff;
+}

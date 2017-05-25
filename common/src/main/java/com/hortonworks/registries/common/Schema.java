@@ -78,7 +78,7 @@ public class Schema implements Serializable {
             Type type = null;
             Type[] types = Type.values();
 
-            if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false")) {
+            if (val != null && (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
                 type = BOOLEAN;
             }
 
@@ -95,9 +95,11 @@ public class Schema implements Serializable {
                     /* Exception is thrown if type does not match. Ignore to search next type */
                 }
             }
+
             if (type == null) {
                 type = STRING;
             }
+
             return type;
         }
     }
