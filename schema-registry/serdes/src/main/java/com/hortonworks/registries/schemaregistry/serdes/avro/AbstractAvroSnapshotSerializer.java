@@ -18,6 +18,7 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
@@ -78,6 +79,14 @@ import java.nio.ByteBuffer;
  */
 public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshotSerializer<Object, O> {
 
+    public AbstractAvroSnapshotSerializer() {
+        super();
+    }
+
+    public AbstractAvroSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
+        super(schemaRegistryClient);
+    }
+    
     /**
      * Writes given {@code input} avro object in a binary format into given {@code outputStream}
      *
@@ -99,7 +108,6 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
             BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
             DatumWriter<Object> writer;
             boolean isSpecificRecord = input instanceof SpecificRecord;
-            outputStream.write(isSpecificRecord ? AvroUtils.SPECIFIC_RECORD : AvroUtils.GENERIC_RECORD);
             if (isSpecificRecord) {
                 writer = new SpecificDatumWriter<>(schema);
             } else {

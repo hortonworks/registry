@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.ByteArrayOutputStream;
@@ -43,6 +44,10 @@ public class AvroSnapshotSerializer extends AbstractAvroSnapshotSerializer<byte[
     public static final byte CURRENT_PROTOCOL_VERSION = 0x1;
 
     public AvroSnapshotSerializer() {
+    }
+
+    public AvroSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
+        super(schemaRegistryClient);
     }
 
     protected byte[] doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {

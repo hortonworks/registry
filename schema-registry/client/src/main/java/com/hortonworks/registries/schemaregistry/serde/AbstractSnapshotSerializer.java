@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.serde;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -36,14 +37,20 @@ import java.util.Map;
  * </ul>
  */
 public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerializer<I, O, SchemaMetadata> {
-    protected SchemaRegistryClient schemaRegistryClient;
+    protected ISchemaRegistryClient schemaRegistryClient;
 
     public AbstractSnapshotSerializer() {
     }
 
+    public AbstractSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
+        this.schemaRegistryClient = schemaRegistryClient;
+    }
+
     @Override
     public void init(Map<String, ?> config) {
-        schemaRegistryClient = new SchemaRegistryClient(config);
+        if (schemaRegistryClient == null) {
+            schemaRegistryClient = new SchemaRegistryClient(config);
+        }
     }
 
     @Override
