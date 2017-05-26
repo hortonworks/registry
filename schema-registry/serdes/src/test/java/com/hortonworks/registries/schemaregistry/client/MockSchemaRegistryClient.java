@@ -30,7 +30,7 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 
 /**
- * Created by pearcem on 19/05/2017.
+ *
  */
 public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     

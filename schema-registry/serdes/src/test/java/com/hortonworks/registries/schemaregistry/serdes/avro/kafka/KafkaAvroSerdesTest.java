@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Created by pearcem on 19/05/2017.
+ *
  */
 public class KafkaAvroSerdesTest {
 
