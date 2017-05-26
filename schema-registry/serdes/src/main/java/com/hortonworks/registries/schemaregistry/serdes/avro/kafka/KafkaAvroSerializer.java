@@ -92,7 +92,7 @@ public class KafkaAvroSerializer implements Serializer<Object> {
         return new SchemaMetadata.Builder(schemaMetadata).description(description).compatibility(compatibility).build();
     }
 
-    protected SchemaMetadata getSchemaKey(String topic, boolean isKey) {
+    public SchemaMetadata getSchemaKey(String topic, boolean isKey) {
         String name = topic;
         if(isKey) {
             if (schemaNameKeySuffix != null ) {
