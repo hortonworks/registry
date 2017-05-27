@@ -19,6 +19,8 @@ import com.hortonworks.registries.serdes.Device;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.SpecificRecord;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -57,7 +59,7 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
         if (payload instanceof byte[]) {
             Assert.assertArrayEquals((byte[]) payload, (byte[]) deserializedObj);
         } else {
-            Assert.assertEquals(payload, deserializedObj);
+            assertAvroObjs(payload, deserializedObj);
         }
     }
 

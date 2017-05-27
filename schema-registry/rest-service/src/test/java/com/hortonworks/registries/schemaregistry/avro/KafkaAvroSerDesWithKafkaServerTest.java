@@ -18,6 +18,8 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -94,8 +96,9 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
             Assert.assertEquals(1, consumerRecords.count());
 
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
+            Object value = consumerRecord.value();
             Assert.assertEquals(getKey(msg), consumerRecord.key());
-            Assert.assertEquals(msg, consumerRecord.value());
+            assertAvroObjs(msg, value);
         } finally {
             CLUSTER.deleteTopic(topicName);
         }

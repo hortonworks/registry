@@ -20,14 +20,18 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaResolver;
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class implements most of the required functionality for an avro deserializer by extending {@link AbstractSnapshotDeserializer}
@@ -91,13 +96,29 @@ import java.util.Map;
  */
 public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapshotDeserializer<I, Object, Schema> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractAvroSnapshotDeserializer.class);
+    
+    public static final String SPECIFIC_AVRO_READER = "specific.avro.reader";
+
+    private final Map<String, Schema> readerSchemaCache = new ConcurrentHashMap();
 
     private AvroSchemaResolver avroSchemaResolver;
 
+    protected boolean useSpecificAvroReader = false;
+
+    public AbstractAvroSnapshotDeserializer() {
+        super();
+    }
+    
+    public AbstractAvroSnapshotDeserializer(ISchemaRegistryClient schemaRegistryClient) {
+        super(schemaRegistryClient);
+    }
+    
     @Override
     public void init(Map<String, ?> config) {
         super.init(config);
         avroSchemaResolver = new AvroSchemaResolver(key -> schemaRegistryClient.getSchemaVersionInfo(key));
+        this.useSpecificAvroReader = (boolean) getValue(config, SPECIFIC_AVRO_READER, false);
+
     }
 
     @Override
@@ -138,19 +159,9 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
                 // generate UTF-8 string object from the received bytes.
                 deserializedObj = new String(IOUtils.toByteArray(payloadInputStream), AvroUtils.UTF_8);
             } else {
-                int recordType = payloadInputStream.read();
-                LOG.debug("Received record type: [{}]", recordType);
-                GenericDatumReader datumReader = null;
-                Schema readerSchema = readerSchemaVersion != null
-                        ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
+                Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 
-                if (recordType == AvroUtils.GENERIC_RECORD) {
-                    datumReader = readerSchema != null ? new GenericDatumReader(writerSchema, readerSchema)
-                            : new GenericDatumReader(writerSchema);
-                } else {
-                    datumReader = readerSchema != null ? new SpecificDatumReader(writerSchema, readerSchema)
-                            : new SpecificDatumReader(writerSchema);
-                }
+                DatumReader datumReader = getDatumReader(writerSchema, readerSchema);
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
         } catch (IOException e) {
@@ -158,5 +169,39 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         }
 
         return deserializedObj;
+    }
+
+
+    private DatumReader getDatumReader(Schema writerSchema, Schema readerSchema) {
+        if(this.useSpecificAvroReader) {
+            if(readerSchema == null) {
+                readerSchema = this.getReaderSchema(writerSchema);
+            }
+
+            return new SpecificDatumReader(writerSchema, readerSchema);
+        } else {
+            return readerSchema == null ? new GenericDatumReader(writerSchema) : new GenericDatumReader(writerSchema, readerSchema);
+        }
+    }
+
+    private Schema getReaderSchema(Schema writerSchema) {
+        Schema readerSchema = this.readerSchemaCache.get(writerSchema.getFullName());
+        if(readerSchema == null) {
+            Class readerClass = SpecificData.get().getClass(writerSchema);
+            if(readerClass == null) {
+                throw new SerDesException("Could not find class " + writerSchema.getFullName() + " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
+            }
+            try {
+                readerSchema = ((SpecificRecord)readerClass.newInstance()).getSchema();
+            } catch (InstantiationException var5) {
+                throw new SerDesException(writerSchema.getFullName() + " specified by the " + "writers schema could not be instantiated to find the readers schema.");
+            } catch (IllegalAccessException var6) {
+                throw new SerDesException(writerSchema.getFullName() + " specified by the " + "writers schema is not allowed to be instantiated to find the readers schema.");
+            }
+
+            this.readerSchemaCache.put(writerSchema.getFullName(), readerSchema);
+        }
+
+        return readerSchema;
     }
 }

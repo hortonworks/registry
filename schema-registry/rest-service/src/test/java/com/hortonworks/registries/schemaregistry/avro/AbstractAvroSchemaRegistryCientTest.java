@@ -24,6 +24,9 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.SpecificRecord;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -56,6 +59,16 @@ public abstract class AbstractAvroSchemaRegistryCientTest {
     @Before
     public void setup() throws IOException {
         schemaRegistryClient = new SchemaRegistryClient(SCHEMA_REGISTRY_CLIENT_CONF);
+    }
+
+    protected void assertAvroObjs(Object expected, Object given) {
+        if (expected instanceof byte[]) {
+            Assert.assertArrayEquals((byte[]) expected, (byte[]) given);
+        } else if(expected instanceof SpecificRecord) {
+            Assert.assertTrue(SpecificData.get().compare(expected, given, ((SpecificRecord) expected).getSchema()) == 0);
+        } else {
+            Assert.assertEquals(expected, given);
+        }
     }
 
     protected Object[] generatePrimitivePayloads() {

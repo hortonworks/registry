@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 
@@ -79,6 +80,10 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
+    }
+
+    public KafkaAvroDeserializer(ISchemaRegistryClient schemaRegistryClient) {
+        avroSnapshotDeserializer = new AvroSnapshotDeserializer(schemaRegistryClient);
     }
 
     @Override

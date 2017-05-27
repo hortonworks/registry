@@ -143,7 +143,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     static {
         String jaasConfigFile = System.getProperty("java.security.auth.login.config");
-        if (jaasConfigFile != null) {
+        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
             KerberosLogin kerberosLogin = new KerberosLogin();
             kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
             try {
