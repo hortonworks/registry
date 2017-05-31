@@ -23,6 +23,16 @@ import java.io.Serializable;
 public final class SchemaVersionInfo implements Serializable {
 
     /**
+     * global unique id of this schema instance
+     */
+    private Long id;
+
+    /**
+     * name of this schema instance
+     */
+    private String name;
+    
+    /**
      * description of this schema instance
      */
     private String description;
@@ -41,17 +51,28 @@ public final class SchemaVersionInfo implements Serializable {
      * timestamp of the schema which is given in SchemaInfo
      */
     private Long timestamp;
+    
 
     @SuppressWarnings("unused")
     private SchemaVersionInfo() { /* Private constructor for Jackson JSON mapping */ }
 
-    public SchemaVersionInfo(Integer version, String schemaText, Long timestamp, String description) {
+    public SchemaVersionInfo(Long id, String name, Integer version, String schemaText, Long timestamp, String description) {
+        this.id = id;
+        this.name = name;
         this.description = description;
         this.version = version;
         this.schemaText = schemaText;
         this.timestamp = timestamp;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
     public String getDescription() {
         return description;
     }
@@ -71,7 +92,9 @@ public final class SchemaVersionInfo implements Serializable {
     @Override
     public String toString() {
         return "SchemaVersionInfo{" +
-                "description='" + description + '\'' +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
                 ", version=" + version +
                 ", schemaText='" + schemaText + '\'' +
                 ", timestamp=" + timestamp +
@@ -85,6 +108,8 @@ public final class SchemaVersionInfo implements Serializable {
 
         SchemaVersionInfo that = (SchemaVersionInfo) o;
 
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
@@ -94,7 +119,9 @@ public final class SchemaVersionInfo implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = description != null ? description.hashCode() : 0;
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);

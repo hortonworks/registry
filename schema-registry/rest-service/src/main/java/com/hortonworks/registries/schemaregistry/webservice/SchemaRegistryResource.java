@@ -98,11 +98,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         super(schemaRegistry, leadershipParticipant);
     }
 
-    // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
-    private static final String OPERATION_GROUP_SCHEMA = "1. Schema";
-    private static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
-    private static final String OPERATION_GROUP_OTHER = "3. Other";
-
     @GET
     @Path("/schemaproviders")
     @ApiOperation(value = "Get list of registered Schema Providers",
@@ -470,8 +465,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Response response;
             try {
                 LOG.info("schemaVersion for [{}] is [{}]", schemaName, schemaVersion);
-                Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
-                response = WSUtils.respondEntity(version, Response.Status.CREATED);
+                SchemaVersionInfo version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
+                response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());

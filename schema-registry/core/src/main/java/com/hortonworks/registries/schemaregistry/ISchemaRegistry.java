@@ -43,21 +43,19 @@ public interface ISchemaRegistry {
 
     Long addSchemaMetadata(SchemaMetadata schemaMetadata, boolean throwErrorIfExists) throws UnsupportedSchemaTypeException;
 
-    Integer addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException, SchemaNotFoundException;
+    SchemaVersionInfo addSchemaVersion(SchemaMetadata schemaMetadata, String schemaText, String description) throws IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException, SchemaNotFoundException;
 
-    Integer addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
+    SchemaVersionInfo addSchemaVersion(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
 
     SchemaMetadataInfo getSchemaMetadata(Long schemaMetadataId);
 
     SchemaMetadataInfo getSchemaMetadata(String schemaName);
 
-    Integer getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
+    SchemaVersionInfo getSchemaVersion(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
-    SchemaNameVersionId getSchemaNameVersionId(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
+    SchemaVersionInfo registerSchema(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
 
-    Long registerSchema(String schemaName, String schemaText, String description) throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, UnsupportedSchemaTypeException;
-
-    String getSchemaById(Long id) throws SchemaNotFoundException, InvalidSchemaException;
+    SchemaVersionInfo getSchemaVersion(Long id) throws SchemaNotFoundException, InvalidSchemaException;
 
     List<SchemaVersionInfo> findAllVersions(String schemaName);
 

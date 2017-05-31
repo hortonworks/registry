@@ -190,7 +190,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     }
 
     public SchemaVersionInfo toSchemaVersionInfo() {
-        return new SchemaVersionInfo(version, schemaText, timestamp, description);
+        return new SchemaVersionInfo(id, name, version, schemaText, timestamp, description);
     }
 
     @Override

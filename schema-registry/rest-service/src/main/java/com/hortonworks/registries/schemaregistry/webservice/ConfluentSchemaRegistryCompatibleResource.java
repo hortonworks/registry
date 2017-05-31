@@ -34,9 +34,7 @@ import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaNameVersionId;
-import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -49,22 +47,18 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
+ * This is used to support confluent serdes, and also thrid party integrations that support confluent schema registry api, 
+ * but yet to adopt registry's api.
  */
 @Path("/v1/confluent")
 @Api(value = "/api/v1/confluent", description = "Endpoint for Confluent Schema Registry API compatible service")
 @Produces(MediaType.APPLICATION_JSON)
-public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
-    private static final Logger LOG = LoggerFactory.getLogger(ConfluentSchemaRegistryResource.class);
+public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryResource {
+    private static final Logger LOG = LoggerFactory.getLogger(ConfluentSchemaRegistryCompatibleResource.class);
 
-    public ConfluentSchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
+    public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         super(schemaRegistry, leadershipParticipant);
     }
-
-    // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
-    private static final String OPERATION_GROUP_SCHEMA = "1. Schema";
-    private static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
-    private static final String OPERATION_GROUP_OTHER = "3. Other";
-
 
     @GET
     @Path("/schemas/ids/{id}")
@@ -74,9 +68,9 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
     public Response getSchemaById(@ApiParam(value = "SchemaVersion id", required = true) @PathParam("id") Long id) {
         Response response;
         try {
-            String schemaText = schemaRegistry.getSchemaById(id);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersion(id);
             SchemaString schema = new SchemaString();
-            schema.setSchema(schemaText);
+            schema.setSchema(schemaVersionInfo.getSchemaText());
             response = WSUtils.respondEntity(schema, Response.Status.OK);
         } catch (SchemaNotFoundException snfe) {
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, Long.toString(id));
@@ -96,11 +90,11 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
                                @ApiParam(value = "The schema ", required = true) String schema) {
         Response response;
         try {
-            SchemaNameVersionId schemaNameVersionId = schemaRegistry.getSchemaNameVersionId(subject, new SchemaString().fromJson(schema).getSchema());
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersion(subject, schemaStringFromJson(schema).getSchema());
             
             
-            if (schemaNameVersionId != null) {
-                response = WSUtils.respondEntity(new Schema(schemaNameVersionId.getName(), schemaNameVersionId.getVersion(), schemaNameVersionId.getId(), schemaNameVersionId.getSchemaText()), Response.Status.OK);
+            if (schemaVersionInfo != null) {
+                response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
@@ -131,9 +125,9 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
             Response response;
             try {
                 LOG.info("registerSchema for [{}] is [{}]", subject);
-                Long schemaId = schemaRegistry.registerSchema(subject, new SchemaString().fromJson(schema).getSchema(), null);
+                SchemaVersionInfo schemaVersionInfo = schemaRegistry.registerSchema(subject, schemaStringFromJson(schema).getSchema(), null);
                 Id id = new Id();
-                id.setId(schemaId);
+                id.setId(schemaVersionInfo.getId());
                 response = WSUtils.respondEntity(id, Response.Status.OK);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
@@ -152,15 +146,15 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
             return response;
         });
     }
+
+    public SchemaString schemaStringFromJson(String json) throws IOException {
+        return (SchemaString) (new ObjectMapper()).readValue(json, SchemaString.class);
+    }
     
     public static class SchemaString {
         private String schema;
 
         public SchemaString() {
-        }
-
-        public SchemaString fromJson(String json) throws IOException {
-            return (SchemaString) (new ObjectMapper()).readValue(json, SchemaString.class);
         }
 
         @JsonProperty("schema")
@@ -207,20 +201,12 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
             sb.append("{schema=" + this.schema + "}");
             return sb.toString();
         }
-
-        public String toJson() throws IOException {
-            return (new ObjectMapper()).writeValueAsString(this);
-        }
     }
 
     public static class Id {
         private long id;
 
         public Id() {
-        }
-
-        public Id fromJson(String json) throws IOException {
-            return (Id)(new ObjectMapper()).readValue(json, Id.class);
         }
 
         @JsonProperty("id")
@@ -232,35 +218,7 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
         public void setId(long id) {
             this.id = id;
         }
-
-        public String toJson() throws IOException {
-            return (new ObjectMapper()).writeValueAsString(this);
-        }
-    }
-
-    public static class Version {
-        private int id;
-
-        public Version() {
-        }
-
-        public Id fromJson(String json) throws IOException {
-            return (Id)(new ObjectMapper()).readValue(json, Id.class);
-        }
-
-        @JsonProperty("id")
-        public int getId() {
-            return this.id;
-        }
-
-        @JsonProperty("id")
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public String toJson() throws IOException {
-            return (new ObjectMapper()).writeValueAsString(this);
-        }
+        
     }
 
     public class Schema implements Comparable<Schema> {
@@ -352,36 +310,6 @@ public class ConfluentSchemaRegistryResource extends  BaseRegistryResource {
                 result = this.version.intValue() - that.version.intValue();
                 return result;
             }
-        }
-    }
-    
-    public static class ErrorMessage {
-        private int errorCode;
-        private String message;
-
-        public ErrorMessage(@JsonProperty("error_code") int errorCode, @JsonProperty("message") String message) {
-            this.errorCode = errorCode;
-            this.message = message;
-        }
-
-        @JsonProperty("error_code")
-        public int getErrorCode() {
-            return this.errorCode;
-        }
-
-        @JsonProperty("error_code")
-        public void setErrorCode(int error_code) {
-            this.errorCode = error_code;
-        }
-
-        @JsonProperty
-        public String getMessage() {
-            return this.message;
-        }
-
-        @JsonProperty
-        public void setMessage(String message) {
-            this.message = message;
         }
     }
 

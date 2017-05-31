@@ -36,7 +36,7 @@ import org.junit.Test;
 /**
  *
  */
-public class ConfluentRegistryResourceTest {
+public class ConfluentRegistryCompatibleResourceTest {
 
     @Test
     public void testSanity() throws Exception {

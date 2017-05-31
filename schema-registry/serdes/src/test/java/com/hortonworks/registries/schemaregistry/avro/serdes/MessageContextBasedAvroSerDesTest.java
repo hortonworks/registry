@@ -53,7 +53,7 @@ public class MessageContextBasedAvroSerDesTest {
                         .build();
         SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1);
         Device input = new Device(1L, "device", 1, System.currentTimeMillis());
-        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(schemaIdVersion.getVersion(),
+        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1l, input.getName().toString(), schemaIdVersion.getVersion(),
                                                                     input.getSchema().toString(),
                                                                     System.currentTimeMillis(),
                                                                     "");

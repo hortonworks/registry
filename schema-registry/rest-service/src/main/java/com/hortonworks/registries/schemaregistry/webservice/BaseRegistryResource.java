@@ -1,3 +1,18 @@
+/**
+ * Copyright 2016 Hortonworks.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import javax.ws.rs.core.Response;
@@ -12,16 +27,20 @@ import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by pearcem on 22/05/2017.
- */
 abstract class BaseRegistryResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BaseRegistryResource.class);
 
     final AtomicReference<LeadershipParticipant> leadershipParticipant;
     final ISchemaRegistry schemaRegistry;
 
+    // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
+    static final String OPERATION_GROUP_SCHEMA = "1. Schema";
+    static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
+    static final String OPERATION_GROUP_OTHER = "3. Other";
+
+    
+    
     BaseRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         Preconditions.checkNotNull(schemaRegistry, "SchemaRegistry can not be null");
         Preconditions.checkNotNull(leadershipParticipant, "LeadershipParticipant can not be null");
