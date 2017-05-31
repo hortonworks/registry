@@ -1374,3 +1374,12 @@ span.warning {
 .white-bg {
   background-color: #fff;
 }
+
+.logo-image{
+  display: inline !important;
+}
+.logo-text{
+  display:inline-grid;
+  vertical-align: middle;
+  margin-left: 3px;
+}

@@ -42,7 +42,8 @@ export default class Header extends Component {
         <Navbar.Header>
           <Navbar.Brand>
             <a href="javascript:void(0);">
-              <strong>SCHEMA</strong><br/> REGISTRY
+              <img src="/styles/img/logo.png" className="logo-image"/>
+              <div className="logo-text"><strong>SCHEMA</strong>REGISTRY</div>
             </a>
           </Navbar.Brand>
           <Navbar.Toggle/>
