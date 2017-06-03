@@ -22,6 +22,7 @@ import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
+import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.Collection;
 import java.util.List;
@@ -68,6 +69,11 @@ public class SingletonInmemoryStore implements StorageManager {
     @Override
     public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException {
         return inMemoryStorageManager.find(namespace, queryParams, orderByFields);
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
+        return inMemoryStorageManager.search(searchQuery);
     }
 
     @Override

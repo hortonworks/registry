@@ -17,6 +17,7 @@ package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.Collection;
 import java.util.List;
@@ -105,6 +106,14 @@ public interface StorageManager {
     <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException;
 
     /**
+     *
+     * @param searchQuery
+     * @param <T>
+     * @return
+     */
+    <T extends Storable> Collection<T> search(SearchQuery searchQuery);
+
+    /**
      * Lists all {@link Storable} objects existing in the given namespace. If no entity is found, and empty list will be returned.
      * @param namespace
      * @return
@@ -129,4 +138,5 @@ public interface StorageManager {
      * @throws StorageException
      */
     void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException;
+
 }

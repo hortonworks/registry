@@ -22,6 +22,7 @@ import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
+import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,4 +102,7 @@ public interface QueryExecutor {
     ExecutionConfig getConfig();
 
     void setStorableFactory(StorableFactory storableFactory);
+
+    //todo unify all other select methods with this method as they are kind of special cases of SearchQuery
+    <T extends Storable> Collection<T> select(SearchQuery searchQuery);
 }

@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
 import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -37,6 +38,9 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.storage.OrderByField;
+import com.hortonworks.registries.storage.search.OrderBy;
+import com.hortonworks.registries.storage.search.WhereClause;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -63,12 +67,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -217,7 +227,101 @@ public class SchemaRegistryResource {
     }
 
     @GET
-    @Path("/schemas/search/fields")
+    @Path("/search/schemas")
+    @ApiOperation(value = "Search for schemas containing the given name and description",
+            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
+            response = SchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response findSchemas(@Context UriInfo uriInfo) {
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        try {
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
+            return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    private Collection<SchemaMetadataInfo> findSchemaMetadataInfos(MultivaluedMap<String, String> queryParameters) {
+        Collection<SchemaMetadataInfo> schemaMetadataInfos;
+        // name and description for now, complex queries are supported by backend and front end can send the json
+        // query for those complex queries.
+        if(queryParameters.containsKey(SchemaMetadataStorable.NAME)
+                || queryParameters.containsKey(SchemaMetadataStorable.DESCRIPTION)) {
+            String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
+            String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
+            WhereClause whereClause = WhereClause.begin()
+                    .contains(SchemaMetadataStorable.NAME, name)
+                    .or()
+                    .contains(SchemaMetadataStorable.DESCRIPTION, description)
+                    .combine();
+            //todo refactor orderby field in DefaultSchemaRegistry#search APIs merge with these APIs
+            String orderByFieldStr = queryParameters.getFirst(ORDER_BY_FIELDS_PARAM_NAME);
+            schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, getOrderByFields(orderByFieldStr));
+        } else {
+            schemaMetadataInfos = Collections.emptyList();
+        }
+        return schemaMetadataInfos;
+    }
+
+    private List<OrderBy> getOrderByFields(String value) {
+        List<OrderBy> orderByList = new ArrayList<>();
+        // _orderByFields=[<field-name>,<a/d>,]*
+        // example can be : _orderByFields=foo,a,bar,d
+        // order by foo with ascending then bar with descending
+        String[] splitStrings = value.split(",");
+        for (int i = 0; i < splitStrings.length; i += 2) {
+            String ascStr = splitStrings[i+1];
+            boolean descending;
+            if("a".equals(ascStr)) {
+                descending = false;
+            } else if("d".equals(ascStr)) {
+                descending = true;
+            } else {
+                throw new IllegalArgumentException("Ascending or Descending identifier can only be 'a' or 'd' respectively.");
+            }
+
+            String fieldName = splitStrings[i];
+            orderByList.add(descending ? OrderBy.desc(fieldName) : OrderBy.asc(fieldName));
+        }
+
+        return orderByList;
+    }
+
+    @GET
+    @Path("/search/schemas/aggregated")
+    @ApiOperation(value = "Search for schemas containing the given name and description",
+            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
+            response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        try {
+            List<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos =
+                    findSchemaMetadataInfos(uriInfo.getQueryParameters())
+                            .stream()
+                            .map(schemaMetadataInfo -> {
+                                SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+                                List<SerDesInfo> serDesInfos = new ArrayList<>(schemaRegistry.getSchemaSerializers(schemaMetadataInfo.getId()));
+                                AggregatedSchemaMetadataInfo result =
+                                        new AggregatedSchemaMetadataInfo(schemaMetadata,
+                                                                         schemaMetadataInfo.getId(),
+                                                                         schemaMetadataInfo.getTimestamp(),
+                                                                         schemaRegistry.findAllVersions(schemaMetadata.getName()),
+                                                                         serDesInfos);
+
+                                return result;
+                            }).collect(Collectors.toList());
+            return WSUtils.respondEntities(aggregatedSchemaMetadataInfos, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/search/schemas/fields")
     @ApiOperation(value = "Search for schemas containing the given field names",
             notes = "Search the schemas for given field names and return a list of schemas that contain the field.",
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)

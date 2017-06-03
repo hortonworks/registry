@@ -31,6 +31,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.Abstrac
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
+import com.hortonworks.registries.storage.search.SearchQuery;
 import com.zaxxer.hikari.HikariConfig;
 
 import java.util.Collection;
@@ -83,6 +84,11 @@ public class MySqlExecutor extends AbstractQueryExecutor {
     public Long nextId(String namespace) {
         // We intentionally return null. Please refer the class javadoc for more details.
         return null;
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> select(SearchQuery searchQuery) {
+        return executeQuery(searchQuery.getNameSpace(), new MySqlSelectQuery(searchQuery, storableFactory.create(searchQuery.getNameSpace()).getSchema()));
     }
 
     @Override

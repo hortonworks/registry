@@ -63,7 +63,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     protected final List<Connection> activeConnections;
 
     private final Cache<SqlQuery, PreparedStatementBuilder> cache;
-    private StorableFactory storableFactory;
+    protected StorableFactory storableFactory;
 
     public AbstractQueryExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
         this(config, connectionBuilder, null);

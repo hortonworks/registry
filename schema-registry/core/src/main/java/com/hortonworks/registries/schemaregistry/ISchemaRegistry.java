@@ -19,6 +19,8 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.storage.search.OrderBy;
+import com.hortonworks.registries.storage.search.WhereClause;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -106,5 +108,8 @@ public interface ISchemaRegistry {
 
     void mapSerDesWithSchema(Long schemaMetadataId, Long serDesId);
 
+    Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields);
+
     AggregatedSchemaMetadataInfo getAggregatedSchemaMetadata(String schemaName);
+
 }

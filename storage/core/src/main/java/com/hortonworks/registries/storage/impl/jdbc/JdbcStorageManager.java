@@ -33,6 +33,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory.
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.MetadataHelper;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
+import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +130,11 @@ public class JdbcStorageManager implements StorageManager {
         log.debug("Querying table = [{}]\n\t filter = [{}]\n\t returned [{}]", namespace, queryParams, entries);
 
         return entries;
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
+        return queryExecutor.select(searchQuery);
     }
 
     private <T extends Storable> Collection<T> list(String namespace, List<OrderByField> orderByFields) {

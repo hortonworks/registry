@@ -21,6 +21,7 @@ import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.cache.impl.GuavaCache;
 import com.hortonworks.registries.storage.cache.writer.StorageWriter;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.Collection;
 import java.util.List;
@@ -82,6 +83,11 @@ public class CacheBackedStorageManager implements StorageManager {
     @Override
     public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException {
         return ((GuavaCache)cache).getDao().find(namespace, queryParams, orderByFields);
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
+        return ((GuavaCache)cache).getDao().search(searchQuery);
     }
 
     @Override
