@@ -65,13 +65,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -228,25 +231,60 @@ public class SchemaRegistryResource {
     public Response findSchemas(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos;
-            // name and description for now, complex queries are supported by backend and front end can send the json
-            // query for those complex queries.
-            if(queryParameters.containsKey(SchemaMetadataStorable.NAME)
-                    || queryParameters.containsKey(SchemaMetadataStorable.DESCRIPTION)) {
-                String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
-                String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
-                WhereClause whereClause = WhereClause.begin()
-                        .contains(SchemaMetadataStorable.NAME, name)
-                        .or()
-                        .contains(SchemaMetadataStorable.DESCRIPTION, description)
-                        .combine();
-
-                schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, Collections.emptyList());
-            } else {
-                schemaMetadataInfos = Collections.emptyList();
-            }
-
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    private Collection<SchemaMetadataInfo> findSchemaMetadataInfos(MultivaluedMap<String, String> queryParameters) {
+        Collection<SchemaMetadataInfo> schemaMetadataInfos;
+        // name and description for now, complex queries are supported by backend and front end can send the json
+        // query for those complex queries.
+        if(queryParameters.containsKey(SchemaMetadataStorable.NAME)
+                || queryParameters.containsKey(SchemaMetadataStorable.DESCRIPTION)) {
+            String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
+            String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
+            WhereClause whereClause = WhereClause.begin()
+                    .contains(SchemaMetadataStorable.NAME, name)
+                    .or()
+                    .contains(SchemaMetadataStorable.DESCRIPTION, description)
+                    .combine();
+
+            schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, Collections.emptyList());
+        } else {
+            schemaMetadataInfos = Collections.emptyList();
+        }
+        return schemaMetadataInfos;
+    }
+
+    @GET
+    @Path("/search/schemas/aggregated")
+    @ApiOperation(value = "Search for schemas containing the given name and description",
+            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
+            response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        try {
+            List<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos =
+                    findSchemaMetadataInfos(uriInfo.getQueryParameters())
+                            .stream()
+                            .map(schemaMetadataInfo -> {
+                                SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+                                List<SerDesInfo> serDesInfos = new ArrayList<>(schemaRegistry.getSchemaSerializers(schemaMetadataInfo.getId()));
+                                AggregatedSchemaMetadataInfo result =
+                                        new AggregatedSchemaMetadataInfo(schemaMetadata,
+                                                                         schemaMetadataInfo.getId(),
+                                                                         schemaMetadataInfo.getTimestamp(),
+                                                                         schemaRegistry.findAllVersions(schemaMetadata.getName()),
+                                                                         serDesInfos);
+
+                                return result;
+                            }).collect(Collectors.toList());
+            return WSUtils.respondEntities(aggregatedSchemaMetadataInfos, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
