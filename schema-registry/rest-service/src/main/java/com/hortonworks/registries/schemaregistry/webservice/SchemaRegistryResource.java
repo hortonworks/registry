@@ -38,6 +38,8 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.storage.OrderByField;
+import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -75,6 +77,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -252,12 +256,37 @@ public class SchemaRegistryResource {
                     .or()
                     .contains(SchemaMetadataStorable.DESCRIPTION, description)
                     .combine();
-
-            schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, Collections.emptyList());
+            //todo refactor orderby field in DefaultSchemaRegistry#search APIs merge with these APIs
+            String orderByFieldStr = queryParameters.getFirst(ORDER_BY_FIELDS_PARAM_NAME);
+            schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, getOrderByFields(orderByFieldStr));
         } else {
             schemaMetadataInfos = Collections.emptyList();
         }
         return schemaMetadataInfos;
+    }
+
+    private List<OrderBy> getOrderByFields(String value) {
+        List<OrderBy> orderByList = new ArrayList<>();
+        // _orderByFields=[<field-name>,<a/d>,]*
+        // example can be : _orderByFields=foo,a,bar,d
+        // order by foo with ascending then bar with descending
+        String[] splitStrings = value.split(",");
+        for (int i = 0; i < splitStrings.length; i += 2) {
+            String ascStr = splitStrings[i+1];
+            boolean descending;
+            if("a".equals(ascStr)) {
+                descending = false;
+            } else if("d".equals(ascStr)) {
+                descending = true;
+            } else {
+                throw new IllegalArgumentException("Ascending or Descending identifier can only be 'a' or 'd' respectively.");
+            }
+
+            String fieldName = splitStrings[i];
+            orderByList.add(descending ? OrderBy.desc(fieldName) : OrderBy.asc(fieldName));
+        }
+
+        return orderByList;
     }
 
     @GET
