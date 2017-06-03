@@ -88,20 +88,25 @@ export default class SchemaRegistryContainer extends Component {
       },
       expandSchema: false,
       activePage: 1,
-      pageSize: 10
+      pageSize: 10,
+      dataFound: true
     };
     this.schemaObj = {};
     this.schemaText = '';
-    this.fetchData();
   }
   componentDidUpdate(){
     this.btnClassChange();
   }
   componentDidMount(){
     this.btnClassChange();
+    this.fetchData().then((entities) => {
+      if(!entities.length){
+        this.setState({dataFound: false});
+      }
+    });
   }
   btnClassChange = () => {
-    if(!this.state.fetchLoader){
+    if(!this.state.loading){
       if(this.state.schemaData.length !== 0){
         const sortDropdown = document.querySelector('.sortDropdown');
         sortDropdown.setAttribute("class","sortDropdown");
@@ -119,15 +124,17 @@ export default class SchemaRegistryContainer extends Component {
       schemaData = [],
       schemaCount = 0;
 
+    const {filterValue} = this.state;
     const {key} = this.state.sorted;
     const sortBy = (key === 'name') ? key+',a' : key+',d';
 
-    SchemaREST.getAggregatedSchemas(sortBy).then((schema) => {
+    this.setState({loading: true});
+    return SchemaREST.searchAggregatedSchemas(sortBy, filterValue).then((schema) => {
+      let schemaEntities = [];
       if (schema.responseMessage !== undefined) {
         FSReactToastr.error(
           <CommonNotification flag="error" content={schema.responseMessage}/>, '', toastOpt);
       } else {
-        let schemaEntities = [];
         schema.entities.map((obj, index) => {
           let {name, schemaGroup, type, description, compatibility, evolve} = obj.schemaMetadata;
           schemaCount++;
@@ -160,12 +167,17 @@ export default class SchemaRegistryContainer extends Component {
             serDesInfos: obj.serDesInfos
           });
           schemaEntities = schemaData;
-          this.setState({schemaData: schemaEntities, fetchLoader: (schemaCount == schemaEntities.length ? false : true)});
         });
+        let dataFound = this.state.dataFound;
+        if(!dataFound && schemaEntities.length){
+          dataFound = true;
+        }
+        this.setState({schemaData: schemaEntities, loading: false, dataFound: dataFound});
         if(schema.entities.length === 0) {
-          this.setState({fetchLoader: false});
+          this.setState({loading: false});
         }
       }
+      return schemaEntities;
     });
   }
   getIconClass(c) {
@@ -204,7 +216,14 @@ export default class SchemaRegistryContainer extends Component {
     (_.isEmpty(input.value)) ? this.setState({slideInput  : false}) : '';
   }
   onFilterChange = (e) => {
-    this.setState({filterValue: e.target.value.trim(), activePage: 1});
+    this.setState({filterValue: e.target.value});
+  } 
+  onFilterKeyPress = (e) => {
+    if(e.key=='Enter'){
+      this.setState({filterValue: e.target.value.trim(), activePage: 1}, () => {
+        this.fetchData();
+      });
+    }
   }
   filterSchema(entities, filterValue){
     let matchFilter = new RegExp(filterValue , 'i');
@@ -370,28 +389,165 @@ export default class SchemaRegistryContainer extends Component {
       readOnly: true,
       theme: 'default no-cursor schema-editor expand-schema'
     };
-    const {filterValue, slideInput, fetchLoader, schemaData, activePage, pageSize} = this.state;
+    const {slideInput, schemaData, activePage, pageSize} = this.state;
     const sortTitle = <span>Sort:<span className="font-blue-color">&nbsp;{this.state.sorted.text}</span></span>;
     var schemaEntities = schemaData;
-    if(filterValue.trim() !== ''){
+    /*if(filterValue.trim() !== ''){
       schemaEntities = this.filterSchema(schemaData, filterValue);
-    }
+    }*/
     const activePageData = this.getActivePageData(schemaEntities, activePage, pageSize);
-    return (
-      <div>
-        <BaseContainer routes={this.props.routes} onLandingPage="false" breadcrumbData={this.breadcrumbData} headerContent={'All Schemas'}>
-            <div id="add-schema">
-                <button role="button" type="button" className="actionAddSchema hb lg success" onClick={this.handleAddSchema.bind(this)}>
-                    <i className="fa fa-plus"></i>
-                </button>
+
+    const panelContent = activePageData.map((s, i)=>{
+      var btnClass = this.getBtnClass(s.compatibility);
+      var iconClass = this.getIconClass(s.compatibility);
+      var versionObj = _.find(s.versionsArr, {versionId: s.currentVersion});
+      var totalVersions = s.versionsArr.length;
+      var sortedVersions =  Utils.sortArray(s.versionsArr.slice(), 'versionId', false);
+      var versionIndex = _.findIndex(sortedVersions, {versionId: s.currentVersion});
+      var header = (
+        <div>
+        <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
+        <div className="panel-sections first fluid-width-15">
+            <h4 ref="schemaName" className="schema-name" title={s.schemaName}>{Utils.ellipses(s.schemaName, this.schemaNameTagWidth)}</h4>
+            <p className={`schema-status ${s.compatibility.toLowerCase()}`}>{s.compatibility}</p>
+        </div>
+        <div className="panel-sections">
+            <h6 className="schema-th">Type</h6>
+            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>{s.type}</h4>
+        </div>
+        <div className="panel-sections">
+            <h6 className="schema-th">Group</h6>
+            <h4 ref="schemaGroup" className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`} title={s.schemaGroup}>{Utils.ellipses(s.schemaGroup, this.schemaGroupTagWidth)}</h4>
+        </div>
+        <div className="panel-sections">
+            <h6 className="schema-th">Version</h6>
+            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>{s.versionsArr.length}</h4>
+        </div>
+        <div className="panel-sections">
+            <h6 className="schema-th">Serializer & Deserializer</h6>
+            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}><Link to={"/schemas/"+s.schemaName+'/serdes'} style={{display:'inline'}}>{s.serDesInfos.length}</Link></h4>
+        </div>
+        <div className="panel-sections" style={{'textAlign': 'right'}}>
+            <a className="collapsed collapseBtn" role="button" aria-expanded="false">
+              <i className={s.collapsed ? "collapseBtn fa fa-chevron-down" : "collapseBtn fa fa-chevron-up"}></i>
+            </a>
+        </div>
+        </div>
+      );
+      const expandButton = ' ' || <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
+        <i className="fa fa-arrows-alt"></i>
+      </button>;
+
+      return (<Panel
+            header={header}
+            headerRole="tabpanel"
+            key={i}
+            collapsible
+            expanded={s.collapsed ? false : true}
+            onSelect={this.handleSelect.bind(this, s)}
+            onEntered={this.handleOnEnter.bind(this, s)}
+            onExited={this.handleOnExit.bind(this, s)}
+        >
+            {s.collapsed ?
+            '': (versionObj ? (<div className="panel-registry-body">
+                    <div className="row">
+                        <div className="col-sm-3">
+                            <h6 className="schema-th">Description</h6>
+                            <p>{versionObj.description}</p>
+                        </div>
+                        <div className="col-sm-6">
+                            {s.renderCodemirror ?
+                            (s.evolve ? ([<h6 key="e.1" className="version-number-text">VERSION&nbsp;{totalVersions - versionIndex}</h6>,
+                              <button key="e.2" type="button" className="btn btn-link btn-edit-schema" onClick={this.handleAddVersion.bind(this, s)}>
+                                <i className="fa fa-pencil"></i>
+                              </button>,
+                              expandButton]) : expandButton)
+                            : ''
+                            }
+                            {s.renderCodemirror ?
+                                (<ReactCodemirror
+                                    ref="JSONCodemirror"
+                                    value={JSON.stringify(JSON.parse(versionObj.schemaText), null, ' ')}
+                                    options={jsonoptions}
+                                />)
+                            : (<div className="col-sm-12">
+                                    <div className="loading-img text-center" style={{marginTop : "50px"}}>
+                                        <img src="styles/img/start-loader.gif" alt="loading" />
+                                    </div>
+                              </div>)
+                            }
+                        </div>
+                <div className="col-sm-3">
+                    <h6 className="schema-th">Change Log</h6>
+                    <ul className="version-tree">
+                        {
+                        sortedVersions.map((v, i)=>{
+                          return (
+                              <li onClick={this.selectVersion.bind(this, v)} className={s.currentVersion === v.versionId? "clearfix current" : "clearfix"} key={i}>
+                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{totalVersions - i}</a>
+                              <p><span className="log-time-text">{Utils.splitTimeStamp(new Date(v.timestamp))}</span> <br/><span className="text-muted">{i === (totalVersions - 1) ? 'CREATED': 'EDITED'}</span></p>
+                              </li>
+                          );
+                        })
+                      }
+                    </ul>
+                </div>
             </div>
-            {schemaData.length > 0 ?
-            (<div className="wrapper animated fadeIn">
+    </div>) :
+    (<div className="panel-registry-body">
+      <div className="row">
+        {s.evolve ?
+        ([<div className="col-sm-3" key="v.k.1">
+            <h6 className="schema-th">Description</h6>
+            <p></p>
+        </div>,
+          <div className="col-sm-6" key="v.k.2">
+              {s.renderCodemirror ?
+                <button type="button" className="btn btn-link btn-add-schema" onClick={this.handleAddVersion.bind(this, s)}>
+                <i className="fa fa-pencil"></i>
+                </button>
+                : ''
+              }
+              {s.renderCodemirror ?
+                (<ReactCodemirror
+                  ref="JSONCodemirror"
+                  value=""
+                  options={jsonoptions}
+                />)
+                : (<div className="col-sm-12">
+                    <div className="loading-img text-center" style={{marginTop : "50px"}}>
+                      <img src="styles/img/start-loader.gif" alt="loading" />
+                    </div>
+                </div>)
+              }
+          </div>,
+          <div className="col-sm-3" key="v.k.3">
+            <h6 className="schema-th">Change Log</h6>
+          </div>])
+          : <div style={{'textAlign': 'center'}}>NO DATA FOUND</div>
+        }
+      </div>
+    </div>)
+            )}
+</Panel>
+      );
+    });
+        
+
+    return (
+      <BaseContainer routes={this.props.routes} onLandingPage="false" breadcrumbData={this.breadcrumbData} headerContent={'All Schemas'}>
+          <div id="add-schema">
+              <button role="button" type="button" className="actionAddSchema hb lg success" onClick={this.handleAddSchema.bind(this)}>
+                  <i className="fa fa-plus"></i>
+              </button>
+          </div>
+          {!this.state.loading && this.state.dataFound ? 
+            <div className="wrapper animated fadeIn">
               <div className="page-title-box row no-margin">
                   <div className="col-md-3 col-md-offset-6 text-right">
                     <FormGroup>
                        <InputGroup>
-                         <FormControl type="text" placeholder="Search by name" onKeyUp={this.onFilterChange} className="" />
+                         <FormControl type="text" placeholder="Search by name" value={this.state.filterValue} onChange={this.onFilterChange} onKeyPress={this.onFilterKeyPress} className="" />
                            <InputGroup.Addon>
                              <i className="fa fa-search"></i>
                            </InputGroup.Addon>
@@ -412,184 +568,47 @@ export default class SchemaRegistryContainer extends Component {
                     </DropdownButton>
                   </div>
               </div>
-            {schemaEntities.length === 0 ? <NoData /> : ''}
-            {!fetchLoader ?
-            <div className="row">
-                <div className="col-md-12">
-                    <PanelGroup
-                        bsClass="panel-registry"
-                        role="tablist"
-                    >
-                    {activePageData.map((s, i)=>{
-                      var btnClass = this.getBtnClass(s.compatibility);
-                      var iconClass = this.getIconClass(s.compatibility);
-                      var versionObj = _.find(s.versionsArr, {versionId: s.currentVersion});
-                      var totalVersions = s.versionsArr.length;
-                      var sortedVersions =  Utils.sortArray(s.versionsArr.slice(), 'versionId', false);
-                      var versionIndex = _.findIndex(sortedVersions, {versionId: s.currentVersion});
-                      var header = (
-                        <div>
-                        <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
-                        <div className="panel-sections first fluid-width-15">
-                            <h4 ref="schemaName" className="schema-name" title={s.schemaName}>{Utils.ellipses(s.schemaName, this.schemaNameTagWidth)}</h4>
-                            <p className={`schema-status ${s.compatibility.toLowerCase()}`}>{s.compatibility}</p>
+            
+              {!this.state.loading && schemaEntities.length ? 
+                <div className="row">
+                    <div className="col-md-12">
+                      <PanelGroup
+                          bsClass="panel-registry"
+                          role="tablist"
+                      >
+                        {panelContent}
+                      </PanelGroup>
+                      {schemaEntities.length > pageSize
+                        ?
+                        <div className="text-center">
+                          <Pagination
+                            prev
+                            next
+                            first
+                            last
+                            ellipsis
+                            boundaryLinks
+                            items={Math.ceil(schemaEntities.length/pageSize)}
+                            maxButtons={5}
+                            activePage={this.state.activePage}
+                            onSelect={this.handlePagination} />
                         </div>
-                        <div className="panel-sections">
-                            <h6 className="schema-th">Type</h6>
-                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>{s.type}</h4>
-                        </div>
-                        <div className="panel-sections">
-                            <h6 className="schema-th">Group</h6>
-                            <h4 ref="schemaGroup" className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`} title={s.schemaGroup}>{Utils.ellipses(s.schemaGroup, this.schemaGroupTagWidth)}</h4>
-                        </div>
-                        <div className="panel-sections">
-                            <h6 className="schema-th">Version</h6>
-                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}>{s.versionsArr.length}</h4>
-                        </div>
-                        <div className="panel-sections">
-                            <h6 className="schema-th">Serializer & Deserializer</h6>
-                            <h4 className={`schema-td ${!s.collapsed ? "font-blue-color" : ''}`}><Link to={"/schemas/"+s.schemaName+'/serdes'} style={{display:'inline'}}>{s.serDesInfos.length}</Link></h4>
-                        </div>
-                        <div className="panel-sections" style={{'textAlign': 'right'}}>
-                            <a className="collapsed collapseBtn" role="button" aria-expanded="false">
-                              <i className={s.collapsed ? "collapseBtn fa fa-chevron-down" : "collapseBtn fa fa-chevron-up"}></i>
-                            </a>
-                        </div>
-                        </div>
-                      );
-                      const expandButton = ' ' || <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
-                        <i className="fa fa-arrows-alt"></i>
-                      </button>;
+                        : null
+                       }
+                    </div>
+                </div>
+                : !this.state.loading ? <NoData /> : null}
+            </div>
+            : !this.state.loading ? <NoData /> : null}
 
-                      return (<Panel
-                            header={header}
-                            headerRole="tabpanel"
-                            key={i}
-                            collapsible
-                            expanded={s.collapsed ? false : true}
-                            onSelect={this.handleSelect.bind(this, s)}
-                            onEntered={this.handleOnEnter.bind(this, s)}
-                            onExited={this.handleOnExit.bind(this, s)}
-                        >
-                            {s.collapsed ?
-                            '': (versionObj ? (<div className="panel-registry-body">
-                                    <div className="row">
-                                        <div className="col-sm-3">
-                                            <h6 className="schema-th">Description</h6>
-                                            <p>{versionObj.description}</p>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            {s.renderCodemirror ?
-                                            (s.evolve ? ([<h6 key="e.1" className="version-number-text">VERSION&nbsp;{totalVersions - versionIndex}</h6>,
-                                              <button key="e.2" type="button" className="btn btn-link btn-edit-schema" onClick={this.handleAddVersion.bind(this, s)}>
-                                                <i className="fa fa-pencil"></i>
-                                              </button>,
-                                              expandButton]) : expandButton)
-                                            : ''
-                                            }
-                                            {s.renderCodemirror ?
-                                                (<ReactCodemirror
-                                                    ref="JSONCodemirror"
-                                                    value={JSON.stringify(JSON.parse(versionObj.schemaText), null, ' ')}
-                                                    options={jsonoptions}
-                                                />)
-                                            : (<div className="col-sm-12">
-                                                    <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                                                        <img src="styles/img/start-loader.gif" alt="loading" />
-                                                    </div>
-                                              </div>)
-                                            }
-                                        </div>
-                                <div className="col-sm-3">
-                                    <h6 className="schema-th">Change Log</h6>
-                                    <ul className="version-tree">
-                                        {
-                                        sortedVersions.map((v, i)=>{
-                                          return (
-                                              <li onClick={this.selectVersion.bind(this, v)} className={s.currentVersion === v.versionId? "clearfix current" : "clearfix"} key={i}>
-                                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{totalVersions - i}</a>
-                                              <p><span className="log-time-text">{Utils.splitTimeStamp(new Date(v.timestamp))}</span> <br/><span className="text-muted">{i === (totalVersions - 1) ? 'CREATED': 'EDITED'}</span></p>
-                                              </li>
-                                          );
-                                        })
-                                      }
-                                    </ul>
-                                </div>
-                            </div>
-                    </div>) :
-                    (<div className="panel-registry-body">
-                      <div className="row">
-                        {s.evolve ?
-                        ([<div className="col-sm-3" key="v.k.1">
-                            <h6 className="schema-th">Description</h6>
-                            <p></p>
-                        </div>,
-                          <div className="col-sm-6" key="v.k.2">
-                              {s.renderCodemirror ?
-                                <button type="button" className="btn btn-link btn-add-schema" onClick={this.handleAddVersion.bind(this, s)}>
-                                <i className="fa fa-pencil"></i>
-                                </button>
-                                : ''
-                              }
-                              {s.renderCodemirror ?
-                                (<ReactCodemirror
-                                  ref="JSONCodemirror"
-                                  value=""
-                                  options={jsonoptions}
-                                />)
-                                : (<div className="col-sm-12">
-                                    <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                                      <img src="styles/img/start-loader.gif" alt="loading" />
-                                    </div>
-                                </div>)
-                              }
-                          </div>,
-                          <div className="col-sm-3" key="v.k.3">
-                            <h6 className="schema-th">Change Log</h6>
-                          </div>])
-                          : <div style={{'textAlign': 'center'}}>NO DATA FOUND</div>
-                        }
-                      </div>
-                    </div>)
-                            )}
-                </Panel>
-                      );
-                    })
-        }
-        </PanelGroup>
-        {schemaEntities.length > pageSize
-          ?
-          <div className="text-center">
-            <Pagination
-              prev
-              next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              items={Math.ceil(schemaEntities.length/pageSize)}
-              maxButtons={5}
-              activePage={this.state.activePage}
-              onSelect={this.handlePagination} />
-          </div>
-          : null
-         }
-
-        </div>
-    </div>
-    : ''}
-    </div>)
-    : fetchLoader ?
-    (
-      <div className="col-sm-12">
-        <div className="loading-img text-center" style={{marginTop : "50px"}}>
-          <img src="styles/img/start-loader.gif" alt="loading" />
-        </div>
-      </div>
-    ): <NoData />
-}
-        </BaseContainer>
-
+          {this.state.loading ? 
+            <div className="col-sm-12">
+              <div className="loading-img text-center" style={{marginTop : "50px"}}>
+                <img src="styles/img/start-loader.gif" alt="loading" />
+              </div>
+            </div>
+            : null}
+  
         <FSModal ref="schemaModal" bsSize="large" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
           <SchemaInfoForm ref="addSchema"/>
         </FSModal>
@@ -612,7 +631,8 @@ export default class SchemaRegistryContainer extends Component {
             <Button onClick={()=>{this.setState({ expandSchema: false });}}>Close</Button>
           </Modal.Footer>
         </Modal>
-      </div>
+      </BaseContainer>
+
     );
   }
 }

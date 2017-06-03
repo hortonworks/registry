@@ -57,6 +57,22 @@ const SchemaREST = {
         return response.json();
       });
   },
+  searchAggregatedSchemas(sortBy, searchStr, options) {
+    options = options || {};
+    options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
+    let url = baseUrl + 'schemaregistry/search/schemas/aggregated?';
+    const params = [];
+    if(sortBy){
+      params.push('_orderByFields='+sortBy);
+    }
+    params.push('name='+searchStr);
+    url += params.join('&');
+    return fetch(url, options)
+      .then((response) => {
+        return response.json();
+      });
+  },
   getSchemaInfo(name, options) {
     options = options || {};
     options.method = options.method || 'GET';
