@@ -65,7 +65,7 @@ const ellipses = function(string, tagWidth) {
   if (!string || tagWidth === undefined) {
     return;
   }
-  return string.length > (tagWidth/11.7) ? `${string.substr(0, tagWidth/11.7)}...` : string;
+  return string.length > (tagWidth/10) ? `${string.substr(0, tagWidth/10)}...` : string;
 };
 
 export default {

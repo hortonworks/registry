@@ -21,6 +21,7 @@ import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -76,12 +77,22 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
     public static final Long DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS = 60 * 5L;
 
     private LoadingCache<SchemaVersionKey, S> schemaCache;
-    protected SchemaRegistryClient schemaRegistryClient;
+    protected ISchemaRegistryClient schemaRegistryClient;
 
+    public AbstractSnapshotDeserializer() {
+        super();
+    }
+    
+    public AbstractSnapshotDeserializer(ISchemaRegistryClient schemaRegistryClient) {
+        this.schemaRegistryClient = schemaRegistryClient;
+    }
+    
     @Override
     public void init(Map<String, ?> config) {
         LOG.debug("Initialized with config: [{}]", config);
-        schemaRegistryClient = new SchemaRegistryClient(config);
+        if (schemaRegistryClient == null) {
+            schemaRegistryClient = new SchemaRegistryClient(config);
+        }
 
         schemaCache = CacheBuilder.newBuilder()
                 .maximumSize(getCacheMaxSize(config))
@@ -111,7 +122,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
         return value;
     }
 
-    private Object getValue(Map<String, ?> config, String key, Object defaultValue) {
+    protected Object getValue(Map<String, ?> config, String key, Object defaultValue) {
         Object value = config.get(key);
         if (value == null) {
             value = defaultValue;

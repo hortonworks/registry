@@ -29,6 +29,7 @@ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.serdes.Device;
 import mockit.Expectations;
 import mockit.Mocked;
+import org.apache.avro.specific.SpecificData;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -79,6 +80,5 @@ public class MessageContextBasedAvroSerDesTest {
         deserializer.init(Collections.emptyMap());
         Object deserializedObject = deserializer.deserialize(messageContext, null);
 
-        Assert.assertEquals(input, deserializedObject);
-    }
+        Assert.assertTrue(SpecificData.get().compare(input, deserializedObject, input.getSchema()) == 0);    }
 }

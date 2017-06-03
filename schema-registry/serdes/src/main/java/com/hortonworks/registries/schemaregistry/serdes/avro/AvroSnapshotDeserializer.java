@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,14 @@ import java.nio.ByteBuffer;
  */
 public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<InputStream> {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
+    
+    public AvroSnapshotDeserializer() {
+        super();
+    }
+    
+    public AvroSnapshotDeserializer(ISchemaRegistryClient schemaRegistryClient) {
+        super(schemaRegistryClient);
+    }
 
     protected SchemaIdVersion retrieveSchemaIdVersion(byte protocolId, InputStream inputStream) throws SerDesException {
         // 8 bytes : schema metadata Id
