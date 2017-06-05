@@ -63,15 +63,21 @@ public class ClassLoaderCache {
                                    TimeUnit.SECONDS)
                 .build(cacheLoader);
 
-        localJarsDir = new File((String) schemaRegistryClient.getConfiguration().getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
+        localJarsDir = new File((String) this.schemaRegistryClient.getConfiguration().getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
+        ensureLocalDirsExist();
+    }
+
+    private void ensureLocalDirsExist() {
         if (!localJarsDir.exists()) {
             if (!localJarsDir.mkdirs()) {
-                throw new RuntimeException("Could not create given local jar storage dir: [" + localJarsDir.getAbsolutePath() + "]");
+                LOG.error("Could not create given local jar storage dir: [{}]", localJarsDir.getAbsolutePath());
             }
         }
     }
 
     private File getFile(String fileId) throws IOException {
+        ensureLocalDirsExist();
+
         File file = new File(localJarsDir, fileId);
         boolean created = file.createNewFile();
         if (created) {
