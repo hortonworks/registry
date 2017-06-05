@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.SlotSynchronizer;
 import com.hortonworks.registries.common.util.FileStorage;
-import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -506,26 +505,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         return result;
-    }
-
-    public SchemaVersionInfo registerSchema(String schemaName, String schemaText, String description)
-        throws UnsupportedSchemaTypeException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException {
-        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
-        if (schemaMetadataInfo == null) {
-            SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(schemaName).type(AvroSchemaProvider.TYPE).build();
-            addSchemaMetadata(schemaMetadata);
-            schemaMetadataInfo = getSchemaMetadata(schemaName);
-        }
-
-        SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-  
-            // check whether the same schema text exists
-        SchemaVersionInfo version = findSchemaVersion(schemaMetadata.getType(), schemaText, schemaMetadataInfo.getId());
-        if (version == null) {
-            version = createSchemaVersion(schemaMetadata, schemaMetadataInfo.getId(), schemaText, description);
-        }
-
-        return version;
     }
     
     public SchemaVersionInfo getSchemaVersion(Long id) throws InvalidSchemaException, SchemaNotFoundException {

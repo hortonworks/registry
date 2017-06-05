@@ -34,7 +34,10 @@ import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -125,7 +128,14 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
             Response response;
             try {
                 LOG.info("registerSchema for [{}] is [{}]", subject);
-                SchemaVersionInfo schemaVersionInfo = schemaRegistry.registerSchema(subject, schemaStringFromJson(schema).getSchema(), null);
+                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(subject);
+                if (schemaMetadataInfo == null) {
+                    SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject).type(AvroSchemaProvider.TYPE).build();
+                    schemaRegistry.addSchemaMetadata(schemaMetadata);
+                    schemaMetadataInfo = schemaRegistry.getSchemaMetadata(subject);
+                }
+                
+                SchemaVersionInfo schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(), schemaStringFromJson(schema).getSchema(), null);
                 Id id = new Id();
                 id.setId(schemaVersionInfo.getId());
                 response = WSUtils.respondEntity(id, Response.Status.OK);
