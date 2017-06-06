@@ -484,8 +484,6 @@ public class AuthenticationFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         boolean isHttps = "https".equals(httpRequest.getScheme());
-        if (((HttpServletRequest) request).getRequestURI().endsWith("401.html"))
-          doFilter(filterChain, httpRequest, httpResponse);
         try {
             boolean newToken = false;
             AuthenticationToken token;
