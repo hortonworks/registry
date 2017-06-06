@@ -75,7 +75,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion)
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         try {
-            int version =  schemaRegistry.addSchemaVersion(schemaMetadata, schemaVersion.getSchemaText(), schemaMetadata.getDescription());
+            int version =  schemaRegistry.addSchemaVersion(schemaMetadata, schemaVersion.getSchemaText(), schemaMetadata.getDescription()).getVersion();
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaMetadata.getName());
             SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), version);
             return schemaIdVersion;
@@ -94,7 +94,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         try {
-            int version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
+            int version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription()).getVersion();
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
             SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), version);
             return schemaIdVersion;

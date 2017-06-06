@@ -86,7 +86,7 @@ import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.OR
 @Path("/v1/schemaregistry")
 @Api(value = "/api/v1/schemaregistry", description = "Endpoint for Schema Registry service")
 @Produces(MediaType.APPLICATION_JSON)
-public class SchemaRegistryResource {
+public class SchemaRegistryResource extends BaseRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryResource.class);
     public static final String THROW_ERROR_IF_EXISTS = "_throwErrorIfExists";
     public static final String THROW_ERROR_IF_EXISTS_LOWER_CASE = THROW_ERROR_IF_EXISTS.toLowerCase();
@@ -94,21 +94,9 @@ public class SchemaRegistryResource {
     // reserved as schema related paths use these strings
     private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
 
-    private final ISchemaRegistry schemaRegistry;
-    private final AtomicReference<LeadershipParticipant> leadershipParticipant;
-
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
-        Preconditions.checkNotNull(schemaRegistry, "SchemaRegistry can not be null");
-        Preconditions.checkNotNull(leadershipParticipant, "LeadershipParticipant can not be null");
-
-        this.schemaRegistry = schemaRegistry;
-        this.leadershipParticipant = leadershipParticipant;
+        super(schemaRegistry, leadershipParticipant);
     }
-
-    // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
-    private static final String OPERATION_GROUP_SCHEMA = "1. Schema";
-    private static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
-    private static final String OPERATION_GROUP_OTHER = "3. Other";
 
     @GET
     @Path("/schemaproviders")
@@ -130,34 +118,6 @@ public class SchemaRegistryResource {
         }
     }
 
-    /**
-     * Checks whether the current instance is a leader. If so, it invokes the given {@code supplier}, else current
-     * request is redirected to the leader node in registry cluster.
-     *
-     * @param uriInfo
-     * @param supplier
-     * @return
-     */
-    private Response handleLeaderAction(UriInfo uriInfo, Supplier<Response> supplier) {
-        LOG.info("URI info [{}]", uriInfo.getRequestUri());
-        if (!leadershipParticipant.get().isLeader()) {
-            URI location = null;
-            try {
-                String currentLeaderLoc = leadershipParticipant.get().getCurrentLeader();
-                URI leaderServerUrl = new URI(currentLeaderLoc);
-                URI requestUri = uriInfo.getRequestUri();
-                location = new URI(leaderServerUrl.getScheme(), leaderServerUrl.getAuthority(),
-                                   requestUri.getPath(), requestUri.getQuery(), requestUri.getFragment());
-                LOG.info("Redirecting to URI [{}] as this instance is not the leader", location);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return Response.temporaryRedirect(location).build();
-        } else {
-            LOG.info("Invoking here as this instance is the leader");
-            return supplier.get();
-        }
-    }
     @GET
     @Path("/schemas/aggregated")
     @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
@@ -505,8 +465,8 @@ public class SchemaRegistryResource {
             Response response;
             try {
                 LOG.info("schemaVersion for [{}] is [{}]", schemaName, schemaVersion);
-                Integer version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
-                response = WSUtils.respondEntity(version, Response.Status.CREATED);
+                SchemaVersionInfo version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
+                response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
@@ -748,13 +708,5 @@ public class SchemaRegistryResource {
             return response;
         });
     }
-
-    private static void checkValueAsNullOrEmpty(String name, String value) throws IllegalArgumentException {
-        if (value == null) {
-            throw new IllegalArgumentException("Parameter " + name + " is null");
-        }
-        if (value.isEmpty()) {
-            throw new IllegalArgumentException("Parameter " + name + " is empty");
-        }
-    }
+    
 }
