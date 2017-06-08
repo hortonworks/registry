@@ -49,12 +49,18 @@ Installation
    `here <https://github.com/hortonworks/registry/blob/master/SETUP.md>`__.
 3. To start with in-memory store.
 
-``cp $REGISTRY_HOME/conf/registry.yaml.inmemory.example $REGISTRY_HOME/conf/registry.yaml       # start the server in fore-ground       $REGISTRY_HOME/bin/registry-server-start conf/registry.yaml       # To start in daemon mode       sudo ./bin/registry start``
+::
+
+   cp $REGISTRY_HOME/conf/registry.yaml.inmemory.example $REGISTRY_HOME/conf/registry.yaml
+   # start the server in fore-ground
+   $REGISTRY_HOME/bin/registry-server-start conf/registry.yaml
+   # To start in daemon mode
+   sudo ./bin/registry start
 
 4. Access the UI at http://host.name:9090
 
 .. figure:: https://raw.githubusercontent.com/hortonworks/registry/master/docs/images/registry-homepage.png
-   :alt: SchemaRegistry UI
+:alt: SchemaRegistry UI
 
    SchemaRegistry UI
 
@@ -88,36 +94,36 @@ Run producer to register schema and send data
 
     java -jar avro-examples-0.1.0-SNAPSHOT.jar -d data/truck_events.csv -p data/kafka-producer.props -sm -s data/truck_events.avsc
 
-Kafka Produer Integration with SchemaRegistry
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Kafka Producer Integration with SchemaRegistry
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Any client integration code must make a dependency on
    schema-registry-serdes
+.. code::
 
-``<dependency>         <groupId>com.hortonworks.registries</groupId>        <artifactId>schema-registry-serdes</artifactId>     </dependency>``
+  <dependency>
+    <groupId>com.hortonworks.registries</groupId>
+    <artifactId>schema-registry-serdes</artifactId>
+  </dependency>
+
 2. For KafkaProducer, user need to add the following config
 
-\`\`\`java
-
-::
+.. code:: java
 
      config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-     config.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL)));
+     config.putAll(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
      config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
      config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
 
-\`\`\` Important settings from above are
+Important settings from the above are
+**schema.registry.url**:
+  This should be set to where the registry server is running ex: http://localhost:9090/api/v1
 
-**schema.registry.url**, this should set to where the registry server is
-running ex: http://localhost:9090/api/v1
+**key.serializer**:
+  *StringSerializer* is used in the above example.
 
-**key.serializer & value.serializer**. In example above we are setting
-value.serializer to
-**com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer**
-
-::
-
-    This serializer has integration with schema registry. It will take the producer config and retrieves schema.registry.url and the topic name to find out the schema. If there is no schema defined it will publish a first version of that schema.
+**value.serializer**:
+  *com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer* is used in the above example. This serializer has integration with schema registry. It will take the producer config and retrieves schema.registry.url and the topic name to find out the schema. If there is no schema defined it will publish a first version of that schema.
 
 Run consumer to retrieve schema and deserialze the messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,23 +139,34 @@ Run consumer to retrieve schema and deserialze the messages
 Kafka Consumer Integration with SchemaRegistry
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. For KafkaConsumer, user need to add the following to config
+1. Any client integration code must make a dependency on
+   schema-registry-serdes
+.. code::
+
+  <dependency>
+    <groupId>com.hortonworks.registries</groupId>
+    <artifactId>schema-registry-serdes</artifactId>
+  </dependency>
+
+2. For KafkaConsumer, user need to add the following to config
 
 .. code:: java
 
      config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-     config.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL)));
+     config.putAll(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
      config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
      config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
 
-Important settings from above are
+Important settings from the above are
 
-**schema.registry.url**, this should set to where the registry server is
-running ex: http://localhost:9090/api/v1
+**schema.registry.url**:
+  This should be set to where the registry server is running ex: http://localhost:9090/api/v1
 
-**key.deserializer & value.deserializer**. In example above we are
-setting value.deserializer to
-**com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer**
+**key.serializer**:
+  *StringSerializer* is used in the above example.
+
+**value.serializer**:
+  *com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer* is used in the above example.
 
 This deserializer tries to find schema.id in the message paylod. If it
 finds schema.id, makes a call to schemaregistry to fetch the avro
@@ -169,52 +186,44 @@ serializer/deserializer for a given schema
 
 .. code:: java
 
+   SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
-    Map<String, Object> config = new HashMap<>();
-    config.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, "http://localhost:8080/api/v1");
-    config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_SIZE, 10);
-    config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS, 5000L);
+   // registering a new schema
+   SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
+   LOG.info("Registered schema metadata [{}] and returned version [{}]", schema1, v1);
 
-    schemaRegistryClient = new SchemaRegistryClient(config);
+   // adding a new version of the schema
+   String schema2 = getSchema("/device-next.avsc");
+   SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
+   SchemaIdVersion v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+   LOG.info("Registered schema metadata [{}] and returned version [{}]", schema2, v2);
 
-    String schemaFileName = "/device.avsc";
-    String schema1 = getSchema(schemaFileName);
-    SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
+   //adding same schema returns the earlier registered version
+   SchemaIdVersion version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+   LOG.info("Received version [{}] for schema metadata [{}]", version, schemaMetadata);
 
-    // registering a new schema
-    Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
-    LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
+   // get a specific version of the schema
+   String schemaName = schemaMetadata.getName();
+   SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2.getVersion()));
+   LOG.info("Received schema version info [{}] for schema metadata [{}]", schemaVersionInfo, schemaMetadata);
 
-    // adding a new version of the schema
-    String schema2 = getSchema("/device-next.avsc");
-    SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
-    Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-    LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
+   // get latest version of the schema
+   SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+   LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
 
-    //adding same schema returns the earlier registered version
-    Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-    LOG.info("");
+   // get all versions of the schema
+   Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
+   LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
 
-    // get a specific version of the schema
-    String schemaName = schemaMetadata.getName();
-    SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
+   // finding schemas containing a specific field
+   SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
+   Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
+   LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaVersionKeys);
 
-    // get latest version of the schema
-    SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
-    LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
+   SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
+   Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
+   LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
 
-    // get all versions of the schema
-    Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
-    LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
-
-    // finding schemas containing a specific field
-    SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
-    Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
-    LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaVersionKeys);
-
-    SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
-    Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
-    LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
 
 Default serializer and deserializer APIs.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -243,13 +252,13 @@ Uploading jar file
 .. code:: java
 
 
-    String serdesJarName = "/serdes-examples.jar";
-    InputStream serdesJarInputStream = SampleSchemaRegistryApplication.class.getResourceAsStream(serdesJarName);
-    if (serdesJarInputStream == null) {
-        throw new RuntimeException("Jar " + serdesJarName + " could not be loaded");
-    }
+   String serdesJarName = "/serdes-examples.jar";
+   InputStream serdesJarInputStream = SampleSchemaRegistryApplication.class.getResourceAsStream(serdesJarName);
+   if (serdesJarInputStream == null) {
+       throw new RuntimeException("Jar " + serdesJarName + " could not be loaded");
+   }
 
-    String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
+   String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
 
 Register serializer and deserializer
 ''''''''''''''''''''''''''''''''''''
@@ -257,23 +266,16 @@ Register serializer and deserializer
 .. code:: java
 
 
-    String simpleSerializerClassName = "com.hortonworks.schemaregistry.samples.serdes.SimpleSerializer";
-    SerDesInfo serializerInfo = new SerDesInfo.Builder()
-                                                .name("simple-serializer")
-                                                .description("simple serializer")
-                                                .fileId(fileId)
-                                                .className(simpleSerializerClassName)
-                                                .buildSerializerInfo();
-    Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
+   String simpleSerializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleSerializer";
+   String simpleDeserializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleDeserializer";
 
-    String simpleDeserializerClassName = "com.hortonworks.schemaregistry.samples.serdes.SimpleDeserializer";
-    SerDesInfo deserializerInfo = new SerDesInfo.Builder()
-            .name("simple-deserializer")
-            .description("simple deserializer")
-            .fileId(fileId)
-            .className(simpleDeserializerClassName)
-            .buildDeserializerInfo();
-    Long deserializerId = schemaRegistryClient.addDeserializer(deserializerInfo);
+   SerDesPair serializerInfo = new SerDesPair(
+           "simple-serializer-deserializer",
+           "simple serializer and deserializer",
+           fileId,
+           simpleSerializerClassName,
+           simpleDeserializerClassName);
+   Long serDesId = schemaRegistryClient.addSerDes(serializerInfo);
 
 Map serializer/deserializer with a schema
 '''''''''''''''''''''''''''''''''''''''''
@@ -281,22 +283,19 @@ Map serializer/deserializer with a schema
 .. code:: java
 
 
-    // map serializer and deserializer with schemakey
-    // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
-    String schemaName = ...
-    schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
-    schemaRegistryClient.mapSchemaWithSerDes(schemaName, deserializerId);
+   // map serializer and deserializer with schema key
+   // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
+   String schemaName = ...
+   schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
 
 Marshal and unmarshal using the registered serializer and deserializer for a schema
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 .. code:: java
 
-    SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaKey);
-    String payload = "Random text: " + new Random().nextLong();
-    byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaInfo);
+   SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaMetadata);
+   String payload = "Random text: " + new Random().nextLong();
+   byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaMetadata);
 
-    SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> snapshotDeserializer = getSnapshotDeserializer(schemaKey);
-    Object deserializedObject = snapshotDeserializer.deserialize(serializedBytes, schemaInfo, schemaInfo);
-
-    LOG.info("Given payload and deserialized object are equal: "+ payload.equals(deserializedObject));
+   SnapshotDeserializer<byte[], Object, Integer> snapshotdeserializer = getSnapshotDeserializer(schemaMetadata);
+   Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, null);

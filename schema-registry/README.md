@@ -123,35 +123,26 @@ Below set of code snippets explain how SchemaRegistryClient can be used for
 
  
 ```java
-
-Map<String, Object> config = new HashMap<>();
-config.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, "http://localhost:8080/api/v1");
-config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_SIZE, 10);
-config.put(SchemaRegistryClient.Options.CLASSLOADER_CACHE_EXPIRY_INTERVAL_MILLISECS, 5000L);
-
-schemaRegistryClient = new SchemaRegistryClient(config);
-
-String schemaFileName = "/device.avsc";
-String schema1 = getSchema(schemaFileName);
 SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
 // registering a new schema
-Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
-LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
+SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
+LOG.info("Registered schema metadata [{}] and returned version [{}]", schema1, v1);
 
 // adding a new version of the schema
 String schema2 = getSchema("/device-next.avsc");
 SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
-Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
+SchemaIdVersion v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+LOG.info("Registered schema metadata [{}] and returned version [{}]", schema2, v2);
 
 //adding same schema returns the earlier registered version
-Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-LOG.info("");
+SchemaIdVersion version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+LOG.info("Received version [{}] for schema metadata [{}]", version, schemaMetadata);
 
 // get a specific version of the schema
 String schemaName = schemaMetadata.getName();
-SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
+SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2.getVersion()));
+LOG.info("Received schema version info [{}] for schema metadata [{}]", schemaVersionInfo, schemaMetadata);
 
 // get latest version of the schema
 SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
@@ -169,13 +160,12 @@ LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaV
 SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
 Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
 LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
-
 ```
 
 ### Default serializer and deserializer APIs.
-Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
+Default serializer and deserializer for a given schema provider can be retrieved like below.
 ```java
-// for avro,
+// For avro,
 AvroSnapshotSerializer serializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
 AvroSnapshotDeserializer deserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
 ```
@@ -190,7 +180,6 @@ Registering serializer and deserializer is done with the below steps
 ##### Uploading jar file
 
 ```java
-
 String serdesJarName = "/serdes-examples.jar";
 InputStream serdesJarInputStream = SampleSchemaRegistryApplication.class.getResourceAsStream(serdesJarName);
 if (serdesJarInputStream == null) {
@@ -198,58 +187,41 @@ if (serdesJarInputStream == null) {
 }
 
 String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
-
 ```
 
 ##### Register serializer and deserializer
 
 ```java
-
 String simpleSerializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleSerializer";
-SerDesInfo serializerInfo = new SerDesInfo.Builder()
-                                            .name("simple-serializer")
-                                            .description("simple serializer")
-                                            .fileId(fileId)
-                                            .className(simpleSerializerClassName)
-                                            .buildSerializerInfo();
-Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
-
 String simpleDeserializerClassName = "org.apache.schemaregistry.samples.serdes.SimpleDeserializer";
-SerDesInfo deserializerInfo = new SerDesInfo.Builder()
-        .name("simple-deserializer")
-        .description("simple deserializer")
-        .fileId(fileId)
-        .className(simpleDeserializerClassName)
-        .buildDeserializerInfo();
-Long deserializerId = schemaRegistryClient.addDeserializer(deserializerInfo);
 
-
+SerDesPair serializerInfo = new SerDesPair(
+        "simple-serializer-deserializer",
+        "simple serializer and deserializer",
+        fileId,
+        simpleSerializerClassName,
+        simpleDeserializerClassName);
+Long serDesId = schemaRegistryClient.addSerDes(serializerInfo);
 ```
 
 ##### Map serializer/deserializer with a schema
 
 ```java
-
-// map serializer and deserializer with schemakey
+// map serializer and deserializer with schema key
 // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
 String schemaName = ...
 schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
-schemaRegistryClient.mapSchemaWithSerDes(schemaName, deserializerId);
-
 ```
 
 ##### Marshal and unmarshal using the registered serializer and deserializer for a schema
 
 ```java
-SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaKey);
+SnapshotSerializer<Object, byte[], SchemaMetadata> snapshotSerializer = getSnapshotSerializer(schemaMetadata);
 String payload = "Random text: " + new Random().nextLong();
-byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaInfo);
+byte[] serializedBytes = snapshotSerializer.serialize(payload, schemaMetadata);
 
-SnapshotDeserializer<byte[], Object, SchemaMetadata, Integer> snapshotDeserializer = getSnapshotDeserializer(schemaKey);
-Object deserializedObject = snapshotDeserializer.deserialize(serializedBytes, schemaInfo, schemaInfo);
-
-LOG.info("Given payload and deserialized object are equal: "+ payload.equals(deserializedObject));
-
+SnapshotDeserializer<byte[], Object, Integer> snapshotdeserializer = getSnapshotDeserializer(schemaMetadata);
+Object deserializedObject = snapshotdeserializer.deserialize(serializedBytes, null);
 ```
 
 ## Using inbuilt Kafka Avro serializer and deserializer
@@ -272,5 +244,4 @@ props.put(SchemaRegistryClient.Options.SCHEMA_REGISTRY_URL, schemaRegistryUrl);
 props.put(SchemaRegistryClient.Options.SCHEMA_CACHE_SIZE, 1000);
 props.put(SchemaRegistryClient.Options.SCHEMA_CACHE_EXPIRY_INTERVAL_MILLISECS, 60*60*1000L);
 props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-
 ```
