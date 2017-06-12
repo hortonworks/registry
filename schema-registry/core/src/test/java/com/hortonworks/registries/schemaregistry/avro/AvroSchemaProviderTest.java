@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.List;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
+
 /**
  *
  */
@@ -40,4 +43,48 @@ public class AvroSchemaProviderTest {
             Assert.assertEquals(11, schemaFieldInfos.size());
         }
     }
+
+    private String schema = "{\n" +
+            "  \"type\" : \"record\",\n" +
+            "  \"namespace\" : \"com.hortonworks.registries\",\n" +
+            "  \"name\" : \"trucks\",\n" +
+            "  \"fields\" : [\n" +
+            "    { \"name\" : \"driverId\" , \"type\" : \"int\" },\n" +
+            "    { \"name\" : \"truckId\" , \"type\" : \"int\" }" +
+            "  ]\n" +
+            "}";
+
+    private String schemaWithDefaults = "{\n" +
+            "  \"type\" : \"record\",\n" +
+            "  \"namespace\" : \"com.hortonworks.registries\",\n" +
+            "  \"name\" : \"trucks\",\n" +
+            "  \"fields\" : [\n" +
+            "    { \"name\" : \"driverId\" , \"type\" : \"int\" },\n" +
+            "    { \"name\" : \"truckId\" , \"type\" : \"int\", \"default\":0 }\n" +
+            "  ]\n" +
+            "}\n";
+
+    private String schemaWithAliases = "{\n" +
+            "  \"type\" : \"record\",\n" +
+            "  \"namespace\" : \"com.hortonworks.registries\",\n" +
+            "  \"aliases\":[\"truckType\"],\n" +
+            "  \"name\" : \"trucks\",\n" +
+            "  \"fields\" : [\n" +
+            "    { \"name\" : \"driverId\" , \"type\" : \"int\" },\n" +
+            "    { \"name\" : \"truckId\" , \"type\" : \"int\", \"default\":0 }\n" +
+            "  ]\n" +
+            "}";
+
+    @Test
+    public void testFingerPrints() throws Exception {
+        AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
+        byte[] schemaFingerprint = avroSchemaProvider.getFingerprint(schema);
+        byte[] schemaWithDefaultsFingerprint = avroSchemaProvider.getFingerprint(schemaWithDefaults);
+        byte[] schemaWithAliasesFingerprint = avroSchemaProvider.getFingerprint(schemaWithAliases);
+
+        Assert.assertThat(schemaFingerprint, not(equalTo(schemaWithAliasesFingerprint)));
+        Assert.assertThat(schemaFingerprint, not(equalTo(schemaWithDefaultsFingerprint)));
+        Assert.assertThat(schemaWithDefaultsFingerprint, not(equalTo(schemaWithAliasesFingerprint)));
+    }
+
 }
