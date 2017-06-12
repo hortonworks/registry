@@ -9,44 +9,58 @@ serializer/deserializer implementations based on incoming messages.
 Schema registry will also enable reuse/discovery/authoring/collaboration
 related to schemas.
 
-Each Schema is mainly represented with metadata like - name - name of
-the schema which is unique across the schema registry. - type -
-Represents the type of schema. For ex Avro, ProtoBuf, Json etc -
-schemaGroup - group of schemas in which this schema belongs to. It can
-be like Kafka, Hive, Spark or system log etc - compatibility -
-Compatibility between different versions of the schema. - description -
-Description about the different versions of a schema.
+Each Schema is mainly represented with metadata like
+
+    name - Name of the schema which is unique across the schema registry.
+
+    type - Represents the type of schema. For ex Avro, ProtoBuf, Json etc
+
+    schemaGroup - Group of schemas in which this schema belongs to. It can
+    be like Kafka, Hive, Spark or system log etc
+
+    compatibility - Compatibility between different versions of the schema.
+
+    description - Description about the different versions of a schema.
 
 Each of these schemas can evolve with multiple versions. Each version of
-the Schema can have - schemaText - Textual representation of schema -
-description - Description about this version
+the Schema can have
+
+    schemaText - Textual representation of schema
+
+    description - Description about this version
 
 Compatibility
 ~~~~~~~~~~~~~
 
 Compatibility of different versions of a schema can be configured with
-any of the below values - Backward - It indicates that new version of a
+any of the below values
+
+Backward - It indicates that new version of a
 schema would be compatible with earlier version of that schema. That
 means the data written from earlier version of the schema, can be
-deserialized with a new version of the schema. - Forward - It indicates
+deserialized with a new version of the schema.
+
+Forward - It indicates
 that an existing schema is compatible with subsequent versions of the
 schema. That means the data written from new version of the schema can
-still be read with old version of the schema. - Full - It indicates that
+still be read with old version of the schema.
+
+Full - It indicates that
 a new version of the schema provides both backward and forward
-compatibilities. - None - There is no compatibility between different
+compatibilities.
+
+None - There is no compatibility between different
 versions of a schema.
 
 Quickstart
 ==========
 
 Installation
-------------
+~~~~~~~~~~~~
 
-1. Download the latest release from here
-   https://github.com/hortonworks/registry/releases
-2. registry server can start with in-memory store or a persistent store
-   like mysql. To setup with mysql please follow the instructions
-   `here <https://github.com/hortonworks/registry/blob/master/SETUP.md>`__.
+1. Download the latest release from `here <https://github.com/hortonworks/registry/releases>`_
+2. Registry server can be started with in-memory store or a persistent store
+   like mysql. To setup with mysql please follow the instructions `here <https://github.com/hortonworks/registry/blob/master/SETUP.md>`__.
 3. To start with in-memory store.
 
 ::
@@ -61,23 +75,22 @@ Installation
 
 .. figure:: https://raw.githubusercontent.com/hortonworks/registry/master/docs/images/registry-homepage.png
 :alt: SchemaRegistry UI
-
    SchemaRegistry UI
 
 Running Kafka Example
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 SchemaRegistry makes it very easy to integrate with Kafka, Storm and
 Nifi and any other systems. We've an example code on how to integrate
-with kafka [here]
-(https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples/avro/TruckEventsKafkaAvroSerDesApp.java)
+with kafka `here
+<https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples/avro/TruckEventsKafkaAvroSerDesApp.java>`_.
 
 To run this example, follow the steps below
 
 Download and Start Apache Kafka
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Download kafka 0.10.0.1 or higher http://kafka.apache.org/downloads
+1. Download kafka 0.10.0.1 or higher from `here <http://kafka.apache.org/downloads>`_.
 2. $KAFKA\_HOME/bin/zoookeeper-server-start.sh
    config/zookeeper.properties
 3. $KAFKA\_HOME/bin/kafka-server-start.sh config/server.properties
@@ -177,7 +190,7 @@ API examples
 ============
 
 Using schema related APIs
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Below set of code snippets explain how SchemaRegistryClient can be used
 for - registering new versions of schemas - fetching registered schema
