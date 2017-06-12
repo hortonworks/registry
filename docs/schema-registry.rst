@@ -74,8 +74,9 @@ Installation
 4. Access the UI at http://host.name:9090
 
 .. figure:: https://raw.githubusercontent.com/hortonworks/registry/master/docs/images/registry-homepage.png
-:alt: SchemaRegistry UI
-   SchemaRegistry UI
+  :alt: SchemaRegistry UI
+
+  SchemaRegistry UI
 
 Running Kafka Example
 ~~~~~~~~~~~~~~~~~~~~~
