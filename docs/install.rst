@@ -33,8 +33,8 @@ CentOS/RedHat
        sudo yum install mysql-server
        sudo mysql-server start
 
-   .. rubric:: Cofigure Mysql
-      :name: cofigure-mysql
+   .. rubric:: Configure Mysql
+      :name: configure-mysql
 
    ::
 
