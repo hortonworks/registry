@@ -15,7 +15,6 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import io.dropwizard.assets.AssetsBundle;
@@ -31,7 +30,6 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
-import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;

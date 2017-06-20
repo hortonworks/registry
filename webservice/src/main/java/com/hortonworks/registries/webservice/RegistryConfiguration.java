@@ -27,7 +27,6 @@ import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
