@@ -16,7 +16,6 @@
 
 package org.apache.schemaregistry.samples.serdes;
 
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import org.slf4j.Logger;
