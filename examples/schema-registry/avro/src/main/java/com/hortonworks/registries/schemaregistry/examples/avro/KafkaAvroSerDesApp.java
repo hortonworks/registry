@@ -16,9 +16,6 @@
 
 package com.hortonworks.registries.schemaregistry.examples.avro;
 
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
@@ -31,18 +28,14 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +44,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,7 +57,6 @@ public class KafkaAvroSerDesApp {
 
     public static final String MSGS_LIMIT = "msgsLimit";
     public static final String TOPIC = "topic";
-    public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
     public static final int DEFAULT_MSGS_LIMIT = 50;
 
     private String producerProps;
