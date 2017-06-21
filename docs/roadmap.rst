@@ -85,7 +85,7 @@ Integration
 3. Converters
  SchemaRegistry uses Avro as the format with an option of extending it to other formats
  such as Protobuf etc. . With converters we provide an option for users to convert
- their cvs, xml, json to Registry format such as Avro, Protobuf etc..
+ their csv, xml, json to Registry format such as Avro, Protobuf etc..
 
 
 Operations
