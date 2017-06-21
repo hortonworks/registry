@@ -59,6 +59,8 @@ public interface ISchemaRegistry {
 
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
+    SchemaVersionInfo getSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException;
+
     SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException;
 
     Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> filters);

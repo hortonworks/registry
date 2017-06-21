@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.google.common.collect.Maps;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -30,8 +31,10 @@ import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.SchemaVersionProtocolHandlerRegistry;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,13 +50,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING;
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE;
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @Category(IntegrationTest.class)
@@ -221,8 +224,17 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     }
 
     @Test
-    public void testAvroSerDeGenericObj() throws Exception {
-        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
+    public void testAvroSerDesGenericObj() throws Exception {
+        for(Byte protocol : SchemaVersionProtocolHandlerRegistry.get().getRegisteredSerDesProtocolHandlers().keySet()) {
+            _testAvroSerDesGenericObj(protocol);
+        }
+    }
+
+    private void _testAvroSerDesGenericObj(Byte protocolId) throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+        Map<String, Object> config = Maps.newHashMap();
+        config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
+        config.put(SERDES_PROTOCOL_VERSION, protocolId);
+
         AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
         avroSnapshotSerializer.init(config);
         AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();
@@ -242,7 +254,16 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     @Test
     public void testAvroSerDePrimitives() throws Exception {
-        Map<String, String> config = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
+        for(Byte protocol : SchemaVersionProtocolHandlerRegistry.get().getRegisteredSerDesProtocolHandlers().keySet()) {
+            _testAvroSerDesPrimitives(protocol);
+        }
+    }
+
+    private void _testAvroSerDesPrimitives(Byte protocolId) {
+        Map<String, Object> config = Maps.newHashMap();
+        config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
+        config.put(SERDES_PROTOCOL_VERSION, protocolId);
+
         AvroSnapshotSerializer avroSnapshotSerializer = new AvroSnapshotSerializer();
         avroSnapshotSerializer.init(config);
         AvroSnapshotDeserializer avroSnapshotDeserializer = new AvroSnapshotDeserializer();

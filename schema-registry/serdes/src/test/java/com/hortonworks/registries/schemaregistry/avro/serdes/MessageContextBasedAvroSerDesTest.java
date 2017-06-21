@@ -51,7 +51,7 @@ public class MessageContextBasedAvroSerDesTest {
                         .type(AvroSchemaProvider.TYPE)
                         .compatibility(SchemaCompatibility.BACKWARD)
                         .build();
-        SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1);
+        SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1, 1L);
         Device input = new Device(1L, "device", 1, System.currentTimeMillis());
         SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1l, input.getName().toString(), schemaIdVersion.getVersion(),
                                                                     input.getSchema().toString(),
@@ -63,7 +63,7 @@ public class MessageContextBasedAvroSerDesTest {
                 mockSchemaRegistryClient.addSchemaVersion(withInstanceOf(SchemaMetadata.class), withInstanceOf(SchemaVersion.class));
                 result = schemaIdVersion;
 
-                mockSchemaRegistryClient.getSchemaMetadataInfo(anyLong);
+                mockSchemaRegistryClient.getSchemaMetadataInfo(anyString);
                 result= new SchemaMetadataInfo(schemaMetadata);
 
                 mockSchemaRegistryClient.getSchemaVersionInfo(withInstanceOf(SchemaVersionKey.class));

@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
@@ -25,6 +24,7 @@ import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataStorable;
@@ -38,7 +38,6 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
-import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
 import io.swagger.annotations.Api;
@@ -66,7 +65,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,8 +72,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
@@ -438,7 +434,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             try {
                 schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, "UTF-8"),
                                                   description);
-                response = addSchema(schemaName, schemaVersion, uriInfo);
+                response = addSchemaVersion(schemaName, schemaVersion, uriInfo);
             } catch (IOException ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -456,11 +452,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    public Response addSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name")
+    public Response addSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
                                       String schemaName,
-                              @ApiParam(value = "Details about the schema", required = true)
+                                     @ApiParam(value = "Details about the schema", required = true)
                                       SchemaVersion schemaVersion,
-                              @Context UriInfo uriInfo) {
+                                     @Context UriInfo uriInfo) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
@@ -540,8 +536,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
-                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer version) {
-        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, version);
+                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber) {
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
 
         Response response;
         try {
@@ -552,6 +548,29 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaMetadata, ex);
+            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+
+        return response;
+    }
+
+    @GET
+    @Path("/schemas/versionsById/{id}")
+    @ApiOperation(value = "Get a version of the schema identified by the schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response getSchemaVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+        SchemaIdVersion schemaIdVersion = new SchemaIdVersion(versionId);
+
+        Response response;
+        try {
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
+            response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            LOG.info("No schema version is found with schema version id : [{}]", versionId);
+            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
 

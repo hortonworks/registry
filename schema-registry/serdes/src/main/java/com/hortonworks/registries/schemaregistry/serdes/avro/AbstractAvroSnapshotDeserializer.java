@@ -17,8 +17,11 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaResolver;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -116,9 +119,23 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
     @Override
     public void init(Map<String, ?> config) {
         super.init(config);
-        avroSchemaResolver = new AvroSchemaResolver(key -> schemaRegistryClient.getSchemaVersionInfo(key));
+        SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
+        avroSchemaResolver = new AvroSchemaResolver(schemaVersionRetriever);
         this.useSpecificAvroReader = (boolean) getValue(config, SPECIFIC_AVRO_READER, false);
+    }
 
+    private SchemaVersionRetriever createSchemaVersionRetriever() {
+        return new SchemaVersionRetriever() {
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                return schemaRegistryClient.getSchemaVersionInfo(key);
+            }
+
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
+                return schemaRegistryClient.getSchemaVersionInfo(key);
+            }
+        };
     }
 
     @Override

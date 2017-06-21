@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,12 +81,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         this.schemaProvidersConfig = schemaProvidersConfig;
     }
 
-    private Collection<? extends SchemaProvider> initSchemaProviders(Collection<Map<String, Object>> schemaProvidersConfig) {
+    private Collection<? extends SchemaProvider> initSchemaProviders(final Collection<Map<String, Object>> schemaProvidersConfig,
+                                                                     final SchemaVersionRetriever schemaVersionRetriever) {
         if (schemaProvidersConfig == null || schemaProvidersConfig.isEmpty()) {
             throw new IllegalArgumentException("No [" + SCHEMA_PROVIDERS + "] property is configured in schema registry configuration file.");
         }
-
-        SchemaVersionRetriever schemaVersionRetriever = key -> getSchemaVersionInfo(key);
 
         return Collections2.transform(schemaProvidersConfig, new Function<Map<String, Object>, SchemaProvider>() {
             @Nullable
@@ -113,7 +113,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public void init(Map<String, Object> props) {
-        Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig);
+        final SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
+
+        Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig, schemaVersionRetriever);
 
         options = new Options(props);
         for (SchemaProvider schemaProvider : schemaProviders) {
@@ -130,13 +132,32 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                      )
                 ).collect(Collectors.toList());
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> retrieveSchemaVersionInfo(key),
-                                                            options.getMaxSchemaCacheSize(),
-                                                            options.getSchemaExpiryInSecs());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(
+                schemaVersionRetriever,
+                options.getMaxSchemaCacheSize(),
+                options.getSchemaExpiryInSecs());
 
-        storageManager.registerStorables(Lists.newArrayList(SchemaMetadataStorable.class, SchemaVersionStorable.class,
-                                                            SchemaFieldInfoStorable.class, SerDesInfoStorable.class,
-                                                            SchemaSerDesMapping.class));
+        storageManager.registerStorables(
+                Arrays.asList(
+                        SchemaMetadataStorable.class,
+                        SchemaVersionStorable.class,
+                        SchemaFieldInfoStorable.class,
+                        SerDesInfoStorable.class,
+                        SchemaSerDesMapping.class));
+    }
+
+    private SchemaVersionRetriever createSchemaVersionRetriever() {
+        return new SchemaVersionRetriever() {
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                return retrieveSchemaVersionInfo(key);
+            }
+
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
+                return retrieveSchemaVersionInfo(key);
+            }
+        };
     }
 
     @Override
@@ -508,6 +529,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
     
     public SchemaVersionInfo getSchemaVersion(Long id) throws InvalidSchemaException, SchemaNotFoundException {
+        return fetchSchemaVersionInfo(id);
+    }
+
+    private SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
         StorableKey storableKey = new StorableKey(SchemaVersionStorable.NAME_SPACE, SchemaVersionStorable.getPrimaryKey(id));
 
         SchemaVersionStorable versionedSchema = storageManager.get(storableKey);
@@ -546,22 +571,47 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
-        return schemaVersionInfoCache.getSchema(schemaVersionKey);
+    public SchemaVersionInfo getSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
+        return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaIdVersion));
     }
 
-    SchemaVersionInfo retrieveSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+    @Override
+    public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
+    }
+
+    private SchemaVersionInfo retrieveSchemaVersionInfo(SchemaIdVersion key) throws SchemaNotFoundException {
+        SchemaVersionInfo schemaVersionInfo = null;
+        if(key.getSchemaVersionId() != null) {
+            schemaVersionInfo = fetchSchemaVersionInfo(key.getSchemaVersionId());
+        } else if(key.getSchemaMetadataId() != null) {
+            SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(key.getSchemaMetadataId());
+            Integer version = key.getVersion();
+
+            schemaVersionInfo = fetchSchemaVersionInfo(version, schemaMetadataInfo);
+        } else {
+            throw new IllegalArgumentException("Invalid SchemaIdVersion: " + key);
+        }
+
+        return schemaVersionInfo;
+    }
+
+    private SchemaVersionInfo retrieveSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         String schemaName = schemaVersionKey.getSchemaName();
+        Integer version = schemaVersionKey.getVersion();
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadata(schemaName);
 
         if (schemaMetadataInfo == null) {
             throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaName);
         }
 
+        return fetchSchemaVersionInfo(version, schemaMetadataInfo);
+    }
+
+    private SchemaVersionInfo fetchSchemaVersionInfo(Integer version, SchemaMetadataInfo schemaMetadataInfo) throws SchemaNotFoundException {
         SchemaVersionInfo schemaVersionInfo = null;
-        Integer version = schemaVersionKey.getVersion();
         if (SchemaVersionKey.LATEST_VERSION.equals(version)) {
-            schemaVersionInfo = getLatestSchemaVersionInfo(schemaVersionKey.getSchemaName());
+            schemaVersionInfo = getLatestSchemaVersionInfo(schemaMetadataInfo.getSchemaMetadata().getName());
         } else {
             Long schemaMetadataId = schemaMetadataInfo.getId();
             List<QueryParam> queryParams = Lists.newArrayList(
@@ -580,22 +630,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         return schemaVersionInfo;
-    }
-
-    private SchemaMetadataStorable getSchemaMetadataStorable(List<QueryParam> queryParams) {
-        Collection<SchemaMetadataStorable> schemaMetadataStorables = storageManager.find(SchemaMetadataStorable.NAME_SPACE, queryParams);
-        SchemaMetadataStorable schemaMetadataStorable = null;
-        if (schemaMetadataStorables != null && !schemaMetadataStorables.isEmpty()) {
-            if (schemaMetadataStorables.size() > 1) {
-                LOG.warn("Received more than one schema with query parameters [{}]", queryParams);
-            }
-            schemaMetadataStorable = schemaMetadataStorables.iterator().next();
-            LOG.debug("Schema found in registry with query parameters [{}]", queryParams);
-        } else {
-            LOG.debug("No schemas found in registry with query parameters [{}]", queryParams);
-        }
-
-        return schemaMetadataStorable;
     }
 
     @Override

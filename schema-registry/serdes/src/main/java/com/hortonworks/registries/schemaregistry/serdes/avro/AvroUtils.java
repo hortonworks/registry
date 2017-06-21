@@ -27,8 +27,6 @@ import java.util.Map;
  */
 public final class AvroUtils {
     public static final Charset UTF_8 = Charset.forName("UTF-8");
-    public static final byte GENERIC_RECORD = 0x0;
-    public static final byte SPECIFIC_RECORD = 0x1;
 
     private static final Map<Schema.Type, Schema> PRIMITIVE_SCHEMAS;
 

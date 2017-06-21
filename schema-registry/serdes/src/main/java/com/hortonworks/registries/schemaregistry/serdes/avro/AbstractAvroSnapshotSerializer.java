@@ -94,7 +94,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
      * @param outputStream into which binary form of {@code input} is written.
      * @throws IOException when any IO error occurs
      */
-    protected void writeContentPayload(Object input, OutputStream outputStream) throws IOException {
+    protected static void writeContentPayload(Object input, OutputStream outputStream) throws IOException {
         Schema schema = computeSchema(input);
         Schema.Type schemaType = schema.getType();
         if (Schema.Type.BYTES.equals(schemaType)) {
@@ -120,38 +120,6 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     }
 
     /**
-     * Writes given {@code protocolId} into {@code outputStream}
-     *
-     * @param protocolId
-     * @param outputStream
-     * @throws IOException when any IO error occurs
-     */
-    protected void writeProtocolId(byte protocolId,
-                                   OutputStream outputStream) throws IOException {
-        // it can be enhanced to have respective protocol handlers for different versions
-        // first byte is protocol version/id.
-        // protocol format:
-        // 1 byte  : protocol version
-        outputStream.write(new byte[]{protocolId});
-    }
-
-    /**
-     * Writes given {@code schemaIdVersion} into {@code outputStream}
-     *
-     * @param schemaIdVersion
-     * @param byteArrayOutputStream
-     * @throws IOException when any IO error occurs
-     */
-    protected void writeSchemaVersion(SchemaIdVersion schemaIdVersion,
-                                      OutputStream byteArrayOutputStream) throws IOException {
-        // 8 bytes : schema metadata Id
-        // 4 bytes : schema version
-        byteArrayOutputStream.write(ByteBuffer.allocate(12)
-                                            .putLong(schemaIdVersion.getSchemaMetadataId())
-                                            .putInt(schemaIdVersion.getVersion()).array());
-    }
-
-    /**
      * @param input avro object
      * @return textual representation of the schema of the given {@code input} avro object
      */
@@ -160,7 +128,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         return schema.toString();
     }
 
-    private Schema computeSchema(Object input) {
+    private static Schema computeSchema(Object input) {
         Schema schema = null;
         if (input instanceof GenericContainer) {
             schema = ((GenericContainer) input).getSchema();

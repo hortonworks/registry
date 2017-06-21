@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 Hortonworks.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.hortonworks.registries.schemaregistry.client;
 
 import java.io.FileNotFoundException;
@@ -75,9 +90,9 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion)
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         try {
-            int version =  schemaRegistry.addSchemaVersion(schemaMetadata, schemaVersion.getSchemaText(), schemaMetadata.getDescription()).getVersion();
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadata, schemaVersion.getSchemaText(), schemaMetadata.getDescription());
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaMetadata.getName());
-            SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), version);
+            SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId());
             return schemaIdVersion;
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
@@ -94,9 +109,9 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         try {
-            int version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription()).getVersion();
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
-            SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), version);
+            SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId());
             return schemaIdVersion;
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
@@ -111,6 +126,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         return schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
+    }
+
+    @Override
+    public SchemaVersionInfo getSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
+        return schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
     }
 
     @Override

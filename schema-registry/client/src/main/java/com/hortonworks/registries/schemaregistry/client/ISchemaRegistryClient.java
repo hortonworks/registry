@@ -202,6 +202,13 @@ public interface ISchemaRegistryClient extends AutoCloseable {
      */
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
+    /**
+     *
+     * @param schemaIdVersion Schema version's identifier
+     * @return {@link SchemaVersionInfo} for the given {@link SchemaIdVersion}
+     * @throws SchemaNotFoundException when there is no schema version exists with the given {@code SchemaIdVersion}
+     */
+    SchemaVersionInfo getSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException;
 
     /**
      * @param schemaName name identifying a schema

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -21,6 +21,7 @@ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * This is the default implementation of {@link AbstractAvroSnapshotDeserializer}.
@@ -39,9 +40,9 @@ import java.io.IOException;
  * }</pre>
  */
 public class AvroSnapshotSerializer extends AbstractAvroSnapshotSerializer<byte[]> {
+    public static final String SERDES_PROTOCOL_VERSION = "serdes.protocol.version";
 
-    // todo have protocol handlers for each version
-    public static final byte CURRENT_PROTOCOL_VERSION = 0x1;
+    private Byte protocolVersion;
 
     public AvroSnapshotSerializer() {
     }
@@ -50,10 +51,24 @@ public class AvroSnapshotSerializer extends AbstractAvroSnapshotSerializer<byte[
         super(schemaRegistryClient);
     }
 
+    @Override
+    public void init(Map<String, ?> config) {
+        super.init(config);
+
+        protocolVersion = (Byte) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION, SchemaVersionProtocolHandlerRegistry.CURRENT_PROTOCOL);
+
+        if(SchemaVersionProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion) == null) {
+            throw new IllegalArgumentException("SchemaVersionProtocolHandler with protocol version " + protocolVersion + " does not exist");
+        }
+    }
+
     protected byte[] doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            writeProtocolId(CURRENT_PROTOCOL_VERSION, byteArrayOutputStream);
-            writeSchemaVersion(schemaIdVersion, byteArrayOutputStream);
+            SchemaVersionProtocolHandlerRegistry
+                    .get()
+                    .getSerDesProtocolHandler(protocolVersion)
+                    .handleSchemaVersionSerialization(byteArrayOutputStream, schemaIdVersion);
+
             writeContentPayload(input, byteArrayOutputStream);
 
             return byteArrayOutputStream.toByteArray();

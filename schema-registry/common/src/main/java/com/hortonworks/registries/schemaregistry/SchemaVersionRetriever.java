@@ -21,5 +21,8 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
  *
  */
 public interface SchemaVersionRetriever {
+
     SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException;
+
+    SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException;
 }
