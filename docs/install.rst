@@ -14,15 +14,18 @@ CentOS/RedHat
        # alternatives --install /usr/bin/java java /opt/jdk1.8.0_111/bin/java 2
        # alternatives --config java
 
-2. edit $REGISTRY\_HOME/conf/registry-env.sh, add the following
+2. Download latest Schema Registry binaries from here
+   https://github.com/hortonworks/registry/releases
+
+3. edit $REGISTRY\_HOME/conf/registry-env.sh, add the following
 
    ::
 
            export JAVA_HOME=/opt/jdk1.8.0_111/
 
-3. Setup Database
+4. Setup Database
 
-   .. rubric:: 3.1 Mysql
+   .. rubric:: 4.1 Mysql
       :name: mysql
 
    .. rubric:: Install Mysql
@@ -47,12 +50,12 @@ CentOS/RedHat
    ::
 
        mysql -u root -p
-       create database registry_db;
+       create database schema_registry;
        CREATE USER 'registry_user'@'localhost' IDENTIFIED BY 'registry_password';
-       GRANT ALL PRIVILEGES ON registry_db.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
+       GRANT ALL PRIVILEGES ON schema_registry.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
        commit;
 
-4. Configure registry.yaml
+5. Configure registry.yaml
 
 ::
 
@@ -69,20 +72,29 @@ Edit the folllowing section to add appropriate database and user settings
       queryTimeoutInSecs: 30
       db.properties:
         dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
-        dataSource.url: "jdbc:mysql://localhost/registry_db"
+        dataSource.url: "jdbc:mysql://localhost/schema_registry"
         dataSource.user:"registry_user"
         dataSource.password: "registry_password"
 
 
-5. Start the registry server
+6. Run bootstrap scripts
+
+::
+
+  $REGISTRY_HOME/bootstrap/boostrap-storage.sh
+
+
+7. Start the registry server
 
 ``sudo ./bin/registry start``
+
 
 OS X
 ----
 
 1. Download latest Schema Registry binaries from here
    https://github.com/hortonworks/registry/releases
+
 2. edit $REGISTRY\_HOME/conf/registry-env.sh, add the following
 
    ::
@@ -118,9 +130,9 @@ OS X
    ::
 
        mysql -u root -p
-       create database registry_db;
+       create database schema_registry;
        CREATE USER 'registry_user'@'localhost' IDENTIFIED BY 'registry_password';
-       GRANT ALL PRIVILEGES ON registry_db.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
+       GRANT ALL PRIVILEGES ON schema_registry.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
        commit;
 
 4. Configure registry.yaml
@@ -140,7 +152,7 @@ Edit the folllowing section to add appropriate database and user settings
       queryTimeoutInSecs: 30
       db.properties:
         dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
-        dataSource.url: "jdbc:mysql://localhost/registry_db"
+        dataSource.url: "jdbc:mysql://localhost/schema_registry"
         dataSource.user:"registry_user"
         dataSource.password: "registry_password"
 
