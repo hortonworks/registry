@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.SchemaVersionProtocolHandlerRegistry;
+import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
                 Assert.assertEquals(test + " - http response unexpected", expectedHttpResponse.getStatusCode(), resp.getStatus());
                 CatalogResponse catalogResponse = SchemaRegistryClient.readCatalogResponse(resp.readEntity(String.class));
                 Assert.assertEquals(test + " - catalog response unexpected",
-                        expectedCatalogResponse.getCode(), catalogResponse.getResponseCode());
+                                    expectedCatalogResponse.getCode(), catalogResponse.getResponseCode());
                 failedAsExpected = true;
             }
             Assert.assertTrue(test + " - did not fail as expected", failedAsExpected);
@@ -106,23 +106,23 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
      * Tests for various schema create failure scenarios
      */
     private static SchemaCreateFailureScenario[] createFailureScenarios =
-    {
-        // No schema type specified
-        new SchemaCreateFailureScenario("Test empty schema type", "name", "group", "",
-                BAD_REQUEST, BAD_REQUEST_PARAM_MISSING),
-        // Schema type is white spaces
-        new SchemaCreateFailureScenario("Test empty schema white spaces", "name", "group", "   ",
-                BAD_REQUEST, BAD_REQUEST_PARAM_MISSING),
-        // Invalid schema type
-        new SchemaCreateFailureScenario("Test invalid schema type", "name", "group", "invalid",
-                BAD_REQUEST, UNSUPPORTED_SCHEMA_TYPE),
-        // No schema name
-        new SchemaCreateFailureScenario("Test empty schema name", "", "group", AvroSchemaProvider.TYPE,
-                BAD_REQUEST, BAD_REQUEST_PARAM_MISSING),
-        // Schema name is white spaces
-        new SchemaCreateFailureScenario("Test schema name white spaces", "    ", "group", AvroSchemaProvider.TYPE,
-                BAD_REQUEST, BAD_REQUEST_PARAM_MISSING)
-    };
+            {
+                    // No schema type specified
+                    new SchemaCreateFailureScenario("Test empty schema type", "name", "group", "",
+                                                    BAD_REQUEST, BAD_REQUEST_PARAM_MISSING),
+                    // Schema type is white spaces
+                    new SchemaCreateFailureScenario("Test empty schema white spaces", "name", "group", "   ",
+                                                    BAD_REQUEST, BAD_REQUEST_PARAM_MISSING),
+                    // Invalid schema type
+                    new SchemaCreateFailureScenario("Test invalid schema type", "name", "group", "invalid",
+                                                    BAD_REQUEST, UNSUPPORTED_SCHEMA_TYPE),
+                    // No schema name
+                    new SchemaCreateFailureScenario("Test empty schema name", "", "group", AvroSchemaProvider.TYPE,
+                                                    BAD_REQUEST, BAD_REQUEST_PARAM_MISSING),
+                    // Schema name is white spaces
+                    new SchemaCreateFailureScenario("Test schema name white spaces", "    ", "group", AvroSchemaProvider.TYPE,
+                                                    BAD_REQUEST, BAD_REQUEST_PARAM_MISSING)
+            };
 
     @Test
     public void testSchemaCreateFailures() throws Exception {
@@ -209,7 +209,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     public void testDefaultSerDes() throws Exception {
         Object defaultSerializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
         Object defaultDeserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
-        Assert.assertEquals(AvroSnapshotDeserializer.class , defaultDeserializer.getClass());
+        Assert.assertEquals(AvroSnapshotDeserializer.class, defaultDeserializer.getClass());
         Assert.assertEquals(AvroSnapshotSerializer.class, defaultSerializer.getClass());
     }
 
@@ -225,7 +225,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     @Test
     public void testAvroSerDesGenericObj() throws Exception {
-        for(Byte protocol : SchemaVersionProtocolHandlerRegistry.get().getRegisteredSerDesProtocolHandlers().keySet()) {
+        for (Byte protocol : SerDesProtocolHandlerRegistry.get().getRegisteredSerDesProtocolHandlers().keySet()) {
             _testAvroSerDesGenericObj(protocol);
         }
     }
@@ -254,7 +254,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     @Test
     public void testAvroSerDePrimitives() throws Exception {
-        for(Byte protocol : SchemaVersionProtocolHandlerRegistry.get().getRegisteredSerDesProtocolHandlers().keySet()) {
+        for (Byte protocol : SerDesProtocolHandlerRegistry.get().getRegisteredSerDesProtocolHandlers().keySet()) {
             _testAvroSerDesPrimitives(protocol);
         }
     }
@@ -299,9 +299,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         Collection<SerDesInfo> serializers = schemaRegistryClient.getSerDes(schemaName);
 
         Assert.assertTrue(serializers.stream()
-                                  .map(x -> x.getSerDesPair())
-                                  .collect(Collectors.toList())
-                                  .contains(serDesPair));
+                                     .map(x -> x.getSerDesPair())
+                                     .collect(Collectors.toList())
+                                     .contains(serDesPair));
     }
 
     private SerDesPair createSerDesInfo(String fileId) {
@@ -311,7 +311,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
                 fileId,
                 "con.hwx.registries.serializer.AvroSnapshotSerializer",
                 "con.hwx.registries.serializer.AvroSnapshotDeserializer"
-                );
+        );
     }
 
     private String uploadFile() throws IOException {

@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 /**
  * This is the default implementation of {@link AbstractAvroSnapshotDeserializer}.
- *
+ * <p>
  * <p>Common way to use this serializer implementation is like below as mentioned in {@link com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer}. </p>
  * <pre>{@code
  *     AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
@@ -40,6 +41,10 @@ import java.util.Map;
  * }</pre>
  */
 public class AvroSnapshotSerializer extends AbstractAvroSnapshotSerializer<byte[]> {
+
+    /**
+     * Property name for protocol version to be set with {@link #init(Map)}.
+     */
     public static final String SERDES_PROTOCOL_VERSION = "serdes.protocol.version";
 
     private Byte protocolVersion;
@@ -55,23 +60,22 @@ public class AvroSnapshotSerializer extends AbstractAvroSnapshotSerializer<byte[
     public void init(Map<String, ?> config) {
         super.init(config);
 
-        protocolVersion = (Byte) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION, SchemaVersionProtocolHandlerRegistry.CURRENT_PROTOCOL);
+        protocolVersion = (Byte) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
 
-        if(SchemaVersionProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion) == null) {
-            throw new IllegalArgumentException("SchemaVersionProtocolHandler with protocol version " + protocolVersion + " does not exist");
+        if (SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion) == null) {
+            throw new IllegalArgumentException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
         }
     }
 
     protected byte[] doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            SchemaVersionProtocolHandlerRegistry
-                    .get()
-                    .getSerDesProtocolHandler(protocolVersion)
-                    .handleSchemaVersionSerialization(byteArrayOutputStream, schemaIdVersion);
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            SerDesProtocolHandler serDesProtocolHandler
+                    = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion);
 
-            writeContentPayload(input, byteArrayOutputStream);
+            serDesProtocolHandler.handleSchemaVersionSerialization(baos, schemaIdVersion);
+            serDesProtocolHandler.handlePayloadSerialization(baos, input);
 
-            return byteArrayOutputStream.toByteArray();
+            return baos.toByteArray();
         } catch (IOException e) {
             throw new SerDesException(e);
         }

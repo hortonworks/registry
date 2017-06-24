@@ -26,7 +26,7 @@ import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.SchemaVersionProtocolHandlerRegistry;
+import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
 import com.hortonworks.registries.serdes.Device;
 import mockit.Expectations;
 import mockit.Mocked;
@@ -49,8 +49,8 @@ public class SchemaVersionProtocolHandlerTest {
     @Test
     public void testSerDesWithVersionIdGtLtIntMax() throws Exception {
         int delta = Math.abs(new Random().nextInt());
-        long[] ids = { ((long)Integer.MAX_VALUE + delta), // more than int max, should trigger VERSION_ID_AS_LONG_PROTOCOL
-                 ((long)Integer.MAX_VALUE - delta)}; // less than int max, should trigger VERSION_ID_AS_INT_PROTOCOL
+        long[] ids = {((long) Integer.MAX_VALUE + delta), // more than int max, should trigger VERSION_ID_AS_LONG_PROTOCOL
+                ((long) Integer.MAX_VALUE - delta)}; // less than int max, should trigger VERSION_ID_AS_INT_PROTOCOL
         for (long id : ids) {
             _testSerDes(id);
         }
@@ -68,9 +68,9 @@ public class SchemaVersionProtocolHandlerTest {
 
         Device input = new Device(1L, "device", 1, System.currentTimeMillis());
         SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(id, input.getName().toString(), schemaIdVersion.getVersion(),
-                input.getSchema().toString(),
-                System.currentTimeMillis(),
-                "some device");
+                                                                    input.getSchema().toString(),
+                                                                    System.currentTimeMillis(),
+                                                                    "some device");
 
         new Expectations() {
             {
@@ -86,7 +86,7 @@ public class SchemaVersionProtocolHandlerTest {
         };
 
         AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
-        serializer.init(Collections.singletonMap(AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION, SchemaVersionProtocolHandlerRegistry.VERSION_ID_AS_INT_PROTOCOL));
+        serializer.init(Collections.singletonMap(AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.VERSION_ID_AS_INT_PROTOCOL));
 
         AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer();
         deserializer.init(Collections.emptyMap());
