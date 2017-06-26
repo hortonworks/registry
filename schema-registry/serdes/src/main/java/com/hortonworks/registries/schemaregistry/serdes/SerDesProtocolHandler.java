@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.serdes;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,7 +39,7 @@ public interface SerDesProtocolHandler {
      * @param outputStream    output stream
      * @param schemaIdVersion schema version info to be serialized
      */
-    void handleSchemaVersionSerialization(OutputStream outputStream, SchemaIdVersion schemaIdVersion);
+    void handleSchemaVersionSerialization(OutputStream outputStream, SchemaIdVersion schemaIdVersion) throws SerDesException;
 
     /**
      * Deserializes schema version related information from the given input stream.
@@ -46,7 +47,7 @@ public interface SerDesProtocolHandler {
      * @param inputStream input stream
      * @return {@link SchemaIdVersion} instenace created from deserializing respective information from given input stream.
      */
-    SchemaIdVersion handleSchemaVersionDeserialization(InputStream inputStream);
+    SchemaIdVersion handleSchemaVersionDeserialization(InputStream inputStream) throws SerDesException;
 
     /**
      * Handles serialization of input into given output stream
@@ -54,7 +55,7 @@ public interface SerDesProtocolHandler {
      * @param outputStream output stream
      * @param input        object to be serialized
      */
-    void handlePayloadSerialization(OutputStream outputStream, Object input);
+    void handlePayloadSerialization(OutputStream outputStream, Object input) throws SerDesException;
 
     /**
      * Handles deserialization of given input stream and returns the deserialized Object.
@@ -63,6 +64,6 @@ public interface SerDesProtocolHandler {
      * @param context     any context required for deserialization.
      * @return returns the deserialized Object.
      */
-    Object handlePayloadDeserialization(InputStream inputStream, Map<String, Object> context);
+    Object handlePayloadDeserialization(InputStream inputStream, Map<String, Object> context) throws SerDesException;
 
 }

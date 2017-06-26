@@ -15,8 +15,16 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.BinaryEncoder;
@@ -30,45 +38,33 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.commons.io.IOUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * Default implementation of serializing and deserializing avro payloads.
+ * Confluent compatible implementation of serializing and deserializing avro payloads.
  */
-public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
+public class ConfluentAvroSerDesHandler implements AvroSerDesHandler {
     private final Map<String, Schema> readerSchemaCache = new ConcurrentHashMap<>();
 
     @Override
     public void handlePayloadSerialization(OutputStream outputStream, Object input) {
         try {
             Schema schema = AvroUtils.computeSchema(input);
-            Schema.Type schemaType = schema.getType();
-            if (Schema.Type.BYTES.equals(schemaType)) {
-                // incase of byte arrays, no need to go through avro as there is not much to optimize and avro is expecting
-                // the payload to be ByteBuffer instead of a byte array
+            if (input instanceof byte[]) {
                 outputStream.write((byte[]) input);
-            } else if (Schema.Type.STRING.equals(schemaType)) {
-                // get UTF-8 bytes and directly send those over instead of using avro.
-                outputStream.write(input.toString().getBytes("UTF-8"));
             } else {
                 BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
                 DatumWriter<Object> writer;
-                boolean isSpecificRecord = input instanceof SpecificRecord;
-                if (isSpecificRecord) {
+                if (input instanceof SpecificRecord) {
                     writer = new SpecificDatumWriter<>(schema);
                 } else {
                     writer = new GenericDatumWriter<>(schema);
                 }
-
                 writer.write(input, encoder);
                 encoder.flush();
             }
-        } catch (IOException e) {
-            throw new SerDesException(e);
+        } catch (IOException | RuntimeException e) {
+            // avro serialization can throw AvroRuntimeException, NullPointerException,
+            // ClassCastException, etc
+            throw new SerDesException("Error serializing Avro message", e);
         }
     }
 
@@ -77,21 +73,19 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
                                                Schema writerSchema,
                                                Schema readerSchema,
                                                boolean useSpecificAvroReader) {
+
         Object deserializedObj;
-        Schema.Type writerSchemaType = writerSchema.getType();
         try {
-            if (Schema.Type.BYTES.equals(writerSchemaType)) {
+            if (Schema.Type.BYTES.equals(writerSchema.getType())) {
                 // serializer writes byte array directly without going through avro encoder layers.
                 deserializedObj = IOUtils.toByteArray(payloadInputStream);
-            } else if (Schema.Type.STRING.equals(writerSchemaType)) {
-                // generate UTF-8 string object from the received bytes.
-                deserializedObj = new String(IOUtils.toByteArray(payloadInputStream), AvroUtils.UTF_8);
             } else {
                 DatumReader datumReader = getDatumReader(writerSchema, readerSchema, useSpecificAvroReader);
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
-        } catch (IOException e) {
-            throw new SerDesException(e);
+        } catch (IOException | RuntimeException e) {
+            // avro deserialization may throw AvroRuntimeException, NullPointerException, etc
+            throw new SerDesException("Error deserializing Avro message for id " + writerSchema, e);
         }
         return deserializedObj;
     }

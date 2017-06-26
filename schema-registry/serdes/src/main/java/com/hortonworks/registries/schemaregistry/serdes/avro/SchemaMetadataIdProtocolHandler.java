@@ -29,17 +29,21 @@ import java.nio.ByteBuffer;
 public class SchemaMetadataIdProtocolHandler extends AbstractAvroSerDesProtocolHandler {
 
     public SchemaMetadataIdProtocolHandler() {
-        super(SerDesProtocolHandlerRegistry.METADATA_ID_VERSION_PROTOCOL);
+        super(SerDesProtocolHandlerRegistry.METADATA_ID_VERSION_PROTOCOL, new DefaultAvroSerDesHandler());
     }
 
     @Override
     protected void doHandleSchemaVersionSerialization(OutputStream outputStream,
-                                                      SchemaIdVersion schemaIdVersion) throws IOException {
+                                                      SchemaIdVersion schemaIdVersion) throws SerDesException {
         // 8 bytes : schema metadata Id
         // 4 bytes : schema version
-        outputStream.write(ByteBuffer.allocate(12)
-                                     .putLong(schemaIdVersion.getSchemaMetadataId())
-                                     .putInt(schemaIdVersion.getVersion()).array());
+        try {
+            outputStream.write(ByteBuffer.allocate(12)
+                                         .putLong(schemaIdVersion.getSchemaMetadataId())
+                                         .putInt(schemaIdVersion.getVersion()).array());
+        } catch (IOException e) {
+            throw new SerDesException(e);
+        }
     }
 
     @Override

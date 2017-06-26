@@ -15,6 +15,8 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import static com.hortonworks.registries.schemaregistry.avro.ConfluentProtocolCompatibleTest.GENERIC_TEST_RECORD_SCHEMA;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,11 +34,15 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class ConfluentRegistryCompatibleResourceTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ConfluentRegistryCompatibleResourceTest.class);
 
     @Test
     public void testSanity() throws Exception {
@@ -49,8 +55,7 @@ public class ConfluentRegistryCompatibleResourceTest {
 
             
             
-            Schema schema = new Schema.Parser().parse("{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
-
+            Schema schema = new Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
             GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
 
             Map<String, Object> config = new HashMap<>();
@@ -65,7 +70,7 @@ public class ConfluentRegistryCompatibleResourceTest {
 
             GenericRecord result = (GenericRecord) kafkaAvroDeserializer.deserialize("topic", bytes);
 
-            System.out.println(result);
+            LOG.info(result.toString());
 
         } finally {
             localSchemaRegistryServer.stop();

@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Registered ser/des protocol handlers which can be used in serializers/deserializers.
  */
 public final class SerDesProtocolHandlerRegistry {
+
+    public static final byte CONFLUENT_VERSION_PROTOCOL = 0x0;
     public static final byte METADATA_ID_VERSION_PROTOCOL = 0x1;
     public static final byte VERSION_ID_AS_LONG_PROTOCOL = 0x2;
     public static final byte VERSION_ID_AS_INT_PROTOCOL = 0x3;
@@ -49,7 +51,7 @@ public final class SerDesProtocolHandlerRegistry {
     }
 
     private SerDesProtocolHandlerRegistry() {
-        List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new SchemaMetadataIdProtocolHandler(),
+        List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new ConfluentProtocolHandler(), new SchemaMetadataIdProtocolHandler(),
                                                                     new SchemaVersionIdAsIntProtocolHandler(), new SchemaVersionIdAsLongProtocolHandler());
         for (SerDesProtocolHandler inbuiltHandler : inbuiltHandlers) {
             registerSerDesProtocolHandler(inbuiltHandler);

@@ -29,19 +29,23 @@ import java.nio.ByteBuffer;
 public class SchemaVersionIdAsLongProtocolHandler extends AbstractAvroSerDesProtocolHandler {
 
     public SchemaVersionIdAsLongProtocolHandler() {
-        super(SerDesProtocolHandlerRegistry.VERSION_ID_AS_LONG_PROTOCOL);
+        super(SerDesProtocolHandlerRegistry.VERSION_ID_AS_LONG_PROTOCOL, new DefaultAvroSerDesHandler());
     }
 
     @Override
     public void doHandleSchemaVersionSerialization(OutputStream outputStream,
-                                                   SchemaIdVersion schemaIdVersion) throws IOException {
-        Long versionId = schemaIdVersion.getSchemaVersionId();
-        outputStream.write(ByteBuffer.allocate(8)
-                                     .putLong(versionId).array());
+                                                   SchemaIdVersion schemaIdVersion) throws SerDesException {
+        try {
+            Long versionId = schemaIdVersion.getSchemaVersionId();
+            outputStream.write(ByteBuffer.allocate(8)
+                                         .putLong(versionId).array());
+        } catch (IOException e) {
+            throw new SerDesException(e);
+        }
     }
 
     @Override
-    public SchemaIdVersion handleSchemaVersionDeserialization(InputStream inputStream) {
+    public SchemaIdVersion handleSchemaVersionDeserialization(InputStream inputStream) throws SerDesException  {
         ByteBuffer byteBuffer = ByteBuffer.allocate(8);
         try {
             inputStream.read(byteBuffer.array());

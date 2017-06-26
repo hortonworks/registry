@@ -15,52 +15,42 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- *
+ * Confluent compatible protocol handler.
  */
-public class SchemaVersionIdAsIntProtocolHandler extends AbstractAvroSerDesProtocolHandler {
-    public static final Logger LOG = LoggerFactory.getLogger(SchemaVersionIdAsIntProtocolHandler.class);
+public class ConfluentProtocolHandler extends AbstractAvroSerDesProtocolHandler {
 
-    private final SchemaVersionIdAsLongProtocolHandler delegate;
+    public static final Logger LOG = LoggerFactory.getLogger(ConfluentProtocolHandler.class);
 
-    public SchemaVersionIdAsIntProtocolHandler() {
-        super(SerDesProtocolHandlerRegistry.VERSION_ID_AS_INT_PROTOCOL, new DefaultAvroSerDesHandler());
-        delegate = new SchemaVersionIdAsLongProtocolHandler();
+    public ConfluentProtocolHandler() {
+        super(SerDesProtocolHandlerRegistry.CONFLUENT_VERSION_PROTOCOL, new ConfluentAvroSerDesHandler());
     }
 
     @Override
-    public void handleSchemaVersionSerialization(OutputStream outputStream,
-                                                 SchemaIdVersion schemaIdVersion) {
+    protected void doHandleSchemaVersionSerialization(OutputStream outputStream,
+                                                      SchemaIdVersion schemaIdVersion) {
         Long versionId = schemaIdVersion.getSchemaVersionId();
         if (versionId > Integer.MAX_VALUE) {
-            // if it is more than int max, fallback to SchemaVersionIdAsLongProtocolHandler
-            LOG.debug("Upgraded to " + delegate + " as versionId is more than max integer");
-            delegate.handleSchemaVersionSerialization(outputStream, schemaIdVersion);
+            throw new SerDesException("Unsupported versionId, max id=" + Integer.MAX_VALUE + " , but was id=" + versionId);
         } else {
             // 4 bytes
             try {
-                outputStream.write(new byte[]{protocolId});
                 outputStream.write(ByteBuffer.allocate(4)
                                              .putInt(versionId.intValue()).array());
             } catch (IOException e) {
                 throw new SerDesException(e);
             }
         }
-    }
-
-    @Override
-    protected void doHandleSchemaVersionSerialization(OutputStream outputStream, SchemaIdVersion schemaIdVersion) throws IOException {
-        // ignore this as this would never be invoked.
     }
 
     @Override
@@ -76,7 +66,4 @@ public class SchemaVersionIdAsIntProtocolHandler extends AbstractAvroSerDesProto
         return new SchemaIdVersion((long) schemaVersionId);
     }
 
-    public Byte getProtocolId() {
-        return protocolId;
-    }
 }

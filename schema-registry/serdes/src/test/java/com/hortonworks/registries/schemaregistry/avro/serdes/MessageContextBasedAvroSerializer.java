@@ -20,7 +20,6 @@ package com.hortonworks.registries.schemaregistry.avro.serdes;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.DefaultAvroSerDesHandler;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -33,20 +32,19 @@ import java.util.Map;
  *
  */
 public class MessageContextBasedAvroSerializer extends AbstractAvroSnapshotSerializer<MessageContext> {
-    private final DefaultAvroSerDesHandler defaultAvroSerDesHandler = new DefaultAvroSerDesHandler();
 
     @Override
     protected MessageContext doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         Map<String, Object> headers = new HashMap<>();
 
-        headers.put("protocol.id", (byte) 0x1);
+        headers.put("protocol.id", getProtocolId());
         headers.put("schema.metadata.id", schemaIdVersion.getSchemaMetadataId());
         headers.put("schema.version", schemaIdVersion.getVersion());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(baos)) {
-            defaultAvroSerDesHandler.handlePayloadSerialization(bufferedOutputStream, input);
+            serializePayload(bufferedOutputStream, input);
         } catch (IOException e) {
             throw new SerDesException(e);
         }

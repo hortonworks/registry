@@ -19,18 +19,12 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
-import org.apache.avro.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
-import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.READER_SCHEMA;
-import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.WRITER_SCHEMA;
 
 /**
  * This is the default implementation of {@link AbstractAvroSnapshotDeserializer}.
@@ -86,18 +80,6 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
 
         return buildDeserializedObject(protocolId, payloadInputStream, schemaMetadata, writerSchemaVersion, readerSchemaVersion);
     }
-
-    @Override
-    protected Object deserializePayloadForProtocol(byte protocolId,
-                                                   InputStream payloadInputStream,
-                                                   Schema writerSchema,
-                                                   Schema readerSchema) throws IOException {
-        Map<String, Object> props = new HashMap<>();
-        props.put(SPECIFIC_AVRO_READER, useSpecificAvroReader);
-        props.put(WRITER_SCHEMA, writerSchema);
-        props.put(READER_SCHEMA, readerSchema);
-        SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId);
-
-        return serDesProtocolHandler.handlePayloadDeserialization(payloadInputStream, props);
-    }
+    
+    
 }

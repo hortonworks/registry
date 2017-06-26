@@ -17,10 +17,16 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import java.io.OutputStream;
+import java.util.Map;
+
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotSerializer;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 import org.apache.avro.Schema;
 
 /**
@@ -74,7 +80,29 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     public AbstractAvroSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
         super(schemaRegistryClient);
     }
+ 
+    /**
+     * Property name for protocol version to be set with {@link #init(Map)}.
+     */
+    public static final String SERDES_PROTOCOL_VERSION = "serdes.protocol.version";
+    
+    protected SerDesProtocolHandler serDesProtocolHandler;
 
+    @Override
+    public void init(Map<String, ?> config) {
+        super.init(config);
+
+        Byte protocolVersion = (Byte) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
+
+        SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion);
+        if (serDesProtocolHandler == null) {
+            throw new IllegalArgumentException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
+        }
+        
+        this.serDesProtocolHandler = serDesProtocolHandler;
+        
+    }
+    
     /**
      * @param input avro object
      * @return textual representation of the schema of the given {@code input} avro object
@@ -82,6 +110,20 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     protected String getSchemaText(Object input) {
         Schema schema = AvroUtils.computeSchema(input);
         return schema.toString();
+    }
+    
+    
+
+    protected void serializeSchemaVersion(OutputStream os, SchemaIdVersion schemaIdVersion) throws SerDesException {
+        serDesProtocolHandler.handleSchemaVersionSerialization(os, schemaIdVersion);
+    }
+
+    protected void serializePayload(OutputStream os, Object input) throws SerDesException {
+        serDesProtocolHandler.handlePayloadSerialization(os, input);
+    }
+    
+    protected Byte getProtocolId() {
+        return serDesProtocolHandler.getProtocolId();
     }
 
 }

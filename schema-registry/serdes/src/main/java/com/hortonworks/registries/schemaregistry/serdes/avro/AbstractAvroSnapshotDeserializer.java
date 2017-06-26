@@ -17,6 +17,9 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.READER_SCHEMA;
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.WRITER_SCHEMA;
+
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -28,12 +31,13 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -98,7 +102,6 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
     private AvroSchemaResolver avroSchemaResolver;
 
     protected boolean useSpecificAvroReader = false;
-    private DefaultAvroSerDesHandler defaultAvroSerDesHandler = new DefaultAvroSerDesHandler();
 
     public AbstractAvroSnapshotDeserializer() {
         super();
@@ -156,23 +159,27 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         String schemaName = schemaMetadata.getName();
         SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
-        try {
-            Schema writerSchema = getSchema(writerSchemaVersionKey);
-            if (writerSchema == null) {
-                throw new SerDesException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
-            }
-            Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
-
-            deserializedObj = deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema, readerSchema);
-        } catch (IOException e) {
-            throw new SerDesException(e);
+        Schema writerSchema = getSchema(writerSchemaVersionKey);
+        if (writerSchema == null) {
+            throw new SerDesException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
         }
+        Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
+
+        deserializedObj = deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema, readerSchema);
 
         return deserializedObj;
     }
 
-    protected Object deserializePayloadForProtocol(byte protocolId, InputStream payloadInputStream, Schema writerSchema, Schema readerSchema) throws IOException {
-        return defaultAvroSerDesHandler.handlePayloadDeserialization(payloadInputStream, writerSchema, readerSchema, useSpecificAvroReader);
-    }
+    protected Object deserializePayloadForProtocol(byte protocolId,
+                                                   InputStream payloadInputStream,
+                                                   Schema writerSchema,
+                                                   Schema readerSchema) throws SerDesException  {
+        Map<String, Object> props = new HashMap<>();
+        props.put(SPECIFIC_AVRO_READER, useSpecificAvroReader);
+        props.put(WRITER_SCHEMA, writerSchema);
+        props.put(READER_SCHEMA, readerSchema);
+        SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId);
 
+        return serDesProtocolHandler.handlePayloadDeserialization(payloadInputStream, props);
+    }
 }

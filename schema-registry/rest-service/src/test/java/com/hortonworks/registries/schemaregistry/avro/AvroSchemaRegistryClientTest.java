@@ -35,6 +35,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
+import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -279,6 +280,8 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
             if (obj instanceof byte[]) {
                 Assert.assertArrayEquals((byte[]) obj, (byte[]) deserializedObj);
+            } else if (deserializedObj instanceof Utf8) {
+                Assert.assertEquals(obj, deserializedObj.toString());
             } else {
                 Assert.assertEquals(obj, deserializedObj);
             }
