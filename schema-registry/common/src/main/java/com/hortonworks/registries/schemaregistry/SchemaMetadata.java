@@ -22,10 +22,11 @@ import java.io.Serializable;
 
 
 /**
- * This class is about metadata of a schema which includes name, type, schemaGroup, description and compatibility.
+ * This class is about metadata of a schema which includes name, type, schemaGroup, description, compatibility and evolve.
  */
 public class SchemaMetadata implements Serializable {
 
+    private static final long serialVersionUID = -6880986623123299254L;
     /**
      * Type of a schema, which can be AVRO, JSON, PROTOBUF etc
      */

@@ -18,15 +18,17 @@
 package com.hortonworks.registries.schemaregistry;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Collection;
 
 /**
- *
+ * This class represents aggregated information about schema metadata which includes versions and mapped serdes.
  */
 public class AggregatedSchemaMetadataInfo implements Serializable {
 
+    private static final long serialVersionUID = -414992394022547720L;
+
     /**
-     * metadata about the schema
+     * Metadata about the schema
      */
     private SchemaMetadata schemaMetadata;
 
@@ -34,15 +36,15 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
 
     private Long timestamp;
 
-    private List<SchemaVersionInfo> versions;
+    private Collection<SchemaVersionInfo> versions;
 
-    private List<SerDesInfo> serDesInfos;
+    private Collection<SerDesInfo> serDesInfos;
 
     public AggregatedSchemaMetadataInfo(SchemaMetadata schemaMetadata,
                                         Long id,
                                         Long timestamp,
-                                        List<SchemaVersionInfo> versions,
-                                        List<SerDesInfo> serDesInfos) {
+                                        Collection<SchemaVersionInfo> versions,
+                                        Collection<SerDesInfo> serDesInfos) {
         this.schemaMetadata = schemaMetadata;
         this.id = id;
         this.timestamp = timestamp;
@@ -62,11 +64,11 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
         return timestamp;
     }
 
-    public List<SchemaVersionInfo> getVersions() {
+    public Collection<SchemaVersionInfo> getVersions() {
         return versions;
     }
 
-    public List<SerDesInfo> getSerDesInfos() {
+    public Collection<SerDesInfo> getSerDesInfos() {
         return serDesInfos;
     }
 

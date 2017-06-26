@@ -34,8 +34,10 @@ import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
@@ -71,7 +73,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
     public Response getSchemaById(@ApiParam(value = "SchemaVersion id", required = true) @PathParam("id") Long id) {
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersion(id);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(id);
             SchemaString schema = new SchemaString();
             schema.setSchema(schemaVersionInfo.getSchemaText());
             response = WSUtils.respondEntity(schema, Response.Status.OK);
@@ -93,7 +95,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
                                @ApiParam(value = "The schema ", required = true) String schema) {
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersion(subject, schemaStringFromJson(schema).getSchema());
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
             
             
             if (schemaVersionInfo != null) {
@@ -128,16 +130,19 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
             Response response;
             try {
                 LOG.info("registerSchema for [{}] is [{}]", subject);
-                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(subject);
+                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 if (schemaMetadataInfo == null) {
                     SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject).type(AvroSchemaProvider.TYPE).build();
-                    schemaRegistry.addSchemaMetadata(schemaMetadata);
-                    schemaMetadataInfo = schemaRegistry.getSchemaMetadata(subject);
+                    schemaRegistry.registerSchemaMetadata(schemaMetadata);
+                    schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }
-                
-                SchemaVersionInfo schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(), schemaStringFromJson(schema).getSchema(), null);
+
+                SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
+                                                                                    new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
                 Id id = new Id();
-                id.setId(schemaVersionInfo.getId());
+                // this is done as part of other PR which makes version id available,
+                // added below to get this compiled, this should have been schemaVersionInfo.getVersionId
+                id.setId(schemaVersionInfo.getSchemaMetadataId());
                 response = WSUtils.respondEntity(id, Response.Status.OK);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
@@ -158,7 +163,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
     }
 
     public SchemaString schemaStringFromJson(String json) throws IOException {
-        return (SchemaString) (new ObjectMapper()).readValue(json, SchemaString.class);
+        return new ObjectMapper().readValue(json, SchemaString.class);
     }
     
     public static class SchemaString {
@@ -207,9 +212,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
         }
 
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{schema=" + this.schema + "}");
-            return sb.toString();
+            return "{schema=" + this.schema + "}";
         }
     }
 
@@ -289,7 +292,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
                 return true;
             } else if(o != null && this.getClass() == o.getClass()) {
                 Schema that = (Schema)o;
-                return !this.subject.equals(that.subject)?false:(!this.version.equals(that.version)?false:(!this.id.equals(that.getId())?false:this.schema.equals(that.schema)));
+                return this.subject.equals(that.subject)
+                        && (this.version.equals(that.version)
+                                && (this.id.equals(that.getId())
+                                        && this.schema.equals(that.schema)));
             } else {
                 return false;
             }
@@ -297,19 +303,17 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
 
         public int hashCode() {
             int result = this.subject.hashCode();
-            result = 31 * result + this.version.intValue();
+            result = 31 * result + this.version;
             result = 31 * result + this.id.intValue();
             result = 31 * result + this.schema.hashCode();
             return result;
         }
 
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{subject=" + this.subject + ",");
-            sb.append("version=" + this.version + ",");
-            sb.append("id=" + this.id + ",");
-            sb.append("schema=" + this.schema + "}");
-            return sb.toString();
+            return ("{subject=" + this.subject + ",") +
+                    "version=" + this.version + "," +
+                    "id=" + this.id + "," +
+                    "schema=" + this.schema + "}";
         }
 
         public int compareTo(Schema that) {
@@ -317,7 +321,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
             if(result != 0) {
                 return result;
             } else {
-                result = this.version.intValue() - that.version.intValue();
+                result = this.version - that.version;
                 return result;
             }
         }

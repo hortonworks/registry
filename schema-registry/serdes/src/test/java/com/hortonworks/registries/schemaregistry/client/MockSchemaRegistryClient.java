@@ -15,14 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
-
+import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -44,56 +37,68 @@ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
 /**
  *
  */
 public class MockSchemaRegistryClient implements ISchemaRegistryClient {
-    
+
     private ISchemaRegistry schemaRegistry;
-    
-    public MockSchemaRegistryClient(){
+
+    public MockSchemaRegistryClient() {
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         this.schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         this.schemaRegistry.init(Collections.<String, Object>emptyMap());
     }
-    
+
     public MockSchemaRegistryClient(ISchemaRegistry schemaRegistry) {
         this.schemaRegistry = schemaRegistry;
     }
 
     @Override
     public Collection<SchemaProviderInfo> getSupportedSchemaProviders() {
-        return schemaRegistry.getRegisteredSchemaProviderInfos();
+        return schemaRegistry.getSupportedSchemaProviders();
     }
 
     @Override
     public Long registerSchemaMetadata(SchemaMetadata schemaMetadata) {
         try {
-            return schemaRegistry.addSchemaMetadata(schemaMetadata);
+            return schemaRegistry.registerSchemaMetadata(schemaMetadata);
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
+    public Long addSchemaMetadata(SchemaMetadata schemaMetadata) {
+        return schemaRegistry.addSchemaMetadata(schemaMetadata);
+    }
+
+    @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(String schemaName) {
-        return schemaRegistry.getSchemaMetadata(schemaName);
+        return schemaRegistry.getSchemaMetadataInfo(schemaName);
     }
 
     @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId) {
-        return schemaRegistry.getSchemaMetadata(schemaMetadataId);
+        return schemaRegistry.getSchemaMetadataInfo(schemaMetadataId);
     }
 
     @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion)
-        throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadata, schemaVersion.getSchemaText(), schemaMetadata.getDescription());
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaMetadata.getName());
-            SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId());
-            return schemaIdVersion;
+
+           return schemaRegistry.addSchemaVersion(schemaMetadata,
+                                                          new SchemaVersion(schemaVersion.getSchemaText(),
+                                                                            schemaMetadata.getDescription()));
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
         }
@@ -101,18 +106,18 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion uploadSchemaVersion(String schemaName, String description, InputStream schemaVersionTextFile)
-        throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
-        throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaName, schemaVersion.getSchemaText(), schemaVersion.getDescription());
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadata(schemaName);
-            SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaMetadataInfo.getId(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId());
-            return schemaIdVersion;
+
+            return schemaRegistry.addSchemaVersion(schemaName,
+                                                          new SchemaVersion(schemaVersion.getSchemaText(),
+                                                                            schemaVersion.getDescription()));
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
         }
@@ -120,7 +125,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
-        return schemaRegistry.findSchemasWithFields(schemaFieldQuery);
+        return schemaRegistry.findSchemasByFields(schemaFieldQuery);
     }
 
     @Override
@@ -140,12 +145,17 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
-        return schemaRegistry.findAllVersions(schemaName);
+        return schemaRegistry.getAllVersions(schemaName);
+    }
+
+    @Override
+    public CompatibilityResult checkCompatibilityWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+        return schemaRegistry.checkCompatibilityWithAllVersions(schemaName, toSchemaText);
     }
 
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        return schemaRegistry.checkCompatibility(schemaName, toSchemaText).isCompatible();
+        return schemaRegistry.checkCompatibilityWithAllVersions(schemaName, toSchemaText).isCompatible();
     }
 
     @Override
@@ -199,6 +209,6 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void close() throws Exception {
-        
+
     }
 }
