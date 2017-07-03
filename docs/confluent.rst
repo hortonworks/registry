@@ -1,5 +1,5 @@
 Migration from Confluent Schema Registry
--------------------------------------------
+----------------------------------------
 
 We support a comparability and a migration path from Confluent Schema Registry.
 
@@ -33,7 +33,7 @@ The following migration path is suggested.
 
 
 ==================
-Thrid Party Tools.
+Third Party Tools.
 ================== 
 
 We are aware there are alot of third party tools only supporting currently confluent's protocol.
