@@ -56,7 +56,7 @@ public class MessageContextBasedAvroSerDesTest {
         SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1l, input.getName().toString(), schemaIdVersion.getVersion(),
                                                                     input.getSchema().toString(),
                                                                     System.currentTimeMillis(),
-                                                                    "");
+                                                                    false, "");
 
         new Expectations() {
             {

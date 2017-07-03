@@ -55,6 +55,12 @@ public interface ISchemaRegistry {
 
     SchemaVersionInfo getSchemaVersion(Long id) throws SchemaNotFoundException, InvalidSchemaException;
 
+    SchemaVersionInfo disableSchemaVersion(String schemaName, SchemaIdVersion id) throws SchemaNotFoundException, InvalidSchemaException;
+
+    SchemaVersionInfo enableSchemaVersion(String schemaName, SchemaIdVersion id) throws SchemaNotFoundException, InvalidSchemaException;
+
+    List<SchemaVersionInfo> disableAllVersions(String schemaName);
+
     List<SchemaVersionInfo> findAllVersions(String schemaName);
 
     SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;

@@ -70,6 +70,7 @@ public class SchemaVersionProtocolHandlerTest {
         SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(id, input.getName().toString(), schemaIdVersion.getVersion(),
                                                                     input.getSchema().toString(),
                                                                     System.currentTimeMillis(),
+                                                                    false,
                                                                     "some device");
 
         new Expectations() {
