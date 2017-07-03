@@ -8,9 +8,14 @@
       "type": "long"
     },
     {
+      "name": "txid",
+      "type": "long",
+      "default": 1
+    },
+    {
       "name": "name",
-      "type": "string",
-      "default": "default"
+      "type": "long",
+      "default": 0
     },
     {
       "name": "version",

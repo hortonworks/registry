@@ -55,6 +55,13 @@ public interface ISchemaRegistryService {
      */
     Long addSchemaMetadata(SchemaMetadata schemaMetadata);
 
+    /**
+     * Updates information about a schema.
+     *
+     * @param schemaMetadata information about schema.
+     * @return tinformation about given schema identified by {@code schemaName} after update.
+     */
+    SchemaMetadataInfo updateSchemaMetadata(String schemaName, SchemaMetadata schemaMetadata);
 
     /**
      * @param schemaName name identifying a schema
@@ -145,11 +152,11 @@ public interface ISchemaRegistryService {
      * @param schemaName   name identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
      *
-     * @return true if the given {@code toSchemaText} is compatible with the latest version of the schema with id as {@code schemaName}.
+     * @return true if the given {@code toSchemaText} is compatible with the validation level of the schema with id as {@code schemaName}.
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    CompatibilityResult checkCompatibilityWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException;
+    CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException;
 
     /**
      * @param schemaFieldQuery {@link SchemaFieldQuery} instance to be run

@@ -82,6 +82,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaMetadataInfo updateSchemaMetadata(String schemaName, SchemaMetadata schemaMetadata) {
+        return schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
+    }
+
+    @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(String schemaName) {
         return schemaRegistry.getSchemaMetadataInfo(schemaName);
     }
@@ -149,13 +154,13 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public CompatibilityResult checkCompatibilityWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        return schemaRegistry.checkCompatibilityWithAllVersions(schemaName, toSchemaText);
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+        return schemaRegistry.checkCompatibility(schemaName, toSchemaText);
     }
 
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        return schemaRegistry.checkCompatibilityWithAllVersions(schemaName, toSchemaText).isCompatible();
+        return schemaRegistry.checkCompatibility(schemaName, toSchemaText).isCompatible();
     }
 
     @Override

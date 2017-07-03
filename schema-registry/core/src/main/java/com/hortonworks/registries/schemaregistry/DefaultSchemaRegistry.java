@@ -191,7 +191,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             final Long nextId = storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
             givenSchemaMetadataStorable.setId(nextId);
             givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
-            storageManager.add(givenSchemaMetadataStorable);
+            storageManager.addOrUpdate(givenSchemaMetadataStorable);
             return givenSchemaMetadataStorable.getId();
         }
     }
@@ -291,35 +291,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 try {
                     Integer version = 0;
                     if (schemaMetadata.isEvolve()) {
-                        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
-                        if (schemaVersionInfos != null && !schemaVersionInfos.isEmpty()) {
-                            SchemaVersionInfo latestSchemaVersionInfo = null;
-                            SchemaCompatibility compatibility = schemaMetadata.getCompatibility();
-                            for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-                                // check for compatibility
-                                CompatibilityResult compatibilityResult =
-                                        schemaTypeWithProviders
-                                                .get(type)
-                                                .checkCompatibility(schemaText,
-                                                                    schemaVersionInfo.getSchemaText(),
-                                                                    compatibility);
-                                if (!compatibilityResult.isCompatible()) {
-                                    String errMsg = String.format("Given schema is not compatible with earlier schema versions. \n" +
-                                                                          "Error location: [%s] \n" +
-                                                                          "Error encountered is: [%s]",
-                                                                  compatibilityResult.getErrorLocation(),
-                                                                  compatibilityResult.getErrorMessage());
-                                    LOG.error(errMsg);
-                                    throw new IncompatibleSchemaException(errMsg);
-                                }
-
-                                Integer curVersion = schemaVersionInfo.getVersion();
-                                if (curVersion >= version) {
-                                    latestSchemaVersionInfo = schemaVersionInfo;
-                                    version = curVersion;
-                                }
-                            }
-
+                        CompatibilityResult compatibilityResult = checkCompatibility(schemaName, schemaText);
+                        if (!compatibilityResult.isCompatible()) {
+                            String errMsg = String.format("Given schema is not compatible with latest schema versions. \n" +
+                                                          "Error location: [%s] \n" +
+                                                          "Error encountered is: [%s]",
+                                                          compatibilityResult.getErrorLocation(),
+                                                          compatibilityResult.getErrorMessage());
+                            LOG.error(errMsg);
+                            throw new IncompatibleSchemaException(errMsg);
+                        }
+                        SchemaVersionInfo latestSchemaVersionInfo = getLatestSchemaVersionInfo(schemaName);
+                        if (latestSchemaVersionInfo != null) {
                             version = latestSchemaVersionInfo.getVersion();
                         }
                     }
@@ -390,6 +373,24 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 .stream()
                 .map(this::buildAggregatedSchemaMetadataInfo)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public SchemaMetadataInfo updateSchemaMetadata(String schemaName, SchemaMetadata schemaMetadata) {
+        if (!schemaName.equals(schemaMetadata.getName())) {
+            throw new IllegalArgumentException("schemaName must match the name in schemaMetadata");
+        }
+        SchemaMetadataStorable givenSchemaMetadataStorable = new SchemaMetadataStorable();
+        givenSchemaMetadataStorable.setName(schemaName);
+
+        SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
+        if (schemaMetadataStorable != null) {
+            schemaMetadataStorable = SchemaMetadataStorable.updateSchemaMetadata(schemaMetadataStorable, schemaMetadata);
+            storageManager.addOrUpdate(schemaMetadataStorable);
+            return schemaMetadataStorable.toSchemaMetadataInfo();
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -666,28 +667,44 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         return latestSchema;
     }
-
-    public CompatibilityResult checkCompatibilityWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
+    
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchema) throws SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
-
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-        for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
-            CompatibilityResult compatibilityResult = isCompatibleWithAllVersions(schemaMetadata.getType(),
-                                                                                  toSchemaText,
-                                                                                  schemaVersionInfo.getSchemaText(),
-                                                                                  schemaMetadata.getCompatibility());
-            if (!compatibilityResult.isCompatible()) {
-                LOG.info("Received schema is not compatible with one of the schema versions [{}] with schema name [{}]",
-                         schemaVersionInfo.getVersion(), schemaName);
-                return compatibilityResult;
-            }
+        SchemaValidationLevel validationLevel = schemaMetadata.getValidationLevel();
+        CompatibilityResult compatibilityResult;
+        switch (validationLevel) {
+            case LATEST:
+                SchemaVersionInfo latestSchemaVersionInfo = getLatestSchemaVersionInfo(schemaName);
+                compatibilityResult = checkCompatibility(schemaMetadata.getType(),
+                                                                             toSchema,
+                                                                             latestSchemaVersionInfo.getSchemaText(),
+                                                                             schemaMetadata.getCompatibility());
+                if (!compatibilityResult.isCompatible()) {
+                    LOG.info("Received schema is not compatible with the latest schema versions [{}] with schema name [{}]",
+                             latestSchemaVersionInfo.getVersion(), schemaName);
+                    return compatibilityResult;
+                }
+                break;
+            case ALL:
+                Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
+                for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
+                    compatibilityResult = checkCompatibility(schemaMetadata.getType(),
+                                                                                 toSchema,
+                                                                                 schemaVersionInfo.getSchemaText(),
+                                                                                 schemaMetadata.getCompatibility());
+                    if (!compatibilityResult.isCompatible()) {
+                        LOG.info("Received schema is not compatible with one of the schema versions [{}] with schema name [{}]",
+                                 schemaVersionInfo.getVersion(), schemaName);
+                        return compatibilityResult;
+                    }
+                }
+                break;
         }
-
-        return CompatibilityResult.createCompatibleResult(toSchemaText);
+        return CompatibilityResult.createCompatibleResult(toSchema);
     }
 
-    private CompatibilityResult isCompatibleWithAllVersions(String type,
+    private CompatibilityResult checkCompatibility(String type,
                                                             String toSchema,
                                                             String existingSchema,
                                                             SchemaCompatibility compatibility) {

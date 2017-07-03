@@ -333,6 +333,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return schemaMetadataInfo.getId();
     }
 
+    @Override
+    public SchemaMetadataInfo updateSchemaMetadata(String schemaName, SchemaMetadata schemaMetadata) {
+        SchemaMetadataInfo schemaMetadataInfo = postEntity(currentSchemaRegistryTargets().schemasTarget.path(schemaName), schemaMetadata, SchemaMetadataInfo.class);
+        if (schemaMetadataInfo != null) {
+            schemaMetadataCache.put(SchemaMetadataCache.Key.of(schemaName), schemaMetadataInfo);
+        }
+        return schemaMetadataInfo;
+    }
+
+
     private Long doRegisterSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
         return postEntity(schemasTarget, schemaMetadata, Long.class);
     }
@@ -544,7 +554,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public CompatibilityResult checkCompatibilityWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException {
         WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
         String response = Subject.doAs(subject, new PrivilegedAction<String>() {
             @Override
@@ -557,7 +567,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        return checkCompatibilityWithAllVersions(schemaName, toSchemaText).isCompatible();
+        return checkCompatibility(schemaName, toSchemaText).isCompatible();
     }
 
     @Override
