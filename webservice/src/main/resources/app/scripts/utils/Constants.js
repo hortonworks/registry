@@ -21,8 +21,16 @@ const toastOpt = {
   extendedTimeOut: 0
 };
 
+const statusCode = {
+  Error: 0,
+  Success: 1,
+  Ok: 2,
+  Processing: 3
+};
+
 export {
   baseUrl,
   notifyTextLimit,
-  toastOpt
+  toastOpt,
+  statusCode
 };
