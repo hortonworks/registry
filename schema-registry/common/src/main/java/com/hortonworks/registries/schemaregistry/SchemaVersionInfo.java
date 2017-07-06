@@ -51,18 +51,24 @@ public final class SchemaVersionInfo implements Serializable {
      * timestamp of the schema which is given in SchemaInfo
      */
     private Long timestamp;
+
+    /**
+     * if the schema version is disabled which is given in SchemaInfo
+     */
+    private Boolean disabled;
     
 
     @SuppressWarnings("unused")
     private SchemaVersionInfo() { /* Private constructor for Jackson JSON mapping */ }
 
-    public SchemaVersionInfo(Long id, String name, Integer version, String schemaText, Long timestamp, String description) {
+    public SchemaVersionInfo(Long id, String name, Integer version, String schemaText, Long timestamp, Boolean disabled, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.version = version;
         this.schemaText = schemaText;
         this.timestamp = timestamp;
+        this.disabled = disabled != null ? disabled : Boolean.FALSE;
     }
 
     public Long getId() {
@@ -89,6 +95,10 @@ public final class SchemaVersionInfo implements Serializable {
         return timestamp;
     }
 
+    public Boolean isDisabled() {
+        return disabled != null && disabled;
+    }
+
     @Override
     public String toString() {
         return "SchemaVersionInfo{" +
@@ -97,8 +107,9 @@ public final class SchemaVersionInfo implements Serializable {
                 ", description='" + description + '\'' +
                 ", version=" + version +
                 ", schemaText='" + schemaText + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
+                ", timestamp='" + timestamp + '\'' +
+                ", disabled=" + disabled +
+               '}';
     }
 
     @Override
@@ -113,7 +124,8 @@ public final class SchemaVersionInfo implements Serializable {
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
-        return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        return disabled != null ? disabled.equals(that.disabled) : that.disabled == null;
 
     }
 
@@ -125,6 +137,7 @@ public final class SchemaVersionInfo implements Serializable {
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        result = 31 * result + (disabled != null ? disabled.hashCode() : 0);
         return result;
     }
 }

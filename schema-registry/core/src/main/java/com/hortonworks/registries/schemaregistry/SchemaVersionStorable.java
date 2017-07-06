@@ -39,6 +39,8 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String TIMESTAMP = "timestamp";
     public static final String FINGERPRINT = "fingerprint";
+    public static final String DISABLED = "disabled";
+
 
     public static final Schema.Field ID_FIELD = Schema.Field.of(ID, Schema.Type.LONG);
 
@@ -50,7 +52,8 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
         Schema.Field.of(VERSION, Schema.Type.INTEGER),
         Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-        Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
+        Schema.Field.of(FINGERPRINT, Schema.Type.STRING),
+        Schema.Field.of(DISABLED, Schema.Type.BOOLEAN)
     );
     
 
@@ -95,6 +98,11 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
      * Fingerprint of the schema.
      */
     private String fingerprint;
+
+    /**
+     * If the schema is disabled.
+     */
+    private Boolean disabled = Boolean.FALSE;
 
     public SchemaVersionStorable() {
     }
@@ -181,6 +189,14 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         this.fingerprint = fingerprint;
     }
 
+    public Boolean getDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(Boolean disabled) {
+        this.disabled = disabled;
+    }
+
     public String getName() {
         return name;
     }
@@ -190,7 +206,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     }
 
     public SchemaVersionInfo toSchemaVersionInfo() {
-        return new SchemaVersionInfo(id, name, version, schemaText, timestamp, description);
+        return new SchemaVersionInfo(id, name, version, schemaText, timestamp, disabled, description);
     }
 
     @Override
@@ -204,7 +220,8 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
                 ", version=" + version +
                 ", timestamp=" + timestamp +
                 ", fingerprint='" + fingerprint + '\'' +
-                '}';
+                ", disabled=" + disabled +
+               '}';
     }
 
     @Override
@@ -222,6 +239,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        if (disabled != null ? !disabled.equals(that.disabled) : that.disabled != null) return false;
         return fingerprint != null ? fingerprint.equals(that.fingerprint) : that.fingerprint == null;
 
     }
@@ -235,6 +253,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        result = 31 * result + (disabled != null ? disabled.hashCode() : 0);
         result = 31 * result + (fingerprint != null ? fingerprint.hashCode() : 0);
         return result;
     }

@@ -72,7 +72,7 @@ public class AvroCompositeSchemasTest {
     }
 
     private SchemaVersionInfo cretaeSchemaVersionInfo(String name) throws IOException {
-        return new SchemaVersionInfo(1l, name, 1, getResourceText(name), System.currentTimeMillis(), "");
+        return new SchemaVersionInfo(1l, name, 1, getResourceText(name), System.currentTimeMillis(), false, "");
     }
 
     private String getResourceText(String name) throws IOException {
