@@ -351,6 +351,35 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         });
     }
 
+    @POST
+    @Path("/schemas/{name}")
+    @ApiOperation(value = "Updates schema information for the given schema name",
+        response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
+                                     @ApiParam(value = "Schema to be added to the registry", required = true)
+                                         SchemaMetadata schemaMetadata,
+                                     @Context UriInfo uriInfo) {
+        return handleLeaderAction(uriInfo, () -> {
+            Response response;
+            try {
+                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
+                if (schemaMetadataInfo != null) {
+                    response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
+                } else {
+                    response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+                }
+            } catch (IllegalArgumentException ex) {
+                LOG.error("Expected parameter is invalid", schemaName, schemaMetadata, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
+            } catch (Exception ex) {
+                LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
+                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            }
+            return response;
+        });
+    }
+
     private void checkValidNames(String name) {
         for (String reservedName : reservedNames) {
             if (reservedName.equalsIgnoreCase(name)) {
@@ -585,7 +614,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                  @ApiParam(value = "schema text", required = true) String schemaText) {
         Response response;
         try {
-            CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibilityWithAllVersions(schemaName, schemaText);
+            CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);

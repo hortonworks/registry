@@ -136,7 +136,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      * 
-     * @deprecated This is deprecated since 0.3.0 and {@link #checkCompatibilityWithAllVersions(String, String)} should
+     * @deprecated This is deprecated since 0.3.0 and {@link #checkCompatibility(String, String)} should
      * be used from next versions.
      */
     boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException;

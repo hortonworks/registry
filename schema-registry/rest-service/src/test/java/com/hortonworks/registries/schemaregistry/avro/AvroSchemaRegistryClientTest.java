@@ -23,6 +23,7 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
@@ -173,6 +174,43 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
         Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
         Assert.assertEquals(1, txidSchemaVersionKeys.size());
+
+        // checks we can update schema meta data.
+        SchemaMetadata currentSchemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaName).getSchemaMetadata();
+        SchemaMetadata schemaMetadataToUpdateTo = new SchemaMetadata.Builder(currentSchemaMetadata).validationLevel(SchemaValidationLevel.LATEST).build();
+        SchemaMetadataInfo updatedSchemaMetadata = schemaRegistryClient.updateSchemaMetadata(schemaName, schemaMetadataToUpdateTo);
+
+        Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata().getValidationLevel());
+    }
+
+    @Test
+    public void testValidationLevels() throws Exception {
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
+        String schemaName = schemaMetadata.getName();
+
+        Long id = schemaRegistryClient.registerSchemaMetadata(schemaMetadata);
+        schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-1.avsc"), "Initial version of the schema"));
+        schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-2.avsc"), "Second version of the schema"));
+        schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-3.avsc"), "Third version of the schema, removes name field"));
+
+        try {
+            schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-4.avsc"), "Forth version of the schema, adds back name field, but different type"));
+            Assert.fail("Should throw IncompatibleSchemaException as check against all schema's would find name field is not compatible with v1 and v2");
+        } catch (IncompatibleSchemaException ise){
+            //expected
+        }
+
+        SchemaMetadata currentSchemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaName).getSchemaMetadata();
+        SchemaMetadata schemaMetadataToUpdateTo = new SchemaMetadata.Builder(currentSchemaMetadata).validationLevel(SchemaValidationLevel.LATEST).build();
+        SchemaMetadataInfo updatedSchemaMetadata = schemaRegistryClient.updateSchemaMetadata(schemaName, schemaMetadataToUpdateTo);
+
+        Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata().getValidationLevel());
+
+        try {
+            schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-4.avsc"), "Forth version of the schema, adds back name field, but different type"));
+        } catch (IncompatibleSchemaException ise){
+            Assert.fail("Should not throw IncompatibleSchemaException as check against only latest schema as such should ignore v1 and v2");
+        }
     }
 
     @Test(expected = InvalidSchemaException.class)

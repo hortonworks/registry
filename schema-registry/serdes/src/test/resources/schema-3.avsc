@@ -8,9 +8,9 @@
       "type": "long"
     },
     {
-      "name": "name",
-      "type": "string",
-      "default": "default"
+      "name": "txid",
+      "type": "long",
+      "default": 1
     },
     {
       "name": "version",
