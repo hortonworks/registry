@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
+import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ConfigEntry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -319,6 +320,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Long registerSchemaMetadata(SchemaMetadata schemaMetadata) {
+        return addSchemaMetadata(schemaMetadata);
+    }
+
+    @Override
+    public Long addSchemaMetadata(SchemaMetadata schemaMetadata) {
         SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(SchemaMetadataCache.Key.of(schemaMetadata.getName()));
         if (schemaMetadataInfo == null) {
             return doRegisterSchemaMetadata(schemaMetadata, currentSchemaRegistryTargets().schemasTarget);
@@ -538,7 +544,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+    public CompatibilityResult checkCompatibilityWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
         WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
         String response = Subject.doAs(subject, new PrivilegedAction<String>() {
             @Override
@@ -546,7 +552,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return webTarget.request().post(Entity.text(toSchemaText), String.class);
             }
         });
-        return readEntity(response, Boolean.class);
+        return readEntity(response, CompatibilityResult.class);
+    }
+
+    @Override
+    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+        return checkCompatibilityWithAllVersions(schemaName, toSchemaText).isCompatible();
     }
 
     @Override
@@ -942,7 +953,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public Collection<ConfigEntry<?>> getAvailableConfigEntries() {
             return options.values();
         }
-
 
     }
 

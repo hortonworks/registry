@@ -18,7 +18,9 @@ package com.hortonworks.registries.schemaregistry.errors;
 /**
  * Indicates that schema type is invalid.
  */
-public class UnsupportedSchemaTypeException extends Exception {
+public class UnsupportedSchemaTypeException extends RuntimeException {
+
+    private static final long serialVersionUID = -1642354679626087357L;
 
     public UnsupportedSchemaTypeException() {
         super();
