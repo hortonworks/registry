@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   UNIQUE KEY (id)
 );
 
+-- Version 0.3.0
+IF NOT EXISTS( SELECT NULL
+            FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE table_name = 'schema_metadata_info'
+             AND column_name = 'validationLevel')  THEN
+  ALTER TABLE `schema_metadata_info` ADD `validationLevel` VARCHAR(256) NOT NULL DEFAULT 'ALL';
+END IF;
+
 CREATE TABLE IF NOT EXISTS schema_version_info (
   id               BIGINT AUTO_INCREMENT NOT NULL,
   description      TEXT,

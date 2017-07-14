@@ -26,6 +26,10 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   UNIQUE("id","name")
 );
 
+-- Version 0.3.0
+ALTER TABLE schema_metadata_info
+  ADD validationLevel IF NOT EXISTS VARCHAR(256) NOT NULL DEFAULT 'ALL';
+
 CREATE TABLE IF NOT EXISTS schema_version_info (
   "id"            SERIAL UNIQUE NOT NULL,
   "description"    TEXT,
