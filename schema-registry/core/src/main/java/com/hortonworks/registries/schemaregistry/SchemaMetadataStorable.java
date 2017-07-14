@@ -127,6 +127,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public Map<String, Object> toMap() {
         Map<String, Object> values = super.toMap();
         values.put(COMPATIBILITY, compatibility.name());
+        values.put(VALIDATION_LEVEL, validationLevel.name());
         return values;
     }
 
@@ -134,7 +135,12 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public Storable fromMap(Map<String, Object> map) {
         String compatibilityName = (String) map.remove(COMPATIBILITY);
         compatibility = SchemaCompatibility.valueOf(compatibilityName);
+
+        String validationLevelName = (String) map.remove(VALIDATION_LEVEL);
+        validationLevel = SchemaValidationLevel.valueOf(validationLevelName);
+
         super.fromMap(map);
+
         return this;
     }
 
@@ -224,8 +230,17 @@ public class SchemaMetadataStorable extends AbstractStorable {
         schemaMetadataStorable.setSchemaGroup(schemaMetadata.getSchemaGroup());
         schemaMetadataStorable.setName(schemaMetadata.getName());
         schemaMetadataStorable.setDescription(schemaMetadata.getDescription());
-        schemaMetadataStorable.setCompatibility(schemaMetadata.getCompatibility());
-        schemaMetadataStorable.setValidationLevel(schemaMetadata.getValidationLevel());
+
+        schemaMetadataStorable.setCompatibility(
+                schemaMetadata.getCompatibility() != null
+                        ? schemaMetadata.getCompatibility()
+                        : SchemaCompatibility.DEFAULT_COMPATIBILITY);
+
+        schemaMetadataStorable.setValidationLevel(
+                schemaMetadata.getValidationLevel() != null
+                        ? schemaMetadata.getValidationLevel()
+                        : SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL);
+
         schemaMetadataStorable.setEvolve(schemaMetadata.isEvolve());
         return schemaMetadataStorable;
     }
