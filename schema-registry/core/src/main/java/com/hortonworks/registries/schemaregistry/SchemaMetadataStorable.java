@@ -230,17 +230,8 @@ public class SchemaMetadataStorable extends AbstractStorable {
         schemaMetadataStorable.setSchemaGroup(schemaMetadata.getSchemaGroup());
         schemaMetadataStorable.setName(schemaMetadata.getName());
         schemaMetadataStorable.setDescription(schemaMetadata.getDescription());
-
-        schemaMetadataStorable.setCompatibility(
-                schemaMetadata.getCompatibility() != null
-                        ? schemaMetadata.getCompatibility()
-                        : SchemaCompatibility.DEFAULT_COMPATIBILITY);
-
-        schemaMetadataStorable.setValidationLevel(
-                schemaMetadata.getValidationLevel() != null
-                        ? schemaMetadata.getValidationLevel()
-                        : SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL);
-
+        schemaMetadataStorable.setCompatibility(schemaMetadata.getCompatibility());
+        schemaMetadataStorable.setValidationLevel(schemaMetadata.getValidationLevel());
         schemaMetadataStorable.setEvolve(schemaMetadata.isEvolve());
         return schemaMetadataStorable;
     }

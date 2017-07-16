@@ -87,8 +87,8 @@ public class SchemaMetadata implements Serializable {
         this.schemaGroup = schemaGroup;
         this.description = description;
         this.evolve = evolve;
-        this.compatibility = (compatibility != null) ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
-        this.validationLevel = (validationLevel != null) ? validationLevel : SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL;
+        this.compatibility = compatibility;
+        this.validationLevel = validationLevel;
     }
 
     /**
@@ -123,14 +123,14 @@ public class SchemaMetadata implements Serializable {
      * @return compatibility supported by this schema
      */
     public SchemaCompatibility getCompatibility() {
-        return compatibility;
+        return compatibility != null ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
     }
 
     /**
      * @return validation supported by this schema
      */
     public SchemaValidationLevel getValidationLevel() {
-        return validationLevel;
+        return validationLevel != null ? validationLevel : SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL;
     }
 
     public boolean isEvolve() {
@@ -162,8 +162,8 @@ public class SchemaMetadata implements Serializable {
         if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (validationLevel != null ? !validationLevel.equals(that.validationLevel) : that.validationLevel != null) return false;
-        return compatibility == that.compatibility;
+        if (getValidationLevel() != null ? !getValidationLevel().equals(that.getValidationLevel()) : that.getValidationLevel() != null) return false;
+        return getCompatibility() == that.getCompatibility();
     }
 
     @Override
@@ -172,8 +172,8 @@ public class SchemaMetadata implements Serializable {
         result = 31 * result + (schemaGroup != null ? schemaGroup.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
-        result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
-        result = 31 * result + (validationLevel != null ? validationLevel.hashCode() : 0);
+        result = 31 * result + (getCompatibility() != null ? getCompatibility().hashCode() : 0);
+        result = 31 * result + (getValidationLevel() != null ? getValidationLevel().hashCode() : 0);
         result = 31 * result + (evolve ? 1 : 0);
         return result;
     }
