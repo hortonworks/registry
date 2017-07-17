@@ -89,8 +89,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     protected SerDesProtocolHandler serDesProtocolHandler;
 
     @Override
-    public void init(Map<String, ?> config) {
-        super.init(config);
+    public void doInit(Map<String, ?> config) {
 
         Number number = (Number) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION,
                                                                              SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
