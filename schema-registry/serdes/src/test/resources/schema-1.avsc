@@ -9,7 +9,8 @@
     },
     {
       "name": "name",
-      "type": "string"
+      "type": "string",
+      "default": "default"
     },
     {
       "name": "version",

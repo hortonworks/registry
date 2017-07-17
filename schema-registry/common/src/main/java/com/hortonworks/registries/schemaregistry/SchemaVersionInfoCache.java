@@ -28,26 +28,81 @@ import java.util.concurrent.TimeUnit;
  */
 public class SchemaVersionInfoCache {
 
-    private final LoadingCache<SchemaVersionKey, SchemaVersionInfo> loadingCache;
+    private final LoadingCache<Key, SchemaVersionInfo> loadingCache;
 
     public SchemaVersionInfoCache(final SchemaVersionRetriever schemaRetriever, final long schemaCacheSize, final long schemaCacheExpiryInMilliSecs) {
         loadingCache = CacheBuilder.newBuilder()
                 .maximumSize(schemaCacheSize)
                 .expireAfterAccess(schemaCacheExpiryInMilliSecs, TimeUnit.MILLISECONDS)
-                .build(new CacheLoader<SchemaVersionKey, SchemaVersionInfo>() {
+                .build(new CacheLoader<SchemaVersionInfoCache.Key, SchemaVersionInfo>() {
                     @Override
-                    public SchemaVersionInfo load(SchemaVersionKey key) throws Exception {
-                        return schemaRetriever.retrieveSchemaVersion(key);
+                    public SchemaVersionInfo load(SchemaVersionInfoCache.Key key) throws Exception {
+                        if(key.schemaVersionKey != null) {
+                            return schemaRetriever.retrieveSchemaVersion(key.schemaVersionKey);
+                        } else if(key.schemaIdVersion != null) {
+                            return schemaRetriever.retrieveSchemaVersion(key.schemaIdVersion);
+                        } else {
+                            throw new IllegalArgumentException("Given argument is not valid: " + key);
+                        }
                     }
                 });
 
     }
 
-    public SchemaVersionInfo getSchema(SchemaVersionKey k) throws SchemaNotFoundException {
+    public SchemaVersionInfo getSchema(SchemaVersionInfoCache.Key key) throws SchemaNotFoundException {
         try {
-            return loadingCache.get(k);
+            return loadingCache.get(key);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class Key {
+
+        private SchemaVersionKey schemaVersionKey;
+        private SchemaIdVersion schemaIdVersion;
+
+        public Key(SchemaVersionKey schemaVersionKey) {
+            this.schemaVersionKey = schemaVersionKey;
+        }
+
+        public Key(SchemaIdVersion schemaIdVersion) {
+            this.schemaIdVersion = schemaIdVersion;
+        }
+
+        public  static Key of(SchemaVersionKey schemaVersionKey) {
+            return new Key(schemaVersionKey);
+        }
+
+        public static Key of(SchemaIdVersion schemaIdVersion) {
+            return new Key(schemaIdVersion);
+        }
+
+        @Override
+        public String toString() {
+            return "Key{" +
+                    "schemaVersionKey=" + schemaVersionKey +
+                    ", schemaIdVersion=" + schemaIdVersion +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Key key = (Key) o;
+
+            if (schemaVersionKey != null ? !schemaVersionKey.equals(key.schemaVersionKey) : key.schemaVersionKey != null)
+                return false;
+            return schemaIdVersion != null ? schemaIdVersion.equals(key.schemaIdVersion) : key.schemaIdVersion == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = schemaVersionKey != null ? schemaVersionKey.hashCode() : 0;
+            result = 31 * result + (schemaIdVersion != null ? schemaIdVersion.hashCode() : 0);
+            return result;
         }
     }
 

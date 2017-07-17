@@ -20,12 +20,17 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 
 /**
- * This class represents schemaMetadataId and version.
+ * This class represents versioned instance of schema with respective information like schemaMetadataId/version,
+ * schemaVersionId.
+ *
+ * It is not necessary that all fields are always available but the minimum information to find schema version is available.
  */
 public final class SchemaIdVersion implements Serializable {
+    private static final long serialVersionUID = 6081264497288914406L;
 
     private Long schemaMetadataId;
     private Integer version;
+    private Long schemaVersionId;
 
     /** Private constructor for Jackson JSON mapping */
     @SuppressWarnings("unused")
@@ -42,6 +47,20 @@ public final class SchemaIdVersion implements Serializable {
         this.version = version;
     }
 
+    public SchemaIdVersion(Long schemaVersionId) {
+        Preconditions.checkNotNull(schemaVersionId, "schemaMetadataId can not be null");
+        this.schemaVersionId = schemaVersionId;
+    }
+
+    public SchemaIdVersion(Long schemaMetadataId, Integer version, Long schemaVersionId) {
+        Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId can not be null");
+        Preconditions.checkNotNull(version, "version can not be null");
+        Preconditions.checkNotNull(schemaVersionId, "schemaMetadataId can not be null");
+        this.schemaMetadataId = schemaMetadataId;
+        this.version = version;
+        this.schemaVersionId = schemaVersionId;
+    }
+
     /**
      * @return version of the schema
      */
@@ -54,11 +73,19 @@ public final class SchemaIdVersion implements Serializable {
         return schemaMetadataId;
     }
 
+    /**
+     * @return id to represent versioned instance of the schema.
+     */
+    public Long getSchemaVersionId() {
+        return schemaVersionId;
+    }
+
     @Override
     public String toString() {
         return "SchemaIdVersion{" +
                 "schemaMetadataId=" + schemaMetadataId +
                 ", version=" + version +
+                ", schemaVersionId=" + schemaVersionId +
                 '}';
     }
 
@@ -71,14 +98,15 @@ public final class SchemaIdVersion implements Serializable {
 
         if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
             return false;
-        return version != null ? version.equals(that.version) : that.version == null;
-
+        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+        return schemaVersionId != null ? schemaVersionId.equals(that.schemaVersionId) : that.schemaVersionId == null;
     }
 
     @Override
     public int hashCode() {
         int result = schemaMetadataId != null ? schemaMetadataId.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (schemaVersionId != null ? schemaVersionId.hashCode() : 0);
         return result;
     }
 }

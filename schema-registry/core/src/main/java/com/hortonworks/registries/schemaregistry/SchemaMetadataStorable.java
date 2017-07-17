@@ -34,6 +34,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public static final String DESCRIPTION = "description";
     public static final String SCHEMA_GROUP = "schemaGroup";
     public static final String COMPATIBILITY = "compatibility";
+    public static final String VALIDATION_LEVEL = "validationLevel";
     public static final String TYPE = "type";
     public static final String TIMESTAMP = "timestamp";
     public static final String EVOLVE = "evolve";
@@ -80,6 +81,12 @@ public class SchemaMetadataStorable extends AbstractStorable {
      */
     private SchemaCompatibility compatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY;
 
+
+    /**
+     * Validation level of this schema instance
+     */
+    private SchemaValidationLevel validationLevel = SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL;
+
     /**
      * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
      */
@@ -110,6 +117,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 SCHEMA_GROUP_FIELD,
                 TYPE_FIELD,
                 Schema.Field.of(COMPATIBILITY, Schema.Type.STRING),
+                Schema.Field.of(VALIDATION_LEVEL, Schema.Type.STRING),
                 Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
                 Schema.Field.of(EVOLVE, Schema.Type.BOOLEAN)
         );
@@ -119,6 +127,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public Map<String, Object> toMap() {
         Map<String, Object> values = super.toMap();
         values.put(COMPATIBILITY, compatibility.name());
+        values.put(VALIDATION_LEVEL, validationLevel.name());
         return values;
     }
 
@@ -126,7 +135,12 @@ public class SchemaMetadataStorable extends AbstractStorable {
     public Storable fromMap(Map<String, Object> map) {
         String compatibilityName = (String) map.remove(COMPATIBILITY);
         compatibility = SchemaCompatibility.valueOf(compatibilityName);
+
+        String validationLevelName = (String) map.remove(VALIDATION_LEVEL);
+        validationLevel = SchemaValidationLevel.valueOf(validationLevelName);
+
         super.fromMap(map);
+
         return this;
     }
 
@@ -171,6 +185,14 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.compatibility = compatibility;
     }
 
+    public SchemaValidationLevel getValidationLevel() {
+        return validationLevel;
+    }
+
+    public void setValidationLevel(SchemaValidationLevel validationLevel) {
+        this.validationLevel = validationLevel;
+    }
+
     public String getType() {
         return type;
     }
@@ -197,16 +219,20 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     public static SchemaMetadataStorable fromSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-        SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
+        SchemaMetadataStorable schemaMetadataStorable = updateSchemaMetadata(new SchemaMetadataStorable(), schemaMetadata);
         schemaMetadataStorable.setId(schemaMetadataInfo.getId());
+        schemaMetadataStorable.setTimestamp(schemaMetadataInfo.getTimestamp());
+        return schemaMetadataStorable;
+    }
+
+    public static SchemaMetadataStorable updateSchemaMetadata(SchemaMetadataStorable schemaMetadataStorable, SchemaMetadata schemaMetadata) {
         schemaMetadataStorable.setType(schemaMetadata.getType());
         schemaMetadataStorable.setSchemaGroup(schemaMetadata.getSchemaGroup());
         schemaMetadataStorable.setName(schemaMetadata.getName());
         schemaMetadataStorable.setDescription(schemaMetadata.getDescription());
         schemaMetadataStorable.setCompatibility(schemaMetadata.getCompatibility());
-        schemaMetadataStorable.setTimestamp(schemaMetadataInfo.getTimestamp());
+        schemaMetadataStorable.setValidationLevel(schemaMetadata.getValidationLevel());
         schemaMetadataStorable.setEvolve(schemaMetadata.isEvolve());
-
         return schemaMetadataStorable;
     }
 
@@ -221,6 +247,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 .type(getType())
                 .schemaGroup(getSchemaGroup())
                 .compatibility(getCompatibility())
+                .validationLevel(getValidationLevel())
                 .description(getDescription())
                 .evolve(getEvolve())
                 .build();
@@ -240,6 +267,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        if (validationLevel != null ? !validationLevel.equals(that.validationLevel) : that.validationLevel != null) return false;
         return compatibility == that.compatibility;
     }
 
@@ -252,6 +280,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (compatibility != null ? compatibility.hashCode() : 0);
+        result = 31 * result + (validationLevel != null ? validationLevel.hashCode() : 0);
         result = 31 * result + (evolve ? 1 : 0);
         return result;
     }
@@ -266,6 +295,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 ", description='" + description + '\'' +
                 ", timestamp=" + timestamp +
                 ", compatibility=" + compatibility +
+                ", validationLevel=" + validationLevel +
                 ", evolve=" + evolve +
                 '}';
     }

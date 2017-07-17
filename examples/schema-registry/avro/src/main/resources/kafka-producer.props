@@ -4,3 +4,4 @@ schema.registry.url=http://localhost:9090/api/v1
 security.protocol=PLAINTEXT
 key.serializer=org.apache.kafka.common.serialization.StringSerializer
 value.serializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer
+ignoreInvalidMessages=true

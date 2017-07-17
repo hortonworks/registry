@@ -37,14 +37,14 @@ public class MessageContextBasedAvroSerializer extends AbstractAvroSnapshotSeria
     protected MessageContext doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         Map<String, Object> headers = new HashMap<>();
 
-        headers.put("protocol.id", (byte) 0x1);
+        headers.put("protocol.id", getProtocolId());
         headers.put("schema.metadata.id", schemaIdVersion.getSchemaMetadataId());
         headers.put("schema.version", schemaIdVersion.getVersion());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        try(BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(baos)) {
-            writeContentPayload(input, bufferedOutputStream);
+        try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(baos)) {
+            serializePayload(bufferedOutputStream, input);
         } catch (IOException e) {
             throw new SerDesException(e);
         }

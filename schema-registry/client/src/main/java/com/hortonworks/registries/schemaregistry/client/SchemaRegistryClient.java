@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
+import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ConfigEntry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -34,6 +35,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
@@ -133,6 +135,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
     private static final String SCHEMA_PROVIDERS_PATH = SCHEMA_REGISTRY_PATH + "/schemaproviders/";
     private static final String SCHEMAS_BY_ID_PATH = SCHEMA_REGISTRY_PATH + "/schemasById/";
+    private static final String SCHEMA_VERSIONS_BY_ID_PATH = SCHEMAS_PATH + "versionsById/";
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serdes/";
     private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
@@ -199,9 +202,19 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         
         classLoaderCache = new ClassLoaderCache(this);
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(key -> doGetSchemaVersionInfo(key),
-                                                            ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).longValue(),
-                                                            ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue());
+        schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionRetriever() {
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                return doGetSchemaVersionInfo(key);
+            }
+
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
+                return doGetSchemaVersionInfo(key);
+            }
+        },
+                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).longValue(),
+                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue());
 
         SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
         schemaMetadataCache = new SchemaMetadataCache(((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE.name())).longValue(),
@@ -229,11 +242,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final WebTarget searchFieldsTarget;
         private final WebTarget serializersTarget;
         private final WebTarget filesTarget;
+        private final WebTarget schemaVersionsByIdTarget;
 
         SchemaRegistryTargets(WebTarget rootTarget) {
             schemaProvidersTarget = rootTarget.path(SCHEMA_PROVIDERS_PATH);
             schemasTarget = rootTarget.path(SCHEMAS_PATH);
             schemasByIdTarget = rootTarget.path(SCHEMAS_BY_ID_PATH);
+            schemaVersionsByIdTarget = rootTarget.path(SCHEMA_VERSIONS_BY_ID_PATH);
             this.rootTarget = rootTarget;
             searchFieldsTarget = rootTarget.path(SEARCH_FIELDS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
@@ -305,6 +320,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Long registerSchemaMetadata(SchemaMetadata schemaMetadata) {
+        return addSchemaMetadata(schemaMetadata);
+    }
+
+    @Override
+    public Long addSchemaMetadata(SchemaMetadata schemaMetadata) {
         SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(SchemaMetadataCache.Key.of(schemaMetadata.getName()));
         if (schemaMetadataInfo == null) {
             return doRegisterSchemaMetadata(schemaMetadata, currentSchemaRegistryTargets().schemasTarget);
@@ -312,6 +332,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         return schemaMetadataInfo.getId();
     }
+
+    @Override
+    public SchemaMetadataInfo updateSchemaMetadata(String schemaName, SchemaMetadata schemaMetadata) {
+        SchemaMetadataInfo schemaMetadataInfo = postEntity(currentSchemaRegistryTargets().schemasTarget.path(schemaName), schemaMetadata, SchemaMetadataInfo.class);
+        if (schemaMetadataInfo != null) {
+            schemaMetadataCache.put(SchemaMetadataCache.Key.of(schemaName), schemaMetadataInfo);
+        }
+        return schemaMetadataInfo;
+    }
+
 
     private Long doRegisterSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
         return postEntity(schemasTarget, schemaMetadata, Long.class);
@@ -446,7 +476,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         }
 
-        return new SchemaIdVersion(schemaMetadataInfo.getId(), readEntity(msg, Integer.class));
+        Integer version = readEntity(msg, Integer.class);
+
+        SchemaVersionInfo schemaVersionInfo = doGetSchemaVersionInfo(new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata().getName(), version));
+
+        return new SchemaIdVersion(schemaMetadataInfo.getId(), version, schemaVersionInfo.getId());
     }
 
     public static CatalogResponse readCatalogResponse(String msg) {
@@ -460,15 +494,36 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    @Override
-    public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+    public SchemaVersionInfo getSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
         try {
-            return schemaVersionInfoCache.getSchema(schemaVersionKey);
+            return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaIdVersion));
         } catch (SchemaNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        try {
+            return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
+        } catch (SchemaNotFoundException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private SchemaVersionInfo doGetSchemaVersionInfo(SchemaIdVersion key) throws SchemaNotFoundException {
+        if(key.getSchemaVersionId() != null) {
+            return getEntity(currentSchemaRegistryTargets().schemaVersionsByIdTarget.path(key.getSchemaVersionId().toString()), SchemaVersionInfo.class);
+        } else if (key.getSchemaMetadataId() != null){
+            SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(key.getSchemaMetadataId());
+            return getSchemaVersionInfo(new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata().getName(), key.getVersion()));
+        }
+
+        throw new IllegalArgumentException("Given argument not valid: " + key);
     }
 
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaVersionKey schemaVersionKey) {
@@ -499,7 +554,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException {
         WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
         String response = Subject.doAs(subject, new PrivilegedAction<String>() {
             @Override
@@ -507,7 +562,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return webTarget.request().post(Entity.text(toSchemaText), String.class);
             }
         });
-        return readEntity(response, Boolean.class);
+        return readEntity(response, CompatibilityResult.class);
+    }
+
+    @Override
+    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+        return checkCompatibility(schemaName, toSchemaText).isCompatible();
     }
 
     @Override
@@ -903,7 +963,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public Collection<ConfigEntry<?>> getAvailableConfigEntries() {
             return options.values();
         }
-
 
     }
 

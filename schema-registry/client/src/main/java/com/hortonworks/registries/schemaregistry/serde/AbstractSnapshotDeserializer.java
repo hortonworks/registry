@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.hortonworks.registries.schemaregistry.serde;
 
 import com.google.common.cache.CacheBuilder;
@@ -20,6 +20,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
@@ -144,9 +145,15 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
         // it can be enhanced to have respective protocol handlers for different versions
         byte protocolId = retrieveProtocolId(input);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, input);
-        SchemaMetadata schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaIdVersion.getSchemaMetadataId()).getSchemaMetadata();
+        SchemaVersionInfo schemaVersionInfo = null;
+        try {
+            schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
+        } catch (SchemaNotFoundException e) {
+            throw new SerDesException(e);
+        }
+        SchemaMetadata schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
 
-        return doDeserialize(input, protocolId, schemaMetadata, schemaIdVersion.getVersion(), readerSchemaVersion);
+        return doDeserialize(input, protocolId, schemaMetadata, schemaVersionInfo.getVersion(), readerSchemaVersion);
     }
 
     /**

@@ -1,12 +1,12 @@
 Examples
-============
+========
 
 SchemaRegistry comes with examples of integration into Kafka. You can find the code
 `here <https://github.com/hortonworks/registry/tree/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples>`_.
 
 
 Running Kafka Producer with AvroSerializer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Login into one of the Kafka broker hosts
 2. bin/kafka-topics.sh --zookeeper zk:2181 --topic truck_events_stream --partitions 2 --replication-factor 1 --create
@@ -27,7 +27,7 @@ Running Kafka Producer with AvroSerializer
 
 
 To run the producer in Secure cluster:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Issue ACLs on the topic you are trying to ingest
 
@@ -67,7 +67,7 @@ To run the producer in Secure cluster:
 
 
 Running Kafka Consumer with AvroDeserializer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Edit data/kafka-consumer.props
 
@@ -86,7 +86,7 @@ Running Kafka Consumer with AvroDeserializer
 
 
 To run the consumer in Secure cluster:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Edit data/kafka-consumer.props
 

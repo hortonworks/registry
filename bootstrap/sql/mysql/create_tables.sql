@@ -14,15 +14,18 @@
 
 -- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
 
+-- USE schema_registry;
+
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
-  id            BIGINT AUTO_INCREMENT NOT NULL,
-  type          VARCHAR(256)          NOT NULL,
-  schemaGroup   VARCHAR(256)          NOT NULL,
-  name          VARCHAR(256)          NOT NULL,
-  compatibility VARCHAR(256)          NOT NULL,
-  description   TEXT,
-  evolve        BOOLEAN               NOT NULL,
-  timestamp     BIGINT                NOT NULL,
+  id              BIGINT AUTO_INCREMENT NOT NULL,
+  type            VARCHAR(256)          NOT NULL,
+  schemaGroup     VARCHAR(256)          NOT NULL,
+  name            VARCHAR(256)          NOT NULL,
+  compatibility   VARCHAR(256)          NOT NULL,
+  validationLevel VARCHAR(256)          NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
+  description     TEXT,
+  evolve          BOOLEAN               NOT NULL,
+  timestamp       BIGINT                NOT NULL,
   PRIMARY KEY (name),
   UNIQUE KEY (id)
 );
@@ -54,13 +57,13 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
-  id                     BIGINT AUTO_INCREMENT NOT NULL,
-  description            TEXT,
-  name                   TEXT                  NOT NULL,
-  fileId                 TEXT                  NOT NULL,
-  serializerClassName    TEXT                  NOT NULL,
-  deserializerClassName  TEXT                  NOT NULL,
-  timestamp              BIGINT                NOT NULL,
+  id                    BIGINT AUTO_INCREMENT NOT NULL,
+  description           TEXT,
+  name                  TEXT                  NOT NULL,
+  fileId                TEXT                  NOT NULL,
+  serializerClassName   TEXT                  NOT NULL,
+  deserializerClassName TEXT                  NOT NULL,
+  timestamp             BIGINT                NOT NULL,
   PRIMARY KEY (id)
 );
 

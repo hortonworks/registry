@@ -68,6 +68,10 @@ public class SchemaMetadataCache {
 
         return schemaMetadataInfo;
     }
+    
+    public void put(Key key, SchemaMetadataInfo schemaMetadataInfo) {
+        loadingCache.put(key, schemaMetadataInfo);
+    }
 
     public SchemaMetadataInfo getIfPresent(Key key) {
         return loadingCache.getIfPresent(key);

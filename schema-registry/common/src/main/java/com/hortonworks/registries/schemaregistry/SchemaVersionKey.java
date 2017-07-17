@@ -24,6 +24,7 @@ import java.io.Serializable;
  */
 public final class SchemaVersionKey implements Serializable {
 
+    private static final long serialVersionUID = 1779747592974345866L;
     public static final Integer LATEST_VERSION = -1;
 
     private String schemaName;

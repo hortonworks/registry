@@ -349,6 +349,7 @@ public class TestAuthenticationFilter {
 
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
             Mockito.when(request.getQueryString()).thenReturn("a=A&b=B");
 
             Assert.assertEquals("http://foo:8080/bar?a=A&b=B", filter.getRequestURL(request));
@@ -524,6 +525,7 @@ public class TestAuthenticationFilter {
 
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
 
             HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
@@ -588,6 +590,7 @@ public class TestAuthenticationFilter {
         Mockito.when(request.getParameter("authenticated")).thenReturn("true");
         Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer
                 ("http://foo:8080/bar"));
+        Mockito.when(request.getRequestURI()).thenReturn("/bar");
         Mockito.when(request.getQueryString()).thenReturn("authenticated=true");
 
         if (invalidToken) {
@@ -701,6 +704,7 @@ public class TestAuthenticationFilter {
 
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
 
             AuthenticationToken token = new AuthenticationToken("u", "p", "t");
             token.setExpires(System.currentTimeMillis() + TOKEN_VALIDITY_SEC);
@@ -758,6 +762,7 @@ public class TestAuthenticationFilter {
 
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
             Mockito.when(request.getCookies()).thenReturn(new Cookie[]{});
             Mockito.when(request.getHeader("WWW-Authenticate")).thenReturn("dummyauth");
             HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -822,6 +827,7 @@ public class TestAuthenticationFilter {
 
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
 
             AuthenticationToken token = new AuthenticationToken("u", "p", DummyAuthenticationHandler.TYPE);
             token.setExpires(System.currentTimeMillis() - TOKEN_VALIDITY_SEC);
@@ -897,6 +903,7 @@ public class TestAuthenticationFilter {
 
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
 
             AuthenticationToken token = new AuthenticationToken("u", "p", "invalidtype");
             token.setExpires(System.currentTimeMillis() + TOKEN_VALIDITY_SEC);
@@ -941,6 +948,7 @@ public class TestAuthenticationFilter {
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).
                     thenReturn(new StringBuffer("http://foo:8080/bar"));
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
 
             HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
@@ -965,6 +973,7 @@ public class TestAuthenticationFilter {
             String tokenSigned = signer.sign(token.toString());
             Cookie cookie = new Cookie(AuthenticatedURL.AUTH_COOKIE, tokenSigned);
             Mockito.when(request.getCookies()).thenReturn(new Cookie[]{cookie});
+            Mockito.when(request.getRequestURI()).thenReturn("/bar");
 
             filter.doFilter(request, response, chain);
 

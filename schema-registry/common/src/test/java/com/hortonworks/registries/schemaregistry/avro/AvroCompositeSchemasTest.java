@@ -15,10 +15,13 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -51,13 +54,25 @@ public class AvroCompositeSchemasTest {
         versions.put("account-dep", cretaeSchemaVersionInfo("/avro/composites/account-dep.avsc"));
 
         avroSchemaProvider = new AvroSchemaProvider();
+        SchemaVersionRetriever schemaVersionRetriever = new SchemaVersionRetriever() {
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                return versions.get(key.getSchemaName());
+            }
+
+            @Override
+            public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
+                return null;
+            }
+        };
+
         Map<String, Object> config = Collections.singletonMap(SchemaProvider.SCHEMA_VERSION_RETRIEVER_CONFIG,
-                                                              (SchemaVersionRetriever) key -> versions.get(key.getSchemaName()));
+                                                              schemaVersionRetriever);
         avroSchemaProvider.init(config);
     }
 
     private SchemaVersionInfo cretaeSchemaVersionInfo(String name) throws IOException {
-        return new SchemaVersionInfo(1, getResourceText(name), System.currentTimeMillis(), "");
+        return new SchemaVersionInfo(1l, name, 1, getResourceText(name), System.currentTimeMillis(), "");
     }
 
     private String getResourceText(String name) throws IOException {

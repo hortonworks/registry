@@ -16,9 +16,7 @@
 
 package com.hortonworks.registries.schemaregistry.examples.avro;
 
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
+import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
@@ -31,18 +29,14 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,24 +45,29 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
+import static com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry.METADATA_ID_VERSION_PROTOCOL;
 
 /**
  * Below class can be used to send messages to a given topic in kafka-producer.props like below.
  *
  * KafkaAvroSerDesApp -sm -d yelp_review_json -s yelp_review.avsc -p kafka-producer.props
+ *
+ * If invalid messages need to be ignored while sending messages to a topic, you can set "ignoreInvalidMessages" to true
+ * in kafka producer properties file.
+ *
  */
 public class KafkaAvroSerDesApp {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesApp.class);
 
-    public static final String MSGS_LIMIT = "msgsLimit";
+    public static final String MSGS_LIMIT_OLD = "msgsLimit";
+    public static final String MSGS_LIMIT = "msgs.limit";
     public static final String TOPIC = "topic";
-    public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
     public static final int DEFAULT_MSGS_LIMIT = 50;
+    public static final String IGNORE_INVALID_MSGS = "ignore.invalid.messages";
 
     private String producerProps;
     private String schemaFile;
@@ -88,11 +87,17 @@ public class KafkaAvroSerDesApp {
         try (FileInputStream fileInputStream = new FileInputStream(this.producerProps)) {
             props.load(fileInputStream);
         }
-        int limit = Integer.parseInt(props.getProperty(MSGS_LIMIT, DEFAULT_MSGS_LIMIT + ""));
+        int limit = Integer.parseInt(props.getProperty(MSGS_LIMIT_OLD,
+                                                       props.getProperty(MSGS_LIMIT,
+                                                                         DEFAULT_MSGS_LIMIT + "")));
+        boolean ignoreInvalidMsgs = Boolean.parseBoolean(props.getProperty(IGNORE_INVALID_MSGS, "false"));
 
         int current = 0;
         Schema schema = new Schema.Parser().parse(new File(this.schemaFile));
         String topicName = props.getProperty(TOPIC);
+
+        // set protocol version to the earlier one.
+        props.put(SERDES_PROTOCOL_VERSION, METADATA_ID_VERSION_PROTOCOL);
 
         final Producer<String, Object> producer = new KafkaProducer<>(props);
         final Callback callback = new MyProducerCallback();
@@ -101,14 +106,31 @@ public class KafkaAvroSerDesApp {
             String line;
             while (current++ < limit && (line = bufferedReader.readLine()) != null) {
                 // convert json to avro records
-                Object avroMsg = jsonToAvro(line, schema);
+                Object avroMsg = null;
+                try {
+                    avroMsg = jsonToAvro(line, schema);
+                } catch (Exception ex) {
+                    LOG.warn("Error encountered while converting json to avro of message [{}]", line, ex);
+                    if(ignoreInvalidMsgs) {
+                        continue;
+                    } else {
+                        throw ex;
+                    }
+                }
 
                 // send avro messages to given topic using KafkaAvroSerializer which registers payload schema if it does not exist
                 // with schema name as "<topic-name>:v", type as "avro" and schemaGroup as "kafka".
                 // schema registry should be running so that KafkaAvroSerializer can register the schema.
                 LOG.info("Sending message: [{}] to topic: [{}]", avroMsg, topicName);
                 ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(topicName, avroMsg);
-                producer.send(producerRecord, callback);
+                try {
+                    producer.send(producerRecord, callback);
+                } catch (SerDesException ex) {
+                    LOG.warn("Error encountered while sending message [{}]", line, ex);
+                    if(!ignoreInvalidMsgs) {
+                        throw ex;
+                    }
+                }
             }
         } finally {
             producer.flush();
@@ -140,7 +162,7 @@ public class KafkaAvroSerDesApp {
             props.load(inputStream);
         }
         String topicName = props.getProperty(TOPIC);
-        KafkaConsumer consumer = new KafkaConsumer<>(props);
+        KafkaConsumer<String, Object> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(topicName));
 
         while (true) {

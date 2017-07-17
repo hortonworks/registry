@@ -23,6 +23,8 @@ import java.io.Serializable;
 public final class CompatibilityResult implements Serializable {
     public static final CompatibilityResult SUCCESS = new CompatibilityResult(true, null);
 
+    private static final long serialVersionUID = 6611482356634821602L;
+
     private boolean compatible;
     private String errorMessage;
     private String errorLocation;

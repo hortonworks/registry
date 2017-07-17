@@ -22,6 +22,7 @@ import jsonlint from 'jsonlint';
 import lint from 'codemirror/addon/lint/lint';
 import SchemaREST from '../../../rest/SchemaREST';
 import Utils from '../../../utils/Utils';
+import {statusCode} from '../../../utils/Constants';
 
 CodeMirror.registerHelper("lint", "json", function(text) {
   var found = [];
@@ -50,7 +51,8 @@ export default class SchemaVersionForm extends Component {
       description: '',
       showError: false,
       changedFields: [],
-      showCodemirror: true
+      showCodemirror: true,
+      schemaTextCompatibility: statusCode.Ok
     };
   }
 
@@ -124,6 +126,24 @@ export default class SchemaVersionForm extends Component {
         }
       });
   }
+  validateSchemaCompatibility = () => {
+    let {schemaText} = this.state;
+    try{
+      const schemaTextStr = JSON.stringify(JSON.parse(schemaText));
+      this.setState({schemaTextCompatibility: statusCode.Processing});
+      SchemaREST.getCompatibility(this.props.schemaObj.schemaName, {body: schemaTextStr})
+        .then((result)=>{
+          if(result.compatible){
+            this.setState({schemaTextCompatibility: statusCode.Success});
+          }else{
+            this.setState({schemaTextCompatibility: result.errorMessage || result.responseMessage});
+          }
+        });
+    }
+    catch(err){
+      console.log(err);
+    }
+  }
 
   render() {
     const jsonoptions = {
@@ -133,7 +153,7 @@ export default class SchemaVersionForm extends Component {
       gutters: ["CodeMirror-lint-markers"],
       lint: true
     };
-    let {schemaText, showError, changedFields, showCodemirror} = this.state;
+    let {schemaText, showError, changedFields, showCodemirror, schemaTextCompatibility} = this.state;
     return (
       <form>
         <div className="form-group">
@@ -147,8 +167,11 @@ export default class SchemaVersionForm extends Component {
         <div className="form-group version-codemirror-container">
           <label>Schema Text <span className="text-danger">*</span></label>
           {showCodemirror
-            ? 
-            <a className="pull-right clear-link" href="javascript:void(0)" onClick={() => { this.setState({schemaText: '', showCodemirror: false}); }}> CLEAR </a>
+            ? [<a key="1" className="pull-right clear-link" href="javascript:void(0)" onClick={() => { this.setState({schemaText: '', showCodemirror: false, schemaTextCompatibility: statusCode.Ok}); }}> CLEAR </a>,
+              <span key="2" className="pull-right" style={{margin: '-1px 5px 0'}}>|</span>,
+              <a key="3" className="pull-right validate-link" href="javascript:void(0)" onClick={this.validateSchemaCompatibility}>
+                VALIDATE
+              </a>]
             : 
             null
           }
@@ -156,10 +179,28 @@ export default class SchemaVersionForm extends Component {
             e.preventDefault();
             e.stopPropagation();
             return false;
-          }}>
+          }} style={{"width":"100%"}}>
             {showCodemirror
               ?
-              <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
+              <div style={{"width":"100%", position: 'relative'}}>
+                {schemaTextCompatibility === statusCode.Processing
+                ?
+                <div className="loading-img text-center schema-validating">
+                  <img src="styles/img/start-loader.gif" alt="loading" />
+                </div>
+                :
+                schemaTextCompatibility === statusCode.Ok
+                  ?
+                  ''
+                  :
+                  <div className={schemaTextCompatibility === statusCode.Success ? "compatibility-alert success" : "compatibility-alert danger"}>
+                    {schemaTextCompatibility === statusCode.Success ? <span className="success">Schema is valid</span> : <span className="danger">{schemaTextCompatibility}</span>}
+                    <span className="alert-close"><i className="fa fa-times" onClick={() => this.setState({schemaTextCompatibility: statusCode.Ok})}></i></span>
+                  </div>
+                }
+                
+                <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
+              </div>
               :
               <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
                 <div onClick={(e) => {

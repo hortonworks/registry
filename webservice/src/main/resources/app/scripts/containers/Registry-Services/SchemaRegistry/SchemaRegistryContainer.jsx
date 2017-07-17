@@ -310,7 +310,7 @@ export default class SchemaRegistryContainer extends Component {
     if (this.refs.addVersion.validateData()) {
       this.refs.addVersion.handleSave().then((versions) => {
         if(versions && versions.compatible === false){
-          FSReactToastr.error(<CommonNotification flag="error" content="Schema is not compatible with other versions."/>, '', toastOpt);
+          FSReactToastr.error(<CommonNotification flag="error" content={versions.errorMessage}/>, '', toastOpt);
         } else {
           if (versions.responseMessage !== undefined) {
             FSReactToastr.error(

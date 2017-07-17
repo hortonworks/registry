@@ -14,50 +14,53 @@
 
 -- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
 
+-- USE schema_registry
+
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
-  "id"            SERIAL PRIMARY KEY,
-  "type"          VARCHAR(256)          NOT NULL,
-  "schemaGroup"   VARCHAR(256)          NOT NULL,
-  "name"          VARCHAR(256)          NOT NULL,
-  "compatibility" VARCHAR(256)          NOT NULL,
-  "description"   TEXT,
-  "evolve"        BOOLEAN               NOT NULL,
-  "timestamp"     BIGINT                NOT NULL,
-  UNIQUE("id","name")
+  "id"              SERIAL PRIMARY KEY,
+  "type"            VARCHAR(256) NOT NULL,
+  "schemaGroup"     VARCHAR(256) NOT NULL,
+  "name"            VARCHAR(256) NOT NULL,
+  "compatibility"   VARCHAR(256) NOT NULL,
+  "validationLevel" VARCHAR(256) NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
+  "description"     TEXT,
+  "evolve"          BOOLEAN      NOT NULL,
+  "timestamp"       BIGINT       NOT NULL,
+  UNIQUE ("id", "name")
 );
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
-  "id"            SERIAL UNIQUE NOT NULL,
-  "description"    TEXT,
-  "schemaText"     TEXT                  NOT NULL,
-  "fingerprint"    TEXT                  NOT NULL,
-  "version"          INT                   NOT NULL,
-  "schemaMetadataId" BIGINT                NOT NULL,
-  "timestamp"        BIGINT                NOT NULL,
-  "name"             VARCHAR(256)          NOT NULL,
-  UNIQUE("schemaMetadataId", "version"),
+  "id"               SERIAL UNIQUE NOT NULL,
+  "description"      TEXT,
+  "schemaText"       TEXT          NOT NULL,
+  "fingerprint"      TEXT          NOT NULL,
+  "version"          INT           NOT NULL,
+  "schemaMetadataId" BIGINT        NOT NULL,
+  "timestamp"        BIGINT        NOT NULL,
+  "name"             VARCHAR(256)  NOT NULL,
+  UNIQUE ("schemaMetadataId", "version"),
   PRIMARY KEY ("name", "version"),
-  FOREIGN KEY ("schemaMetadataId", "name") REFERENCES schema_metadata_info("id", "name")
+  FOREIGN KEY ("schemaMetadataId", "name") REFERENCES schema_metadata_info ("id", "name")
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
   "id"               SERIAL PRIMARY KEY,
-  "schemaInstanceId" BIGINT NOT NULL,
-  "timestamp"        BIGINT NOT NULL,
-  "name"             VARCHAR(256)   NOT NULL,
+  "schemaInstanceId" BIGINT       NOT NULL,
+  "timestamp"        BIGINT       NOT NULL,
+  "name"             VARCHAR(256) NOT NULL,
   "fieldNamespace"   VARCHAR(256),
-  "type"             VARCHAR(256)          NOT NULL,
+  "type"             VARCHAR(256) NOT NULL,
   FOREIGN KEY ("schemaInstanceId") REFERENCES schema_version_info ("id")
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
   "id"                    SERIAL PRIMARY KEY,
   "description"           TEXT,
-  "name"                  TEXT                  NOT NULL,
-  "fileId"                TEXT                  NOT NULL,
-  "serializerClassName"   TEXT                  NOT NULL,
-  "deserializerClassName" TEXT                  NOT NULL,
-  "timestamp"             BIGINT                NOT NULL
+  "name"                  TEXT   NOT NULL,
+  "fileId"                TEXT   NOT NULL,
+  "serializerClassName"   TEXT   NOT NULL,
+  "deserializerClassName" TEXT   NOT NULL,
+  "timestamp"             BIGINT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_mapping (

@@ -1,5 +1,5 @@
 Competition
-================
+===========
 
 Schema Registry is only one of the types of registries this project supports.
 On the same foundation, other registries such as MLRegistry, Rules, ApplicationConfigs
@@ -14,7 +14,7 @@ the schema-registry-client to query schema registry to serialize/deserialize the
 
 A frequently asked question is, how Schema Registry from this project is different
 from Confluent Schema Registry. While we don't have a clear roadmap of Confluent
-Schema Registry, here are the difference both current capabilities and future
+Schema Registry, here are the current capabilities of both. You may want to look at future
 roadmap.
 
 +-----------------------------+-------------------------+---------------------------+
