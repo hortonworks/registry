@@ -23,6 +23,8 @@ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -36,25 +38,24 @@ import java.util.Map;
  *    <li>{@link #getSchemaText(Object)}</li>
  * </ul>
  */
-public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerializer<I, O, SchemaMetadata> {
-    protected ISchemaRegistryClient schemaRegistryClient;
+public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes implements SnapshotSerializer<I, O, SchemaMetadata> {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSnapshotSerializer.class);
 
     public AbstractSnapshotSerializer() {
     }
 
     public AbstractSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
-        this.schemaRegistryClient = schemaRegistryClient;
-    }
-
-    @Override
-    public void init(Map<String, ?> config) {
-        if (schemaRegistryClient == null) {
-            schemaRegistryClient = new SchemaRegistryClient(config);
-        }
+        super(schemaRegistryClient);
     }
 
     @Override
     public final O serialize(I input, SchemaMetadata schemaMetadata) throws SerDesException {
+        if(!initialized) {
+            throw new IllegalStateException("init should be invoked before invoking serialize operation");
+        }
+        if(closed) {
+            throw new IllegalStateException("This serializer is already closed");
+        }
 
         // compute schema based on input object
         String schema = getSchemaText(input);
@@ -85,8 +86,4 @@ public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerial
      */
     protected abstract O doSerialize(I input, SchemaIdVersion schemaIdVersion) throws SerDesException;
 
-    @Override
-    public void close() throws Exception {
-        schemaRegistryClient.close();
-    }
 }
