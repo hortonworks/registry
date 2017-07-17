@@ -29,6 +29,7 @@ import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import com.hortonworks.registries.common.exception.ParserException;
 
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +54,8 @@ public class Schema implements Serializable {
         STRING(String.class),
         BINARY(byte[].class), // raw data
         NESTED(Map.class),  // nested field
-        ARRAY(List.class);    // array field
+        ARRAY(List.class),  // array field
+        BLOB(InputStream.class);    // Blob
 
         private final Class<?> javaType;
 
@@ -631,6 +633,8 @@ public class Schema implements Serializable {
             return Type.BOOLEAN;
         } else if (value instanceof byte[]) {
             return Type.BINARY;
+        } else if (value instanceof InputStream) {
+            return Type.BLOB;
         } else if (value instanceof List) {
             return Type.ARRAY;
         } else if (value instanceof Map) {
@@ -659,6 +663,8 @@ public class Schema implements Serializable {
             return Type.BOOLEAN;
         } else if (clazz.equals(byte[].class)) {
             return Type.BINARY;
+        } else if (clazz.equals(InputStream.class)) {
+            return Type.BLOB;
         } else if (clazz.equals(List.class)) {
             return Type.ARRAY;
         } else if (clazz.equals(Map.class)) {
