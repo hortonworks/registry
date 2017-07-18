@@ -208,13 +208,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (retrievedschemaMetadataInfo != null) {
             schemaMetadataId = retrievedschemaMetadataInfo.getId();
             // check whether the same schema text exists
-            try {
-                schemaVersionInfo = getSchemaVersionInfo(schemaName, schemaVersion.getSchemaText());
-            } catch (SchemaNotFoundException e) {
+            schemaVersionInfo = getSchemaVersionInfo(schemaName, schemaVersion.getSchemaText());
+            if (schemaVersionInfo == null) {
                 schemaVersionInfo = createSchemaVersion(schemaMetadata,
-                                              retrievedschemaMetadataInfo.getId(),
-                                              schemaVersion.getSchemaText(),
-                                              schemaVersion.getDescription());
+                                                        retrievedschemaMetadataInfo.getId(),
+                                                        schemaVersion.getSchemaText(),
+                                                        schemaVersion.getDescription());
+
             }
         } else {
             schemaMetadataId = registerSchemaMetadata(schemaMetadata);
@@ -537,13 +537,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         Long schemaMetadataId = schemaMetadataInfo.getId();
-        SchemaVersionInfo result = findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
-
-        if (result == null) {
-            throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
-        }
-
-        return result;
+        return findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
     }
 
     public SchemaVersionInfo getSchemaVersionInfo(Long id) throws SchemaNotFoundException {
