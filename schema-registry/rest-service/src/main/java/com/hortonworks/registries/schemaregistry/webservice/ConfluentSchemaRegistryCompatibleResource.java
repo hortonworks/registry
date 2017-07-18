@@ -103,6 +103,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
+        } catch(SchemaNotFoundException ex) {
+            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving schema version with name: [{}]", subject, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -110,7 +112,6 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
 
         return response;
     }
-    
     
     @POST
     @Path("/subjects/{subject}/versions")
