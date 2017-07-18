@@ -78,7 +78,7 @@ import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.OR
 /**
  * Schema Registry resource that provides schema registry REST service.
  */
-@Path("/v1/schemaregistry")
+@Path("/api/v1/schemaregistry")
 @Api(value = "/api/v1/schemaregistry", description = "Endpoint for Schema Registry service")
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryResource extends BaseRegistryResource {

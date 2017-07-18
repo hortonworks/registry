@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -70,6 +71,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         if (registryConfiguration.isEnableCors()) {
             enableCORS(environment);
         }
+
         addServletFilters(registryConfiguration, environment);
     }
 
@@ -115,7 +117,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     @Override
     public void initialize(Bootstrap<RegistryConfiguration> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/assets", "/", "index.html", "static"));
+        // always deploy UI on /ui. If there is no other filter like Confluent etc, redirect / to /ui
+        bootstrap.addBundle(new AssetsBundle("/assets", "/ui", "index.html", "static"));
         bootstrap.addBundle(new SwaggerBundle<RegistryConfiguration>() {
             @Override
             protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(RegistryConfiguration registryConfiguration) {
@@ -205,14 +208,19 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private void addServletFilters(RegistryConfiguration registryConfiguration, Environment environment) {
         List<ServletFilterConfiguration> servletFilterConfigurations = registryConfiguration.getServletFilters();
         if (servletFilterConfigurations != null && !servletFilterConfigurations.isEmpty()) {
-            for (ServletFilterConfiguration servletFilterConfiguration: servletFilterConfigurations) {
+            for (ServletFilterConfiguration servletFilterConfig: servletFilterConfigurations) {
                 try {
-                    FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(servletFilterConfiguration.getClassName(), (Class<? extends Filter>)
-                            Class.forName(servletFilterConfiguration.getClassName()));
-                    dynamic.setInitParameters(servletFilterConfiguration.getParams());
+                    String className = servletFilterConfig.getClassName();
+                    Map<String, String> params = servletFilterConfig.getParams();
+                    LOG.info("Registering servlet filter [{}]", servletFilterConfig);
+                    Class<? extends Filter> filterClass = (Class<? extends Filter>) Class.forName(className);
+                    FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(className, filterClass);
+                    if(params != null) {
+                        dynamic.setInitParameters(params);
+                    }
                     dynamic.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
                 } catch (Exception e) {
-                    LOG.error("Error registering servlet filter {}", servletFilterConfiguration);
+                    LOG.error("Error registering servlet filter {}", servletFilterConfig);
                     throw new RuntimeException(e);
                 }
             }

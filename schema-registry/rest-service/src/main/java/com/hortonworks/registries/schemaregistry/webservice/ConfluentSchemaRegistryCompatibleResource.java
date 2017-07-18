@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  * This is used to support confluent serdes, and also thrid party integrations that support confluent schema registry api, 
  * but yet to adopt registry's api.
  */
-@Path("/v1/confluent")
+@Path("/api/v1/confluent")
 @Api(value = "/api/v1/confluent", description = "Endpoint for Confluent Schema Registry API compatible service")
 @Produces(MediaType.APPLICATION_JSON)
 public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryResource {
