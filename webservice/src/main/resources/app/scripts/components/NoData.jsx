@@ -16,7 +16,7 @@ import React, {Component} from 'react';
 
 const NoData = () => {
   const divStyle = {
-    backgroundImage: 'url(\'styles/img/back-default.png\')',
+    backgroundImage: 'url(\'../ui/styles/img/back-default.png\')',
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center top",
     backgroundSize: "50%",

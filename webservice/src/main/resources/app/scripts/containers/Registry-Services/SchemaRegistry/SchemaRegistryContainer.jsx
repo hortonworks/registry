@@ -217,7 +217,7 @@ export default class SchemaRegistryContainer extends Component {
   }
   onFilterChange = (e) => {
     this.setState({filterValue: e.target.value});
-  } 
+  }
   onFilterKeyPress = (e) => {
     if(e.key=='Enter'){
       this.setState({filterValue: e.target.value.trim(), activePage: 1}, () => {
@@ -238,7 +238,7 @@ export default class SchemaRegistryContainer extends Component {
     el.target.parentElement.setAttribute("class","active");
     //if sorting by name, then in ascending order
     //if sorting by timestamp, then in descending order
-    
+
     const sortObj = {key : eventKey , text : this.sortByKey(eventKey)};
     this.setState({sorted : sortObj}, () => {
       this.fetchData();
@@ -472,7 +472,7 @@ export default class SchemaRegistryContainer extends Component {
                                 />)
                             : (<div className="col-sm-12">
                                     <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                                        <img src="styles/img/start-loader.gif" alt="loading" />
+                                        <img src="../ui/styles/img/start-loader.gif" alt="loading" />
                                     </div>
                               </div>)
                             }
@@ -516,7 +516,7 @@ export default class SchemaRegistryContainer extends Component {
                 />)
                 : (<div className="col-sm-12">
                     <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                      <img src="styles/img/start-loader.gif" alt="loading" />
+                      <img src="../ui/styles/img/start-loader.gif" alt="loading" />
                     </div>
                 </div>)
               }
@@ -532,7 +532,7 @@ export default class SchemaRegistryContainer extends Component {
 </Panel>
       );
     });
-        
+
 
     return (
       <BaseContainer routes={this.props.routes} onLandingPage="false" breadcrumbData={this.breadcrumbData} headerContent={'All Schemas'}>
@@ -541,7 +541,7 @@ export default class SchemaRegistryContainer extends Component {
                   <i className="fa fa-plus"></i>
               </button>
           </div>
-          {!this.state.loading && this.state.dataFound ? 
+          {!this.state.loading && this.state.dataFound ?
             <div className="wrapper animated fadeIn">
               <div className="page-title-box row no-margin">
                   <div className="col-md-3 col-md-offset-6 text-right">
@@ -568,8 +568,8 @@ export default class SchemaRegistryContainer extends Component {
                     </DropdownButton>
                   </div>
               </div>
-            
-              {!this.state.loading && schemaEntities.length ? 
+
+              {!this.state.loading && schemaEntities.length ?
                 <div className="row">
                     <div className="col-md-12">
                       <PanelGroup
@@ -601,14 +601,14 @@ export default class SchemaRegistryContainer extends Component {
             </div>
             : !this.state.loading ? <NoData /> : null}
 
-          {this.state.loading ? 
+          {this.state.loading ?
             <div className="col-sm-12">
               <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                <img src="styles/img/start-loader.gif" alt="loading" />
+                <img src="../ui/styles/img/start-loader.gif" alt="loading" />
               </div>
             </div>
             : null}
-  
+
         <FSModal ref="schemaModal" bsSize="large" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
           <SchemaInfoForm ref="addSchema"/>
         </FSModal>
