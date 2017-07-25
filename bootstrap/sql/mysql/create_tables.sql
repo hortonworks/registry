@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
   PRIMARY KEY (name, version),
-  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   fieldNamespace   VARCHAR(255),
   type             VARCHAR(255)          NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id)
+  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (

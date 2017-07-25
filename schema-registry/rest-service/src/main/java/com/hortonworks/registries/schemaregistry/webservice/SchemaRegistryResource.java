@@ -55,6 +55,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -755,4 +756,27 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         });
     }
 
+    @DELETE
+    @Path("/schemas/{name}/versions/{version}")
+    @ApiOperation(value = "Delete a schema version given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
+    public Response deleteSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                        @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                        @Context UriInfo uriInfo,
+                                        @Context HttpHeaders httpHeaders) {
+        SchemaVersionKey schemaVersionKey = null;
+        try {
+            schemaVersionKey = new SchemaVersionKey(schemaName, versionNumber);
+            schemaRegistry.deleteSchemaVersion(schemaVersionKey);
+            return WSUtils.respond(Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            LOG.info("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
+            if (isThrowErrorIfExists(httpHeaders))
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
+            else
+                return WSUtils.respondEntity(schemaVersionKey, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while deleting schemaVersion with name: [{}], version : [{}]", schemaName, versionNumber, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
 }

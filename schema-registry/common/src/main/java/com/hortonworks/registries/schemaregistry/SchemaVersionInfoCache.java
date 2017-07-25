@@ -57,6 +57,10 @@ public class SchemaVersionInfoCache {
         }
     }
 
+    public void invalidateSchema(SchemaVersionInfoCache.Key key) {
+        loadingCache.invalidate(key);
+    }
+
     public static class Key {
 
         private SchemaVersionKey schemaVersionKey;
