@@ -172,7 +172,7 @@ export default class SchemaVersionForm extends Component {
               <a key="3" className="pull-right validate-link" href="javascript:void(0)" onClick={this.validateSchemaCompatibility}>
                 VALIDATE
               </a>]
-            : 
+            :
             null
           }
           <div onDrop={this.handleOnDrop.bind(this)} onDragOver={(e) => {
@@ -186,7 +186,7 @@ export default class SchemaVersionForm extends Component {
                 {schemaTextCompatibility === statusCode.Processing
                 ?
                 <div className="loading-img text-center schema-validating">
-                  <img src="styles/img/start-loader.gif" alt="loading" />
+                  <img src="../ui/styles/img/start-loader.gif" alt="loading" />
                 </div>
                 :
                 schemaTextCompatibility === statusCode.Ok
@@ -198,7 +198,7 @@ export default class SchemaVersionForm extends Component {
                     <span className="alert-close"><i className="fa fa-times" onClick={() => this.setState({schemaTextCompatibility: statusCode.Ok})}></i></span>
                   </div>
                 }
-                
+
                 <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
               </div>
               :
