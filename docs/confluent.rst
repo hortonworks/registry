@@ -18,8 +18,15 @@ The following migration path is suggested.
 2. Redirect Confluent Serdes.
 
   - Registry provides a Confluent compatible API for the Confluent Serdes.
-  - As such simply re-directing the url path to Regsitry for existing applications and services will migrate these.
+  - As such simply re-directing the url path to Registry for existing applications and services will migrate these. You can do that by enabling a filter in registry configuration like below.
+    ::
 
+      servletFilters:
+        - className: "com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter"
+          params:
+            # value format is [<targetpath>,<paths-should-be-redirected-to>,*|]*
+            # below /subjects and /schemas/ids are forwarded to /api/v1/confluent
+            forwardPaths: "/api/v1/confluent,/subjects/*,/schemas/ids/*"
 
 3. Serdes Change.
 
