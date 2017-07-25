@@ -445,6 +445,31 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
+    @Override
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        schemaVersionInfoCache.invalidateSchema(new SchemaVersionInfoCache.Key(schemaVersionKey));
+
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey.getSchemaName(), schemaVersionKey.getVersion()));
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+            }
+        });
+
+        handleDeleteSchemaResponse(response);
+    }
+
+    private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException {
+        String msg = response.readEntity(String.class);
+        switch (Response.Status.fromStatusCode(response.getStatus())) {
+            case NOT_FOUND:
+                throw new SchemaNotFoundException(msg);
+            case INTERNAL_SERVER_ERROR:
+                throw new RuntimeException(msg);
+        }
+    }
+
     private SchemaIdVersion doAddSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {

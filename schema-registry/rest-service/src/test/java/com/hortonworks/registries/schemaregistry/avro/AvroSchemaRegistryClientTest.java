@@ -66,7 +66,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
     private static final String INVALID_SCHEMA_PROVIDER_TYPE = "invalid-schema-provider-type";
 
-    /** Class to describe schema create operation failure scenarios */
+    /**
+     * Class to describe schema create operation failure scenarios
+     */
     private static class SchemaCreateFailureScenario {
         private final String test;
         private final String name;
@@ -85,7 +87,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
             expectedCatalogResponse = catalogResponse;
         }
 
-        /** Return true if the schema creation failed as expected */
+        /**
+         * Return true if the schema creation failed as expected
+         */
         private void testCreate(SchemaRegistryClient client) {
             boolean failedAsExpected = false;
             SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(name).type(type).schemaGroup(group).
@@ -196,7 +200,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         try {
             schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-4.avsc"), "Forth version of the schema, adds back name field, but different type"));
             Assert.fail("Should throw IncompatibleSchemaException as check against all schema's would find name field is not compatible with v1 and v2");
-        } catch (IncompatibleSchemaException ise){
+        } catch (IncompatibleSchemaException ise) {
             //expected
         }
 
@@ -208,7 +212,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
         try {
             schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(getSchema("/schema-4.avsc"), "Forth version of the schema, adds back name field, but different type"));
-        } catch (IncompatibleSchemaException ise){
+        } catch (IncompatibleSchemaException ise) {
             Assert.fail("Should not throw IncompatibleSchemaException as check against only latest schema as such should ignore v1 and v2");
         }
     }
@@ -365,6 +369,36 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
 
         InputStream inputStream = new FileInputStream(tmpJarFile);
         return schemaRegistryClient.uploadFile(inputStream);
+    }
+
+    @Test
+    public void testSchemaVersionDeletion() throws Exception {
+
+        String schemaName = TEST_NAME_RULE.getMethodName();
+
+        SchemaVersionKey schemaVersionKey = addAndDeleteSchemaVersion(schemaName);
+
+        Assert.assertTrue(schemaRegistryClient.getAllVersions(schemaName).isEmpty());
+    }
+
+    private SchemaVersionKey addAndDeleteSchemaVersion(String schemaName) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, IOException {
+        SchemaMetadata schemaMetadata = createSchemaMetadata(schemaName, SchemaCompatibility.BOTH);
+        SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchema("/device.avsc"), "Initial version of the schema"));
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata.getName(), schemaIdVersion.getVersion());
+        schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
+
+        return schemaVersionKey;
+    }
+
+    @Test(expected = SchemaNotFoundException.class)
+    public void testDeletingNonExistingSchema() throws Exception {
+
+        String schemaName = TEST_NAME_RULE.getMethodName();
+
+        SchemaVersionKey schemaVersionKey = addAndDeleteSchemaVersion(schemaName);
+
+        // deleting again should return SchemaNotFoundException
+        schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
     }
 
 }
