@@ -15,18 +15,6 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +37,18 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -133,7 +133,11 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
                 LOG.info("registerSchema for [{}] is [{}]", subject);
                 SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 if (schemaMetadataInfo == null) {
-                    SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject).type(AvroSchemaProvider.TYPE).build();
+                    SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject)
+                            .type(AvroSchemaProvider.TYPE)
+                            .schemaGroup("Kafka")
+                            .build();
+
                     schemaRegistry.registerSchemaMetadata(schemaMetadata);
                     schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }

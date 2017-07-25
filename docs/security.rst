@@ -2,7 +2,7 @@ Running registry and streamline web-services securely
 =====================================================
 
 SPNEGO
--------
+------
 
 This module is intended to be used by registry and streamline
 web-services so that they can enable http client authentication via
@@ -88,7 +88,7 @@ default UI jetty server request header size. If using MIT Kerberos with
 jettty server, make sure you set HTTP header buffer bytes to 65536
 
 SSL
-------
+---
   Enabling SSL for Registry Server.
 
 Generate Self-Signed Certificate
@@ -110,24 +110,25 @@ Generate Self-Signed Certificate
 
       ::
 
-       # keytool -import -trustcacerts -alias selfsigned -file <path_to_java>/selfsigned.crt -keystore cacerts
+       # keytool -import -trustcacerts -alias selfsigned -file selfsigned.crt -keystore <path_to_java>/cacerts
 
    4. registry config for the server should look like this
-
       ::
+
        server:
          applicationConnectors:
-          - type: https
-            port: 8443
-            keyStorePath: ./conf/keystore.jks 
-            keyStorePassword: test12 
-            validateCerts: false
-            validatePeers: false 
+           - type: https
+             port: 8443
+             keyStorePath: ./conf/keystore.jks
+             keyStorePassword: test12
+             validateCerts: false
+             validatePeers: false
          adminConnectors:
-         - type: https
-           port: 8444
-           keyStorePath: ./conf/keystore.jks 
-           keyStorePassword: test12
-           validateCerts: false
-           validatePeers: false
-    5. When you start the server, you can access via https on the port 8443.
+           - type: https
+             port: 8444
+             keyStorePath: ./conf/keystore.jks
+             keyStorePassword: test12
+             validateCerts: false
+             validatePeers: false
+
+   5. When you start the server, you can access via https on the port 8443.
