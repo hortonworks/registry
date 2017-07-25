@@ -592,6 +592,22 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
     }
 
+    @Override
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        SchemaVersionInfoCache.Key schemaVersionCacheKey = new SchemaVersionInfoCache.Key(schemaVersionKey);
+        SchemaVersionInfo schemaVersionInfo = schemaVersionInfoCache.getSchema(schemaVersionCacheKey);
+        synchronized (addOrUpdateLock) {
+            schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
+            storageManager.remove(createSchemaVersionStorableKey(schemaVersionInfo.getId()));
+        }
+    }
+
+    private StorableKey createSchemaVersionStorableKey(Long id) {
+        SchemaVersionStorable schemaVersionStorable = new SchemaVersionStorable();
+        schemaVersionStorable.setId(id);
+        return schemaVersionStorable.getStorableKey();
+    }
+
     private SchemaVersionInfo retrieveSchemaVersionInfo(SchemaIdVersion key) throws SchemaNotFoundException {
         SchemaVersionInfo schemaVersionInfo = null;
         if(key.getSchemaVersionId() != null) {

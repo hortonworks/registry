@@ -129,6 +129,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        schemaRegistry.deleteSchemaVersion(schemaVersionKey);
+    }
+
+    @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
         return schemaRegistry.findSchemasByFields(schemaFieldQuery);
     }

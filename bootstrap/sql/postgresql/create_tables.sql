@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   "name"             VARCHAR(255) NOT NULL,
   "fieldNamespace"   VARCHAR(255),
   "type"             VARCHAR(255) NOT NULL,
-  FOREIGN KEY ("schemaInstanceId") REFERENCES schema_version_info ("id")
+  FOREIGN KEY ("schemaInstanceId") REFERENCES schema_version_info ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
