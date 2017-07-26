@@ -367,4 +367,27 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         return schemaRegistryClient.uploadFile(inputStream);
     }
 
+    @Test
+    public void testSchemaVersionDeletion() throws Exception {
+
+        String schemaName = TEST_NAME_RULE.getMethodName();
+
+        SchemaMetadata schemaMetadata = createSchemaMetadata(schemaName, SchemaCompatibility.BOTH);
+        SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchema("/device.avsc"), "Initial version of the schema"));
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata.getName(), schemaIdVersion.getVersion());
+
+        schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
+
+        Assert.assertTrue(schemaRegistryClient.getAllVersions(schemaName).isEmpty());
+    }
+
+    @Test(expected = SchemaNotFoundException.class)
+    public void testDeletingNonExistingSchema() throws Exception {
+
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(TEST_NAME_RULE.getMethodName(), 1);
+
+        schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
+    }
+
 }
