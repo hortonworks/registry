@@ -89,17 +89,15 @@ jettty server, make sure you set HTTP header buffer bytes to 65536
 
 SSL
 ---
-  Enabling SSL for Registry Server.
+This section talks about enabling SSL for Registry Server. Below steps mention about how to generate self signed certificates and use them with Registry Server.
 
-Generate Self-Signed Certificate
---------------------------------
-   1.  run the following to create a self-signed entry in the keystore.jks. The alias selfsigned can be anything you want.
+   1. Run the following to create a self-signed entry in the keystore.jks. The alias selfsigned can be anything you want.
 
       ::
 
        # keytool -genkey -alias selfsigned -keyalg RSA -keystore keystore.jks -keysize 2048
 
-   2. export the certificate to selfsigned.crt with:
+   2. Export the certificate to selfsigned.crt with:
 
       ::
 
@@ -112,7 +110,8 @@ Generate Self-Signed Certificate
 
        # keytool -import -trustcacerts -alias selfsigned -file selfsigned.crt -keystore <path_to_java>/cacerts
 
-   4. registry config for the server should look like this
+   4. Registry config for the server can be configured like below.
+
       ::
 
        server:

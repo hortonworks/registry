@@ -1,6 +1,6 @@
 
 Roadmap
-=============
+=======
 
 
 We are working on making Registry a true Central Metadata Repository that
@@ -15,7 +15,7 @@ Schema Registry
 
 
 Schema Improvements
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 1. Rich Data types
   With Avro and other formats, Users get standard types including primitives and in Avro's
@@ -33,7 +33,7 @@ Schema Improvements
 
 
 Collaboration
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 1. Notifications
   Allow users to subscribe to a schema of interest for any version changes.
@@ -62,7 +62,7 @@ Collaboration
   the schemas.
 
 Security
-~~~~~~~~~
+~~~~~~~~
 
 1. Authentication
   As part of 0.3 release , we added SPNEGO auth to authenticate users. As part of
@@ -74,7 +74,7 @@ Security
 
 
 Integration
-~~~~~~~~~~~~~~
+~~~~~~~~~~~
 
 1. Multi-lang Client support for Registry
  SchemaRegistryClient can only be used in Java based applications. We are working
