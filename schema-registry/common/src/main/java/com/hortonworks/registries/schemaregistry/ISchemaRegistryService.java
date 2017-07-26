@@ -113,8 +113,10 @@ public interface ISchemaRegistryService {
     SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
-     *  Deletes a schema version given {@code schemaVersionKey}, throws an SchemaNotFoundException if the schema version is not absent.
+     *  Deletes a schema version given {@code schemaVersionKey}, throws an SchemaNotFoundException if the schema version is absent.
+     *
      * @param schemaVersionKey key identifying a schema and a version
+     *
      * @throws SchemaNotFoundException when there is no schema version exists with the given {@code schemaVersionKey}
      */
     void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;

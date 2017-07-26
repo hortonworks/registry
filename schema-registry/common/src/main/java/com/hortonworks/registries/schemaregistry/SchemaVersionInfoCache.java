@@ -53,6 +53,8 @@ public class SchemaVersionInfoCache {
         try {
             return loadingCache.get(key);
         } catch (ExecutionException e) {
+            if(e.getCause().getClass() == SchemaNotFoundException.class)
+                throw (SchemaNotFoundException) e.getCause();
             throw new RuntimeException(e);
         }
     }
