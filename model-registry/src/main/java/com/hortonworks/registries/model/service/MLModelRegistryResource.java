@@ -98,7 +98,7 @@ public final class MLModelRegistryResource {
             MLModel createdModelInfo = modelRegistryService.addModelInfo(modelInfo, pmmlInputStream, fileDisposition.getFileName());
             return WSUtils.respondEntity(createdModelInfo, CREATED);
         } catch (Exception exception) {
-            LOG.debug("Error occured while adding the pmml model", exception);
+            LOG.debug("Error occurred while adding the pmml model", exception);
             throw exception;
         } finally {
             try {
@@ -153,7 +153,7 @@ public final class MLModelRegistryResource {
                     modelId, modelInfo, pmmlInputStream, fileDisposition.getFileName());
             return WSUtils.respondEntity(createdModelInfo, CREATED);
         } catch (Exception exception) {
-            LOG.debug("Error occured while adding the pmml model", exception);
+            LOG.debug("Error occurred while adding the pmml model", exception);
             throw exception;
         } finally {
             try {
