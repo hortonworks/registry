@@ -370,23 +370,24 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     @Test
     public void testSchemaVersionDeletion() throws Exception {
 
-        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
+        String schemaName = TEST_NAME_RULE.getMethodName();
+
+        SchemaMetadata schemaMetadata = createSchemaMetadata(schemaName, SchemaCompatibility.BOTH);
         SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(getSchema("/device.avsc"), "Initial version of the schema"));
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata.getName(), schemaIdVersion.getVersion());
 
-        // Deleting an existing schema should not throw exception
-
         schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
 
-        // Deleting a non existing schema should throw exception
+        Assert.assertTrue(schemaRegistryClient.getAllVersions(schemaName).isEmpty());
+    }
 
-        try {
-            schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
-        } catch (SchemaNotFoundException e) {
-            return;
-        }
+    @Test(expected = SchemaNotFoundException.class)
+    public void testDeletingNonExistingSchema() throws Exception {
 
-        throw new Exception(String.format("Tried to delete a non existent schema version : %s but schema registry client didn't throw an exception", schemaVersionKey));
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(TEST_NAME_RULE.getMethodName(), 1);
+
+        schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
     }
 
 }
