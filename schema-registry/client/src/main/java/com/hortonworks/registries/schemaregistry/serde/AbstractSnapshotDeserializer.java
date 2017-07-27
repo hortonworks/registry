@@ -89,7 +89,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     protected void doInit(Map<String, ?> config) {
         schemaCache = CacheBuilder.newBuilder()
                 .maximumSize(getCacheMaxSize(config))
-                .expireAfterAccess(getCacheExpiryInMillis(config), TimeUnit.MILLISECONDS)
+                .expireAfterAccess(getCacheExpiryInSecs(config), TimeUnit.SECONDS)
                 .build(new CacheLoader<SchemaVersionKey, S>() {
                     @Override
                     public S load(SchemaVersionKey schemaVersionKey) throws Exception {
@@ -98,10 +98,10 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
                 });
     }
 
-    private Long getCacheExpiryInMillis(Map<String, ?> config) {
+    private Long getCacheExpiryInSecs(Map<String, ?> config) {
         Long value = (Long) getValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS);
         if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + "must be non negative.");
+            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + " must be non negative.");
         }
         return value;
     }
@@ -109,7 +109,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     private Integer getCacheMaxSize(Map<String, ?> config) {
         Integer value = (Integer) getValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
         if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + "must be non negative.");
+            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + " must be non negative.");
         }
         return value;
     }
