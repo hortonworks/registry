@@ -374,11 +374,9 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     @Test
     public void testSchemaVersionDeletion() throws Exception {
 
-        String schemaName = TEST_NAME_RULE.getMethodName();
+        SchemaVersionKey schemaVersionKey = addAndDeleteSchemaVersion(TEST_NAME_RULE.getMethodName());
 
-        SchemaVersionKey schemaVersionKey = addAndDeleteSchemaVersion(schemaName);
-
-        Assert.assertTrue(schemaRegistryClient.getAllVersions(schemaName).isEmpty());
+        Assert.assertTrue(schemaRegistryClient.getAllVersions(schemaVersionKey.getSchemaName()).isEmpty());
     }
 
     private SchemaVersionKey addAndDeleteSchemaVersion(String schemaName) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, IOException {
@@ -393,9 +391,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
     @Test(expected = SchemaNotFoundException.class)
     public void testDeletingNonExistingSchema() throws Exception {
 
-        String schemaName = TEST_NAME_RULE.getMethodName();
-
-        SchemaVersionKey schemaVersionKey = addAndDeleteSchemaVersion(schemaName);
+        SchemaVersionKey schemaVersionKey = addAndDeleteSchemaVersion(TEST_NAME_RULE.getMethodName());
 
         // deleting again should return SchemaNotFoundException
         schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
