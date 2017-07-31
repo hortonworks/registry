@@ -106,9 +106,22 @@
         </fileSet>
     </fileSets>
     <files>
+         <file>
+            <source>${project.basedir}./registry-dist/VERSION</source>
+            <outputDirectory>/</outputDirectory>
+        </file>
         <file>
             <source>${project.basedir}./README.md</source>
             <outputDirectory>/</outputDirectory>
         </file>
+        <file>
+            <source>${project.basedir}./LICENSE.txt</source>
+            <outputDirectory>/</outputDirectory>
+        </file>
+        <file>
+            <source>${project.basedir}./NOTICE.txt</source>
+            <outputDirectory>/</outputDirectory>
+        </file>
+
     </files>
 </assembly>

@@ -28,6 +28,12 @@
     <name>Registry Binary Distribution</name>
     <description>Registry binary distribution</description>
 
+    <scm>
+        <connection>scm:git:git@github.com:hortonworks/registry</connection>
+        <developerConnection>scm:git:git@github.com:hortonworks/registry</developerConnection>
+        <url>scm:git:git@github.com:hortonworks/registry</url>
+    </scm>
+
     <dependencies>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
@@ -73,6 +79,30 @@
     <build>
         <finalName>${final.Name}-${project.version}</finalName>
         <plugins>
+           <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>buildnumber-maven-plugin</artifactId>
+               <version>1.4</version>
+               <configuration>
+                   <doCheck>false</doCheck>
+                   <doUpdate>false</doUpdate>
+                   <outputDirectory>${project.basedir}</outputDirectory>
+                   <outputName>VERSION</outputName>
+                   <revisiononscmfailure>
+                       <items>
+                           <item>version=${project.version}</item>
+                       </items>
+                   </revisiononscmfailure>
+               </configuration>
+               <executions>
+                   <execution>
+                       <phase>generate-resources</phase>
+                       <goals>
+                           <goal>create-metadata</goal>
+                       </goals>
+                   </execution>
+               </executions>
+           </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
