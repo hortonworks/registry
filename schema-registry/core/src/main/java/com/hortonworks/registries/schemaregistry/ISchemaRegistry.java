@@ -76,7 +76,7 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      *
      * @return Collects aggregated schema metadata which contains the given properties.
      */
-    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props);
+    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) throws SchemaNotFoundException;
 
     /**
      * @param schemaName name of the schema
@@ -84,7 +84,7 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @return {@link AggregatedSchemaMetadataInfo} for the given schema name, null if there is no schema registered with
      * the given schema name.
      */
-    AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName);
+    AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException;
 
     /**
      * @param props properties

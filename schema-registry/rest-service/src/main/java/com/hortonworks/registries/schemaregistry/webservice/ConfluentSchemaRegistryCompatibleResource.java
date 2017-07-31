@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
@@ -48,18 +48,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
- * This is used to support confluent serdes, and also thrid party integrations that support confluent schema registry api, 
+ * This is used to support confluent serdes, and also third party integrations that support confluent schema registry api,
  * but yet to adopt registry's api.
  */
 @Path("/api/v1/confluent")
 @Api(value = "/api/v1/confluent", description = "Endpoint for Confluent Schema Registry API compatible service")
 @Produces(MediaType.APPLICATION_JSON)
-public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryResource {
+public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(ConfluentSchemaRegistryCompatibleResource.class);
+
+    private static final String OPERATION_GROUP_CONFLUENT_SR = "4. Confluent Schema Registry compatible API";
 
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         super(schemaRegistry, leadershipParticipant);
@@ -67,65 +72,196 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
 
     @GET
     @Path("/schemas/ids/{id}")
-    @ApiOperation(value = "Get schema iby id",
-        response = Schema.class, tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Get schema version by id",
+            response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
-    public Response getSchemaById(@ApiParam(value = "SchemaVersion id", required = true) @PathParam("id") Long id) {
+    public Response getSchemaById(@ApiParam(value = "schema version id", required = true) @PathParam("id") Long id) {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(id);
             SchemaString schema = new SchemaString();
             schema.setSchema(schemaVersionInfo.getSchemaText());
             response = WSUtils.respondEntity(schema, Response.Status.OK);
-        } catch (SchemaNotFoundException snfe) {
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, Long.toString(id));
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema version found with id [{}]", id, ex);
+            response = schemaNotFoundError();
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving Schema with id: [{}]", id, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            response = serverError();
         }
         return response;
     }
 
+    @GET
+    @Path("/subjects")
+    @ApiOperation(value = "Get all registered subjects",
+            response = String.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
+    @Timed
+    public Response getSubjects() {
+        Response response;
+        try {
+            List<String> registeredSubjects = schemaRegistry.findSchemaMetadata(Collections.emptyMap())
+                                                            .stream()
+                                                            .map(x -> x.getSchemaMetadata().getName())
+                                                            .collect(Collectors.toList());
+
+            response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
+        }
+        return response;
+    }
+
+    public static class ErrorMessage {
+        private int errorCode;
+        private String message;
+
+        public ErrorMessage() {
+        }
+
+        public ErrorMessage(int errorCode, String message) {
+            this.errorCode = errorCode;
+            this.message = message;
+        }
+
+        @JsonProperty("error_code")
+        public int getErrorCode() {
+            return errorCode;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        @Override
+        public String toString() {
+            return "ErrorMessage{" +
+                    "errorCode=" + errorCode +
+                    ", message='" + message + '\'' +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ErrorMessage that = (ErrorMessage) o;
+
+            if (errorCode != that.errorCode) return false;
+            return message != null ? message.equals(that.message) : that.message == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = errorCode;
+            result = 31 * result + (message != null ? message.hashCode() : 0);
+            return result;
+        }
+    }
+
+
+    @GET
+    @Path("/subjects/{subject}/versions")
+    @ApiOperation(value = "Get all registered subjects",
+            response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
+    @Timed
+    public Response getAllVersions(@ApiParam(value = "subject", required = true)
+                                   @PathParam("subject")
+                                           String subject) {
+        Response response;
+        try {
+            List<Integer> registeredSubjects = schemaRegistry.getAllVersions(subject)
+                                                             .stream()
+                                                             .map(x -> x.getId().intValue())
+                                                             .collect(Collectors.toList());
+
+            response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema found with name [{}]", subject, ex);
+            response = subjectNotFoundError();
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
+        }
+        return response;
+    }
+
+    @GET
+    @Path("/subjects/{subject}/versions/{versionId}")
+    @ApiOperation(value = "Get all registered subjects",
+            response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
+    @Timed
+    public Response getSchemaVersion(@ApiParam(value = "subject", required = true)
+                                     @PathParam("subject")
+                                             String subject,
+                                     @ApiParam(value = "versionId", required = true)
+                                     @PathParam("versionId")
+                                             String versionId) {
+        Response response;
+        try {
+
+            SchemaVersionInfo schemaVersionInfo = "latest".equals(versionId)
+                    ? schemaRegistry.getLatestSchemaVersionInfo(subject)
+                    : schemaRegistry.getSchemaVersionInfo(Long.valueOf(versionId));
+
+            SchemaVersionEntry schemaVersionEntry = new SchemaVersionEntry(schemaVersionInfo.getName(),
+                                                                           schemaVersionInfo.getId().intValue(),
+                                                                           schemaVersionInfo.getSchemaText());
+            response = WSUtils.respondEntity(schemaVersionEntry, Response.Status.OK);
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema version found with id [{}]", versionId, ex);
+            response = versionNotFoundError();
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
+        }
+        return response;
+    }
 
     @POST
     @Path("/subjects/{subject}")
-    @ApiOperation(value = "Get schema information for the given schema name", response = Id.class, tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Get schema information for the given schema name and schema text", response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
-    public Response lookUpSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject, 
-                               @ApiParam(value = "The schema ", required = true) String schema) {
+    public Response registerSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
+                                           @ApiParam(value = "The schema ", required = true) String schema) {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
-            
-            
+
             if (schemaVersionInfo != null) {
                 response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
-        } catch(SchemaNotFoundException ex) {
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
+        } catch (InvalidSchemaException ex) {
+            LOG.error("Given schema is invalid", ex);
+            response = invalidSchemaError();
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema found with name [{}]", subject, ex);
+            response = subjectNotFoundError();
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving schema version with name: [{}]", subject, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            response = serverError();
         }
 
         return response;
     }
-    
+
     @POST
     @Path("/subjects/{subject}/versions")
     @ApiOperation(value = "Register a new version of the schema",
-        notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
-                "and returns respective unique id." +
-                "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
-        response = Id.class, tags = OPERATION_GROUP_SCHEMA)
+            notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
+                    "and returns respective unique id." +
+                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
+            response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     public Response registerSchema(@ApiParam(value = "subject", required = true) @PathParam("subject")
-                                  String subject,
-                              @ApiParam(value = "Details about the schema", required = true)
-                                  String schema,
-                              @Context UriInfo uriInfo) {
+                                           String subject,
+                                   @ApiParam(value = "Details about the schema", required = true)
+                                           String schema,
+                                   @Context UriInfo uriInfo) {
         LOG.info("registerSchema for [{}] is [{}]", subject);
         return handleLeaderAction(uriInfo, () -> {
             Response response;
@@ -138,39 +274,128 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
                             .schemaGroup("Kafka")
                             .build();
 
-                    schemaRegistry.registerSchemaMetadata(schemaMetadata);
+                    schemaRegistry.addSchemaMetadata(schemaMetadata);
                     schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }
 
                 SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                     new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
                 Id id = new Id();
-                // this is done as part of other PR which makes version id available,
-                // added below to get this compiled, this should have been schemaVersionInfo.getVersionId
-                id.setId(schemaVersionInfo.getSchemaMetadataId());
+                id.setId(schemaVersionInfo.getSchemaVersionId());
                 response = WSUtils.respondEntity(id, Response.Status.OK);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
+                response = invalidSchemaError();
             } catch (IncompatibleSchemaException ex) {
                 LOG.error("Incompatible schema error encountered while adding subject [{}]", subject, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, ex.getMessage());
+                response = incompatibleSchemaError();
             } catch (UnsupportedSchemaTypeException ex) {
                 LOG.error("Unsupported schema type encountered while adding subject [{}]", subject, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
+                response = incompatibleSchemaError();
             } catch (Exception ex) {
                 LOG.error("Encountered error while adding subject [{}]", subject, ex);
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+                response = serverError();
             }
 
             return response;
         });
     }
+    public static Response serverError() {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                       .entity(new ErrorMessage(50001, " Error in the backend datastore\n"))
+                       .build();
+    }
 
-    public SchemaString schemaStringFromJson(String json) throws IOException {
+    public static Response subjectNotFoundError() {
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity(new ErrorMessage(40401, "Subject not found"))
+                       .build();
+    }
+
+    public static Response versionNotFoundError() {
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity(new ErrorMessage(40402, "Version not found"))
+                       .build();
+    }
+
+    public static Response schemaNotFoundError() {
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity(new ErrorMessage(40403, "Schema not found"))
+                       .build();
+    }
+
+    public static Response invalidSchemaError() {
+        return Response.status(422)
+                       .entity(new ErrorMessage(42201, "Invalid Avro schema"))
+                       .build();
+    }
+
+    public static Response incompatibleSchemaError() {
+        return Response.status(Response.Status.CONFLICT)
+                       .entity(new ErrorMessage(40901, "Incompatible Avro schema"))
+                       .build();
+    }
+
+    private SchemaString schemaStringFromJson(String json) throws IOException {
         return new ObjectMapper().readValue(json, SchemaString.class);
     }
-    
+
+    public static class SchemaVersionEntry {
+        private String name;
+        private Integer version;
+        private String schema;
+
+        public SchemaVersionEntry() {
+        }
+
+        public SchemaVersionEntry(String name, Integer version, String schema) {
+            this.name = name;
+            this.version = version;
+            this.schema = schema;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Integer getVersion() {
+            return version;
+        }
+
+        public String getSchema() {
+            return schema;
+        }
+
+        @Override
+        public String toString() {
+            return "SchemaVersionEntry{" +
+                    "name='" + name + '\'' +
+                    ", version=" + version +
+                    ", schema='" + schema + '\'' +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SchemaVersionEntry that = (SchemaVersionEntry) o;
+
+            if (name != null ? !name.equals(that.name) : that.name != null) return false;
+            if (version != null ? !version.equals(that.version) : that.version != null) return false;
+            return schema != null ? schema.equals(that.schema) : that.schema == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (version != null ? version.hashCode() : 0);
+            result = 31 * result + (schema != null ? schema.hashCode() : 0);
+            return result;
+        }
+    }
+
     public static class SchemaString {
         private String schema;
 
@@ -188,18 +413,18 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
         }
 
         public boolean equals(Object o) {
-            if(this == o) {
+            if (this == o) {
                 return true;
-            } else if(o != null && this.getClass() == o.getClass()) {
-                if(!super.equals(o)) {
+            } else if (o != null && this.getClass() == o.getClass()) {
+                if (!super.equals(o)) {
                     return false;
                 } else {
-                    SchemaString that = (SchemaString)o;
-                    if(this.schema != null) {
-                        if(!this.schema.equals(that.schema)) {
+                    SchemaString that = (SchemaString) o;
+                    if (this.schema != null) {
+                        if (!this.schema.equals(that.schema)) {
                             return false;
                         }
-                    } else if(that.schema != null) {
+                    } else if (that.schema != null) {
                         return false;
                     }
 
@@ -212,7 +437,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
 
         public int hashCode() {
             int result = super.hashCode();
-            result = 31 * result + (this.schema != null?this.schema.hashCode():0);
+            result = 31 * result + (this.schema != null ? this.schema.hashCode() : 0);
             return result;
         }
 
@@ -236,7 +461,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
         public void setId(long id) {
             this.id = id;
         }
-        
+
     }
 
     public class Schema implements Comparable<Schema> {
@@ -293,14 +518,14 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
         }
 
         public boolean equals(Object o) {
-            if(this == o) {
+            if (this == o) {
                 return true;
-            } else if(o != null && this.getClass() == o.getClass()) {
-                Schema that = (Schema)o;
+            } else if (o != null && this.getClass() == o.getClass()) {
+                Schema that = (Schema) o;
                 return this.subject.equals(that.subject)
                         && (this.version.equals(that.version)
-                                && (this.id.equals(that.getId())
-                                        && this.schema.equals(that.schema)));
+                        && (this.id.equals(that.getId())
+                        && this.schema.equals(that.schema)));
             } else {
                 return false;
             }
@@ -323,7 +548,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends  BaseRegistryReso
 
         public int compareTo(Schema that) {
             int result = this.subject.compareTo(that.subject);
-            if(result != 0) {
+            if (result != 0) {
                 return result;
             } else {
                 result = this.version - that.version;
