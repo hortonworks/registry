@@ -679,6 +679,31 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return getEntities(currentSchemaRegistryTargets().schemasTarget.path(path), SerDesInfo.class);
     }
 
+    @Override
+    public void startReview(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void enable(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void delete(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void archive(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void disable(SchemaVersionKey schemaVersionKey) {
+
+    }
+
     public <T> T createSerializerInstance(SerDesInfo serDesInfo) {
         return createInstance(serDesInfo, true);
     }

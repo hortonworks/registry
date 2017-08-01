@@ -15,12 +15,17 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaFieldInfo implements Serializable {
+    private static final long serialVersionUID = -6194661942575334254L;
+
     public static final String ID = "id";
     public static final String SCHEMA_INSTANCE_ID = "schemaInstanceId";
     public static final String TIMESTAMP = "timestamp";

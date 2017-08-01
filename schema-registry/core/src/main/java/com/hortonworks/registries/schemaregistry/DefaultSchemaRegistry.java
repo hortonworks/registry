@@ -782,6 +782,31 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return getSerDesInfos(schemaName);
     }
 
+    @Override
+    public void enable(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void delete(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void archive(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void disable(SchemaVersionKey schemaVersionKey) {
+
+    }
+
+    @Override
+    public void startReview(SchemaVersionKey schemaVersionKey) {
+
+    }
+
     private Collection<SchemaSerDesMapping> getSchemaSerDesMappings(Long schemaMetadataId) {
         List<QueryParam> queryParams =
                 Collections.singletonList(new QueryParam(SchemaSerDesMapping.SCHEMA_METADATA_ID, schemaMetadataId.toString()));

@@ -219,4 +219,23 @@ public interface ISchemaRegistryService {
      */
     Collection<SerDesInfo> getSerDes(String schemaName);
 
+    default void enable(SchemaVersionKey schemaVersionKey){
+        throw new UnsupportedOperationException();
+    }
+
+    default void delete(SchemaVersionKey schemaVersionKey) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void archive(SchemaVersionKey schemaVersionKey) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void disable(SchemaVersionKey schemaVersionKey) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void startReview(SchemaVersionKey schemaVersionKey) {
+        throw new UnsupportedOperationException();
+    }
 }

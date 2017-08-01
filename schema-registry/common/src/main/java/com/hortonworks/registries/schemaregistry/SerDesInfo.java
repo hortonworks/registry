@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
@@ -22,7 +23,10 @@ import java.io.Serializable;
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SerDesInfo implements Serializable {
+    private static final long serialVersionUID = -3756866955883733874L;
+
     private Long id;
     private Long timestamp;
     private SerDesPair serDesPair;
