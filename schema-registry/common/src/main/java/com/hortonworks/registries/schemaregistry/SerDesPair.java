@@ -17,12 +17,17 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SerDesPair implements Serializable {
+    private static final long serialVersionUID = -1291992612139840722L;
+
     private String name;
     private String description;
     private String fileId;

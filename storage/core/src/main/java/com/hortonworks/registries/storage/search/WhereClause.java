@@ -17,6 +17,8 @@
  */
 package com.hortonworks.registries.storage.search;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +37,10 @@ import java.util.List;
  *
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WhereClause implements Serializable {
+    private static final long serialVersionUID = 901279529557954101L;
+
     protected List<PredicateCombinerPair> predicateCombinerPairs;
 
     private WhereClause() {

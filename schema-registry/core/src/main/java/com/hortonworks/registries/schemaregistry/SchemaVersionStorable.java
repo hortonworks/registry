@@ -39,6 +39,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String TIMESTAMP = "timestamp";
     public static final String FINGERPRINT = "fingerprint";
+    public static final String STATE = "state";
 
     public static final Schema.Field ID_FIELD = Schema.Field.of(ID, Schema.Type.LONG);
 
@@ -50,7 +51,8 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
         Schema.Field.of(VERSION, Schema.Type.INTEGER),
         Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-        Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
+        Schema.Field.of(FINGERPRINT, Schema.Type.STRING),
+        Schema.Field.of(STATE, Schema.Type.BYTE)
     );
     
 
