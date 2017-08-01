@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
@@ -25,6 +26,7 @@ import java.io.Serializable;
  *
  * It is not necessary that all fields are always available but the minimum information to find schema version is available.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class SchemaIdVersion implements Serializable {
     private static final long serialVersionUID = 6081264497288914406L;
 

@@ -17,6 +17,8 @@
  */
 package com.hortonworks.registries.storage.search;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +27,9 @@ import java.util.List;
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SearchQuery implements Serializable {
+    private static final long serialVersionUID = 3394075873934901992L;
     private String nameSpace;
     private List<OrderBy> orderByFields;
     private WhereClause whereClause;

@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
@@ -24,6 +25,7 @@ import java.io.Serializable;
 /**
  * This class is about metadata of a schema which includes name, type, schemaGroup, description, compatibility and evolve.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaMetadata implements Serializable {
 
     private static final long serialVersionUID = -6880986623123299254L;
