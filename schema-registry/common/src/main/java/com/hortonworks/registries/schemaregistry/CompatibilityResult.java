@@ -15,11 +15,14 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class CompatibilityResult implements Serializable {
     public static final CompatibilityResult SUCCESS = new CompatibilityResult(true, null);
 
