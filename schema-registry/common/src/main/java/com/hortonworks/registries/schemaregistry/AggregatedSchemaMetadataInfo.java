@@ -17,12 +17,15 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.util.Collection;
 
 /**
  * This class represents aggregated information about schema metadata which includes versions and mapped serdes.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AggregatedSchemaMetadataInfo implements Serializable {
 
     private static final long serialVersionUID = -414992394022547720L;

@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
@@ -22,6 +23,7 @@ import java.io.Serializable;
 /**
  * This class contains schema name and version.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class SchemaVersionKey implements Serializable {
 
     private static final long serialVersionUID = 1779747592974345866L;
