@@ -371,6 +371,7 @@ public class AvroSchemaRegistryClientTest extends AbstractAvroSchemaRegistryCien
         return schemaRegistryClient.uploadFile(inputStream);
     }
 
+
     @Test
     public void testSchemaVersionDeletion() throws Exception {
 
