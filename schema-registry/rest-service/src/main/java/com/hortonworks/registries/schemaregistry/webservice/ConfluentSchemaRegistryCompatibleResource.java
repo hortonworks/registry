@@ -224,8 +224,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @Path("/subjects/{subject}")
     @ApiOperation(value = "Get schema information for the given schema name and schema text", response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
-    public Response registerSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
-                                           @ApiParam(value = "The schema ", required = true) String schema) {
+    public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
+                                         @ApiParam(value = "The schema ", required = true) String schema) {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
