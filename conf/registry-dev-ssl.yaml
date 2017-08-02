@@ -1,5 +1,10 @@
 # registries configuration
 modules:
+# tag-registry configuration
+#  - name: tag-registry
+#    className: com.hortonworks.iotas.registries.tag.service.TagRegistryModule
+#
+# schema-registry configuration
   - name: schema-registry
     className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
     config:
@@ -7,12 +12,12 @@ modules:
         - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
           defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
+
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
       # inmemory schema version cache entry expiry interval after access
       schemaCacheExpiryInterval: 3600
-
 
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
@@ -29,6 +34,7 @@ servletFilters:
      redirectPaths: "/ui/,/"
 
 # HA configuration
+## When no configuration is set, then all the nodes in schema registry cluster are eligible to write to the backend storage.
 #haConfig:
 #  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
 #  config:
@@ -46,11 +52,31 @@ servletFilters:
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
-    directory: "/tmp/schema-registry/jars"
-
+    directory: "/tmp"
 # storage provider configuration
 storageProviderConfiguration:
  providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+# Example configuration for phoenix based JDBC driver
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "phoenix"
+#   queryTimeoutInSecs: 30
+#   db.properties:
+#     jdbcDriverClass: "com.hortonworks.phoenix.jdbc.PhoenixDriver"
+#     jdbcUrl: "jdbc:phoenix:localhost:2181"
+#
+# MySQL based jdbc provider configuration is:
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "mysql"
+#   queryTimeoutInSecs: 30
+#   db.properties:
+#     dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
+#     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+#     dataSource.user: ""
+#     dataSource.password: ""
 
 #swagger configuration
 swagger:
@@ -61,13 +87,58 @@ enableCors: false
 
 server:
   applicationConnectors:
-    - type: http
-      port: 9090
+    - type: https
+      port: 8443
+      keyStorePath: ./conf/keystore.jks 
+      keyStorePassword: test12 
+      validateCerts: false
+      validatePeers: false 
+  adminConnectors:
+    - type: https
+      port: 8444
+      keyStorePath: ./conf/keystore.jks 
+      keyStorePassword: test12
+      validateCerts: false
+      validatePeers: false
 
 # Logging settings.
 logging:
-  level: INFO
-  loggers:
-    com.hortonworks.registries: INFO
 
-  
+  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  level: INFO
+
+  # Logger-specific levels.
+  loggers:
+
+    # Sets the level for 'com.example.app' to DEBUG.
+    com.hortonworks.registries: DEBUG
+
+
+  appenders:
+    - type: console
+#    - type: file
+#      threshold: DEBUG
+#      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+#      currentLogFilename: /tmp/application.log
+#      archivedLogFilenamePattern: /tmp/application-%d{yyyy-MM-dd}-%i.log.gz
+#      archivedFileCount: 7
+#      timeZone: UTC
+#      maxFileSize: 10MB
+
+#jerseyClient:
+#  minThreads: 1
+#  maxThreads: 16
+#  workQueueSize: 1000
+#  gzipEnabled: true
+#  gzipEnabledForRequests: true
+#  chunkedEncodingEnabled: true
+#  timeout: 1000ms
+#  connectionTimeout: 1000ms
+#  timeToLive: 1h
+#  cookiesEnabled: false
+#  maxConnections: 10
+#  maxConnectionsPerRoute: 1024
+#  keepAlive: 0ms
+#  retries: 10
+#  userAgent: Storm-Client
+

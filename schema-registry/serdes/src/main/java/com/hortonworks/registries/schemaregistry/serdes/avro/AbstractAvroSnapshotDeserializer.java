@@ -112,8 +112,8 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
     }
 
     @Override
-    public void init(Map<String, ?> config) {
-        super.init(config);
+    public void doInit(Map<String, ?> config) {
+        super.doInit(config);
         SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
         avroSchemaResolver = new AvroSchemaResolver(schemaVersionRetriever);
         useSpecificAvroReader = (boolean) getValue(config, SPECIFIC_AVRO_READER, false);

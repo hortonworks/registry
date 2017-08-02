@@ -18,11 +18,11 @@
 
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
   id              BIGINT AUTO_INCREMENT NOT NULL,
-  type            VARCHAR(256)          NOT NULL,
-  schemaGroup     VARCHAR(256)          NOT NULL,
-  name            VARCHAR(256)          NOT NULL,
-  compatibility   VARCHAR(256)          NOT NULL,
-  validationLevel VARCHAR(256)          NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
+  type            VARCHAR(255)          NOT NULL,
+  schemaGroup     VARCHAR(255)          NOT NULL,
+  name            VARCHAR(255)          NOT NULL,
+  compatibility   VARCHAR(255)          NOT NULL,
+  validationLevel VARCHAR(255)          NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
   description     TEXT,
   evolve          BOOLEAN               NOT NULL,
   timestamp       BIGINT                NOT NULL,
@@ -38,22 +38,22 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  name             VARCHAR(256)          NOT NULL,
+  name             VARCHAR(255)          NOT NULL,
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
   PRIMARY KEY (name, version),
-  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
   id               BIGINT AUTO_INCREMENT NOT NULL,
   schemaInstanceId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  name             VARCHAR(256)          NOT NULL,
-  fieldNamespace   VARCHAR(256),
-  type             VARCHAR(256)          NOT NULL,
+  name             VARCHAR(255)          NOT NULL,
+  fieldNamespace   VARCHAR(255),
+  type             VARCHAR(255)          NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id)
+  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (

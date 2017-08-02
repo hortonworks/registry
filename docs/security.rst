@@ -1,6 +1,9 @@
 Running registry and streamline web-services securely
 =====================================================
 
+SPNEGO
+------
+
 This module is intended to be used by registry and streamline
 web-services so that they can enable http client authentication via
 SPNEGO. The supported authentication mechanism is Kerberos. The code for
@@ -83,3 +86,48 @@ above:
 **Caution**: In AD MIT Kerberos setup, the key size is bigger than the
 default UI jetty server request header size. If using MIT Kerberos with
 jettty server, make sure you set HTTP header buffer bytes to 65536
+
+SSL
+---
+This section talks about enabling SSL for Registry Server. Below steps mention about how to generate self signed certificates and use them with Registry Server.
+
+   1. Run the following to create a self-signed entry in the keystore.jks. The alias selfsigned can be anything you want.
+
+      ::
+
+       # keytool -genkey -alias selfsigned -keyalg RSA -keystore keystore.jks -keysize 2048
+
+   2. Export the certificate to selfsigned.crt with:
+
+      ::
+
+       # keytool -export -alias selfsigned -file selfsigned.crt -keystore keystore.jks
+
+   3. Import that certificate into your cacerts, the default Java keystore. You may need to do this as root, or with sudo.
+      Go to the /jre/lib/security directory, and run:
+
+      ::
+
+       # keytool -import -trustcacerts -alias selfsigned -file selfsigned.crt -keystore <path_to_java>/cacerts
+
+   4. Registry config for the server can be configured like below.
+
+      ::
+
+       server:
+         applicationConnectors:
+           - type: https
+             port: 8443
+             keyStorePath: ./conf/keystore.jks
+             keyStorePassword: test12
+             validateCerts: false
+             validatePeers: false
+         adminConnectors:
+           - type: https
+             port: 8444
+             keyStorePath: ./conf/keystore.jks
+             keyStorePassword: test12
+             validateCerts: false
+             validatePeers: false
+
+   5. When you start the server, you can access via https on the port 8443.

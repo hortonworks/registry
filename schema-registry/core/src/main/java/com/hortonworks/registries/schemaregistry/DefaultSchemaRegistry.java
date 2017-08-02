@@ -208,13 +208,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (retrievedschemaMetadataInfo != null) {
             schemaMetadataId = retrievedschemaMetadataInfo.getId();
             // check whether the same schema text exists
-            try {
-                schemaVersionInfo = getSchemaVersionInfo(schemaName, schemaVersion.getSchemaText());
-            } catch (SchemaNotFoundException e) {
+            schemaVersionInfo = getSchemaVersionInfo(schemaName, schemaVersion.getSchemaText());
+            if (schemaVersionInfo == null) {
                 schemaVersionInfo = createSchemaVersion(schemaMetadata,
-                                              retrievedschemaMetadataInfo.getId(),
-                                              schemaVersion.getSchemaText(),
-                                              schemaVersion.getDescription());
+                                                        retrievedschemaMetadataInfo.getId(),
+                                                        schemaVersion.getSchemaText(),
+                                                        schemaVersion.getDescription());
+
             }
         } else {
             schemaMetadataId = registerSchemaMetadata(schemaMetadata);
@@ -312,7 +312,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
                     break;
                 } catch (StorageException e) {
-                    // optimistic to try the next try would be successful. When retr attemps are exhausted, throw error back to invoker.
+                    // optimistic to try the next try would be successful. When retry attempts are exhausted, throw error back to invoker.
                     if (++retryCt == DEFAULT_RETRY_CT) {
                         LOG.error("Giving up after retry attempts [{}] while trying to add new version of schema with metadata [{}]", retryCt, schemaMetadata, e);
                         throw e;
@@ -371,7 +371,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) {
         return findSchemaMetadata(props)
                 .stream()
-                .map(this::buildAggregatedSchemaMetadataInfo)
+                .map(schemaMetadataInfo -> {
+                    try {
+                        return buildAggregatedSchemaMetadataInfo(schemaMetadataInfo);
+                    } catch (SchemaNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
@@ -513,8 +519,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(final String schemaName) {
+    public Collection<SchemaVersionInfo> getAllVersions(final String schemaName) throws SchemaNotFoundException {
         List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
+
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
+        if(schemaMetadataInfo == null) {
+            throw new SchemaNotFoundException("Schema not found with name " + schemaName);
+        }
 
         Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
         List<SchemaVersionInfo> schemaVersionInfos;
@@ -537,13 +548,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         Long schemaMetadataId = schemaMetadataInfo.getId();
-        SchemaVersionInfo result = findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
-
-        if (result == null) {
-            throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
-        }
-
-        return result;
+        return findSchemaVersion(schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
     }
 
     public SchemaVersionInfo getSchemaVersionInfo(Long id) throws SchemaNotFoundException {
@@ -596,6 +601,22 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
+    }
+
+    @Override
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        SchemaVersionInfoCache.Key schemaVersionCacheKey = new SchemaVersionInfoCache.Key(schemaVersionKey);
+        SchemaVersionInfo schemaVersionInfo = schemaVersionInfoCache.getSchema(schemaVersionCacheKey);
+        synchronized (addOrUpdateLock) {
+            schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
+            storageManager.remove(createSchemaVersionStorableKey(schemaVersionInfo.getId()));
+        }
+    }
+
+    private StorableKey createSchemaVersionStorableKey(Long id) {
+        SchemaVersionStorable schemaVersionStorable = new SchemaVersionStorable();
+        schemaVersionStorable.setId(id);
+        return schemaVersionStorable.getStorableKey();
     }
 
     private SchemaVersionInfo retrieveSchemaVersionInfo(SchemaIdVersion key) throws SchemaNotFoundException {
@@ -808,12 +829,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     }
 
-    public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) {
+    public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         return buildAggregatedSchemaMetadataInfo(schemaMetadataInfo);
     }
 
-    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {
+    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) throws SchemaNotFoundException {
         if(schemaMetadataInfo == null) {
             return null;
         }

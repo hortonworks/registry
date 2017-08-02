@@ -18,7 +18,7 @@ body {
   padding-bottom: 30px;
 }
 body.graph-bg {
-    background: #eef0ef url('../../../styles/img/graph-bg.png') repeat;
+    background: #eef0ef url('../../../ui/styles/img/graph-bg.png') repeat;
     /*background-size: 20px 20px;
     background-image: linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px);*/
 }

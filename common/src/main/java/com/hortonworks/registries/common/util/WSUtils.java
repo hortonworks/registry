@@ -52,6 +52,10 @@ public final class WSUtils {
                 .build();
     }
 
+    public static Response respond(Response.Status status) {
+        return Response.status(status).build();
+    }
+
     public static Response respond(Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
         return Response.status(status)
                 .entity(CatalogResponse.newResponse(msg).entity(null).format(formatArgs))

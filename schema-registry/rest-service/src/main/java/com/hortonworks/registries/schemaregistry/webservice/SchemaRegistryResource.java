@@ -55,6 +55,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -78,7 +79,7 @@ import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.OR
 /**
  * Schema Registry resource that provides schema registry REST service.
  */
-@Path("/v1/schemaregistry")
+@Path("/api/v1/schemaregistry")
 @Api(value = "/api/v1/schemaregistry", description = "Endpoint for Schema Registry service")
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaRegistryResource extends BaseRegistryResource {
@@ -755,4 +756,23 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         });
     }
 
+    @DELETE
+    @Path("/schemas/{name}/versions/{version}")
+    @ApiOperation(value = "Delete a schema version given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
+    public Response deleteSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                        @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                        @Context UriInfo uriInfo) {
+        SchemaVersionKey schemaVersionKey = null;
+        try {
+            schemaVersionKey = new SchemaVersionKey(schemaName, versionNumber);
+            schemaRegistry.deleteSchemaVersion(schemaVersionKey);
+            return WSUtils.respond(Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            LOG.info("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while deleting schemaVersion with name: [{}], version : [{}]", schemaName, versionNumber, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
 }

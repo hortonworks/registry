@@ -1,5 +1,7 @@
 # Registry
 
+[![Join the chat at https://gitter.im/registry-users/Lobby](https://badges.gitter.im/registry-users/Lobby.svg)](https://gitter.im/registry-users/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Registry is a framework to build metadata repositories. As part of Registry, we currently have SchemaRegistry and MLRegistry repositories.
 
 Follow [@schemaregistry](https://twitter.com/schemaregistry) on Twitter for updates on the project.

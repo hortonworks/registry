@@ -15,6 +15,20 @@ modules:
       # inmemory schema version cache entry expiry interval after access
       schemaCacheExpiryInterval: 3600
 
+servletFilters:
+# - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
+#   params:
+#     type: "kerberos"
+#     kerberos.principal: "HTTP/streamline-ui-host.com"
+#     kerberos.keytab: "/vagrant/keytabs/http.keytab"
+#     kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
+ - className: "com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter"
+   params:
+     # value format is [<targetpath>,<paths-should-be-redirected-to>,*|]*
+     # below /subjects and /schemas/ids are forwarded to /api/v1/confluent
+     forwardPaths: "/api/v1/confluent,/subjects/*,/schemas/ids/*"
+     redirectPaths: "/ui/,/"
+
 # HA configuration
 haConfig:
   className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
@@ -79,7 +93,6 @@ swagger:
 #    port: 8080
 
 server:
-  rootPath: '/api/*'
 #  softNofileLimit: 1000
 #  hardNofileLimit: 1000
   applicationConnectors:

@@ -19,7 +19,6 @@ import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaValidator;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
-import org.apache.avro.SchemaValidatorBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ import java.util.TreeSet;
  * schema can be successfully decoded using the specified reader schema.
  */
 public final class AvroSchemaValidator implements SchemaValidator<Schema> {
-    private static final Logger LOG = LoggerFactory.getLogger(SchemaCompatibility.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaValidator.class);
 
     private static final Map<SchemaCompatibility, SchemaCompatibilityValidator> COMPATIBILITY_VALIDATORS;
 

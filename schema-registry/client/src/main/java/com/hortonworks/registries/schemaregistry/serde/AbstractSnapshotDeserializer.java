@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  * @param <O> deserialized representation of the received payload
  * @param <S> parsed schema representation to be stored in local cache
  */
-public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotDeserializer<I, O, Integer> {
+public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerDes implements SnapshotDeserializer<I, O, Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSnapshotDeserializer.class);
 
     /**
@@ -78,39 +78,30 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
     public static final Long DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS = 60 * 5L;
 
     private LoadingCache<SchemaVersionKey, S> schemaCache;
-    protected ISchemaRegistryClient schemaRegistryClient;
 
     public AbstractSnapshotDeserializer() {
-        super();
     }
     
     public AbstractSnapshotDeserializer(ISchemaRegistryClient schemaRegistryClient) {
-        this.schemaRegistryClient = schemaRegistryClient;
+        super(schemaRegistryClient);
     }
     
-    @Override
-    public void init(Map<String, ?> config) {
-        LOG.debug("Initialized with config: [{}]", config);
-        if (schemaRegistryClient == null) {
-            schemaRegistryClient = new SchemaRegistryClient(config);
-        }
-
+    protected void doInit(Map<String, ?> config) {
         schemaCache = CacheBuilder.newBuilder()
                 .maximumSize(getCacheMaxSize(config))
-                .expireAfterAccess(getCacheExpiryInMillis(config), TimeUnit.MILLISECONDS)
+                .expireAfterAccess(getCacheExpiryInSecs(config), TimeUnit.SECONDS)
                 .build(new CacheLoader<SchemaVersionKey, S>() {
                     @Override
                     public S load(SchemaVersionKey schemaVersionKey) throws Exception {
                         return getParsedSchema(schemaVersionKey);
                     }
                 });
-
     }
 
-    private Long getCacheExpiryInMillis(Map<String, ?> config) {
+    private Long getCacheExpiryInSecs(Map<String, ?> config) {
         Long value = (Long) getValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS);
         if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + "must be non negative.");
+            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + " must be non negative.");
         }
         return value;
     }
@@ -118,7 +109,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
     private Integer getCacheMaxSize(Map<String, ?> config) {
         Integer value = (Integer) getValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
         if (value < 0) {
-            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + "must be non negative.");
+            throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + " must be non negative.");
         }
         return value;
     }
@@ -132,16 +123,23 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
     }
 
     /**
-     * Returns the parsed schema representation of the schema associated with the given {@code schemaVersionInfo}
-     * @param schemaVersionInfo
+     * Returns the parsed schema representation of the schema associated with the given {@code schemaVersionKey}
+     * @param schemaVersionKey
      * @throws InvalidSchemaException when the associated schema is not valid.
-     * @throws SchemaNotFoundException when there is no schema for the given {@code schemaVersionInfo}
+     * @throws SchemaNotFoundException when there is no schema for the given {@code schemaVersionKey}
      */
-    protected abstract S getParsedSchema(SchemaVersionKey schemaVersionInfo) throws InvalidSchemaException, SchemaNotFoundException;
+    protected abstract S getParsedSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException;
 
     @Override
     public O deserialize(I input,
                          Integer readerSchemaVersion) throws SerDesException {
+        if(!initialized) {
+            throw new IllegalStateException("init should be invoked before invoking deserialize operation");
+        }
+        if(closed) {
+            throw new IllegalStateException("This deserializer is already closed");
+        }
+
         // it can be enhanced to have respective protocol handlers for different versions
         byte protocolId = retrieveProtocolId(input);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, input);
@@ -200,8 +198,4 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> implements SnapshotD
         }
     }
 
-    @Override
-    public void close() throws Exception {
-        schemaRegistryClient.close();
-    }
 }

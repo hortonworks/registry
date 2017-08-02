@@ -217,7 +217,7 @@ export default class SchemaRegistryContainer extends Component {
   }
   onFilterChange = (e) => {
     this.setState({filterValue: e.target.value});
-  } 
+  }
   onFilterKeyPress = (e) => {
     if(e.key=='Enter'){
       this.setState({filterValue: e.target.value.trim(), activePage: 1}, () => {
@@ -238,7 +238,7 @@ export default class SchemaRegistryContainer extends Component {
     el.target.parentElement.setAttribute("class","active");
     //if sorting by name, then in ascending order
     //if sorting by timestamp, then in descending order
-    
+
     const sortObj = {key : eventKey , text : this.sortByKey(eventKey)};
     this.setState({sorted : sortObj}, () => {
       this.fetchData();
@@ -403,7 +403,6 @@ export default class SchemaRegistryContainer extends Component {
       var versionObj = _.find(s.versionsArr, {versionId: s.currentVersion});
       var totalVersions = s.versionsArr.length;
       var sortedVersions =  Utils.sortArray(s.versionsArr.slice(), 'versionId', false);
-      var versionIndex = _.findIndex(sortedVersions, {versionId: s.currentVersion});
       var header = (
         <div>
         <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
@@ -457,7 +456,7 @@ export default class SchemaRegistryContainer extends Component {
                         </div>
                         <div className="col-sm-6">
                             {s.renderCodemirror ?
-                            (s.evolve ? ([<h6 key="e.1" className="version-number-text">VERSION&nbsp;{totalVersions - versionIndex}</h6>,
+                            (s.evolve ? ([<h6 key="e.1" className="version-number-text">VERSION&nbsp;{versionObj.versionId}</h6>,
                               <button key="e.2" type="button" className="btn btn-link btn-edit-schema" onClick={this.handleAddVersion.bind(this, s)}>
                                 <i className="fa fa-pencil"></i>
                               </button>,
@@ -472,7 +471,7 @@ export default class SchemaRegistryContainer extends Component {
                                 />)
                             : (<div className="col-sm-12">
                                     <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                                        <img src="styles/img/start-loader.gif" alt="loading" />
+                                        <img src="../ui/styles/img/start-loader.gif" alt="loading" />
                                     </div>
                               </div>)
                             }
@@ -484,7 +483,7 @@ export default class SchemaRegistryContainer extends Component {
                         sortedVersions.map((v, i)=>{
                           return (
                               <li onClick={this.selectVersion.bind(this, v)} className={s.currentVersion === v.versionId? "clearfix current" : "clearfix"} key={i}>
-                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{totalVersions - i}</a>
+                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{v.versionId}</a>
                               <p><span className="log-time-text">{Utils.splitTimeStamp(new Date(v.timestamp))}</span> <br/><span className="text-muted">{i === (totalVersions - 1) ? 'CREATED': 'EDITED'}</span></p>
                               </li>
                           );
@@ -516,7 +515,7 @@ export default class SchemaRegistryContainer extends Component {
                 />)
                 : (<div className="col-sm-12">
                     <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                      <img src="styles/img/start-loader.gif" alt="loading" />
+                      <img src="../ui/styles/img/start-loader.gif" alt="loading" />
                     </div>
                 </div>)
               }
@@ -532,7 +531,7 @@ export default class SchemaRegistryContainer extends Component {
 </Panel>
       );
     });
-        
+
 
     return (
       <BaseContainer routes={this.props.routes} onLandingPage="false" breadcrumbData={this.breadcrumbData} headerContent={'All Schemas'}>
@@ -541,7 +540,7 @@ export default class SchemaRegistryContainer extends Component {
                   <i className="fa fa-plus"></i>
               </button>
           </div>
-          {!this.state.loading && this.state.dataFound ? 
+          {!this.state.loading && this.state.dataFound ?
             <div className="wrapper animated fadeIn">
               <div className="page-title-box row no-margin">
                   <div className="col-md-3 col-md-offset-6 text-right">
@@ -559,17 +558,17 @@ export default class SchemaRegistryContainer extends Component {
                       id="sortDropdown"
                       className="sortDropdown"
                     >
-                        <MenuItem onClick={this.onSortByClicked.bind(this,"name")}>
+                        <MenuItem active={this.state.sorted.key == 'name' ? true : false} onClick={this.onSortByClicked.bind(this,"name")}>
                             &nbsp;Name
                         </MenuItem>
-                        <MenuItem active onClick={this.onSortByClicked.bind(this,"timestamp")}>
+                        <MenuItem active={this.state.sorted.key == 'timestamp' ? true : false} onClick={this.onSortByClicked.bind(this,"timestamp")}>
                             &nbsp;Last Update
                         </MenuItem>
                     </DropdownButton>
                   </div>
               </div>
-            
-              {!this.state.loading && schemaEntities.length ? 
+
+              {!this.state.loading && schemaEntities.length ?
                 <div className="row">
                     <div className="col-md-12">
                       <PanelGroup
@@ -601,14 +600,14 @@ export default class SchemaRegistryContainer extends Component {
             </div>
             : !this.state.loading ? <NoData /> : null}
 
-          {this.state.loading ? 
+          {this.state.loading ?
             <div className="col-sm-12">
               <div className="loading-img text-center" style={{marginTop : "50px"}}>
-                <img src="styles/img/start-loader.gif" alt="loading" />
+                <img src="../ui/styles/img/start-loader.gif" alt="loading" />
               </div>
             </div>
             : null}
-  
+
         <FSModal ref="schemaModal" bsSize="large" data-title={this.state.modalTitle} data-resolve={this.handleSave.bind(this)}>
           <SchemaInfoForm ref="addSchema"/>
         </FSModal>
