@@ -403,7 +403,6 @@ export default class SchemaRegistryContainer extends Component {
       var versionObj = _.find(s.versionsArr, {versionId: s.currentVersion});
       var totalVersions = s.versionsArr.length;
       var sortedVersions =  Utils.sortArray(s.versionsArr.slice(), 'versionId', false);
-      var versionIndex = _.findIndex(sortedVersions, {versionId: s.currentVersion});
       var header = (
         <div>
         <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
@@ -457,7 +456,7 @@ export default class SchemaRegistryContainer extends Component {
                         </div>
                         <div className="col-sm-6">
                             {s.renderCodemirror ?
-                            (s.evolve ? ([<h6 key="e.1" className="version-number-text">VERSION&nbsp;{totalVersions - versionIndex}</h6>,
+                            (s.evolve ? ([<h6 key="e.1" className="version-number-text">VERSION&nbsp;{versionObj.versionId}</h6>,
                               <button key="e.2" type="button" className="btn btn-link btn-edit-schema" onClick={this.handleAddVersion.bind(this, s)}>
                                 <i className="fa fa-pencil"></i>
                               </button>,
@@ -484,7 +483,7 @@ export default class SchemaRegistryContainer extends Component {
                         sortedVersions.map((v, i)=>{
                           return (
                               <li onClick={this.selectVersion.bind(this, v)} className={s.currentVersion === v.versionId? "clearfix current" : "clearfix"} key={i}>
-                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{totalVersions - i}</a>
+                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{v.versionId}</a>
                               <p><span className="log-time-text">{Utils.splitTimeStamp(new Date(v.timestamp))}</span> <br/><span className="text-muted">{i === (totalVersions - 1) ? 'CREATED': 'EDITED'}</span></p>
                               </li>
                           );
@@ -559,10 +558,10 @@ export default class SchemaRegistryContainer extends Component {
                       id="sortDropdown"
                       className="sortDropdown"
                     >
-                        <MenuItem onClick={this.onSortByClicked.bind(this,"name")}>
+                        <MenuItem active={this.state.sorted.key == 'name' ? true : false} onClick={this.onSortByClicked.bind(this,"name")}>
                             &nbsp;Name
                         </MenuItem>
-                        <MenuItem active onClick={this.onSortByClicked.bind(this,"timestamp")}>
+                        <MenuItem active={this.state.sorted.key == 'timestamp' ? true : false} onClick={this.onSortByClicked.bind(this,"timestamp")}>
                             &nbsp;Last Update
                         </MenuItem>
                     </DropdownButton>
