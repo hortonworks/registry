@@ -38,6 +38,8 @@ import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.Random;
 
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
+
 /**
  *
  */
@@ -52,11 +54,11 @@ public class SchemaVersionProtocolHandlerTest {
         long[] ids = {((long) Integer.MAX_VALUE + delta), // more than int max, should trigger VERSION_ID_AS_LONG_PROTOCOL
                 ((long) Integer.MAX_VALUE - delta)}; // less than int max, should trigger VERSION_ID_AS_INT_PROTOCOL
         for (long id : ids) {
-            _testSerDes(id);
+            _testSerDes(id, SerDesProtocolHandlerRegistry.VERSION_ID_AS_INT_PROTOCOL);
         }
     }
 
-    private void _testSerDes(Long id) throws Exception {
+    private void _testSerDes(Long id, Number serdesProtocolVersion) throws Exception {
         SchemaMetadata schemaMetadata =
                 new SchemaMetadata.Builder("random-" + System.currentTimeMillis())
                         .schemaGroup("custom")
@@ -75,18 +77,18 @@ public class SchemaVersionProtocolHandlerTest {
         new Expectations() {
             {
                 mockSchemaRegistryClient.getSchemaMetadataInfo(anyString);
-                result = new SchemaMetadataInfo(schemaMetadata);
+                result = new SchemaMetadataInfo(schemaMetadata); minTimes=0; maxTimes=1;
 
                 mockSchemaRegistryClient.addSchemaVersion(withInstanceOf(SchemaMetadata.class), withInstanceOf(SchemaVersion.class));
-                result = schemaIdVersion;
+                result = schemaIdVersion; minTimes=0; maxTimes=1;
 
                 mockSchemaRegistryClient.getSchemaVersionInfo(withInstanceOf(SchemaVersionKey.class));
-                result = schemaVersionInfo;
+                result = schemaVersionInfo; minTimes=0; maxTimes=1;
             }
         };
 
         AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
-        serializer.init(Collections.singletonMap(AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.VERSION_ID_AS_INT_PROTOCOL));
+        serializer.init(Collections.singletonMap(SERDES_PROTOCOL_VERSION, serdesProtocolVersion));
 
         AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer();
         deserializer.init(Collections.emptyMap());
@@ -96,4 +98,20 @@ public class SchemaVersionProtocolHandlerTest {
 
         Assert.assertTrue(SpecificData.get().compare(input, deserializedObj, input.getSchema()) == 0);
     }
+
+    @Test
+    public void testIntegerSerDesProtocolVersion() throws Exception {
+       _testSerDes(1L, 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSerDesProtocolVersionAsMoreThan127() throws Exception {
+       _testSerDes(1L, Byte.MAX_VALUE + Math.abs(new Random().nextInt()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSerDesProtocolVersionAsLessThanZero() throws Exception {
+        _testSerDes(1L, new Random().nextInt(127) - 128);
+    }
+
 }
