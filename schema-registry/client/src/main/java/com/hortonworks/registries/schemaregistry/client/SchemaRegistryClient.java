@@ -48,6 +48,7 @@ import com.hortonworks.registries.schemaregistry.serde.pull.PullDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullSerializer;
 import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
 import org.apache.commons.io.IOUtils;
+import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.multipart.BodyPart;
@@ -59,6 +60,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 import javax.ws.rs.NotFoundException;
@@ -171,6 +174,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final SchemaMetadataCache schemaMetadataCache;
     private final Cache<SchemaDigestEntry, SchemaIdVersion> schemaTextCache;
 
+    private static final String SSL_CONFIGURATION_KEY = "schema.registry.client.ssl";
+    private static final String HOSTNAME_VERIFIER_CLASS_KEY = "hostnameVerifierClass";
+
     /**
      * Creates {@link SchemaRegistryClient} instance with the given yaml config.
      * @param confFile config file which contains the configuration entries.
@@ -190,10 +196,24 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         configuration = new Configuration(conf);
 
         ClientConfig config = createClientConfig(conf);
-        client = ClientBuilder.newBuilder()
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .withConfig(config)
-                .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE)
-                .build();
+                .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+        if(conf.containsKey(SSL_CONFIGURATION_KEY)) {
+            Map<String,String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
+            clientBuilder.sslContext(createSSLContext(sslConfigurations));
+            if(sslConfigurations.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
+                HostnameVerifier hostNameVerifier= null;
+                String hostNameVerifierClassName = sslConfigurations.get(HOSTNAME_VERIFIER_CLASS_KEY);
+                try {
+                    hostNameVerifier = (HostnameVerifier) Class.forName(hostNameVerifierClassName).newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to instantiate hostNameVerifierClass : "+hostNameVerifierClassName, e);
+                }
+                clientBuilder.hostnameVerifier(hostNameVerifier);
+            }
+        }
+        client = clientBuilder.build();
         client.register(MultiPartFeature.class);
 
         // get list of urls and create given or default UrlSelector.
@@ -226,6 +246,27 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 .expireAfterAccess(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue(),
                                    TimeUnit.MILLISECONDS)
                 .build();
+    }
+
+    protected SSLContext createSSLContext(Map<String, String> sslConfigurations) {
+        SslConfigurator sslConfigurator = SslConfigurator.newInstance();
+        String keyPassword = "keyPassword";
+        sslConfigurator.keyStoreType(sslConfigurations.get("keyStoreType"))
+                .keyStoreFile(sslConfigurations.get("keyStorePath"))
+                .keyStorePassword(sslConfigurations.get("keyStorePassword"))
+                .trustStoreType(sslConfigurations.get("trustStoreType"))
+                .trustStoreFile(sslConfigurations.get("trustStorePath"))
+                .trustStorePassword(sslConfigurations.get("trustStorePassword"))
+                .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
+                .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
+                .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
+                .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"))
+                .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
+                .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"))
+                .securityProtocol(sslConfigurations.get("protocol"));
+        if(sslConfigurations.containsKey(keyPassword))
+            sslConfigurator.keyPassword(sslConfigurations.get(keyPassword));
+        return sslConfigurator.createSSLContext();
     }
 
     private SchemaRegistryTargets currentSchemaRegistryTargets() {

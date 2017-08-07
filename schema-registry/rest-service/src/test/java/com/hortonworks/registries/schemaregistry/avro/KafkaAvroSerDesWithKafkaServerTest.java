@@ -16,10 +16,13 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.common.test.IntegrationTest;
+import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
+import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
+import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRunner;
+import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestName;
+import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
-import org.apache.avro.specific.SpecificData;
-import org.apache.avro.specific.SpecificRecord;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -35,13 +38,15 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.Assert;
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -54,18 +59,44 @@ import java.util.concurrent.TimeUnit;
  * These tests use embedded kafka cluster and sends/receives messages with producer/consumer apis by configuring
  * {@link KafkaAvroSerializer} and {@link KafkaAvroDeserializer}
  */
-@Category(IntegrationTest.class)
-public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegistryCientTest {
-    private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesWithKafkaServerTest.class);
 
-    @ClassRule
-    public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
+@RunWith(CustomParameterizedRunner.class)
+@Category(IntegrationTest.class)
+public class KafkaAvroSerDesWithKafkaServerTest {
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesWithKafkaServerTest.class);
+    private static EmbeddedKafkaCluster CLUSTER;
+    private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
+
+    @Rule
+    public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
+
+    @CustomParameterizedRunner.Parameters
+    public static Iterable<SchemaRegistryTestProfileType> profiles() {
+        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    }
+
+    @CustomParameterizedRunner.BeforeParam
+    public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
+        SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
+        SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
+        CLUSTER =  new EmbeddedKafkaCluster(1);
+        CLUSTER.start();
+    }
+
+    @CustomParameterizedRunner.AfterParam
+    public static void afterParam() throws Exception {
+        CLUSTER.stop();
+        SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.stopTestServer();
+    }
+
+    public KafkaAvroSerDesWithKafkaServerTest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
+    }
 
     @Test
     public void testPrimitivesInKafkaCluster() throws Exception {
         String topicPrefix = TEST_NAME_RULE.getMethodName();
 
-        Object[] msgs = generatePrimitivePayloads();
+        Object[] msgs = AvroSchemaRegistryClientUtil.generatePrimitivePayloads();
 
         _testWithKafkaCluster(topicPrefix, msgs);
     }
@@ -74,8 +105,8 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
     public void testAvroRecordsInKafkaCluster() throws Exception {
         String topicPrefix = TEST_NAME_RULE.getMethodName();
 
-        _testWithKafkaCluster(topicPrefix + "-generic", createGenericRecordForDevice());
-        _testWithKafkaCluster(topicPrefix + "-specific", createSpecificRecord());
+        _testWithKafkaCluster(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
+        _testWithKafkaCluster(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
     }
 
     private void _testWithKafkaCluster(String topicPrefix, Object[] msgs) throws InterruptedException {
@@ -98,7 +129,7 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
             Object value = consumerRecord.value();
             Assert.assertEquals(getKey(msg), consumerRecord.key());
-            assertAvroObjs(msg, value);
+            AvroSchemaRegistryClientUtil.assertAvroObjs(msg, value);
         } finally {
             CLUSTER.deleteTopic(topicName);
         }
@@ -124,7 +155,7 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
     private ConsumerRecords<String, Object> consumeMessage(String topicName, String bootstrapServers, String consumerGroup) throws InterruptedException {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.putAll(SCHEMA_REGISTRY_CLIENT_CONF);
+        props.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf());
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1000");
@@ -161,7 +192,7 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
         String bootstrapServers = CLUSTER.bootstrapServers();
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.putAll(SCHEMA_REGISTRY_CLIENT_CONF);
+        config.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf());
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
 
@@ -194,11 +225,11 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
         String topic = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
 
         // send initial message
-        Object initialMsg = createGenericRecordForDevice();
+        Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
         _testWithKafkaCluster(topic, initialMsg);
 
         // send a message with incompatible version of the schema
-        Object incompatMsg = createGenericRecordForIncompatDevice();
+        Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
             _testWithKafkaCluster(topic, incompatMsg);
             Assert.fail("An error should have been received here because of incompatible schemas");
@@ -207,7 +238,7 @@ public class KafkaAvroSerDesWithKafkaServerTest extends AbstractAvroSchemaRegist
         }
 
         // send a message with compatible version of the schema
-        Object compatMsg = createGenericRecordForCompatDevice();
+        Object compatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForCompatDevice();
         _testWithKafkaCluster(topic, compatMsg);
     }
 

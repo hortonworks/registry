@@ -15,21 +15,57 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
+import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
+import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRunner;
+import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestName;
+import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.serdes.Device;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
-import org.apache.avro.specific.SpecificData;
-import org.apache.avro.specific.SpecificRecord;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  *
  */
+
+@RunWith(CustomParameterizedRunner.class)
 @Category(IntegrationTest.class)
-public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
+public class KafkaAvroSerDesTest {
+
+    private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
+
+    @Rule
+    public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
+
+    @CustomParameterizedRunner.Parameters
+    public static Iterable<SchemaRegistryTestProfileType> profiles() {
+        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    }
+
+    @CustomParameterizedRunner.BeforeParam
+    public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
+        SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
+        SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
+    }
+
+    @CustomParameterizedRunner.AfterParam
+    public static void afterParam() throws Exception {
+        SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.stopTestServer();
+    }
+
+
+    public KafkaAvroSerDesTest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
+
+    }
 
     @Test
     public void testPrimitiveSerDes() {
@@ -39,7 +75,7 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
     }
 
     private void _testPrimitiveSerDes(String topicPrefix) {
-        Object[] payloads = generatePrimitivePayloads();
+        Object[] payloads = AvroSchemaRegistryClientUtil.generatePrimitivePayloads();
 
         for (Object payload : payloads) {
             String topic = topicPrefix + ":" + (payload != null ? payload.getClass().getName() : "null");
@@ -50,16 +86,17 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
 
     private void _testKafkaSerDes(String topic, boolean isKey, Object payload) {
         KafkaAvroSerializer avroSerializer = new KafkaAvroSerializer();
-        avroSerializer.configure(SCHEMA_REGISTRY_CLIENT_CONF, isKey);
+        Map<String,Object> schemaRegistryClientConf = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf();
+        avroSerializer.configure(schemaRegistryClientConf, isKey);
         KafkaAvroDeserializer avroDeserializer = new KafkaAvroDeserializer();
-        avroDeserializer.configure(SCHEMA_REGISTRY_CLIENT_CONF, isKey);
+        avroDeserializer.configure(schemaRegistryClientConf, isKey);
 
         byte[] serializedData = avroSerializer.serialize(topic, payload);
         Object deserializedObj = avroDeserializer.deserialize(topic, serializedData);
         if (payload instanceof byte[]) {
             Assert.assertArrayEquals((byte[]) payload, (byte[]) deserializedObj);
         } else {
-            assertAvroObjs(payload, deserializedObj);
+            AvroSchemaRegistryClientUtil.assertAvroObjs(payload, deserializedObj);
         }
     }
 
@@ -68,11 +105,11 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
         String topicPrefix = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
 
         String genericRecordTopic = topicPrefix + "-generic";
-        Object genericRecordForDevice = createGenericRecordForDevice();
+        Object genericRecordForDevice = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
         _testKafkaSerDes(genericRecordTopic, true, genericRecordForDevice);
         _testKafkaSerDes(genericRecordTopic, true, genericRecordForDevice);
 
-        Device specificRecord = createSpecificRecord();
+        Device specificRecord = AvroSchemaRegistryClientUtil.createSpecificRecord();
         String specificRecordTopic = topicPrefix + "-specific";
         _testKafkaSerDes(specificRecordTopic, true, specificRecord);
         _testKafkaSerDes(specificRecordTopic, false, specificRecord);
@@ -83,12 +120,12 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
         String topic = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
 
         // send initial message
-        Object initialMsg = createGenericRecordForDevice();
+        Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
         _testKafkaSerDes(topic, true, initialMsg);
         _testKafkaSerDes(topic, false, initialMsg);
 
         // send a message with incompatible version of the schema
-        Object incompatMsg = createGenericRecordForIncompatDevice();
+        Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
             _testKafkaSerDes(topic, true, incompatMsg);
             Assert.fail("An error should have been received here because of incompatible schemas");
@@ -97,7 +134,7 @@ public class KafkaAvroSerDesTest extends AbstractAvroSchemaRegistryCientTest {
         }
 
         // send a message with compatible version of the schema
-        Object compatMsg = createGenericRecordForCompatDevice();
+        Object compatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForCompatDevice();
         _testKafkaSerDes(topic, true, compatMsg);
         _testKafkaSerDes(topic, false, compatMsg);
     }
