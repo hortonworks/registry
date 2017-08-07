@@ -15,45 +15,64 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.google.common.io.Resources;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestConfiguration;
+import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
+import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
+import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRunner;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.curator.test.TestingServer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
  */
+@RunWith(CustomParameterizedRunner.class)
 public class LocalRegistryServerHATest {
+    private static SchemaRegistryTestConfiguration SCHEMA_REGISTRY_TEST_CONFIGURATION;
     private static final Logger LOG = LoggerFactory.getLogger(LocalRegistryServerHATest.class);
     private TestingServer testingServer;
-    private List<LocalSchemaRegistryServer> registryServers;
+    private List<SchemaRegistryTestServerClientWrapper> registryServers;
+
+    @CustomParameterizedRunner.Parameters
+    public static Iterable<SchemaRegistryTestProfileType> profiles() {
+        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT_HA, SchemaRegistryTestProfileType.SSL_HA);
+    }
+
+    @CustomParameterizedRunner.BeforeParam
+    public static void setUp(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws URISyntaxException {
+        SCHEMA_REGISTRY_TEST_CONFIGURATION = SchemaRegistryTestConfiguration.forProfileType(schemaRegistryTestProfileType);
+    }
+
+    public LocalRegistryServerHATest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
+
+    }
 
     @Before
     public void startZooKeeper() throws Exception {
         testingServer = new TestingServer(true);
-        URI configPath = Resources.getResource("schema-registry-test-ha.yaml").toURI();
-        String fileContent = IOUtils.toString(configPath, "UTF-8");
+        File serverYAMLFile = new File(SCHEMA_REGISTRY_TEST_CONFIGURATION.getServerYAMLPath());
+        String fileContent = FileUtils.readFileToString(serverYAMLFile,"UTF-8" );
 
         File registryConfigFile = File.createTempFile("ha-", ".yaml");
         registryConfigFile.deleteOnExit();
@@ -61,11 +80,12 @@ public class LocalRegistryServerHATest {
             IOUtils.write(fileContent.replace("__zk_connect_url__", testingServer.getConnectString()), writer);
         }
 
-        List<LocalSchemaRegistryServer> schemaRegistryServers = new ArrayList<>();
+        SchemaRegistryTestConfiguration testConfiguration = new SchemaRegistryTestConfiguration(registryConfigFile.getAbsolutePath(), SCHEMA_REGISTRY_TEST_CONFIGURATION.getClientYAMLPath());
+        List<SchemaRegistryTestServerClientWrapper> schemaRegistryServers = new ArrayList<>();
         for (int i = 1; i < 4; i++) {
-            LocalSchemaRegistryServer server = new LocalSchemaRegistryServer(registryConfigFile.getAbsolutePath());
+            SchemaRegistryTestServerClientWrapper server = new SchemaRegistryTestServerClientWrapper(testConfiguration);
             schemaRegistryServers.add(server);
-            server.start();
+            server.startTestServer();
         }
 
         registryServers = Collections.unmodifiableList(schemaRegistryServers);
@@ -73,9 +93,9 @@ public class LocalRegistryServerHATest {
 
     @After
     public void stopZooKeeper() throws Exception {
-        for (LocalSchemaRegistryServer registryServer : registryServers) {
+        for (SchemaRegistryTestServerClientWrapper registryServer : registryServers) {
             try {
-                registryServer.stop();
+                registryServer.startTestServer();
             } catch (Exception e) {
                 // ignore any exceptions as one of the servers have been already stopped and that may throw an exception.
             }
@@ -84,11 +104,11 @@ public class LocalRegistryServerHATest {
         testingServer.stop();
     }
 
-    private LocalSchemaRegistryServer leaderSchemaRegistryServer() {
-        LocalSchemaRegistryServer leader = null;
+    private SchemaRegistryTestServerClientWrapper leaderSchemaRegistryServer() {
+        SchemaRegistryTestServerClientWrapper leader = null;
 
         while (leader == null) {
-            for (LocalSchemaRegistryServer registryServer : registryServers) {
+            for (SchemaRegistryTestServerClientWrapper registryServer : registryServers) {
                 if (registryServer.hasLeadership()) {
                     leader = registryServer;
                 }
@@ -99,10 +119,10 @@ public class LocalRegistryServerHATest {
         return leader;
     }
     
-    private LocalSchemaRegistryServer followerSchemaRegistryServer() {
+    private SchemaRegistryTestServerClientWrapper followerSchemaRegistryServer() {
         leaderSchemaRegistryServer();
 
-        for (LocalSchemaRegistryServer registryServer : registryServers) {
+        for (SchemaRegistryTestServerClientWrapper registryServer : registryServers) {
             if (!registryServer.hasLeadership()) {
                 return registryServer;
             }
@@ -114,8 +134,8 @@ public class LocalRegistryServerHATest {
     @Test
     public void testHASanity() throws Exception {
 
-        LocalSchemaRegistryServer followerServer = followerSchemaRegistryServer();
-        SchemaRegistryClient schemaRegistryClient = createSchemaRegistryClient(followerServer.getLocalPort());
+        SchemaRegistryTestServerClientWrapper followerServer = followerSchemaRegistryServer();
+        SchemaRegistryClient schemaRegistryClient = followerServer.getClient();
 
         // registering schema metadata on follower, this should have been redirected to leader.
         String schemaName = "foo";
@@ -130,27 +150,22 @@ public class LocalRegistryServerHATest {
 
         // retrieve schema on leader as the schema data is stored in memory in leader. this data does not exist on
         // followers as the storage is inmemory.
-        LocalSchemaRegistryServer leaderServer = leaderSchemaRegistryServer();
+        SchemaRegistryTestServerClientWrapper leaderServer = leaderSchemaRegistryServer();
         int leaderPort = leaderServer.getLocalPort();
-        SchemaRegistryClient leaderClient = createSchemaRegistryClient(leaderPort);
+        SchemaRegistryClient leaderClient = leaderServer.getClient();
         SchemaMetadataInfo schemaMetadataInfo = leaderClient.getSchemaMetadataInfo(schemaName);
         Assert.assertEquals(schemaMetadata, schemaMetadataInfo.getSchemaMetadata());
 
         // stop the leader server
-        leaderServer.stop();
+        leaderServer.stopTestServer();
 
         // get the new leader server and run operations.
-        LocalSchemaRegistryServer newLeaderServer = leaderSchemaRegistryServer();
+        SchemaRegistryTestServerClientWrapper newLeaderServer = leaderSchemaRegistryServer();
         Assert.assertNotEquals(leaderPort, newLeaderServer.getLocalPort());
 
-        leaderClient = createSchemaRegistryClient(newLeaderServer.getLocalPort());
+        leaderClient = newLeaderServer.getClient();
         String receivedSchema = leaderClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v1.getVersion())).getSchemaText();
         Assert.assertEquals(schema1, receivedSchema);
     }
 
-    private SchemaRegistryClient createSchemaRegistryClient(int localPort) {
-        final String rootUrl = String.format("http://localhost:%d/api/v1", localPort);
-        final Map<String, String> SCHEMA_REGISTRY_CLIENT_CONF = Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), rootUrl);
-        return new SchemaRegistryClient(SCHEMA_REGISTRY_CLIENT_CONF);
-    }
 }

@@ -1,4 +1,4 @@
-schema.registry.url : "http://localhost:9191/api/v1"
+schema.registry.url : "__registry_url"
 schema.registry.client.local.jars.path : "/tmp/schema-registry/local-jars"
 schema.registry.client.class.loader.cache.size : 1024
 schema.registry.client.class.loader.cache.expiry.interval : 3600
@@ -9,19 +9,19 @@ schema.registry.client.schema.text.cache.size : 1024
 schema.registry.client.schema.text.cache.expiry.interval : 300
 schema.registry.client.url.selector : "com.hortonworks.registries.schemaregistry.client.FailoverUrlSelector"
 
-#schema.registry.client.ssl:
-#  protocol: SSL
-#  hostnameVerifierClass:
-#  keyStoreType:
-#  keyStorePath:
-#  keyStorePassword:
-#  keyStoreProvider:
+schema.registry.client.ssl:
+  protocol: SSL
+  hostnameVerifierClass: com.hortonworks.registries.schemaregistry.avro.util.AcceptAllHostnameVerifier
+  keyStoreType: JKS
+  keyStorePath: ./src/test/resources/jks/client.jks
+  keyStorePassword: clientpwd
 #  keyPassword:
+#  keyStoreProvider:
 #  keyManagerFactoryProvider:
 #  keyManagerFactoryAlgorithm:
-#  trustStoreType:
-#  trustStorePath:
-#  trustStorePassword:
+  trustStoreType: JKS
+  trustStorePath: ./src/test/resources/jks/client.jks
+  trustStorePassword: clientpwd
 #  trustStoreProvider:
 #  trustManagerFactoryProvider:
 #  trustManagerFactoryAlgorithm:

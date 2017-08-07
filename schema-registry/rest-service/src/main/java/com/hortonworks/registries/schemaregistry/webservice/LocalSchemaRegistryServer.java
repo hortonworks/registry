@@ -86,6 +86,10 @@ public class LocalSchemaRegistryServer {
         return registryApplication.getAdminPort();
     }
 
+    public String getLocalURL() {
+        return registryApplication.localServer.getURI().toString();
+    }
+
     /**
      * Returns true if this server is the leader in registry cluster.
      */
