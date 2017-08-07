@@ -17,9 +17,6 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
-import java.io.OutputStream;
-import java.util.Map;
-
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
@@ -28,6 +25,9 @@ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 import org.apache.avro.Schema;
+
+import java.io.OutputStream;
+import java.util.Map;
 
 /**
  * The below example describes how to extend this serializer with user supplied representation like MessageContext class.
@@ -80,29 +80,40 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     public AbstractAvroSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
         super(schemaRegistryClient);
     }
- 
+
     /**
      * Property name for protocol version to be set with {@link #init(Map)}.
      */
     public static final String SERDES_PROTOCOL_VERSION = "serdes.protocol.version";
-    
+
     protected SerDesProtocolHandler serDesProtocolHandler;
 
     @Override
     public void init(Map<String, ?> config) {
         super.init(config);
 
-        Byte protocolVersion = (Byte) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
+        Number number = (Number) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION,
+                                                                             SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
+        validateSerdesProtocolVersion(number);
+
+        Byte protocolVersion = number.byteValue();
 
         SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion);
         if (serDesProtocolHandler == null) {
             throw new IllegalArgumentException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
         }
-        
+
         this.serDesProtocolHandler = serDesProtocolHandler;
-        
     }
-    
+
+    private void validateSerdesProtocolVersion(Number number) {
+        final long x;
+        if ((x = number.longValue()) != number.doubleValue()
+                || (x < 0 || x > Byte.MAX_VALUE)) {
+            throw new IllegalArgumentException(SERDES_PROTOCOL_VERSION+ " value should be in [0, "+Byte.MAX_VALUE+"]");
+        }
+    }
+
     /**
      * @param input avro object
      * @return textual representation of the schema of the given {@code input} avro object
@@ -111,8 +122,6 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         Schema schema = AvroUtils.computeSchema(input);
         return schema.toString();
     }
-    
-    
 
     protected void serializeSchemaVersion(OutputStream os, SchemaIdVersion schemaIdVersion) throws SerDesException {
         serDesProtocolHandler.handleSchemaVersionSerialization(os, schemaIdVersion);
