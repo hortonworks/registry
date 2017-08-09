@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -63,6 +64,7 @@ import static com.hortonworks.registries.schemaregistry.avro.ConfluentProtocolCo
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.incompatibleSchemaError;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.invalidSchemaError;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.subjectNotFoundError;
+import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.versionNotFoundError;
 
 /**
  * Tests related to APIs exposed with {@link ConfluentSchemaRegistryCompatibleResource}
@@ -214,6 +216,57 @@ public class ConfluentRegistryCompatibleResourceTest {
     }
 
     @Test
+    public void testSubjectWithVersionIdApi() throws Exception {
+        String subject = testName();
+        String response = postSubjectSchema(subject,
+                                            fetchSchema("/device.avsc")).readEntity(String.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        long id = objectMapper.readValue(response, Id.class).getId();
+        Assert.assertTrue(id > 0);
+
+        String validResponse = rootTarget.path(String.format("/subjects/%s/versions/%s", subject, id))
+                                         .request(MediaType.APPLICATION_JSON_TYPE)
+                                         .get(String.class);
+        SchemaVersionEntry schemaVersionEntry = new ObjectMapper().readValue(validResponse, SchemaVersionEntry.class);
+        Assert.assertEquals(subject, schemaVersionEntry.getName());
+        Assert.assertEquals(id, schemaVersionEntry.getVersion().intValue());
+
+        // invalid subject, valid version
+        String invalidSubject = subject + new Random().nextInt();
+        Response invalidSubjectResponse = rootTarget.path(String.format("/subjects/%s/versions/%s", invalidSubject, id))
+                                                    .request(MediaType.APPLICATION_JSON_TYPE)
+                                                    .get();
+        Assert.assertEquals(subjectNotFoundError().getEntity(),
+                            objectMapper.readValue(invalidSubjectResponse.readEntity(String.class), ErrorMessage.class));
+
+        // valid subject, invalid versions
+        String[] invalidVersions = {
+                id + 10 + "", // non existing version
+                "invalid-version", // invalid version string
+                -1 + "", // invalid version number can not be <= 0
+                0 + "", // invalid version number can not be <= 0
+                ((long) Integer.MAX_VALUE) + 10L + "" // invalid version number, can not be > Integer.MAX_VALUE
+        };
+        for (String invalidVersion : invalidVersions) {
+            Response invalidVersionResponse = rootTarget.path(String.format("/subjects/%s/versions/%s", subject, invalidVersion))
+                                                        .request(MediaType.APPLICATION_JSON_TYPE)
+                                                        .get();
+            Assert.assertEquals(versionNotFoundError().getEntity(),
+                                objectMapper.readValue(invalidVersionResponse.readEntity(String.class), ErrorMessage.class));
+        }
+
+        // valid subject, version belonging to a different subject
+        String newSubject = testName() + 1;
+        postSubjectSchema(newSubject,
+                          fetchSchema("/device-compat.avsc")).readEntity(String.class);
+        Response validSubInvalidVerResp = rootTarget.path(String.format("/subjects/%s/versions/%s", newSubject, id))
+                                                    .request(MediaType.APPLICATION_JSON_TYPE)
+                                                    .get();
+        Assert.assertEquals(versionNotFoundError().getEntity(),
+                            objectMapper.readValue(validSubInvalidVerResp.readEntity(String.class), ErrorMessage.class));
+    }
+
+    @Test
     public void testInValidSchemas() throws Exception {
         // add invalid schema
         Response invalidSchemaResponse = postSubjectSchema(testName(),
@@ -222,7 +275,7 @@ public class ConfluentRegistryCompatibleResourceTest {
 
         ErrorMessage errorMessage = new ObjectMapper().readValue(invalidSchemaResponse.readEntity(String.class),
                                                                  ErrorMessage.class);
-        Assert.assertEquals(((ErrorMessage) invalidSchemaError().getEntity()).getErrorCode(), errorMessage.getErrorCode());
+        Assert.assertEquals(invalidSchemaError().getEntity(), errorMessage);
     }
 
 
@@ -242,8 +295,7 @@ public class ConfluentRegistryCompatibleResourceTest {
 
         ErrorMessage errorMessage = objectMapper.readValue(incompatSchemaResponse.readEntity(String.class),
                                                            ErrorMessage.class);
-        Assert.assertEquals(((ErrorMessage) incompatibleSchemaError().getEntity()).getErrorCode(),
-                            errorMessage.getErrorCode());
+        Assert.assertEquals(incompatibleSchemaError().getEntity(), errorMessage);
     }
 
     @Test
@@ -257,7 +309,7 @@ public class ConfluentRegistryCompatibleResourceTest {
         Assert.assertEquals(subjectNotFoundError().getStatus(),
                             nonExistingSubjectResponse.getStatus());
 
-        Assert.assertEquals(((ErrorMessage) subjectNotFoundError().getEntity()).getErrorCode(), errorMessage.getErrorCode());
+        Assert.assertEquals(subjectNotFoundError().getEntity(), errorMessage);
     }
 
     private List<String> getAllSubjects() throws IOException {
