@@ -164,7 +164,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     @GET
     @Path("/subjects/{subject}/versions")
-    @ApiOperation(value = "Get all registered subjects",
+    @ApiOperation(value = "Get all schema versions of given subject",
             response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     public Response getAllVersions(@ApiParam(value = "subject", required = true)
@@ -190,7 +190,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     @GET
     @Path("/subjects/{subject}/versions/{versionId}")
-    @ApiOperation(value = "Get all registered subjects",
+    @ApiOperation(value = "Get the schema information for given subject and versionId",
             response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     public Response getSchemaVersion(@ApiParam(value = "subject", required = true)
@@ -201,18 +201,50 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                              String versionId) {
         Response response;
         try {
+            SchemaVersionInfo schemaVersionInfo = null;
 
-            SchemaVersionInfo schemaVersionInfo = "latest".equals(versionId)
-                    ? schemaRegistry.getLatestSchemaVersionInfo(subject)
-                    : schemaRegistry.getSchemaVersionInfo(Long.valueOf(versionId));
+            if ("latest".equals(versionId)) {
+                schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(subject);
+            } else {
+                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
+                if (schemaMetadataInfo == null) {
+                    throw new SchemaNotFoundException();
+                }
+                SchemaVersionInfo fetchedSchemaVersionInfo = null;
+                try {
+                    Long id = Long.valueOf(versionId);
+                    if (id > 0 && id <= Integer.MAX_VALUE) {
+                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(id);
+                    } else {
+                        LOG.error("versionId is not in valid range [{}, {}] ", 1, Integer.MAX_VALUE);
+                    }
+                } catch (NumberFormatException e) {
+                    LOG.error("Invalid version id string ", versionId, e);
+                } catch (SchemaNotFoundException e) {
+                    LOG.error("Schema version not found with version id [{}]", versionId, e);
+                }
 
-            SchemaVersionEntry schemaVersionEntry = new SchemaVersionEntry(schemaVersionInfo.getName(),
-                                                                           schemaVersionInfo.getId().intValue(),
-                                                                           schemaVersionInfo.getSchemaText());
-            response = WSUtils.respondEntity(schemaVersionEntry, Response.Status.OK);
+                if (fetchedSchemaVersionInfo != null) {
+                    if (subject.equals(fetchedSchemaVersionInfo.getName())) {
+                        schemaVersionInfo = fetchedSchemaVersionInfo;
+                    } else {
+                        LOG.error("Received schema version for id [{}] belongs to subject [{}] which is different from requested subject [{}]",
+                                  versionId, fetchedSchemaVersionInfo.getName(), subject);
+                    }
+                }
+            }
+
+            if (schemaVersionInfo == null) {
+                response = versionNotFoundError();
+            } else {
+                SchemaVersionEntry schemaVersionEntry = new SchemaVersionEntry(schemaVersionInfo.getName(),
+                                                                               schemaVersionInfo.getId().intValue(),
+                                                                               schemaVersionInfo.getSchemaText());
+                response = WSUtils.respondEntity(schemaVersionEntry, Response.Status.OK);
+            }
         } catch (SchemaNotFoundException ex) {
-            LOG.error("No schema version found with id [{}]", versionId, ex);
-            response = versionNotFoundError();
+            LOG.error("No schema found with subject [{}]", subject, ex);
+            response = subjectNotFoundError();
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
             response = serverError();
@@ -300,9 +332,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             return response;
         });
     }
+
     public static Response serverError() {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                       .entity(new ErrorMessage(50001, " Error in the backend datastore\n"))
+                       .entity(new ErrorMessage(50001, "Error in the backend data store"))
                        .build();
     }
 
