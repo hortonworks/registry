@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   "description"     TEXT,
   "evolve"          BOOLEAN      NOT NULL,
   "timestamp"       BIGINT       NOT NULL,
-  UNIQUE ("id", "name")
+  UNIQUE ("id"),
+  PRIMARY KEY ( "name")
 );
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
