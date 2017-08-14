@@ -41,7 +41,7 @@ modules:
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
-    directory: "/schema-registry/jars"
+    directory: "/tmp/schema-registry/jars"
 
 
 # MySQL based jdbc provider configuration is:

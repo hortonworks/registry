@@ -1,4 +1,4 @@
--- Copyright 2016 Hortonworks.
+﻿﻿-- Copyright 2016 Hortonworks.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,16 +17,17 @@
 -- USE schema_registry
 
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
-  "id"              SERIAL PRIMARY KEY,
-  "type"            VARCHAR(256) NOT NULL,
-  "schemaGroup"     VARCHAR(256) NOT NULL,
-  "name"            VARCHAR(256) NOT NULL,
-  "compatibility"   VARCHAR(256) NOT NULL,
-  "validationLevel" VARCHAR(256) NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
+  "id"              SERIAL UNIQUE NOT NULL,
+  "type"            VARCHAR(255) NOT NULL,
+  "schemaGroup"     VARCHAR(255) NOT NULL,
+  "name"            VARCHAR(255) NOT NULL,
+  "compatibility"   VARCHAR(255) NOT NULL,
+  "validationLevel" VARCHAR(255) NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
   "description"     TEXT,
   "evolve"          BOOLEAN      NOT NULL,
   "timestamp"       BIGINT       NOT NULL,
-  UNIQUE ("id", "name")
+  PRIMARY KEY ( "name"),
+  UNIQUE ("id")
 );
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
@@ -37,19 +38,20 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   "version"          INT           NOT NULL,
   "schemaMetadataId" BIGINT        NOT NULL,
   "timestamp"        BIGINT        NOT NULL,
-  "name"             VARCHAR(256)  NOT NULL,
+  "name"             VARCHAR(255)  NOT NULL,
   UNIQUE ("schemaMetadataId", "version"),
   PRIMARY KEY ("name", "version"),
-  FOREIGN KEY ("schemaMetadataId", "name") REFERENCES schema_metadata_info ("id", "name")
+  FOREIGN KEY ("schemaMetadataId") REFERENCES schema_metadata_info ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY ("name") REFERENCES schema_metadata_info ("name") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
   "id"               SERIAL PRIMARY KEY,
   "schemaInstanceId" BIGINT       NOT NULL,
   "timestamp"        BIGINT       NOT NULL,
-  "name"             VARCHAR(256) NOT NULL,
-  "fieldNamespace"   VARCHAR(256),
-  "type"             VARCHAR(256) NOT NULL,
+  "name"             VARCHAR(255) NOT NULL,
+  "fieldNamespace"   VARCHAR(255),
+  "type"             VARCHAR(255) NOT NULL,
   FOREIGN KEY ("schemaInstanceId") REFERENCES schema_version_info ("id")
 );
 
@@ -69,3 +71,4 @@ CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
 
   UNIQUE ("schemaMetadataId", "serDesId")
 );
+
