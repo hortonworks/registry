@@ -15,12 +15,17 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  * This class represents details about versioned instance of a schema which includes description and schema text.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaVersion implements Serializable {
+    private static final long serialVersionUID = 1664618495690787804L;
+
     private String description;
     private String schemaText;
 

@@ -17,12 +17,17 @@
  */
 package com.hortonworks.registries.storage.search;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Predicate implements Serializable {
+    private static final long serialVersionUID = 3928533466168563000L;
+
     public enum Operation {EQ, LT, GT, LTE, GTE, CONTAINS}
 
     private String field;

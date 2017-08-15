@@ -27,6 +27,8 @@ import java.util.Collections;
  */
 public final class ConfigEntry<T> implements Serializable {
 
+    private static final long serialVersionUID = -3408548579276359761L;
+
     private final String name;
     private final Class<? extends T> type;
     private final String description;

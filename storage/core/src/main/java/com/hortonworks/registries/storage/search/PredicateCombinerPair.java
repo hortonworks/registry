@@ -17,12 +17,16 @@
  */
 package com.hortonworks.registries.storage.search;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PredicateCombinerPair implements Serializable {
+    private static final long serialVersionUID = 8860616526693470116L;
     private Predicate predicate;
     private WhereClauseCombiner.Operation combinerOperation;
 
