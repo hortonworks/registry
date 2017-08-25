@@ -37,7 +37,7 @@ limitations under the License.
 
 ## Committers
 
-* Satish Duggana ([@0xfeed](https://twitter.com/0xeed))
+* Satish Duggana ([@0xeed](https://twitter.com/0xeed))
 * Michael Andre Pearce ([@itsourcery](http://twitter.com/itsourcery))
 * Sriharsha Chintalapani ([@d3fmacro](http://twitter.com/d3fmacro))
 * Priyank Shah ([@priyank5485](http://twitter.com/priyank5485))
