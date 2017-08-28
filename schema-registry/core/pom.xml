@@ -92,10 +92,16 @@
 
         <!-- test dependencies -->
         <dependency>
+            <groupId>org.jmockit</groupId>
+            <artifactId>jmockit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>storage-core</artifactId>

@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import java.io.Serializable;
 public class SchemaMetadata implements Serializable {
 
     private static final long serialVersionUID = -6880986623123299254L;
+
     /**
      * Type of a schema, which can be AVRO, JSON, PROTOBUF etc
      */
@@ -164,7 +165,8 @@ public class SchemaMetadata implements Serializable {
         if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (getValidationLevel() != null ? !getValidationLevel().equals(that.getValidationLevel()) : that.getValidationLevel() != null) return false;
+        if (getValidationLevel() != null ? !getValidationLevel().equals(that.getValidationLevel())
+                                         : that.getValidationLevel() != null) return false;
         return getCompatibility() == that.getCompatibility();
     }
 
@@ -212,12 +214,14 @@ public class SchemaMetadata implements Serializable {
             description = schemaMetadata.getDescription();
             compatibility = schemaMetadata.getCompatibility();
             validationLevel = schemaMetadata.getValidationLevel();
-            evolve = schemaMetadata.evolve;
+            evolve = schemaMetadata.isEvolve();
         }
 
         /**
          * @param schemaGroup schema group to which this schema belongs to. For ex: kafka, hive etc
          *                    This can be used in querying schemas belonging to a specific schema group.
+         *
+         * @return the current instance.
          */
         public Builder schemaGroup(String schemaGroup) {
             this.schemaGroup = schemaGroup;
@@ -226,6 +230,8 @@ public class SchemaMetadata implements Serializable {
 
         /**
          * @param type Type of a schema, which can be AVRO, JSON, PROTOBUF etc
+         *
+         * @return the current instance.
          */
         public Builder type(String type) {
             Preconditions.checkNotNull(type, "type can not be null");
@@ -235,6 +241,8 @@ public class SchemaMetadata implements Serializable {
 
         /**
          * @param description Description about the schema metadata.
+         *
+         * @return the current instance.
          */
         public Builder description(String description) {
             this.description = description;
@@ -243,6 +251,8 @@ public class SchemaMetadata implements Serializable {
 
         /**
          * @param compatibility Compatibility to be supported for all versions of this evolving schema.
+         *
+         * @return the current instance.
          */
         public Builder compatibility(SchemaCompatibility compatibility) {
             this.compatibility = compatibility;
@@ -251,6 +261,8 @@ public class SchemaMetadata implements Serializable {
 
         /**
          * @param validationLevel Validation level to be supported for versions of this evolving schema, all or latest.
+         *
+         * @return the current instance.
          */
         public Builder validationLevel(SchemaValidationLevel validationLevel) {
             this.validationLevel = validationLevel;
@@ -260,12 +272,17 @@ public class SchemaMetadata implements Serializable {
         /**
          * @param evolve whether to support multiple version of a schema. If it is set to false then only one version
          *               of the schema can be added.
+         *
+         * @return the current instance.
          */
         public Builder evolve(boolean evolve) {
             this.evolve = evolve;
             return this;
         }
 
+        /**
+         * @return SchemaMetadata instance built from the
+         */
         public SchemaMetadata build() {
             return new SchemaMetadata(name, type, schemaGroup, description, compatibility, validationLevel, evolve);
         }

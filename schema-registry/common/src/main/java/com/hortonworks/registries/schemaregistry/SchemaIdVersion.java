@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,8 @@ public final class SchemaIdVersion implements Serializable {
 
     /** Private constructor for Jackson JSON mapping */
     @SuppressWarnings("unused")
-    private SchemaIdVersion() { }
+    private SchemaIdVersion() {
+    }
 
     /**
      * @param schemaMetadataId unique id of schema metadata
@@ -57,7 +58,7 @@ public final class SchemaIdVersion implements Serializable {
     public SchemaIdVersion(Long schemaMetadataId, Integer version, Long schemaVersionId) {
         Preconditions.checkNotNull(schemaMetadataId, "schemaMetadataId can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
-        Preconditions.checkNotNull(schemaVersionId, "schemaMetadataId can not be null");
+        Preconditions.checkNotNull(schemaVersionId, "schemaVersionId can not be null");
         this.schemaMetadataId = schemaMetadataId;
         this.version = version;
         this.schemaVersionId = schemaVersionId;
@@ -66,7 +67,9 @@ public final class SchemaIdVersion implements Serializable {
     /**
      * @return version of the schema
      */
-    public Integer getVersion() { return version; }
+    public Integer getVersion() {
+        return version;
+    }
 
     /**
      * @return unique id of the schema metadata.
@@ -98,17 +101,27 @@ public final class SchemaIdVersion implements Serializable {
 
         SchemaIdVersion that = (SchemaIdVersion) o;
 
+        // check for schemaVersionId when they are equal
+        if (schemaVersionId != null && that.schemaVersionId != null) {
+            return schemaVersionId.equals(that.schemaVersionId);
+        }
+
         if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
             return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        return schemaVersionId != null ? schemaVersionId.equals(that.schemaVersionId) : that.schemaVersionId == null;
+        return (version != null ? version.equals(that.version) : that.version == null);
     }
 
     @Override
     public int hashCode() {
-        int result = schemaMetadataId != null ? schemaMetadataId.hashCode() : 0;
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (schemaVersionId != null ? schemaVersionId.hashCode() : 0);
+        int result = 0;
+        // if schemaVersionId is not nul, then their hashcodes should be same is sufficient as these objects are equal if
+        // their non null schemaVersionId fields are equal.
+        if (schemaVersionId != null) {
+            result = schemaVersionId.hashCode();
+        } else {
+            result = (schemaMetadataId != null ? schemaMetadataId.hashCode() : 0);
+            result = 31 * result + (version != null ? version.hashCode() : 0);
+        }
         return result;
     }
 }

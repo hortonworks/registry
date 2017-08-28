@@ -23,30 +23,24 @@ package com.hortonworks.registries.schemaregistry.serde.pull;
 public interface PullEventContext<F> {
 
     /**
-     * Returns true if this context indicates start of a record.
-     *
-     * @return
+     * @return true if this context indicates start of a record.
      */
     boolean startRecord();
 
     /**
-     * Returns true if this context indicates end of a record.
-     *
-     * @return
+     * @return true if this context indicates end of a record.
      */
     boolean endRecord();
 
     /**
-     * Returns true if this context indicates start of a field. New field information can be retrieved by calling {@code #currentField()}.
      *
-     * @return
+     * @return true if this context indicates start of a field. New field information can be retrieved by calling {@code #currentField()}.
      */
     boolean startField();
 
     /**
-     * Returns true if this context indicates end of field. New field and value can be retrieved by calling {@code #fieldValue()}.
+     * @return true if this context indicates end of field. New field and value can be retrieved by calling {@code #fieldValue()}.
      *
-     * @return
      */
     boolean endField();
 
@@ -56,9 +50,7 @@ public interface PullEventContext<F> {
     F currentField();
 
     /**
-     * Returns {@link PullEventContext.FieldValue} instance for the current context.
-     *
-     * @return
+     * @return {@link PullEventContext.FieldValue} instance for the current context.
      */
     FieldValue<F> fieldValue();
 
@@ -70,9 +62,7 @@ public interface PullEventContext<F> {
     interface FieldValue<F> {
 
         /**
-         * Current field
-         *
-         * @return
+         * @return current field
          */
         F field();
 
@@ -80,7 +70,7 @@ public interface PullEventContext<F> {
          * This MAY be lazily generated. If this method is not accessed then internal stream may not realize the value
          * but stream can move to the next field location if it exists.
          *
-         * @return
+         * @return the value of this field.
          */
         Object value();
     }

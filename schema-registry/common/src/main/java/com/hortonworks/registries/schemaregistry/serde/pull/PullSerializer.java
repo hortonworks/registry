@@ -25,7 +25,7 @@ public interface PullSerializer extends Resourceable {
     /**
      * Adds the given context to output.
      *
-     * @param pullContext
+     * @param pullContext current context of the parsed payload.
      */
     void add(PullEventContext pullContext);
 }

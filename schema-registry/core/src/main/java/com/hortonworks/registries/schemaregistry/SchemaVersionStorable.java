@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,6 +39,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     public static final String SCHEMA_TEXT = "schemaText";
     public static final String TIMESTAMP = "timestamp";
     public static final String FINGERPRINT = "fingerprint";
+    public static final String STATE = "state";
 
     public static final Schema.Field ID_FIELD = Schema.Field.of(ID, Schema.Type.LONG);
 
@@ -50,7 +51,8 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         Schema.Field.optional(DESCRIPTION, Schema.Type.STRING),
         Schema.Field.of(VERSION, Schema.Type.INTEGER),
         Schema.Field.of(TIMESTAMP, Schema.Type.LONG),
-        Schema.Field.of(FINGERPRINT, Schema.Type.STRING)
+        Schema.Field.of(FINGERPRINT, Schema.Type.STRING),
+        Schema.Field.of(STATE, Schema.Type.BYTE)
     );
     
 
@@ -95,6 +97,11 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
      * Fingerprint of the schema.
      */
     private String fingerprint;
+
+    /**
+     * State of this version.
+     */
+    private Byte state;
 
     public SchemaVersionStorable() {
     }
@@ -189,8 +196,16 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         this.name = name;
     }
 
+    public Byte getState() {
+        return state;
+    }
+
+    public void setState(Byte state) {
+        this.state = state;
+    }
+
     public SchemaVersionInfo toSchemaVersionInfo() {
-        return new SchemaVersionInfo(id, name, version, schemaText, timestamp, description);
+        return new SchemaVersionInfo(id, name, version, schemaMetadataId, schemaText, timestamp, description, state);
     }
 
     @Override
@@ -204,6 +219,10 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
                 ", version=" + version +
                 ", timestamp=" + timestamp +
                 ", fingerprint='" + fingerprint + '\'' +
+                ", state=" + state +
+                ", description='" + description + '\'' +
+                ", version=" + version +
+                ", rootEntityId=" + rootEntityId +
                 '}';
     }
 
@@ -222,8 +241,8 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-        return fingerprint != null ? fingerprint.equals(that.fingerprint) : that.fingerprint == null;
-
+        if (fingerprint != null ? !fingerprint.equals(that.fingerprint) : that.fingerprint != null) return false;
+        return state != null ? state.equals(that.state) : that.state == null;
     }
 
     @Override
@@ -236,6 +255,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (fingerprint != null ? fingerprint.hashCode() : 0);
+        result = 31 * result + (state != null ? state.hashCode() : 0);
         return result;
     }
 }

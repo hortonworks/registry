@@ -32,9 +32,9 @@ public interface PushDeserializer<S, F> extends Resourceable {
      * Deserializes the given input stream and invokes respective callbacks to the given {@code handler} whenever a respective
      * event or field is encountered.
      *
-     * @param inputStream
-     * @param schema
-     * @param handler
+     * @param inputStream payload input stream
+     * @param schema current schema
+     * @param handler handler to which events are pushed.
      */
     void deserialize(InputStream inputStream, S schema, PushDeserializerHandler<F> handler);
 

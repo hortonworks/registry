@@ -33,8 +33,8 @@ public class SchemaRegistryTestServerClientWrapper {
 
     private LocalSchemaRegistryServer localSchemaRegistryServer;
     private SchemaRegistryTestConfiguration schemaRegistryTestConfiguration;
-    private Map<String, Object> clientConf;
-    private SchemaRegistryClient schemaRegistryClient;
+    private volatile Map<String, Object> cachedClientConf;
+    private volatile SchemaRegistryClient cachedSchemaRegistryClient;
     private static final String V1_API_PATH = "api/v1";
 
     public SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration schemaRegistryTestConfiguration) throws URISyntaxException {
@@ -72,31 +72,56 @@ public class SchemaRegistryTestServerClientWrapper {
     }
 
     public SchemaRegistryClient getClient() throws IOException {
-        if (schemaRegistryClient == null) {
-            clientConf = exportClientConf();
-            schemaRegistryClient = new SchemaRegistryClient(clientConf);
+        return getClient(false);
+    }
+
+    public SchemaRegistryClient getClient(boolean cached) throws IOException {
+        if (!cached) {
+            SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(exportClientConf(false));
+            if (cachedSchemaRegistryClient == null) {
+                cachedSchemaRegistryClient = schemaRegistryClient;
+            }
+            return schemaRegistryClient;
+        } else {
+            if (cachedSchemaRegistryClient == null) {
+                cachedSchemaRegistryClient = new SchemaRegistryClient(exportClientConf(true));
+            }
+            return cachedSchemaRegistryClient;
         }
-        return schemaRegistryClient;
     }
 
     public Map<String, Object> exportClientConf() {
-        if (clientConf == null) {
-            try {
-                String registryURL = localSchemaRegistryServer.getLocalURL() + V1_API_PATH;
-                if (schemaRegistryTestConfiguration.getClientYAMLPath() == null) {
-                    Map<String, Object> ret = new HashMap<>();
-                    ret.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryURL);
-                    return ret;
-                }
-                try (FileInputStream fis = new FileInputStream(schemaRegistryTestConfiguration.getClientYAMLPath())) {
-                    Map<String, Object> ret = (Map<String, Object>) new Yaml().load(IOUtils.toString(fis, "UTF-8"));
-                    ret.put("schema.registry.url", registryURL);
-                    clientConf = ret;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to export schema client configuration for yaml : " + schemaRegistryTestConfiguration.getClientYAMLPath(), e);
+        return exportClientConf(false);
+    }
+
+    public Map<String, Object> exportClientConf(boolean cached) {
+        if (!cached) {
+            Map<String, Object> clientConfig = createClientConf();
+            if (cachedClientConf == null) {
+                cachedClientConf = clientConfig;
             }
+            return clientConfig;
+        } else {
+            if (cachedClientConf == null) {
+                cachedClientConf = createClientConf();
+            }
+            return cachedClientConf;
         }
-        return clientConf;
+    }
+
+    private Map<String, Object> createClientConf() {
+        String registryURL = localSchemaRegistryServer.getLocalURL() + V1_API_PATH;
+        if (schemaRegistryTestConfiguration.getClientYAMLPath() == null) {
+            Map<String, Object> ret = new HashMap<>();
+            ret.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryURL);
+            return ret;
+        }
+        try (FileInputStream fis = new FileInputStream(schemaRegistryTestConfiguration.getClientYAMLPath())) {
+            Map<String, Object> ret = (Map<String, Object>) new Yaml().load(IOUtils.toString(fis, "UTF-8"));
+            ret.put("schema.registry.url", registryURL);
+            return ret;
+        } catch(Exception e) {
+            throw new RuntimeException("Failed to export schema client configuration for yaml : " + schemaRegistryTestConfiguration.getClientYAMLPath(), e);
+        }
     }
 }

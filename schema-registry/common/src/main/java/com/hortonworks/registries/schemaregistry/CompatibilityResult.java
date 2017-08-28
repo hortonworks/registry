@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,15 +75,22 @@ public final class CompatibilityResult implements Serializable {
     }
 
     /**
-     * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#compatible} as false and {@link CompatibilityResult#errorMessage} as given {@code errorMessage}
-     *  @param errorMessage
-     * @param errorLocation
-     * @param schema
+     * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#isCompatible()} as false and {@link CompatibilityResult#getErrorMessage()} as given {@code errorMessage}
+     * @param errorMessage error message
+     * @param errorLocation location of the error
+     * @param schema schema for which this incompatibility result is returned.
+     *
      */
-    public static CompatibilityResult createIncompatibleResult(String errorMessage, String errorLocation, String schema) {
+    public static CompatibilityResult createIncompatibleResult(String errorMessage,
+                                                               String errorLocation,
+                                                               String schema) {
         return new CompatibilityResult(false, errorMessage, errorLocation, schema);
     }
 
+    /**
+     * @param schema schema to which compatibility is successful.
+     * @return compatibility successful result for the given schema.
+     */
     public static CompatibilityResult createCompatibleResult(String schema) {
         return new CompatibilityResult(true, schema);
     }

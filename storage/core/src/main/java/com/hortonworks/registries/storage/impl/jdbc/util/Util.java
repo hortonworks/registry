@@ -52,6 +52,7 @@ public class Util {
             case Types.BIT:
                 return Boolean.class;
             case Types.TINYINT:
+                return Byte.class;
             case Types.SMALLINT:
                 return Short.class;
             case Types.INTEGER:

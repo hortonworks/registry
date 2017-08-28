@@ -16,16 +16,17 @@
 package com.hortonworks.registries.schemaregistry;
 
 /**
- *
+ * This is used to implement the compatibility of given reader and writer schemas.
  */
 public interface SchemaValidator<T> {
 
     /**
-     * validates the
+     * Validates whether the payloads written with {@code writerSchema} can be projected or read according to the given
+     * {@code readerSchema} and returns respective {@link CompatibilityResult} instance.
      *
-     * @param readerSchema
-     * @param writerSchema
-     * @return
+     * @param readerSchema reader schema
+     * @param writerSchema writer schema
+     * @return CompatibilityResult after validating the given reader and writer schemas.
      */
     CompatibilityResult validate(T readerSchema, T writerSchema);
 }

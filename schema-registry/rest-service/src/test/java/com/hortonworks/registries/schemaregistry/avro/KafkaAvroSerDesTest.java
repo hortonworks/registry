@@ -86,7 +86,7 @@ public class KafkaAvroSerDesTest {
 
     private void _testKafkaSerDes(String topic, boolean isKey, Object payload) {
         KafkaAvroSerializer avroSerializer = new KafkaAvroSerializer();
-        Map<String,Object> schemaRegistryClientConf = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf();
+        Map<String,Object> schemaRegistryClientConf = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true);
         avroSerializer.configure(schemaRegistryClientConf, isKey);
         KafkaAvroDeserializer avroDeserializer = new KafkaAvroDeserializer();
         avroDeserializer.configure(schemaRegistryClientConf, isKey);

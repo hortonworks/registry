@@ -8,3 +8,4 @@ schema.registry.client.schema.metadata.cache.expiry.interval : 300
 schema.registry.client.schema.text.cache.size : 1024
 schema.registry.client.schema.text.cache.expiry.interval : 300
 schema.registry.client.url.selector : "com.hortonworks.registries.schemaregistry.client.FailoverUrlSelector"
+jersey.config.client.readTimeout: 300000

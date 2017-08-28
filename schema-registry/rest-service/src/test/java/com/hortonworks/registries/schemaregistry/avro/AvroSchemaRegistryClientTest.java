@@ -19,7 +19,6 @@ import com.google.common.collect.Maps;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
-import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
@@ -30,10 +29,10 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
+import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRunner;
 import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestName;
-import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -41,6 +40,8 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
+import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -63,6 +64,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING;
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE;
@@ -76,7 +78,7 @@ public class AvroSchemaRegistryClientTest {
     private static final String INVALID_SCHEMA_PROVIDER_TYPE = "invalid-schema-provider-type";
     private static SchemaRegistryClient SCHEMA_REGISTRY_CLIENT;
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
-    private static Map<String,Object> SCHEMA_REGISTRY_CLIENT_CONF;
+    private static Map<String, Object> SCHEMA_REGISTRY_CLIENT_CONF;
 
     @Rule
     public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
@@ -90,7 +92,7 @@ public class AvroSchemaRegistryClientTest {
     public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
-        SCHEMA_REGISTRY_CLIENT = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient();
+        SCHEMA_REGISTRY_CLIENT = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient(false);
         SCHEMA_REGISTRY_CLIENT_CONF = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf();
     }
 
@@ -176,55 +178,6 @@ public class AvroSchemaRegistryClientTest {
     }
 
     @Test
-    public void testSchemaOps() throws Exception {
-        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
-
-        Long id = SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata);
-        Assert.assertNotNull(id);
-
-        // registering a new schema
-        String schemaName = schemaMetadata.getName();
-        String schema1 = AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc");
-        SchemaIdVersion v1 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName, new SchemaVersion(schema1, "Initial version of the schema"));
-        Assert.assertNotNull(v1.getSchemaMetadataId());
-        Assert.assertEquals(1, v1.getVersion().intValue());
-
-        SchemaMetadataInfo schemaMetadataInfoForId = SCHEMA_REGISTRY_CLIENT.getSchemaMetadataInfo(v1.getSchemaMetadataId());
-        SchemaMetadataInfo schemaMetadataInfoForName = SCHEMA_REGISTRY_CLIENT.getSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(schemaMetadataInfoForId, schemaMetadataInfoForName);
-
-        // adding a new version of the schema using uploadSchemaVersion API
-        SchemaIdVersion v2 = SCHEMA_REGISTRY_CLIENT.uploadSchemaVersion(schemaMetadata.getName(),
-                                                                      "second version",
-                                                                      AvroSchemaRegistryClientTest.class.getResourceAsStream("/schema-2.avsc"));
-        Assert.assertEquals(v1.getVersion() + 1, v2.getVersion().intValue());
-
-        SchemaVersionInfo schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2.getVersion()));
-        SchemaVersionInfo latest = SCHEMA_REGISTRY_CLIENT.getLatestSchemaVersionInfo(schemaName);
-        Assert.assertEquals(latest, schemaVersionInfo);
-
-        Collection<SchemaVersionInfo> allVersions = SCHEMA_REGISTRY_CLIENT.getAllVersions(schemaName);
-        Assert.assertEquals(2, allVersions.size());
-
-        // receive the same version as earlier without adding a new schema entry as it exists in the same schema group.
-        SchemaIdVersion version = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "already added schema"));
-        Assert.assertEquals(version, v1);
-
-        Collection<SchemaVersionKey> md5SchemaVersionKeys = SCHEMA_REGISTRY_CLIENT.findSchemasByFields(new SchemaFieldQuery.Builder().name("md5").build());
-        Assert.assertEquals(2, md5SchemaVersionKeys.size());
-
-        Collection<SchemaVersionKey> txidSchemaVersionKeys = SCHEMA_REGISTRY_CLIENT.findSchemasByFields(new SchemaFieldQuery.Builder().name("txid").build());
-        Assert.assertEquals(1, txidSchemaVersionKeys.size());
-
-        // checks we can update schema meta data.
-        SchemaMetadata currentSchemaMetadata = SCHEMA_REGISTRY_CLIENT.getSchemaMetadataInfo(schemaName).getSchemaMetadata();
-        SchemaMetadata schemaMetadataToUpdateTo = new SchemaMetadata.Builder(currentSchemaMetadata).validationLevel(SchemaValidationLevel.LATEST).build();
-        SchemaMetadataInfo updatedSchemaMetadata = SCHEMA_REGISTRY_CLIENT.updateSchemaMetadata(schemaName, schemaMetadataToUpdateTo);
-
-        Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata().getValidationLevel());
-    }
-
-    @Test
     public void testValidationLevels() throws Exception {
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
         String schemaName = schemaMetadata.getName();
@@ -241,11 +194,14 @@ public class AvroSchemaRegistryClientTest {
             //expected
         }
 
-        SchemaMetadata currentSchemaMetadata = SCHEMA_REGISTRY_CLIENT.getSchemaMetadataInfo(schemaName).getSchemaMetadata();
-        SchemaMetadata schemaMetadataToUpdateTo = new SchemaMetadata.Builder(currentSchemaMetadata).validationLevel(SchemaValidationLevel.LATEST).build();
+        SchemaMetadata currentSchemaMetadata = SCHEMA_REGISTRY_CLIENT.getSchemaMetadataInfo(schemaName)
+                                                                     .getSchemaMetadata();
+        SchemaMetadata schemaMetadataToUpdateTo = new SchemaMetadata.Builder(currentSchemaMetadata).validationLevel(SchemaValidationLevel.LATEST)
+                                                                                                   .build();
         SchemaMetadataInfo updatedSchemaMetadata = SCHEMA_REGISTRY_CLIENT.updateSchemaMetadata(schemaName, schemaMetadataToUpdateTo);
 
-        Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata().getValidationLevel());
+        Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata()
+                                                                               .getValidationLevel());
 
         try {
             SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-4.avsc"), "Forth version of the schema, adds back name field, but different type"));
@@ -293,12 +249,12 @@ public class AvroSchemaRegistryClientTest {
         Assert.assertEquals(AvroSnapshotSerializer.class, defaultSerializer.getClass());
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testInvalidTypeForDefaultSer() throws Exception {
         SCHEMA_REGISTRY_CLIENT.getDefaultSerializer(INVALID_SCHEMA_PROVIDER_TYPE);
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testInvalidTypeForDefaultDes() throws Exception {
         SCHEMA_REGISTRY_CLIENT.getDefaultDeserializer(INVALID_SCHEMA_PROVIDER_TYPE);
     }
@@ -419,7 +375,8 @@ public class AvroSchemaRegistryClientTest {
 
     private SchemaVersionKey addAndDeleteSchemaVersion(String schemaName) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, IOException {
         SchemaMetadata schemaMetadata = createSchemaMetadata(schemaName, SchemaCompatibility.BOTH);
-        SchemaIdVersion schemaIdVersion = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaMetadata, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/device.avsc"), "Initial version of the schema"));
+        SchemaIdVersion schemaIdVersion = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaMetadata, new SchemaVersion(AvroSchemaRegistryClientUtil
+                                                                                                                            .getSchema("/device.avsc"), "Initial version of the schema"));
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata.getName(), schemaIdVersion.getVersion());
         SCHEMA_REGISTRY_CLIENT.deleteSchemaVersion(schemaVersionKey);
 
@@ -433,6 +390,124 @@ public class AvroSchemaRegistryClientTest {
 
         // deleting again should return SchemaNotFoundException
         SCHEMA_REGISTRY_CLIENT.deleteSchemaVersion(schemaVersionKey);
+    }
+
+    @Test
+    public void testSchemaVersionEnableState() throws Exception {
+        IntStream.range(1, 100).forEach(x -> {
+            try {
+                System.out.println("########## Running for iter: " + x);
+                doTestSchemaVersionEnableState(TEST_NAME_RULE.getMethodName() + x);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public void doTestSchemaVersionEnableState(String schemaName) throws Exception {
+        String schema = AvroSchemaRegistryClientUtil.getSchema("/device.avsc");
+        String incompatSchema = AvroSchemaRegistryClientUtil.getSchema("/device-compat.avsc");
+
+        SchemaMetadata schemaMetadata = createSchemaMetadata(schemaName, SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        SchemaIdVersion schemaIdVersion_1 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaMetadata,
+                                                                                    new SchemaVersion(schema, "Initial version of the schema"));
+
+        // adding a new version of the schema
+        SchemaVersion incompatSchemaInfo = new SchemaVersion(incompatSchema, "second version");
+        SchemaIdVersion schemaIdVersion_2 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaMetadata, incompatSchemaInfo);
+
+        Long schemaVersionId_2 = schemaIdVersion_2.getSchemaVersionId();
+        SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaVersionId_2);
+        SchemaVersionInfo schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
+        System.out.println("disable :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.DISABLED.id(), schemaVersionInfo.getStateId());
+
+        SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaVersionId_2);
+        schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
+        System.out.println("enable :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.ENABLED.id(), schemaVersionInfo.getStateId());
+
+        SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaVersionId_2);
+        schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
+        System.out.println("disable :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.DISABLED.id(), schemaVersionInfo.getStateId());
+
+        SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(schemaVersionId_2);
+        schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
+        System.out.println("archive :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.ARCHIVED.id(), schemaVersionInfo.getStateId());
+    }
+
+    @Test
+    public void testSchemaVersionLifeCycleStatesWithValidationAsLatest() throws Exception {
+        doTestSchemaVersionLifeCycleStates(SchemaValidationLevel.LATEST);
+    }
+
+    @Test
+    public void testSchemaVersionLifeCycleStatesWithValidationAsAll() throws Exception {
+        doTestSchemaVersionLifeCycleStates(SchemaValidationLevel.ALL);
+    }
+
+    private void doTestSchemaVersionLifeCycleStates(SchemaValidationLevel validationLevel) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, IOException, SchemaLifecycleException {
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(TEST_NAME_RULE.getMethodName() + "-schema")
+                .type(AvroSchemaProvider.TYPE)
+                .schemaGroup("group")
+                .compatibility(SchemaCompatibility.BOTH)
+                .validationLevel(validationLevel)
+                .build();
+        String schemaName = schemaMetadata.getName();
+
+        Long id = SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata);
+
+        SchemaIdVersion schemaIdVersion_1 =
+                SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName,
+                                                        new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc"),
+                                                                          "Initial version of the schema"));
+        SchemaIdVersion schemaIdVersion_2 =
+                SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName,
+                                                        new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-2.avsc"),
+                                                                          "Second version of the schema"));
+
+        // disable version 2
+        SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaIdVersion_2.getSchemaVersionId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.DISABLED.id(),
+                            SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2).getStateId());
+
+        // add version 3
+        SchemaIdVersion schemaIdVersion_3 =
+                SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName,
+                                                        new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-3.avsc"),
+                                                                          "Third version of the schema, removes name field"));
+        // enable version 2
+        SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaIdVersion_2.getSchemaVersionId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.ENABLED.id(),
+                            SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2).getStateId());
+
+        SchemaIdVersion schemaIdVersion_4 =
+                SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName,
+                                                        new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-4.avsc"),
+                                                                          "Forth version of the schema, adds back name field, but different type",
+                                                                          SchemaVersionLifecycleStates.INITIATED.id()));
+        // enable version 4
+        try {
+            SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaIdVersion_4.getSchemaVersionId());
+            Assert.fail("Enabling "+schemaIdVersion_4+" should have failed with incompatible schema error");
+        } catch (IncompatibleSchemaException e) {
+        }
+        Assert.assertEquals(SchemaVersionLifecycleStates.INITIATED.id(),
+                            SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_4).getStateId());
+
+        // disable version 3
+        SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaIdVersion_3.getSchemaVersionId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.DISABLED.id(),
+                            SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_3).getStateId());
+
+        // enable version 3
+        SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaIdVersion_3.getSchemaVersionId());
+        Assert.assertEquals(SchemaVersionLifecycleStates.ENABLED.id(),
+                            SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_3).getStateId());
     }
 
 }

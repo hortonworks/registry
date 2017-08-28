@@ -45,29 +45,29 @@ public interface PushDeserializerHandler<F> {
     /**
      * Indicates the deserialization of the given field is started
      *
-     * @param startField
+     * @param startField field instance which is just started
      */
     void startField(F startField);
 
     /**
      * Callback to receive the currently deserialized value.
      *
-     * @param value
+     * @param value value of the field being read.
      */
     void readFieldValue(Object value);
 
     /**
      * Indicates the deserialization of the given field is finished.
      *
-     * @param endField
+     * @param endField field instance which is just ended.
      */
     void endField(F endField);
 
     /**
      * Callback to receive current field and value
      *
-     * @param field
-     * @param value
+     * @param field current field
+     * @param value current field's value.
      */
     void currentFieldValue(F field, Object value);
 

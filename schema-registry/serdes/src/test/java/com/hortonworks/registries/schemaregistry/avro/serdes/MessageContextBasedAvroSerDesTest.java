@@ -64,7 +64,7 @@ public class MessageContextBasedAvroSerDesTest {
                 result = schemaIdVersion;
 
                 mockSchemaRegistryClient.getSchemaMetadataInfo(anyString);
-                result= new SchemaMetadataInfo(schemaMetadata);
+                result = new SchemaMetadataInfo(schemaMetadata);
 
                 mockSchemaRegistryClient.getSchemaVersionInfo(withInstanceOf(SchemaVersionKey.class));
                 result = schemaVersionInfo;

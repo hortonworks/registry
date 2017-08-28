@@ -38,11 +38,14 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
+  state            TINYINT               NOT NULL,
   name             VARCHAR(255)          NOT NULL,
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
   PRIMARY KEY (name, version),
-  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
@@ -53,7 +56,20 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   fieldNamespace   VARCHAR(255),
   type             VARCHAR(255)          NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS schema_version_state (
+  id              BIGINT AUTO_INCREMENT NOT NULL,
+  schemaVersionId BIGINT                NOT NULL,
+  stateId         TINYINT               NOT NULL,
+  sequence        INT                   NOT NULL,
+  timestamp       BIGINT                NOT NULL,
+  details         VARCHAR(255),
+  PRIMARY KEY (schemaversionId, stateId, sequence),
+  UNIQUE KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (

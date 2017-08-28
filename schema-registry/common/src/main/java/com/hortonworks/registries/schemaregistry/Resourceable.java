@@ -26,7 +26,7 @@ public interface Resourceable extends AutoCloseable {
     /**
      * Initializes with the given configuration.
      *
-     * @param config
+     * @param config config properties
      */
     void init(Map<String, ?> config);
 
