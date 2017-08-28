@@ -62,6 +62,10 @@ footer {
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
 }
 
+.bold {
+  font-weight: bold;
+}
+
 
 /* Header */
 .navbar {
@@ -904,15 +908,11 @@ label {
   }
 }
 
-.form-horizontal .control-label {
-  text-align: left;
-}
-
-.form-horizontal .form-group {
+/*.form-horizontal .form-group {
   margin-left: 0;
   margin-right: 0;
   margin-top: 10px;
-}
+}*/
 
 .form-group label {
   font-size: 12px;
@@ -1415,4 +1415,101 @@ span.warning {
   z-index: 999;
   width: 100%;
   height: 100%;
+}
+.compare-version {
+  cursor: pointer;
+  font-weight: 600;
+}
+.diffoutputdiv {
+  border: 1px solid darkgray;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-top-color: transparent;
+}
+.table-header-custom.unified{
+  text-align: center;
+  padding: 5px 10px;
+  background-color: #f7f7f7;
+  border-style: solid;
+  border-width: 1px 1px 0 1px;
+  border-color: #bbbbcc;
+  margin-bottom: -1px;
+  z-index: 111;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-color: #bbbbcc;
+}
+.table-header-custom.split{
+  text-align: center;
+  padding: 5px 10px;
+  background-color: #f7f7f7;
+  border-style: solid;
+  border-width: 1px 1px 0 1px;
+  border-color: #bbbbcc;
+  margin-bottom: -1px;
+  z-index: 111;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-color: #bbbbcc;
+}
+.table-header-custom.split div{
+  display: inline;
+}
+table.diff{
+  width: 100%;
+  color: #6e6e71;
+  border: none;
+}
+table.diff tbody th {
+  font-size: 14px;
+  width: 21px;
+  background-color: #f7f7f7;
+  color: #999;
+  border: none;
+}
+table.splitdiff tbody th {
+  width: 6%;
+}
+table.splitdiff tbody td {
+  width: 44%;
+}
+table.diff .delete {
+  background-color: #ffeef0;
+}
+table.diff .delete-ln {
+  background-color: #ffdce0;
+}
+table.diff .insert, table.diff .replace {
+  background-color: #e6ffed;
+}
+table.diff .insert-ln, table.diff .replace-ln {
+  background-color: #cdffd8;
+}
+table.diff .empty {
+  background-color: #fafbfc;
+}
+.diffViewBtn:hover, .diffViewBtn:active {
+  background-color: #0a698c !important;
+  color: #fff !important;
+  border: 1px solid #0a698c !important;
+}
+.diffViewBtn.selected, .diffViewBtn:focus {
+  background-color: #1290c0;
+  color: #fff;
+  border: 1px solid #1290c0;
+}
+.version-diff-labels {
+  margin-bottom: 8px;
+}
+.version-diff-labels label{
+  margin-bottom: 0px;
+  text-align: left !important;
+}
+
+.version-description {
+  color: #8a8a8a;
+}
+
+.schema-version-labels{
+  padding-top: 7px;
 }

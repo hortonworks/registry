@@ -39,6 +39,7 @@ import jsonlint from 'jsonlint';
 import lint from 'codemirror/addon/lint/lint';
 import SchemaInfoForm from './SchemaInfoForm';
 import SchemaVersionForm from './SchemaVersionForm';
+import SchemaVersionDiff from './SchemaVersionDiff';
 import FSReactToastr from '../../../components/FSReactToastr';
 import SchemaREST from '../../../rest/SchemaREST';
 import NoData from '../../../components/NoData';
@@ -370,6 +371,14 @@ export default class SchemaRegistryContainer extends Component {
     return allData.slice(startIndex, startIndex+pageSize);
   }
 
+  handleCompareVersions(schemaObj) {
+    this.schemaObj = schemaObj;
+    this.setState({
+      modalTitle: 'Compare Schema Versions',
+      showDiffModal: true
+    });
+  }
+
   render() {
     const jsonoptions = {
       lineNumbers: true,
@@ -490,6 +499,9 @@ export default class SchemaRegistryContainer extends Component {
                         })
                       }
                     </ul>
+                    {sortedVersions.length > 1 ?
+                      <a className="compare-version" onClick={this.handleCompareVersions.bind(this, s)}>COMPARE VERSIONS</a> : ''
+                    }
                 </div>
             </div>
     </div>) :
@@ -628,6 +640,17 @@ export default class SchemaRegistryContainer extends Component {
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={()=>{this.setState({ expandSchema: false });}}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+        <Modal ref="schemaDiffModal" bsSize="large" show={this.state.showDiffModal} onHide={()=>{this.setState({ showDiffModal: false });}}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.modalTitle}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <SchemaVersionDiff ref="compareVersion" schemaObj={this.schemaObj}/>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={()=>{this.setState({ showDiffModal: false });}}>Close</Button>
           </Modal.Footer>
         </Modal>
       </BaseContainer>
