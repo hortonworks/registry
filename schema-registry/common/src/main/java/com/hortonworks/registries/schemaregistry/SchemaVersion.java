@@ -32,7 +32,10 @@ public class SchemaVersion implements Serializable {
     private Byte initialState;
 
     @SuppressWarnings("unused")
-    private SchemaVersion() { /* Private constructor for Jackson JSON mapping */ }
+    private SchemaVersion() {
+        /* Private constructor for Jackson JSON mapping */
+        this(null, null , null);
+    }
 
     public SchemaVersion(String schemaText, String description) {
         this(schemaText, description, null);
