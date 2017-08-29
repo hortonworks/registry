@@ -70,17 +70,13 @@ public interface PullDeserializer<S, F> extends Resourceable {
     }
 
     /**
-     * Returns true if it contain next record/field in the given payload.
+     * @return true if it contain next record/field in the given payload.
      * Returns false when it reaches end of the payload.
-     *
-     * @return
      */
     boolean hasNext() throws SerDesException;
 
     /**
-     * Returns the next record/field's {@link PullEventContext} in the payload given to the deserializer.
-     *
-     * @return
+     * @return the next record/field's {@link PullEventContext} in the payload given to the deserializer.
      */
     PullEventContext<F> next() throws SerDesException;
 

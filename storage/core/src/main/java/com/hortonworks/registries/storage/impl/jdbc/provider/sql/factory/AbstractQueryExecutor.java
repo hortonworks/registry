@@ -364,6 +364,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
                 if (columnJavaType.equals(String.class)) {
                     map.put(columnLabel, resultSet.getString(columnLabel));
+                } else if (columnJavaType.equals(Byte.class)) {
+                    map.put(columnLabel, resultSet.getByte(columnLabel));
                 } else if (columnJavaType.equals(Integer.class)) {
                     map.put(columnLabel, resultSet.getInt(columnLabel));
                 } else if (columnJavaType.equals(Double.class)) {

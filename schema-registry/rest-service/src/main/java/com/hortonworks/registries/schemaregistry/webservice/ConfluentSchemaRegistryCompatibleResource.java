@@ -78,7 +78,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     public Response getSchemaById(@ApiParam(value = "schema version id", required = true) @PathParam("id") Long id) {
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(id);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
             SchemaString schema = new SchemaString();
             schema.setSchema(schemaVersionInfo.getSchemaText());
             response = WSUtils.respondEntity(schema, Response.Status.OK);
@@ -214,7 +214,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 try {
                     Long id = Long.valueOf(versionId);
                     if (id > 0 && id <= Integer.MAX_VALUE) {
-                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(id);
+                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
                     } else {
                         LOG.error("versionId is not in valid range [{}, {}] ", 1, Integer.MAX_VALUE);
                     }
@@ -289,7 +289,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
-    public Response registerSchema(@ApiParam(value = "subject", required = true) @PathParam("subject")
+    public Response registerSchemaVersion(@ApiParam(value = "subject", required = true) @PathParam("subject")
                                            String subject,
                                    @ApiParam(value = "Details about the schema", required = true)
                                            String schema,

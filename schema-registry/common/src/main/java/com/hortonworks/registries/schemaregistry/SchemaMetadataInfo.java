@@ -43,13 +43,13 @@ public final class SchemaMetadataInfo implements Serializable {
     private SchemaMetadataInfo() { /* Private constructor for Jackson JSON mapping */}
 
     /**
-     * @param schemaMetadata
+     * @param schemaMetadata schema metadata
      */
     public SchemaMetadataInfo(SchemaMetadata schemaMetadata) {
         this(schemaMetadata, null, null);
     }
 
-    SchemaMetadataInfo(SchemaMetadata schemaMetadata,
+    public SchemaMetadataInfo(SchemaMetadata schemaMetadata,
                        Long id,
                        Long timestamp) {
         Preconditions.checkNotNull(schemaMetadata, "schemaMetadata can not be null");

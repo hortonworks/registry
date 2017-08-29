@@ -1,19 +1,19 @@
--- Copyright 2016 Hortonworks.
---
+-- Copyright 2016 Hortonworks.;
+-- ;
 -- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---    http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
-
--- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS
-
+-- you may not use this file except in compliance with the License.;
+-- You may obtain a copy of the License at;
+-- ;
+--    http://www.apache.org/licenses/LICENSE-2.0;
+-- ;
+-- Unless required by applicable law or agreed to in writing, software;
+-- distributed under the License is distributed on an "AS IS" BASIS,;
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.;
+-- See the License for the specific language governing permissions and;
+-- limitations under the License.;
+-- ;
+-- THE NAMES OF THE TABLE COLUMNS MUST MATCH THE NAMES OF THE CORRESPONDING CLASS MODEL FIELDS;
+-- ;
 -- USE schema_registry;
 
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
@@ -38,11 +38,14 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
+  state            TINYINT               NOT NULL,
   name             VARCHAR(255)          NOT NULL,
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
   PRIMARY KEY (name, version),
-  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
@@ -53,7 +56,20 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   fieldNamespace   VARCHAR(255),
   type             VARCHAR(255)          NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS schema_version_state (
+  id              BIGINT AUTO_INCREMENT NOT NULL,
+  schemaVersionId BIGINT                NOT NULL,
+  stateId         TINYINT               NOT NULL,
+  sequence        INT                   NOT NULL,
+  timestamp       BIGINT                NOT NULL,
+  details         VARCHAR(255),
+  PRIMARY KEY (schemaversionId, stateId, sequence),
+  UNIQUE KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (

@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,11 @@ package com.hortonworks.registries.schemaregistry;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Different types of Schema providers such as AVRO, Protobuf etc.
+ * SchemaProvider is an abstract way to provide the required functionality for a specific protocol like Avro, Json etc.
  */
 public interface SchemaProvider {
 
@@ -31,6 +30,7 @@ public interface SchemaProvider {
 
     /**
      * Initializes with the given {@code config}.
+     *
      * @param config configuration of this registry
      */
     public void init(Map<String, Object> config);
@@ -66,23 +66,33 @@ public interface SchemaProvider {
      * CompatibilityResult with {@link CompatibilityResult#isCompatible} as false, {@link CompatibilityResult#getErrorMessage()}
      * with respective errorMessage
      *
-     * @param toSchema
-     * @param existingSchema
-     * @param compatibility
+     * @param toSchema       schema text to be checked for compatibility.
+     * @param existingSchema existing schema to which it is checked for.
+     * @param compatibility  compatibility mode
+     *
+     * @return compatibility result with the given schemas
      */
     CompatibilityResult checkCompatibility(String toSchema, String existingSchema, SchemaCompatibility compatibility);
 
     /**
      * @param schemaText textual representation of schema
+     *
      * @return fingerprint of canonicalized form of the given schema.
+     *
+     * @throws InvalidSchemaException  when the given schema is invalid.
+     * @throws SchemaNotFoundException when there are no schemas found mentioned in include fields of the schema text.
      */
     byte[] getFingerprint(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
 
     /**
      * Returns all the fields in the given {@code schemaText} by traversing the whole schema including nested/complex types.
      *
-     * @param schemaText
+     * @param schemaText schema text
+     *
      * @return all the fields in the given {@code schemaText}
+     *
+     * @throws InvalidSchemaException  when the given schema is invalid.
+     * @throws SchemaNotFoundException when there are no schemas found mentioned in include fields of the schema text.
      */
     List<SchemaFieldInfo> generateFields(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
 
@@ -90,9 +100,10 @@ public interface SchemaProvider {
      * Returns the resultant schema of the given {@code schemaText} after parsing and replacing any include references
      * with the actual types.
      *
-     * @throws InvalidSchemaException when the given schemaText does not represent a valid schema
+     * @param schemaText schmea text
+     *
+     * @throws InvalidSchemaException  when the given schemaText does not represent a valid schema
      * @throws SchemaNotFoundException when any of the dependent includedSchemas does not exist
-     * @param schemaText
      */
-     String getResultantSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
+    String getResultantSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException;
 }

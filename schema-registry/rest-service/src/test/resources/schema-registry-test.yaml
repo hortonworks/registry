@@ -75,6 +75,16 @@ fileStorageConfiguration:
 #    db.properties:
 #      dataSourceClassName: "com.mysql.cj.jdbc.MysqlDataSource"
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "mysql"
+#   queryTimeoutInSecs: 30
+#   db.properties:
+#     dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
+#     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+#     dataSource.user: "root"
+#     dataSource.password: "mysql17"
 
 storageProviderConfiguration:
   providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"

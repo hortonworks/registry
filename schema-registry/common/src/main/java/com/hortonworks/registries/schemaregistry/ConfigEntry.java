@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.Collections;
 /**
  * Details about a configuration entry containing
  * - name, type, description, mandatory, default value and validator.
- *
+ * <p>
  * Mandatory configuration entry can be created with {@link ConfigEntry#mandatory(String, Class, String, Object, Validator)}
  * Optional configuration entry can be created with {@link ConfigEntry#optional(String, Class, String, Object, Validator)}
  */
@@ -138,7 +138,8 @@ public final class ConfigEntry<T> implements Serializable {
         /**
          * Validates the given value
          *
-         * @param v typ eof the value
+         * @param v type of the value
+         *
          * @throws IllegalArgumentException when the given value is not valid.
          */
         void validate(V v);
@@ -147,6 +148,8 @@ public final class ConfigEntry<T> implements Serializable {
          * Multiple {@link Validator}s can be composed with this method.
          *
          * @param other other validator to be composed with this validator
+         *
+         * @return Returns the current Validator instance.
          */
         default Validator<V> with(final Validator<V> other) {
             return with(Collections.singletonList(other));
@@ -156,6 +159,8 @@ public final class ConfigEntry<T> implements Serializable {
          * Multiple {@link Validator}s can be composed with this method.
          *
          * @param others other validators to be composed with this validator
+         *
+         * @return Returns the current Validator instance.
          */
         default Validator<V> with(final Iterable<Validator<V>> others) {
             return v -> {

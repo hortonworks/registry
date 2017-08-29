@@ -47,6 +47,7 @@ import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullSerializer;
 import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
+import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
@@ -233,7 +234,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return doGetSchemaVersionInfo(key);
             }
         },
-                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).longValue(),
+                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).intValue(),
                 ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue());
 
         SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
@@ -581,18 +582,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    private SchemaVersionInfo doGetSchemaVersionInfo(SchemaIdVersion key) throws SchemaNotFoundException {
-        if(key.getSchemaVersionId() != null) {
-            return getEntity(currentSchemaRegistryTargets().schemaVersionsByIdTarget.path(key.getSchemaVersionId().toString()), SchemaVersionInfo.class);
-        } else if (key.getSchemaMetadataId() != null){
-            SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(key.getSchemaMetadataId());
-            return getSchemaVersionInfo(new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata().getName(), key.getVersion()));
+    private SchemaVersionInfo doGetSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
+        if(schemaIdVersion.getSchemaVersionId() != null) {
+            LOG.info("Getting schema version from target registry for [{}]", schemaIdVersion.getSchemaVersionId());
+            return getEntity(currentSchemaRegistryTargets().schemaVersionsByIdTarget.path(schemaIdVersion.getSchemaVersionId().toString()), SchemaVersionInfo.class);
+        } else if (schemaIdVersion.getSchemaMetadataId() != null){
+            SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaIdVersion.getSchemaMetadataId());
+            SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata()
+                                                                                       .getName(), schemaIdVersion.getVersion());
+            LOG.info("Getting schema version from target registry for key [{}]", schemaVersionKey);
+            return doGetSchemaVersionInfo(schemaVersionKey);
         }
 
-        throw new IllegalArgumentException("Given argument not valid: " + key);
+        throw new IllegalArgumentException("Given argument not valid: " + schemaIdVersion);
     }
 
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaVersionKey schemaVersionKey) {
+        LOG.info("Getting schema version from target registry for [{}]", schemaVersionKey);
         String schemaName = schemaVersionKey.getSchemaName();
         WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey.getVersion()));
 
@@ -611,6 +617,81 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void enableSchemaVersion(Long schemaVersionId)
+            throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException {
+        try {
+            fetchSchemaVersionState(schemaVersionId, "enable");
+        } catch (SchemaLifecycleException e) {
+            Throwable cause = e.getCause();
+            if(cause != null && cause instanceof IncompatibleSchemaException) {
+                throw (IncompatibleSchemaException) cause;
+            }
+            throw e;
+        }
+    }
+
+    @Override
+    public void disableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        fetchSchemaVersionState(schemaVersionId, "disable");
+    }
+
+    @Override
+    public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        fetchSchemaVersionState(schemaVersionId, "delete");
+    }
+
+    @Override
+    public void archiveSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        fetchSchemaVersionState(schemaVersionId, "archive");
+    }
+
+    @Override
+    public void startSchemaVersionReview(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        fetchSchemaVersionState(schemaVersionId, "startReview");
+
+    }
+
+    private boolean fetchSchemaVersionState(Long schemaVersionId,
+                                            String operation) throws SchemaNotFoundException, SchemaLifecycleException {
+
+        WebTarget webTarget = currentSchemaRegistryTargets().schemaVersionsByIdTarget.path(schemaVersionId + "/state/" + operation);
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return webTarget.request().post(null);
+            }
+        });
+
+        boolean result =  handleSchemaLifeCycleResponse(response);
+
+        // invalidate this entry from cache.
+        schemaVersionInfoCache.invalidateSchema(SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId)));
+
+        return result;
+    }
+
+    private boolean handleSchemaLifeCycleResponse(Response response) throws SchemaNotFoundException, SchemaLifecycleException {
+        boolean result;
+        int status = response.getStatus();
+        if(status == Response.Status.OK.getStatusCode()) {
+            result = response.readEntity(Boolean.class);
+        } else if(status == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new SchemaNotFoundException(response.readEntity(String.class));
+        } else if(status == Response.Status.BAD_REQUEST.getStatusCode()) {
+            CatalogResponse catalogResponse = readCatalogResponse(response.readEntity(String.class));
+            if(catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA.getCode()) {
+                throw new SchemaLifecycleException(new IncompatibleSchemaException(catalogResponse.getResponseMessage()));
+            }
+            throw new SchemaLifecycleException(catalogResponse.getResponseMessage());
+
+        } else {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
+
+        return result;
     }
 
     @Override
@@ -886,7 +967,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS,
                                      ConfigEntry.PositiveNumberValidator.get());
 
-        public static final long DEFAULT_SCHEMA_CACHE_SIZE = 1024L;
+        public static final long DEFAULT_SCHEMA_CACHE_SIZE = 1024;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60L;
 
         /**

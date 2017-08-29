@@ -63,15 +63,6 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
     SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException;
 
     /**
-     * @param id schema version id
-     *
-     * @return Returns {@link SchemaVersionInfo} for the given id.
-     *
-     * @throws SchemaNotFoundException when there is no version of schema with the given id.
-     */
-    SchemaVersionInfo getSchemaVersionInfo(Long id) throws SchemaNotFoundException;
-
-    /**
      * @param props properties
      *
      * @return Collects aggregated schema metadata which contains the given properties.
