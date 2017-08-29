@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS schema_version_state (
   sequence        INT                   NOT NULL,
   timestamp       BIGINT                NOT NULL,
   details         VARCHAR(255),
-  PRIMARY KEY (schemaversionId, stateId, sequence),
+  PRIMARY KEY (schemaVersionId, stateId, sequence),
   UNIQUE KEY (id)
 );
 

@@ -204,6 +204,11 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         this.state = state;
     }
 
+    // this is to address postgres in which it does not support byte values
+    public void setState(Short state) {
+        this.state = state.byteValue();
+    }
+
     public SchemaVersionInfo toSchemaVersionInfo() {
         return new SchemaVersionInfo(id, name, version, schemaMetadataId, schemaText, timestamp, description, state);
     }

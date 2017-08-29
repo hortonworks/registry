@@ -56,7 +56,7 @@ public class SchemaVersionStateStorable extends AbstractStorable {
     private Long timestamp;
     private String details;
 
-    private long id;
+    private Long id;
 
     public SchemaVersionStateStorable() {
     }
@@ -97,6 +97,11 @@ public class SchemaVersionStateStorable extends AbstractStorable {
 
     public void setStateId(Byte stateId) {
         this.stateId = stateId;
+    }
+
+    // this is to support storage engines which does not support byte as data type.
+    public void setStateId(Short stateId) {
+        this.stateId = stateId.byteValue();
     }
 
     public void setSequence(Integer sequence) {
