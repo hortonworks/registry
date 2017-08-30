@@ -290,6 +290,7 @@
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <spring.version>4.3.6.RELEASE</spring.version>
         <postgresql.version>9.4.1212</postgresql.version>
+        <flyway.version>4.2.0</flyway.version>
     </properties>
 
     <distributionManagement>
@@ -343,6 +344,11 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
             <dependency>
@@ -519,6 +525,12 @@
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+
 
             <!-- Test dependencies -->
             <dependency>
