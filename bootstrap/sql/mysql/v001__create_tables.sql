@@ -61,17 +61,6 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
     ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS schema_version_state (
-  id              BIGINT AUTO_INCREMENT NOT NULL,
-  schemaVersionId BIGINT                NOT NULL,
-  stateId         TINYINT               NOT NULL,
-  sequence        INT                   NOT NULL,
-  timestamp       BIGINT                NOT NULL,
-  details         VARCHAR(255),
-  PRIMARY KEY (schemaVersionId, stateId, sequence),
-  UNIQUE KEY (id)
-);
-
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
   id                    BIGINT AUTO_INCREMENT NOT NULL,
   description           TEXT,

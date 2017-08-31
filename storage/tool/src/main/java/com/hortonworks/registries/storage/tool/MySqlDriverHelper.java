@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.hortonworks.registries.storage.tool;
 
 import java.io.BufferedInputStream;
@@ -32,7 +33,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class MySqlDriverHelper {
-    public static final String MYSQL_JAR_FILE_PATTERN = "mysql-connector-java-.*?-bin.jar";
+    public static final String MYSQL_JAR_FILE_PATTERN = "mysql-connector-java.*?.jar";
 
     public static void downloadMySQLJarIfNeeded(StorageProviderConfiguration storageProperties, String bootstrapDirPath, String mysqlJarUrl) throws Exception {
         /* Due to license issues we will not be able to ship mysql driver.
@@ -43,7 +44,13 @@ public class MySqlDriverHelper {
         File bootstrapLibDir = new File (bootstrapDirPath + File.separator + "lib/");
         File libDir = new File (bootstrapDirPath + File.separator +  "../libs/");
 
-        if (storageProperties.getDbType().equals("mysql")
+        if(!libDir.exists()) {
+            System.out.println(String.format("Directory : \"%s\" not found, trying to create it ...",libDir.getAbsolutePath()));
+            if (!libDir.mkdir())
+                throw new RuntimeException(String.format("Failed to create the directory : \"%s\"", libDir.getAbsolutePath()));
+        }
+
+        if (storageProperties.getDbType().equals(DatabaseType.MYSQL)
                 && (!isMySQLJarFileAvailableOnAnyOfDirectories(Arrays.asList(bootstrapLibDir, libDir)))) {
             downloadMySQLJar(mysqlJarUrl, bootstrapLibDir);
         }
@@ -56,7 +63,7 @@ public class MySqlDriverHelper {
     private static void downloadMySQLJar(String mysqlJarUrl, File bootstrapLibDir) throws Exception {
         if (mysqlJarUrl == null || mysqlJarUrl.equals(""))
             throw new IllegalArgumentException("Missing mysql client jar url. " +
-                                                       "Please pass mysql client jar url using -m option.");
+                    "Please pass mysql client jar url using -m option.");
         String mysqlJarFileName = MySqlDriverHelper.downloadMysqlJarAndCopyToLibDir(bootstrapLibDir, mysqlJarUrl, MYSQL_JAR_FILE_PATTERN);
         if (mysqlJarFileName != null) {
             File mysqlJarFile = new File(bootstrapLibDir+ File.separator + mysqlJarFileName);
@@ -87,7 +94,7 @@ public class MySqlDriverHelper {
             FileOutputStream fos = new FileOutputStream(tmpFileName);
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
         } catch(IOException ie) {
-            System.out.println("Failed to download the mysql driver from " + url);
+            System.err.println("Failed to download the mysql driver from " + url);
             throw new IOException(ie);
         }
 
@@ -102,10 +109,11 @@ public class MySqlDriverHelper {
             MySqlDriverHelper.copyFile(bootstrapLibFile, libFile);
             return mysqlJarFileName;
         } catch (IOException ie) {
-            System.out.println("Failed to copy mysql driver into " + bootstrapLibDir + " and " + libDir);
+            ie.printStackTrace();
+            System.err.println("Failed to copy mysql driver into " + bootstrapLibDir + " and " + libDir);
         } catch (Exception e ) {
             e.printStackTrace();
-            System.out.println("Failed to copy mysql driver into " + bootstrapLibDir + " and " + libDir);
+            System.err.println("Failed to copy mysql driver into " + bootstrapLibDir + " and " + libDir);
         }
         return null;
     }
