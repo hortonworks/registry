@@ -9,9 +9,8 @@ modules:
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
       # schema reviewer configuration
       schemaReviewExecutor:
-        - className: "com.hortonworks.registries.state.DefaultSchemaReviewExecutor"
-          props:
-            prop: "value"
+        className: "com.hortonworks.registries.schemaregistry.state.DefaultSchemaReviewExecutor"
+        props:
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
