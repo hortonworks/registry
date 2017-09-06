@@ -23,6 +23,8 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.commons.lang3.EnumUtils;
 import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +96,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         return avroFieldsGenerator.generateFields(new Schema.Parser().parse(getResultantSchema(schemaText)));
     }
 
-    public String normalize(Schema schema) throws IOException {
+    public String normalize(Schema schema) throws IOException, InvalidSchemaException {
         Map<String, String> env = new HashMap<>();
         StringBuilder sb = new StringBuilder();
         return build(env, schema, sb).toString();
@@ -106,13 +108,23 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     // Added default and aliases handling here.
     private static Appendable build(Map<String, String> env,
                                     Schema schema,
-                                    Appendable appendable) throws IOException {
+                                    Appendable appendable) throws IOException, InvalidSchemaException {
         boolean firstTime = true;
         Schema.Type schemaType = schema.getType();
         String fullName = schema.getFullName();
         switch (schemaType) {
-            default: // boolean, bytes, double, float, int, long, null, string
+            default: // boolean, bytes, double, float, int, long, null
                 return appendable.append('"').append(schemaType.getName()).append('"');
+
+            case STRING:
+                String stringType = schema.getProp(GenericData.STRING_PROP);
+                if ( stringType == null )
+                    stringType = schemaType.getName();
+                else {
+                    if(!EnumUtils.isValidEnum(GenericData.StringType.class, stringType))
+                        throw new InvalidSchemaException(String.format("Invalid property \"%s : %s\"", GenericData.STRING_PROP, stringType));
+                }
+                return appendable.append('"').append(stringType).append('"');
 
             case UNION:
                 appendable.append('[');
