@@ -46,17 +46,6 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   FOREIGN KEY ("name") REFERENCES schema_metadata_info ("name") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS schema_version_state (
-  "id"              SERIAL UNIQUE NOT NULL,
-  "schemaVersionId" BIGINT        NOT NULL,
-  "stateId"         SMALLINT       NOT NULL,
-  "sequence"        INT           NOT NULL,
-  "timestamp"       BIGINT        NOT NULL,
-  "details"         VARCHAR(255)  NOT NULL,
-  PRIMARY KEY ("schemaVersionId", "stateId", "sequence"),
-  UNIQUE ("id")
-);
-
 CREATE TABLE IF NOT EXISTS schema_field_info (
   "id"               SERIAL PRIMARY KEY,
   "schemaInstanceId" BIGINT       NOT NULL,
