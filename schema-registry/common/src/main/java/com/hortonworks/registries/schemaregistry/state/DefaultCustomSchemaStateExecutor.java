@@ -20,23 +20,24 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import java.util.Map;
 
 /**
- * This is default implementation of SchemaReviewExecutor which always leads to the success state.
+ * This is default implementation of CustomSchemaStateExecutor which always leads to the success state.
  */
-public class DefaultSchemaReviewExecutor implements SchemaReviewExecutor {
+public class DefaultCustomSchemaStateExecutor implements CustomSchemaStateExecutor {
 
     private SchemaVersionLifecycleState successState;
     private SchemaVersionLifecycleState retryState;
 
     @Override
-    public void init(SchemaVersionLifecycleState successState,
-                     SchemaVersionLifecycleState retryState,
+    public void init(SchemaVersionLifecycleStateMachine.Builder builder,
+                     Byte successStateId,
+                     Byte retryStateId,
                      Map<String, ?> props) {
-        this.successState = successState;
-        this.retryState = retryState;
+        this.successState = builder.getStates().get(successStateId);
+        this.retryState = builder.getStates().get(retryStateId);
     }
 
     @Override
-    public void execute(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
+    public void executeReviewState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         schemaVersionLifecycleContext.setState(successState);
         schemaVersionLifecycleContext.updateSchemaVersionState();
     }

@@ -23,7 +23,6 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -37,7 +36,6 @@ import java.util.Random;
 /**
  *
  */
-//@Ignore
 public class SchemaVersionLifecycleStatesTest {
     private static Logger LOG = LoggerFactory.getLogger(SchemaVersionLifecycleStatesTest.class);
 
@@ -55,7 +53,7 @@ public class SchemaVersionLifecycleStatesTest {
         SchemaVersionInfo schemaVersionInfo =
                 new SchemaVersionInfo(new Random().nextLong(), schemaMetadata.getName(), 1, schemaMetadataInfo.getId(),
                                       "{\"type\":\"string\"}", System.currentTimeMillis(),
-                                      "", SchemaVersionLifecycleStates.ENABLED.id());
+                                      "", SchemaVersionLifecycleStates.ENABLED.getId());
 
         SchemaVersionService schemaVersionServiceMock = new SchemaVersionService() {
             @Override
@@ -91,7 +89,14 @@ public class SchemaVersionLifecycleStatesTest {
             }
 
         };
-        context = new SchemaVersionLifecycleContext(schemaVersionInfo.getId(), 1, schemaVersionServiceMock, new SchemaVersionLifecycleStates.Registry());
+        SchemaVersionLifecycleStateMachine lifecycleStateMachine = SchemaVersionLifecycleStateMachine.newBuilder()
+                                                                                                     .build();
+
+        context = new SchemaVersionLifecycleContext(schemaVersionInfo.getId(),
+                                                    1,
+                                                    schemaVersionServiceMock,
+                                                    lifecycleStateMachine,
+                                                    new DefaultCustomSchemaStateExecutor());
     }
 
     @Test
@@ -99,8 +104,8 @@ public class SchemaVersionLifecycleStatesTest {
 
         InbuiltSchemaVersionLifecycleState initiated = SchemaVersionLifecycleStates.INITIATED;
 
-        DefaultSchemaReviewExecutor schemaReviewExecutor = createDefaultSchemaReviewExecutor();
-        initiated.startReview(context, schemaReviewExecutor);
+        DefaultCustomSchemaStateExecutor schemaReviewExecutor = createDefaultSchemaReviewExecutor();
+        initiated.startReview(context);
         initiated.enable(context);
 
         checkDisableNotSupported(initiated, context);
@@ -108,9 +113,12 @@ public class SchemaVersionLifecycleStatesTest {
         checkDeleteNotSupported(initiated, context);
     }
 
-    private DefaultSchemaReviewExecutor createDefaultSchemaReviewExecutor() {
-        DefaultSchemaReviewExecutor schemaReviewExecutor = new DefaultSchemaReviewExecutor();
-        schemaReviewExecutor.init(SchemaVersionLifecycleStates.REVIEWED, SchemaVersionLifecycleStates.CHANGES_REQUIRED, Collections.emptyMap());
+    private DefaultCustomSchemaStateExecutor createDefaultSchemaReviewExecutor() {
+        DefaultCustomSchemaStateExecutor schemaReviewExecutor = new DefaultCustomSchemaStateExecutor();
+        schemaReviewExecutor.init(SchemaVersionLifecycleStateMachine.newBuilder(),
+                                  SchemaVersionLifecycleStates.REVIEWED.getId(),
+                                  SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(),
+                                  Collections.emptyMap());
         return schemaReviewExecutor;
     }
 
@@ -169,17 +177,16 @@ public class SchemaVersionLifecycleStatesTest {
                                           SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.archive(context);
-            Assert.fail(state.name() + " should not lead to archive state");
+            Assert.fail(state.getName() + " should not lead to archive state");
         } catch (SchemaLifecycleException e) {
         }
     }
-
 
     private void checkDeleteNotSupported(InbuiltSchemaVersionLifecycleState state,
                                          SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.delete(context);
-            Assert.fail(state.name() + " should not lead to delete state");
+            Assert.fail(state.getName() + " should not lead to delete state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -188,7 +195,7 @@ public class SchemaVersionLifecycleStatesTest {
                                           SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.disable(context);
-            Assert.fail(state.name() + " should not lead to disabled state");
+            Assert.fail(state.getName() + " should not lead to disabled state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -197,7 +204,7 @@ public class SchemaVersionLifecycleStatesTest {
                                          SchemaVersionLifecycleContext context) throws SchemaNotFoundException, IncompatibleSchemaException {
         try {
             state.enable(context);
-            Assert.fail(state.name() + " should not lead to enable state");
+            Assert.fail(state.getName() + " should not lead to enable state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -205,8 +212,8 @@ public class SchemaVersionLifecycleStatesTest {
     private void checkStartReviewNotSupported(InbuiltSchemaVersionLifecycleState state,
                                               SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
-            state.startReview(context, createDefaultSchemaReviewExecutor());
-            Assert.fail(state.name() + " should not lead to startReview state");
+            state.startReview(context);
+            Assert.fail(state.getName() + " should not lead to startReview state");
         } catch (SchemaLifecycleException e) {
         }
     }

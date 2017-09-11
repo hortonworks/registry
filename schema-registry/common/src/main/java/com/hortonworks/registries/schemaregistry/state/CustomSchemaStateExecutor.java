@@ -20,20 +20,24 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import java.util.Map;
 
 /**
- * This interface should be implemented for having custom review process. This can be defined in registry.yaml for
- * registration.
+ * This interface should be implemented for having custom review process and adding any custom states with the default 
+ * state machine. This can be defined in registry.yaml for registration.
+ *
+ * This is still experimental API and not stable.
  */
-public interface SchemaReviewExecutor {
+public interface CustomSchemaStateExecutor {
 
     /**
      * Initialize with completion states of this schema review.
      *
-     * @param successState state to be set when review is successful.
-     * @param retryState   state to be set when review is failed.
-     * @param props        any properties to be initialized with.
+     * @param builder        this can be used to add any custom states and transitions.
+     * @param successStateId state to be set when review is successful.
+     * @param retryStateId   state to be set when review is failed.
+     * @param props          any properties to be initialized with.
      */
-    void init(SchemaVersionLifecycleState successState,
-              SchemaVersionLifecycleState retryState,
+    void init(SchemaVersionLifecycleStateMachine.Builder builder,
+              Byte successStateId,
+              Byte retryStateId,
               Map<String, ?> props);
 
     /**
@@ -45,5 +49,5 @@ public interface SchemaReviewExecutor {
      * @throws SchemaLifecycleException when any lifecycle error occurs.
      * @throws SchemaNotFoundException  when the given schema version is not found.
      */
-    void execute(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException;
+    void executeReviewState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException;
 }

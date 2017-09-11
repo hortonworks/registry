@@ -15,33 +15,28 @@
  */
 package com.hortonworks.registries.schemaregistry.state;
 
-import java.util.List;
+import java.io.Serializable;
 
 /**
  * Schema version life cycle state to be defined.
  */
 public interface SchemaVersionLifecycleState {
+    Byte INBUILT_STATE_ID_MAX = 32;
 
     /**
-     * @return This state's identifier. Identifiers &lt;= 32 are reserved and 33 to 127 can be used for any custom
-     * states.
+     * @return This state's identifier. Identifiers [0, 32] are reserved and other byte values can be used for
+     * any custom states.
      */
-    Byte id();
+    Byte getId();
 
     /**
      * @return name of this state
      */
-    String name();
+    String getName();
 
     /**
      * @return description about this state
      */
-    String description();
+    String getDescription();
 
-    /**
-     * @return List of states that can lead from this state.
-     */
-    default List<SchemaVersionLifecycleState> nextStates() {
-        throw new UnsupportedOperationException();
-    }
 }

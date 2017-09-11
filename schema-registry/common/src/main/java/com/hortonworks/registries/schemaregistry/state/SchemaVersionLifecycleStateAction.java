@@ -16,14 +16,15 @@
 package com.hortonworks.registries.schemaregistry.state;
 
 /**
- *
+ * This class defines what needs to be executed on transition from one state to other state.
  */
-public abstract class AbstractInbuiltSchemaLifecycleState extends BaseSchemaVersionLifecycleState implements InbuiltSchemaVersionLifecycleState {
+public interface SchemaVersionLifecycleStateAction {
 
-    protected AbstractInbuiltSchemaLifecycleState(String name,
-                                                  byte id,
-                                                  String description) {
-        super(name, id, description);
-    }
-
+    /**
+     * @param context which gives the context about the state machine and any dependent services.
+     *
+     * @throws SchemaLifecycleException any Exceptions occur will be wrapper in this and consumers of this API
+     *                                  should check for root cause and take appropriate action.
+     */
+    public void execute(SchemaVersionLifecycleContext context) throws SchemaLifecycleException;
 }

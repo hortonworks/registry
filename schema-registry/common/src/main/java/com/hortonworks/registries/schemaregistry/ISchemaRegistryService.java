@@ -20,12 +20,11 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
-import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleState;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Basic service interface for schema registry which should be implemented by client and server interfaces.
@@ -246,11 +245,7 @@ public interface ISchemaRegistryService {
         throw new UnsupportedOperationException();
     }
 
-    default void executeCustomState(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        throw new UnsupportedOperationException();
-    }
+    void transitionState(Long schemaVersionId, Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException;
 
-    default List<SchemaVersionLifecycleState> getSchemaVersionLifecycleStates() {
-        throw new UnsupportedOperationException();
-    }
+    SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo();
 }

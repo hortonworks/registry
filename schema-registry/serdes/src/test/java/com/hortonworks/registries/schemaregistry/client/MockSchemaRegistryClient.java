@@ -34,6 +34,8 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 
@@ -205,6 +207,17 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public Collection<SerDesInfo> getSerDes(String schemaName) {
         return null;
+    }
+
+    @Override
+    public void transitionState(Long schemaVersionId,
+                                Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException {
+        schemaRegistry.transitionState(schemaVersionId, targetStateId);
+    }
+
+    @Override
+    public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
+        return schemaRegistry.getSchemaVersionLifecycleStateMachineInfo();
     }
 
     public <T> T createSerializerInstance(SerDesInfo serDesInfo) {
