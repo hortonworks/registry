@@ -68,6 +68,26 @@ const ellipses = function(string, tagWidth) {
   return string.length > (tagWidth/10) ? `${string.substr(0, tagWidth/10)}...` : string;
 };
 
+export class StateMachine {
+  constructor(obj = {}){
+    this.states = obj.states;
+    this.transitions = obj.transitions;
+  }
+  setStates(obj = {}){
+    this.states = obj.states;
+    this.transitions = obj.transitions;
+  }
+  getStateById(id){
+    return _.find(this.states, {id: id});
+  }
+  getTransitionStateOptions(id){
+    var options = _.filter(this.transitions, (t) => {
+      return t.sourceStateId == id;
+    });
+    return options;
+  }
+}
+
 export default {
   isValidJson,
   sortArray,
