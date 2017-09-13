@@ -211,7 +211,7 @@ export default class SchemaFormContainer extends Component {
     };
     let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror} = this.state;
     return (
-      <form className="form-horizontal">
+      <form>
       <div className="row">
         <div className={expandCodemirror ? "hidden" : "col-md-6"} ref="formLeftPanel">
           <div className="form-group">
