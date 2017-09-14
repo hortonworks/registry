@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -174,7 +175,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         try {
             List<Integer> registeredSubjects = schemaRegistry.getAllVersions(subject)
                                                              .stream()
-                                                             .map(x -> x.getId().intValue())
+                                                             .map(SchemaVersionInfo::getVersion)
                                                              .collect(Collectors.toList());
 
             response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
@@ -212,9 +213,9 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 }
                 SchemaVersionInfo fetchedSchemaVersionInfo = null;
                 try {
-                    Long id = Long.valueOf(versionId);
+                    Integer id = Integer.valueOf(versionId);
                     if (id > 0 && id <= Integer.MAX_VALUE) {
-                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
+                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaVersionKey(subject, id));
                     } else {
                         LOG.error("versionId is not in valid range [{}, {}] ", 1, Integer.MAX_VALUE);
                     }
@@ -237,8 +238,9 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo == null) {
                 response = versionNotFoundError();
             } else {
-                SchemaVersionEntry schemaVersionEntry = new SchemaVersionEntry(schemaVersionInfo.getName(),
-                                                                               schemaVersionInfo.getId().intValue(),
+                Schema schemaVersionEntry = new Schema(schemaVersionInfo.getName(),
+                                                                               schemaVersionInfo.getVersion(),
+                                                                               schemaVersionInfo.getId(),
                                                                                schemaVersionInfo.getSchemaText());
                 response = WSUtils.respondEntity(schemaVersionEntry, Response.Status.OK);
             }
@@ -376,14 +378,16 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     public static class SchemaVersionEntry {
         private String name;
         private Integer version;
+        private Long id;
         private String schema;
 
         public SchemaVersionEntry() {
         }
 
-        public SchemaVersionEntry(String name, Integer version, String schema) {
+        public SchemaVersionEntry(String name, Integer version,Long id, String schema) {
             this.name = name;
             this.version = version;
+            this.id = id;
             this.schema = schema;
         }
 
@@ -395,6 +399,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             return version;
         }
 
+        public Long getId() {
+            return id;
+        }
+
         public String getSchema() {
             return schema;
         }
@@ -402,8 +410,9 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         @Override
         public String toString() {
             return "SchemaVersionEntry{" +
-                    "name='" + name + '\'' +
+                    "subject='" + name + '\'' +
                     ", version=" + version +
+                    ", id=" + id +
                     ", schema='" + schema + '\'' +
                     '}';
         }
@@ -417,6 +426,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
             if (name != null ? !name.equals(that.name) : that.name != null) return false;
             if (version != null ? !version.equals(that.version) : that.version != null) return false;
+            if (id != null ? !id.equals(that.id) : that.id != null) return false;
             return schema != null ? schema.equals(that.schema) : that.schema == null;
         }
 
@@ -424,6 +434,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         public int hashCode() {
             int result = name != null ? name.hashCode() : 0;
             result = 31 * result + (version != null ? version.hashCode() : 0);
+            result = 31 * result + (id != null ? id.hashCode() : 0);
             result = 31 * result + (schema != null ? schema.hashCode() : 0);
             return result;
         }
