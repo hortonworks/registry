@@ -54,6 +54,11 @@ public class MySqlSelectQuery extends AbstractSelectQuery {
     }
 
     @Override
+    protected String tableNameEncloser() {
+        return "`";
+    }
+
+    @Override
     protected void initParameterizedSql() {
         sql = "SELECT * FROM " + tableName;
         //where clause is defined by columns specified in the PrimaryKey

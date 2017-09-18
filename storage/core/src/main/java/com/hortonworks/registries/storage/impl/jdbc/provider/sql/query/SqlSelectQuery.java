@@ -34,6 +34,11 @@ public class SqlSelectQuery extends AbstractSelectQuery {
     }
 
     @Override
+    protected String tableNameEncloser() {
+        return "";
+    }
+
+    @Override
     protected void addOrderByFieldsToParameterizedSql() {
         if (orderByFields != null && !orderByFields.isEmpty()) {
             sql += join(orderByFields.stream()

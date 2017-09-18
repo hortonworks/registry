@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.storage.impl.jdbc.util;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.sql.Date;
 import java.sql.Time;
@@ -38,7 +39,7 @@ public class Util {
         throw new RuntimeException("Unknown sqlType " + sqlType);
     }
 
-    public static Class getJavaType(int sqlType) {
+    public static Class getJavaType(int sqlType, int precision) {
         switch (sqlType) {
             case Types.CHAR:
             case Types.VARCHAR:
@@ -47,8 +48,10 @@ public class Util {
                 return String.class;
             case Types.BINARY:
             case Types.VARBINARY:
-            case Types.LONGVARBINARY:
                 return byte[].class;
+            case Types.BLOB:
+            case Types.LONGVARBINARY:
+                return InputStream.class;
             case Types.BIT:
                 return Boolean.class;
             case Types.TINYINT:
@@ -70,6 +73,17 @@ public class Util {
                 return Time.class;
             case Types.TIMESTAMP:
                 return Timestamp.class;
+            case Types.NUMERIC:
+                switch (precision) {
+                    case 1:
+                        return Boolean.class;
+                    case 3:
+                        return Byte.class;
+                    case 10:
+                        return Integer.class;
+                    default:
+                        return Long.class;
+                }
             default:
                 throw new RuntimeException("We do not support tables with SqlType: " + getSqlTypeName(sqlType));
         }
