@@ -124,8 +124,9 @@ logging:
   # Logger-specific levels.
   loggers:
 
-    # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.registries: DEBUG
+    # Sets the level for 'com.example.app' to INFO.
+    # Please change the log level to DEBUG when there're test failures and you need to dive into.
+    com.hortonworks.registries: INFO
 
 
   appenders:
