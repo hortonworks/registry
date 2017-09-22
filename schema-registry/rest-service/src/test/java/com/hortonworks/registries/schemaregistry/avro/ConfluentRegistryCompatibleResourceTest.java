@@ -81,7 +81,7 @@ public class ConfluentRegistryCompatibleResourceTest {
 
     @Before
     public void setup() throws Exception {
-        String configPath = new File(Resources.getResource("schema-registry-test.yaml").toURI()).getAbsolutePath();
+        String configPath = new File(Resources.getResource("schema-registry-test-confluent.yaml").toURI()).getAbsolutePath();
         localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         localSchemaRegistryServer.start();
         String rootUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
