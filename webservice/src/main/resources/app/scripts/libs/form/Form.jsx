@@ -13,6 +13,7 @@
 **/
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import _ from 'lodash';
 import {
   Button,
@@ -108,5 +109,5 @@ FSForm.defaultProps = {
 };
 
 FSForm.childContextTypes = {
-  Form: React.PropTypes.object
+  Form: PropTypes.object
 };

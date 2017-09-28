@@ -255,7 +255,7 @@ export default class SchemaFormContainer extends Component {
             <label><input name="evolve" onChange={this.handleToggleEvolve.bind(this)} type="checkbox" value={evolve} checked={evolve}/> Evolve</label>
             {!evolve
               ?
-              <span className="warning"> <i className="fa fa-exclamation-triangle" aria-hidden="true"></i> New schema versions cannot be added.</span>
+              <span className="checkbox-warning"> <i className="fa fa-exclamation-triangle" aria-hidden="true"></i> New schema versions cannot be added.</span>
               :
               null
             }
