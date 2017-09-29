@@ -134,41 +134,38 @@ A summary with the contents of the patch is optional but strongly encouraged if 
 
 <a name="merge-pull-request"></a>
 
-### Merge a pull request or patch
+### Merge a pull request
 
-To pull in a merge request you should generally follow the command line instructions sent out by GitHub.
+You can utilize merge script to merge a pull request. There're some tasks prior to use the script. 
 
-1. Create remote repo called upstream with Registry [repo](https://github.com/hortonworks/registry.git)
+#### CI Build
+Registry is integrated with travis CI. The status of the build for the pending pull request will be reflected in the PR itself. You must see "The Travis CI build passed" in the pull request before merging it.
 
-        $ git remote add upstream https://github.com/hortonworks/registry.git
-        $ git fetch upstream
-        
-2. Create a local branch for integrating and testing the pull request.  You may want to name the branch according to 
-   Registry Issue associated with the pull request (example: `ISSUE-1234`).
+#### Preparation
 
-        $ git checkout -b <local_test_branch>  upstream/master # e.g. git checkout -b ISSUE-1234
+1. Add Github mirror git repo to remote named `pull-repo`. You can set `PR_REMOTE_NAME` in system environment to use another name.
 
-3. Merge the pull request into your local test branch.
+```
+$ git remote add pull-repo https://github.com/hortonworks/registry.git
+```
 
-        $ git pull <remote_repo_url> <remote_branch>
+2. Add git repo for push to remote named `push-repo`. You can set `PUSH_REMOTE_NAME` in system environment to use another name.
 
-4.  Assuming that the pull request merges without any conflicts:
+```
+$ git remote add push-repo <push repository git url>
+```
 
-5. Run any sanity tests that you think are needed as mentioned in [build the code and run the tests](#build-the-code-and-run-the-tests).
+#### How to use merge script
 
-6. Once you are confident that everything is ok, you can merge your local test branch into your local `master` branch,
-   and push the changes back to remote repo.
+All merges should be done using the dev/merge_registry_pr.py script, which squashes the pull request’s changes into one commit. 
+The script is fairly self explanatory and walks you through steps and options interactively.
 
-        # Pull request looks ok, change log was updated, etc.  We are ready for pushing.
-        $ git checkout master
-        $ git merge <local_test_branch>  # e.g. git merge ISSUE-1234
+Please note that the script prompts for merger after squashed commit is made. Merger can then run the build and do the manual test before pushing, 
+but in normal it is encouraged to see the CI build success on PR before merging the PR, so unless merger wants to do some manual tests, 
+it is fine to do the push immediately.
 
-        # At this point our local master branch is ready, so now we will push the changes
-        # to the official repo.  
-        $ git push origin  HEAD:refs/heads/master 
+After the PR is merged, in normal only the PR will be closed. You may need to handle associated issue manually. 
 
-7. The last step is updating the corresponding Github issue with respective resolution.
-   
 <a name="building"></a>
 
 # Build the code and run the tests
