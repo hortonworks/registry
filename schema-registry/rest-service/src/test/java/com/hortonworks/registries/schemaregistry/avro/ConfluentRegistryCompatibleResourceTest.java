@@ -21,12 +21,11 @@ import com.google.common.io.Resources;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.ErrorMessage;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.SchemaString;
-import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.SchemaVersionEntry;
+import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.commons.io.IOUtils;
@@ -60,7 +59,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.schemaregistry.avro.ConfluentProtocolCompatibleTest.GENERIC_TEST_RECORD_SCHEMA;
-import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.*;
+import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.VersionId;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.incompatibleSchemaError;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.invalidSchemaError;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.subjectNotFoundError;
@@ -105,7 +104,7 @@ public class ConfluentRegistryCompatibleResourceTest {
     @Test
     public void testConfluentSerDes() throws Exception {
 
-        Schema schema = new Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
+        org.apache.avro.Schema schema = new org.apache.avro.Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
         GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
 
         Map<String, Object> config = new HashMap<>();
@@ -150,13 +149,13 @@ public class ConfluentRegistryCompatibleResourceTest {
         Assert.assertTrue(initialVersion < secondVersion);
         // retrieve the schema for that version and check whether it has same schema.
         String receivedSchema = getVersion(subjectName, secondVersion + "").getSchema();
-        Assert.assertEquals(new Schema.Parser().parse(secondVersionSchema),
-                            new Schema.Parser().parse(receivedSchema));
+        Assert.assertEquals(new org.apache.avro.Schema.Parser().parse(secondVersionSchema),
+                            new org.apache.avro.Schema.Parser().parse(receivedSchema));
 
         // check latest version of schema
         String latestSchema = getVersion(subjectName, "latest").getSchema();
-        Assert.assertEquals(new Schema.Parser().parse(secondVersionSchema),
-                            new Schema.Parser().parse(latestSchema));
+        Assert.assertEquals(new org.apache.avro.Schema.Parser().parse(secondVersionSchema),
+                            new org.apache.avro.Schema.Parser().parse(latestSchema));
 
         // check for invalid schemas
         Response invalidSchemaResponse = postSubjectSchema(subjectName, fetchSchema("/device-unsupported-type.avsc"));
@@ -189,12 +188,12 @@ public class ConfluentRegistryCompatibleResourceTest {
                                                      VersionId.class).getId();
 
             // check get version api
-            SchemaVersionEntry schemaVersionEntry = getVersion(subjectName, version.toString());
+            Schema schemaVersionEntry = getVersion(subjectName, version.toString());
 
             Assert.assertEquals(subjectName, schemaVersionEntry.getSubject());
             Assert.assertEquals(version.intValue(), schemaVersionEntry.getVersion().intValue());
-            Schema recvdSchema = new Schema.Parser().parse(schemaVersionEntry.getSchema());
-            Schema regdSchema = new Schema.Parser().parse(schemaText);
+            org.apache.avro.Schema recvdSchema = new org.apache.avro.Schema.Parser().parse(schemaVersionEntry.getSchema());
+            org.apache.avro.Schema regdSchema = new org.apache.avro.Schema.Parser().parse(schemaText);
             Assert.assertEquals(regdSchema, recvdSchema);
         }
 
@@ -227,7 +226,7 @@ public class ConfluentRegistryCompatibleResourceTest {
         String validResponse = rootTarget.path(String.format("/subjects/%s/versions/%s", subject, id))
                                          .request(MediaType.APPLICATION_JSON_TYPE)
                                          .get(String.class);
-        SchemaVersionEntry schemaVersionEntry = new ObjectMapper().readValue(validResponse, SchemaVersionEntry.class);
+        Schema schemaVersionEntry = new ObjectMapper().readValue(validResponse, Schema.class);
         Assert.assertEquals(subject, schemaVersionEntry.getSubject());
         Assert.assertEquals(id, schemaVersionEntry.getVersion().intValue());
 
@@ -318,10 +317,10 @@ public class ConfluentRegistryCompatibleResourceTest {
         });
     }
 
-    private SchemaVersionEntry getVersion(String subjectName, String version) throws IOException {
+    private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getVersion(String subjectName, String version) throws IOException {
         WebTarget versionsTarget = rootTarget.path("/subjects/" + subjectName + "/versions/");
         String versionsResponse = versionsTarget.path(version).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
-        return new ObjectMapper().readValue(versionsResponse, SchemaVersionEntry.class);
+        return new ObjectMapper().readValue(versionsResponse, Schema.class);
     }
 
     private Response postSubjectSchema(String subjectName, String schemaText) throws IOException {

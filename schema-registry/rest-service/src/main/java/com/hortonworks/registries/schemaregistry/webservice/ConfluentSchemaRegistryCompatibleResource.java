@@ -238,11 +238,11 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo == null) {
                 response = versionNotFoundError();
             } else {
-                Schema schemaVersionEntry = new Schema(schemaVersionInfo.getName(),
+                Schema schema = new Schema(schemaVersionInfo.getName(),
                                                                                schemaVersionInfo.getVersion(),
                                                                                schemaVersionInfo.getId(),
                                                                                schemaVersionInfo.getSchemaText());
-                response = WSUtils.respondEntity(schemaVersionEntry, Response.Status.OK);
+                response = WSUtils.respondEntity(schema, Response.Status.OK);
             }
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
@@ -375,71 +375,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     private SchemaString schemaStringFromJson(String json) throws IOException {
         return new ObjectMapper().readValue(json, SchemaString.class);
     }
-
-    public static class SchemaVersionEntry {
-        private String subject;
-        private Integer version;
-        private Long id;
-        private String schema;
-
-        public SchemaVersionEntry() {
-        }
-
-        public SchemaVersionEntry(String subject, Integer version,Long id, String schema) {
-            this.subject = subject;
-            this.version = version;
-            this.id = id;
-            this.schema = schema;
-        }
-
-        public String getSubject() {
-            return subject;
-        }
-
-        public Integer getVersion() {
-            return version;
-        }
-
-        public Long getId() {
-            return id;
-        }
-
-        public String getSchema() {
-            return schema;
-        }
-
-        @Override
-        public String toString() {
-            return "SchemaVersionEntry{" +
-                   "subject='" + subject + '\'' +
-                   ", version=" + version +
-                   ", id=" + id +
-                   ", schema='" + schema + '\'' +
-                   '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SchemaVersionEntry that = (SchemaVersionEntry) o;
-
-            if (subject != null ? !subject.equals(that.subject) : that.subject != null) return false;
-            if (version != null ? !version.equals(that.version) : that.version != null) return false;
-            if (id != null ? !id.equals(that.id) : that.id != null) return false;
-            return schema != null ? schema.equals(that.schema) : that.schema == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = subject != null ? subject.hashCode() : 0;
-            result = 31 * result + (version != null ? version.hashCode() : 0);
-            result = 31 * result + (id != null ? id.hashCode() : 0);
-            result = 31 * result + (schema != null ? schema.hashCode() : 0);
-            return result;
-        }
-    }
+    
 
     public static class SchemaString {
         private String schema;
@@ -509,7 +445,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     }
 
-    public class Schema implements Comparable<Schema> {
+    public static class Schema implements Comparable<Schema> {
         private String subject;
         private Integer version;
         private Long id;
