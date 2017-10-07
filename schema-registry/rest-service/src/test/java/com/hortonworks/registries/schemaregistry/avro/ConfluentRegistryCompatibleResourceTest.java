@@ -59,7 +59,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.schemaregistry.avro.ConfluentProtocolCompatibleTest.GENERIC_TEST_RECORD_SCHEMA;
-import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.VersionId;
+import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Id;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.incompatibleSchemaError;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.invalidSchemaError;
 import static com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.subjectNotFoundError;
@@ -131,9 +131,9 @@ public class ConfluentRegistryCompatibleResourceTest {
         ObjectMapper objectMapper = new ObjectMapper();
 
         // register initial version of schema
-        int initialVersion = objectMapper.readValue(postSubjectSchema(subjectName, fetchSchema("/device.avsc"))
+        long initialSchemaId = objectMapper.readValue(postSubjectSchema(subjectName, fetchSchema("/device.avsc"))
                                                              .readEntity(String.class),
-                                                    VersionId.class).getId();
+                                                    Id.class).getId();
 
         // try to register incompatible schema and check for expected errors
         Response response = postSubjectSchema(subjectName, fetchSchema("/device-incompat.avsc"));
@@ -143,12 +143,12 @@ public class ConfluentRegistryCompatibleResourceTest {
 
         // register valid schema
         String secondVersionSchema = fetchSchema("/device-compat.avsc");
-        int secondVersion = objectMapper.readValue(postSubjectSchema(subjectName, secondVersionSchema)
+        long secondSchemaId = objectMapper.readValue(postSubjectSchema(subjectName, secondVersionSchema)
                                                             .readEntity(String.class),
-                                                   VersionId.class).getId();
-        Assert.assertTrue(initialVersion < secondVersion);
+                                                   Id.class).getId();
+        Assert.assertTrue(initialSchemaId < secondSchemaId);
         // retrieve the schema for that version and check whether it has same schema.
-        String receivedSchema = getVersion(subjectName, secondVersion + "").getSchema();
+        String receivedSchema = getVersion(subjectName,"latest").getSchema();
         Assert.assertEquals(new org.apache.avro.Schema.Parser().parse(secondVersionSchema),
                             new org.apache.avro.Schema.Parser().parse(receivedSchema));
 
@@ -183,15 +183,15 @@ public class ConfluentRegistryCompatibleResourceTest {
             subjects.add(subjectName);
 
             // check post schema version
-            Integer version = objectMapper.readValue(postSubjectSchema(subjectName, schemaText)
+            Long schemaId = objectMapper.readValue(postSubjectSchema(subjectName, schemaText)
                                                              .readEntity(String.class),
-                                                     VersionId.class).getId();
+                                                     Id.class).getId();
 
             // check get version api
-            Schema schemaVersionEntry = getVersion(subjectName, version.toString());
+            Schema schemaVersionEntry = getVersion(subjectName,"latest");
 
             Assert.assertEquals(subjectName, schemaVersionEntry.getSubject());
-            Assert.assertEquals(version.intValue(), schemaVersionEntry.getVersion().intValue());
+            Assert.assertEquals(schemaId.intValue(), schemaVersionEntry.getId().intValue());
             org.apache.avro.Schema recvdSchema = new org.apache.avro.Schema.Parser().parse(schemaVersionEntry.getSchema());
             org.apache.avro.Schema regdSchema = new org.apache.avro.Schema.Parser().parse(schemaText);
             Assert.assertEquals(regdSchema, recvdSchema);
@@ -220,7 +220,7 @@ public class ConfluentRegistryCompatibleResourceTest {
         String response = postSubjectSchema(subject,
                                             fetchSchema("/device.avsc")).readEntity(String.class);
         ObjectMapper objectMapper = new ObjectMapper();
-        long id = objectMapper.readValue(response, VersionId.class).getId();
+        long id = objectMapper.readValue(response, Id.class).getId();
         Assert.assertTrue(id > 0);
 
         String validResponse = rootTarget.path(String.format("/subjects/%s/versions/%s", subject, id))
@@ -254,15 +254,6 @@ public class ConfluentRegistryCompatibleResourceTest {
                                 objectMapper.readValue(invalidVersionResponse.readEntity(String.class), ErrorMessage.class));
         }
 
-        // valid subject, version belonging to a different subject
-//        String newSubject = testName() + 1;
-//        postSubjectSchema(newSubject,
-//                          fetchSchema("/device-compat.avsc")).readEntity(String.class);
-//        Response validSubInvalidVerResp = rootTarget.path(String.format("/subjects/%s/versions/%s", newSubject, id))
-//                                                    .request(MediaType.APPLICATION_JSON_TYPE)
-//                                                    .get();
-//        Assert.assertEquals(versionNotFoundError().getEntity(),
-//                            objectMapper.readValue(validSubInvalidVerResp.readEntity(String.class), ErrorMessage.class));
     }
 
     @Test
@@ -284,7 +275,7 @@ public class ConfluentRegistryCompatibleResourceTest {
         String response = postSubjectSchema(subject,
                                             fetchSchema("/device.avsc")).readEntity(String.class);
         ObjectMapper objectMapper = new ObjectMapper();
-        int id = objectMapper.readValue(response, VersionId.class).getId();
+        long id = objectMapper.readValue(response, Id.class).getId();
         Assert.assertTrue(id > 0);
 
         // add incompatible schema
@@ -320,6 +311,12 @@ public class ConfluentRegistryCompatibleResourceTest {
     private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getVersion(String subjectName, String version) throws IOException {
         WebTarget versionsTarget = rootTarget.path("/subjects/" + subjectName + "/versions/");
         String versionsResponse = versionsTarget.path(version).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+        return new ObjectMapper().readValue(versionsResponse, Schema.class);
+    }
+
+    private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getSchemaById(Long schemaId) throws IOException {
+        WebTarget versionsTarget = rootTarget.path("/schemas/ids/");
+        String versionsResponse = versionsTarget.path(schemaId.toString()).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
         return new ObjectMapper().readValue(versionsResponse, Schema.class);
     }
 

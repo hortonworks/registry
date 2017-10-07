@@ -256,7 +256,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     @POST
     @Path("/subjects/{subject}")
-    @ApiOperation(value = "Get schema information for the given schema subject and schema text", response = VersionId.class, tags = OPERATION_GROUP_CONFLUENT_SR)
+    @ApiOperation(value = "Get schema information for the given schema subject and schema text", response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
                                          @ApiParam(value = "The schema ", required = true) String schema) {
@@ -289,7 +289,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             notes = "Registers the given schema version to schema with subject if the given schemaText is not registered as a version for this schema, " +
                     "and returns respective unique id." +
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
-            response = VersionId.class, tags = OPERATION_GROUP_CONFLUENT_SR)
+            response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     public Response registerSchemaVersion(@ApiParam(value = "subject", required = true) @PathParam("subject")
                                            String subject,
@@ -315,9 +315,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                     new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
 
-                VersionId version = new VersionId();
-                version.setId(schemaVersionInfo.getVersion());
-                response = WSUtils.respondEntity(version, Response.Status.OK);
+                Id id = new Id();
+                id.setId(schemaVersionInfo.getSchemaVersionId());
+                response = WSUtils.respondEntity(id, Response.Status.OK);
+
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
                 response = invalidSchemaError();
@@ -375,7 +376,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     private SchemaString schemaStringFromJson(String json) throws IOException {
         return new ObjectMapper().readValue(json, SchemaString.class);
     }
-    
+
 
     public static class SchemaString {
         private String schema;
@@ -427,24 +428,24 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         }
     }
 
-    public static class VersionId {
-        private int id;
 
-        public VersionId() {
+    public static class Id {
+        private long id;
+
+        public Id() {
         }
 
         @JsonProperty("id")
-        public int getId() {
+        public long getId() {
             return this.id;
         }
 
         @JsonProperty("id")
-        public void setId(int id) {
+        public void setId(long id) {
             this.id = id;
         }
 
     }
-
     public static class Schema implements Comparable<Schema> {
         private String subject;
         private Integer version;
