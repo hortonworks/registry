@@ -19,8 +19,6 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
-import com.hortonworks.registries.storage.search.Predicate;
-import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.List;
@@ -54,23 +52,24 @@ public class MySqlSelectQuery extends AbstractSelectQuery {
     }
 
     @Override
-    protected void initParameterizedSql() {
-        sql = "SELECT * FROM " + tableName;
+    protected String getParameterizedSql() {
+        String sql = "SELECT * FROM " + tableName;
         //where clause is defined by columns specified in the PrimaryKey
         if (columns != null) {
             sql += " WHERE " + join(getColumnNames(columns, "`%s` = ?"), " AND ");
         }
-
-        log.debug("Parameterized sql: [{}]", sql);
+        LOG.debug(sql);
+        return sql;
     }
 
-    protected void addOrderByFieldsToParameterizedSql() {
+    @Override
+    protected String orderBySql() {
+        String sql = "";
         if (orderByFields != null && !orderByFields.isEmpty()) {
             sql += join(orderByFields.stream()
-                                .map(x -> " ORDER BY `" + x.getFieldName() + "` " + (x.isDescending() ? "DESC" : "ASC"))
-                                .collect(Collectors.toList()), ",");
+                    .map(x -> " ORDER BY `" + x.getFieldName() + "` " + (x.isDescending() ? "DESC" : "ASC"))
+                    .collect(Collectors.toList()), ",");
         }
-
-        log.debug("SQL after adding order by clause: [{}]", sql);
+        return sql;
     }
 }

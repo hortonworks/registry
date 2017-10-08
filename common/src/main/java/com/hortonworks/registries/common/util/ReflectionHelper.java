@@ -47,22 +47,38 @@ public class ReflectionHelper {
 
     public static <T> T invokeSetter(String propertyName, Object object, Object valueToSet) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String methodName = "set" + StringUtils.capitalize(propertyName);
-        Method method = object.getClass().getMethod(methodName, valueToSet.getClass());
+        Method method = null;
+        try {
+            method = object.getClass().getMethod(methodName, valueToSet.getClass());
+        } catch (NoSuchMethodException ex) {
+            // try setters that accept super types
+            Method[] methods = object.getClass().getMethods();
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals(methodName) && methods[i].getParameterCount() == 1) {
+                    if (methods[i].getParameters()[0].getType().isAssignableFrom(valueToSet.getClass())) {
+                        method = methods[i];
+                        break;
+                    }
+                }
+            }
+            if (method == null) {
+                throw ex;
+            }
+        }
         return (T) method.invoke(object, valueToSet);
     }
 
     /**
-     * Given a class, this method returns a map of names of all the instance (non static) fields -&gt; type.
+     * Given a class, this method returns a map of names of all the instance (non static) fields to type.
      * if the class has any super class it also includes those fields.
-     *
      * @param clazz , not null
      * @return
      */
     public static Map<String, Class> getFieldNamesToTypes(Class clazz) {
         Field[] declaredFields = clazz.getDeclaredFields();
         Map<String, Class> instanceVariableNamesToTypes = new HashMap<>();
-        for (Field field : declaredFields) {
-            if (!Modifier.isStatic(field.getModifiers())) {
+        for(Field field : declaredFields) {
+            if(!Modifier.isStatic(field.getModifiers())) {
                 LOG.trace("clazz {} has field {} with type {}", clazz.getName(), field.getName(), field.getType().getName());
                 instanceVariableNamesToTypes.put(field.getName(), field.getType());
             } else {
@@ -70,7 +86,7 @@ public class ReflectionHelper {
             }
         }
 
-        if (!clazz.getSuperclass().equals(Object.class)) {
+        if(!clazz.getSuperclass().equals(Object.class)) {
             instanceVariableNamesToTypes.putAll(getFieldNamesToTypes(clazz.getSuperclass()));
         }
         return instanceVariableNamesToTypes;

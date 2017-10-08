@@ -28,6 +28,7 @@ import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
 import com.hortonworks.registries.storage.search.WhereClauseCombiner;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,9 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
 
     protected List<OrderByField> orderByFields;
 
+    protected SearchQuery searchQuery;
+    protected Schema schema;
+
     public AbstractSelectQuery(String nameSpace) {
         this(nameSpace, null);
     }
@@ -52,22 +56,38 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
     public AbstractSelectQuery(String nameSpace, List<OrderByField> orderByFields) {
         super(nameSpace);
         this.orderByFields = orderByFields;
-        addOrderByFieldsToParameterizedSql();
     }
 
     public AbstractSelectQuery(StorableKey storableKey, List<OrderByField> orderByFields) {
         super(storableKey);
         this.orderByFields = orderByFields;
-        addOrderByFieldsToParameterizedSql();
     }
 
     public AbstractSelectQuery(SearchQuery searchQuery, Schema schema) {
         super(searchQuery.getNameSpace());
-        buildSqlWithSearchQuery(searchQuery, schema);
+        this.searchQuery = searchQuery;
+        this.schema = schema;
     }
 
-    protected void buildSqlWithSearchQuery(SearchQuery searchQuery, Schema schema) {
-        sql = "SELECT * FROM " + tableName;
+    protected abstract String getParameterizedSql();
+    protected abstract String orderBySql();
+
+    @Override
+    protected final String createParameterizedSql() {
+        if (searchQuery != null) {
+            return buildSqlWithSearchQuery(searchQuery, schema);
+        } else {
+            String sql = getParameterizedSql();
+            String orderBy = orderBySql();
+            if (!StringUtils.isEmpty(orderBy)) {
+                sql += orderBy;
+            }
+            return sql;
+        }
+    }
+
+    protected String buildSqlWithSearchQuery(SearchQuery searchQuery, Schema schema) {
+        String sql = "SELECT * FROM " + fieldEncloser() + tableName + fieldEncloser();
 
         WhereClause whereClause = searchQuery.getWhereClause();
         Map<Schema.Field, Object> fieldsToValues = new HashMap<>();
@@ -109,6 +129,8 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
 
         primaryKey = new PrimaryKey(fieldsToValues);
         columns = Lists.newArrayList(fieldsToValues.keySet());
+
+        return sql;
     }
 
     protected abstract String fieldEncloser();
@@ -153,8 +175,6 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
 
         return result;
     }
-
-    protected abstract void addOrderByFieldsToParameterizedSql();
 
     @Override
     public boolean equals(Object o) {

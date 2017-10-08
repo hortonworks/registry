@@ -33,11 +33,15 @@ public interface VersionedStorable extends Storable {
 
     /**
      * Returns the version of the instance.
+     *
+     * @return the version
      */
     Integer getVersion();
 
     /**
      * Returns the description about this version.
+     *
+     * @return the description
      */
     String getDescription();
 
@@ -46,6 +50,8 @@ public interface VersionedStorable extends Storable {
      * For example, user wants to create a set of versioned schemas. User creates a root entity containing information
      * about this set of schema like name, compatibility etc. There can be multiple versions of schemas with in that
      * schema set then those versions can refer to that schema set entity with rootEntityId.
+     *
+     * @return the root entity id
      */
     Long getRootEntityId();
 }

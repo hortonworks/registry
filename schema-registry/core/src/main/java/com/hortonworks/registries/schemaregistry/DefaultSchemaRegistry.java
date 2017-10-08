@@ -473,7 +473,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public String uploadFile(InputStream inputStream) {
         String fileName = UUID.randomUUID().toString();
         try {
-            String uploadedFilePath = fileStorage.uploadFile(inputStream, fileName);
+            String uploadedFilePath = fileStorage.upload(inputStream, fileName);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -483,7 +483,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public InputStream downloadFile(String fileId) throws IOException {
-        return fileStorage.downloadFile(fileId);
+        return fileStorage.download(fileId);
     }
 
     @Override
