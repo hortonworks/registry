@@ -213,9 +213,9 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 }
                 SchemaVersionInfo fetchedSchemaVersionInfo = null;
                 try {
-                    Integer id = Integer.valueOf(versionId);
-                    if (id > 0 && id <= Integer.MAX_VALUE) {
-                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaVersionKey(subject, id));
+                    Integer version = Integer.valueOf(versionId);
+                    if (version > 0 && version <= Integer.MAX_VALUE) {
+                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaVersionKey(subject, version));
                     } else {
                         LOG.error("versionId is not in valid range [{}, {}] ", 1, Integer.MAX_VALUE);
                     }
