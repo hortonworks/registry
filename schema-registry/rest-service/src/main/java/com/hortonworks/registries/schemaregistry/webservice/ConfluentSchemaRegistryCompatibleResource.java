@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -174,12 +175,12 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         try {
             List<Integer> registeredSubjects = schemaRegistry.getAllVersions(subject)
                                                              .stream()
-                                                             .map(x -> x.getId().intValue())
+                                                             .map(SchemaVersionInfo::getVersion)
                                                              .collect(Collectors.toList());
 
             response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
         } catch (SchemaNotFoundException ex) {
-            LOG.error("No schema found with name [{}]", subject, ex);
+            LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
@@ -212,9 +213,9 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 }
                 SchemaVersionInfo fetchedSchemaVersionInfo = null;
                 try {
-                    Long id = Long.valueOf(versionId);
-                    if (id > 0 && id <= Integer.MAX_VALUE) {
-                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(id);
+                    Integer version = Integer.valueOf(versionId);
+                    if (version > 0 && version <= Integer.MAX_VALUE) {
+                        fetchedSchemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaVersionKey(subject, version));
                     } else {
                         LOG.error("versionId is not in valid range [{}, {}] ", 1, Integer.MAX_VALUE);
                     }
@@ -237,10 +238,11 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo == null) {
                 response = versionNotFoundError();
             } else {
-                SchemaVersionEntry schemaVersionEntry = new SchemaVersionEntry(schemaVersionInfo.getName(),
-                                                                               schemaVersionInfo.getId().intValue(),
-                                                                               schemaVersionInfo.getSchemaText());
-                response = WSUtils.respondEntity(schemaVersionEntry, Response.Status.OK);
+                Schema schema = new Schema(schemaVersionInfo.getName(),
+                                           schemaVersionInfo.getVersion(),
+                                           schemaVersionInfo.getId(),
+                                           schemaVersionInfo.getSchemaText());
+                response = WSUtils.respondEntity(schema, Response.Status.OK);
             }
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
@@ -254,7 +256,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     @POST
     @Path("/subjects/{subject}")
-    @ApiOperation(value = "Get schema information for the given schema name and schema text", response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
+    @ApiOperation(value = "Get schema information for the given schema subject and schema text", response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
                                          @ApiParam(value = "The schema ", required = true) String schema) {
@@ -271,10 +273,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             LOG.error("Given schema is invalid", ex);
             response = invalidSchemaError();
         } catch (SchemaNotFoundException ex) {
-            LOG.error("No schema found with name [{}]", subject, ex);
+            LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
         } catch (Exception ex) {
-            LOG.error("Encountered error while retrieving schema version with name: [{}]", subject, ex);
+            LOG.error("Encountered error while retrieving schema version with subject: [{}]", subject, ex);
             response = serverError();
         }
 
@@ -284,7 +286,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @POST
     @Path("/subjects/{subject}/versions")
     @ApiOperation(value = "Register a new version of the schema",
-            notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this schema, " +
+            notes = "Registers the given schema version to schema with subject if the given schemaText is not registered as a version for this schema, " +
                     "and returns respective unique id." +
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
@@ -312,9 +314,11 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
                 SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                     new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
+
                 Id id = new Id();
                 id.setId(schemaVersionInfo.getSchemaVersionId());
                 response = WSUtils.respondEntity(id, Response.Status.OK);
+
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
                 response = invalidSchemaError();
@@ -373,61 +377,6 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         return new ObjectMapper().readValue(json, SchemaString.class);
     }
 
-    public static class SchemaVersionEntry {
-        private String name;
-        private Integer version;
-        private String schema;
-
-        public SchemaVersionEntry() {
-        }
-
-        public SchemaVersionEntry(String name, Integer version, String schema) {
-            this.name = name;
-            this.version = version;
-            this.schema = schema;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Integer getVersion() {
-            return version;
-        }
-
-        public String getSchema() {
-            return schema;
-        }
-
-        @Override
-        public String toString() {
-            return "SchemaVersionEntry{" +
-                    "name='" + name + '\'' +
-                    ", version=" + version +
-                    ", schema='" + schema + '\'' +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SchemaVersionEntry that = (SchemaVersionEntry) o;
-
-            if (name != null ? !name.equals(that.name) : that.name != null) return false;
-            if (version != null ? !version.equals(that.version) : that.version != null) return false;
-            return schema != null ? schema.equals(that.schema) : that.schema == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (version != null ? version.hashCode() : 0);
-            result = 31 * result + (schema != null ? schema.hashCode() : 0);
-            return result;
-        }
-    }
 
     public static class SchemaString {
         private String schema;
@@ -479,6 +428,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         }
     }
 
+
     public static class Id {
         private long id;
 
@@ -496,8 +446,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         }
 
     }
-
-    public class Schema implements Comparable<Schema> {
+    public static class Schema implements Comparable<Schema> {
         private String subject;
         private Integer version;
         private Long id;
