@@ -18,7 +18,9 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.MetadataHelper;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +36,13 @@ import java.util.regex.Pattern;
 public class MySqlQueryUtils {
     private static final Logger log = LoggerFactory.getLogger(MySqlQueryUtils.class);
 
+    private static final StorageDataTypeContext STORAGE_DATA_TYPE_CONTEXT = new DefaultStorageDataTypeContext();
+
     private MySqlQueryUtils() {
     }
 
     public static long nextIdMySql(Connection connection, String namespace, int queryTimeoutSecs) throws SQLException {
-        if (!MetadataHelper.isAutoIncrement(connection, namespace, queryTimeoutSecs)) {
+        if (!MetadataHelper.isAutoIncrement(connection, namespace, queryTimeoutSecs, STORAGE_DATA_TYPE_CONTEXT)) {
             throw new NonIncrementalColumnException();
         }
 
@@ -51,7 +55,7 @@ public class MySqlQueryUtils {
 
     private static ResultSet getResultSet(Connection connection, int queryTimeoutSecs, String sql) throws SQLException {
         final MySqlQuery sqlBuilder = new MySqlQuery(sql);
-        return PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs),
+        return PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), STORAGE_DATA_TYPE_CONTEXT,
                 sqlBuilder).getPreparedStatement(sqlBuilder).executeQuery();
     }
 
@@ -64,7 +68,7 @@ public class MySqlQueryUtils {
     }
 
     public static long nextIdH2(Connection connection, String namespace, int queryTimeoutSecs) throws SQLException {
-        if (!MetadataHelper.isAutoIncrement(connection, namespace, queryTimeoutSecs)) {
+        if (!MetadataHelper.isAutoIncrement(connection, namespace, queryTimeoutSecs, STORAGE_DATA_TYPE_CONTEXT)) {
             throw new NonIncrementalColumnException();
         }
 

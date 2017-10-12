@@ -18,6 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.sql.query;
 
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +32,8 @@ import java.sql.SQLException;
 public class MetadataHelper {
     private static final Logger log = LoggerFactory.getLogger(MetadataHelper.class);
 
-    public static boolean isAutoIncrement(Connection connection, String namespace, int queryTimeoutSecs) throws SQLException {
-        final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs),
+    public static boolean isAutoIncrement(Connection connection, String namespace, int queryTimeoutSecs, StorageDataTypeContext storageDataTypeContext) throws SQLException {
+        final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
                 new SqlSelectQuery(namespace)).getMetaData();
 
         final int columnCount = rsMetadata.getColumnCount();
@@ -44,19 +45,4 @@ public class MetadataHelper {
         }
         return false;
     }
-
-    public static boolean isColumnInNamespace(Connection connection, int queryTimeoutSecs, String namespace, String columnName) throws SQLException {
-        final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs),
-                new SqlSelectQuery(namespace)).getMetaData();
-
-        final int columnCount = rsMetadata.getColumnCount();
-
-        for (int i = 1; i <= columnCount; i++) {
-            if (rsMetadata.getColumnName(i).equalsIgnoreCase(columnName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }

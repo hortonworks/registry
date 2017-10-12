@@ -18,7 +18,9 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSqlQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +40,7 @@ public class PhoenixSequenceIdQuery {
     private static final String SEQUENCE_TABLE = "sequence_table";
     private final String namespace;
     private final ConnectionBuilder connectionBuilder;
+    private static final StorageDataTypeContext STORAGE_DATA_TYPE_CONTEXT = new DefaultStorageDataTypeContext();
     private final int queryTimeoutSecs;
 
     public PhoenixSequenceIdQuery(String namespace, ConnectionBuilder connectionBuilder, int queryTimeoutSecs) {
@@ -60,17 +63,17 @@ public class PhoenixSequenceIdQuery {
         PhoenixSqlQuery deleteQuery = new PhoenixSqlQuery("DELETE FROM " + SEQUENCE_TABLE + " WHERE \"id\"='" + uuid + "'");
 
         try (Connection connection = connectionBuilder.getConnection()) {
-            int upsertResult = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), updateQuery).getPreparedStatement(updateQuery).executeUpdate();
+            int upsertResult = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), STORAGE_DATA_TYPE_CONTEXT, updateQuery).getPreparedStatement(updateQuery).executeUpdate();
             log.debug("Query [{}] is executed and returns result with [{}]", updateQuery, upsertResult);
 
-            ResultSet selectResultSet = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), selectQuery).getPreparedStatement(selectQuery).executeQuery();
+            ResultSet selectResultSet = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), STORAGE_DATA_TYPE_CONTEXT, selectQuery).getPreparedStatement(selectQuery).executeQuery();
             if (selectResultSet.next()) {
                 nextId = selectResultSet.getLong(namespace);
             } else {
                 throw new RuntimeException("No sequence-id created for the current sequence of [" + namespace + "]");
             }
             log.debug("Generated sequence id [{}] for [{}]", nextId, namespace);
-            int deleteResult = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), deleteQuery).getPreparedStatement(deleteQuery).executeUpdate();
+            int deleteResult = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), STORAGE_DATA_TYPE_CONTEXT, deleteQuery).getPreparedStatement(deleteQuery).executeUpdate();
             if (deleteResult == 0) {
                 log.error("Could not delete entry in " + SEQUENCE_TABLE + " for value [{}]", namespace, uuid);
             } else {

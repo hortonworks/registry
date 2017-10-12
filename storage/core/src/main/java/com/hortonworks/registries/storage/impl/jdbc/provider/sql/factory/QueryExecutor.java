@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
@@ -105,4 +106,9 @@ public interface QueryExecutor {
 
     //todo unify all other select methods with this method as they are kind of special cases of SearchQuery
     <T extends Storable> Collection<T> select(SearchQuery searchQuery);
+
+    /**
+     * @return true if a table has the columnName else false
+     */
+    boolean isColumnInNamespace(String namespace, String columnName) throws SQLException;
 }
