@@ -41,7 +41,7 @@ public class PostgresSelectQueryTest {
         PostgresqlSelectQuery postgresqlSelectQuery = new PostgresqlSelectQuery(nameSpace);
         String parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic", parametrizedSql);
+        Assert.assertEquals("SELECT * FROM \"topic\"", parametrizedSql);
 
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
@@ -49,7 +49,7 @@ public class PostgresSelectQueryTest {
         postgresqlSelectQuery = new PostgresqlSelectQuery(new StorableKey(nameSpace, new PrimaryKey(fieldToObjectMap)));
         parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic WHERE \"foo\" = ?", parametrizedSql);
+        Assert.assertEquals("SELECT * FROM \"topic\" WHERE \"foo\" = ?", parametrizedSql);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class PostgresSelectQueryTest {
         PostgresqlSelectQuery postgresqlSelectQuery = new PostgresqlSelectQuery("topic", orderByFields);
         String parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic ORDER BY \"foo\" DESC, ORDER BY \"bar\" ASC", parametrizedSql);
+        Assert.assertEquals("SELECT * FROM \"topic\" ORDER BY \"foo\" DESC, ORDER BY \"bar\" ASC", parametrizedSql);
 
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
@@ -67,7 +67,7 @@ public class PostgresSelectQueryTest {
         postgresqlSelectQuery = new PostgresqlSelectQuery(new StorableKey(nameSpace, new PrimaryKey(fieldToObjectMap)), orderByFields);
         parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic WHERE \"foo\" = ? ORDER BY \"foo\" DESC, ORDER BY \"bar\" ASC", parametrizedSql);
+        Assert.assertEquals("SELECT * FROM \"topic\" WHERE \"foo\" = ? ORDER BY \"foo\" DESC, ORDER BY \"bar\" ASC", parametrizedSql);
 
     }
 }

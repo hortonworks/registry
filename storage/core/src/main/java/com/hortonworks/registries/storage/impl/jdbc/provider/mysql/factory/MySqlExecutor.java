@@ -27,6 +27,7 @@ import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectio
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertUpdateDuplicate;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MysqlUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
@@ -81,6 +82,11 @@ public class MySqlExecutor extends AbstractQueryExecutor {
     }
 
     @Override
+    public int update(Storable storable) {
+        return executeUpdate(new MysqlUpdateQuery(storable));
+    }
+
+    @Override
     public Long nextId(String namespace) {
         // We intentionally return null. Please refer the class javadoc for more details.
         return null;
@@ -109,32 +115,6 @@ public class MySqlExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields) {
         return executeQuery(storableKey.getNameSpace(), new MySqlSelectQuery(storableKey, orderByFields));
-    }
-
-    public static MySqlExecutor createExecutor(Map<String, Object> jdbcProps) {
-        Util.validateJDBCProperties(jdbcProps, Lists.newArrayList("dataSourceClassName", "dataSource.url"));
-
-        String dataSourceClassName = (String) jdbcProps.get("dataSourceClassName");
-        log.info("data source class: [{}]", dataSourceClassName);
-
-        String jdbcUrl = (String) jdbcProps.get("dataSource.url");
-        log.info("dataSource.url is: [{}] ", jdbcUrl);
-
-        int queryTimeOutInSecs = -1;
-        if (jdbcProps.containsKey("queryTimeoutInSecs")) {
-            queryTimeOutInSecs = (Integer) jdbcProps.get("queryTimeoutInSecs");
-            if (queryTimeOutInSecs < 0) {
-                throw new IllegalArgumentException("queryTimeoutInSecs property can not be negative");
-            }
-        }
-
-        Properties properties = new Properties();
-        properties.putAll(jdbcProps);
-        HikariConfig hikariConfig = new HikariConfig(properties);
-
-        HikariCPConnectionBuilder connectionBuilder = new HikariCPConnectionBuilder(hikariConfig);
-        ExecutionConfig executionConfig = new ExecutionConfig(queryTimeOutInSecs);
-        return new MySqlExecutor(executionConfig, connectionBuilder);
     }
 
     private void insertOrUpdateWithUniqueId(final Storable storable, final SqlQuery sqlQuery) {

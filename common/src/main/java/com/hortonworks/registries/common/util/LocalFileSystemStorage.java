@@ -56,19 +56,19 @@ public class LocalFileSystemStorage implements FileStorage {
             }
         } else {
             if (!dirFile.isDirectory()) {
-                throw new RuntimeException("Given directory path " + directory + " is not a directory");
+                throw new RuntimeException("Given directory path "+directory+" is not a directory");
             }
         }
     }
 
     @Override
-    public String uploadFile(InputStream inputStream, String name) throws IOException {
+    public String upload(InputStream inputStream, String name) throws IOException {
         ensureDirExists();
 
         Path path = FileSystems.getDefault().getPath(directory, name);
         File file = path.toFile();
         if (!file.createNewFile()) {
-            throw new IOException("File: [" + name + "] already exists");
+            throw new IOException("File: ["+name+"] already exists");
         }
         try (OutputStream outputStream = new FileOutputStream(file)) {
             ByteStreams.copy(inputStream, outputStream);
@@ -77,7 +77,7 @@ public class LocalFileSystemStorage implements FileStorage {
     }
 
     @Override
-    public InputStream downloadFile(String name) throws IOException {
+    public InputStream download(String name) throws IOException {
         ensureDirExists();
 
         Path path = FileSystems.getDefault().getPath(directory, name);
@@ -86,11 +86,15 @@ public class LocalFileSystemStorage implements FileStorage {
     }
 
     @Override
-    public boolean deleteFile(String name) throws IOException {
+    public boolean delete(String name) throws IOException {
         ensureDirExists();
 
         Path path = FileSystems.getDefault().getPath(directory, name);
         return Files.deleteIfExists(path);
     }
 
+    @Override
+    public boolean exists(String name) {
+        return Files.exists(FileSystems.getDefault().getPath(directory, name));
+    }
 }
