@@ -22,11 +22,13 @@ import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
+import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
@@ -45,6 +47,13 @@ public interface QueryExecutor {
      * Inserts or updates the specified {@link Storable} in storage
      */
     void insertOrUpdate(Storable storable);
+
+    /**
+     * Updates the specified storable in the storage
+     *
+     * @return the number of rows updated
+     */
+    int update(Storable storable);
 
     /**
      * Deletes the specified {@link StorableKey} from storage
@@ -105,4 +114,9 @@ public interface QueryExecutor {
 
     //todo unify all other select methods with this method as they are kind of special cases of SearchQuery
     <T extends Storable> Collection<T> select(SearchQuery searchQuery);
+
+    /**
+     *  @return returns set of column names for a given table
+     */
+    CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException;
 }

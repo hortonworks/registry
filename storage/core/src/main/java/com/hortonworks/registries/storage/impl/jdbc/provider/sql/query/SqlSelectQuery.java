@@ -34,24 +34,25 @@ public class SqlSelectQuery extends AbstractSelectQuery {
     }
 
     @Override
-    protected void addOrderByFieldsToParameterizedSql() {
+    public String orderBySql() {
+        String sql = "";
         if (orderByFields != null && !orderByFields.isEmpty()) {
             sql += join(orderByFields.stream()
                                 .map(x -> " ORDER BY " + x.getFieldName() + " " + (x.isDescending() ? "DESC" : "ASC"))
                                 .collect(Collectors.toList()), ",");
         }
-
-        log.debug("SQL after adding order by clause: [{}]", sql);
+        return sql;
     }
 
     // "SELECT * FROM DB.TABLE [WHERE C1 = ?, C2 = ?]"
     @Override
-    protected void initParameterizedSql() {
-        sql = "SELECT * FROM " + tableName;
+    protected String getParameterizedSql() {
+        String sql = "SELECT * FROM " + tableName;
         //where clause is defined by columns specified in the PrimaryKey
         if (columns != null) {
             sql += " WHERE " + join(getColumnNames(columns, "%s = ?"), " AND ");
         }
-        log.debug(sql);
+        LOG.debug(sql);
+        return sql;
     }
 }

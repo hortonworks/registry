@@ -31,9 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- *
- */
 public class HdfsFileStorageTest {
     private static final String HDFS_DIR = "/tmp/test-hdfs";
     private HdfsFileStorage fileStorage;
@@ -61,11 +58,11 @@ public class HdfsFileStorageTest {
         Files.write(file.toPath(), lines, Charset.forName("UTF-8"));
         String jarFileName = "test.jar";
 
-        fileStorage.deleteFile(jarFileName);
+        fileStorage.delete(jarFileName);
 
-        fileStorage.uploadFile(new FileInputStream(file), jarFileName);
+        fileStorage.upload(new FileInputStream(file), jarFileName);
 
-        InputStream inputStream = fileStorage.downloadFile(jarFileName);
+        InputStream inputStream = fileStorage.download(jarFileName);
         List<String> actual = IOUtils.readLines(inputStream);
         Assert.assertEquals(lines, actual);
     }
@@ -84,11 +81,11 @@ public class HdfsFileStorageTest {
         Files.write(file.toPath(), lines, Charset.forName("UTF-8"));
         String jarFileName = "test.jar";
 
-        fileStorage.deleteFile(jarFileName);
+        fileStorage.delete(jarFileName);
 
-        fileStorage.uploadFile(new FileInputStream(file), jarFileName);
+        fileStorage.upload(new FileInputStream(file), jarFileName);
 
-        InputStream inputStream = fileStorage.downloadFile(jarFileName);
+        InputStream inputStream = fileStorage.download(jarFileName);
         List<String> actual = IOUtils.readLines(inputStream);
         Assert.assertEquals(lines, actual);
     }

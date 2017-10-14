@@ -18,10 +18,18 @@ package com.hortonworks.registries.storage.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.exception.DuplicateEntityException;
+import com.hortonworks.registries.common.util.ReflectionHelper;
 import com.hortonworks.registries.storage.Storable;
+import com.hortonworks.registries.storage.annotation.SearchableField;
 import com.hortonworks.registries.storage.annotation.StorableEntity;
+import com.hortonworks.registries.storage.annotation.VersionField;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -32,9 +40,10 @@ import java.util.function.Function;
 import static com.hortonworks.registries.common.util.ReflectionHelper.getAnnotatedClasses;
 
 /**
- * Utility methods for the core package.
+ * Utility methods for the storage package.
  */
 public final class StorageUtils {
+
 
     private StorageUtils() {
     }
@@ -62,13 +71,46 @@ public final class StorageUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static Collection<Class<? extends Storable>> getStreamlineEntities() {
+    public static Collection<Class<? extends Storable>> getStorableEntities() {
         Set<Class<? extends Storable>> entities = new HashSet<>();
-        getAnnotatedClasses("com.hortonworks", StorableEntity.class).forEach(clazz -> {
+        ReflectionHelper.getAnnotatedClasses("com.hortonworks", StorableEntity.class).forEach(clazz -> {
             if (Storable.class.isAssignableFrom(clazz)) {
                 entities.add((Class<? extends Storable>) clazz);
             }
         });
         return entities;
+    }
+
+    public static List<Pair<Field, String>> getSearchableFieldValues(Storable storable)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        List<Pair<Field, String>> res = new ArrayList<>();
+        getAnnotatedFieldValues(storable, SearchableField.class).forEach(kv -> {
+            res.add(Pair.of(kv.getKey(), kv.getValue() instanceof String ? (String) kv.getValue() : kv.getValue().toString()));
+        });
+        return res;
+    }
+
+    public static Optional<Pair<Field, Long>> getVersionFieldValue(Storable storable)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        for (Pair<Field, Object> kv : getAnnotatedFieldValues(storable, VersionField.class)) {
+            if (kv.getValue() instanceof Long) {
+                return Optional.of(Pair.of(kv.getKey(), (Long) kv.getValue()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    public static List<Pair<Field, Object>> getAnnotatedFieldValues(Storable storable, Class<? extends Annotation> clazz)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        List<Pair<Field, Object>> res = new ArrayList<>();
+        for (Field field : storable.getClass().getDeclaredFields()) {
+            if (field.getAnnotation(clazz) != null) {
+                Object val = ReflectionHelper.invokeGetter(field.getName(), storable);
+                if (val != null) {
+                    res.add(Pair.of(field, val));
+                }
+            }
+        }
+        return res;
     }
 }

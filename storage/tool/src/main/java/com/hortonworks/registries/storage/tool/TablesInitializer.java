@@ -180,7 +180,7 @@ public class TablesInitializer {
 
     private static void usage(Options options) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("Registry TableInitializer [options]", options);
+        formatter.printHelp("TableInitializer [options]", options);
     }
 
 }

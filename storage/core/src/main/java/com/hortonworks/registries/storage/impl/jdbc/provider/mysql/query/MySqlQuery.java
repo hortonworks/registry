@@ -19,13 +19,15 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSqlQuery;
 
 public class MySqlQuery extends AbstractSqlQuery {
+    private final String sql;
 
     public MySqlQuery(String sql) {
         this.sql = sql;
     }
 
     @Override
-    protected void initParameterizedSql() {
-        log.debug(sql);
+    protected String createParameterizedSql() {
+        LOG.debug(sql);
+        return sql;
     }
 }

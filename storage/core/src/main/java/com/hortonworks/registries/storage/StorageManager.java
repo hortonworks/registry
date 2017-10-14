@@ -34,7 +34,7 @@ public interface StorageManager {
     /**
      * Initialize respective {@link StorageManager}  with the given properties
      *
-     * @param properties
+     * @param properties the properties
      */
     void init(Map<String, Object> properties);
     
@@ -44,7 +44,8 @@ public interface StorageManager {
      * it will do a get and ensure new and old storables instances are equal in which case it will return false.
      * If the old and new instances are not the same it will throw {@code AlreadyExistsException}.
      * Will return true if no existing storable entity was found and the supplied entity gets added successfully.
-     * @param storable
+     *
+     * @param storable the storable
      * @throws StorageException
      */
     void add(Storable storable) throws StorageException;
@@ -61,19 +62,39 @@ public interface StorageManager {
 
     /**
      * Unlike add, if the storage entity already exists, it will be updated. If it does not exist, it will be created.
-     * @param storable
+     *
+     * @param storable the storable
      * @throws StorageException
      */
     void addOrUpdate(Storable storable) throws StorageException;
 
     /**
+     * Updates an existing {@link Storable}. Throws {@link StorageException} if the
+     * storable could not be updated.
+     *
+     * @param storable the storable
+     */
+    void update(Storable storable);
+
+    /**
      * Gets the storable entity by using {@code Storable.getPrimaryKey()} as lookup key, return null if no storable entity with
      * the supplied key is found.
-     * @param key
-     * @return
+     *
+     * @param key the key
+     * @return the storable
      * @throws StorageException
      */
     <T extends Storable> T get(StorableKey key) throws StorageException;
+
+    /**
+     * Returns if an entity with the given key exists or not.
+     *
+     * @param key the Storable key
+     * @return true if the entity with given key exists, false otherwise
+     */
+    default boolean exists(StorableKey key) {
+        return get(key) != null;
+    }
 
     /**
      * Get the list of storable entities in the namespace, matching the query params.
@@ -85,9 +106,9 @@ public interface StorageManager {
      * List&lt;Device&gt; devices = find(DEVICE_NAMESPACE, params);
      * </pre>
      *
-     * @param namespace
-     * @param queryParams
-     * @return
+     * @param namespace the namespace
+     * @param queryParams the query params
+     * @return the storables
      * @throws StorageException
      */
     <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams) throws StorageException;
@@ -96,27 +117,27 @@ public interface StorageManager {
      * Returns the collection of storable entities in the given {@code namespace}, matching given {@code queryParams} and
      * order by the given list of {@code orderByFields}
      *
-     * @param namespace
-     * @param queryParams
-     * @param orderByFields
-     * @param <T>
-     * @return
+     * @param namespace the namespace
+     * @param queryParams the query params
+     * @param orderByFields the order by fields
+     * @param <T> the storable type
+     * @return the storables
      * @throws StorageException when any storage error occurs
      */
     <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException;
 
     /**
      *
-     * @param searchQuery
-     * @param <T>
-     * @return
+     * @param searchQuery the search query
+     * @param <T> the type
+     * @return the storables
      */
     <T extends Storable> Collection<T> search(SearchQuery searchQuery);
 
     /**
      * Lists all {@link Storable} objects existing in the given namespace. If no entity is found, and empty list will be returned.
-     * @param namespace
-     * @return
+     * @param namespace the namespace
+     * @return the storables
      * @throws StorageException
      */
     <T extends Storable> Collection<T> list(String namespace) throws StorageException;
@@ -134,7 +155,7 @@ public interface StorageManager {
      * Registers a Collection of {@link Storable}} classes to be used in {@link StorableFactory} for creating instances
      * of a given namespace.
      *
-     * @param classes
+     * @param classes the storable classes to register
      * @throws StorageException
      */
     void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException;

@@ -25,5 +25,7 @@ public interface StorageWriter {
 
     void addOrUpdate(Storable storable);
 
+    void update(Storable storable);
+
     Object remove(StorableKey key);
 }

@@ -86,24 +86,6 @@ public class SearchApiTest {
     }
 
     @Test
-    public void testGeneratedSqlForSearchApi() {
-        List<Pair<SearchQuery, Pair<String, String>>> pairs = Lists.newArrayList(Pair.of(simpleQuery, Pair.of(simpleQueryMySql, simpleQueryPostgreSql)),
-                                                                   Pair.of(complexQuery, Pair.of(complexQueryMySql, complexQueryPostgreSql)));
-        final Schema schema = new DeviceInfo().getSchema();
-        for (Pair<SearchQuery, Pair<String, String>> pair : pairs) {
-            MySqlSelectQuery mySqlSelectQuery = new MySqlSelectQuery(pair.getLeft(), schema);
-            String parametrizedSql = mySqlSelectQuery.getParametrizedSql();
-            LOG.info("parametrizedSql = " + parametrizedSql);
-            Assert.assertEquals(pair.getRight().getLeft().trim(), parametrizedSql.trim());
-
-            PostgresqlSelectQuery postgresqlSelectQuery = new PostgresqlSelectQuery(pair.getLeft(),schema);
-            String parametrizedPostgreSql = postgresqlSelectQuery.getParametrizedSql();
-            LOG.info("parametrizedPostgreSql = " + parametrizedPostgreSql);
-            Assert.assertEquals(pair.getRight().getRight().trim(), parametrizedPostgreSql.trim());
-        }
-    }
-
-    @Test
     public void testSearchAPIJsons() throws Exception {
         LOG.info("simpleQuery = [{}]", simpleQuery);
         LOG.info("complexQuery = [{}]", complexQuery);
