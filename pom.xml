@@ -282,8 +282,8 @@
         <phoenix.version>4.4.0-HBase-1.1</phoenix.version>
         <mariadb-java-client.version>1.5.5</mariadb-java-client.version>
         <calcite.version>1.4.0-incubating</calcite.version>
-        <commons-lang3.version>3.3</commons-lang3.version>
-        <commons-lang.version>2.5</commons-lang.version>
+        <commons-lang3.version>3.4</commons-lang3.version>
+        <commons-lang.version>2.6</commons-lang.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-surefire.version>2.18.1</maven-surefire.version>
         <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>
@@ -291,6 +291,8 @@
         <spring.version>4.3.6.RELEASE</spring.version>
         <postgresql.version>9.4.1212</postgresql.version>
         <flyway.version>4.2.0</flyway.version>
+        <hikari.version>2.2.5</hikari.version>
+        <h2database.version>1.4.188</h2database.version>
     </properties>
 
     <distributionManagement>
@@ -530,7 +532,16 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>${flyway.version}</version>
             </dependency>
-
+            <dependency>
+              <groupId>com.zaxxer</groupId>
+              <artifactId>HikariCP-java6</artifactId>
+              <version>${hikari.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>commons-lang</groupId>
+              <artifactId>commons-lang</artifactId>
+              <version>${commons-lang.version}</version>
+            </dependency>
 
             <!-- Test dependencies -->
             <dependency>
