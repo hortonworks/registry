@@ -530,6 +530,7 @@ public class SchemaVersionLifecycleManager {
             stateStorable.setSequence(schemaVersionLifecycleContext.getSequence() + 1);
             stateStorable.setStateId(stateId);
             stateStorable.setTimestamp(System.currentTimeMillis());
+            stateStorable.setId(storageManager.nextId(SchemaVersionStateStorable.NAME_SPACE));
 
             storageManager.add(stateStorable);
 
