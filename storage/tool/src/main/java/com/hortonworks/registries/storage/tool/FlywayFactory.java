@@ -17,6 +17,7 @@
 package com.hortonworks.registries.storage.tool;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationVersion;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +29,8 @@ public class FlywayFactory {
     private static final String sqlMigrationPrefix = "v";
     private static final boolean validateOnMigrate = true;
     private static final boolean outOfOrder = false;
+    private static final boolean baselineOnMigrate = true;
+    private static final String baselineVersion = "000";
     private static final boolean cleanOnValidationError = false;
 
 
@@ -40,6 +43,8 @@ public class FlywayFactory {
         flyway.setSqlMigrationPrefix(sqlMigrationPrefix);
         flyway.setValidateOnMigrate(validateOnMigrate);
         flyway.setOutOfOrder(outOfOrder);
+        flyway.setBaselineOnMigrate(baselineOnMigrate);
+        flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
         flyway.setCleanOnValidationError(cleanOnValidationError);
         flyway.setLocations(location);
         flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword(), null);
