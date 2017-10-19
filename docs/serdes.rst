@@ -1,6 +1,6 @@
 
-Serializtion/Deserilization protocol
-====================================
+Serialization/Deserialization protocol
+======================================
 
 Serializer and Deserializer are used to marshal and unmarshal messages according to a given schema by adding schema version information along with the payload.
 There are different protocols in how schema version is passed along with the payload.
@@ -22,7 +22,7 @@ payload:
     follow the below process to serialize the payload.
 
   if the given payload is of specific-record type
-    then use specific datum writer
+    then use specific datum writer along with binary encoder
   else
     use generic datum writer along with binary encoder.
 
@@ -47,7 +47,7 @@ payload:
     use generic datum writer along with binary encoder.
 
   if user api asks to read it as specific-record
-    then use specific datum reader
+    then use specific datum reader passing both writer and reader schemas
   else
     use generic datum reader passing both writer and reader schemas.
 
@@ -70,7 +70,7 @@ payload:
     follow the below process to serialize the payload.
 
   if the given payload is of specific-record type
-    then use specific datum writer
+    then use specific datum writer along with binary encoder.
   else
     use generic datum writer along with binary encoder.
 
@@ -92,12 +92,12 @@ payload:
     follow the below process to deserialize the payload
 
   if the given payload is of specific-record type
-    then use specific datum writer
+    then use specific datum writer along with binary encoder.
   else
     use generic datum writer along with binary encoder.
 
   if user api asks to read it as specific-record
-    then use specific datum reader
+    then use specific datum reader passing both writer and reader schemas.
   else
     use generic datum reader passing both writer and reader schemas.
 
