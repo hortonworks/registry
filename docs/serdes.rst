@@ -33,6 +33,7 @@ version-info: version identifier as integer type, so it would be of 4 bytes.
 Get the respective avro schema for the given schema version id which will be writer schema.
 User Deserializer API can take any schema version which can be treated as reader schema.
 
+payload:
   if schema type is byte array
     then read byte array as it is.
   else
@@ -78,6 +79,7 @@ version-info: long value which represents schema version id, viz 8 bytes
 Get the respective avro schema for the given schema version id which will be writer schema.
 User Deserializer API can take any schema version which can be treated as reader schema.
 
+payload:
   if schema type is byte array
     then read byte array as it is
   else if schema type is string
