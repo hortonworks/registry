@@ -57,8 +57,18 @@ public class SingletonInmemoryStore implements StorageManager {
     }
 
     @Override
+    public void update(Storable storable) {
+        inMemoryStorageManager.update(storable);
+    }
+
+    @Override
     public <T extends Storable> T get(StorableKey key) throws StorageException {
         return inMemoryStorageManager.get(key);
+    }
+
+    @Override
+    public boolean exists(StorableKey key) {
+        return inMemoryStorageManager.exists(key);
     }
 
     @Override

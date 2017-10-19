@@ -95,7 +95,7 @@ public final class SchemaVersionInfo implements Serializable {
         this.version = version;
         this.schemaText = schemaText;
         this.timestamp = timestamp;
-        this.stateId = stateId == null ? SchemaVersionLifecycleStates.ENABLED.id() : stateId;
+        this.stateId = stateId == null ? SchemaVersionLifecycleStates.ENABLED.getId() : stateId;
     }
 
     public Long getId() {

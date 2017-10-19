@@ -32,8 +32,9 @@ public class PostgresqlDeleteQuery extends AbstractStorableKeyQuery {
     }
 
     @Override
-    protected void initParameterizedSql() {
-        sql = "DELETE FROM  " + tableName + " WHERE " + join(getColumnNames(columns, "\"%s\" = ?"), " AND ");
-        log.debug(sql);
+    protected String createParameterizedSql() {
+        String sql = "DELETE FROM  \"" + tableName + "\" WHERE " + join(getColumnNames(columns, "\"%s\" = ?"), " AND ");
+        LOG.debug(sql);
+        return sql;
     }
 }

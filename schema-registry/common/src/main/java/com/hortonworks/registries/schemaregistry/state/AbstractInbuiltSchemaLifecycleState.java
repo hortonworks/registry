@@ -15,71 +15,15 @@
  */
 package com.hortonworks.registries.schemaregistry.state;
 
-import java.util.List;
-
 /**
  *
  */
-public abstract class AbstractInbuiltSchemaLifecycleState implements InbuiltSchemaVersionLifecycleState {
-    private final String name;
-    private final byte id;
-    private final String description;
-    private final List<SchemaVersionLifecycleState> nextStates;
+public abstract class AbstractInbuiltSchemaLifecycleState extends BaseSchemaVersionLifecycleState implements InbuiltSchemaVersionLifecycleState {
 
     protected AbstractInbuiltSchemaLifecycleState(String name,
                                                   byte id,
-                                                  String description,
-                                                  List<SchemaVersionLifecycleState> nextStates) {
-        this.name = name;
-        this.id = id;
-        this.description = description;
-        this.nextStates = nextStates;
+                                                  String description) {
+        super(name, id, description);
     }
 
-    @Override
-    public Byte id() {
-        return id;
-    }
-
-    @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public String description() {
-        return description;
-    }
-
-    @Override
-    public List<SchemaVersionLifecycleState> nextStates() {
-        return nextStates;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AbstractInbuiltSchemaLifecycleState that = (AbstractInbuiltSchemaLifecycleState) o;
-
-        if (id != that.id) return false;
-        return name != null ? name.equals(that.name) : that.name == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (int) id;
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "{" +
-                "name='" + name + '\'' +
-                ", id=" + id +
-                ", description='" + description + '\'' +
-                '}';
-    }
 }

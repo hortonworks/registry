@@ -23,7 +23,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
-import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleState;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
@@ -452,13 +452,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public void executeCustomState(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        schemaVersionLifecycleManager.executeCustomState(schemaVersionId);
+    public void transitionState(Long schemaVersionId, Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException {
+        schemaVersionLifecycleManager.executeState(schemaVersionId, targetStateId);
     }
 
-    public List<SchemaVersionLifecycleState> getSchemaVersionLifecycleStates() {
-        //todo
-        return null;
+    public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
+        return schemaVersionLifecycleManager.getSchemaVersionLifecycleStateMachine().toConfig();
     }
 
     @Override
@@ -474,7 +473,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public String uploadFile(InputStream inputStream) {
         String fileName = UUID.randomUUID().toString();
         try {
-            String uploadedFilePath = fileStorage.uploadFile(inputStream, fileName);
+            String uploadedFilePath = fileStorage.upload(inputStream, fileName);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -484,7 +483,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public InputStream downloadFile(String fileId) throws IOException {
-        return fileStorage.downloadFile(fileId);
+        return fileStorage.download(fileId);
     }
 
     @Override

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS schema_version_state (
   "stateId"         SMALLINT       NOT NULL,
   "sequence"        INT           NOT NULL,
   "timestamp"       BIGINT        NOT NULL,
-  "details"         VARCHAR(255),
+  "details"         BYTEA,
   PRIMARY KEY ("schemaVersionId", "stateId", "sequence"),
   UNIQUE ("id")
 );

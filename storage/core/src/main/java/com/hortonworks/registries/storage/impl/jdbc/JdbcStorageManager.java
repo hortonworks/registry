@@ -25,19 +25,17 @@ import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
+import com.hortonworks.registries.storage.exception.ConcurrentUpdateException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.StorageException;
-import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.factory.PhoenixExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory.PostgresqlExecutor;
+import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.MetadataHelper;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,6 +78,14 @@ public class JdbcStorageManager implements StorageManager {
     public void addOrUpdate(Storable storable) throws StorageException {
         log.debug("Adding or updating storable [{}]", storable);
         queryExecutor.insertOrUpdate(storable);
+    }
+
+    @Override
+    public void update(Storable storable) {
+        if (queryExecutor.update(storable) == 0) {
+            log.warn("Update storable '{}' returned 0 rows, possible concurrent update or invalid primary key");
+            throw new ConcurrentUpdateException("Row could not be updated, possible concurrent update or invalid primary key");
+        }
     }
 
     @Override
@@ -174,24 +180,23 @@ public class JdbcStorageManager implements StorageManager {
      * the {@link StorableKey} from the list of query parameters, and then can use {@link SqlSelectQuery} builder to generate the query using
      * the query parameters in the where clause
      *
-     * @return {@link StorableKey} with all query parameters that match database columns <br>
+     * @return {@link StorableKey} with all query parameters that match database columns <br/>
      * null if none of the query parameters specified matches a column in the DB
      */
     private StorableKey buildStorableKey(String namespace, List<QueryParam> queryParams) throws Exception {
         final Map<Schema.Field, Object> fieldsToVal = new HashMap<>();
-        final Connection connection = queryExecutor.getConnection();
         StorableKey storableKey = null;
 
         try {
+            CaseAgnosticStringSet columnNames = queryExecutor.getColumnNames(namespace);
             for (QueryParam qp : queryParams) {
-                int queryTimeoutSecs = queryExecutor.getConfig().getQueryTimeoutSecs();
-                if (!MetadataHelper.isColumnInNamespace(connection, queryTimeoutSecs, namespace, qp.getName())) {
+                if (!columnNames.contains(qp.getName())) {
                     log.warn("Query parameter [{}] does not exist for namespace [{}]. Query parameter ignored.", qp.getName(), namespace);
                 } else {
                     final String val = qp.getValue();
                     final Schema.Type typeOfVal = Schema.Type.getTypeOfVal(val);
                     fieldsToVal.put(new Schema.Field(qp.getName(), typeOfVal),
-                        typeOfVal.getJavaType().getConstructor(String.class).newInstance(val)); // instantiates object of the appropriate type
+                            typeOfVal.getJavaType().getConstructor(String.class).newInstance(val)); // instantiates object of the appropriate type
                 }
             }
 
@@ -206,8 +211,6 @@ public class JdbcStorageManager implements StorageManager {
         } catch (Exception e) {
             log.debug("Exception occurred when attempting to generate StorableKey from QueryParam", e);
             throw new IllegalQueryParameterException(e);
-        } finally {
-            queryExecutor.closeConnection(connection);
         }
 
         return storableKey;
@@ -230,30 +233,13 @@ public class JdbcStorageManager implements StorageManager {
 
         // When we have more providers we can add a layer to have a factory to create respective jdbc storage managers.
         // For now, keeping it simple as there are only 2.
-        if(!"phoenix".equals(type) && !"mysql".equals(type) && !"postgresql".equals(type)) {
+        if(!"mysql".equals(type) && !"postgresql".equals(type) && !"oracle".equals(type)) {
             throw new IllegalArgumentException("Unknown jdbc storage provider type: "+type);
         }
         log.info("jdbc provider type: [{}]", type);
         Map<String, Object> dbProperties = (Map<String, Object>) properties.get("db.properties");
 
-        QueryExecutor queryExecutor;
-        switch (type) {
-            case "phoenix":
-                try {
-                    queryExecutor = PhoenixExecutor.createExecutor(dbProperties);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                break;
-            case "mysql":
-                queryExecutor = MySqlExecutor.createExecutor(dbProperties);
-                break;
-            case "postgresql":
-                queryExecutor = PostgresqlExecutor.createExecutor(dbProperties);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported storage provider type: "+type);
-        }
+        QueryExecutor queryExecutor = QueryExecutorFactory.get(type, dbProperties);
 
         this.queryExecutor = queryExecutor;
         this.queryExecutor.setStorableFactory(storableFactory);

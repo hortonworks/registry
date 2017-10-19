@@ -14,7 +14,7 @@
 
 require('file?name=[name].[ext]!../../index.html'); //for production build
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {render} from 'react-dom';
 import debug from 'debug';
 import 'babel-polyfill';

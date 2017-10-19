@@ -8,8 +8,8 @@ modules:
           defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
       # schema reviewer configuration
-      schemaReviewExecutor:
-        className: "com.hortonworks.registries.schemaregistry.state.DefaultSchemaReviewExecutor"
+      customSchemaStateExecutor:
+        className: "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor"
         props:
       # schema cache properties
       # inmemory schema versions cache size

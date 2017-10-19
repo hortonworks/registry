@@ -40,7 +40,7 @@ public class SchemaVersionStateStorable extends AbstractStorable {
     private static final Schema.Field SEQUENCE_FIELD = Schema.Field.of(SEQUENCE, Schema.Type.INTEGER);
     private static final Schema.Field STATE_FIELD = Schema.Field.of(STATE, Schema.Type.BYTE);
     private static final Schema.Field TIMESTAMP_FIELD = Schema.Field.of(TIMESTAMP, Schema.Type.LONG);
-    private static final Schema.Field DETAILS_FIELD = Schema.Field.of(DETAILS, Schema.Type.STRING);
+    private static final Schema.Field DETAILS_FIELD = Schema.Field.of(DETAILS, Schema.Type.BINARY);
 
     public static final Schema SCHEMA = Schema.of(ID_FIELD,
                                                   SCHEMA_VERSION_ID_FIELD,
@@ -54,7 +54,7 @@ public class SchemaVersionStateStorable extends AbstractStorable {
     private Byte stateId;
     private Integer sequence;
     private Long timestamp;
-    private String details;
+    private byte[] details;
 
     private Long id;
 
@@ -77,7 +77,7 @@ public class SchemaVersionStateStorable extends AbstractStorable {
         return timestamp;
     }
 
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
 
@@ -112,7 +112,7 @@ public class SchemaVersionStateStorable extends AbstractStorable {
         this.timestamp = timestamp;
     }
 
-    public void setDetails(String details) {
+    public void setDetails(byte[] details) {
         this.details = details;
     }
 
@@ -124,9 +124,9 @@ public class SchemaVersionStateStorable extends AbstractStorable {
     @Override
     public PrimaryKey getPrimaryKey() {
         Map<Schema.Field, Object> fields = new HashMap<Schema.Field, Object>(){{
-        put(SCHEMA_VERSION_ID_FIELD, schemaVersionId);
-        put(STATE_FIELD, stateId);
-        put(SEQUENCE_FIELD, sequence);
+            put(SCHEMA_VERSION_ID_FIELD, schemaVersionId);
+            put(STATE_FIELD, stateId);
+            put(SEQUENCE_FIELD, sequence);
         }};
         return new PrimaryKey(fields);
     }

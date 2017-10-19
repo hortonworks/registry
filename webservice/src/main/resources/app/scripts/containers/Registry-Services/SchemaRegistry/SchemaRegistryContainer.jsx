@@ -28,9 +28,11 @@ import {
     PanelGroup,
     Panel,
     Modal,
-    Pagination
+    Pagination,
+    OverlayTrigger,
+    Popover
 } from 'react-bootstrap';
-import Utils from '../../../utils/Utils';
+import Utils, {StateMachine} from '../../../utils/Utils';
 import ReactCodemirror from 'react-codemirror';
 import '../../../utils/Overrides';
 import CodeMirror from 'codemirror';
@@ -63,6 +65,60 @@ CodeMirror.registerHelper("lint", "json", function(text) {
   return found;
 });
 
+class ChangeState extends Component{
+  constructor(props){
+    super(props);
+    this.state = {
+      edit: false
+    };
+  }
+  changeState(e){
+    const {version} = this.props;
+    SchemaREST.changeStateOfVersion(version.id, this.refs.stateSelect.value, {}).then((res) => {
+      version.stateId = parseInt(this.refs.stateSelect.value);
+      this.setState({edit: false});
+    });
+  }
+  onEdit(){
+    this.setState({edit: true}, () => {});
+  }
+  render(){
+    const {edit} = this.state;
+    const {StateMachine, version, showEditBtn} = this.props;
+    const transitions = StateMachine.getTransitionStateOptions(version.stateId);
+    const currentState = StateMachine.getStateById(version.stateId).name;
+    let comp;
+    if(edit){
+      comp = <div style={{"marginTop": "5px"}}>
+        <select ref="stateSelect" className="stateSelect" defaultValue={version.stateId}>
+          <option disabled value={version.stateId}>{currentState}</option>
+          {transitions.map( option =>
+            (<option value={option.targetStateId} key={option.targetStateId}>{option.name}</option>)
+          )}
+        </select>
+        &nbsp;
+        <a href="javascript:void(0)" className="btn-stateSelect" onClick={this.changeState.bind(this)}>
+          <i className="fa fa-check" aria-hidden="true"></i>
+        </a>
+        &nbsp;
+        <a href="javascript:void(0)" className="btn-stateSelect" onClick={() => this.setState({edit: false})}>
+          <i className="fa fa-times" aria-hidden="true"></i>
+        </a>
+      </div>;
+    }else{
+      comp = <div>
+          <span className="text-muted">{currentState}</span>
+          &nbsp;
+          {transitions.length &&  showEditBtn?
+          <a href="javascript:void(0)" onClick={this.onEdit.bind(this)}><i className="fa fa-pencil" aria-hidden="true"></i></a>
+          : ''
+          }
+        </div>;
+    }
+    return comp;
+  }
+}
+
 export default class SchemaRegistryContainer extends Component {
   constructor(props) {
     super();
@@ -94,6 +150,8 @@ export default class SchemaRegistryContainer extends Component {
     };
     this.schemaObj = {};
     this.schemaText = '';
+
+    this.StateMachine = new StateMachine();
   }
   componentDidUpdate(){
     this.btnClassChange();
@@ -105,6 +163,7 @@ export default class SchemaRegistryContainer extends Component {
         this.setState({dataFound: false});
       }
     });
+    this.fetchStateMachine();
   }
   btnClassChange = () => {
     if(!this.state.loading){
@@ -119,6 +178,11 @@ export default class SchemaRegistryContainer extends Component {
         }
       }
     }
+  }
+  fetchStateMachine(){
+    return SchemaREST.getSchemaVersionStateMachine().then((res) => {
+      this.StateMachine.setStates(res);
+    });
   }
   fetchData() {
     let promiseArr = [],
@@ -149,7 +213,9 @@ export default class SchemaRegistryContainer extends Component {
                 description: v.description,
                 schemaText: v.schemaText,
                 schemaName: name,
-                timestamp: v.timestamp
+                timestamp: v.timestamp,
+                stateId: v.stateId,
+                id: v.id
               });
             });
             currentVersion = Utils.sortArray(obj.versions.slice(), 'timestamp', false)[0].version;
@@ -492,8 +558,16 @@ export default class SchemaRegistryContainer extends Component {
                         sortedVersions.map((v, i)=>{
                           return (
                               <li onClick={this.selectVersion.bind(this, v)} className={s.currentVersion === v.versionId? "clearfix current" : "clearfix"} key={i}>
-                              <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{v.versionId}</a>
-                              <p><span className="log-time-text">{Utils.splitTimeStamp(new Date(v.timestamp))}</span> <br/><span className="text-muted">{i === (totalVersions - 1) ? 'CREATED': 'EDITED'}</span></p>
+                                <a className={s.currentVersion === v.versionId? "hb version-number" : "hb default version-number"}>v{v.versionId}</a>
+                                <p>
+                                  <span className="log-time-text">{Utils.splitTimeStamp(new Date(v.timestamp))}</span>
+                                  <br/>
+                                </p>
+                                <ChangeState
+                                  version={v}
+                                  StateMachine={this.StateMachine}
+                                  showEditBtn={s.currentVersion === v.versionId}
+                                />
                               </li>
                           );
                         })

@@ -29,17 +29,20 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class AbstractSqlQuery implements SqlQuery {
-    protected static final Logger log = LoggerFactory.getLogger(AbstractSqlQuery.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(AbstractSqlQuery.class);
     protected List<Schema.Field> columns;
     protected String tableName;
     protected PrimaryKey primaryKey;
-    protected String sql;
+    private String sql;
 
-    /** This method must be overridden and must initialize the field {@code sql} */
-    protected abstract void initParameterizedSql();
+    /** This method must be overridden and must return parameterized sql */
+    protected abstract String createParameterizedSql();
 
     @Override
     public String getParametrizedSql() {
+        if (sql == null) {
+            sql = createParameterizedSql();
+        }
         return sql;
     }
 

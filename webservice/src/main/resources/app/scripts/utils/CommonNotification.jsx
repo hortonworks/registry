@@ -13,6 +13,7 @@
 **/
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {notifyTextLimit} from '../utils/Constants';
 
 class CommonNotification extends Component {
@@ -59,6 +60,6 @@ class CommonNotification extends Component {
 export default CommonNotification;
 
 CommonNotification.propTypes = {
-  flag: React.PropTypes.string.isRequired,
-  content: React.PropTypes.string
+  flag: PropTypes.string.isRequired,
+  content: PropTypes.string
 };

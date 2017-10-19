@@ -29,6 +29,7 @@ import java.util.Map;
 
 /**
  * HDFS based implementation for storing files.
+ *
  */
 public class HdfsFileStorage implements FileStorage {
 
@@ -43,10 +44,10 @@ public class HdfsFileStorage implements FileStorage {
     @Override
     public void init(Map<String, String> config) {
         Configuration hdfsConfig = new Configuration();
-        for (Map.Entry<String, String> entry : config.entrySet()) {
-            if (entry.getKey().equals(CONFIG_FSURL)) {
+        for(Map.Entry<String, String> entry: config.entrySet()) {
+            if(entry.getKey().equals(CONFIG_FSURL)) {
                 this.fsUrl = config.get(CONFIG_FSURL);
-            } else if (entry.getKey().equals(CONFIG_DIRECTORY)) {
+            } else if(entry.getKey().equals(CONFIG_DIRECTORY)) {
                 this.directory = config.get(CONFIG_DIRECTORY);
             } else {
                 hdfsConfig.set(entry.getKey(), entry.getValue());
@@ -54,7 +55,7 @@ public class HdfsFileStorage implements FileStorage {
         }
 
         // make sure fsUrl is set
-        if (fsUrl == null) {
+        if(fsUrl == null) {
             throw new RuntimeException("fsUrl must be specified for HdfsFileStorage.");
         }
 
@@ -66,10 +67,10 @@ public class HdfsFileStorage implements FileStorage {
     }
 
     @Override
-    public String uploadFile(InputStream inputStream, String name) throws IOException {
+    public String upload(InputStream inputStream, String name) throws IOException {
         Path jarPath = new Path(directory, name);
 
-        try (FSDataOutputStream outputStream = hdfsFileSystem.create(jarPath, false)) {
+        try(FSDataOutputStream outputStream = hdfsFileSystem.create(jarPath, false)) {
             ByteStreams.copy(inputStream, outputStream);
         }
 
@@ -77,13 +78,23 @@ public class HdfsFileStorage implements FileStorage {
     }
 
     @Override
-    public InputStream downloadFile(String name) throws IOException {
+    public InputStream download(String name) throws IOException {
         Path filePath = new Path(directory, name);
         return hdfsFileSystem.open(filePath);
     }
 
     @Override
-    public boolean deleteFile(String name) throws IOException {
+    public boolean delete(String name) throws IOException {
         return hdfsFileSystem.delete(new Path(directory, name), true);
+    }
+
+    @Override
+    public boolean exists(String name) {
+        try {
+            return hdfsFileSystem.exists(new Path(directory, name));
+        } catch (Exception ex) {
+            // ignore
+        }
+        return false;
     }
 }

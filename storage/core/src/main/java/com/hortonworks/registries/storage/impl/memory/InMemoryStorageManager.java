@@ -88,6 +88,16 @@ public class InMemoryStorageManager implements StorageManager {
     }
 
     @Override
+    public void update(Storable storable) {
+        String namespace = storable.getNameSpace();
+        PrimaryKey pk = storable.getPrimaryKey();
+        if (!storageMap.containsKey(namespace)) {
+            throw new StorageException("Row could not be updated");
+        }
+        storageMap.get(namespace).put(pk, storable);
+    }
+
+    @Override
     public <T extends Storable> T get(StorableKey key) throws StorageException {
         return storageMap.containsKey(key.getNameSpace())
                 ? (T) storageMap.get(key.getNameSpace()).get(key.getPrimaryKey())
@@ -98,7 +108,7 @@ public class InMemoryStorageManager implements StorageManager {
      * Uses reflection to query the field or the method. Assumes
      * a public getXXX method is available to get the field value.
      */
-    private boolean matches(Storable val, List<QueryParam> queryParams) {
+    private boolean matches(Storable val, List<QueryParam> queryParams, Class<?> clazz) {
         Object fieldValue;
         boolean res = true;
             for (QueryParam qp : queryParams) {
@@ -135,7 +145,7 @@ public class InMemoryStorageManager implements StorageManager {
                 Map<PrimaryKey, Storable> storableMap = storageMap.get(namespace);
                 if (storableMap != null) {
                     for (Storable val : storableMap.values()) {
-                        if (matches(val, queryParams)) {
+                        if (matches(val, queryParams, clazz)) {
                             storables.add((T) val);
                         }
                     }

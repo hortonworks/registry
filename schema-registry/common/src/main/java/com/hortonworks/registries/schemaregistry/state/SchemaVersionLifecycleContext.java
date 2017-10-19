@@ -21,58 +21,102 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- *
+ * This class contains contextual information and services required for transition from one state to other state.
  */
 public class SchemaVersionLifecycleContext {
     private SchemaVersionLifecycleState state;
     private Long schemaVersionId;
     private Integer sequence;
     private SchemaVersionService schemaVersionService;
-    private SchemaVersionLifecycleStates.Registry schemaLifeCycleStatesRegistry;
+    private SchemaVersionLifecycleStateMachine schemaVersionLifecycleStateMachine;
+    private CustomSchemaStateExecutor customSchemaStateExecutor;
     private ConcurrentMap<String, Object> props = new ConcurrentHashMap<>();
 
     public SchemaVersionLifecycleContext(Long schemaVersionId,
                                          Integer sequence,
                                          SchemaVersionService schemaVersionService,
-                                         SchemaVersionLifecycleStates.Registry schemaLifeCycleStatesRegistry) {
+                                         SchemaVersionLifecycleStateMachine schemaVersionLifecycleStateMachine,
+                                         CustomSchemaStateExecutor customSchemaStateExecutor) {
         this.schemaVersionId = schemaVersionId;
         this.sequence = sequence;
         this.schemaVersionService = schemaVersionService;
-        this.schemaLifeCycleStatesRegistry = schemaLifeCycleStatesRegistry;
+        this.schemaVersionLifecycleStateMachine = schemaVersionLifecycleStateMachine;
+        this.customSchemaStateExecutor = customSchemaStateExecutor;
     }
 
+    /**
+     * Sets the given state as target state for the given schema version identified by {@code schemaVersionId}.
+     *
+     * @param state target state.
+     */
     public void setState(SchemaVersionLifecycleState state) {
         this.state = state;
     }
 
+    /**
+     * @return Target state to be set.
+     */
     public SchemaVersionLifecycleState getState() {
         return state;
     }
 
+    /**
+     * @return schema version id for which state change has to happen.
+     */
     public Long getSchemaVersionId() {
         return schemaVersionId;
     }
 
+    /**
+     * @return Current sequence of the schema version state updation.
+     */
     public Integer getSequence() {
         return sequence;
     }
 
+    /**
+     * @return {@link SchemaVersionService} which can be used to have different operations with schema versions etc.
+     */
     public SchemaVersionService getSchemaVersionService() {
         return schemaVersionService;
     }
 
-    public SchemaVersionLifecycleStates.Registry getSchemaLifeCycleStatesRegistry() {
-        return schemaLifeCycleStatesRegistry;
+    public CustomSchemaStateExecutor getCustomSchemaStateExecutor() {
+        return customSchemaStateExecutor;
     }
 
+    /**
+     * @return SchemaVersionLifecycleStateMachine registered for this SchemaRegistry instance.
+     */
+    public SchemaVersionLifecycleStateMachine getSchemaLifeCycleStatesMachine() {
+        return schemaVersionLifecycleStateMachine;
+    }
+
+    /**
+     * @param key key object
+     * @return any property registered for the given key.
+     */
     public Object getProperty(String key) {
         return props.get(key);
     }
 
+    /**
+     * Set the given property value for the given property key.
+     *
+     * @param key key object
+     * @param value value object
+     * @return Any value that is already registered for the given key.
+     */
     public Object setProperty(String key, String value) {
         return props.put(key, value);
     }
 
+    /**
+     * Updates the current context into the schema version state storage.
+     *
+     * @throws SchemaLifecycleException when any error occurs while updating the state.
+     * @throws SchemaNotFoundException when there is no schema/version found with the given {@code schemaVersionId}.
+     */
     public void updateSchemaVersionState() throws SchemaLifecycleException, SchemaNotFoundException {
         schemaVersionService.updateSchemaVersionState(this);
     }
@@ -84,7 +128,7 @@ public class SchemaVersionLifecycleContext {
                 ", schemaVersionId=" + schemaVersionId +
                 ", sequence=" + sequence +
                 ", schemaVersionService=" + schemaVersionService +
-                ", schemaLifeCycleStatesRegistry=" + schemaLifeCycleStatesRegistry +
+                ", schemaVersionLifecycleStateMachine=" + schemaVersionLifecycleStateMachine +
                 ", props=" + props +
                 '}';
     }

@@ -333,6 +333,7 @@ footer {
   border-left: 1px solid #1290c0;
   border-right: 1px solid #1290c0;
   color: #fff;
+  z-index:99
 }
 
 .hb:before, .hb:after {
@@ -1121,7 +1122,7 @@ label {
   content: '';
   position: absolute;
   border-left: 2px solid #949494;
-  height: 30px;
+  height: 40px;
   bottom: 45px;
   left: 39px;
   width: 1px;
@@ -1332,7 +1333,7 @@ label {
   margin-bottom: 10px;
 }
 
-span.warning {
+span.checkbox-warning {
   color: #f0ad4e;
 }
 
@@ -1512,4 +1513,23 @@ table.diff .empty {
 
 .schema-version-labels{
   padding-top: 7px;
+}
+
+.stateSelect {
+  display: inline-block;
+  height: 24px;
+  background: white;
+  font-size: 11px;
+  border-radius: 3px;
+  border-color: #1290c0;
+}
+.btn-stateSelect {
+  display: inline-block;
+  width: 24px;
+  padding: 1px;
+  background-color: #ffffff;
+  color: #1290c0;
+  border-radius: 5px;
+  text-align: center;
+  border: 1px #1290c0 solid;
 }

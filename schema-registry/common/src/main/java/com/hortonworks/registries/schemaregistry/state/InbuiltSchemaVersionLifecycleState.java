@@ -17,32 +17,36 @@ package com.hortonworks.registries.schemaregistry.state;
 
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Collection;
 
 /**
  *
  */
 public interface InbuiltSchemaVersionLifecycleState extends SchemaVersionLifecycleState {
 
-    public default void startReview(SchemaVersionLifecycleContext schemaVersionLifecycleContext,
-                                    SchemaReviewExecutor schemaReviewExecutor) throws SchemaLifecycleException, SchemaNotFoundException {
+    default void startReview(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
-    public default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException, IncompatibleSchemaException {
+    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
-    public default void disable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
+    default void disable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
 
     }
 
-    public default void archive(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
+    default void archive(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
-    public default void delete(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
+    default void delete(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
+
+    Collection<Pair<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction>> getTransitionActions();
 
 }

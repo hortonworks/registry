@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.storage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.registries.common.Schema;
 
 import java.util.Map;
@@ -28,7 +29,7 @@ public interface Storable {
     /**
      * Storage namespace this can be translated to a jdbc table or zookeeper node or hbase table.
      * TODO: Namespace can be a first class entity, probably needs its own class.
-     * @return
+     * @return the namespace
      */
     String getNameSpace();
 
@@ -36,7 +37,8 @@ public interface Storable {
      * TODO: Get a better name.
      *
      * The actual columns for this storable entity and its types.
-     * @return
+     *
+     * @return the schema
      */
     Schema getSchema();
 
@@ -44,6 +46,8 @@ public interface Storable {
      * Defines set of columns that uniquely identifies this storage entity.
      * This can be translated to a primary key of a table.
      * of fields.
+     *
+     * @return the primary key
      */
     PrimaryKey getPrimaryKey();
 
@@ -61,15 +65,16 @@ public interface Storable {
 
     /**
      * Converts this storable instance to a map.
-     * @return
+     * @return the map
      */
     Map<String, Object> toMap();        //TODO: Make this map type safe
 
     /**
      * Converts the given map to a storable instance and returns that instance.
      * Could just be a static method but we want overriding behavior.
-     * @param map
-     * @return
+     *
+     * @param map the map
+     * @return the storable
      */
     Storable fromMap(Map<String, Object> map);
 
@@ -82,7 +87,19 @@ public interface Storable {
 
     /**
      * Set unique Id to the storable. This method is for putting auto generated key.
+     *
+     * @param id the id
      */
     void setId(Long id);
+
+    /**
+     * Returns if the storable should be cached or not
+     *
+     * @return if the storable should be cached
+     */
+    @JsonIgnore
+    default boolean isCacheable() {
+        return true;
+    }
 
 }
