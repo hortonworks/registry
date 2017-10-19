@@ -10,5 +10,6 @@ Contents:
    schema-registry
    examples
    security
+   serdes
    roadmap
    competition
