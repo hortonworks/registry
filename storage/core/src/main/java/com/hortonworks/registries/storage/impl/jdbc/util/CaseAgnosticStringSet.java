@@ -1,12 +1,12 @@
 /**
- * Copyright 2016 Hortonworks.
- *
+ * Copyright 2017 Hortonworks.
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,18 +14,21 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
+package com.hortonworks.registries.storage.impl.jdbc.util;
 
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSqlQuery;
+import java.util.HashSet;
 
-public class MySqlQuery extends AbstractSqlQuery {
+public class CaseAgnosticStringSet extends HashSet<String> {
 
-    public MySqlQuery(String sql) {
-        this.sql = sql;
+    public boolean add(String e) {
+        return super.add(e.toLowerCase());
     }
 
-    @Override
-    protected void initParameterizedSql() {
-        LOG.debug(sql);
+    public boolean contains(String o) {
+        return super.contains(o.toLowerCase());
+    }
+
+    public boolean remove(String o) {
+        return super.remove(o.toLowerCase());
     }
 }

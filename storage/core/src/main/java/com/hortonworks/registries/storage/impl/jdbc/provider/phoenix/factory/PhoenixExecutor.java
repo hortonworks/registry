@@ -31,7 +31,9 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.Phoen
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.query.PhoenixUpsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.zaxxer.hikari.HikariConfig;
@@ -51,12 +53,14 @@ import java.util.Map;
  */
 public class PhoenixExecutor extends AbstractQueryExecutor {
 
+    private static final StorageDataTypeContext phoenixDataTypeContext = new DefaultStorageDataTypeContext();
+
     public PhoenixExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder) {
-        super(config, connectionBuilder);
+        super(config, connectionBuilder, phoenixDataTypeContext);
     }
 
     public PhoenixExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
-        super(config, connectionBuilder, cacheBuilder);
+        super(config, connectionBuilder, cacheBuilder, phoenixDataTypeContext);
     }
 
     @Override
@@ -96,7 +100,7 @@ public class PhoenixExecutor extends AbstractQueryExecutor {
 
     @Override
     public Long nextId(String namespace) {
-        PhoenixSequenceIdQuery phoenixSequenceIdQuery = new PhoenixSequenceIdQuery(namespace, connectionBuilder, queryTimeoutSecs);
+        PhoenixSequenceIdQuery phoenixSequenceIdQuery = new PhoenixSequenceIdQuery(namespace, connectionBuilder, queryTimeoutSecs, phoenixDataTypeContext);
         return phoenixSequenceIdQuery.getNextID();
     }
 

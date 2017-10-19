@@ -19,9 +19,11 @@ public class StorageProviderConfiguration {
     private static final String MYSQL_DELIMITER = ";";
     private static final String PHOENIX_DELIMITER = "\n";
     private static final String POSTGRESQL_DELIMITER = ";";
+    private static final String ORACLE_DELIMITER = "#";
     private static final String PHOENIX = "phoenix";
     private static final String MYSQL = "mysql";
     private static final String POSTGRESQL = "postgresql";
+    private static final String ORACLE = "oracle";
 
     private String driverClass;
     private String url;
@@ -55,6 +57,10 @@ public class StorageProviderConfiguration {
 
     public static StorageProviderConfiguration postgresql(String driverClass, String url, String user, String password) {
         return new StorageProviderConfiguration(driverClass, url, user, password, POSTGRESQL, POSTGRESQL_DELIMITER);
+    }
+
+    public static StorageProviderConfiguration oracle(String driverClass, String url, String user, String password) {
+        return new StorageProviderConfiguration(driverClass, url, user, password, ORACLE, ORACLE_DELIMITER);
     }
 
     public String getDriverClass() {

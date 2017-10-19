@@ -17,19 +17,11 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
-import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
-import com.hortonworks.registries.storage.search.OrderBy;
-import com.hortonworks.registries.storage.search.Predicate;
-import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
-import com.hortonworks.registries.storage.search.WhereClause;
-import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -69,7 +61,7 @@ public class PostgresqlSelectQuery extends AbstractSelectQuery {
                                 .map(x -> " ORDER BY \"" + x.getFieldName() + "\" " + (x.isDescending() ? "DESC" : "ASC"))
                                 .collect(Collectors.toList()), ",");
         }
-        log.debug("SQL after adding order by clause: [{}]", sql);
+        LOG.debug("SQL after adding order by clause: [{}]", sql);
     }
 
     @Override
@@ -79,7 +71,7 @@ public class PostgresqlSelectQuery extends AbstractSelectQuery {
             sql += " WHERE " + join(getColumnNames(columns, "\"%s\" = ?"), " AND ");
         }
 
-        log.debug("Parameterized sql: [{}]", sql);
+        LOG.debug("Parameterized sql: [{}]", sql);
     }
 
 

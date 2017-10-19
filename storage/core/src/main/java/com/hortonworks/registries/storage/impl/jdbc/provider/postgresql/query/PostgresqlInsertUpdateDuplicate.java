@@ -54,7 +54,7 @@ public class PostgresqlInsertUpdateDuplicate extends AbstractStorableSqlQuery {
                 + ") VALUES(" + getBindVariables("?,", columnNames.size()) + ")"
                 + " ON CONFLICT ON CONSTRAINT " + tableName + "_pkey"
                 + " DO UPDATE SET " + join(getColumnNames(columns, "\"%s\" = ?"), ", ");
-        log.debug(sql);
+        LOG.debug(sql);
     }
 
     @Override

@@ -19,8 +19,6 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
-import com.hortonworks.registries.storage.search.Predicate;
-import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.List;
@@ -61,7 +59,7 @@ public class MySqlSelectQuery extends AbstractSelectQuery {
             sql += " WHERE " + join(getColumnNames(columns, "`%s` = ?"), " AND ");
         }
 
-        log.debug("Parameterized sql: [{}]", sql);
+        LOG.debug("Parameterized sql: [{}]", sql);
     }
 
     protected void addOrderByFieldsToParameterizedSql() {
@@ -71,6 +69,6 @@ public class MySqlSelectQuery extends AbstractSelectQuery {
                                 .collect(Collectors.toList()), ",");
         }
 
-        log.debug("SQL after adding order by clause: [{}]", sql);
+        LOG.debug("SQL after adding order by clause: [{}]", sql);
     }
 }

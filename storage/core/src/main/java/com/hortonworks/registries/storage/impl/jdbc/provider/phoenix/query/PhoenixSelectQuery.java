@@ -55,7 +55,7 @@ public class PhoenixSelectQuery extends AbstractSelectQuery {
                                 .map(x -> " ORDER BY \"" + x.getFieldName() + "\" " + (x.isDescending() ? "DESC" : "ASC"))
                                 .collect(Collectors.toList()), ",");
         }
-        log.debug("SQL after adding order by clause: [{}]", sql);
+        LOG.debug("SQL after adding order by clause: [{}]", sql);
     }
 
     @Override
@@ -65,6 +65,6 @@ public class PhoenixSelectQuery extends AbstractSelectQuery {
         if (columns != null) {
             sql += " WHERE " + join(getColumnNames(columns, "\"%s\" = ?"), " AND ");
         }
-        log.debug(sql);
+        LOG.debug(sql);
     }
 }

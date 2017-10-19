@@ -16,20 +16,13 @@
 
 package com.hortonworks.registries.storage.impl.jdbc;
 
-import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
 import com.hortonworks.registries.storage.StorageManager;
-import com.hortonworks.registries.storage.exception.AlreadyExistsException;
-import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlQueryUtils;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableTest;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;

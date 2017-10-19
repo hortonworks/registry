@@ -28,11 +28,12 @@ import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.factory.OracleExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.phoenix.factory.PhoenixExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory.PostgresqlExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.MetadataHelper;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,9 +184,10 @@ public class JdbcStorageManager implements StorageManager {
         StorableKey storableKey = null;
 
         try {
+            CaseAgnosticStringSet columnNames = queryExecutor.getColumnNames(namespace);
             for (QueryParam qp : queryParams) {
                 int queryTimeoutSecs = queryExecutor.getConfig().getQueryTimeoutSecs();
-                if (!MetadataHelper.isColumnInNamespace(connection, queryTimeoutSecs, namespace, qp.getName())) {
+                if (!columnNames.contains(qp.getName())) {
                     log.warn("Query parameter [{}] does not exist for namespace [{}]. Query parameter ignored.", qp.getName(), namespace);
                 } else {
                     final String val = qp.getValue();
@@ -230,7 +232,7 @@ public class JdbcStorageManager implements StorageManager {
 
         // When we have more providers we can add a layer to have a factory to create respective jdbc storage managers.
         // For now, keeping it simple as there are only 2.
-        if(!"phoenix".equals(type) && !"mysql".equals(type) && !"postgresql".equals(type)) {
+        if(!"phoenix".equals(type) && !"mysql".equals(type) && !"postgresql".equals(type) && !"oracle".equals(type)) {
             throw new IllegalArgumentException("Unknown jdbc storage provider type: "+type);
         }
         log.info("jdbc provider type: [{}]", type);
@@ -251,6 +253,10 @@ public class JdbcStorageManager implements StorageManager {
             case "postgresql":
                 queryExecutor = PostgresqlExecutor.createExecutor(dbProperties);
                 break;
+            case "oracle":
+                queryExecutor = OracleExecutor.createExecutor(dbProperties);
+                break;
+
             default:
                 throw new IllegalArgumentException("Unsupported storage provider type: "+type);
         }

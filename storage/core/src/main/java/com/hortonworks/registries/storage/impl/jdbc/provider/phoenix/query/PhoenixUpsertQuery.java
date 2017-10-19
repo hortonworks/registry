@@ -32,6 +32,6 @@ public class PhoenixUpsertQuery extends AbstractStorableSqlQuery {
         sql = "UPSERT INTO " + tableName + " ("
                 + join(getColumnNames(columns, "\"%s\""), ", ")
                 + ") VALUES( " + getBindVariables("?,", columns.size()) + ")";
-        log.debug(sql);
+        LOG.debug(sql);
     }
 }

@@ -67,7 +67,7 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
     }
 
     protected void buildSqlWithSearchQuery(SearchQuery searchQuery, Schema schema) {
-        sql = "SELECT * FROM " + tableName;
+        sql = "SELECT * FROM " + fieldEncloser() + tableName + fieldEncloser();
 
         WhereClause whereClause = searchQuery.getWhereClause();
         Map<Schema.Field, Object> fieldsToValues = new HashMap<>();

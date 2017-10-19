@@ -41,7 +41,7 @@ public class SqlSelectQuery extends AbstractSelectQuery {
                                 .collect(Collectors.toList()), ",");
         }
 
-        log.debug("SQL after adding order by clause: [{}]", sql);
+        LOG.debug("SQL after adding order by clause: [{}]", sql);
     }
 
     // "SELECT * FROM DB.TABLE [WHERE C1 = ?, C2 = ?]"
@@ -52,6 +52,6 @@ public class SqlSelectQuery extends AbstractSelectQuery {
         if (columns != null) {
             sql += " WHERE " + join(getColumnNames(columns, "%s = ?"), " AND ");
         }
-        log.debug(sql);
+        LOG.debug(sql);
     }
 }
