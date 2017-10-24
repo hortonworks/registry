@@ -17,6 +17,8 @@ package com.hortonworks.registries.webservice;
 
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.listeners.TransactionEventListener;
+import com.hortonworks.registries.storage.transaction.TransactionManager;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.HAConfiguration;
@@ -131,6 +133,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         StorageManager storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
+        TransactionManager transactionManager = new TransactionManager(storageManager);
         FileStorage fileStorage = getJarStorage(registryConfiguration.getFileStorageConfiguration());
 
         List<ModuleConfiguration> modules = registryConfiguration.getModules();
@@ -165,6 +168,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             environment.jersey().register(resource);
         }
         environment.jersey().register(MultiPartFeature.class);
+        environment.jersey().register(new TransactionEventListener(transactionManager));
     }
 
     private void enableCORS(Environment environment) {

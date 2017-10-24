@@ -23,10 +23,10 @@ import com.google.common.cache.RemovalNotification;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.exception.TransactionException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlDeleteQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
@@ -34,20 +34,16 @@ import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
-import com.hortonworks.registries.storage.impl.jdbc.util.Util;
+import com.hortonworks.registries.storage.transaction.TransactionBookKeeper;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,6 +61,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     protected final ConnectionBuilder connectionBuilder;
     protected final List<Connection> activeConnections;
     protected final StorageDataTypeContext storageDataTypeContext;
+    protected final TransactionBookKeeper transactionBookKeeper = TransactionBookKeeper.get();
 
     private final Cache<SqlQuery, PreparedStatementBuilder> cache;
     protected StorableFactory storableFactory;
@@ -113,16 +110,17 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     @Override
     public Connection getConnection() {
-        Connection connection = connectionBuilder.getConnection();
-        log.debug("Opened connection {}", connection);
-        activeConnections.add(connection);
-        return connection;
+        if (transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId()))
+            return transactionBookKeeper.getConnection(Thread.currentThread().getId());
+        else
+            throw new TransactionException(String.format("No active transaction is associated with the thread id : %s ", Long.toString(Thread.currentThread().getId())));
     }
 
     @Override
     public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
         CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
-        try(Connection connection = getConnection()) {
+        try {
+            Connection connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
                     new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
@@ -177,15 +175,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     private Cache<SqlQuery, PreparedStatementBuilder> buildCache(CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         return cacheBuilder.removalListener(new RemovalListener<SqlQuery, PreparedStatementBuilder>() {
-            /** Closes and removes the database connection when the entry is removed from cache */
+            /** Cleanup operation for when the entry is removed from cache */
             @Override
             public void onRemoval(RemovalNotification<SqlQuery, PreparedStatementBuilder> notification) {
                 final PreparedStatementBuilder val = notification.getValue();
-                log.debug("Removing entry from cache and closing connection [key:{}, val: {}]", notification.getKey(), val);
+                log.debug("Removed entry from cache [key:{}, val: {}]", notification.getKey(), val);
                 log.debug("Cache size: {}", cache.size());
-                if (val != null) {
-                    closeConnection(val.getConnection());
-                }
             }
         }).build();
     }
@@ -199,6 +194,60 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         this.storableFactory = storableFactory;
     }
 
+
+    // =============== Methods for supporting transaction ===============
+
+
+    @Override
+    public void beginTransaction() throws StorageException {
+        try {
+            if (!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                log.debug(" --- Begin transaction for thread id : {} --- ", Thread.currentThread().getId());
+                Connection connection = connectionBuilder.getConnection();
+                log.debug("Opened connection {}", connection);
+                activeConnections.add(connection);
+                connection.setAutoCommit(false);
+                transactionBookKeeper.addTransaction(Thread.currentThread().getId(), connection);
+            } else {
+                log.debug(" --- Reusing transaction for thread if : {} --- ", Thread.currentThread().getId());
+                transactionBookKeeper.incrementNestedTransactionCount(Thread.currentThread().getId());
+            }
+        } catch (SQLException e) {
+            throw new StorageException("Failed to start transaction", e);
+        }
+    }
+
+    @Override
+    public void rollbackTransaction() throws StorageException {
+        try {
+            Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
+            connection.rollback();
+            closeTransaction(connection);
+            log.debug(" --- Rolled back transaction for thread id : {} --- ", Thread.currentThread().getId());
+        } catch (SQLException e) {
+            throw new StorageException("Failed to roll back transaction", e);
+        }
+    }
+
+
+    @Override
+    public void commitTransaction() throws StorageException {
+        try {
+            Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
+            connection.commit();
+            closeTransaction(connection);
+            log.debug(" --- Committed transaction for thread id : {} --- ", Thread.currentThread().getId());
+        } catch (SQLException e) {
+            throw new StorageException("Failed to commit transaction", e);
+        }
+    }
+
+    private void closeTransaction(Connection connection) throws SQLException {
+        if (transactionBookKeeper.removeTransaction(Thread.currentThread().getId())) {
+            connection.setAutoCommit(true);
+            closeConnection(connection);
+        }
+    }
 
     // =============== Private helper Methods ===============
 
@@ -239,11 +288,6 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 result = getStorablesFromResultSet(resultSet, namespace);
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
-            } finally {
-                // Close every opened connection if not using cache. If using cache, cache expiry manages connections
-                if (!isCacheEnabled()) {
-                    closeConn();
-                }
             }
             return result;
         }
@@ -253,11 +297,6 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 return getPreparedStatement().executeUpdate();
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
-            } finally {
-                // Close every opened connection if not using cache. If using cache, cache expiry manages connections
-                if (!isCacheEnabled()) {
-                    closeConn();
-                }
             }
         }
 
@@ -273,17 +312,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 }
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
-            } finally {
-                // Close every opened connection if not using cache. If using cache, cache expiry manages connections
-                if (!isCacheEnabled()) {
-                    closeConn();
-                }
             }
 
-        }
-
-        void closeConn() {
-            closeConnection(connection);
         }
 
         // ====== private helper methods ======
