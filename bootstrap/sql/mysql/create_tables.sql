@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   timestamp       BIGINT                NOT NULL,
   PRIMARY KEY (name),
   UNIQUE KEY (id)
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
   id               BIGINT AUTO_INCREMENT NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
   PRIMARY KEY (name, version),
   FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name) ON DELETE CASCADE ON UPDATE CASCADE
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
   id               BIGINT AUTO_INCREMENT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   type             VARCHAR(255)          NOT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id) ON DELETE CASCADE ON UPDATE CASCADE
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
   id                    BIGINT AUTO_INCREMENT NOT NULL,
@@ -65,11 +65,28 @@ CREATE TABLE IF NOT EXISTS schema_serdes_info (
   deserializerClassName TEXT                  NOT NULL,
   timestamp             BIGINT                NOT NULL,
   PRIMARY KEY (id)
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
   schemaMetadataId BIGINT NOT NULL,
   serDesId         BIGINT NOT NULL,
 
   UNIQUE KEY `UK_IDS` (schemaMetadataId, serdesId)
-);
+)#
+
+-- 3.0.0 doesn't have "validationLevel" column for "schema_metadata_info", handling that case with stored procedure
+
+DROP PROCEDURE IF EXISTS add_validation_level_if_missing#
+
+CREATE PROCEDURE add_validation_level_if_missing ()
+BEGIN
+    SELECT COUNT(*) INTO @col_exists FROM information_schema.columns WHERE table_schema IN (SELECT DATABASE() FROM DUAL) AND table_name = 'schema_metadata_info' AND column_name = 'validationLevel';
+    IF @col_exists = 0 THEN
+       SET @str = 'ALTER TABLE schema_metadata_info ADD validationLevel VARCHAR(255) NOT NULL DEFAULT "ALL" AFTER compatibility';
+       PREPARE stmt FROM @str;
+       EXECUTE stmt;
+       DEALLOCATE PREPARE stmt;
+    END IF;
+END #
+
+CALL add_validation_level_if_missing()#

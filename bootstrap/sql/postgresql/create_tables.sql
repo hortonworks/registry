@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS schema_metadata_info (
   "timestamp"       BIGINT       NOT NULL,
   PRIMARY KEY ( "name"),
   UNIQUE ("id")
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_version_info (
   "id"               SERIAL UNIQUE NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   PRIMARY KEY ("name", "version"),
   FOREIGN KEY ("schemaMetadataId") REFERENCES schema_metadata_info ("id") ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY ("name") REFERENCES schema_metadata_info ("name") ON DELETE CASCADE ON UPDATE CASCADE
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
   "id"               SERIAL PRIMARY KEY,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   "fieldNamespace"   VARCHAR(255),
   "type"             VARCHAR(255) NOT NULL,
   FOREIGN KEY ("schemaInstanceId") REFERENCES schema_version_info ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
   "id"                    SERIAL PRIMARY KEY,
@@ -63,12 +63,26 @@ CREATE TABLE IF NOT EXISTS schema_serdes_info (
   "serializerClassName"   TEXT   NOT NULL,
   "deserializerClassName" TEXT   NOT NULL,
   "timestamp"             BIGINT NOT NULL
-);
+)#
 
 CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
   "schemaMetadataId" BIGINT NOT NULL,
   "serDesId"         BIGINT NOT NULL,
 
   UNIQUE ("schemaMetadataId", "serDesId")
-);
+)#
 
+
+CREATE OR REPLACE FUNCTION add_validation_level_if_missing()
+  RETURNS void AS $$
+  DECLARE
+    col_count INT;
+  BEGIN
+    SELECT COUNT(*) INTO col_count FROM information_schema."columns" WHERE table_schema = current_schema() and table_name = 'schema_metadata_info' and column_name = 'validationLevel';
+    IF col_count = 0 THEN
+      EXECUTE 'ALTER TABLE "schema_metadata_info" ADD COLUMN "validationLevel" VARCHAR(255) NOT NULL DEFAULT ''ALL''';
+    END IF;
+  END;
+$$ LANGUAGE plpgsql#
+
+SELECT add_validation_level_if_missing()#
