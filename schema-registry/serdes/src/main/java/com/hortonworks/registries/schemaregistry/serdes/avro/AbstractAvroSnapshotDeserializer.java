@@ -29,6 +29,7 @@ import com.hortonworks.registries.schemaregistry.avro.AvroSchemaResolver;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
@@ -161,7 +162,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
         Schema writerSchema = getSchema(writerSchemaVersionKey);
         if (writerSchema == null) {
-            throw new SerDesException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
+            throw new RegistryException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
         }
         Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 

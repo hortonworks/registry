@@ -19,6 +19,8 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,11 +56,11 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
         try {
             protocolId = (byte) inputStream.read();
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
         }
 
         if (protocolId == -1) {
-            throw new SerDesException("End of stream reached while trying to read protocol id");
+            throw new AvroException("End of stream reached while trying to read protocol id");
         }
 
         checkProtocolHandlerExists(protocolId);
@@ -68,7 +70,7 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
 
     private void checkProtocolHandlerExists(byte protocolId) {
         if (SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId) == null) {
-            throw new SerDesException("Unknown protocol id [" + protocolId + "] received while deserializing the payload");
+            throw new AvroException("Unknown protocol id [" + protocolId + "] received while deserializing the payload");
         }
     }
 

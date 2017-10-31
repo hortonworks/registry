@@ -24,6 +24,7 @@ import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotSerialize
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import org.apache.avro.Schema;
 
 import java.io.OutputStream;
@@ -99,7 +100,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
 
         SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion);
         if (serDesProtocolHandler == null) {
-            throw new IllegalArgumentException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
+            throw new AvroException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
         }
 
         this.serDesProtocolHandler = serDesProtocolHandler;
@@ -109,7 +110,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         final long x;
         if ((x = number.longValue()) != number.doubleValue()
                 || (x < 0 || x > Byte.MAX_VALUE)) {
-            throw new IllegalArgumentException(SERDES_PROTOCOL_VERSION+ " value should be in [0, "+Byte.MAX_VALUE+"]");
+            throw new AvroException(SERDES_PROTOCOL_VERSION + " value should be in [0, " + Byte.MAX_VALUE + "]");
         }
     }
 

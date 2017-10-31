@@ -19,14 +19,12 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * This class implements {@link SnapshotSerializer} and internally creates schema registry client to connect to the
@@ -65,8 +63,8 @@ public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes im
             SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
             // write the version and given object to the output
             return doSerialize(input, schemaIdVersion);
-        } catch (InvalidSchemaException | IncompatibleSchemaException | SchemaNotFoundException e) {
-            throw new SerDesException(e);
+        } catch (SchemaNotFoundException | IncompatibleSchemaException | InvalidSchemaException e) {
+            throw new RegistryException(e);
         }
     }
 
