@@ -42,10 +42,6 @@
             <artifactId>postgresql</artifactId>
         </dependency>
         <dependency>
-              <groupId>org.mariadb.jdbc</groupId>
-              <artifactId>mariadb-java-client</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP-java6</artifactId>
             <version>${hikari.version}</version>
@@ -109,6 +105,10 @@
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-mapreduce-client-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.sourceforge.findbugs</groupId>
+                    <artifactId>annotations</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
