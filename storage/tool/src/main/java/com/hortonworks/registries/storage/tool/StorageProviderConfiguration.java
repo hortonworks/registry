@@ -16,9 +16,9 @@
 package com.hortonworks.registries.storage.tool;
 
 public class StorageProviderConfiguration {
-    private static final String MYSQL_DELIMITER = ";";
+    private static final String MYSQL_DELIMITER = "#";
     private static final String PHOENIX_DELIMITER = "\n";
-    private static final String POSTGRESQL_DELIMITER = ";";
+    private static final String POSTGRESQL_DELIMITER = "#";
     private static final String ORACLE_DELIMITER = "#";
     private static final String PHOENIX = "phoenix";
     private static final String MYSQL = "mysql";
