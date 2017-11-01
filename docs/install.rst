@@ -71,7 +71,7 @@ Edit the folllowing section to add appropriate database and user settings
       db.type: "mysql"
       queryTimeoutInSecs: 30
       db.properties:
-        dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
+        dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
         dataSource.url: "jdbc:mysql://localhost/schema_registry"
         dataSource.user:"registry_user"
         dataSource.password: "registry_password"
@@ -151,7 +151,7 @@ Edit the folllowing section to add appropriate database and user settings
       db.type: "mysql"
       queryTimeoutInSecs: 30
       db.properties:
-        dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
+        dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
         dataSource.url: "jdbc:mysql://localhost/schema_registry"
         dataSource.user:"registry_user"
         dataSource.password: "registry_password"
