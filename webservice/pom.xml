@@ -64,6 +64,10 @@
                     <groupId>io.dropwizard</groupId>
                     <artifactId>dropwizard-core</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>annotations</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
