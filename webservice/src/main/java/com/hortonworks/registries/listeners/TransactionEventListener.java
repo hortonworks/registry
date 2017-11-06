@@ -53,7 +53,7 @@ public class TransactionEventListener implements ApplicationEventListener {
             if (eventType == RequestEvent.Type.RESOURCE_METHOD_START) {
                 Optional<UnitOfWork> unitOfWork = methodMap.computeIfAbsent(event.getUriInfo()
                         .getMatchedResourceMethod(), UnitOfWorkEventListener::registerUnitOfWorkAnnotations);
-                useTransactionForUnitOfWork = unitOfWork.isPresent() ? unitOfWork.get().transactional() : true;
+                useTransactionForUnitOfWork = unitOfWork.isPresent() ? unitOfWork.get().transactional() : false;
                 if (useTransactionForUnitOfWork)
                     transactionManager.beginTransaction();
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {

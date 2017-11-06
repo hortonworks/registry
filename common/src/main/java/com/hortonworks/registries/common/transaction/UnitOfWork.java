@@ -23,6 +23,10 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ *    Use this annotation is used to define resource method level properties.
+ */
+
 @Target(METHOD)
 @Retention(RUNTIME)
 @Documented

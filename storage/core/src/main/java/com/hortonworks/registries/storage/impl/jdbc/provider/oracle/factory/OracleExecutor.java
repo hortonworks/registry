@@ -109,7 +109,7 @@ public class OracleExecutor extends AbstractQueryExecutor {
 
     @Override
     public Long nextId(String namespace) {
-        OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT);
+        OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT, transactionBookKeeper);
         return oracleSequenceIdQuery.getNextID();
     }
 

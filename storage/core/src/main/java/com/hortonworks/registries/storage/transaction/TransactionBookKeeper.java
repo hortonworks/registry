@@ -23,13 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class TransactionBookKeeper {
 
-    private static final TransactionBookKeeper transactionBookKeeper = new TransactionBookKeeper();
-
     protected final ConcurrentHashMap<Long, TransactionContext> threadIdToConnectionMap = new ConcurrentHashMap<>();
-
-    private TransactionBookKeeper() {
-
-    }
 
     public boolean hasActiveTransaction(Long threadId) {
         return threadIdToConnectionMap.containsKey(threadId);
@@ -65,9 +59,5 @@ public class TransactionBookKeeper {
             return false;
         } else
             throw new TransactionException(String.format("No transaction is associated with thread id : %s", Long.toString(threadId)));
-    }
-
-    public static TransactionBookKeeper get() {
-        return transactionBookKeeper;
     }
 }

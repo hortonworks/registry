@@ -33,14 +33,15 @@ public class OracleSequenceIdQuery {
     private static final Logger log = LoggerFactory.getLogger(OracleSequenceIdQuery.class);
     private static final String nextValueFunction = "nextval";
     private final String namespace;
-    private final TransactionBookKeeper transactionBookKeeper = TransactionBookKeeper.get();
+    private final TransactionBookKeeper transactionBookKeeper;
     private final OracleDataTypeContext oracleDatabaseStorageContext;
     private final int queryTimeoutSecs;
 
-    public OracleSequenceIdQuery(String namespace, int queryTimeoutSecs, OracleDataTypeContext oracleDatabaseStorageContext) {
+    public OracleSequenceIdQuery(String namespace, int queryTimeoutSecs, OracleDataTypeContext oracleDatabaseStorageContext, TransactionBookKeeper transactionBookKeeper) {
         this.namespace = namespace;
         this.queryTimeoutSecs = queryTimeoutSecs;
         this.oracleDatabaseStorageContext = oracleDatabaseStorageContext;
+        this.transactionBookKeeper = transactionBookKeeper;
     }
 
     public Long getNextID() {

@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.webservice;
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.common.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -121,6 +122,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response listAggregatedSchemas(@Context UriInfo uriInfo) {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
@@ -144,6 +146,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get aggregated schema information for the given schema name",
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
@@ -166,6 +169,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response listSchemas(@Context UriInfo uriInfo) {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
@@ -190,6 +194,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
             response = SchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response findSchemas(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
@@ -253,6 +258,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
@@ -284,6 +290,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             notes = "Search the schemas for given field names and return a list of schemas that contain the field.",
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response findSchemasByFields(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
@@ -322,6 +329,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     " A unique schema identifier is returned.",
             response = Long.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
                                           SchemaMetadata schemaMetadata,
                                   @Context UriInfo uriInfo,
@@ -359,6 +367,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Updates schema information for the given schema name",
         response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
                                      @ApiParam(value = "Schema to be added to the registry", required = true)
                                          SchemaMetadata schemaMetadata,
@@ -404,6 +413,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get schema information for the given schema name",
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
@@ -426,6 +436,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get schema for a given schema identifier",
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId) {
         Response response;
         try {
@@ -452,6 +463,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response uploadSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
                                                 String schemaName,
                                         @ApiParam(value = "Schema version text file to be uploaded", required = true)
@@ -483,6 +495,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response addSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
                                       String schemaName,
                                      @ApiParam(value = "Details about the schema", required = true)
@@ -517,6 +530,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get the latest version of the schema for the given schema name",
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
 
         Response response;
@@ -542,6 +556,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get all the versions of the schema for the given schema name)",
             response = SchemaVersionInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
 
         Response response;
@@ -566,6 +581,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get a version of the schema identified by the schema name",
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
                                      @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber) {
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
@@ -590,6 +606,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get a version of the schema identified by the given versionid",
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response getSchemaVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
         SchemaIdVersion schemaIdVersion = new SchemaIdVersion(versionId);
 
@@ -631,6 +648,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Enables version of the schema identified by the given versionid",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response enableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
 
         Response response;
@@ -659,6 +677,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Disables version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response disableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
 
         Response response;
@@ -684,6 +703,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Disables version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response archiveSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
 
         Response response;
@@ -710,6 +730,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Disables version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response deleteSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
 
         Response response;
@@ -735,6 +756,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Disables version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response startReviewSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
 
         Response response;
@@ -760,6 +782,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Runs the state execution for schema version identified by the given version id and executes action associated with target state id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response executeState(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
                                  @ApiParam(value = "", required = true) @PathParam("stateId") Byte stateId) {
 
@@ -790,6 +813,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Checks if the given schema text is compatible with all the versions of the schema identified by the name",
             response = CompatibilityResult.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
+    @UnitOfWork
     public Response checkCompatibilityWithSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                                  @ApiParam(value = "schema text", required = true) String schemaText) {
         Response response;
@@ -812,6 +836,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get list of Serializers registered for the given schema name",
             response = SerDesInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SERDE)
     @Timed
+    @UnitOfWork
     public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
@@ -877,6 +902,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/serdes")
     @ApiOperation(value = "Add a Serializer/Deserializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
+    @UnitOfWork
     public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) SerDesPair serDesPair,
                               @Context UriInfo uriInfo) {
         return handleLeaderAction(uriInfo, () -> _addSerDesInfo(serDesPair));
@@ -886,6 +912,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/serdes/{id}")
     @ApiOperation(value = "Get a Serializer for the given serializer id", response = SerDesInfo.class, tags = OPERATION_GROUP_SERDE)
     @Timed
+    @UnitOfWork
     public Response getSerDes(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId) {
         return _getSerDesInfo(serializerId);
     }
@@ -919,6 +946,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/schemas/{name}/mapping/{serDesId}")
     @ApiOperation(value = "Bind the given Serializer/Deserializer to the schema identified by the schema name", tags = OPERATION_GROUP_SERDE)
     @Timed
+    @UnitOfWork
     public Response mapSchemaWithSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                         @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId,
                                         @Context UriInfo uriInfo) {
@@ -938,6 +966,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @DELETE
     @Path("/schemas/{name}/versions/{version}")
     @ApiOperation(value = "Delete a schema version given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
     public Response deleteSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                         @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
                                         @Context UriInfo uriInfo) {

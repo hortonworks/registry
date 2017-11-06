@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
-public class JdbcStorageManager implements TransactionalStorageManager {
+public class JdbcStorageManager implements TransactionalStorageManager, StorageManager {
     private static final Logger log = LoggerFactory.getLogger(StorageManager.class);
     public static final String DB_TYPE = "db.type";
 

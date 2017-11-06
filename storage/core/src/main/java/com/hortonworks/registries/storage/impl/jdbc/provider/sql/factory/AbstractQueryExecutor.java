@@ -61,7 +61,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     protected final ConnectionBuilder connectionBuilder;
     protected final List<Connection> activeConnections;
     protected final StorageDataTypeContext storageDataTypeContext;
-    protected final TransactionBookKeeper transactionBookKeeper = TransactionBookKeeper.get();
+    protected final TransactionBookKeeper transactionBookKeeper = new TransactionBookKeeper();
 
     private final Cache<SqlQuery, PreparedStatementBuilder> cache;
     protected StorableFactory storableFactory;
@@ -219,33 +219,36 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     @Override
     public void rollbackTransaction() throws StorageException {
+        Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
         try {
-            Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
             connection.rollback();
             closeTransaction(connection);
             log.debug(" --- Rolled back transaction for thread id : {} --- ", Thread.currentThread().getId());
         } catch (SQLException e) {
             throw new StorageException("Failed to roll back transaction", e);
+        } finally {
+            closeConnection(connection);
         }
     }
 
 
     @Override
     public void commitTransaction() throws StorageException {
+        Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
         try {
-            Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
             connection.commit();
             closeTransaction(connection);
             log.debug(" --- Committed transaction for thread id : {} --- ", Thread.currentThread().getId());
         } catch (SQLException e) {
             throw new StorageException("Failed to commit transaction", e);
+        } finally {
+            closeConnection(connection);
         }
     }
 
     private void closeTransaction(Connection connection) throws SQLException {
         if (transactionBookKeeper.removeTransaction(Thread.currentThread().getId())) {
             connection.setAutoCommit(true);
-            closeConnection(connection);
         }
     }
 

@@ -18,7 +18,7 @@ package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.storage.exception.StorageException;
 
-public interface TransactionalStorageManager extends StorageManager {
+public interface TransactionalStorageManager {
 
     /**
      * Begins the transaction
