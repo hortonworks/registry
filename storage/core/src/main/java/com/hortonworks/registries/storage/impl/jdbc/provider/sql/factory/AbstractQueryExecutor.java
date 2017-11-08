@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.StorageException;
@@ -35,6 +36,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.transaction.TransactionBookKeeper;
+import com.hortonworks.registries.storage.transaction.TransactionState;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -98,7 +100,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     }
 
     @Override
-    public <T extends Storable> Collection<T> select(final StorableKey storableKey){
+    public <T extends Storable> Collection<T> select(final StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new SqlSelectQuery(storableKey));
     }
 
@@ -159,7 +161,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
 
     private void closeAllOpenConnections() {
-        for(Iterator<Connection> iter = activeConnections.iterator(); iter.hasNext(); ) {
+        for (Iterator<Connection> iter = activeConnections.iterator(); iter.hasNext(); ) {
             Connection connection = iter.next();
             try {
                 if (!connection.isClosed()) {
@@ -187,7 +189,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     @Override
     public void setStorableFactory(StorableFactory storableFactory) {
-        if(this.storableFactory != null) {
+        if (this.storableFactory != null) {
             throw new IllegalStateException("StorableFactory is already set");
         }
 
@@ -199,56 +201,84 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
 
     @Override
-    public void beginTransaction() throws StorageException {
+    public void beginTransaction(TransactionIsolation transactionIsolationLevel) {
+        long currentThreadId = Thread.currentThread().getId();
         try {
-            if (!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
-                log.debug(" --- Begin transaction for thread id : {} --- ", Thread.currentThread().getId());
+            if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
+                log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
                 Connection connection = connectionBuilder.getConnection();
+                connection.setTransactionIsolation(transactionIsolationLevel.getValue());
                 log.debug("Opened connection {}", connection);
                 activeConnections.add(connection);
                 connection.setAutoCommit(false);
-                transactionBookKeeper.addTransaction(Thread.currentThread().getId(), connection);
+                transactionBookKeeper.addTransaction(currentThreadId, connection);
             } else {
-                log.debug(" --- Reusing transaction for thread if : {} --- ", Thread.currentThread().getId());
-                transactionBookKeeper.incrementNestedTransactionCount(Thread.currentThread().getId());
+                log.debug(" --- Reusing transaction for thread if : {} --- ", currentThreadId);
+                if (transactionBookKeeper.getConnection(currentThreadId).getTransactionIsolation() != transactionIsolationLevel.getValue())
+                    throw new TransactionException("Attempted to change the isolation level amidst an active transaction");
+                transactionBookKeeper.incrementNestedTransactionCount(currentThreadId);
             }
         } catch (SQLException e) {
-            throw new StorageException("Failed to start transaction", e);
+            log.error("Failed to start transaction", e);
+            throw new TransactionException("Failed to start transaction", e);
         }
     }
 
     @Override
-    public void rollbackTransaction() throws StorageException {
-        Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
-        try {
-            connection.rollback();
-            closeTransaction(connection);
-            log.debug(" --- Rolled back transaction for thread id : {} --- ", Thread.currentThread().getId());
-        } catch (SQLException e) {
-            throw new StorageException("Failed to roll back transaction", e);
-        } finally {
-            closeConnection(connection);
+    public void rollbackTransaction() {
+        long currentThreadId = Thread.currentThread().getId();
+        if (transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
+            Connection connection = transactionBookKeeper.getConnection(currentThreadId);
+            try {
+                closeTransactionIfUnused(currentThreadId, TransactionState.ROLLBACK);
+                log.debug(" --- Rolled back transaction for thread id : {} --- ", currentThreadId);
+            } catch (SQLException e) {
+                throw new TransactionException("Failed to roll back transaction", e);
+            } finally {
+                if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
+                    transactionBookKeeper.removeTransaction(currentThreadId);
+                    closeConnection(connection);
+                }
+            }
+        } else {
+            throw new TransactionException(String.format("Failed to rollback, No active transaction is associated with thread id : %s", Long.toString(currentThreadId)));
         }
+
     }
 
 
     @Override
-    public void commitTransaction() throws StorageException {
-        Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
-        try {
-            connection.commit();
-            closeTransaction(connection);
-            log.debug(" --- Committed transaction for thread id : {} --- ", Thread.currentThread().getId());
-        } catch (SQLException e) {
-            throw new StorageException("Failed to commit transaction", e);
-        } finally {
-            closeConnection(connection);
+    public void commitTransaction() {
+        long currentThreadId = Thread.currentThread().getId();
+        if (transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
+            Connection connection = transactionBookKeeper.getConnection(currentThreadId);
+            try {
+                closeTransactionIfUnused(currentThreadId, TransactionState.COMMIT);
+                log.debug(" --- Committed transaction for thread id : {} --- ", currentThreadId);
+            } catch (SQLException e) {
+                throw new TransactionException("Failed to commit transaction", e);
+            } finally {
+                if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
+                    transactionBookKeeper.removeTransaction(currentThreadId);
+                    closeConnection(connection);
+                }
+            }
+        } else {
+            throw new TransactionException(String.format("Failed to commit, No active transaction is associated with thread id : %s", Long.toString(currentThreadId)));
         }
     }
 
-    private void closeTransaction(Connection connection) throws SQLException {
-        if (transactionBookKeeper.removeTransaction(Thread.currentThread().getId())) {
-            connection.setAutoCommit(true);
+    private void closeTransactionIfUnused(long threadId, TransactionState currentTransactionState) throws SQLException {
+        long currentThreadId = Thread.currentThread().getId();
+        transactionBookKeeper.decrementNestedTransactionCount(currentThreadId, currentTransactionState);
+        if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
+            if (transactionBookKeeper.whereThereAnyRollbacks(currentThreadId))
+                transactionBookKeeper.getConnection(currentThreadId).rollback();
+            else if (transactionBookKeeper.whereThereAnyCommits(currentThreadId))
+                transactionBookKeeper.getConnection(currentThreadId).commit();
+            else
+                throw new TransactionException("Attempted to close a transaction without explicit call to commit or rollback");
+            transactionBookKeeper.getConnection(threadId).setAutoCommit(true);
         }
     }
 
@@ -346,7 +376,9 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             return preparedStatementBuilder.getPreparedStatement(sqlBuilder);
         }
 
-        /** This callable is instantiated and called the first time every key:val entry is inserted into the cache */
+        /**
+         * This callable is instantiated and called the first time every key:val entry is inserted into the cache
+         */
         private class PreparedStatementBuilderCallable implements Callable<PreparedStatementBuilder> {
             private final SqlQuery sqlBuilder;
             private final boolean returnGeneratedKeys;
@@ -400,13 +432,13 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
             try {
                 boolean next = resultSet.next();
-                if(next) {
+                if (next) {
                     maps = new LinkedList<>();
                     ResultSetMetaData rsMetadata = resultSet.getMetaData();
                     do {
                         Map<String, Object> map = storageDataTypeContext.getMapWithRowContents(resultSet, rsMetadata);
                         maps.add(map);
-                    } while(resultSet.next());
+                    } while (resultSet.next());
                 }
             } catch (SQLException e) {
                 log.error("Exception occurred while processing result set.", e);

@@ -16,6 +16,24 @@
 
 package com.hortonworks.registries.storage;
 
-public interface TransactionManagerAware {
-    void setTransactionManager(TransactionManager transactionManager);
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
+
+public interface TransactionManager {
+
+    /**
+     * Begins the transaction
+     */
+    void beginTransaction(TransactionIsolation transactionIsolationLevel);
+
+
+    /**
+     * Discards the changes made to the storage layer and reverts to the last committed point
+     */
+    void rollbackTransaction();
+
+
+    /**
+     * Flushes the changes made to the storage layer
+     */
+    void commitTransaction();
 }

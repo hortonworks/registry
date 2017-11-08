@@ -16,13 +16,14 @@
 
 package com.hortonworks.registries.storage.filestorage;
 
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.config.HikariBasicConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
-import com.hortonworks.registries.storage.transaction.TransactionManager;
 import com.hortonworks.registries.storage.util.StorageUtils;
 import org.apache.commons.io.IOUtils;
 import org.h2.tools.RunScript;
@@ -49,7 +50,7 @@ public class TransactionTest {
         connectionBuilder = new HikariCPConnectionBuilder(HikariBasicConfig.getH2HikariConfig());
         MySqlExecutor queryExecutor = new MySqlExecutor(new ExecutionConfig(-1), connectionBuilder);
         StorageManager jdbcStorageManager = new JdbcStorageManager(queryExecutor);
-        transactionManager = new TransactionManager(jdbcStorageManager);
+        transactionManager = (TransactionManager) jdbcStorageManager;
         jdbcStorageManager.registerStorables(StorageUtils.getStorableEntities());
         dbFileStorage = new DbFileStorage();
         dbFileStorage.setStorageManager(jdbcStorageManager);
@@ -61,7 +62,7 @@ public class TransactionTest {
         String input;
 
         try {
-            transactionManager.beginTransaction();
+            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
             input = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(FILE_NAME), "UTF-8");
             dbFileStorage.upload(IOUtils.toInputStream(input, "UTF-8"), FILE_NAME);
             transactionManager.commitTransaction();
@@ -71,7 +72,7 @@ public class TransactionTest {
         }
 
         try{
-            transactionManager.beginTransaction();
+            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
             String update = input + " new text";
             dbFileStorage.upload(IOUtils.toInputStream(update, "UTF-8"), FILE_NAME);
             InputStream is = dbFileStorage.download(FILE_NAME);
@@ -83,7 +84,7 @@ public class TransactionTest {
         }
 
         try {
-            transactionManager.beginTransaction();
+            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
             InputStream is = dbFileStorage.download(FILE_NAME);
             String output = IOUtils.toString(is, "UTF-8");
             Assert.assertEquals(input, output);

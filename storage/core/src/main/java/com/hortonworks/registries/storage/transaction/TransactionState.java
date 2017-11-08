@@ -14,26 +14,16 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.storage;
+package com.hortonworks.registries.storage.transaction;
 
-import com.hortonworks.registries.storage.exception.StorageException;
+public enum TransactionState {
+    INITIALIZED(0),
+    ROLLBACK(1),
+    COMMIT(2);
 
-public interface TransactionalStorageManager {
+    int value;
 
-    /**
-     * Begins the transaction
-     */
-    void beginTransaction() throws StorageException;
-
-
-    /**
-     * Discards the changes made to the storage layer and reverts to the last committed point
-     */
-    void rollbackTransaction() throws StorageException;
-
-
-    /**
-     * Flushes the changes made to the storage layer
-     */
-    void commitTransaction() throws StorageException;
+    TransactionState(int value) {
+        this.value = value;
+    }
 }

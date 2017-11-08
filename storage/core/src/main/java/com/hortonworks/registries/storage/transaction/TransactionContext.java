@@ -21,6 +21,7 @@ import java.sql.Connection;
 public class TransactionContext {
     private int nestedTransactionCount = 1;
     private final Connection connection;
+    private int transactionState = TransactionState.INITIALIZED.value;
 
     public TransactionContext(Connection connection) {
         this.connection = connection;
@@ -40,5 +41,13 @@ public class TransactionContext {
 
     public int getNestedTransactionCount() {
         return this.nestedTransactionCount;
+    }
+
+    public int getTransactionState() {
+        return this.transactionState;
+    }
+
+    public void recordState(TransactionState state) {
+        transactionState |= state.value;
     }
 }

@@ -17,7 +17,7 @@
 package com.hortonworks.registries.listeners;
 
 import com.hortonworks.registries.common.transaction.UnitOfWork;
-import com.hortonworks.registries.storage.transaction.TransactionManager;
+import com.hortonworks.registries.storage.TransactionManager;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
@@ -55,7 +55,7 @@ public class TransactionEventListener implements ApplicationEventListener {
                         .getMatchedResourceMethod(), UnitOfWorkEventListener::registerUnitOfWorkAnnotations);
                 useTransactionForUnitOfWork = unitOfWork.isPresent() ? unitOfWork.get().transactional() : false;
                 if (useTransactionForUnitOfWork)
-                    transactionManager.beginTransaction();
+                    transactionManager.beginTransaction(unitOfWork.get().transactionIsolation());
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {
                 // not supporting transactions to filters
             } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
@@ -64,6 +64,8 @@ public class TransactionEventListener implements ApplicationEventListener {
             } else if (eventType == RequestEvent.Type.FINISHED) {
                 if (useTransactionForUnitOfWork && event.isSuccess())
                     transactionManager.commitTransaction();
+                else if (useTransactionForUnitOfWork && !event.isSuccess())
+                    transactionManager.rollbackTransaction();
             }
         }
 

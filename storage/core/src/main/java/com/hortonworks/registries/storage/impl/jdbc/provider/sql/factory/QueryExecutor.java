@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory;
 
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
@@ -124,17 +125,17 @@ public interface QueryExecutor {
     /**
      *  Begins the transaction
      */
-    void beginTransaction() throws StorageException;
+    void beginTransaction(TransactionIsolation transactionIsolationLevel);
 
 
     /**
      *  Discards the changes made to the storage layer and reverts to the last committed point
      */
-    void rollbackTransaction() throws StorageException;
+    void rollbackTransaction();
 
 
     /**
      *  Flushes the changes made to the storage layer
      */
-    void commitTransaction() throws StorageException;
+    void commitTransaction();
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@ package com.hortonworks.registries.webservice;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.listeners.TransactionEventListener;
-import com.hortonworks.registries.storage.transaction.TransactionManager;
+import com.hortonworks.registries.storage.NOOPTransactionManager;
+import com.hortonworks.registries.storage.TransactionManager;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.HAConfiguration;
@@ -133,7 +134,11 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         StorageManager storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
-        TransactionManager transactionManager = new TransactionManager(storageManager);
+        TransactionManager transactionManager;
+        if (storageManager instanceof TransactionManager)
+            transactionManager = (TransactionManager) storageManager;
+        else
+            transactionManager = new NOOPTransactionManager();
         FileStorage fileStorage = getJarStorage(registryConfiguration.getFileStorageConfiguration());
 
         List<ModuleConfiguration> modules = registryConfiguration.getModules();
