@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 
@@ -63,7 +64,7 @@ public final class AvroUtils {
         } else if (input instanceof Boolean) {
             type = Schema.Type.BOOLEAN;
         } else {
-            throw new RuntimeException("input type: " + input.getClass() + " is not supported");
+            throw new AvroException("input type: " + input.getClass() + " is not supported");
         }
 
         return PRIMITIVE_SCHEMAS.get(type);

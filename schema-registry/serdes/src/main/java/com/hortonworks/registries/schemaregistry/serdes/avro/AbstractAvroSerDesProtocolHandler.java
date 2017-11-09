@@ -16,8 +16,8 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 import org.apache.avro.Schema;
 
 import java.io.IOException;
@@ -57,7 +57,7 @@ public abstract class AbstractAvroSerDesProtocolHandler implements SerDesProtoco
             outputStream.write(new byte[]{protocolId});
             doHandleSchemaVersionSerialization(outputStream, schemaIdVersion);
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
         }
     }
 

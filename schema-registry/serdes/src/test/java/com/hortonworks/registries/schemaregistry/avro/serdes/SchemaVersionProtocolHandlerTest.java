@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import com.hortonworks.registries.serdes.Device;
 import mockit.Expectations;
 import mockit.Mocked;
@@ -104,12 +105,12 @@ public class SchemaVersionProtocolHandlerTest {
        _testSerDes(1L, 1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = AvroException.class)
     public void testSerDesProtocolVersionAsMoreThan127() throws Exception {
        _testSerDes(1L, Byte.MAX_VALUE + Math.abs(new Random().nextInt()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = AvroException.class)
     public void testSerDesProtocolVersionAsLessThanZero() throws Exception {
         _testSerDes(1L, new Random().nextInt(127) - 128);
     }
