@@ -244,17 +244,17 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     }
 
     @Override
-    public void beginTransaction(TransactionIsolation transactionIsolationLevel) throws StorageException {
+    public void beginTransaction(TransactionIsolation transactionIsolationLevel) {
         queryExecutor.beginTransaction(transactionIsolationLevel);
     }
 
     @Override
-    public void rollbackTransaction() throws StorageException {
+    public void rollbackTransaction() {
         queryExecutor.rollbackTransaction();
     }
 
     @Override
-    public void commitTransaction() throws StorageException {
+    public void commitTransaction() {
         queryExecutor.commitTransaction();
     }
 }

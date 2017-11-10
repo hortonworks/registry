@@ -26,17 +26,17 @@ public class NOOPTransactionManager implements TransactionManager {
     private static final Logger LOG = LoggerFactory.getLogger(NOOPTransactionManager.class);
 
     @Override
-    public void beginTransaction(TransactionIsolation transactionIsolationLevel) throws StorageException {
+    public void beginTransaction(TransactionIsolation transactionIsolationLevel) {
         LOG.debug(String.format("--- Ignore call to begin transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
     }
 
     @Override
-    public void rollbackTransaction() throws StorageException {
+    public void rollbackTransaction() {
         LOG.debug(String.format("--- Ignore call to rollback transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
     }
 
     @Override
-    public void commitTransaction() throws StorageException {
+    public void commitTransaction() {
         LOG.debug(String.format("--- Ignore call to commit transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
     }
 }
