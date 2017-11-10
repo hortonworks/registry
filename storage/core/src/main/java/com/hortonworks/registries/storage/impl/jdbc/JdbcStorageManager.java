@@ -18,14 +18,15 @@ package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
-import com.hortonworks.registries.storage.exception.ConcurrentUpdateException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
-public class JdbcStorageManager implements StorageManager {
+public class JdbcStorageManager implements TransactionManager, StorageManager {
     private static final Logger log = LoggerFactory.getLogger(StorageManager.class);
     public static final String DB_TYPE = "db.type";
 
@@ -82,10 +83,7 @@ public class JdbcStorageManager implements StorageManager {
 
     @Override
     public void update(Storable storable) {
-        if (queryExecutor.update(storable) == 0) {
-            log.warn("Update storable '{}' returned 0 rows, possible concurrent update or invalid primary key");
-            throw new ConcurrentUpdateException("Row could not be updated, possible concurrent update or invalid primary key");
-        }
+        queryExecutor.update(storable);
     }
 
     @Override
@@ -245,4 +243,18 @@ public class JdbcStorageManager implements StorageManager {
         this.queryExecutor.setStorableFactory(storableFactory);
     }
 
+    @Override
+    public void beginTransaction(TransactionIsolation transactionIsolationLevel) {
+        queryExecutor.beginTransaction(transactionIsolationLevel);
+    }
+
+    @Override
+    public void rollbackTransaction() {
+        queryExecutor.rollbackTransaction();
+    }
+
+    @Override
+    public void commitTransaction() {
+        queryExecutor.commitTransaction();
+    }
 }

@@ -18,6 +18,7 @@ package com.hortonworks.registries.tag.service;
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.exception.service.exception.request.EntityNotFoundException;
+import com.hortonworks.registries.common.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.tag.Tag;
 import com.hortonworks.registries.tag.TaggedEntity;
@@ -116,6 +117,7 @@ public class TagCatalogResource {
     @GET
     @Path("/tags")
     @Timed
+    @UnitOfWork
     public Response listTags(@Context UriInfo uriInfo) {
         List<QueryParam> queryParams = new ArrayList<>();
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -153,6 +155,7 @@ public class TagCatalogResource {
     @GET
     @Path("/tags/{id}")
     @Timed
+    @UnitOfWork
     public Response getTagById(@PathParam("id") Long tagId) {
         Tag result = tagService.getTag(tagId);
         if (result != null) {
@@ -216,6 +219,7 @@ public class TagCatalogResource {
     @POST
     @Path("/tags")
     @Timed
+    @UnitOfWork
     public Response addTag(TagDto tagDto) {
         Tag createdTag = tagService.addTag(makeTag(tagDto));
         return WSUtils.respondEntity(makeTagDto(createdTag), CREATED);
@@ -255,6 +259,7 @@ public class TagCatalogResource {
     @DELETE
     @Path("/tags/{id}")
     @Timed
+    @UnitOfWork
     public Response removeTag(@PathParam("id") Long tagId) {
         Tag removedTag = tagService.removeTag(tagId);
         if (removedTag != null) {
@@ -292,6 +297,7 @@ public class TagCatalogResource {
     @PUT
     @Path("/tags/{id}")
     @Timed
+    @UnitOfWork
     public Response addOrUpdateTag(@PathParam("id") Long tagId, TagDto tagDto) {
         Tag newTag = tagService.addOrUpdateTag(tagId, makeTag(tagDto));
         return WSUtils.respondEntity(makeTagDto(newTag), OK);
@@ -317,6 +323,7 @@ public class TagCatalogResource {
     @POST
     @Path("/tags/{id}/entities/{namespace}/{entity-id}")
     @Timed
+    @UnitOfWork
     public Response addTagForEntity(@PathParam("id") Long tagId, @PathParam("namespace") String namespace, @PathParam("entity-id") Long entityId) {
         Tag tag = tagService.getTag(tagId);
         if(tag != null) {
@@ -347,6 +354,7 @@ public class TagCatalogResource {
     @DELETE
     @Path("/tags/{id}/entities/{namespace}/{entity-id}")
     @Timed
+    @UnitOfWork
     public Response removeTagFromEntity(@PathParam("id") Long tagId, @PathParam("namespace") String namespace, @PathParam("entity-id") Long entityId) {
         Tag tag = tagService.getTag(tagId);
         if(tag !=null ) {
@@ -379,6 +387,7 @@ public class TagCatalogResource {
     @GET
     @Path("/tags/{id}/entities")
     @Timed
+    @UnitOfWork
     public Response getTaggedEntities(@PathParam("id") Long tagId) {
         List<TaggedEntity> result = tagService.getEntities(tagId, true);
         if (result != null) {
@@ -411,6 +420,7 @@ public class TagCatalogResource {
     @GET
     @Path("/taggedentities/{namespace}/{id}/tags")
     @Timed
+    @UnitOfWork
     public Response getTagsForEntity(@PathParam("namespace") String namespace, @PathParam("id") Long entityId) {
         List<Tag> tags = tagService.getTags(new TaggedEntity(namespace, entityId));
         if (tags != null) {

@@ -16,11 +16,13 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory;
 
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
+import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.search.SearchQuery;
@@ -119,4 +121,21 @@ public interface QueryExecutor {
      *  @return returns set of column names for a given table
      */
     CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException;
+
+    /**
+     *  Begins the transaction
+     */
+    void beginTransaction(TransactionIsolation transactionIsolationLevel);
+
+
+    /**
+     *  Discards the changes made to the storage layer and reverts to the last committed point
+     */
+    void rollbackTransaction();
+
+
+    /**
+     *  Flushes the changes made to the storage layer
+     */
+    void commitTransaction();
 }

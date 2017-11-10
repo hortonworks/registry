@@ -109,14 +109,15 @@ public class OracleExecutor extends AbstractQueryExecutor {
 
     @Override
     public Long nextId(String namespace) {
-        OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, connectionBuilder, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT);
+        OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT, transactionBookKeeper);
         return oracleSequenceIdQuery.getNextID();
     }
 
     @Override
     public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
         CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
-        try (Connection connection = getConnection()) {
+        try {
+            Connection connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {

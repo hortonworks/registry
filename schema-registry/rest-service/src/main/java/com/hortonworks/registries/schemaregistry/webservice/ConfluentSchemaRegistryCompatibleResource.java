@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.common.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -76,6 +77,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @ApiOperation(value = "Get schema version by id",
             response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
+    @UnitOfWork
     public Response getSchemaById(@ApiParam(value = "schema version id", required = true) @PathParam("id") Long id) {
         Response response;
         try {
@@ -98,6 +100,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @ApiOperation(value = "Get all registered subjects",
             response = String.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
+    @UnitOfWork
     public Response getSubjects() {
         Response response;
         try {
@@ -168,6 +171,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @ApiOperation(value = "Get all schema versions of given subject",
             response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
+    @UnitOfWork
     public Response getAllVersions(@ApiParam(value = "subject", required = true)
                                    @PathParam("subject")
                                            String subject) {
@@ -194,6 +198,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @ApiOperation(value = "Get the schema information for given subject and versionId",
             response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
+    @UnitOfWork
     public Response getSchemaVersion(@ApiParam(value = "subject", required = true)
                                      @PathParam("subject")
                                              String subject,
@@ -258,6 +263,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @Path("/subjects/{subject}")
     @ApiOperation(value = "Get schema information for the given schema subject and schema text", response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
+    @UnitOfWork
     public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
                                          @ApiParam(value = "The schema ", required = true) String schema) {
         Response response;
@@ -291,6 +297,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
+    @UnitOfWork
     public Response registerSchemaVersion(@ApiParam(value = "subject", required = true) @PathParam("subject")
                                            String subject,
                                    @ApiParam(value = "Details about the schema", required = true)
