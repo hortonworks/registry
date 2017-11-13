@@ -33,8 +33,13 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>registry-common</artifactId>
+            <artifactId>registry-common-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
