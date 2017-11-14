@@ -16,17 +16,19 @@
 -- ;
 -- USE schema_registry;
 
+-- This script makes all the necessary changes to bring the database to 3.0.2 from any of the previous versions
+
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
   "id"              SERIAL UNIQUE NOT NULL,
-  "type"            VARCHAR(255)  NOT NULL,
-  "schemaGroup"     VARCHAR(255)  NOT NULL,
-  "name"            VARCHAR(255)  NOT NULL,
-  "compatibility"   VARCHAR(255)  NOT NULL,
-  "validationLevel" VARCHAR(255)  NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
+  "type"            VARCHAR(255) NOT NULL,
+  "schemaGroup"     VARCHAR(255) NOT NULL,
+  "name"            VARCHAR(255) NOT NULL,
+  "compatibility"   VARCHAR(255) NOT NULL,
+  "validationLevel" VARCHAR(255) NOT NULL,
   "description"     TEXT,
-  "evolve"          BOOLEAN       NOT NULL,
-  "timestamp"       BIGINT        NOT NULL,
-  PRIMARY KEY ("name"),
+  "evolve"          BOOLEAN      NOT NULL,
+  "timestamp"       BIGINT       NOT NULL,
+  PRIMARY KEY ( "name"),
   UNIQUE ("id")
 );
 
@@ -38,7 +40,6 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   "version"          INT           NOT NULL,
   "schemaMetadataId" BIGINT        NOT NULL,
   "timestamp"        BIGINT        NOT NULL,
-  "state"            SMALLINT      NOT NULL,
   "name"             VARCHAR(255)  NOT NULL,
   UNIQUE ("schemaMetadataId", "version"),
   PRIMARY KEY ("name", "version"),
@@ -73,3 +74,17 @@ CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
   UNIQUE ("schemaMetadataId", "serDesId")
 );
 
+
+CREATE OR REPLACE FUNCTION add_validation_level_if_missing()
+  RETURNS void AS $$
+  DECLARE
+    col_count INT;
+  BEGIN
+    SELECT COUNT(*) INTO col_count FROM information_schema."columns" WHERE table_schema = current_schema() and table_name = 'schema_metadata_info' and column_name = 'validationLevel';
+    IF col_count = 0 THEN
+      EXECUTE 'ALTER TABLE "schema_metadata_info" ADD COLUMN "validationLevel" VARCHAR(255) NOT NULL DEFAULT ''ALL''';
+    END IF;
+  END;
+$$ LANGUAGE plpgsql;
+
+SELECT add_validation_level_if_missing();

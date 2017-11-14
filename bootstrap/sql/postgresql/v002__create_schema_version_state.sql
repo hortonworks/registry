@@ -23,3 +23,5 @@ CREATE TABLE IF NOT EXISTS schema_version_state (
   PRIMARY KEY ("schemaVersionId", "stateId", "sequence"),
   UNIQUE ("id")
 );
+
+ALTER TABLE "schema_version_info" ADD COLUMN "state" SMALLINT NOT NULL DEFAULT 5;
