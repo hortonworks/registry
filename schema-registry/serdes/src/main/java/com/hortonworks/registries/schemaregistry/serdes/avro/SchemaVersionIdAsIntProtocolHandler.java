@@ -16,7 +16,8 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,7 @@ public class SchemaVersionIdAsIntProtocolHandler extends AbstractAvroSerDesProto
                 outputStream.write(ByteBuffer.allocate(4)
                                              .putInt(versionId.intValue()).array());
             } catch (IOException e) {
-                throw new SerDesException(e);
+                throw new AvroException(e);
             }
         }
     }
@@ -69,7 +70,7 @@ public class SchemaVersionIdAsIntProtocolHandler extends AbstractAvroSerDesProto
         try {
             inputStream.read(byteBuffer.array());
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
         }
 
         int schemaVersionId = byteBuffer.getInt();

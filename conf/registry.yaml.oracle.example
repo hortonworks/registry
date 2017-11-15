@@ -47,7 +47,7 @@ fileStorageConfiguration:
   properties:
     directory: "/tmp/schema-registry/jars"
 
-# MySQL based jdbc provider configuration is:
+# Oracle based jdbc provider configuration is:
 storageProviderConfiguration:
  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
  properties:

@@ -16,13 +16,15 @@
 -- ;
 -- USE schema_registry;
 
+-- This script makes all the necessary changes to bring the database to 3.0.2 from any of the previous versions
+
 CREATE TABLE IF NOT EXISTS schema_metadata_info (
   id              BIGINT AUTO_INCREMENT NOT NULL,
   type            VARCHAR(255)          NOT NULL,
   schemaGroup     VARCHAR(255)          NOT NULL,
   name            VARCHAR(255)          NOT NULL,
   compatibility   VARCHAR(255)          NOT NULL,
-  validationLevel VARCHAR(255)          NOT NULL, -- added in 0.3.1, table should be altered to add this column from earlier versions.
+  validationLevel VARCHAR(255)          NOT NULL,
   description     TEXT,
   evolve          BOOLEAN               NOT NULL,
   timestamp       BIGINT                NOT NULL,
@@ -38,14 +40,11 @@ CREATE TABLE IF NOT EXISTS schema_version_info (
   version          INT                   NOT NULL,
   schemaMetadataId BIGINT                NOT NULL,
   timestamp        BIGINT                NOT NULL,
-  state            TINYINT               NOT NULL,
   name             VARCHAR(255)          NOT NULL,
   UNIQUE KEY (id),
   UNIQUE KEY `UK_METADATA_ID_VERSION_FK` (schemaMetadataId, version),
   PRIMARY KEY (name, version),
-  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  FOREIGN KEY (schemaMetadataId, name) REFERENCES schema_metadata_info (id, name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_field_info (
@@ -56,9 +55,7 @@ CREATE TABLE IF NOT EXISTS schema_field_info (
   fieldNamespace   VARCHAR(255),
   type             VARCHAR(255)          NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  FOREIGN KEY (schemaInstanceId) REFERENCES schema_version_info (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS schema_serdes_info (
@@ -78,3 +75,24 @@ CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
 
   UNIQUE KEY `UK_IDS` (schemaMetadataId, serdesId)
 );
+
+-- 3.0.0 doesn't have "validationLevel" column for "schema_metadata_info", handling that case with stored procedure
+
+DROP PROCEDURE IF EXISTS add_validation_level_if_missing;
+
+delimiter ///
+
+CREATE PROCEDURE add_validation_level_if_missing()
+BEGIN
+    SELECT COUNT(*) INTO @col_exists FROM information_schema.columns WHERE table_schema IN (SELECT DATABASE() FROM DUAL) AND table_name = 'schema_metadata_info' AND column_name = 'validationLevel';
+    IF @col_exists = 0 THEN
+       SET @str = 'ALTER TABLE schema_metadata_info ADD validationLevel VARCHAR(255) NOT NULL DEFAULT "ALL" AFTER compatibility';
+       PREPARE stmt FROM @str;
+       EXECUTE stmt;
+       DEALLOCATE PREPARE stmt;
+    END IF;
+END ///
+
+delimiter ;
+
+CALL add_validation_level_if_missing();

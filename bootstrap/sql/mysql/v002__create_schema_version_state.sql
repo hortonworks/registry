@@ -23,3 +23,5 @@ CREATE TABLE IF NOT EXISTS schema_version_state (
   PRIMARY KEY (schemaVersionId, stateId, sequence),
   UNIQUE KEY (id)
 );
+
+ALTER TABLE `schema_version_info` ADD `state` TINYINT NOT NULL DEFAULT 5 AFTER `timestamp`;

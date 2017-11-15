@@ -21,9 +21,12 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryRetryableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +50,7 @@ public class SchemaMetadataCache {
                         } else if (key.getId() != null) {
                             return schemaMetadataFetcher.fetch(key.getId());
                         } else {
-                            throw new IllegalArgumentException("Key should have name or id as non null");
+                            throw new RegistryException("Key should have name or id as non null");
                         }
                     }
                 });
@@ -60,8 +63,16 @@ public class SchemaMetadataCache {
         } catch (ExecutionException e) {
             LOG.error("Error occurred while retrieving schema metadata for [{}]", key, e);
             Throwable cause = e.getCause();
-            if (!(cause instanceof SchemaNotFoundException)) {
-                throw new RuntimeException(cause.getMessage(), cause);
+            if (cause instanceof IOException) {
+                throw new RegistryRetryableException(cause.getMessage(), cause);
+            } else if (cause instanceof RuntimeException) {
+                if (cause.getCause() instanceof IOException) {
+                    throw new RegistryRetryableException(cause.getMessage(), cause);
+                } else {
+                    throw new RegistryException(cause.getMessage(), cause);
+                }
+            } else if (!(cause instanceof SchemaNotFoundException)) {
+                throw new RegistryException(cause.getMessage(), cause);
             }
             schemaMetadataInfo = null;
         }

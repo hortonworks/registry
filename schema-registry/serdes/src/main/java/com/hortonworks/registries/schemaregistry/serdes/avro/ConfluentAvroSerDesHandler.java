@@ -19,12 +19,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.BinaryEncoder;
@@ -61,10 +60,12 @@ public class ConfluentAvroSerDesHandler implements AvroSerDesHandler {
                 writer.write(input, encoder);
                 encoder.flush();
             }
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException e) {
+            throw new AvroRetryableException("Error serializing Avro message", e);
+        } catch (RuntimeException e) {
             // avro serialization can throw AvroRuntimeException, NullPointerException,
             // ClassCastException, etc
-            throw new SerDesException("Error serializing Avro message", e);
+            throw new AvroException("Error serializing Avro message", e);
         }
     }
 
@@ -83,9 +84,11 @@ public class ConfluentAvroSerDesHandler implements AvroSerDesHandler {
                 DatumReader datumReader = getDatumReader(writerSchema, readerSchema, useSpecificAvroReader);
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException e) {
+            throw new AvroRetryableException("Error deserializing Avro message for id " + writerSchema, e);
+        } catch (RuntimeException e) {
             // avro deserialization may throw AvroRuntimeException, NullPointerException, etc
-            throw new SerDesException("Error deserializing Avro message for id " + writerSchema, e);
+            throw new AvroException("Error deserializing Avro message for id " + writerSchema, e);
         }
         return deserializedObj;
     }
@@ -107,14 +110,14 @@ public class ConfluentAvroSerDesHandler implements AvroSerDesHandler {
         if (readerSchema == null) {
             Class readerClass = SpecificData.get().getClass(writerSchema);
             if (readerClass == null) {
-                throw new SerDesException("Could not find class " + writerSchema.getFullName() + " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
+                throw new AvroException("Could not find class " + writerSchema.getFullName() + " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
             }
             try {
                 readerSchema = ((SpecificRecord) readerClass.newInstance()).getSchema();
             } catch (InstantiationException e) {
-                throw new SerDesException(writerSchema.getFullName() + " specified by the " + "writers schema could not be instantiated to find the readers schema.");
+                throw new AvroException(writerSchema.getFullName() + " specified by the " + "writers schema could not be instantiated to find the readers schema.");
             } catch (IllegalAccessException e) {
-                throw new SerDesException(writerSchema.getFullName() + " specified by the " + "writers schema is not allowed to be instantiated to find the readers schema.");
+                throw new AvroException(writerSchema.getFullName() + " specified by the " + "writers schema is not allowed to be instantiated to find the readers schema.");
             }
 
             this.readerSchemaCache.put(writerSchema.getFullName(), readerSchema);

@@ -23,9 +23,9 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,8 +92,12 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
                 .expireAfterAccess(getCacheExpiryInSecs(config), TimeUnit.SECONDS)
                 .build(new CacheLoader<SchemaVersionKey, S>() {
                     @Override
-                    public S load(SchemaVersionKey schemaVersionKey) throws Exception {
-                        return getParsedSchema(schemaVersionKey);
+                    public S load(SchemaVersionKey schemaVersionKey) {
+                        try {
+                            return getParsedSchema(schemaVersionKey);
+                        } catch (SchemaNotFoundException | InvalidSchemaException e) {
+                           throw new RegistryException(e);
+                        }
                     }
                 });
     }
@@ -144,14 +148,15 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         byte protocolId = retrieveProtocolId(input);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, input);
         SchemaVersionInfo schemaVersionInfo = null;
+        SchemaMetadata schemaMetadata = null;
         try {
             schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
-        } catch (SchemaNotFoundException e) {
-            throw new SerDesException(e);
+            schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
+        } catch (Exception e) {
+            throw new RegistryException(e);
         }
-        SchemaMetadata schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
-
         return doDeserialize(input, protocolId, schemaMetadata, schemaVersionInfo.getVersion(), readerSchemaVersion);
+
     }
 
     /**
@@ -194,7 +199,11 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         try {
             return schemaCache.get(schemaVersionKey);
         } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            if (e.getCause() instanceof RegistryException) {
+                throw (RegistryException) e.getCause();
+            } else {
+                throw new RegistryException(e);
+            }
         }
     }
 
