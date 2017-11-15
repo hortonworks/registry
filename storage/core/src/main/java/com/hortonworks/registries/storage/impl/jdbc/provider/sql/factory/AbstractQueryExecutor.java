@@ -21,6 +21,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.StorageException;
@@ -28,11 +29,10 @@ import com.hortonworks.registries.storage.exception.TransactionException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlDeleteQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.Storable;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.transaction.TransactionBookKeeper;
@@ -112,10 +112,16 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     @Override
     public Connection getConnection() {
-        if (transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId()))
+        Connection connection;
+        if (transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
             return transactionBookKeeper.getConnection(Thread.currentThread().getId());
-        else
-            throw new TransactionException(String.format("No active transaction is associated with the thread id : %s ", Long.toString(Thread.currentThread().getId())));
+        } else {
+            log.info("No active transaction is associated with the thread id : [{}] ", Thread.currentThread().getId());
+            connection = connectionBuilder.getConnection();
+            activeConnections.add(connection);
+        }
+
+        return connection;
     }
 
     @Override
