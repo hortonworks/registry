@@ -127,8 +127,9 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     @Override
     public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
         CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
+        Connection connection = null;
         try {
-            Connection connection = getConnection();
+            connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
                     new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
@@ -138,13 +139,19 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
+        } finally {
+            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                closeConnection(connection);
+            }
         }
     }
 
     public void closeConnection(Connection connection) {
         if (connection != null) {
             try {
-                connection.close();
+                if(!connection.isClosed()) {
+                    connection.close();
+                }
                 log.debug("Closed connection {}", connection);
                 activeConnections.remove(connection);
             } catch (SQLException e) {
@@ -186,9 +193,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             /** Cleanup operation for when the entry is removed from cache */
             @Override
             public void onRemoval(RemovalNotification<SqlQuery, PreparedStatementBuilder> notification) {
-                final PreparedStatementBuilder val = notification.getValue();
-                log.debug("Removed entry from cache [key:{}, val: {}]", notification.getKey(), val);
+                final PreparedStatementBuilder preparedStatementBuilder = notification.getValue();
+                log.debug("Removed entry from cache [key:{}, val: {}]", notification.getKey(), preparedStatementBuilder);
                 log.debug("Cache size: {}", cache.size());
+                if(preparedStatementBuilder != null && !transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                    closeConnection(preparedStatementBuilder.getConnection());
+                }
             }
         }).build();
     }
@@ -327,8 +337,17 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 result = getStorablesFromResultSet(resultSet, namespace);
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
+            } finally {
+                closeConn();
             }
             return result;
+        }
+
+        void closeConn() {
+            // Close every opened connection if not using cache. If using cache, cache expiry manages connections
+            if (!isCacheEnabled() && !transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                closeConnection(connection);
+            }
         }
 
         int executeUpdate() {
@@ -336,6 +355,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 return getPreparedStatement().executeUpdate();
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
+            } finally {
+                closeConn();
             }
         }
 
@@ -351,6 +372,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 }
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
+            } finally {
+                closeConn();
             }
 
         }
