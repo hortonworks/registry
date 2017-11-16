@@ -116,8 +116,9 @@ public class OracleExecutor extends AbstractQueryExecutor {
     @Override
     public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
         CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
+        Connection connection = null;
         try {
-            Connection connection = getConnection();
+            connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
@@ -127,6 +128,10 @@ public class OracleExecutor extends AbstractQueryExecutor {
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
+        } finally {
+            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                closeConnection(connection);
+            }
         }
     }
 }
