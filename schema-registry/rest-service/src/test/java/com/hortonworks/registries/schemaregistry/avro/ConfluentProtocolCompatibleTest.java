@@ -26,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
+import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.avro.Schema;
@@ -51,6 +52,7 @@ public class ConfluentProtocolCompatibleTest {
         LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         try {
             localSchemaRegistryServer.start();
+            SchemaRegistryUtil.createMasterBranch(localSchemaRegistryServer.getStorageManager());
 
             final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
             final String registryUrl = String.format("http://localhost:%d/api/v1", localSchemaRegistryServer.getLocalPort());
@@ -99,6 +101,7 @@ public class ConfluentProtocolCompatibleTest {
         LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         try {
             localSchemaRegistryServer.start();
+            SchemaRegistryUtil.createMasterBranch(localSchemaRegistryServer.getStorageManager());
 
             final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
             final String registryUrl = String.format("http://localhost:%d/api/v1", localSchemaRegistryServer.getLocalPort());

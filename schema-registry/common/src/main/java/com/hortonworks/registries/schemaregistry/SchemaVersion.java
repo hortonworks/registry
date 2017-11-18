@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+import com.hortonworks.registries.schemaregistry.state.details.AbstractStateDetails;
 
 import java.io.Serializable;
 
@@ -30,6 +31,7 @@ public class SchemaVersion implements Serializable {
     private String description;
     private String schemaText;
     private Byte initialState;
+    private AbstractStateDetails stateDetails;
 
     @SuppressWarnings("unused")
     private SchemaVersion() {
@@ -42,9 +44,22 @@ public class SchemaVersion implements Serializable {
     }
 
     public SchemaVersion(String schemaText, String description, Byte initialState) {
+        this(schemaText, description, initialState, null);
+    }
+
+    public SchemaVersion(String schemaText, String description, Byte initialState, AbstractStateDetails abstractStateDetails) {
         this.description = description;
         this.schemaText = schemaText;
         this.initialState = initialState != null ? initialState : SchemaVersionLifecycleStates.ENABLED.getId();
+        this.stateDetails = abstractStateDetails;
+    }
+
+    public void setState(Byte state) {
+        this.initialState = state;
+    }
+
+    public void setStateDetails(AbstractStateDetails abstractStateDetails) {
+        this.stateDetails = abstractStateDetails;
     }
 
     public String getDescription() {
@@ -59,12 +74,17 @@ public class SchemaVersion implements Serializable {
         return initialState;
     }
 
+    public AbstractStateDetails getStateDetails() {
+        return stateDetails;
+    }
+
     @Override
     public String toString() {
         return "SchemaVersion{" +
                 "description='" + description + '\'' +
                 ", schemaText='" + schemaText + '\'' +
-                ", initialState=" + initialState +
+                ", initialState='" + initialState + '\'' +
+                ", details=" + stateDetails +
                 '}';
     }
 }

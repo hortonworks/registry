@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.client;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -26,16 +27,21 @@ import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SchemaVersionMergeStrategy;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
+import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 
@@ -55,6 +61,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     public MockSchemaRegistryClient() {
         StorageManager storageManager = new InMemoryStorageManager();
+        SchemaRegistryUtil.createMasterBranch(storageManager);
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         this.schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         this.schemaRegistry.init(Collections.<String, Object>emptyMap());
@@ -100,7 +107,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         try {
 
            return schemaRegistry.addSchemaVersion(schemaMetadata,
@@ -112,6 +119,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion);
+    }
+
+    @Override
     public SchemaIdVersion uploadSchemaVersion(String schemaName, String description, InputStream schemaVersionTextFile)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
         throw new UnsupportedOperationException();
@@ -119,7 +131,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         try {
 
             return schemaRegistry.addSchemaVersion(schemaName,
@@ -131,13 +143,23 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return null;
+    }
+
+    @Override
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         schemaRegistry.deleteSchemaVersion(schemaVersionKey);
     }
 
     @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
+    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException {
         return schemaRegistry.findSchemasByFields(schemaFieldQuery);
+    }
+
+    @Override
+    public Collection<SchemaVersionKey> findSchemasByFields(String schemaBranchName, SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException {
+        return schemaRegistry.findSchemasByFields(schemaBranchName, schemaFieldQuery);
     }
 
     @Override
@@ -156,17 +178,32 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
+    }
+
+    @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
         return schemaRegistry.getAllVersions(schemaName);
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.getAllVersions(schemaBranchName, schemaName);
+    }
+
+    @Override
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.checkCompatibility(schemaName, toSchemaText);
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.checkCompatibility(schemaBranchName, schemaName, toSchemaText);
+    }
+
+    @Override
+    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.checkCompatibility(schemaName, toSchemaText).isCompatible();
     }
 
@@ -186,12 +223,22 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Long addSerDes(SerDesPair serializerInfo) {
-        return null;
+        return schemaRegistry.addSerDes(serializerInfo);
     }
 
     @Override
     public void mapSchemaWithSerDes(String schemaName, Long serDesId) {
+        schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
+    }
 
+    @Override
+    public SchemaIdVersion uploadSchemaVersion(String schemaBranchName, String schemaName, String description, InputStream schemaVersionTextFile) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+        return null;
+    }
+
+    @Override
+    public boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return false;
     }
 
     @Override
@@ -220,6 +267,21 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
         return schemaRegistry.getSchemaVersionLifecycleStateMachineInfo();
     }
 
+    @Override
+    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
+       return schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
+    }
+
+    @Override
+    public Collection<SchemaBranch> getAllBranches() {
+        return schemaRegistry.getAllBranches();
+    }
+
+    @Override
+    public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
+        schemaRegistry.deleteSchemaBranch(schemaBranchId);
+    }
+
     public <T> T createSerializerInstance(SerDesInfo serDesInfo) {
         return null;
     }
@@ -227,6 +289,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public <T> T createDeserializerInstance(SerDesInfo serDesInfo) {
         return null;
+    }
+
+    @Override
+    public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
+         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC);
     }
 
 
