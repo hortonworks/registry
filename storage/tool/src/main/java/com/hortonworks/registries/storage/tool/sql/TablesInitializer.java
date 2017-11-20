@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hortonworks.registries.storage.tool;
+package com.hortonworks.registries.storage.tool.sql;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -167,7 +167,7 @@ public class TablesInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(FlywayFactory.get(storageProperties, scriptRootPath));
+        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));
