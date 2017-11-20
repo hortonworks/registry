@@ -62,7 +62,7 @@ To run the producer in Secure cluster:
 
 5. kinit -kt your.keytab principal@EXAMPLE.com. Make sure you gave ACLs to the pricncipal refer to [2]
 
-6. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.3.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
+6. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.4.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
 
 
 
@@ -115,4 +115,4 @@ To run the consumer in Secure cluster:
 
 3. kinit -kt your.keytab principal@EXAMPLE.com. Make sure you gave ACLs to the pricncipal refer to [2]
 
-4. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.3.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm
+4. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.4.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm
