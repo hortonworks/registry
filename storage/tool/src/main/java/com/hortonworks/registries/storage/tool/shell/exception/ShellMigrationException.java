@@ -14,19 +14,19 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.storage.tool.exception;
+package com.hortonworks.registries.storage.tool.shell.exception;
 
-public class SchemaMigrationException extends RuntimeException {
+public class ShellMigrationException extends RuntimeException {
 
-    public SchemaMigrationException(String message) {
+    public ShellMigrationException(String message) {
         super(message);
     }
 
-    public SchemaMigrationException(String message, Throwable throwable) {
+    public ShellMigrationException(String message, Throwable throwable) {
         super(message, throwable);
     }
 
-    public SchemaMigrationException(Throwable throwable) {
+    public ShellMigrationException(Throwable throwable) {
         super(throwable);
     }
 }

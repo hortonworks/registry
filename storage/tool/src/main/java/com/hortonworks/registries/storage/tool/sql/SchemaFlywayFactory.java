@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.storage.tool;
+package com.hortonworks.registries.storage.tool.sql;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
@@ -22,7 +22,7 @@ import org.flywaydb.core.api.MigrationVersion;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
-public class FlywayFactory {
+public class SchemaFlywayFactory {
 
     private static final String encoding = StandardCharsets.UTF_8.name();
     private static final String metaDataTableName = "DATABASE_CHANGE_LOG";

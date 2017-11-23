@@ -13,7 +13,7 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
  **/
-package com.hortonworks.registries.storage.tool;
+package com.hortonworks.registries.storage.tool.sql;
 
 import java.io.IOException;
 import java.util.Map;

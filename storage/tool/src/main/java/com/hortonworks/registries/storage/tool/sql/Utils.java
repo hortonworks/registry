@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hortonworks.registries.storage.tool;
+package com.hortonworks.registries.storage.tool.sql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
