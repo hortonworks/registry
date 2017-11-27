@@ -10,7 +10,7 @@ Documentation and tutorials can be found on the [Registry docs](http://registry-
 
 ## Getting Help
 
-Registry users or devs should send a message to [Registry Google Group](https://groups.google.com/forum/#!forum/registry)
+Registry users or devs should send a message to [Registry Google Group](https://groups.google.com/forum/#!forum/registry).
 
 [![Join the chat at https://gitter.im/registry-users/Lobby](https://badges.gitter.im/registry-users/Lobby.svg)](https://gitter.im/registry-users/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
