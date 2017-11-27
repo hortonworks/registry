@@ -33,24 +33,21 @@ public class OracleSequenceIdQuery {
     private static final Logger log = LoggerFactory.getLogger(OracleSequenceIdQuery.class);
     private static final String nextValueFunction = "nextval";
     private final String namespace;
-    private final TransactionBookKeeper transactionBookKeeper;
     private final OracleDataTypeContext oracleDatabaseStorageContext;
     private final int queryTimeoutSecs;
 
-    public OracleSequenceIdQuery(String namespace, int queryTimeoutSecs, OracleDataTypeContext oracleDatabaseStorageContext, TransactionBookKeeper transactionBookKeeper) {
+    public OracleSequenceIdQuery(String namespace, int queryTimeoutSecs, OracleDataTypeContext oracleDatabaseStorageContext) {
         this.namespace = namespace;
         this.queryTimeoutSecs = queryTimeoutSecs;
         this.oracleDatabaseStorageContext = oracleDatabaseStorageContext;
-        this.transactionBookKeeper = transactionBookKeeper;
     }
 
-    public Long getNextID() {
+    public Long getNextID(Connection connection) {
 
         OracleSqlQuery nextValueQuery = new OracleSqlQuery(String.format("SELECT \"%s\".%s from DUAL", namespace.toUpperCase(), nextValueFunction));
         Long nextId = 0l;
 
         try {
-            Connection connection = transactionBookKeeper.getConnection(Thread.currentThread().getId());
             ResultSet selectResultSet = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), oracleDatabaseStorageContext, nextValueQuery).getPreparedStatement(nextValueQuery).executeQuery();
             if (selectResultSet.next()) {
                 nextId = selectResultSet.getLong(nextValueFunction);

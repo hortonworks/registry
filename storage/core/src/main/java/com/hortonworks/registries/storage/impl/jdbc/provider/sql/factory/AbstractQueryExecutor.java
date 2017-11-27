@@ -223,14 +223,16 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
                 log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
                 Connection connection = connectionBuilder.getConnection();
-                connection.setTransactionIsolation(transactionIsolationLevel.getValue());
+                if (transactionIsolationLevel != TransactionIsolation.DEFAULT)
+                    connection.setTransactionIsolation(transactionIsolationLevel.getValue());
                 log.debug("Opened connection {}", connection);
                 activeConnections.add(connection);
                 connection.setAutoCommit(false);
                 transactionBookKeeper.addTransaction(currentThreadId, connection);
             } else {
                 log.debug(" --- Reusing transaction for thread if : {} --- ", currentThreadId);
-                if (transactionBookKeeper.getConnection(currentThreadId).getTransactionIsolation() != transactionIsolationLevel.getValue())
+                if (transactionIsolationLevel != TransactionIsolation.DEFAULT &&
+                        transactionBookKeeper.getConnection(currentThreadId).getTransactionIsolation() != transactionIsolationLevel.getValue())
                     throw new TransactionException("Attempted to change the isolation level amidst an active transaction");
                 transactionBookKeeper.incrementNestedTransactionCount(currentThreadId);
             }
