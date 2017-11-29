@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.storage.tool;
+package com.hortonworks.registries.storage.tool.sql;
 
 public enum DatabaseType {
 
