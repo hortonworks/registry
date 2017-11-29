@@ -171,7 +171,7 @@ public class AvroSchemaResolver implements SchemaResolver {
                 updatedFields.add(new Schema.Field(field.name(),
                                                    fieldSchema,
                                                    field.doc(),
-                                                   currentFieldTypeIsUnion ? NullNode.getInstance() : null,
+                                                   currentFieldTypeIsUnion ? NullNode.getInstance() : field.defaultValue(),
                                                    field.order()));
             }
 
