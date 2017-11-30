@@ -1,0 +1,1 @@
+{"type":"record","name":"SimpleUnionRecord","namespace":"com.hortonworks.examples.","fields":[{"name":"union_field","type":["null","string"],"default":null},{"name":"int_field","type":"int","default":5}]}
