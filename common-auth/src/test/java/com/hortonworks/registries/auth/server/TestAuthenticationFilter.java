@@ -974,6 +974,7 @@ public class TestAuthenticationFilter {
             Cookie cookie = new Cookie(AuthenticatedURL.AUTH_COOKIE, tokenSigned);
             Mockito.when(request.getCookies()).thenReturn(new Cookie[]{cookie});
             Mockito.when(request.getRequestURI()).thenReturn("/bar");
+            Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
 
             filter.doFilter(request, response, chain);
 
