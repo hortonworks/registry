@@ -39,6 +39,7 @@ import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -174,6 +176,10 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(new TransactionEventListener(transactionManager));
+
+        final ErrorPageErrorHandler errorPageErrorHandler = new ErrorPageErrorHandler();
+        errorPageErrorHandler.addErrorPage(Response.Status.UNAUTHORIZED.getStatusCode(), "/401.html");
+        environment.getApplicationContext().setErrorHandler(errorPageErrorHandler);
     }
 
     private void enableCORS(Environment environment) {
