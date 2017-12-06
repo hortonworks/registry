@@ -118,6 +118,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         } else {
             log.info("No active transaction is associated with the thread id : [{}] ", Thread.currentThread().getId());
             connection = connectionBuilder.getConnection();
+            log.debug("Created new connection: [{}], active connection size: [{}]", connection, activeConnections.size());
             activeConnections.add(connection);
         }
 
@@ -131,7 +132,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         try {
             connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
-                    new SqlSelectQuery(namespace)).getMetaData();
+                                                                             new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
                 columns.add(rsMetadata.getColumnName(i));
             }
@@ -154,6 +155,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 }
                 log.debug("Closed connection {}", connection);
                 activeConnections.remove(connection);
+                log.debug("Removed connection: [{}] , active connection size: [{}]", connection, activeConnections.size());
             } catch (SQLException e) {
                 throw new RuntimeException("Failed to close connection", e);
             }
@@ -389,6 +391,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 preparedStatementBuilder = cache.get(sqlBuilder, new PreparedStatementBuilderCallable(sqlBuilder, false));
             } else {
                 connection = getConnection();
+                log.debug("Got new connection to create PreparedStatement: [{}]", connection);
                 log.debug("sqlBuilder {}", sqlBuilder.toString());
                 preparedStatementBuilder = PreparedStatementBuilder.of(connection, config, storageDataTypeContext, sqlBuilder);
             }
@@ -402,6 +405,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 preparedStatementBuilder = cache.get(sqlBuilder, new PreparedStatementBuilderCallable(sqlBuilder, true));
             } else {
                 connection = getConnection();
+                log.debug("Got new connection to create PreparedStatement returning generated key: [{}]", connection);
                 preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
             }
             return preparedStatementBuilder.getPreparedStatement(sqlBuilder);
@@ -431,10 +435,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             public PreparedStatementBuilder call() throws Exception {
                 // opens a new connection which remains open for as long as this entry is in the cache
                 final PreparedStatementBuilder preparedStatementBuilder;
+                Connection connection = getConnection();
+                log.debug("Got new connection to create PreparedStatementBuilder: [{}]", connection);
                 if (returnGeneratedKeys) {
-                    preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(getConnection(), config, storageDataTypeContext, sqlBuilder);
+                    preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
                 } else {
-                    preparedStatementBuilder = PreparedStatementBuilder.of(getConnection(), config, storageDataTypeContext, sqlBuilder);
+                    preparedStatementBuilder = PreparedStatementBuilder.of(connection, config, storageDataTypeContext, sqlBuilder);
                 }
                 log.debug("Loading cache with [key: {}, val: {}]", sqlBuilder, preparedStatementBuilder);
                 return preparedStatementBuilder;
