@@ -240,12 +240,15 @@ public class SampleSchemaRegistryClientApp {
         String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), DEFAULT_SCHEMA_REG_URL);
         Map<String, Object> config = createConfig(schemaRegistryUrl);
         SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(config);
+        try {
+            sampleSchemaRegistryClientApp.runSchemaApis();
 
-        sampleSchemaRegistryClientApp.runSchemaApis();
+            sampleSchemaRegistryClientApp.runCustomSerDesApi();
 
-        sampleSchemaRegistryClientApp.runCustomSerDesApi();
-
-        sampleSchemaRegistryClientApp.runAvroSerDesApis();
+            sampleSchemaRegistryClientApp.runAvroSerDesApis();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static Map<String, Object> createConfig(String schemaRegistryUrl) {

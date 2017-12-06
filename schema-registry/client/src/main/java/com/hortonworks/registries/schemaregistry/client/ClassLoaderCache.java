@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.channels.FileLock;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -87,9 +86,8 @@ public class ClassLoaderCache {
         }
 
         try (FileOutputStream fos = new FileOutputStream(file);
-             FileLock fileLock = fos.getChannel().lock();
              FileInputStream fileInputStream = new FileInputStream(file)) {
-            LOG.debug("Took file lock: [{}] for file: [{}]", fileLock, file);
+            LOG.debug("Loading file: [{}]", file);
 
             if (fileInputStream.read() != -1) {
                 LOG.debug("File [{}] is already written with content and returning the existing file", file);

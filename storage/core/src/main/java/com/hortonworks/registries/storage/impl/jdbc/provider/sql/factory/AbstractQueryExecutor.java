@@ -26,7 +26,6 @@ import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlDeleteQuery;
-import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
@@ -34,20 +33,15 @@ import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
-import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -114,15 +108,17 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     @Override
     public Connection getConnection() {
         Connection connection = connectionBuilder.getConnection();
-        log.debug("Opened connection {}", connection);
         activeConnections.add(connection);
+        log.debug("Created new connection: [{}], active connection size: [{}]", connection, activeConnections.size());
         return connection;
     }
 
     @Override
     public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
         CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
-        try(Connection connection = getConnection()) {
+        Connection connection = null;
+        try {
+            connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
                     new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
@@ -132,6 +128,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
+        } finally {
+            closeConnection(connection);
         }
     }
 
@@ -141,6 +139,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 connection.close();
                 log.debug("Closed connection {}", connection);
                 activeConnections.remove(connection);
+                log.debug("Removed connection: [{}] , active connection size: [{}]", connection, activeConnections.size());
             } catch (SQLException e) {
                 throw new RuntimeException("Failed to close connection", e);
             }
@@ -236,7 +235,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             } finally {
                 // Close every opened connection if not using cache. If using cache, cache expiry manages connections
                 if (!isCacheEnabled()) {
-                    closeConn();
+                    closeConnection(connection);
                 }
             }
             return result;
@@ -250,7 +249,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             } finally {
                 // Close every opened connection if not using cache. If using cache, cache expiry manages connections
                 if (!isCacheEnabled()) {
-                    closeConn();
+                    closeConnection(connection);
                 }
             }
         }
@@ -270,14 +269,9 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             } finally {
                 // Close every opened connection if not using cache. If using cache, cache expiry manages connections
                 if (!isCacheEnabled()) {
-                    closeConn();
+                    closeConnection(connection);
                 }
             }
-
-        }
-
-        void closeConn() {
-            closeConnection(connection);
         }
 
         // ====== private helper methods ======
@@ -289,6 +283,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 preparedStatementBuilder = cache.get(sqlBuilder, new PreparedStatementBuilderCallable(sqlBuilder, false));
             } else {
                 connection = getConnection();
+                log.debug("Got new connection to create PreparedStatement: [{}]", connection);
                 log.debug("sqlBuilder {}", sqlBuilder.toString());
                 preparedStatementBuilder = PreparedStatementBuilder.of(connection, config, storageDataTypeContext, sqlBuilder);
             }
@@ -302,6 +297,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 preparedStatementBuilder = cache.get(sqlBuilder, new PreparedStatementBuilderCallable(sqlBuilder, true));
             } else {
                 connection = getConnection();
+                log.debug("Got new connection to create PreparedStatement returning generated key: [{}]", connection);
+
                 preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
             }
             return preparedStatementBuilder.getPreparedStatement(sqlBuilder);
@@ -329,10 +326,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             public PreparedStatementBuilder call() throws Exception {
                 // opens a new connection which remains open for as long as this entry is in the cache
                 final PreparedStatementBuilder preparedStatementBuilder;
+                Connection connection = getConnection();
+                log.debug("Got new connection to create PreparedStatementBuilder: [{}]", connection);
                 if (returnGeneratedKeys) {
-                    preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(getConnection(), config, storageDataTypeContext, sqlBuilder);
+                    preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
                 } else {
-                    preparedStatementBuilder = PreparedStatementBuilder.of(getConnection(), config, storageDataTypeContext, sqlBuilder);
+                    preparedStatementBuilder = PreparedStatementBuilder.of(connection, config, storageDataTypeContext, sqlBuilder);
                 }
                 log.debug("Loading cache with [key: {}, val: {}]", sqlBuilder, preparedStatementBuilder);
                 return preparedStatementBuilder;

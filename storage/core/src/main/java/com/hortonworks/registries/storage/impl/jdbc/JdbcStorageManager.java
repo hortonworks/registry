@@ -181,6 +181,7 @@ public class JdbcStorageManager implements StorageManager {
     private StorableKey buildStorableKey(String namespace, List<QueryParam> queryParams) throws Exception {
         final Map<Schema.Field, Object> fieldsToVal = new HashMap<>();
         final Connection connection = queryExecutor.getConnection();
+        log.debug("Got connection to fetch StorableKey [{}]", connection);
         StorableKey storableKey = null;
 
         try {
