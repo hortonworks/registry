@@ -23,7 +23,7 @@ cd ${SRC_ROOT_DIR}
 # Travis only has 3GB of memory, lets use 1GB for build, and 1.5GB for forked JVMs
 export MAVEN_OPTS="-Xmx1024m"
 
-mvn --batch-mode test -Dmaven.test.redirectTestOutputToFile=true
+mvn --batch-mode verify -Dmaven.test.redirectTestOutputToFile=true
 BUILD_RET_VAL=$?
 
 for dir in `find . -type d -and -wholename \*/target/surefire-reports`;
