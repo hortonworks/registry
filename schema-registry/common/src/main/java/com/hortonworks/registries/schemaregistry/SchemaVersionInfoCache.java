@@ -93,7 +93,7 @@ public class SchemaVersionInfoCache {
 
     public SchemaVersionInfo getSchema(SchemaVersionInfoCache.Key key) throws SchemaNotFoundException {
         try {
-            LOG.info("Trying to load entry for cache with key [{}] from target service", key);
+            LOG.debug("Trying to load entry for cache with key [{}] from target service", key);
             return loadingCache.get(key);
         } catch (ExecutionException e) {
             if (e.getCause().getClass() == SchemaNotFoundException.class)
@@ -103,12 +103,12 @@ public class SchemaVersionInfoCache {
     }
 
     public SchemaVersionInfo getSchemaIfPresent(SchemaVersionInfoCache.Key key) throws SchemaNotFoundException {
-        LOG.info("Trying to get entry from cache if it is present in local cache with key [{}]", key);
+        LOG.debug("Trying to get entry from cache if it is present in local cache with key [{}]", key);
         return loadingCache.getIfPresent(key);
     }
 
     public void invalidateSchema(SchemaVersionInfoCache.Key key) {
-        LOG.info("Invalidating cache entry for key [{}]", key);
+        LOG.debug("Invalidating cache entry for key [{}]", key);
         loadingCache.invalidate(key);
 
         SchemaVersionKey schemaVersionKey =
