@@ -177,7 +177,7 @@ export default class SchemaFormContainer extends Component {
     }
   }
 
-  handleSave() {
+  handleSave(didVersionFailed) {
     let data = {};
     let {name, type, schemaGroup, description, compatibility, evolve, schemaText} = this.state;
     data = {
@@ -187,18 +187,22 @@ export default class SchemaFormContainer extends Component {
       description,
       evolve
     };
+    let versionData = { schemaText, description };
     if (compatibility !== '') {
       data.compatibility = compatibility;
     }
-    return SchemaREST.postSchema({body: JSON.stringify(data)})
+    if(didVersionFailed){
+      return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
+    } else {
+      return SchemaREST.postSchema({body: JSON.stringify(data)})
         .then((schemaResult)=>{
           if(schemaResult.responseMessage !== undefined){
             FSReactToastr.error(<CommonNotification flag="error" content={schemaResult.responseMessage}/>, '', toastOpt);
           } else {
-            let versionData = { schemaText, description };
             return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
           }
         });
+    }
   }
 
   render() {
@@ -273,7 +277,7 @@ export default class SchemaFormContainer extends Component {
               <a key="3" className="pull-right" href="javascript:void(0)" onClick={() => { this.setState({expandCodemirror: !expandCodemirror}); }}>
                 {expandCodemirror ? <i className="fa fa-compress"></i> : <i className="fa fa-expand"></i>}
               </a>]
-            : 
+            :
             null
           }
           <div onDrop={this.handleOnDrop.bind(this)} onDragOver={(e) => {
