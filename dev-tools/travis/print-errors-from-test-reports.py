@@ -18,18 +18,20 @@ import glob
 import traceback
 from xml.etree.ElementTree import ElementTree
 
-def print_detail_information(testcase, fail_or_error):
+
+def print_detail_information(file_path, failure_cases):
     print "-" * 50
-    print "classname: %s / testname: %s" % (testcase.get("classname"), testcase.get("name"))
-    print fail_or_error.text
-    stdout = testcase.find("system-out")
-    if stdout != None:
-        print "-" * 20, "system-out", "-"*20
-        print stdout.text
-    stderr = testcase.find("system-err")
-    if stderr != None:
-        print "-" * 20, "system-err", "-"*20
-        print stderr.text
+    for testcase in failure_cases:
+        print "classname: %s / testname: %s" % (testcase.get("classname"), testcase.get("name"))
+    print "-" * 50
+    print "Printing output..."
+    output_file_path = file_path.replace("TEST-", "").replace(".xml", "-output.txt")
+    if os.path.exists(output_file_path):
+        with open(output_file_path, "r") as fr:
+            print fr.read()
+    else:
+        print "No output file for the test case. desired output file path: %s" % output_file_path
+
     print "-" * 50
 
 
@@ -39,29 +41,28 @@ def print_error_reports_from_report_file(file_path):
         tree.parse(file_path)
     except:
         print "-" * 50
-        print "Error parsing %s"%file_path
-        f = open(file_path, "r");
-        print f.read();
+        print "Error parsing %s" % file_path
+        with open(file_path, "r") as fr:
+            print fr.read()
         print "-" * 50
         return
 
     testcases = tree.findall(".//testcase")
+    failure_cases = []
     for testcase in testcases:
         error = testcase.find("error")
-        if error is not None:
-            print_detail_information(testcase, error)
-
         fail = testcase.find("fail")
-        if fail is not None:
-            print_detail_information(testcase, fail)
-
         failure = testcase.find("failure")
-        if failure is not None:
-            print_detail_information(testcase, failure)
+
+        if error is not None or fail is not None or failure is not None:
+            failure_cases.append(testcase)
+
+    if len(failure_cases) > 0:
+        print_detail_information(file_path, failure_cases)
 
 
 def main(report_dir_path):
-    for test_report in glob.iglob(report_dir_path + '/*.xml'):
+    for test_report in glob.iglob(report_dir_path + '/TEST-*.xml'):
         file_path = os.path.abspath(test_report)
         try:
             print "Checking %s" % test_report
