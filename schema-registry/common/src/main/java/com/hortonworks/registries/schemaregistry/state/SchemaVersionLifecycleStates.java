@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry.state;
 
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
@@ -24,7 +25,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryConstants;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -412,7 +412,7 @@ public final class SchemaVersionLifecycleStates {
         int schemaVersion = schemaVersionInfo.getVersion();
         String schemaText = schemaVersionInfo.getSchemaText();
         List<SchemaVersionInfo> allEnabledSchemaVersions =
-                schemaVersionService.getAllSchemaVersions(SchemaRegistryConstants.MASTER_BRANCH, schemaName)
+                schemaVersionService.getAllSchemaVersions(SchemaBranch.MASTER_BRANCH, schemaName)
                                     .stream()
                                     .filter(x -> SchemaVersionLifecycleStates.ENABLED.getId().equals(x.getStateId()))
                                     .collect(Collectors.toList());

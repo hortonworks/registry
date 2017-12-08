@@ -31,7 +31,7 @@ public class SchemaVersion implements Serializable {
     private String description;
     private String schemaText;
     private Byte initialState;
-    private AbstractStateDetails stateDetails;
+    private byte [] stateDetails;
 
     @SuppressWarnings("unused")
     private SchemaVersion() {
@@ -47,7 +47,7 @@ public class SchemaVersion implements Serializable {
         this(schemaText, description, initialState, null);
     }
 
-    public SchemaVersion(String schemaText, String description, Byte initialState, AbstractStateDetails abstractStateDetails) {
+    public SchemaVersion(String schemaText, String description, Byte initialState, byte [] abstractStateDetails) {
         this.description = description;
         this.schemaText = schemaText;
         this.initialState = initialState != null ? initialState : SchemaVersionLifecycleStates.ENABLED.getId();
@@ -58,7 +58,7 @@ public class SchemaVersion implements Serializable {
         this.initialState = state;
     }
 
-    public void setStateDetails(AbstractStateDetails abstractStateDetails) {
+    public void setStateDetails(byte [] abstractStateDetails) {
         this.stateDetails = abstractStateDetails;
     }
 
@@ -74,7 +74,7 @@ public class SchemaVersion implements Serializable {
         return initialState;
     }
 
-    public AbstractStateDetails getStateDetails() {
+    public byte [] getStateDetails() {
         return stateDetails;
     }
 

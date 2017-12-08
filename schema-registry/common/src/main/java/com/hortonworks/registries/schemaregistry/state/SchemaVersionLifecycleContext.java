@@ -31,7 +31,7 @@ public class SchemaVersionLifecycleContext {
     private SchemaVersionService schemaVersionService;
     private SchemaVersionLifecycleStateMachine schemaVersionLifecycleStateMachine;
     private CustomSchemaStateExecutor customSchemaStateExecutor;
-    private AbstractStateDetails abstractStateDetails;
+    private byte[] stateDetails;
     private ConcurrentMap<String, Object> props = new ConcurrentHashMap<>();
 
     public SchemaVersionLifecycleContext(Long schemaVersionId,
@@ -123,12 +123,12 @@ public class SchemaVersionLifecycleContext {
         schemaVersionService.updateSchemaVersionState(this);
     }
 
-    public void setDetails(AbstractStateDetails abstractStateDetails) {
-        this.abstractStateDetails = abstractStateDetails;
+    public void setDetails(byte [] stateDetails) {
+        this.stateDetails = stateDetails;
     }
 
-    public AbstractStateDetails getDetails() {
-        return abstractStateDetails;
+    public byte [] getDetails() {
+        return stateDetails;
     }
 
     @Override
@@ -137,7 +137,7 @@ public class SchemaVersionLifecycleContext {
                 "state=" + state +
                 ", schemaVersionId=" + schemaVersionId +
                 ", sequence=" + sequence +
-                ", details=" + abstractStateDetails +
+                ", details=" + stateDetails +
                 ", schemaVersionService=" + schemaVersionService +
                 ", schemaVersionLifecycleStateMachine=" + schemaVersionLifecycleStateMachine +
                 ", props=" + props +

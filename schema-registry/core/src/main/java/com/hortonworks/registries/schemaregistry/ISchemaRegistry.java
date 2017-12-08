@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -119,5 +120,17 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @return Collection of schemas from the results of given where clause.
      */
     Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields);
+
+    /**
+     *  Merges a given schema version to 'MASTER' branch with a merge strategy
+     * @param schemaVersionId             id of the schema version to be merged
+     * @param schemaVersionMergeStrategy  merge strategy to be used for merging to 'MASTER'
+     * @return
+     * @throws SchemaNotFoundException
+     * @throws IncompatibleSchemaException
+     */
+    default SchemaIdVersion mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
+        throw new UnsupportedOperationException();
+    }
 
 }

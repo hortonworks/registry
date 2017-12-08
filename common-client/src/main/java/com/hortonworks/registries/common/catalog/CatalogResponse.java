@@ -47,7 +47,7 @@ public class CatalogResponse {
         UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type.", 0),
         BAD_REQUEST(1110, "Bad Request.", 0),
         ENTITY_CONFLICT(1111, "An entity with id [%s] already exists",1),
-        BAD_REQUEST_WITH_MESSAGE(1112, "Bad Request :- %s",1);
+        BAD_REQUEST_WITH_MESSAGE(1112, "Bad Request - %s",1);
 
         private final int code;
         private final String msg;

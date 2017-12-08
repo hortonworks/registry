@@ -329,9 +329,13 @@ public interface ISchemaRegistryService {
         throw new UnsupportedOperationException();
     }
 
-    default SchemaIdVersion mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
-        throw new UnsupportedOperationException();
-    }
+    /**
+     *  Merge a schema version to 'MASTER' branch
+     * @param schemaVersionId  schema version to be used to merge to 'MASTER'
+     * @return
+     * @throws SchemaNotFoundException  if the {@code schemaVersionId} is can't found
+     * @throws IncompatibleSchemaException  if the {@code schemaVersionId} to be merged is not compatible with the schema versions for that schema metadata in 'MASTER' branch
+     */
 
     default SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
         throw new UnsupportedOperationException();
@@ -341,9 +345,24 @@ public interface ISchemaRegistryService {
 
     SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo();
 
+    /**
+     *  Create a schema branch from a schema version id
+     * @param schemaVersionId    schema version id to be used for as the initial version for schema branch to be created
+     * @param schemaBranch       schema branch object to be used for creating a schema branch
+     * @return
+     * @throws SchemaBranchAlreadyExistsException {@code schemaBranch} already exists
+     * @throws SchemaNotFoundException  {@code schemaVersionId} to be used to create a {@code schemaBranch} can't be found
+     */
     SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException;
 
     Collection<SchemaBranch> getAllBranches();
+
+    /**
+     *  Delete a schema branch and all the schema version part of the branch, only if the schema versions are not in enabled state.
+     * @param schemaBranchId  ID of the schema branch
+     * @throws SchemaBranchNotFoundException  if the schema branch to be deleted does not exists
+     * @throws InvalidSchemaBranchDeletionException  if the schema branch can't be deleted at the moment
+     */
 
     void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException;
 }

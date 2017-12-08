@@ -34,7 +34,6 @@ import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
-import com.hortonworks.registries.schemaregistry.SchemaVersionMergeStrategy;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
@@ -46,7 +45,6 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryConstants;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
 import io.swagger.annotations.Api;
@@ -86,8 +84,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
-import static com.hortonworks.registries.schemaregistry.util.SchemaRegistryConstants.DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY;
-import static com.hortonworks.registries.schemaregistry.util.SchemaRegistryConstants.MASTER_BRANCH;
+import static com.hortonworks.registries.schemaregistry.SchemaBranch.MASTER_BRANCH;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -275,7 +272,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@QueryParam("branch") @DefaultValue(SchemaRegistryConstants.MASTER_BRANCH) String schemaBranchName ,
+    public Response findAggregatedSchemas(@QueryParam("branch") @DefaultValue(SchemaBranch.MASTER_BRANCH) String schemaBranchName ,
                                           @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
@@ -1038,10 +1035,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @POST
-    @Path("/branch/version/{version}/create")
+    @Path("/schemas/versionsById/{versionId}/branch")
     @ApiOperation(value = "Fork a new schema branch given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
-    public Response createSchemaBranch( @ApiParam(value = "Details about schema version",required = true) @PathParam("version") Long schemaVersionId,
+    public Response createSchemaBranch( @ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId,
                                         @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch) {
         try {
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
@@ -1057,30 +1054,28 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @POST
-    @Path("/schemas/{version}/merge")
+    @Path("/schemas/{versionId}/merge")
     @ApiOperation(value = "Merge a schema version to master given its version id", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
-    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("version") Long schemaVersionId,
-                                       @ApiParam(value = "Merge strategy for merging the schema version")
-                                       @QueryParam("strategy") @DefaultValue(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY) String strategy) {
+    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
         try {
-            SchemaIdVersion schemaIdVersion = schemaRegistry.mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(strategy));
+            SchemaIdVersion schemaIdVersion = schemaRegistry.mergeSchemaVersion(schemaVersionId);
             return WSUtils.respondEntity(schemaIdVersion, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
         } catch (IncompatibleSchemaException e) {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, e.getMessage());
         } catch (Exception ex) {
-            LOG.error("Encountered error while merging a schema version to {} branch with version : [{}]",SchemaRegistryConstants.MASTER_BRANCH, schemaVersionId, ex);
+            LOG.error("Encountered error while merging a schema version to {} branch with version : [{}]", SchemaBranch.MASTER_BRANCH, schemaVersionId, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
     }
 
     @DELETE
-    @Path("/branch/{branch_id}/delete")
+    @Path("/schemas/branch/{branchId}")
     @ApiOperation(value = "Delete a branch give its name", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
-    public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branch_id") Long schemaBranchId) {
+    public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branchId") Long schemaBranchId) {
         try {
             schemaRegistry.deleteSchemaBranch(schemaBranchId);
             return WSUtils.respond(Response.Status.OK);

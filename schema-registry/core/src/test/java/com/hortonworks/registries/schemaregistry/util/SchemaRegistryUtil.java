@@ -16,16 +16,16 @@
 
 package com.hortonworks.registries.schemaregistry.util;
 
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaBranchStorable;
 import com.hortonworks.registries.storage.StorageManager;
 
 public class SchemaRegistryUtil {
 
-    public static final String MASTER_BRANCH_NAME = SchemaRegistryConstants.MASTER_BRANCH;
     public static final String MASTER_BRANCH_DESCRIPTION = "Schemas in this branch are meant to be consumed for production environment";
 
     public static void createMasterBranch(StorageManager jdbcStorageManager) {
-        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(MASTER_BRANCH_NAME, MASTER_BRANCH_DESCRIPTION);
+        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH, MASTER_BRANCH_DESCRIPTION);
         schemaBranchStorable.setId(1l);
         jdbcStorageManager.add(schemaBranchStorable);
     }

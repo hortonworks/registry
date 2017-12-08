@@ -17,6 +17,14 @@
 package com.hortonworks.registries.schemaregistry;
 
 public enum  SchemaVersionMergeStrategy {
+    /*
+     With this merge strategy, a new schema version is added to master even if the latest version
+     for that schemaMetadata for that 'MASTER' is not the same as root version of that branch
+      */
     OPTIMISTIC,
+    /*
+     With this merge strategy, a new schema version is added to master even if the latest version
+     for that schemaMetadata for that 'MASTER' is same as root version of that branch
+      */
     PESSIMISTIC;
 }

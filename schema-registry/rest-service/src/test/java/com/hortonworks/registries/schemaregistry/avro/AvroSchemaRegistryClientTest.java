@@ -493,23 +493,6 @@ public class AvroSchemaRegistryClientTest {
         SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaIdVersion_2.getSchemaVersionId());
         Assert.assertEquals(SchemaVersionLifecycleStates.ENABLED.getId(),
                             SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2).getStateId());
-/*
-      Commenting out the below scenarios as schema compatibility check happens even when a schema is created with 'INITIATED' state
- */
-
-//        SchemaIdVersion schemaIdVersion_4 =
-//                SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName,
-//                                                        new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-4.avsc"),
-//                                                                          "Forth version of the schema, adds back name field, but different type",
-//                                                                          SchemaVersionLifecycleStates.INITIATED.getId()));
-        // enable version 4
-//        try {
-//            SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaIdVersion_4.getSchemaVersionId());
-//            Assert.fail("Enabling " + schemaIdVersion_4 + " should have failed with incompatible schema error");
-//        } catch (IncompatibleSchemaException e) {
-//        }
-//        Assert.assertEquals(SchemaVersionLifecycleStates.INITIATED.getId(),
-//                            SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_4).getStateId());
 
         // disable version 3
         SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaIdVersion_3.getSchemaVersionId());

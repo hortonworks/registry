@@ -28,7 +28,6 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryConstants;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
@@ -61,6 +60,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
 
     public static final String ORDER_BY_FIELDS_PARAM_NAME = "_orderByFields";
+    public static final String DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY = "OPTIMISTIC";
 
     private final StorageManager storageManager;
     private final FileStorage fileStorage;
@@ -271,7 +271,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props)
             throws SchemaBranchNotFoundException, SchemaNotFoundException {
-        return findAggregatedSchemaMetadata(SchemaRegistryConstants.MASTER_BRANCH, props);
+        return findAggregatedSchemaMetadata(SchemaBranch.MASTER_BRANCH, props);
     }
 
     public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(String schemaBranchName, Map<String, String> props)
@@ -280,7 +280,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
 
         SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName));
-        SchemaVersionInfo rootSchemaVersion = schemaBranchName.equals(SchemaRegistryConstants.MASTER_BRANCH) ? null : schemaVersionLifecycleManager.getRootVersion(schemaBranch);
+        SchemaVersionInfo rootSchemaVersion = schemaBranchName.equals(SchemaBranch.MASTER_BRANCH) ? null : schemaVersionLifecycleManager.getRootVersion(schemaBranch);
         return findSchemaMetadata(props)
                 .stream()
                 .filter(schemaMetadataInfo -> rootSchemaVersion == null ? true : rootSchemaVersion.getSchemaMetadataId().equals(schemaMetadataInfo.getId()))
@@ -378,7 +378,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery)
             throws SchemaBranchNotFoundException, SchemaNotFoundException {
-        return findSchemasByFields(SchemaRegistryConstants.MASTER_BRANCH, schemaFieldQuery);
+        return findSchemasByFields(SchemaBranch.MASTER_BRANCH, schemaFieldQuery);
     }
 
     @Override
@@ -448,7 +448,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata,
                                             SchemaVersion schemaVersion)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
-        return schemaVersionLifecycleManager.addSchemaVersion(SchemaRegistryConstants.MASTER_BRANCH, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x));
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x));
     }
 
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
@@ -461,7 +461,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public SchemaIdVersion addSchemaVersion(String schemaName,
                                             SchemaVersion schemaVersion)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
-        return schemaVersionLifecycleManager.addSchemaVersion(SchemaRegistryConstants.MASTER_BRANCH, schemaName, schemaVersion);
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion);
     }
 
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
@@ -540,7 +540,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
-        return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(SchemaRegistryConstants.DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY));
+        return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY));
     }
 
     public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
@@ -553,7 +553,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     public CompatibilityResult checkCompatibility(String schemaName, String toSchema) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-        return schemaVersionLifecycleManager.checkCompatibility(SchemaRegistryConstants.MASTER_BRANCH, schemaName, toSchema);
+        return schemaVersionLifecycleManager.checkCompatibility(SchemaBranch.MASTER_BRANCH, schemaName, toSchema);
     }
 
     @Override
@@ -596,8 +596,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchId));
 
-        if (schemaBranch.getName().equals(SchemaRegistryConstants.MASTER_BRANCH))
-            throw new InvalidSchemaBranchDeletionException(String.format("Can't delete '%s' branch",SchemaRegistryConstants.MASTER_BRANCH));
+        if (schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH))
+            throw new InvalidSchemaBranchDeletionException(String.format("Can't delete '%s' branch", SchemaBranch.MASTER_BRANCH));
 
         schemaBranchCache.invalidateSchemaBranch(SchemaBranchCache.Key.of(schemaBranchId));
 
@@ -738,7 +738,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
-        return buildAggregatedSchemaMetadataInfo(SchemaRegistryConstants.MASTER_BRANCH, schemaMetadataInfo);
+        return buildAggregatedSchemaMetadataInfo(SchemaBranch.MASTER_BRANCH, schemaMetadataInfo);
     }
 
 

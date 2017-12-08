@@ -29,10 +29,6 @@ public class SchemaBranchStorable extends AbstractStorable {
     public static final String NAME_SPACE = "schema_branch";
 
     public static final String ID = "id";
-    public static final String NAME = "name";
-    public static final String DESCRIPTION = "description";
-    public static final String TIMESTAMP = "timestamp";
-
 
     private Long id;
     private String name;

@@ -16,27 +16,23 @@
 
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaBranch implements Serializable {
 
-
-    public static final String ID = "id";
-    public static final String NAME = "name";
-    public static final String DESCRIPTION = "description";
-    public static final String TIMESTAMP = "timestamp";
+    public static final String MASTER_BRANCH = "MASTER";
+    private static final long serialVersionUID = -5159269803911927338L;
 
     private Long id;
     private String name;
     private String description;
     private Long timestamp;
 
-    public SchemaBranch() {
+    private SchemaBranch() {
 
-    }
-
-    public SchemaBranch(String name) {
-        this(name, null, null);
     }
 
     public SchemaBranch(String name, String description) {

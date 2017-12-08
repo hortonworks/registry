@@ -16,10 +16,12 @@
 
 package com.hortonworks.registries.schemaregistry.state.details;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.hortonworks.registries.schemaregistry.state.InbuiltSchemaVersionLifecycleState;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

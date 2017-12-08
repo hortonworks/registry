@@ -36,7 +36,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
-import com.hortonworks.registries.schemaregistry.SchemaVersionMergeStrategy;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
@@ -54,7 +53,6 @@ import com.hortonworks.registries.schemaregistry.serde.pull.PullSerializer;
 import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryConstants;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
@@ -428,7 +426,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
             InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
-        return addSchemaVersion(SchemaRegistryConstants.MASTER_BRANCH, schemaMetadata, schemaVersion);
+        return addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion);
     }
 
     @Override
@@ -455,15 +453,15 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion uploadSchemaVersion(String schemaName, String description, InputStream schemaVersionTextFile) throws
-            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
-        return uploadSchemaVersion(SchemaRegistryConstants.MASTER_BRANCH, schemaName, description, schemaVersionTextFile);
+            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return uploadSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, description, schemaVersionTextFile);
     }
 
     public SchemaIdVersion uploadSchemaVersion(final String schemaBranchName,
                                                final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionInputStream)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
@@ -503,7 +501,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public SchemaIdVersion addSchemaVersion(final String schemaName, final SchemaVersion schemaVersion)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
-        return addSchemaVersion(SchemaRegistryConstants.MASTER_BRANCH, schemaName, schemaVersion);
+        return addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion);
     }
 
     @Override
@@ -622,7 +620,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
-        return getLatestSchemaVersionInfo(SchemaRegistryConstants.MASTER_BRANCH, schemaName);
+        return getLatestSchemaVersionInfo(SchemaBranch.MASTER_BRANCH, schemaName);
     }
 
     @Override
@@ -671,7 +669,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
-        return getAllVersions(SchemaRegistryConstants.MASTER_BRANCH, schemaName);
+        return getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName);
     }
 
     private static String encode(String schemaName) {
@@ -716,15 +714,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         transitionSchemaVersionState(schemaVersionId, "startReview");
     }
 
-
     @Override
     public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
-       return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(SchemaRegistryConstants.DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY));
-    }
-
-    @Override
-    public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge").queryParam("strategy", schemaVersionMergeStrategy.name());
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge");
         Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
             @Override
             public Response run() {
@@ -760,7 +752,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
-        WebTarget target = currentSchemaRegistryTargets().schemaBranchTarget.path("/version/"+schemaVersionId+"/create");
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path("versionsById/"+schemaVersionId + "/branch");
         Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
             @Override
             public Response run() {
@@ -790,7 +782,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
-        WebTarget target = currentSchemaRegistryTargets().schemaBranchTarget.path(schemaBranchId+"/delete");
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path("branch/"+schemaBranchId);
         Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
             @Override
             public Response run() {
@@ -857,7 +849,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-        return checkCompatibility(SchemaRegistryConstants.MASTER_BRANCH, schemaName, toSchemaText);
+        return checkCompatibility(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);
     }
 
     @Override
@@ -875,7 +867,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-        return isCompatibleWithAllVersions(SchemaRegistryConstants.MASTER_BRANCH, schemaName, toSchemaText);
+        return isCompatibleWithAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);
     }
 
     @Override
@@ -885,7 +877,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
-        return findSchemasByFields(SchemaRegistryConstants.MASTER_BRANCH, schemaFieldQuery);
+        return findSchemasByFields(SchemaBranch.MASTER_BRANCH, schemaFieldQuery);
     }
 
     @Override

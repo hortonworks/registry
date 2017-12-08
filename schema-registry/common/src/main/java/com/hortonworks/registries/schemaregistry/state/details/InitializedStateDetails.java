@@ -17,10 +17,12 @@
 package com.hortonworks.registries.schemaregistry.state.details;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.schemaregistry.state.InbuiltSchemaVersionLifecycleState;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializedStateDetails implements AbstractStateDetails {
 
     public class MergedBranchDetails {
@@ -28,6 +30,10 @@ public class InitializedStateDetails implements AbstractStateDetails {
         private String branchName;
         @JsonProperty
         private Long versionId;
+
+        private MergedBranchDetails() {
+
+        }
 
         public MergedBranchDetails(String branchName, Long versionId) {
             this.branchName = branchName;
@@ -46,12 +52,12 @@ public class InitializedStateDetails implements AbstractStateDetails {
     }
 
     @JsonProperty
-    Boolean isMergedFromBranch = false;
+    private Boolean isMergedFromBranch = false;
 
     @JsonProperty
-    MergedBranchDetails mergedBranchDetails = null;
+    private MergedBranchDetails mergedBranchDetails = null;
 
-    public InitializedStateDetails() {
+    private InitializedStateDetails() {
 
     }
 

@@ -127,12 +127,12 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
     public SchemaIdVersion uploadSchemaVersion(final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionTextFile)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
 
     /**
      * Uploads the given {@code schemaVersionTextFile} as a new version for the given schema with name {@code schemaName}
-     *
+     * @param schemaBranchName      name identifying a schema branch name
      * @param schemaName            name identifying a schema
      * @param description           description about the version of this schema
      * @param schemaVersionTextFile File containing new version of the schema content.
@@ -147,7 +147,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
                                                final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionTextFile)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * @param schemaName   name identifying a schema
@@ -164,6 +164,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
 
 
     /**
+     * @param schemaBranchName  name identifying a schema branch name
      * @param schemaName   name identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
      *

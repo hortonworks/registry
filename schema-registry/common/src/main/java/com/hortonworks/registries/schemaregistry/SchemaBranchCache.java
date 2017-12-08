@@ -56,6 +56,7 @@ public class SchemaBranchCache {
                             throw new IllegalArgumentException("Given argument is not valid: " + key);
                         }
                         loadingCache.put(otherKey, schemaBranch);
+                        schemaBranchNameToIdMap.put(schemaBranch.getName(), schemaBranch.getId());
                         return schemaBranch;
                     }
                 });
@@ -69,7 +70,7 @@ public class SchemaBranchCache {
             LOG.error("Error occurred while retrieving schema branch for [{}]", key, e);
             Throwable cause = e.getCause();
             if (cause instanceof SchemaBranchNotFoundException)
-                throw (SchemaBranchNotFoundException) e.getCause();
+                throw (SchemaBranchNotFoundException) cause;
             else
                 throw new RuntimeException(e);
         }
@@ -103,12 +104,12 @@ public class SchemaBranchCache {
         private Long id;
 
         private Key(String name) {
-            Preconditions.checkNotNull("name can not be null", name);
+            Preconditions.checkNotNull(name, "name can not be null");
             this.name = name;
         }
 
         private Key(Long id) {
-            Preconditions.checkNotNull("id can not be null", id);
+            Preconditions.checkNotNull(id, "id can not be null");
             this.id = id;
         }
 

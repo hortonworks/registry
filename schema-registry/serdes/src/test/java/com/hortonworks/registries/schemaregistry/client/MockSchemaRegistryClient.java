@@ -125,7 +125,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion uploadSchemaVersion(String schemaName, String description, InputStream schemaVersionTextFile)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         throw new UnsupportedOperationException();
     }
 
@@ -232,7 +232,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion uploadSchemaVersion(String schemaBranchName, String schemaName, String description, InputStream schemaVersionTextFile) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+    public SchemaIdVersion uploadSchemaVersion(String schemaBranchName, String schemaName, String description, InputStream schemaVersionTextFile) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return null;
     }
 
@@ -293,7 +293,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
-         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC);
+         return schemaRegistry.mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC);
     }
 
 
