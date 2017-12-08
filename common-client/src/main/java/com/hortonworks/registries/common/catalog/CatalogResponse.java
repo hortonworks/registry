@@ -45,7 +45,9 @@ public class CatalogResponse {
         INVALID_SCHEMA(1107, "Given schema is invalid. %s", 1),
         UNSUPPORTED_SCHEMA_TYPE(1108, "Given schema type is not supported.", 0),
         UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type.", 0),
-        BAD_REQUEST(1110, "Bad Request.", 0);
+        BAD_REQUEST(1110, "Bad Request.", 0),
+        ENTITY_CONFLICT(1111, "An entity with id [%s] already exists",1),
+        BAD_REQUEST_WITH_MESSAGE(1112, "Bad Request - %s",1);
 
         private final int code;
         private final String msg;

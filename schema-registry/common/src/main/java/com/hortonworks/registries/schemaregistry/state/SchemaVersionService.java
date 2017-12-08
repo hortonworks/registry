@@ -19,6 +19,7 @@ import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.Collection;
@@ -40,5 +41,5 @@ public interface SchemaVersionService {
                                               String toSchemaText,
                                               String existingSchemaText);
 
-    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaName) throws SchemaNotFoundException;
+    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 }

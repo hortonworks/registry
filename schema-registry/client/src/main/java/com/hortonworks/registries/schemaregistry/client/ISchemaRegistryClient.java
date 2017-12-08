@@ -21,6 +21,7 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
@@ -126,9 +127,44 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
     public SchemaIdVersion uploadSchemaVersion(final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionTextFile)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException;
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
+
 
     /**
+     * Uploads the given {@code schemaVersionTextFile} as a new version for the given schema with name {@code schemaName}
+     * @param schemaBranchName      name identifying a schema branch name
+     * @param schemaName            name identifying a schema
+     * @param description           description about the version of this schema
+     * @param schemaVersionTextFile File containing new version of the schema content.
+     *
+     * @return version of the schema added.
+     *
+     * @throws InvalidSchemaException      if the given versionedSchema is not valid
+     * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
+     * @throws SchemaNotFoundException     if the given schemaMetadata not found.
+     */
+    public SchemaIdVersion uploadSchemaVersion(final String schemaBranchName,
+                                               final String schemaName,
+                                               final String description,
+                                               final InputStream schemaVersionTextFile)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
+
+    /**
+     * @param schemaName   name identifying a schema
+     * @param toSchemaText text representing the schema to be checked for compatibility
+     *
+     * @return true if the given {@code toSchemaText} is compatible with all the versions of the schema with name as {@code schemaName}.
+     *
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+     *
+     * @deprecated This is deprecated since 0.3.0 and {@link #checkCompatibility(String, String)} should
+     * be used from next versions.
+     */
+    boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException ;
+
+
+    /**
+     * @param schemaBranchName  name identifying a schema branch name
      * @param schemaName   name identifying a schema
      * @param toSchemaText text representing the schema to be checked for compatibility
      *
@@ -139,7 +175,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @deprecated This is deprecated since 0.3.0 and {@link #checkCompatibility(String, String)} should
      * be used from next versions.
      */
-    boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException;
+    boolean isCompatibleWithAllVersions(String schemaBranchName,String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException ;
 
     /**
      * Returns a new instance of default serializer configured for the given type of schema.

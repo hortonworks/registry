@@ -20,6 +20,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -84,7 +85,7 @@ public class SchemaVersionLifecycleStatesTest {
             }
 
             @Override
-            public Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaName) throws SchemaNotFoundException {
+            public Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException {
                 return Collections.singletonList(schemaVersionInfo);
             }
 
@@ -110,7 +111,6 @@ public class SchemaVersionLifecycleStatesTest {
 
         checkDisableNotSupported(initiated, context);
         checkArchiveNotSupported(initiated, context);
-        checkDeleteNotSupported(initiated, context);
     }
 
     private DefaultCustomSchemaStateExecutor createDefaultSchemaReviewExecutor() {
@@ -201,7 +201,7 @@ public class SchemaVersionLifecycleStatesTest {
     }
 
     private void checkEnableNotSupported(InbuiltSchemaVersionLifecycleState state,
-                                         SchemaVersionLifecycleContext context) throws SchemaNotFoundException, IncompatibleSchemaException {
+                                         SchemaVersionLifecycleContext context) throws SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchNotFoundException {
         try {
             state.enable(context);
             Assert.fail(state.getName() + " should not lead to enable state");

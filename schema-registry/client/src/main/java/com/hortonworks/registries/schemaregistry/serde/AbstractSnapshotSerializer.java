@@ -21,6 +21,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes im
             SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
             // write the version and given object to the output
             return doSerialize(input, schemaIdVersion);
-        } catch (SchemaNotFoundException | IncompatibleSchemaException | InvalidSchemaException e) {
+        } catch (SchemaNotFoundException | IncompatibleSchemaException | InvalidSchemaException | SchemaBranchNotFoundException e) {
             throw new RegistryException(e);
         }
     }
