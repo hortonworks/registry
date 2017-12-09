@@ -23,6 +23,7 @@ import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -36,7 +37,10 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
@@ -54,11 +58,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -78,6 +84,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
+import static com.hortonworks.registries.schemaregistry.SchemaBranch.MASTER_BRANCH;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -117,6 +124,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
     }
 
+    //TODO : Get all the versions across all the branches
+
     @GET
     @Path("/schemas/aggregated")
     @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
@@ -131,10 +140,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 List<String> value = entry.getValue();
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
-
             Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = schemaRegistry.findAggregatedSchemaMetadata(filters);
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -147,15 +157,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                            @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName) {
         Response response;
         try {
-            AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
+            AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaBranchName, schemaName);
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -259,7 +272,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
+    public Response findAggregatedSchemas(@QueryParam("branch") @DefaultValue(SchemaBranch.MASTER_BRANCH) String schemaBranchName ,
+                                          @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(uriInfo.getQueryParameters());
@@ -273,11 +287,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                         new AggregatedSchemaMetadataInfo(schemaMetadata,
                                                          schemaMetadataInfo.getId(),
                                                          schemaMetadataInfo.getTimestamp(),
-                                                         schemaRegistry.getAllVersions(schemaMetadata.getName()),
+                                                         schemaRegistry.getAllVersions(schemaBranchName, schemaMetadata.getName()),
                                                          serDesInfos));
             }
 
             return WSUtils.respondEntities(aggregatedSchemaMetadataInfos, Response.Status.OK);
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -291,12 +307,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemasByFields(@Context UriInfo uriInfo) {
+    public Response findSchemasByFields(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                        @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters));
+            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasByFields(schemaBranchName, buildSchemaFieldQuery(queryParameters));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -466,6 +485,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response uploadSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
                                                 String schemaName,
+                                        @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
                                         @ApiParam(value = "Schema version text file to be uploaded", required = true)
                                         @FormDataParam("file") final InputStream inputStream,
                                         @ApiParam(value = "Description about the schema version to be uploaded", required = true)
@@ -477,7 +497,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             try {
                 schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, "UTF-8"),
                                                   description);
-                response = addSchemaVersion(schemaName, schemaVersion, uriInfo);
+                response = addSchemaVersion(schemaBranchName, schemaName, schemaVersion, uriInfo);
             } catch (IOException ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -496,16 +516,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response addSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
+    public Response addSchemaVersion(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                     @ApiParam(value = "Schema name", required = true) @PathParam("name")
                                       String schemaName,
                                      @ApiParam(value = "Details about the schema", required = true)
                                       SchemaVersion schemaVersion,
+
                                      @Context UriInfo uriInfo) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
-                SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaName, schemaVersion);
+                SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion);
                 response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
@@ -516,6 +538,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             } catch (UnsupportedSchemaTypeException ex) {
                 LOG.error("Unsupported schema type encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
+            } catch (SchemaBranchNotFoundException e) {
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
             } catch (Exception ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -531,17 +555,20 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName) {
 
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaName);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
             if (schemaVersionInfo != null) {
                 response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting latest schema version for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -557,17 +584,20 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                         @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName) {
 
         Response response;
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaName);
+            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName);
             if (schemaVersionInfos != null) {
                 response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -742,8 +772,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
         } catch(SchemaLifecycleException e) {
             LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        }catch (Exception ex) {
+            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
+        } catch (Exception ex) {
             LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
@@ -814,15 +844,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = CompatibilityResult.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response checkCompatibilityWithSchema(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+    public Response checkCompatibilityWithSchema(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                                 @ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                                  @ApiParam(value = "schema text", required = true) String schemaText) {
         Response response;
         try {
-            CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaName, schemaText);
+            CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while checking compatibility with versions of schema with [{}] for given schema text [{}]", schemaName, schemaText, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -983,4 +1016,77 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
     }
+
+    @GET
+    @Path("/branches")
+    @ApiOperation(value = "Get list of registered schema branches",
+            response = SchemaBranch.class, responseContainer = "List",
+            tags = OPERATION_GROUP_OTHER)
+    @Timed
+    @UnitOfWork
+    public Response getAllBranches(@Context UriInfo uriInfo) {
+        try {
+            Collection<SchemaBranch> schemaBranches = schemaRegistry.getAllBranches();
+            return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while listing schema branches", ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/schemas/versionsById/{versionId}/branch")
+    @ApiOperation(value = "Fork a new schema branch given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response createSchemaBranch( @ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId,
+                                        @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch) {
+        try {
+            SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
+            return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK) ;
+        } catch (SchemaBranchAlreadyExistsException e) {
+            return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  e.getMessage());
+        } catch (SchemaNotFoundException e) {
+            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while creating a new branch with name: [{}], version : [{}]", schemaBranch.getName(), schemaVersionId, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/schemas/{versionId}/merge")
+    @ApiOperation(value = "Merge a schema version to master given its version id", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
+        try {
+            SchemaIdVersion schemaIdVersion = schemaRegistry.mergeSchemaVersion(schemaVersionId);
+            return WSUtils.respondEntity(schemaIdVersion, Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
+        } catch (IncompatibleSchemaException e) {
+            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, e.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while merging a schema version to {} branch with version : [{}]", SchemaBranch.MASTER_BRANCH, schemaVersionId, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @DELETE
+    @Path("/schemas/branch/{branchId}")
+    @ApiOperation(value = "Delete a branch give its name", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branchId") Long schemaBranchId) {
+        try {
+            schemaRegistry.deleteSchemaBranch(schemaBranchId);
+            return WSUtils.respond(Response.Status.OK);
+        } catch (SchemaBranchNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaBranchId.toString());
+        } catch (InvalidSchemaBranchDeletionException e) {
+            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while deleting a branch with name: [{}]", schemaBranchId, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
 }

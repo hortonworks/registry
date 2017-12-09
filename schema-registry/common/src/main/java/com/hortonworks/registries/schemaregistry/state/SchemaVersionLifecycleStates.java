@@ -17,11 +17,13 @@ package com.hortonworks.registries.schemaregistry.state;
 
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -62,13 +64,18 @@ public final class SchemaVersionLifecycleStates {
 
         @Override
         public void enable(SchemaVersionLifecycleContext context)
-                throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException {
+                throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
             transitionToEnableState(context);
         }
 
         @Override
         public Collection<Pair<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction>> getTransitionActions() {
-            return Lists.newArrayList(createStartReviewTransitionActionPair(getId()), createArchiveTransitionAction(getId()));
+            return Lists.newArrayList(createStartReviewTransitionActionPair(getId()), createArchiveTransitionAction(getId()), createDeleteTransitionActionPair(getId()));
+        }
+
+        @Override
+        public void delete(SchemaVersionLifecycleContext context) throws SchemaLifecycleException, SchemaNotFoundException {
+            transitionToDeleteState(context);
         }
 
         @Override
@@ -146,7 +153,7 @@ public final class SchemaVersionLifecycleStates {
 
         @Override
         public void enable(SchemaVersionLifecycleContext context)
-                throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException {
+                throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
             transitionToEnableState(context);
         }
 
@@ -239,7 +246,7 @@ public final class SchemaVersionLifecycleStates {
                        context -> {
                            try {
                                transitionToEnableState(context);
-                           } catch (SchemaNotFoundException | IncompatibleSchemaException e) {
+                           } catch (SchemaNotFoundException | IncompatibleSchemaException | SchemaBranchNotFoundException e) {
                                throw new SchemaLifecycleException(e);
                            }
                        });
@@ -263,8 +270,8 @@ public final class SchemaVersionLifecycleStates {
 
     private static void transitionToDeleteState(SchemaVersionLifecycleContext context) throws SchemaLifecycleException, SchemaNotFoundException {
         context.setState(DELETED);
-        context.getSchemaVersionService().deleteSchemaVersion(context.getSchemaVersionId());
         context.updateSchemaVersionState();
+        context.getSchemaVersionService().deleteSchemaVersion(context.getSchemaVersionId());
     }
 
     private static final class EnabledState extends AbstractInbuiltSchemaLifecycleState {
@@ -311,7 +318,7 @@ public final class SchemaVersionLifecycleStates {
 
         @Override
         public void enable(SchemaVersionLifecycleContext context)
-                throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException {
+                throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
             transitionToEnableState(context);
         }
 
@@ -392,7 +399,7 @@ public final class SchemaVersionLifecycleStates {
     }
 
     public static void transitionToEnableState(SchemaVersionLifecycleContext context)
-            throws SchemaNotFoundException, IncompatibleSchemaException, SchemaLifecycleException {
+            throws SchemaNotFoundException, IncompatibleSchemaException, SchemaLifecycleException, SchemaBranchNotFoundException {
         Long schemaVersionId = context.getSchemaVersionId();
         SchemaVersionService schemaVersionService = context.getSchemaVersionService();
 
@@ -405,7 +412,7 @@ public final class SchemaVersionLifecycleStates {
         int schemaVersion = schemaVersionInfo.getVersion();
         String schemaText = schemaVersionInfo.getSchemaText();
         List<SchemaVersionInfo> allEnabledSchemaVersions =
-                schemaVersionService.getAllSchemaVersions(schemaName)
+                schemaVersionService.getAllSchemaVersions(SchemaBranch.MASTER_BRANCH, schemaName)
                                     .stream()
                                     .filter(x -> SchemaVersionLifecycleStates.ENABLED.getId().equals(x.getStateId()))
                                     .collect(Collectors.toList());

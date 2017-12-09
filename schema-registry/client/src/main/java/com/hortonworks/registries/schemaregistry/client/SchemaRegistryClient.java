@@ -26,6 +26,7 @@ import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ConfigEntry;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -39,7 +40,10 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
@@ -147,6 +151,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
+    private static final String SCHEMA_BRANCH = SCHEMA_REGISTRY_PATH + "/branch/";
     private static Subject subject;
 
     static {
@@ -296,6 +301,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final WebTarget schemaVersionsTarget;
         private final WebTarget schemaVersionsByIdTarget;
         private final WebTarget schemaVersionsStatesMachineTarget;
+        private final WebTarget schemaBranchTarget;
 
         SchemaRegistryTargets(WebTarget rootTarget) {
             this.rootTarget = rootTarget;
@@ -308,6 +314,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             searchFieldsTarget = rootTarget.path(SEARCH_FIELDS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
             filesTarget = rootTarget.path(FILES_PATH);
+            schemaBranchTarget = rootTarget.path(SCHEMA_BRANCH);
+
         }
 
     }
@@ -417,7 +425,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
-                                                                                                        InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion);
+    }
+
+    @Override
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws
+            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         // get it, if it exists in cache
         SchemaDigestEntry schemaDigestEntry = buildSchemaTextEntry(schemaVersion, schemaMetadata.getName());
         SchemaIdVersion schemaIdVersion = schemaTextCache.getIfPresent(schemaDigestEntry);
@@ -431,16 +445,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             }
 
             // add schemaIdVersion
-            schemaIdVersion = addSchemaVersion(schemaMetadata.getName(), schemaVersion);
+            schemaIdVersion = addSchemaVersion(schemaBranchName, schemaMetadata.getName(), schemaVersion);
         }
 
         return schemaIdVersion;
     }
 
-    public SchemaIdVersion uploadSchemaVersion(final String schemaName,
+    @Override
+    public SchemaIdVersion uploadSchemaVersion(String schemaName, String description, InputStream schemaVersionTextFile) throws
+            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return uploadSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, description, schemaVersionTextFile);
+    }
+
+    public SchemaIdVersion uploadSchemaVersion(final String schemaBranchName,
+                                               final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionInputStream)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
@@ -449,7 +470,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         StreamDataBodyPart streamDataBodyPart = new StreamDataBodyPart("file", schemaVersionInputStream);
 
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions/upload");
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions/upload").queryParam("branch",schemaBranchName);
         MultiPart multipartEntity =
                 new FormDataMultiPart()
                         .field("description", description, MediaType.APPLICATION_JSON_TYPE)
@@ -479,11 +500,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaIdVersion addSchemaVersion(final String schemaName, final SchemaVersion schemaVersion)
-            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion);
+    }
+
+    @Override
+    public SchemaIdVersion addSchemaVersion(final String schemaBranchName, final String schemaName, final SchemaVersion schemaVersion)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         try {
             return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName),
-                                       () -> doAddSchemaVersion(schemaName, schemaVersion));
+                                       () -> doAddSchemaVersion(schemaBranchName, schemaName, schemaVersion));
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             LOG.error("Encountered error while adding new version [{}] of schema [{}] and error [{}]", schemaVersion, schemaName, e);
@@ -529,14 +556,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    private SchemaIdVersion doAddSchemaVersion(String schemaName,
+    private SchemaIdVersion doAddSchemaVersion(String schemaBranchName, String schemaName,
                                                SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
             throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
         }
 
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions");
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions").queryParam("branch", schemaBranchName);
         Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
             @Override
             public Response run() {
@@ -592,6 +619,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
+        return getLatestSchemaVersionInfo(SchemaBranch.MASTER_BRANCH, schemaName);
+    }
+
+    @Override
     public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         try {
             return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
@@ -630,9 +662,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions/latest");
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException {
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions/latest").queryParam("branch", schemaBranchName);;
         return getEntity(webTarget, SchemaVersionInfo.class);
+    }
+
+    @Override
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
+        return getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName);
     }
 
     private static String encode(String schemaName) {
@@ -678,6 +715,30 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge");
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request().post(null);
+            }
+        });
+
+        int status = response.getStatus();
+        if (status == Response.Status.OK.getStatusCode()) {
+            String msg = response.readEntity(String.class);
+            SchemaIdVersion schemaIdVersion = readEntity(msg, SchemaIdVersion.class);
+            return schemaIdVersion;
+        } else if (status == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new SchemaNotFoundException(response.readEntity(String.class));
+        } else if (status == Response.Status.BAD_REQUEST.getStatusCode()) {
+            throw new IncompatibleSchemaException(response.readEntity(String.class));
+        } else {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
+    }
+
+    @Override
     public void transitionState(Long schemaVersionId,
                                 Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException {
         boolean result = transitionSchemaVersionState(schemaVersionId, targetStateId.toString());
@@ -687,6 +748,57 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
         return getEntity(currentSchemaRegistryTargets().schemaVersionsStatesMachineTarget,
                          SchemaVersionLifecycleStateMachineInfo.class);
+    }
+
+    @Override
+    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path("versionsById/"+schemaVersionId + "/branch");
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaBranch), Response.class);
+            }
+        });
+
+        int status = response.getStatus();
+        if (status == Response.Status.OK.getStatusCode()) {
+            String msg = response.readEntity(String.class);
+            SchemaBranch returnedSchemaBranch = readEntity(msg, SchemaBranch.class);
+            return returnedSchemaBranch;
+        } else if (status == Response.Status.BAD_REQUEST.getStatusCode()) {
+            throw new SchemaNotFoundException(response.readEntity(String.class));
+        } else if (status == Response.Status.CONFLICT.getStatusCode()) {
+            throw new SchemaBranchAlreadyExistsException(response.readEntity(String.class));
+        } else {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
+    }
+
+    @Override
+    public Collection<SchemaBranch> getAllBranches() {
+        return getEntities(currentSchemaRegistryTargets().rootTarget.path(SCHEMA_REGISTRY_PATH + "/branches"),
+                SchemaBranch.class);
+    }
+
+    @Override
+    public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path("branch/"+schemaBranchId);
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request().delete();
+            }
+        });
+
+        int status = response.getStatus();
+        if (status == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new SchemaBranchNotFoundException(response.readEntity(String.class));
+        } else if (status == Response.Status.BAD_REQUEST.getStatusCode()) {
+            throw new InvalidSchemaBranchDeletionException(response.readEntity(String.class));
+        } else if (status != Response.Status.OK.getStatusCode()) {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
+
     }
 
     private boolean transitionSchemaVersionState(Long schemaVersionId,
@@ -730,15 +842,20 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions");
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException {
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName);
         return getEntities(webTarget, SchemaVersionInfo.class);
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaName,
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return checkCompatibility(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);
+    }
+
+    @Override
+    public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName,
                                                   String toSchemaText) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility").queryParam("branch", schemaBranchName);
         String response = Subject.doAs(subject, new PrivilegedAction<String>() {
             @Override
             public String run() {
@@ -749,16 +866,27 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException {
-        return checkCompatibility(schemaName, toSchemaText).isCompatible();
+    public boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return isCompatibleWithAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);
+    }
+
+    @Override
+    public boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return checkCompatibility(schemaBranchName,schemaName, toSchemaText).isCompatible();
     }
 
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
+        return findSchemasByFields(SchemaBranch.MASTER_BRANCH, schemaFieldQuery);
+    }
+
+    @Override
+    public Collection<SchemaVersionKey> findSchemasByFields(String schemaBranchName, SchemaFieldQuery schemaFieldQuery) {
         WebTarget target = currentSchemaRegistryTargets().searchFieldsTarget;
         for (Map.Entry<String, String> entry : schemaFieldQuery.toQueryMap().entrySet()) {
             target = target.queryParam(entry.getKey(), entry.getValue());
         }
+        target.queryParam("branch", schemaBranchName);
 
         return getEntities(target, SchemaVersionKey.class);
     }

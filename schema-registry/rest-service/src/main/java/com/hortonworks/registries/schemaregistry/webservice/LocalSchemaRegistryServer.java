@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
+import com.hortonworks.registries.storage.StorageManager;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Environment;
 import com.hortonworks.registries.webservice.RegistryApplication;
@@ -88,6 +89,10 @@ public class LocalSchemaRegistryServer {
 
     public String getLocalURL() {
         return registryApplication.localServer.getURI().toString();
+    }
+
+    public StorageManager getStorageManager() {
+        return registryApplication.getStorageManager();
     }
 
     /**

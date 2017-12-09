@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.state;
 
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -30,7 +31,7 @@ public interface InbuiltSchemaVersionLifecycleState extends SchemaVersionLifecyc
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
-    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException {
+    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
