@@ -157,11 +157,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                            @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName) {
+    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
         Response response;
         try {
-            AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaBranchName, schemaName);
+            AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
@@ -272,8 +271,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@QueryParam("branch") @DefaultValue(SchemaBranch.MASTER_BRANCH) String schemaBranchName ,
-                                          @Context UriInfo uriInfo) {
+    public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(uriInfo.getQueryParameters());
@@ -287,7 +285,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                         new AggregatedSchemaMetadataInfo(schemaMetadata,
                                                          schemaMetadataInfo.getId(),
                                                          schemaMetadataInfo.getTimestamp(),
-                                                         schemaRegistry.getAllVersions(schemaBranchName, schemaMetadata.getName()),
+                                                         schemaRegistry.getAggregatedSchemaBranch(schemaMetadata.getName()),
                                                          serDesInfos));
             }
 
@@ -1018,15 +1016,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @GET
-    @Path("/branches")
+    @Path("/schemas/{name}/branches")
     @ApiOperation(value = "Get list of registered schema branches",
             response = SchemaBranch.class, responseContainer = "List",
             tags = OPERATION_GROUP_OTHER)
     @Timed
     @UnitOfWork
-    public Response getAllBranches(@Context UriInfo uriInfo) {
+    public Response getAllBranches(@ApiParam(value = "Details about schema name",required = true) @PathParam("name") String schemaName,
+                                   @Context UriInfo uriInfo) {
         try {
-            Collection<SchemaBranch> schemaBranches = schemaRegistry.getAllBranches();
+            Collection<SchemaBranch> schemaBranches = schemaRegistry.getSchemaBranches(schemaName);
             return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schema branches", ex);

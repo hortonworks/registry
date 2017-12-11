@@ -139,7 +139,7 @@ public class AvroSchemaRegistryTest {
 
         //aggregate apis
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadata = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getVersions().size());
+        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getSchemaBranches().iterator().next().getSchemaVersionInfos().size());
         Assert.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
 
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());

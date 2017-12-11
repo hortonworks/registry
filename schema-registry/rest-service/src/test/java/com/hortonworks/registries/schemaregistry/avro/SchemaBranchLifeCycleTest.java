@@ -23,7 +23,6 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionMergeStrategy;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
@@ -94,14 +93,6 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test
-    public void getAllBranchesWithOnlyMaster() throws Exception {
-
-        SchemaBranch masterBranch = new SchemaBranch(MASTER_BRANCH_NAME, MASTER_BRANCH_DESCRIPTION, null);
-        Collection <SchemaBranch> schemaBranches = Collections.singletonList(masterBranch);
-        Assert.assertEquals(schemaBranches, schemaRegistryClient.getAllBranches());
-    }
-
-    @Test
     public void getAllBranches() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
 
         SchemaBranch masterBranch = new SchemaBranch(MASTER_BRANCH_NAME, MASTER_BRANCH_DESCRIPTION, null);
@@ -120,7 +111,7 @@ public class SchemaBranchLifeCycleTest {
 
         schemaRegistryClient.createSchemaBranch(schemaIdVersion2.getSchemaVersionId(), branch2);
 
-        Set<String> actualSchemaBranches = schemaRegistryClient.getAllBranches().stream().map(branch -> branch.getName()).collect(Collectors.toSet());
+        Set<String> actualSchemaBranches = schemaRegistryClient.getSchemaBranches(schemaMetadata.getName()).stream().map(branch -> branch.getName()).collect(Collectors.toSet());
         Set<String> expectedSchemaBranches = new HashSet<>(Lists.newArrayList(masterBranch.getName(), branch1.getName(), branch2.getName()));
 
         Assert.assertTrue(SetUtils.isEqualSet(actualSchemaBranches, expectedSchemaBranches));
@@ -319,14 +310,14 @@ public class SchemaBranchLifeCycleTest {
 
         Collection<SchemaVersionInfo> branchSchemaVersionInfos = schemaRegistryClient.getAllVersions(branch1.getName(), schemaMetadata.getName());
 
-        Assert.assertTrue(schemaRegistryClient.getAllBranches().size() == 2);
+        Assert.assertTrue(schemaRegistryClient.getSchemaBranches(schemaMetadata.getName()).size() == 2);
 
         schemaRegistryClient.deleteSchemaBranch(persistedSchemaBranch.getId());
 
         Collection<SchemaVersionInfo> masterSchemaVersionInfos = schemaRegistryClient.getAllVersions(schemaMetadata.getName());
 
         Assert.assertTrue(masterSchemaVersionInfos.size() == 1);
-        Assert.assertTrue(schemaRegistryClient.getAllBranches().size() == 1);
+        Assert.assertTrue(schemaRegistryClient.getSchemaBranches(schemaMetadata.getName()).size() == 1);
     }
 
 

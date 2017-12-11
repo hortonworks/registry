@@ -151,7 +151,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
-    private static final String SCHEMA_BRANCH = SCHEMA_REGISTRY_PATH + "/branch/";
     private static Subject subject;
 
     static {
@@ -301,7 +300,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final WebTarget schemaVersionsTarget;
         private final WebTarget schemaVersionsByIdTarget;
         private final WebTarget schemaVersionsStatesMachineTarget;
-        private final WebTarget schemaBranchTarget;
 
         SchemaRegistryTargets(WebTarget rootTarget) {
             this.rootTarget = rootTarget;
@@ -314,8 +312,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             searchFieldsTarget = rootTarget.path(SEARCH_FIELDS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
             filesTarget = rootTarget.path(FILES_PATH);
-            schemaBranchTarget = rootTarget.path(SCHEMA_BRANCH);
-
         }
 
     }
@@ -775,8 +771,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaBranch> getAllBranches() {
-        return getEntities(currentSchemaRegistryTargets().rootTarget.path(SCHEMA_REGISTRY_PATH + "/branches"),
+    public Collection<SchemaBranch> getSchemaBranches(String schemaName) {
+        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/branches"),
                 SchemaBranch.class);
     }
 
