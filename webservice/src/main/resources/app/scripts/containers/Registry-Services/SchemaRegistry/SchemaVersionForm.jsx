@@ -113,6 +113,7 @@ export default class SchemaVersionForm extends Component {
 
   handleSave() {
     let {schemaText, description} = this.state;
+    let {schemaObj} = this.props;
     let data = {
       schemaText,
       description
@@ -120,7 +121,7 @@ export default class SchemaVersionForm extends Component {
     return SchemaREST.getCompatibility(this.props.schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
       .then((result)=>{
         if(result.compatible){
-          return SchemaREST.postVersion(this.props.schemaObj.schemaName, {body: JSON.stringify(data)});
+          return SchemaREST.postVersion(this.props.schemaObj.schemaName, {body: JSON.stringify(data)}, schemaObj.branch.schemaBranch.name);
         } else {
           return result;
         }
