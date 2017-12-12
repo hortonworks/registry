@@ -109,6 +109,28 @@ export class String extends BaseField {
   }
 }
 
+export class TextArea extends String {
+  getField = () => {
+    let disabledField = this.context.Form.props.readOnly;
+
+    return (<textarea className={
+        this.context.Form.state.Errors[this.props.valuePath]
+        ?
+        "form-control invalidInput"
+        :
+        "form-control"
+      }
+      ref="input"
+      value={this.props.data[this.props.value] || ''}
+      disabled={disabledField}
+      {...this.props.attrs}
+      onChange={this.handleChange}
+      style={{maxWidth: '100%'}}
+      />
+    );
+  }
+}
+
 
 export class File extends BaseField {
   handleChange = (e) => {

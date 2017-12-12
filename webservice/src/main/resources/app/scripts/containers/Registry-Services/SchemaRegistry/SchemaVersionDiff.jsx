@@ -24,7 +24,7 @@ import {difflib} from '../../../libs/jsdifflib/difflib';
 export default class SchemaVersionDiff extends Component {
   constructor(props) {
     super(props);
-    let versionsArr = Utils.sortArray(this.props.schemaObj.versionsArr.slice(), 'versionId', false);
+    let versionsArr = Utils.sortArray(this.props.schemaObj.schemaVersionInfos.slice(), 'version', false);
     let newTextOptions = versionsArr;
     let baseTextOptions = versionsArr;
     this.state = {
@@ -46,15 +46,15 @@ export default class SchemaVersionDiff extends Component {
 
   handleBaseVersionChange(obj) {
     let {versionsArr, newTextVersion, newText, baseTextOptions} = this.state;
-    if(obj.versionId) {
-      let s = _.find(baseTextOptions, {versionId: obj.versionId});
+    if(obj.version) {
+      let s = _.find(baseTextOptions, {version: obj.version});
       this.setState({baseText: s.schemaText, baseTextVersion: s});
     }
   }
   handleNewVersionChange(obj) {
-    if(obj.versionId) {
+    if(obj.version) {
       let {newTextOptions, baseTextVersion, baseText, versionsArr} = this.state;
-      let s = _.find(newTextOptions, {versionId: obj.versionId});
+      let s = _.find(newTextOptions, {version: obj.version});
       this.setState({newText: s.schemaText, newTextVersion: s});
     }
   }
@@ -83,8 +83,8 @@ export default class SchemaVersionDiff extends Component {
       baseTextLines: base,
       newTextLines: newtxt,
       opcodes: opcodes,
-      baseTextName: baseTextVersion ? ("V " + baseTextVersion.versionId) : '',
-      newTextName: newTextVersion ?  ("V " + newTextVersion.versionId) : '',
+      baseTextName: baseTextVersion ? ("V " + baseTextVersion.version) : '',
+      newTextName: newTextVersion ?  ("V " + newTextVersion.version) : '',
       viewType: inlineView ? 1 : 0
     }));
 
@@ -99,11 +99,11 @@ export default class SchemaVersionDiff extends Component {
         <div className="form-group version-diff-labels m-b-sm">
             <label className="control-label col-sm-2">Base Version</label>
             <div className="col-sm-2">
-              <Select value={baseTextVersion} options={baseTextOptions} onChange={this.handleBaseVersionChange.bind(this)} valueKey="versionId" labelKey="versionId" clearable={false} />
+              <Select value={baseTextVersion} options={baseTextOptions} onChange={this.handleBaseVersionChange.bind(this)} valueKey="version" labelKey="version" clearable={false} />
             </div>
             <label className="control-label col-sm-offset-2 col-sm-2">New Version</label>
             <div className="col-sm-2">
-              <Select value={newTextVersion} options={newTextOptions} onChange={this.handleNewVersionChange.bind(this)} valueKey="versionId" labelKey="versionId" clearable={false} />
+              <Select value={newTextVersion} options={newTextOptions} onChange={this.handleNewVersionChange.bind(this)} valueKey="version" labelKey="version" clearable={false} />
             </div>
         </div>
         <div className="row">
@@ -120,7 +120,7 @@ export default class SchemaVersionDiff extends Component {
       <div className="row">
         <div className="col-sm-12">
           {inlineView ?
-          (<div className="table-header-custom unified">{"V " + (baseTextVersion ? baseTextVersion.versionId : '') + " vs. V " + (newTextVersion ? newTextVersion.versionId : '')}
+          (<div className="table-header-custom unified">{"V " + (baseTextVersion ? baseTextVersion.version : '') + " vs. V " + (newTextVersion ? newTextVersion.version : '')}
               <ButtonGroup bsClass=" btn-group btn-group-xs pull-right">
                 <Button
                   className={inlineView ? "diffViewBtn btn selected" : "diffViewBtn btn"}
@@ -140,8 +140,8 @@ export default class SchemaVersionDiff extends Component {
           </div>)
           :
           (<div className="table-header-custom split">
-            <div className="col-sm-6">{"V " + (baseTextVersion ? baseTextVersion.versionId : '')}</div>
-            <div>{"V " + (newTextVersion ? newTextVersion.versionId : '')}</div>
+            <div className="col-sm-6">{"V " + (baseTextVersion ? baseTextVersion.version : '')}</div>
+            <div>{"V " + (newTextVersion ? newTextVersion.version : '')}</div>
             <ButtonGroup bsClass="btn-group btn-group-xs pull-right">
                 <Button
                   className={inlineView ? "diffViewBtn btn selected" : "diffViewBtn btn"}
