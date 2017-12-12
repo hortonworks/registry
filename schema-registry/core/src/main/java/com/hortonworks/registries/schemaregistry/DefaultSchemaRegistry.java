@@ -46,7 +46,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -531,7 +530,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-        Collection<AggregatedSchemaBranch> aggregatedSchemaBranches = new LinkedList<>();
+        Collection<AggregatedSchemaBranch> aggregatedSchemaBranches = new ArrayList<>();
         for (SchemaBranch schemaBranch : getSchemaBranches(schemaName)) {
             Long rootVersion = schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH) ? null: schemaVersionLifecycleManager.getRootVersion(schemaBranch).getId();
             aggregatedSchemaBranches.add(new AggregatedSchemaBranch(schemaBranch, rootVersion, getAllVersions(schemaBranch.getName(), schemaName)));

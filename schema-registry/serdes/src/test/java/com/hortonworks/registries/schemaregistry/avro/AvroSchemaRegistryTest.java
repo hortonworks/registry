@@ -15,6 +15,8 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -144,6 +146,14 @@ public class AvroSchemaRegistryTest {
 
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());
         Assert.assertEquals(1, aggregatedSchemaMetadataCollection.size());
+
+        // Serializing and deserializing AggregatedSchemaMetadataInfo should not throw any errors
+
+        String aggregateSchemaMetadataStr = new ObjectMapper().writeValueAsString(aggregatedSchemaMetadataCollection);
+
+        Collection<AggregatedSchemaMetadataInfo> returnedResult =
+                new ObjectMapper().readValue(aggregateSchemaMetadataStr,
+                        new TypeReference<Collection<AggregatedSchemaMetadataInfo>>() {});
     }
 
     @Test

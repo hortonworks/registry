@@ -444,8 +444,7 @@ public class SchemaVersionLifecycleManager {
         Collection<SchemaVersionInfo> schemaVersionInfos;
 
         if(schemaBranchName.equals(SchemaBranch.MASTER_BRANCH)) {
-            List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.SCHEMA_METADATA_ID,
-                    getSchemaMetadataInfo(schemaName).getId().toString()));
+            List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
             Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams,
                     Collections.singletonList(OrderByField.of(SchemaVersionStorable.VERSION, true)));
             Set<Long> schemaVersionIds = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName))).

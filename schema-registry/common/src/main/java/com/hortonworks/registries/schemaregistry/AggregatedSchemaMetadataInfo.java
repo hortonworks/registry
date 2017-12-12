@@ -43,6 +43,10 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
 
     private Collection<SerDesInfo> serDesInfos;
 
+    private AggregatedSchemaMetadataInfo() {
+
+    }
+
     public AggregatedSchemaMetadataInfo(SchemaMetadata schemaMetadata,
                                         Long id,
                                         Long timestamp,

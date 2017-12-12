@@ -21,9 +21,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.util.Collection;
 
-/*
-     This class represents the aggregated information about the schema branch which includes all the schema versions tied
-     to that branch and the schema version from which the branch was created
+/**
+ *   This class represents the aggregated information about the schema branch which includes all the schema versions tied
+ *   to that branch and the schema version from which the branch was created
  */
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,6 +34,10 @@ public class AggregatedSchemaBranch implements Serializable {
     private SchemaBranch schemaBranch;
     private Long rootSchemaVersion;
     private Collection<SchemaVersionInfo> schemaVersionInfos;
+
+    private AggregatedSchemaBranch() {
+
+    }
 
     public AggregatedSchemaBranch(SchemaBranch schemaBranch, Long rootSchemaVersion, Collection<SchemaVersionInfo> schemaVersionInfos) {
         this.schemaBranch = schemaBranch;
