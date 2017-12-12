@@ -75,6 +75,16 @@ fileStorageConfiguration:
 #    db.properties:
 #      dataSourceClassName: "com.mysql.cj.jdbc.MysqlDataSource"
 #      dataSource.url: "jdbc:mysql://localhost:3307/test"
+#storageProviderConfiguration:
+# providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+# properties:
+#   db.type: "mysql"
+#   queryTimeoutInSecs: 30
+#   db.properties:
+#     dataSourceClassName: "org.mariadb.jdbc.MariaDbDataSource"
+#     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+#     dataSource.user: "root"
+#     dataSource.password: "mysql17"
 
 storageProviderConfiguration:
   providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
@@ -94,37 +104,40 @@ swagger:
 #    port: 8080
 
 server:
+#  softNofileLimit: 1000
+#  hardNofileLimit: 1000
   applicationConnectors:
-    - type: https
+    - type: http
       port: 0
-      keyStorePath: ./src/test/resources/jks/server.jks
-      keyStorePassword: serverpwd
-      trustStorePath: ./src/test/resources/jks/client.jks
-      trustStorePassword: clientpwd
-      needClientAuth: true
-      validateCerts: false
-      validatePeers: false
+#    - type: https
+#      port: 8443
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
+# this requires the alpn-boot library on the JVM's boot classpath
+#    - type: spdy3
+#      port: 8445
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
   adminConnectors:
-    - type: https
+    - type: http
       port: 0
-      keyStorePath: ./src/test/resources/jks/server.jks
-      keyStorePassword: serverpwd
-      trustStorePath: ./src/test/resources/jks/client.jks
-      trustStorePassword: clientpwd
-      needClientAuth: true
-      validateCerts: false
-      validatePeers: false
+#    - type: https
+#      port: 8444
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
 
 # Logging settings.
 logging:
-
   # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
   level: INFO
 
   # Logger-specific levels.
-  # loggers:
+  loggers:
     # Sets the level for 'com.example.app' to DEBUG.
-    # com.hortonworks.registries: DEBUG
+    com.hortonworks.registries: WARN
 
 
   appenders:

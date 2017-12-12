@@ -122,11 +122,9 @@ logging:
   level: INFO
 
   # Logger-specific levels.
-  loggers:
-
+  # loggers:
     # Sets the level for 'com.example.app' to DEBUG.
-    com.hortonworks.registries: DEBUG
-
+    # com.hortonworks.registries: DEBUG
 
   appenders:
     - type: console

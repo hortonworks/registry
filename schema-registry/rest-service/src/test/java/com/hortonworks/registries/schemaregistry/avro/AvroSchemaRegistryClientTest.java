@@ -404,7 +404,6 @@ public class AvroSchemaRegistryClientTest {
     public void testSchemaVersionEnableState() throws Exception {
         IntStream.range(1, 100).forEach(x -> {
             try {
-                System.out.println("########## Running for iter: " + x);
                 doTestSchemaVersionEnableState(TEST_NAME_RULE.getMethodName() + x);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -429,22 +428,18 @@ public class AvroSchemaRegistryClientTest {
         Long schemaVersionId_2 = schemaIdVersion_2.getSchemaVersionId();
         SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaVersionId_2);
         SchemaVersionInfo schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
-        System.out.println("disable :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
         Assert.assertEquals(SchemaVersionLifecycleStates.DISABLED.getId(), schemaVersionInfo.getStateId());
 
         SCHEMA_REGISTRY_CLIENT.enableSchemaVersion(schemaVersionId_2);
         schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
-        System.out.println("enable :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
         Assert.assertEquals(SchemaVersionLifecycleStates.ENABLED.getId(), schemaVersionInfo.getStateId());
 
         SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(schemaVersionId_2);
         schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
-        System.out.println("disable :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
         Assert.assertEquals(SchemaVersionLifecycleStates.DISABLED.getId(), schemaVersionInfo.getStateId());
 
         SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(schemaVersionId_2);
         schemaVersionInfo = SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2);
-        System.out.println("archive :: schemaVersionInfo.getStateId() = " + schemaVersionInfo.getStateId());
         Assert.assertEquals(SchemaVersionLifecycleStates.ARCHIVED.getId(), schemaVersionInfo.getStateId());
     }
 

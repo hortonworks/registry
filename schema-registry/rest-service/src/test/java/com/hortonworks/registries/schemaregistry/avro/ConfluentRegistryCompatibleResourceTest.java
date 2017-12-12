@@ -81,7 +81,7 @@ public class ConfluentRegistryCompatibleResourceTest {
 
     @Before
     public void setup() throws Exception {
-        String configPath = new File(Resources.getResource("schema-registry-test.yaml").toURI()).getAbsolutePath();
+        String configPath = new File(Resources.getResource("schema-registry-test-confluent.yaml").toURI()).getAbsolutePath();
         localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         localSchemaRegistryServer.start();
         SchemaRegistryUtil.createMasterBranch(localSchemaRegistryServer.getStorageManager());
