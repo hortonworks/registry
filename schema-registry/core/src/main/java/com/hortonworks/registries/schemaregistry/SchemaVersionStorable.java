@@ -210,14 +210,14 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     }
 
     public SchemaVersionInfo toSchemaVersionInfo() {
-        return new SchemaVersionInfo(id, name, version, schemaMetadataId, schemaText, timestamp, description, state);
+        return new SchemaVersionInfo(id, name, version, getSchemaMetadataId(), schemaText, timestamp, description, state);
     }
 
     @Override
     public String toString() {
         return "SchemaVersionStorable{" +
                 "id=" + id +
-                ", schemaMetadataId=" + schemaMetadataId +
+                ", schemaMetadataId=" + getSchemaMetadataId() +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", schemaText='" + schemaText + '\'' +
@@ -239,7 +239,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         SchemaVersionStorable that = (SchemaVersionStorable) o;
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
+        if (getSchemaMetadataId() != null ? !getSchemaMetadataId().equals(that.getSchemaMetadataId()) : that.getSchemaMetadataId() != null)
             return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
@@ -253,7 +253,7 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     @Override
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (schemaMetadataId != null ? schemaMetadataId.hashCode() : 0);
+        result = 31 * result + (getSchemaMetadataId() != null ? getSchemaMetadataId().hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);

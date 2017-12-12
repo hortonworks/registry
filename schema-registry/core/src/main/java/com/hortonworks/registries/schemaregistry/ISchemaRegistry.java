@@ -72,30 +72,12 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
     Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
-     * @param schemaBranch name of the schema branch
-     * @param props properties
-     *
-     * @return Collects aggregated schema metadata which contains the given properties.
-     */
-    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(String schemaBranch, Map<String, String> props) throws SchemaNotFoundException, SchemaBranchNotFoundException;
-
-    /**
      * @param schemaName name of the schema
      *
      * @return {@link AggregatedSchemaMetadataInfo} for the given schema name, null if there is no schema registered with
      * the given schema name.
      */
     AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
-
-
-    /**
-     * @param schemaBranchName name of the schema branch
-     * @param schemaName name of the schema
-     *
-     * @return {@link AggregatedSchemaMetadataInfo} for the given schema name, null if there is no schema registered with
-     * the given schema name.
-     */
-    AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * @param props properties
@@ -132,5 +114,15 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
     default SchemaIdVersion mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
         throw new UnsupportedOperationException();
     }
+
+
+    /**
+     * @param schemaName name identifying a schema
+     *
+     * @return all schema branches with versions of the schemas for given schemaName
+     *
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+     */
+    Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
 }

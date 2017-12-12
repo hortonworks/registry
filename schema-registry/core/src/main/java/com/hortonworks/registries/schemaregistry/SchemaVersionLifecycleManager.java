@@ -868,7 +868,7 @@ public class SchemaVersionLifecycleManager {
         return schemaVersionInfo;
     }
 
-    private Set<SchemaBranch> getSchemaBranches(Long schemaVersionId) throws SchemaBranchNotFoundException {
+    public Set<SchemaBranch> getSchemaBranches(Long schemaVersionId) throws SchemaBranchNotFoundException {
         List<QueryParam> schemaVersionMappingStorableQueryParams = new ArrayList<>();
         Set<SchemaBranch> schemaBranches = new HashSet<>();
         schemaVersionMappingStorableQueryParams.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_VERSION_INFO_ID, schemaVersionId.toString()));

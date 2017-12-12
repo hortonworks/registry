@@ -273,8 +273,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaBranch> getAllBranches() {
-        return schemaRegistry.getAllBranches();
+    public Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException {
+        return schemaRegistry.getSchemaBranches(schemaName);
     }
 
     @Override

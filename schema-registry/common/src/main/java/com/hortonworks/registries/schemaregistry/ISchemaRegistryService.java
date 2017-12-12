@@ -355,7 +355,7 @@ public interface ISchemaRegistryService {
      */
     SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException;
 
-    Collection<SchemaBranch> getAllBranches();
+    Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException;
 
     /**
      *  Delete a schema branch and all the schema version part of the branch, only if the schema versions are not in enabled state.
