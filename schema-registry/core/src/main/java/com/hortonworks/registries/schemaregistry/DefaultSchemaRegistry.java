@@ -271,22 +271,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props)
             throws SchemaBranchNotFoundException, SchemaNotFoundException {
-        return findAggregatedSchemaMetadata(SchemaBranch.MASTER_BRANCH, props);
-    }
 
-    public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(String schemaBranchName, Map<String, String> props)
-            throws SchemaBranchNotFoundException, SchemaNotFoundException {
-
-        Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
-
-        SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName));
-        SchemaVersionInfo rootSchemaVersion = schemaBranchName.equals(SchemaBranch.MASTER_BRANCH) ? null : schemaVersionLifecycleManager.getRootVersion(schemaBranch);
         return findSchemaMetadata(props)
                 .stream()
-                .filter(schemaMetadataInfo -> rootSchemaVersion == null ? true : rootSchemaVersion.getSchemaMetadataId().equals(schemaMetadataInfo.getId()))
                 .map(schemaMetadataInfo -> {
                     try {
-                        return buildAggregatedSchemaMetadataInfo(schemaBranchName, schemaMetadataInfo);
+                        return buildAggregatedSchemaMetadataInfo(schemaMetadataInfo);
                     } catch (SchemaNotFoundException | SchemaBranchNotFoundException e) {
                         throw new RuntimeException(e);
                     }
@@ -539,6 +529,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        Collection<AggregatedSchemaBranch> aggregatedSchemaBranches = new ArrayList<>();
+        for (SchemaBranch schemaBranch : getSchemaBranches(schemaName)) {
+            Long rootVersion = schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH) ? null: schemaVersionLifecycleManager.getRootVersion(schemaBranch).getId();
+            aggregatedSchemaBranches.add(new AggregatedSchemaBranch(schemaBranch, rootVersion, getAllVersions(schemaBranch.getName(), schemaName)));
+        }
+        return aggregatedSchemaBranches;
+    }
+
+    @Override
     public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY));
     }
@@ -561,7 +561,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         Preconditions.checkNotNull(schemaBranch.getName(), "Schema branch name can't be null");
 
-        SchemaBranch existingSchemaBranch = schemaBranchCache.getIfPresent(SchemaBranchCache.Key.of(schemaBranch.getName()));
+        SchemaBranch existingSchemaBranch = null;
+        try {
+            existingSchemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranch.getName()));
+        } catch (SchemaBranchNotFoundException e) {
+            // Ignore this error
+        }
+
         if (existingSchemaBranch != null)
            throw new SchemaBranchAlreadyExistsException(String.format("A schema branch with name : \"%s\" already exists", schemaBranch.getName()));
         SchemaBranchStorable schemaBranchStorable = SchemaBranchStorable.from(schemaBranch);
@@ -584,9 +590,15 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaBranch> getAllBranches() {
-        Collection<SchemaBranchStorable> schemaBranchStorables = storageManager.list(SchemaBranchStorable.NAME_SPACE);
-        return schemaBranchStorables.stream().map(schemaBranchStorable -> schemaBranchStorable.toSchemaBranch()).collect(Collectors.toList());
+    public Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException {
+        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
+        return schemaVersionInfos.stream().flatMap(schemaVersionInfo -> {
+            try {
+                return schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId()).stream();
+            } catch (SchemaBranchNotFoundException e) {
+                throw new RuntimeException(String.format("Failed to obtain schema branch associated with schema name : %s", schemaName),e);
+            }
+        }).collect(Collectors.toSet());
     }
 
     @Override
@@ -738,33 +750,21 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
-        return buildAggregatedSchemaMetadataInfo(SchemaBranch.MASTER_BRANCH, schemaMetadataInfo);
+        return buildAggregatedSchemaMetadataInfo(schemaMetadataInfo);
     }
 
-
-    public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-
-        Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
-
-        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
-        return buildAggregatedSchemaMetadataInfo(schemaBranchName, schemaMetadataInfo);
-    }
-
-    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(String schemaBranchName, SchemaMetadataInfo schemaMetadataInfo) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-
-        Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         if (schemaMetadataInfo == null) {
             return null;
         }
 
-        Collection<SchemaVersionInfo> allVersions = getAllVersions(schemaBranchName, schemaMetadataInfo.getSchemaMetadata().getName());
         List<SerDesInfo> serDesInfos = getSerDesInfos(schemaMetadataInfo.getSchemaMetadata().getName());
 
         return new AggregatedSchemaMetadataInfo(schemaMetadataInfo.getSchemaMetadata(),
                                                 schemaMetadataInfo.getId(),
                                                 schemaMetadataInfo.getTimestamp(),
-                                                allVersions,
+                                                getAggregatedSchemaBranch(schemaMetadataInfo.getSchemaMetadata().getName()),
                                                 serDesInfos);
     }
 

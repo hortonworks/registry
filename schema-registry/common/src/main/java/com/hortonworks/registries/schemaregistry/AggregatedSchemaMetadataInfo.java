@@ -39,19 +39,23 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
 
     private Long timestamp;
 
-    private Collection<SchemaVersionInfo> versions;
+    private Collection<AggregatedSchemaBranch> schemaBranches;
 
     private Collection<SerDesInfo> serDesInfos;
+
+    private AggregatedSchemaMetadataInfo() {
+
+    }
 
     public AggregatedSchemaMetadataInfo(SchemaMetadata schemaMetadata,
                                         Long id,
                                         Long timestamp,
-                                        Collection<SchemaVersionInfo> versions,
+                                        Collection<AggregatedSchemaBranch> schemaBranches,
                                         Collection<SerDesInfo> serDesInfos) {
         this.schemaMetadata = schemaMetadata;
         this.id = id;
         this.timestamp = timestamp;
-        this.versions = versions;
+        this.schemaBranches = schemaBranches;
         this.serDesInfos = serDesInfos;
     }
 
@@ -67,8 +71,8 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
         return timestamp;
     }
 
-    public Collection<SchemaVersionInfo> getVersions() {
-        return versions;
+    public Collection<AggregatedSchemaBranch> getSchemaBranches() {
+        return schemaBranches;
     }
 
     public Collection<SerDesInfo> getSerDesInfos() {
@@ -81,7 +85,7 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
                 "schemaMetadata=" + schemaMetadata +
                 ", id=" + id +
                 ", timestamp=" + timestamp +
-                ", versions=" + versions +
+                ", schemaBranches=" + schemaBranches +
                 ", serDesInfos=" + serDesInfos +
                 '}';
     }
