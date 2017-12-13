@@ -41,7 +41,6 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 
@@ -61,7 +60,6 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     public MockSchemaRegistryClient() {
         StorageManager storageManager = new InMemoryStorageManager();
-        SchemaRegistryUtil.createMasterBranch(storageManager);
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         this.schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         this.schemaRegistry.init(Collections.<String, Object>emptyMap());
@@ -155,11 +153,6 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException {
         return schemaRegistry.findSchemasByFields(schemaFieldQuery);
-    }
-
-    @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(String schemaBranchName, SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException {
-        return schemaRegistry.findSchemasByFields(schemaBranchName, schemaFieldQuery);
     }
 
     @Override

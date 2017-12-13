@@ -56,13 +56,6 @@
 
         <!-- test dependencies -->
         <dependency>
-            <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-core</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>${kafkaArtifact}</artifactId>
             <version>${kafka.version}</version>

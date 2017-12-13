@@ -25,7 +25,8 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializedStateDetails implements AbstractStateDetails {
 
-    public class MergedBranchDetails {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MergedBranchDetails {
         @JsonProperty
         private String branchName;
         @JsonProperty
@@ -52,9 +53,6 @@ public class InitializedStateDetails implements AbstractStateDetails {
     }
 
     @JsonProperty
-    private Boolean isMergedFromBranch = false;
-
-    @JsonProperty
     private MergedBranchDetails mergedBranchDetails = null;
 
     private InitializedStateDetails() {
@@ -62,13 +60,16 @@ public class InitializedStateDetails implements AbstractStateDetails {
     }
 
     public InitializedStateDetails(String branchName, Long versionId) {
-        isMergedFromBranch = true;
         mergedBranchDetails = new MergedBranchDetails(branchName, versionId);
     }
 
     @JsonIgnore
     public MergedBranchDetails getMergedBranchDetails() {
         return mergedBranchDetails;
+    }
+
+    public void setMergedBranchDetails(MergedBranchDetails mergedBranchDetails) {
+        this.mergedBranchDetails = mergedBranchDetails;
     }
 
     @JsonIgnore

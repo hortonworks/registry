@@ -68,6 +68,13 @@ public final class SchemaVersionInfo implements Serializable {
      */
     private Byte stateId;
 
+
+    /**
+     *   If the schema version is merged from a schema branch, this is will corresponding merge message
+     *   which includes the branch name from it was merged from and the schema version id
+     */
+    private String details;
+
     @SuppressWarnings("unused")
     private SchemaVersionInfo() { /* Private constructor for Jackson JSON mapping */ }
 
@@ -130,6 +137,10 @@ public final class SchemaVersionInfo implements Serializable {
         return schemaMetadataId;
     }
 
+    public String getDetails() { return this.details;}
+
+    public void setDetails(String details) { this.details = details;}
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -145,6 +156,7 @@ public final class SchemaVersionInfo implements Serializable {
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        if (details != null ? !details.equals(that.details) : that.details != null) return false;
         return stateId != null ? stateId.equals(that.stateId) : that.stateId == null;
     }
 
@@ -158,6 +170,7 @@ public final class SchemaVersionInfo implements Serializable {
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (stateId != null ? stateId.hashCode() : 0);
+        result = 31 * result + (details != null ? details.hashCode() : 0);
         return result;
     }
 
@@ -172,6 +185,7 @@ public final class SchemaVersionInfo implements Serializable {
                 ", schemaText='" + schemaText + '\'' +
                 ", timestamp=" + timestamp +
                 ", stateId=" + stateId +
+                ", details='" + details + '\'' +
                 '}';
     }
 }

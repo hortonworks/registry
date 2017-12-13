@@ -305,15 +305,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemasByFields(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                        @Context UriInfo uriInfo) {
+    public Response findSchemasByFields(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasByFields(schemaBranchName, buildSchemaFieldQuery(queryParameters));
+            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1044,7 +1041,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
             return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK) ;
         } catch (SchemaBranchAlreadyExistsException e) {
-            return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  e.getMessage());
+            return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  schemaBranch.getName());
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
         } catch (Exception ex) {
