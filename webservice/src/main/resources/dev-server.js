@@ -50,7 +50,7 @@ app.use(webpackHotMiddleware(compiler));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, './index.html'));
 });
-app.use("/", express.static(__dirname + '/app'));
+app.use("/ui", express.static(__dirname + '/app'));
 
 
 //-------------------proxy-------------------
