@@ -59,9 +59,9 @@ CentOS/RedHat
 
 ::
 
-  cp conf/registry.yaml.mysql.example conf/registry.yaml
+  cp conf/registry-mysql-example.yaml conf/registry.yaml
 
-Edit the folllowing section to add appropriate database and user settings
+Edit the following section to add appropriate database and user settings
 
 ::
 
@@ -139,9 +139,9 @@ OS X
 
 ::
 
-  cp conf/registry.yaml.mysql.example conf/registry.yaml
+  cp conf/registry-mysql-example.yaml conf/registry.yaml
 
-Edit the folllowing section to add appropriate database and user settings
+Edit the following section to add appropriate database and user settings
 
 ::
 

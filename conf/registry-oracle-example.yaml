@@ -13,7 +13,6 @@ modules:
       # inmemory schema version cache entry expiry interval after access
       schemaCacheExpiryInterval: 3600
 
-
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
 #   params:
@@ -49,9 +48,17 @@ fileStorageConfiguration:
   properties:
     directory: "/tmp/schema-registry/jars"
 
-# storage provider configuration
+# Oracle based jdbc provider configuration is:
 storageProviderConfiguration:
- providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+ providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+ properties:
+   db.type: "oracle"
+   queryTimeoutInSecs: 5
+   db.properties:
+     dataSourceClassName: "oracle.jdbc.pool.OracleDataSource"
+     dataSource.url: "jdbc:oracle:thin:@localhost:1521/orclpdb1.localdomain"
+     dataSource.user: "registry_user"
+     dataSource.password: "registry_user_passwd"
 
 #swagger configuration
 swagger:
@@ -64,6 +71,9 @@ server:
   applicationConnectors:
     - type: http
       port: 9090
+  adminConnectors:
+    - type: http
+      port: 9091
 
 # Logging settings.
 logging:
