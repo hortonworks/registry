@@ -31,6 +31,11 @@ module.exports = merge(config, {
   cache: true,
   //devtool: 'cheap-module-eval-source-map',
   devtool: 'inline-source-map',
+  output: {
+    filename: 'ui/js/[name].js',
+    path: path.resolve(__dirname, '../public/assets'),
+    publicPath: '/'
+  },
   entry: {
     application: [
       'webpack-hot-middleware/client',
@@ -40,6 +45,11 @@ module.exports = merge(config, {
     vendor: ['react', 'react-dom', 'react-router']
   },
   plugins: [
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'vendor',
+      filename: 'ui/js/vendor.bundle.js',
+      minChunks: Infinity
+    }),
     new extractTextPlugin("[name].css"),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.DefinePlugin(GLOBALS)
