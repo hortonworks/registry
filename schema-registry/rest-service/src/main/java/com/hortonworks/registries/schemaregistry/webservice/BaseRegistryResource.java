@@ -39,8 +39,8 @@ abstract class BaseRegistryResource {
     static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
     static final String OPERATION_GROUP_OTHER = "3. Other";
 
-    
-    
+
+
     BaseRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         Preconditions.checkNotNull(schemaRegistry, "SchemaRegistry can not be null");
         Preconditions.checkNotNull(leadershipParticipant, "LeadershipParticipant can not be null");

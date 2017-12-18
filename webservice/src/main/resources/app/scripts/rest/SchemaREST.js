@@ -44,6 +44,16 @@ const SchemaREST = {
         return response.json();
       });
   },
+  getAggregatedSchema(schemaName, options) {
+    options = options || {};
+    options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
+    let url = baseUrl + `schemaregistry/schemas/${schemaName}/aggregated`;
+    return fetch(url, options)
+      .then((response) => {
+        return response.json();
+      });
+  },
   getAggregatedSchemas(sortBy, options) {
     options = options || {};
     options.method = options.method || 'GET';
@@ -103,7 +113,7 @@ const SchemaREST = {
         return response.json();
       });
   },
-  postVersion(name, options) {
+  postVersion(name, options, branchName) {
     options = options || {};
     options.method = options.method || 'POST';
     options.headers = options.headers || {
@@ -112,7 +122,8 @@ const SchemaREST = {
     };
     options.credentials = 'same-origin';
     name = encodeURIComponent(name);
-    return fetch(baseUrl + 'schemaregistry/schemas/' + name + '/versions', options)
+    branchName = branchName || 'MASTER';
+    return fetch(baseUrl + 'schemaregistry/schemas/' + name + '/versions?branch='+branchName, options)
       .then((response) => {
         return response.json();
       });
@@ -160,6 +171,54 @@ const SchemaREST = {
     return fetch(baseUrl + 'schemaregistry/schemas/versions/'+verId+'/state/'+stateId, options)
       .then((response) => {
         return response.json();
+      });
+  },
+  getBranches(schemaName, options) {
+    options = options || {};
+    options.method = options.method || 'GET';
+    options.credentials = 'same-origin';
+    return fetch(baseUrl + `schemaregistry/schemas/${schemaName}/branches`, options)
+      .then((response) => {
+        return response.json();
+      });
+  },
+  forkNewBranch(verId, options){
+    options = options || {};
+    options.method = options.method || 'POST';
+    options.headers = options.headers || {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    options.credentials = 'same-origin';
+    return fetch(baseUrl + `schemaregistry/schemas/versionsById/${verId}/branch`, options)
+      .then((response) => {
+        return response.json();
+      });
+  },
+  mergeBranch(verId, options){
+    options = options || {};
+    options.method = options.method || 'POST';
+    options.headers = options.headers || {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    options.credentials = 'same-origin';
+    return fetch(baseUrl + `schemaregistry/schemas/${verId}/merge`, options)
+      .then((response) => {
+        return response.json();
+      });
+  },
+  deleteBranch(branchId, options){
+    options = options || {};
+    options.method = options.method || 'DELETE';
+    options.headers = options.headers || {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    options.credentials = 'same-origin';
+    return fetch(baseUrl + `schemaregistry/schemas/branch/${branchId}`, options)
+      .then((response) => {
+        return response;
       });
   }
 };

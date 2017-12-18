@@ -3,7 +3,7 @@ Serialization/Deserialization protocol
 ======================================
 
 Serializer and Deserializer are used to marshal and unmarshal messages according to a given schema by adding schema version information along with the payload.
-There are different protocols in how schema version is passed along with the payload.
+There are different protocols in how schema version is passed along with the payload. This framework allows to build custom ser/des protocols by users.
 
 Confluent protocol
 ``````````````````
@@ -105,9 +105,9 @@ Java implementation is located at `serialization/deserialization  <https://githu
 
 Schema version id as int protocol
 `````````````````````````````````
-Protocol-id: 2
+Protocol-id: 3
 
-This protocol's serialization and deserialization of payload process is similar to Schema version id as long protocol except the schema version id is treated as int.
+This protocol's serialization and deserialization of payload process is similar to Schema version id as long protocol except the schema version id is treated as int and it falls back to long when it is more than max integer value.
 
 Java implementation is located at `serialization/deserialization  <https://github.com/hortonworks/registry/blob/master/schema-registry/serdes/src/main/java/com/hortonworks/registries/schemaregistry/serdes/avro/DefaultAvroSerDesHandler.java>`_ and `protocol <https://github.com/hortonworks/registry/blob/master/schema-registry/serdes/src/main/java/com/hortonworks/registries/schemaregistry/serdes/avro/SchemaVersionIdAsIntProtocolHandler.java>`_.
 

@@ -67,6 +67,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>schema-registry-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
             <version>${dropwizard.version}</version>

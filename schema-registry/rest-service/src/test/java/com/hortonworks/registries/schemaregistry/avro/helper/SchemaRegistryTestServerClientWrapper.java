@@ -19,6 +19,7 @@ package com.hortonworks.registries.schemaregistry.avro.helper;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestConfiguration;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 import org.apache.commons.io.IOUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -49,6 +50,7 @@ public class SchemaRegistryTestServerClientWrapper {
     public void startTestServer() throws Exception {
         try {
             localSchemaRegistryServer.start();
+            SchemaRegistryUtil.createMasterBranch(localSchemaRegistryServer.getStorageManager());
         } catch (Exception e) {
             localSchemaRegistryServer.stop();
             throw e;

@@ -15,6 +15,8 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -25,7 +27,9 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
@@ -62,6 +66,7 @@ public class AvroSchemaRegistryTest {
         schema2 = getSchema("/device-compat.avsc");
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
+        SchemaRegistryUtil.createMasterBranch(storageManager);
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         schemaRegistry.init(Collections.<String, Object>emptyMap());
@@ -136,11 +141,19 @@ public class AvroSchemaRegistryTest {
 
         //aggregate apis
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadata = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getVersions().size());
+        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getSchemaBranches().iterator().next().getSchemaVersionInfos().size());
         Assert.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
 
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());
         Assert.assertEquals(1, aggregatedSchemaMetadataCollection.size());
+
+        // Serializing and deserializing AggregatedSchemaMetadataInfo should not throw any errors
+
+        String aggregateSchemaMetadataStr = new ObjectMapper().writeValueAsString(aggregatedSchemaMetadataCollection);
+
+        Collection<AggregatedSchemaMetadataInfo> returnedResult =
+                new ObjectMapper().readValue(aggregateSchemaMetadataStr,
+                        new TypeReference<Collection<AggregatedSchemaMetadataInfo>>() {});
     }
 
     @Test
@@ -150,7 +163,7 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test(expected = SchemaNotFoundException.class)
-    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException {
+    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
         schemaRegistry.addSchemaVersion(INVALID_SCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy"));
     }
 
