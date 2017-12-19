@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.schemaregistry.errors;
 
-public class SchemaBranchNotFoundException extends Exception {
+public class SchemaBranchNotFoundException extends RuntimeException {
     public SchemaBranchNotFoundException() {
     }
 
