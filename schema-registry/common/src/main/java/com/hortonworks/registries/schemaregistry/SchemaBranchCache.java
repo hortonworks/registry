@@ -23,6 +23,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,14 +67,19 @@ public class SchemaBranchCache {
         SchemaBranch schemaBranch;
         try {
             schemaBranch = loadingCache.get(key);
-        } catch (ExecutionException e) {
+        } catch (UncheckedExecutionException e) {
             LOG.error("Error occurred while retrieving schema branch for [{}]", key, e);
             Throwable cause = e.getCause();
-            if (cause instanceof SchemaBranchNotFoundException)
+            if (cause instanceof SchemaBranchNotFoundException) {
                 throw (SchemaBranchNotFoundException) cause;
-            else
+            } else {
                 throw new RuntimeException(e);
+            }
+        } catch (ExecutionException e) {
+            LOG.error("Error occurred while retrieving schema branch for [{}]", key, e);
+            throw new RuntimeException(e);
         }
+
         return schemaBranch;
     }
 
