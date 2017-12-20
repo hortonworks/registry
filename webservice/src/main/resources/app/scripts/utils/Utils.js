@@ -68,6 +68,20 @@ const ellipses = function(string, tagWidth) {
   return string.length > (tagWidth/10) ? `${string.substr(0, tagWidth/10)}...` : string;
 };
 
+export function checkStatus(response, method) {
+  if (response.status >= 200 && response.status < 300) {
+    if(method !== 'DELETE'){
+      return response.json();
+    }else{
+      return response;
+    }
+  } else {
+    const error = new Error(response.statusText);
+    error.response = response.json();
+    throw error;
+  }
+};
+
 export class StateMachine {
   constructor(obj = {}){
     this.states = obj.states;

@@ -15,6 +15,7 @@
 import fetch from 'isomorphic-fetch';
 import {baseUrl} from '../utils/Constants';
 import {CustomFetch} from '../utils/Overrides';
+import {checkStatus} from '../utils/Utils';
 
 const SchemaREST = {
   postSchema(options) {
@@ -178,9 +179,7 @@ const SchemaREST = {
     options.method = options.method || 'GET';
     options.credentials = 'same-origin';
     return fetch(baseUrl + `schemaregistry/schemas/${schemaName}/branches`, options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   forkNewBranch(verId, options){
     options = options || {};
@@ -191,9 +190,7 @@ const SchemaREST = {
     };
     options.credentials = 'same-origin';
     return fetch(baseUrl + `schemaregistry/schemas/versionsById/${verId}/branch`, options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   mergeBranch(verId, options){
     options = options || {};
@@ -204,9 +201,7 @@ const SchemaREST = {
     };
     options.credentials = 'same-origin';
     return fetch(baseUrl + `schemaregistry/schemas/${verId}/merge`, options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   deleteBranch(branchId, options){
     options = options || {};
@@ -217,8 +212,8 @@ const SchemaREST = {
     };
     options.credentials = 'same-origin';
     return fetch(baseUrl + `schemaregistry/schemas/branch/${branchId}`, options)
-      .then((response) => {
-        return response;
+      .then((res) => {
+        return checkStatus(res, 'DELETE');
       });
   }
 };
