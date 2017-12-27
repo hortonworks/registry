@@ -28,9 +28,7 @@ const SchemaREST = {
     };
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemas', options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   getAllSchemas(sortBy, options) {
     options = options || {};
@@ -51,9 +49,7 @@ const SchemaREST = {
     options.credentials = 'same-origin';
     let url = baseUrl + `schemaregistry/schemas/${schemaName}/aggregated`;
     return fetch(url, options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   getAggregatedSchemas(sortBy, options) {
     options = options || {};
@@ -80,9 +76,7 @@ const SchemaREST = {
     params.push('name='+searchStr);
     url += params.join('&');
     return fetch(url, options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   getSchemaInfo(name, options) {
     options = options || {};
@@ -134,9 +128,7 @@ const SchemaREST = {
     options.method = options.method || 'GET';
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemaproviders', options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   getCompatibility(name, options) {
     options = options || {};
@@ -148,18 +140,14 @@ const SchemaREST = {
     options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     return fetch(baseUrl+'schemaregistry/schemas/'+name+'/compatibility', options)
-      .then( (response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   getSchemaVersionStateMachine(options) {
     options = options || {};
     options.method = options.method || 'GET';
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemas/versions/statemachine', options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   changeStateOfVersion(verId, stateId, options){
     options = options || {};
@@ -170,9 +158,7 @@ const SchemaREST = {
     };
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/schemas/versions/'+verId+'/state/'+stateId, options)
-      .then((response) => {
-        return response.json();
-      });
+      .then(checkStatus);
   },
   getBranches(schemaName, options) {
     options = options || {};

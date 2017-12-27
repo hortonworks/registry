@@ -113,7 +113,7 @@ export default class SchemaRegistryContainer extends Component {
   fetchStateMachine(){
     return SchemaREST.getSchemaVersionStateMachine().then((res) => {
       this.StateMachine.setStates(res);
-    });
+    }).catch(Utils.showError);
   }
   fetchData() {
     let promiseArr = [],
@@ -177,7 +177,7 @@ export default class SchemaRegistryContainer extends Component {
         }
       }
       return schemaEntities;
-    });
+    }).catch(Utils.showError);
   }
   slideInput = (e) => {
     this.setState({slideInput  : true});

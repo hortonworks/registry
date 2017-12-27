@@ -15,6 +15,9 @@
 import _ from 'lodash';
 import React from 'react';
 import moment from 'moment';
+import FSReactToastr from '../components/FSReactToastr';
+import {toastOpt} from './Constants';
+import CommonNotification from './CommonNotification';
 
 const isValidJson = function(obj) {
   try {
@@ -68,6 +71,18 @@ const ellipses = function(string, tagWidth) {
   return string.length > (tagWidth/10) ? `${string.substr(0, tagWidth/10)}...` : string;
 };
 
+const showError = function(err) {
+  if(err.response){
+    err.response.then((res) => {
+      FSReactToastr.error(
+        <CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt
+      );
+    });
+  }else{
+    console.error(err);
+  }
+};
+
 export function checkStatus(response, method) {
   if (response.status >= 200 && response.status < 300) {
     if(method !== 'DELETE'){
@@ -107,5 +122,6 @@ export default {
   sortArray,
   splitTimeStamp,
   getDateTimeLabel,
-  ellipses
+  ellipses,
+  showError
 };

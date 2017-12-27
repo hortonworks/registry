@@ -18,6 +18,7 @@ import BaseContainer from '../../BaseContainer';
 import { Table, Thead, Th, Tr, Td, unsafe } from 'reactable';
 
 import FSReactToastr from '../../../components/FSReactToastr';
+import Utils from '../../../utils/Utils';
 
 import SerializerDeserializerForm from './SerializerDeserializerForm';
 import FSModal from '../../../components/FSModal';
@@ -48,18 +49,6 @@ export default class SerializerDeserializer extends Component {
     this.refs.addModal.show();
   }
 
-  showError(err){
-    if(err.response){
-      err.response.then((res) => {
-        FSReactToastr.error(
-          <strong>{res.responseMessage}</strong>
-        );
-      });
-    }else{
-      console.error(err);
-    }
-  }
-
   addNew = () => {
     const {addSerializerDeserializerForm} = this.refs;
     const {Form} = addSerializerDeserializerForm.refs;
@@ -87,11 +76,11 @@ export default class SerializerDeserializer extends Component {
                 this.refs.addModal.hide();
                 this.clearFormData();
               })
-              .catch(this.showError);
+              .catch(Utils.showError);
           })
-          .catch(this.showError);
+          .catch(Utils.showError);
       })
-      .catch(this.showError);
+      .catch(Utils.showError);
   }
 
   clearFormData = () => {

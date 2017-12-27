@@ -14,6 +14,8 @@
 
 import React, {Component} from 'react';
 import SchemaREST from '../rest/SchemaREST';
+import FSReactToastr from '../components/FSReactToastr';
+import Utils from '../utils/Utils';
 
 export default class ChangeState extends Component{
   constructor(props){
@@ -22,12 +24,13 @@ export default class ChangeState extends Component{
       edit: false
     };
   }
+
   changeState(e){
     const {version} = this.props;
     SchemaREST.changeStateOfVersion(version.id, this.refs.stateSelect.value, {}).then((res) => {
       version.stateId = parseInt(this.refs.stateSelect.value);
       this.setState({edit: false});
-    });
+    }).catch(Utils.showError);
   }
   onEdit(){
     this.setState({edit: true}, () => {});
