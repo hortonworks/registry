@@ -139,7 +139,7 @@ export default class SchemaVersionForm extends Component {
           }else{
             this.setState({schemaTextCompatibility: result.errorMessage || result.responseMessage});
           }
-        });
+        }).catch(Utils.showError);
     }
     catch(err){
       console.log(err);

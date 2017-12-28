@@ -88,7 +88,7 @@ export default class SchemaFormContainer extends Component {
   fetchData() {
     SchemaREST.getSchemaProviders().then((results) => {
       this.setState({typeArr: results.entities});
-    });
+    }).catch(Utils.showError);
   }
 
   handleValueChange(e) {

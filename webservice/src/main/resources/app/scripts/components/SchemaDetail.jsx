@@ -68,7 +68,7 @@ export default class SchemaDetail extends Component{
         return b.name == "MASTER";
       });
       this.setState({branches: res.entities, selectedBranch});
-    });
+    }).catch(Utils.showError);
   }
   getAggregatedSchema(){
     const {schema} = this.props;
@@ -78,7 +78,7 @@ export default class SchemaDetail extends Component{
         schema[key] = res[key];
       });
       this.forceUpdate();
-    });
+    }).catch(Utils.showError);
   }
   componentDidMount(){
     this.btnClassChange();
@@ -196,7 +196,7 @@ export default class SchemaDetail extends Component{
             }
           }
         }
-      });
+      }).catch(Utils.showError);
     }
   }
   handleCompareVersions(schemaObj) {
@@ -231,7 +231,7 @@ export default class SchemaDetail extends Component{
       });
       const currentVersion = Utils.sortArray(newBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
       this.setState({selectedBranch: newBranch, currentVersion});
-    });
+    }).catch(Utils.showError);
   }
   onMerge(v){
     SchemaREST.mergeBranch(v.id, {}).then((res) => {
@@ -241,7 +241,7 @@ export default class SchemaDetail extends Component{
         FSReactToastr.success(<strong>Branch Merged Successfully</strong>);
         this.fetchAndSelectBranch();
       }
-    });
+    }).catch(Utils.showError);
   }
   onDeleteBranch = () => {
     const {selectedBranch} = this.state;
@@ -255,7 +255,7 @@ export default class SchemaDetail extends Component{
         );
         this.fetchAndSelectBranch();
       }
-    });
+    }).catch(Utils.showError);
   }
   handleSaveFork(){
     const {currentVersion} = this.state;
@@ -273,7 +273,7 @@ export default class SchemaDetail extends Component{
           this.refs.ForkBranch.hide();
           this.fetchAndSelectBranch(FormData.name);
         }
-      });
+      }).catch(Utils.showError);;
     }
   }
   getHeader(){
