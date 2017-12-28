@@ -37,11 +37,14 @@ public class SchemaVersionLifecycleStateMachine {
 
     private final Map<Byte, SchemaVersionLifecycleState> states;
     private final Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions;
+    private final Map<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> listeners;
 
     private SchemaVersionLifecycleStateMachine(Map<Byte, SchemaVersionLifecycleState> states,
-                                               Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions) {
+                                               Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions,
+                                               Map<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> listeners) {
         this.states = Collections.unmodifiableMap(states);
         this.transitions = Collections.unmodifiableMap(transitions);
+        this.listeners = Collections.unmodifiableMap(listeners);
     }
 
     public Map<Byte, SchemaVersionLifecycleState> getStates() {
@@ -50,6 +53,10 @@ public class SchemaVersionLifecycleStateMachine {
 
     public Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> getTransitions() {
         return transitions;
+    }
+
+    public Map<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> getListeners() {
+        return listeners;
     }
 
     public SchemaVersionLifecycleStateMachineInfo toConfig() {
@@ -64,6 +71,7 @@ public class SchemaVersionLifecycleStateMachine {
     public static class Builder {
         ConcurrentMap<Byte, SchemaVersionLifecycleState> states = new ConcurrentHashMap<>();
         ConcurrentMap<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitionsWithActions = new ConcurrentHashMap<>();
+        ConcurrentMap<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> transitionsWithListeners = new ConcurrentHashMap<>();
 
         public Builder() {
             registerInBuiltStates();
@@ -128,6 +136,17 @@ public class SchemaVersionLifecycleStateMachine {
             return this;
         }
 
+        public void registerListener(SchemaVersionLifecycleStateTransition transition, SchemaVersionLifecycleStateTransitionListener listener) {
+            SchemaVersionLifecycleStateAction schemaVersionLifecycleStateAction = transitionsWithActions.get(transition);
+            if (schemaVersionLifecycleStateAction == null)
+                throw new IllegalArgumentException("Given transition doesn't have any action associated with it");
+            synchronized (schemaVersionLifecycleStateAction) {
+                List<SchemaVersionLifecycleStateTransitionListener> listeners = transitionsWithListeners.getOrDefault(transition, new ArrayList<>());
+                listeners.add(listener);
+                transitionsWithListeners.put(transition, listeners);
+            }
+        }
+
         private void checkForInbuiltStateIds(SchemaVersionLifecycleState state) {
             if (!(state instanceof InbuiltSchemaVersionLifecycleState)) {
                 if (state.getId() <= INBUILT_STATE_ID_MAX) {
@@ -144,8 +163,12 @@ public class SchemaVersionLifecycleStateMachine {
             }
         }
 
+        public Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> getTransitionsWithActions() {
+            return Collections.unmodifiableMap(transitionsWithActions);
+        }
+
         public SchemaVersionLifecycleStateMachine build() {
-            return new SchemaVersionLifecycleStateMachine(states, transitionsWithActions);
+            return new SchemaVersionLifecycleStateMachine(states, transitionsWithActions , transitionsWithListeners);
         }
     }
 

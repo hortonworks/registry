@@ -519,8 +519,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public void transitionState(Long schemaVersionId, Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException {
-        schemaVersionLifecycleManager.executeState(schemaVersionId, targetStateId);
+    public void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
+        schemaVersionLifecycleManager.executeState(schemaVersionId, targetStateId, transitionDetails);
     }
 
     @Override
