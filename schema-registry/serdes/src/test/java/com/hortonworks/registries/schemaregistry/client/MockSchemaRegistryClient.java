@@ -258,8 +258,9 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void transitionState(Long schemaVersionId,
-                                Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException {
-        schemaRegistry.transitionState(schemaVersionId, targetStateId);
+                                Byte targetStateId,
+                                byte [] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
+        schemaRegistry.transitionState(schemaVersionId, targetStateId, transitionDetails);
     }
 
     @Override

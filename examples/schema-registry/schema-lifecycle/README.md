@@ -1,0 +1,14 @@
+## Steps to try out custom schema lifecycle example
+
+1. This example assumes that target database already has the latest sql migrations, if that is not the case please use [bootstrap-storage.sh](./../../../bootstrap/bootstrap-storage.sh) script to run the migrations. This script would use [registry.yaml](./../../../conf/registry.yaml) as the configuration.
+2. Run [SchemaLifecycleApp](./src/main/java/com/hortonworks/registries/examples/schema/lifecycle/SchemaLifecycleApp.java) which takes [resources/registry-lifecycle-example.yaml](./src/main/resources/registry-lifecycle-example.yaml) as it's configuration. This class will kick start Schema Registry service and will incorporate a custom schema lifecycle as defined in [CustomReviewCycleExecutor](./src/main/java/com/hortonworks/registries/examples/schema/lifecycle/executor/CustomReviewCycleExecutor.java).
+3. **SchemaLifecycleApp** starts at any of the available port. Note down the port number from the server log and update **schemaRegistryUrl** property in [resources/review-service.yaml](./src/main/resources/review-service.yaml) with the port number.
+4. Run [ReviewServiceApp](./src/main/java/com/hortonworks/registries/examples/schema/lifecycle/review/service/ReviewServiceApp.java) which takes [resources/review-service.yaml](./src/main/resources/review-service.yaml) as it's configuration. This class will be used to make custom state transitions outside of Schema Registry.
+5. Open a web browser and navigate to Schema Registry url.
+6. Register a new schema and create a new branch from the registered schema.
+7. In the schema branch created in the previous step, add a new schema version. The created schema version will be in **INITIATED** state.
+8. Change the status of the schema version in the previous step to **StartReview**, the UI will transition to **PeerReview** state.
+9. Use the ReviewService API **curl -X POST http://localhost:7070/v1/review/peer/schema/{versionId}/[accept | reject | modify] -H 'Content-Type: application/json' -d ''** to change the status of schema version to **TechnicalLeadReview**, **Rejected** and **ChangesRequired** state respectively.
+10. Once the schema version has moved to **TechnicalLeadReview** you can use **curl -X POST http://localhost:7070/v1/review/technical/schema/{versionId}/[accept | reject | modify] -H 'Content-Type: application/json' -d '''** to change the status of schema version to **ReviewedState**, **Rejected** and **ChangesRequired** state respectively.
+11. If the schema version is moved to **ReviewedState**, it can then be enabled from the UI. Enabling a schema version would trigger the custom listener and post a notification to the Review Service, which should print below message in the Review Service log.                             
+   *<<==== Schema version info : [0-9]+ has transitioned to enabled state ====>>*

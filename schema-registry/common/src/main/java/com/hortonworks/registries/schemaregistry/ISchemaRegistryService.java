@@ -341,7 +341,7 @@ public interface ISchemaRegistryService {
         throw new UnsupportedOperationException();
     }
 
-    void transitionState(Long schemaVersionId, Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException;
+    void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException;
 
     SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo();
 

@@ -15,6 +15,7 @@
     <modules>
         <module>serdes</module>
         <module>avro</module>
+        <module>schema-lifecycle</module>
     </modules>
 
 </project>

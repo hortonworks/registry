@@ -812,11 +812,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response executeState(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                 @ApiParam(value = "", required = true) @PathParam("stateId") Byte stateId) {
+                                 @ApiParam(value = "", required = true) @PathParam("stateId") Byte stateId,
+                                 byte [] transitionDetails) {
 
         Response response;
         try {
-            schemaRegistry.transitionState(versionId, stateId);
+            schemaRegistry.transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
