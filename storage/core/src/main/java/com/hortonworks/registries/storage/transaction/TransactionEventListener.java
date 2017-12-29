@@ -14,8 +14,9 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.listeners;
+package com.hortonworks.registries.storage.transaction;
 
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.common.transaction.UnitOfWork;
 import com.hortonworks.registries.storage.TransactionManager;
 import org.glassfish.jersey.server.model.ResourceMethod;
@@ -32,19 +33,42 @@ public class TransactionEventListener implements ApplicationEventListener {
 
     private final ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap = new ConcurrentHashMap<>();
     private final TransactionManager transactionManager;
+    private final boolean runWithTxnIfNotConfigured;
 
+    /**
+     * Creates instance by taking the below arguments and webservice methods are not run in transaction unless they use
+     * {@link UnitOfWork} on respective webservice resource methods.
+     *
+     * @param transactionManager transactionManager to be used for txn lifecycle invocations.
+     */
     public TransactionEventListener(TransactionManager transactionManager) {
+        this(transactionManager, false);
+    }
+
+    /**
+     * Creates instance by taking the below arguments.
+     *
+     * @param transactionManager        transactionManager to be used for txn lifecycle invocations.
+     * @param runWithTxnIfNotConfigured All webservice resource methods are invoked in a transaction even if they are
+     *                                  not set with {@link UnitOfWork}.
+     */
+    public TransactionEventListener(TransactionManager transactionManager, boolean runWithTxnIfNotConfigured) {
         this.transactionManager = transactionManager;
+        this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
     }
 
     private static class UnitOfWorkEventListener implements RequestEventListener {
         private final ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap;
         private final TransactionManager transactionManager;
+        private final boolean runWithTxnIfNotConfigured;
         private boolean useTransactionForUnitOfWork = true;
 
-        public UnitOfWorkEventListener(ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap, TransactionManager transactionManager) {
+        public UnitOfWorkEventListener(ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap,
+                                       TransactionManager transactionManager,
+                                       boolean runWithTxnIfNotConfigured) {
             this.methodMap = methodMap;
             this.transactionManager = transactionManager;
+            this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
         }
 
         @Override
@@ -52,10 +76,17 @@ public class TransactionEventListener implements ApplicationEventListener {
             final RequestEvent.Type eventType = event.getType();
             if (eventType == RequestEvent.Type.RESOURCE_METHOD_START) {
                 Optional<UnitOfWork> unitOfWork = methodMap.computeIfAbsent(event.getUriInfo()
-                        .getMatchedResourceMethod(), UnitOfWorkEventListener::registerUnitOfWorkAnnotations);
-                useTransactionForUnitOfWork = unitOfWork.isPresent() ? unitOfWork.get().transactional() : false;
-                if (useTransactionForUnitOfWork)
-                    transactionManager.beginTransaction(unitOfWork.get().transactionIsolation());
+                                                                                 .getMatchedResourceMethod(),
+                                                                            UnitOfWorkEventListener::registerUnitOfWorkAnnotations);
+
+                // get property whether to have unitOfWork with DB default transaction by default
+                useTransactionForUnitOfWork =
+                        unitOfWork.isPresent() ? unitOfWork.get().transactional() : runWithTxnIfNotConfigured;
+                TransactionIsolation transactionIsolation = unitOfWork.map(UnitOfWork::transactionIsolation)
+                                                                      .orElse(TransactionIsolation.DEFAULT);
+                if (useTransactionForUnitOfWork) {
+                    transactionManager.beginTransaction(transactionIsolation);
+                }
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {
                 // not supporting transactions to filters
             } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
@@ -80,11 +111,10 @@ public class TransactionEventListener implements ApplicationEventListener {
 
     @Override
     public void onEvent(ApplicationEvent applicationEvent) {
-
     }
 
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
-        return new UnitOfWorkEventListener(methodMap, transactionManager);
+        return new UnitOfWorkEventListener(methodMap, transactionManager, runWithTxnIfNotConfigured);
     }
 }
