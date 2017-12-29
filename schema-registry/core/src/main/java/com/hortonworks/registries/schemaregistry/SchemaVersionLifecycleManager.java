@@ -28,6 +28,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaVersionMergeException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.state.InbuiltSchemaVersionLifecycleState;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateTransitionListener;
 import com.hortonworks.registries.schemaregistry.state.details.InitializedStateDetails;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.CustomSchemaStateExecutor;
@@ -66,6 +67,7 @@ public class SchemaVersionLifecycleManager {
 
     private static final String DEFAULT_SCHEMA_REVIEW_EXECUTOR_CLASS = "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor";
     public static final InbuiltSchemaVersionLifecycleState DEFAULT_VERSION_STATE = SchemaVersionLifecycleStates.INITIATED;
+    private static final List<SchemaVersionLifecycleStateTransitionListener> DEFAULT_LISTENERS = new ArrayList<>();
 
     private final SchemaVersionLifecycleStateMachine schemaVersionLifecycleStateMachine;
     private CustomSchemaStateExecutor customSchemaStateExecutor;
@@ -778,7 +780,7 @@ public class SchemaVersionLifecycleManager {
         ((InbuiltSchemaVersionLifecycleState) pair.getRight()).startReview(pair.getLeft());
     }
 
-    public void executeState(Long schemaVersionId, Byte targetState)
+    public void executeState(Long schemaVersionId, Byte targetState, byte[] transitionDetails)
             throws SchemaLifecycleException, SchemaNotFoundException {
         ImmutablePair<SchemaVersionLifecycleContext, SchemaVersionLifecycleState> schemaLifeCycleContextAndState =
                 createSchemaVersionLifeCycleContextAndState(schemaVersionId);
@@ -786,13 +788,19 @@ public class SchemaVersionLifecycleManager {
         SchemaVersionLifecycleState currentState = schemaLifeCycleContextAndState.getRight();
 
         schemaVersionLifecycleContext.setState(currentState);
+        schemaVersionLifecycleContext.setDetails(transitionDetails);
         SchemaVersionLifecycleStateTransition transition =
                 new SchemaVersionLifecycleStateTransition(currentState.getId(), targetState);
         SchemaVersionLifecycleStateAction action = schemaVersionLifecycleContext.getSchemaLifeCycleStatesMachine()
                                                                                 .getTransitions()
                                                                                 .get(transition);
         try {
+            List<SchemaVersionLifecycleStateTransitionListener> listeners = schemaVersionLifecycleContext.getSchemaLifeCycleStatesMachine()
+                    .getListeners().getOrDefault(transition, DEFAULT_LISTENERS);
+
+            listeners.stream().forEach(listener -> listener.preStateTransition(schemaVersionLifecycleContext));
             action.execute(schemaVersionLifecycleContext);
+            listeners.stream().forEach(listener -> listener.postStateTransition(schemaVersionLifecycleContext));
         } catch (SchemaLifecycleException e) {
             Throwable cause = e.getCause();
             if (cause != null && cause instanceof SchemaNotFoundException) {

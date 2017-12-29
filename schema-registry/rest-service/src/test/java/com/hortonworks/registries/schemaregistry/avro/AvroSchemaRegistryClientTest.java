@@ -567,7 +567,7 @@ public class AvroSchemaRegistryClientTest {
         List<SchemaVersionLifecycleStateTransition> nextTransitions = nextTransitionsForStateIds.get(stateId);
 
         Byte targetStateId = nextTransitions.get(0).getTargetStateId();
-        SCHEMA_REGISTRY_CLIENT.transitionState(schemaVersionInfo.getId(), targetStateId);
+        SCHEMA_REGISTRY_CLIENT.transitionState(schemaVersionInfo.getId(), targetStateId, null);
 
         Assert.assertEquals(targetStateId, SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2).getStateId());
     }

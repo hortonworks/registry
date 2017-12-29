@@ -680,7 +680,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public void enableSchemaVersion(Long schemaVersionId)
             throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException {
         try {
-            transitionSchemaVersionState(schemaVersionId, "enable");
+            transitionSchemaVersionState(schemaVersionId, "enable", null);
         } catch (SchemaLifecycleException e) {
             Throwable cause = e.getCause();
             if (cause != null && cause instanceof IncompatibleSchemaException) {
@@ -692,22 +692,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void disableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        transitionSchemaVersionState(schemaVersionId, "disable");
+        transitionSchemaVersionState(schemaVersionId, "disable", null);
     }
 
     @Override
     public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        transitionSchemaVersionState(schemaVersionId, "delete");
+        transitionSchemaVersionState(schemaVersionId, "delete", null);
     }
 
     @Override
     public void archiveSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        transitionSchemaVersionState(schemaVersionId, "archive");
+        transitionSchemaVersionState(schemaVersionId, "archive", null);
     }
 
     @Override
     public void startSchemaVersionReview(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        transitionSchemaVersionState(schemaVersionId, "startReview");
+        transitionSchemaVersionState(schemaVersionId, "startReview", null);
     }
 
     @Override
@@ -736,8 +736,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void transitionState(Long schemaVersionId,
-                                Byte targetStateId) throws SchemaNotFoundException, SchemaLifecycleException {
-        boolean result = transitionSchemaVersionState(schemaVersionId, targetStateId.toString());
+                                Byte targetStateId,
+                                byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
+        boolean result = transitionSchemaVersionState(schemaVersionId, targetStateId.toString(), transitionDetails);
     }
 
     @Override
@@ -798,13 +799,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private boolean transitionSchemaVersionState(Long schemaVersionId,
-                                                 String operationOrTargetState) throws SchemaNotFoundException, SchemaLifecycleException {
+                                                 String operationOrTargetState,
+                                                 byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
 
         WebTarget webTarget = currentSchemaRegistryTargets().schemaVersionsTarget.path(schemaVersionId + "/state/" + operationOrTargetState);
         Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
             @Override
             public Response run() {
-                return webTarget.request().post(null);
+                return webTarget.request().post(Entity.text(transitionDetails));
             }
         });
 

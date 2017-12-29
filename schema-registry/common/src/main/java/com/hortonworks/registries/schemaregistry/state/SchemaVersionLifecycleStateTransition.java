@@ -38,7 +38,7 @@ public class SchemaVersionLifecycleStateTransition implements Serializable {
         this(sourceStateId, targetStateId, null, null);
     }
 
-    SchemaVersionLifecycleStateTransition(Byte sourceStateId, Byte targetStateId, String name, String description) {
+    public SchemaVersionLifecycleStateTransition(Byte sourceStateId, Byte targetStateId, String name, String description) {
         this.sourceStateId = sourceStateId;
         this.targetStateId = targetStateId;
         this.name = name;

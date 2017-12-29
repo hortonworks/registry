@@ -1,0 +1,10 @@
+
+schemaRegistryUrl: "http://localhost:{SCHEMA_REGISTRY_PORT_NUMBER}/api/v1"
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 7070
+  adminConnectors:
+    - type: http
+      port: 7071
