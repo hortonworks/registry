@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.state;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.Field;
@@ -24,7 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleState.INBUILT_STATE_ID_MAX;
 
@@ -41,10 +44,11 @@ public class SchemaVersionLifecycleStateMachine {
 
     private SchemaVersionLifecycleStateMachine(Map<Byte, SchemaVersionLifecycleState> states,
                                                Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions,
-                                               Map<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> listeners) {
+                                               Map<SchemaVersionLifecycleStateTransition, ConcurrentLinkedQueue<SchemaVersionLifecycleStateTransitionListener>> listeners) {
         this.states = Collections.unmodifiableMap(states);
         this.transitions = Collections.unmodifiableMap(transitions);
-        this.listeners = Collections.unmodifiableMap(listeners);
+        this.listeners = Collections.unmodifiableMap(listeners).entrySet().stream().
+                collect(Collectors.toMap(Map.Entry::getKey, transitionWithListener -> Lists.newArrayList(transitionWithListener.getValue().iterator())));
     }
 
     public Map<Byte, SchemaVersionLifecycleState> getStates() {
@@ -71,7 +75,7 @@ public class SchemaVersionLifecycleStateMachine {
     public static class Builder {
         ConcurrentMap<Byte, SchemaVersionLifecycleState> states = new ConcurrentHashMap<>();
         ConcurrentMap<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitionsWithActions = new ConcurrentHashMap<>();
-        ConcurrentMap<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> transitionsWithListeners = new ConcurrentHashMap<>();
+        ConcurrentMap<SchemaVersionLifecycleStateTransition, ConcurrentLinkedQueue<SchemaVersionLifecycleStateTransitionListener>> transitionsWithListeners = new ConcurrentHashMap<>();
 
         public Builder() {
             registerInBuiltStates();
@@ -140,11 +144,10 @@ public class SchemaVersionLifecycleStateMachine {
             SchemaVersionLifecycleStateAction schemaVersionLifecycleStateAction = transitionsWithActions.get(transition);
             if (schemaVersionLifecycleStateAction == null)
                 throw new IllegalArgumentException("Given transition doesn't have any action associated with it");
-            synchronized (schemaVersionLifecycleStateAction) {
-                List<SchemaVersionLifecycleStateTransitionListener> listeners = transitionsWithListeners.getOrDefault(transition, new ArrayList<>());
-                listeners.add(listener);
-                transitionsWithListeners.put(transition, listeners);
-            }
+            ConcurrentLinkedQueue<SchemaVersionLifecycleStateTransitionListener> listeners = transitionsWithListeners.computeIfAbsent(transition,
+                    missingTransition -> new ConcurrentLinkedQueue<>());
+            listeners.add(listener);
+            transitionsWithListeners.put(transition, listeners);
         }
 
         private void checkForInbuiltStateIds(SchemaVersionLifecycleState state) {

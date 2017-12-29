@@ -57,7 +57,15 @@ fileStorageConfiguration:
 
 # MySQL based jdbc provider configuration is:
 storageProviderConfiguration:
- providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
+ providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+ properties:
+   db.type: "mysql"
+   queryTimeoutInSecs: 30
+   db.properties:
+     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+     dataSource.user: "root"
+     dataSource.password: "root"
 
 #swagger configuration
 swagger:
@@ -69,14 +77,14 @@ enableCors: true
 server:
   applicationConnectors:
     - type: http
-      port: 9090
+      port: 0
   adminConnectors:
     - type: http
-      port: 9091
+      port: 0
 
 # Logging settings.
 logging:
-  level: DEBUG
+  level: INFO
   loggers:
-    com.hortonworks.registries: DEBUG
+    com.hortonworks.registries: INFO
 

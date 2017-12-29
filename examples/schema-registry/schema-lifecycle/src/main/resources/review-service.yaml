@@ -1,5 +1,5 @@
 
-schemaRegistryUrl: "http://localhost:9090/api/v1"
+schemaRegistryUrl: "http://localhost:{SCHEMA_REGISTRY_PORT_NUMBER}/api/v1"
 
 server:
   applicationConnectors:

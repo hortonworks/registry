@@ -30,9 +30,6 @@ public class SchemaLifecycleApp {
     public static void startUp() throws Exception {
         LOCAL_SCHEMA_REGISTRY_SERVER = new LocalSchemaRegistryServer(SchemaLifecycleApp.class.getClassLoader().getResource("registry-lifecycle-example.yaml").getPath());
         LOCAL_SCHEMA_REGISTRY_SERVER.start();
-        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable("MASTER");
-        schemaBranchStorable.setId(LOCAL_SCHEMA_REGISTRY_SERVER.getStorageManager().nextId(SchemaBranchStorable.NAME_SPACE));
-        LOCAL_SCHEMA_REGISTRY_SERVER.getStorageManager().add(schemaBranchStorable);
     }
 
 }
