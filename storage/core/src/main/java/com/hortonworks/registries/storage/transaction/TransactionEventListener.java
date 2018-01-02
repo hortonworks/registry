@@ -62,6 +62,7 @@ public class TransactionEventListener implements ApplicationEventListener {
         private final TransactionManager transactionManager;
         private final boolean runWithTxnIfNotConfigured;
         private boolean useTransactionForUnitOfWork = true;
+        private boolean isTransactionActive = false;
 
         public UnitOfWorkEventListener(ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap,
                                        TransactionManager transactionManager,
@@ -86,17 +87,24 @@ public class TransactionEventListener implements ApplicationEventListener {
                                                                       .orElse(TransactionIsolation.DEFAULT);
                 if (useTransactionForUnitOfWork) {
                     transactionManager.beginTransaction(transactionIsolation);
+                    isTransactionActive = true;
                 }
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {
                 // not supporting transactions to filters
             } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
-                if (useTransactionForUnitOfWork)
+                if (useTransactionForUnitOfWork && isTransactionActive) {
                     transactionManager.rollbackTransaction();
+                    isTransactionActive = false;
+                }
             } else if (eventType == RequestEvent.Type.FINISHED) {
-                if (useTransactionForUnitOfWork && event.isSuccess())
+                if (useTransactionForUnitOfWork && event.isSuccess()) {
                     transactionManager.commitTransaction();
-                else if (useTransactionForUnitOfWork && !event.isSuccess())
+                    isTransactionActive = false;
+                }
+                else if (useTransactionForUnitOfWork && !event.isSuccess() && isTransactionActive) {
                     transactionManager.rollbackTransaction();
+                    isTransactionActive = false;
+                }
             }
         }
 
