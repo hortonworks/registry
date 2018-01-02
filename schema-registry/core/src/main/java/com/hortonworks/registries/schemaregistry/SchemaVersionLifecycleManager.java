@@ -94,7 +94,7 @@ public class SchemaVersionLifecycleManager {
         schemaVersionInfoCache = new SchemaVersionInfoCache(
                 schemaVersionRetriever,
                 options.getMaxSchemaCacheSize(),
-                options.getSchemaExpiryInSecs());
+                options.getSchemaExpiryInSecs() * 1000L);
 
         customSchemaStateExecutor = createSchemaReviewExecutor(props, builder);
 

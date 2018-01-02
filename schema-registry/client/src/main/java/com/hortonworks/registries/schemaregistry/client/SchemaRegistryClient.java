@@ -230,21 +230,21 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         classLoaderCache = new ClassLoaderCache(this);
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(new SchemaVersionRetriever() {
-            @Override
-            public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
-                return doGetSchemaVersionInfo(key);
-            }
+        schemaVersionInfoCache = new SchemaVersionInfoCache(
+                new SchemaVersionRetriever() {
+                    @Override
+                    public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                        return doGetSchemaVersionInfo(key);
+                    }
 
-            @Override
-            public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
-                return doGetSchemaVersionInfo(key);
-            }
-        },
-                                                            ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE
-                                                                                                     .name())).intValue(),
-                                                            ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                                     .name())).longValue());
+                    @Override
+                    public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
+                        return doGetSchemaVersionInfo(key);
+                    }
+                },
+                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).intValue(),
+                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue() * 1000L
+        );
 
         SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
         schemaMetadataCache = new SchemaMetadataCache(((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE
@@ -258,7 +258,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                                                                             .name())).longValue())
                                       .expireAfterAccess(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS
                                                                                                   .name())).longValue(),
-                                                         TimeUnit.MILLISECONDS)
+                                                         TimeUnit.SECONDS)
                                       .build();
     }
 
