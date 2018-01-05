@@ -177,6 +177,27 @@ public class AvroSchemaRegistryTest {
                                    .getVersion();
     }
 
+    @Test(expected = InvalidSchemaException.class)
+    public void testSchemaTextAsNull() throws Exception {
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                                                     new SchemaVersion(null, "Initial version of the schema"))
+                                   .getVersion();
+    }
+
+    @Test(expected = InvalidSchemaException.class)
+    public void testSchemaTextAsEmpty() throws Exception {
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                                                     new SchemaVersion("", "Initial version of the schema"))
+                                   .getVersion();
+    }
 
     @Test(expected = IncompatibleSchemaException.class)
     public void testIncompatibleSchemas() throws Exception {
