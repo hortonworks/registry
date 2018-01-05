@@ -16,13 +16,18 @@
 package com.hortonworks.registries.schemaregistry.state;
 
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
  * This is default implementation of CustomSchemaStateExecutor which always leads to the success state.
  */
 public class DefaultCustomSchemaStateExecutor implements CustomSchemaStateExecutor {
+    private InReviewState inReviewState;
 
     private SchemaVersionLifecycleState successState;
     private SchemaVersionLifecycleState retryState;
@@ -34,11 +39,51 @@ public class DefaultCustomSchemaStateExecutor implements CustomSchemaStateExecut
                      Map<String, ?> props) {
         this.successState = builder.getStates().get(successStateId);
         this.retryState = builder.getStates().get(retryStateId);
+        inReviewState = new InReviewState(successState);
+        builder.register(inReviewState);
+
+        for (Pair<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> pair : inReviewState
+                .getTransitionActions()) {
+            builder.transition(pair.getLeft(), pair.getRight());
+        }
     }
 
     @Override
-    public void executeReviewState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
-        schemaVersionLifecycleContext.setState(successState);
+    public void executeReviewState(SchemaVersionLifecycleContext schemaVersionLifecycleContext)
+            throws SchemaLifecycleException, SchemaNotFoundException {
+        schemaVersionLifecycleContext.setState(inReviewState);
         schemaVersionLifecycleContext.updateSchemaVersionState();
+    }
+
+    private static final class InReviewState extends AbstractInbuiltSchemaLifecycleState {
+        private final List<Pair<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction>> transitionActionPair;
+
+        private InReviewState(final SchemaVersionLifecycleState targetState) {
+            super("InReview",
+                  (byte) 32,
+                  "Finish the schema version."
+                 );
+            SchemaVersionLifecycleStateTransition stateTransition = new SchemaVersionLifecycleStateTransition(getId(), targetState.getId(), "FinishReview", "Finish schema review process");
+            SchemaVersionLifecycleStateAction stateAction = context -> {
+                context.setState(targetState);
+                try {
+                    context.updateSchemaVersionState();
+                } catch (SchemaNotFoundException e) {
+                    throw new SchemaLifecycleException(e);
+                }
+            };
+            transitionActionPair = Collections.singletonList(Pair.of(stateTransition, stateAction));
+        }
+
+        @Override
+        public Collection<Pair<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction>> getTransitionActions() {
+            return transitionActionPair;
+        }
+
+        @Override
+        public String toString() {
+            return "FinishReviewState{" + super.toString() + "}";
+        }
+
     }
 }
