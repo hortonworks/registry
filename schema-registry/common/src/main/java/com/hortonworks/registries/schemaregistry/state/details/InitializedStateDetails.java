@@ -25,33 +25,6 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializedStateDetails implements AbstractStateDetails {
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class MergeInfo {
-        @JsonProperty
-        private String schemaBranchName;
-        @JsonProperty
-        private Long schemaVersionId;
-
-        private MergeInfo() {
-
-        }
-
-        public MergeInfo(String branchName, Long versionId) {
-            this.schemaBranchName = branchName;
-            this.schemaVersionId = versionId;
-        }
-
-        @JsonIgnore
-        public String getSchemaBranchName() {
-            return schemaBranchName;
-        }
-
-        @JsonIgnore
-        public Long getSchemaVersionId() {
-            return schemaVersionId;
-        }
-    }
-
     @JsonProperty
     private MergeInfo mergeInfo = null;
 

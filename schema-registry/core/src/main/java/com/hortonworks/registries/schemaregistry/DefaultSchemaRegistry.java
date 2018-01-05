@@ -31,6 +31,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleCon
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import com.hortonworks.registries.schemaregistry.state.details.InitializedStateDetails;
+import com.hortonworks.registries.schemaregistry.state.details.MergeInfo;
 import com.hortonworks.registries.schemaregistry.utils.ObjectMapperUtils;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
@@ -533,7 +534,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 SchemaVersionLifecycleContext context = null;
                 try {
                     context = schemaVersionLifecycleManager.createSchemaVersionLifeCycleContext(schemaVersionInfo.getId(), SchemaVersionLifecycleStates.INITIATED);
-                    InitializedStateDetails.MergeInfo mergeInfo = null;
+                    MergeInfo mergeInfo = null;
                     if (context.getDetails() == null) {
                         mergeInfo = null;
                     } else {

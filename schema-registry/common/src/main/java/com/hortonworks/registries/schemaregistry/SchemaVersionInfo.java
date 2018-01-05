@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
-import com.hortonworks.registries.schemaregistry.state.details.InitializedStateDetails;
+import com.hortonworks.registries.schemaregistry.state.details.MergeInfo;
 
 import java.io.Serializable;
 
@@ -74,7 +74,7 @@ public final class SchemaVersionInfo implements Serializable {
      *   If schema version was merged from another branch, then this will variable will have branch name
      *   and the schema version from which it was merged from
      */
-    private InitializedStateDetails.MergeInfo mergeInfo;
+    private MergeInfo mergeInfo;
 
     @SuppressWarnings("unused")
     private SchemaVersionInfo() { /* Private constructor for Jackson JSON mapping */ }
@@ -138,9 +138,9 @@ public final class SchemaVersionInfo implements Serializable {
         return schemaMetadataId;
     }
 
-    public InitializedStateDetails.MergeInfo getMergeInfo() { return this.mergeInfo;}
+    public MergeInfo getMergeInfo() { return this.mergeInfo;}
 
-    public void setMergeInfo(InitializedStateDetails.MergeInfo mergeInfo) { this.mergeInfo = mergeInfo;}
+    public void setMergeInfo(MergeInfo mergeInfo) { this.mergeInfo = mergeInfo;}
 
     @Override
     public boolean equals(Object o) {
