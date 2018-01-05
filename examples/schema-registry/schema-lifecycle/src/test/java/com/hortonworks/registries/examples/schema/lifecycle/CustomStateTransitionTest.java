@@ -62,9 +62,9 @@ public class CustomStateTransitionTest {
 
     @Test
     public void testTransitionToRejectedState() throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException, SchemaLifecycleException {
-        SchemaBranch branch1 = new SchemaBranch("BRANCH1", "desc1", null);
-
         SchemaMetadata schemaMetadata = createSchemaMetadata("test", SchemaCompatibility.NONE);
+        SchemaBranch branch1 = new SchemaBranch("BRANCH1", schemaMetadata.getName());
+
         String schema1 = getSchema("/device.avsc");
         schemaRegistryClient.addSchemaMetadata(schemaMetadata);
         SchemaIdVersion schemaIdVersion1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "initial version"));

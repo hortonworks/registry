@@ -15,7 +15,6 @@
  **/
 package com.hortonworks.registries.schemaregistry.examples.avro;
 
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.webservice.RegistryApplication;
 import com.hortonworks.registries.webservice.RegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
@@ -37,7 +36,6 @@ public class SampleApplicationTest {
     @Test
     public void testApis() throws Exception {
         final String rootUrl = String.format("http://localhost:%d/api/v1", DROPWIZARD_APP_RULE.getLocalPort());
-        SchemaRegistryUtil.createMasterBranch(((RegistryApplication) DROPWIZARD_APP_RULE.getApplication()).getStorageManager());
         Map<String, Object> config = SampleSchemaRegistryClientApp.createConfig(rootUrl);
         SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(config);
 

@@ -29,7 +29,6 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
@@ -66,7 +65,6 @@ public class AvroSchemaRegistryTest {
         schema2 = getSchema("/device-compat.avsc");
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
-        SchemaRegistryUtil.createMasterBranch(storageManager);
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         schemaRegistry.init(Collections.<String, Object>emptyMap());
