@@ -26,6 +26,7 @@ import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ConfigEntry;
+import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -711,7 +712,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge");
         Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
             @Override
@@ -723,8 +724,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         int status = response.getStatus();
         if (status == Response.Status.OK.getStatusCode()) {
             String msg = response.readEntity(String.class);
-            SchemaIdVersion schemaIdVersion = readEntity(msg, SchemaIdVersion.class);
-            return schemaIdVersion;
+            return readEntity(msg, SchemaVersionMergeResult.class);
         } else if (status == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new SchemaNotFoundException(response.readEntity(String.class));
         } else if (status == Response.Status.BAD_REQUEST.getStatusCode()) {
