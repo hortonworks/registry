@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+import com.hortonworks.registries.schemaregistry.state.details.MergeInfo;
 
 import java.io.Serializable;
 
@@ -67,6 +68,13 @@ public final class SchemaVersionInfo implements Serializable {
      * current stateId of this version.
      */
     private Byte stateId;
+
+
+    /**
+     *   If schema version was merged from another branch, then this will variable will have branch name
+     *   and the schema version from which it was merged from
+     */
+    private MergeInfo mergeInfo;
 
     @SuppressWarnings("unused")
     private SchemaVersionInfo() { /* Private constructor for Jackson JSON mapping */ }
@@ -130,6 +138,10 @@ public final class SchemaVersionInfo implements Serializable {
         return schemaMetadataId;
     }
 
+    public MergeInfo getMergeInfo() { return this.mergeInfo;}
+
+    public void setMergeInfo(MergeInfo mergeInfo) { this.mergeInfo = mergeInfo;}
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -145,6 +157,7 @@ public final class SchemaVersionInfo implements Serializable {
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
+        if (mergeInfo != null ? !mergeInfo.equals(that.mergeInfo) : that.mergeInfo != null) return false;
         return stateId != null ? stateId.equals(that.stateId) : that.stateId == null;
     }
 
@@ -158,6 +171,7 @@ public final class SchemaVersionInfo implements Serializable {
         result = 31 * result + (schemaText != null ? schemaText.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (stateId != null ? stateId.hashCode() : 0);
+        result = 31 * result + (mergeInfo != null ? mergeInfo.hashCode() : 0);
         return result;
     }
 
@@ -172,6 +186,7 @@ public final class SchemaVersionInfo implements Serializable {
                 ", schemaText='" + schemaText + '\'' +
                 ", timestamp=" + timestamp +
                 ", stateId=" + stateId +
+                ", details='" + mergeInfo + '\'' +
                 '}';
     }
 }

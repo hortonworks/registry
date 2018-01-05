@@ -35,7 +35,7 @@ public class SchemaBranchCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaBranchCache.class);
 
     private final LoadingCache<Key, SchemaBranch> loadingCache;
-    private final BiMap <String,Long> schemaBranchNameToIdMap;
+    private final BiMap <SchemaBranchKey, Long> schemaBranchNameToIdMap;
 
     public SchemaBranchCache(Integer size, Long expiryInSecs, final SchemaBranchFetcher schemaBranchFetcher) {
         schemaBranchNameToIdMap = Maps.synchronizedBiMap(HashBiMap.create());
@@ -47,17 +47,18 @@ public class SchemaBranchCache {
                     public SchemaBranch load(Key key) throws Exception {
                         SchemaBranch schemaBranch;
                         Key otherKey;
-                        if (key.getName() != null) {
-                            schemaBranch = schemaBranchFetcher.getSchemaBranch(key.getName());
+                        if (key.getSchemaBranchKey() != null) {
+                            schemaBranch = schemaBranchFetcher.getSchemaBranch(key.getSchemaBranchKey());
                             otherKey = Key.of(schemaBranch.getId());
+                            schemaBranchNameToIdMap.put(key.getSchemaBranchKey(), schemaBranch.getId());
                         } else if (key.getId() != null) {
                             schemaBranch = schemaBranchFetcher.getSchemaBranch(key.getId());
-                            otherKey = Key.of(schemaBranch.getName());
+                            otherKey = Key.of(new SchemaBranchKey(schemaBranch.getName(), schemaBranch.getSchemaMetadataName()));
+                            schemaBranchNameToIdMap.put(otherKey.schemaBranchKey, schemaBranch.getId());
                         } else {
                             throw new IllegalArgumentException("Given argument is not valid: " + key);
                         }
                         loadingCache.put(otherKey, schemaBranch);
-                        schemaBranchNameToIdMap.put(schemaBranch.getName(), schemaBranch.getId());
                         return schemaBranch;
                     }
                 });
@@ -95,23 +96,23 @@ public class SchemaBranchCache {
         LOG.info("Invalidating cache entry for key [{}]", key);
         loadingCache.invalidate(key);
 
-        Key otherKey = key.id == null ? Key.of(schemaBranchNameToIdMap.get(key.name)) : Key.of(schemaBranchNameToIdMap.inverse().get(key.id));
+        Key otherKey = key.id == null ? Key.of(schemaBranchNameToIdMap.get(key.getSchemaBranchKey())) : Key.of(schemaBranchNameToIdMap.inverse().get(key.id));
         loadingCache.invalidate(otherKey);
     }
 
     public interface SchemaBranchFetcher {
-        SchemaBranch getSchemaBranch(String name) throws SchemaBranchNotFoundException;
+        SchemaBranch getSchemaBranch(SchemaBranchKey schemaBranchKey) throws SchemaBranchNotFoundException;
 
         SchemaBranch getSchemaBranch(Long id) throws SchemaBranchNotFoundException;
     }
 
     public static class Key {
-        private String name;
+        private SchemaBranchKey schemaBranchKey;
         private Long id;
 
-        private Key(String name) {
-            Preconditions.checkNotNull(name, "name can not be null");
-            this.name = name;
+        private Key(SchemaBranchKey schemaBranchKey) {
+            Preconditions.checkNotNull(schemaBranchKey, "schemaBranchKey can not be null");
+            this.schemaBranchKey = schemaBranchKey;
         }
 
         private Key(Long id) {
@@ -119,8 +120,8 @@ public class SchemaBranchCache {
             this.id = id;
         }
 
-        public String getName() {
-            return name;
+        public SchemaBranchKey getSchemaBranchKey() {
+            return schemaBranchKey;
         }
 
         public Long getId() {
@@ -134,20 +135,20 @@ public class SchemaBranchCache {
 
             Key key = (Key) o;
 
-            if (name != null ? !name.equals(key.name) : key.name != null) return false;
+            if (schemaBranchKey != null ? !schemaBranchKey.equals(key.schemaBranchKey) : key.schemaBranchKey != null) return false;
             return id != null ? id.equals(key.id) : key.id == null;
 
         }
 
         @Override
         public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
+            int result = schemaBranchKey != null ? schemaBranchKey.hashCode() : 0;
             result = 31 * result + (id != null ? id.hashCode() : 0);
             return result;
         }
 
-        public static Key of(String name) {
-            return new Key(name);
+        public static Key of(SchemaBranchKey schemaBranchKey) {
+            return new Key(schemaBranchKey);
         }
 
         public static Key of(Long id) {

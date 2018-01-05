@@ -29,9 +29,12 @@ public class SchemaBranchStorable extends AbstractStorable {
     public static final String NAME_SPACE = "schema_branch";
 
     public static final String ID = "id";
+    public static final String NAME = "name";
+    public static final String SCHEMA_METADATA_NAME = "schemaMetadataName";
 
     private Long id;
     private String name;
+    private String schemaMetadataName;
     private String description;
     private Long timestamp;
 
@@ -46,7 +49,7 @@ public class SchemaBranchStorable extends AbstractStorable {
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
         Map<Schema.Field, Object> values = new HashMap<>();
-        values.put(new Schema.Field(SchemaFieldInfo.NAME, Schema.Type.STRING), name);
+        values.put(new Schema.Field(SchemaFieldInfo.ID, Schema.Type.LONG), id);
         return new PrimaryKey(values);
     }
 
@@ -54,16 +57,21 @@ public class SchemaBranchStorable extends AbstractStorable {
 
     }
 
-    public SchemaBranchStorable(String name) {
+    public SchemaBranchStorable(Long id) {
+        this.id = id;
+    }
+
+    public SchemaBranchStorable(String name, String schemaMetadataName) {
         this(name, null, null);
     }
 
-    public SchemaBranchStorable(String name, String description) {
-        this(name, description,null);
+    public SchemaBranchStorable(String name, String schemaMetadataName, String description) {
+        this(name, description,  schemaMetadataName, null);
     }
 
-    public SchemaBranchStorable(String name, String description, Long timestamp) {
+    public SchemaBranchStorable(String name, String schemaMetadataName, String description, Long timestamp) {
         this.name = name;
+        this.schemaMetadataName = schemaMetadataName;
         this.description = description;
         this.timestamp = timestamp;
     }
@@ -93,6 +101,10 @@ public class SchemaBranchStorable extends AbstractStorable {
         this.name = name;
     }
 
+    public String getSchemaMetadataName() { return this.schemaMetadataName;}
+
+    public void setSchemaMetadataName(String schemaMetadataName) { this.schemaMetadataName = schemaMetadataName;}
+
     public String getDescription() { return this.description; }
 
     public void setDescription(String description) { this.description = description; }
@@ -110,6 +122,7 @@ public class SchemaBranchStorable extends AbstractStorable {
         return "SchemaBranchStorable {" +
                 "id=" + id +
                 ", name='" + name + '\'' +
+                ", schemaMetadataName='" + schemaMetadataName + '\'' +
                 ", description='" + description + '\'' +
                 ", timestamp=" + timestamp +
                 '}';
@@ -124,6 +137,7 @@ public class SchemaBranchStorable extends AbstractStorable {
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (schemaMetadataName != null ? !schemaMetadataName.equals(that.schemaMetadataName) : that.schemaMetadataName != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
@@ -133,12 +147,13 @@ public class SchemaBranchStorable extends AbstractStorable {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (schemaMetadataName != null ? schemaMetadataName.hashCode() : 0 );
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         return result;
     }
 
     public SchemaBranch toSchemaBranch() {
-        return new SchemaBranch(this.id, this.name, this.description, this.timestamp);
+        return new SchemaBranch(this.id, this.name, this.schemaMetadataName, this.description, this.timestamp);
     }
 }

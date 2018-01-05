@@ -257,14 +257,6 @@ public interface ISchemaRegistryService {
     Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException;
 
     /**
-     * @param schemaBranchName name of the schema branch
-     * @param schemaFieldQuery {@link SchemaFieldQuery} instance to be run
-     *
-     * @return schema versions matching the fields specified in the query
-     */
-    Collection<SchemaVersionKey> findSchemasByFields(String schemaBranchName, SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException;
-
-    /**
      * Uploads the given {@code inputStream} of any file and returns the identifier for which it can be downloaded later
      * with {@link #downloadFile(String)}.
      *

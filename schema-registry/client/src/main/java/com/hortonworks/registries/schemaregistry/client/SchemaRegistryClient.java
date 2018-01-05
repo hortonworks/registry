@@ -875,16 +875,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
-        return findSchemasByFields(SchemaBranch.MASTER_BRANCH, schemaFieldQuery);
-    }
-
-    @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(String schemaBranchName, SchemaFieldQuery schemaFieldQuery) {
         WebTarget target = currentSchemaRegistryTargets().searchFieldsTarget;
         for (Map.Entry<String, String> entry : schemaFieldQuery.toQueryMap().entrySet()) {
             target = target.queryParam(entry.getKey(), entry.getValue());
         }
-        target.queryParam("branch", schemaBranchName);
 
         return getEntities(target, SchemaVersionKey.class);
     }

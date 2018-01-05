@@ -14,12 +14,14 @@
 -- ;
 
 CREATE TABLE IF NOT EXISTS "schema_branch" (
-  "id"          SERIAL          UNIQUE NOT NULL,
-  "name"        VARCHAR(255)    NOT NULL,
-  "description" TEXT,
-  "timestamp"   BIGINT          DEFAULT NULL,
-  PRIMARY KEY ("name"),
-  UNIQUE ("id")
+  "id"                   SERIAL          UNIQUE NOT NULL,
+  "name"                 VARCHAR(255)    NOT NULL,
+  "schemaMetadataName"   VARCHAR(255)    NOT NULL,
+  "description"          TEXT,
+  "timestamp"            BIGINT          DEFAULT NULL,
+  PRIMARY KEY ("id"),
+  FOREIGN KEY ("schemaMetadataName") REFERENCES "schema_metadata_info" ("name") ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE ("name", "schemaMetadataName")
 );
 
 CREATE TABLE IF NOT EXISTS "schema_branch_version_mapping" (
@@ -30,17 +32,23 @@ CREATE TABLE IF NOT EXISTS "schema_branch_version_mapping" (
   FOREIGN KEY ("schemaVersionInfoId") REFERENCES "schema_version_info" (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-INSERT INTO "schema_branch" ("name","description") VALUES ('MASTER', 'Schemas in this branch are meant to be consumed for production environment');
-
 CREATE OR REPLACE FUNCTION update_schema_version_branch()
   RETURNS void AS $$
   DECLARE
       branch_id  BIGINT;
+      branch_desc TEXT;
+      metadata_cursor CURSOR FOR
+         SELECT "name" FROM "schema_metadata_info";
       id_cursor CURSOR FOR
-         SELECT "id" FROM "schema_version_info";
+         SELECT "id","name" FROM "schema_version_info";
   BEGIN
-    SELECT "id" INTO branch_id FROM "schema_branch" WHERE "name" = 'MASTER';
+    FOR meta_ptr IN metadata_cursor LOOP
+        branch_desc := '''MASTER'' branch for schema metadata ''' || meta_ptr."name" || '''' ;
+        INSERT INTO "schema_branch" ("name", "schemaMetadataName", "description") VALUES ('MASTER', meta_ptr."name", branch_desc);
+    END LOOP;
+
     FOR ptr IN id_cursor LOOP
+        SELECT "id" INTO branch_id FROM "schema_branch" WHERE "name" = 'MASTER' AND "schemaMetadataName" = ptr."name";
         INSERT INTO "schema_branch_version_mapping" VALUES (branch_id, ptr.id);
     END LOOP;
   END;
