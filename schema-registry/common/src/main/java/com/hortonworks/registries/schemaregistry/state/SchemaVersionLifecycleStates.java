@@ -145,7 +145,7 @@ public final class SchemaVersionLifecycleStates {
     private static final class ReviewedState extends AbstractInbuiltSchemaLifecycleState {
 
         private ReviewedState() {
-            super("ReviewedState",
+            super("Reviewed",
                   (byte) 4,
                   "This schema version is successfully reviewed"
                  );
