@@ -30,6 +30,8 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleContext;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+import com.hortonworks.registries.schemaregistry.state.details.InitializedStateDetails;
+import com.hortonworks.registries.schemaregistry.utils.ObjectMapperUtils;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
@@ -531,10 +533,21 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 SchemaVersionLifecycleContext context = null;
                 try {
                     context = schemaVersionLifecycleManager.createSchemaVersionLifeCycleContext(schemaVersionInfo.getId(), SchemaVersionLifecycleStates.INITIATED);
-                    schemaVersionInfo.setDetails(SchemaVersionLifecycleStates.INITIATED.getStateTransitionMessage(context));
+                    InitializedStateDetails.MergeInfo mergeInfo = null;
+                    if (context.getDetails() == null) {
+                        mergeInfo = null;
+                    } else {
+                        try {
+                            InitializedStateDetails details = ObjectMapperUtils.deserialize(context.getDetails(), InitializedStateDetails.class);
+                            mergeInfo = details.getMergeInfo();
+                        } catch (IOException e) {
+                            throw new RuntimeException(String.format("Failed to serialize state details of schema version : '%s'",context.getSchemaVersionId()),e);
+                        }
+                    }
+                    schemaVersionInfo.setMergeInfo(mergeInfo);
                 } catch (SchemaNotFoundException e) {
                     // If the schema version has never been in 'INITIATED' state, then SchemaNotFoundException error is thrown which is expected
-                    schemaVersionInfo.setDetails(schemaVersionLifecycleManager.getSchemaVersionLifecycleStateMachine().getStates().get(schemaVersionInfo.getStateId()).getStateTransitionMessage(context));
+                    schemaVersionInfo.setMergeInfo(null);
                 }
             });
             aggregatedSchemaBranches.add(new AggregatedSchemaBranch(schemaBranch, rootVersion, schemaVersionInfos));

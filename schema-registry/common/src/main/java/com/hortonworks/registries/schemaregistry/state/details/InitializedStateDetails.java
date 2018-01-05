@@ -26,50 +26,50 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 public class InitializedStateDetails implements AbstractStateDetails {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class MergedBranchDetails {
+    public static class MergeInfo {
         @JsonProperty
-        private String branchName;
+        private String schemaBranchName;
         @JsonProperty
-        private Long versionId;
+        private Long schemaVersionId;
 
-        private MergedBranchDetails() {
+        private MergeInfo() {
 
         }
 
-        public MergedBranchDetails(String branchName, Long versionId) {
-            this.branchName = branchName;
-            this.versionId = versionId;
+        public MergeInfo(String branchName, Long versionId) {
+            this.schemaBranchName = branchName;
+            this.schemaVersionId = versionId;
         }
 
         @JsonIgnore
-        public String getBranchName() {
-            return branchName;
+        public String getSchemaBranchName() {
+            return schemaBranchName;
         }
 
         @JsonIgnore
-        public Long getVersionId() {
-            return versionId;
+        public Long getSchemaVersionId() {
+            return schemaVersionId;
         }
     }
 
     @JsonProperty
-    private MergedBranchDetails mergedBranchDetails = null;
+    private MergeInfo mergeInfo = null;
 
     private InitializedStateDetails() {
 
     }
 
     public InitializedStateDetails(String branchName, Long versionId) {
-        mergedBranchDetails = new MergedBranchDetails(branchName, versionId);
+        mergeInfo = new MergeInfo(branchName, versionId);
     }
 
     @JsonIgnore
-    public MergedBranchDetails getMergedBranchDetails() {
-        return mergedBranchDetails;
+    public MergeInfo getMergeInfo() {
+        return mergeInfo;
     }
 
-    public void setMergedBranchDetails(MergedBranchDetails mergedBranchDetails) {
-        this.mergedBranchDetails = mergedBranchDetails;
+    public void setMergeInfo(MergeInfo mergeInfo) {
+        this.mergeInfo = mergeInfo;
     }
 
     @JsonIgnore

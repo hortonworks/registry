@@ -39,8 +39,4 @@ public interface SchemaVersionLifecycleState {
      */
     String getDescription();
 
-    default String getStateTransitionMessage(SchemaVersionLifecycleContext schemaVersionLifecycleContext) {
-        return "";
-    }
-
 }

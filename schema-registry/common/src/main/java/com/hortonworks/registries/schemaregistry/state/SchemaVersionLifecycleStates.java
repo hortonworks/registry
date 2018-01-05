@@ -26,7 +26,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.state.details.AbstractStateDetails;
 import com.hortonworks.registries.schemaregistry.state.details.InitializedStateDetails;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -44,8 +43,6 @@ import java.util.stream.Collectors;
  * can be removed after a configured time. This may be useful for looking at changes of the schema version history.
  */
 public final class SchemaVersionLifecycleStates {
-
-    private static final ObjectMapper OBJECT_MAPPPER = new ObjectMapper();
 
     public static final InbuiltSchemaVersionLifecycleState INITIATED = new InitiatedState();
     public static final InbuiltSchemaVersionLifecycleState START_REVIEW = new StartReviewState();
@@ -82,21 +79,6 @@ public final class SchemaVersionLifecycleStates {
         @Override
         public void delete(SchemaVersionLifecycleContext context) throws SchemaLifecycleException, SchemaNotFoundException {
             transitionToDeleteState(context);
-        }
-
-        public String getStateTransitionMessage(SchemaVersionLifecycleContext context) {
-            InitializedStateDetails initializedStateDetails;
-            try {
-                if(context.getDetails() == null)
-                    return "";
-                 initializedStateDetails = OBJECT_MAPPPER.readValue(context.getDetails(), InitializedStateDetails.class);
-            } catch (IOException e) {
-                throw new RuntimeException(String.format("Failed to deserialize state details for schema version id : %s", context.getSchemaVersionId()), e);
-            }
-
-            if(initializedStateDetails == null)
-                return "";
-            return String.format("Merged from schema version id : '%s' of schema branch : '%s'", initializedStateDetails.getMergedBranchDetails().getVersionId(), initializedStateDetails.getMergedBranchDetails().getBranchName());
         }
 
         @Override
