@@ -141,6 +141,10 @@ public class SchemaVersionLifecycleManager {
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaMetadata, "schemaMetadata can't be null");
+        Preconditions.checkNotNull(schemaVersion, "schemaVersion can't be null");
+
+        checkSchemaText(schemaVersion.getSchemaText());
 
         SchemaVersionInfo schemaVersionInfo;
         String schemaName = schemaMetadata.getName();
@@ -169,12 +173,22 @@ public class SchemaVersionLifecycleManager {
         return new SchemaIdVersion(schemaMetadataId, schemaVersionInfo.getVersion(), schemaVersionInfo.getId());
     }
 
+    private void checkSchemaText(String schemaText) throws InvalidSchemaException {
+        if(schemaText == null || schemaText.trim().isEmpty()) {
+            throw new InvalidSchemaException();
+        }
+    }
+
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             String schemaName,
                                             SchemaVersion schemaVersion)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
+        Preconditions.checkNotNull(schemaVersion, "schemaVersion can't be null");
+
+        checkSchemaText(schemaVersion.getSchemaText());
 
         // check whether there exists schema-metadata for schema-metadata-key
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
@@ -191,6 +205,7 @@ public class SchemaVersionLifecycleManager {
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        checkSchemaText(schemaVersion.getSchemaText());
 
         SchemaVersionInfo schemaVersionInfo;
         // check whether there exists schema-metadata for schema-metadata-key
@@ -212,6 +227,7 @@ public class SchemaVersionLifecycleManager {
                                                                String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
 
         return getLatestSchemaVersionInfo(schemaBranchName, schemaName, SchemaVersionLifecycleStates.ENABLED.getId());
     }
@@ -220,14 +236,17 @@ public class SchemaVersionLifecycleManager {
                                                         String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
 
         return getLatestSchemaVersionInfo(schemaBranchName, schemaName, null);
     }
 
-    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName,
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName,
+                                                        String schemaName,
                                                         Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
 
         Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaBranchName, schemaName);
 
@@ -245,11 +264,14 @@ public class SchemaVersionLifecycleManager {
     }
 
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
-        return getLatestSchemaVersionInfo(schemaName, (Byte) null);
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
+
+        return getLatestSchemaVersionInfo(schemaName,(Byte) null);
     }
 
-    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName,
-                                                        Byte stateId) throws SchemaNotFoundException {
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName, Byte stateId) throws SchemaNotFoundException {
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
+
         Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
 
         SchemaVersionInfo latestSchema = null;
