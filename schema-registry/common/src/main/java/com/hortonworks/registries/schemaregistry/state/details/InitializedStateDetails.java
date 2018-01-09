@@ -25,50 +25,24 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializedStateDetails implements AbstractStateDetails {
 
-    public class MergedBranchDetails {
-        @JsonProperty
-        private String branchName;
-        @JsonProperty
-        private Long versionId;
-
-        private MergedBranchDetails() {
-
-        }
-
-        public MergedBranchDetails(String branchName, Long versionId) {
-            this.branchName = branchName;
-            this.versionId = versionId;
-        }
-
-        @JsonIgnore
-        public String getBranchName() {
-            return branchName;
-        }
-
-        @JsonIgnore
-        public Long getVersionId() {
-            return versionId;
-        }
-    }
-
     @JsonProperty
-    private Boolean isMergedFromBranch = false;
-
-    @JsonProperty
-    private MergedBranchDetails mergedBranchDetails = null;
+    private MergeInfo mergeInfo = null;
 
     private InitializedStateDetails() {
 
     }
 
     public InitializedStateDetails(String branchName, Long versionId) {
-        isMergedFromBranch = true;
-        mergedBranchDetails = new MergedBranchDetails(branchName, versionId);
+        mergeInfo = new MergeInfo(branchName, versionId);
     }
 
     @JsonIgnore
-    public MergedBranchDetails getMergedBranchDetails() {
-        return mergedBranchDetails;
+    public MergeInfo getMergeInfo() {
+        return mergeInfo;
+    }
+
+    public void setMergeInfo(MergeInfo mergeInfo) {
+        this.mergeInfo = mergeInfo;
     }
 
     @JsonIgnore

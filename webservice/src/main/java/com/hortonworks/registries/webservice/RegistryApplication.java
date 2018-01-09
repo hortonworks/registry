@@ -62,7 +62,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
     protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
-    protected StorageManager storageManager = null;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
@@ -136,7 +135,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
+        StorageManager storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
         TransactionManager transactionManager;
         if (storageManager instanceof TransactionManager)
             transactionManager = (TransactionManager) storageManager;
@@ -241,10 +240,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 }
             }
         }
-    }
-
-    public StorageManager getStorageManager() {
-        return storageManager;
     }
 
     public static void main(String[] args) throws Exception {

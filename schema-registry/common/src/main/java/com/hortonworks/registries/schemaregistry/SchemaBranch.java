@@ -24,10 +24,13 @@ import java.io.Serializable;
 public class SchemaBranch implements Serializable {
 
     public static final String MASTER_BRANCH = "MASTER";
+    public static final String MASTER_BRANCH_DESC = "'MASTER' branch for schema metadata '%s'";
+
     private static final long serialVersionUID = -5159269803911927338L;
 
     private Long id;
     private String name;
+    private String schemaMetadataName;
     private String description;
     private Long timestamp;
 
@@ -35,17 +38,18 @@ public class SchemaBranch implements Serializable {
 
     }
 
-    public SchemaBranch(String name, String description) {
-        this(name, description, null);
+    public SchemaBranch(String name, String schemaMetadataName) {
+        this(name, schemaMetadataName, null, null);
     }
 
-    public SchemaBranch(String name, String description, Long timestamp) {
-       this(null, name, description, timestamp);
+    public SchemaBranch(String name, String schemaMetadataName, String description, Long timestamp) {
+       this(null, name, schemaMetadataName, description, timestamp);
     }
 
-    public SchemaBranch(Long id, String name, String description, Long timestamp) {
+    public SchemaBranch(Long id, String name, String schemaMetadataName, String description, Long timestamp) {
         this.id = id;
         this.name = name;
+        this.schemaMetadataName = schemaMetadataName;
         this.description = description;
         this.timestamp = timestamp;
     }
@@ -57,6 +61,8 @@ public class SchemaBranch implements Serializable {
     public String getName() {
         return this.name;
     }
+
+    public String getSchemaMetadataName() { return  this.schemaMetadataName;}
 
     public Long getTimestamp() {
         return this.timestamp;
@@ -72,6 +78,7 @@ public class SchemaBranch implements Serializable {
         SchemaBranch schemaFieldInfo = (SchemaBranch) o;
 
         if (name != null ? !name.equals(schemaFieldInfo.name) : schemaFieldInfo.name != null) return false;
+        if (schemaMetadataName != null ? !schemaMetadataName.equals(schemaFieldInfo.schemaMetadataName) : schemaFieldInfo.schemaMetadataName != null) return false;
 
         return true;
     }
@@ -81,6 +88,7 @@ public class SchemaBranch implements Serializable {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (schemaMetadataName != null ? schemaMetadataName.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         return result;
@@ -91,6 +99,7 @@ public class SchemaBranch implements Serializable {
         return "SchemaBranch {" +
                 "id=" + id +
                 ", name='" + name + '\'' +
+                ", schemaMetadataName='" + schemaMetadataName + '\'' +
                 ", description='" + description + '\'' +
                 ", timestamp='" + timestamp + '\'' +
                 '}';

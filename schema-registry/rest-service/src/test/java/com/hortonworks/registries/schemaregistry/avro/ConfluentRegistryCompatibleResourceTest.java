@@ -18,7 +18,6 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.ErrorMessage;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.SchemaString;
@@ -84,7 +83,6 @@ public class ConfluentRegistryCompatibleResourceTest {
         String configPath = new File(Resources.getResource("schema-registry-test.yaml").toURI()).getAbsolutePath();
         localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         localSchemaRegistryServer.start();
-        SchemaRegistryUtil.createMasterBranch(localSchemaRegistryServer.getStorageManager());
         String rootUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
         rootTarget = createRootTarget(rootUrl);
     }

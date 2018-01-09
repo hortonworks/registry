@@ -29,7 +29,6 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.util.SchemaRegistryUtil;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
@@ -66,7 +65,6 @@ public class AvroSchemaRegistryTest {
         schema2 = getSchema("/device-compat.avsc");
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
-        SchemaRegistryUtil.createMasterBranch(storageManager);
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
         schemaRegistry.init(Collections.<String, Object>emptyMap());
@@ -179,6 +177,27 @@ public class AvroSchemaRegistryTest {
                                    .getVersion();
     }
 
+    @Test(expected = InvalidSchemaException.class)
+    public void testSchemaTextAsNull() throws Exception {
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                                                     new SchemaVersion(null, "Initial version of the schema"))
+                                   .getVersion();
+    }
+
+    @Test(expected = InvalidSchemaException.class)
+    public void testSchemaTextAsEmpty() throws Exception {
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                                                     new SchemaVersion("", "Initial version of the schema"))
+                                   .getVersion();
+    }
 
     @Test(expected = IncompatibleSchemaException.class)
     public void testIncompatibleSchemas() throws Exception {

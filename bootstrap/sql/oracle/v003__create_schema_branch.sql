@@ -16,10 +16,12 @@
 CREATE TABLE "schema_branch" (
   "id"                    NUMBER(19,0)          NOT NULL,
   "name"                  VARCHAR2(4000)        NOT NULL,
+  "schemaMetadataName"    VARCHAR(255)          NOT NULL,
   "description"           VARCHAR2(4000),
   "timestamp"             NUMBER(19,0),
-  CONSTRAINT schema_branch_pk PRIMARY KEY ("name"),
-  CONSTRAINT schema_branch_uk UNIQUE ("id")
+  CONSTRAINT schema_branch_pk PRIMARY KEY ("id"),
+  CONSTRAINT schema_branch_fk FOREIGN KEY ("schemaMetadataName") REFERENCES "schema_metadata_info" ("name") ON DELETE CASCADE,
+  CONSTRAINT schema_branch_uk UNIQUE ("name", "schemaMetadataName")
 );
 
 CREATE TABLE "schema_branch_version_mapping" (
@@ -32,15 +34,19 @@ CREATE TABLE "schema_branch_version_mapping" (
 
 CREATE SEQUENCE "SCHEMA_BRANCH" START WITH 1 INCREMENT BY 1 MAXVALUE 10000000000000000000;
 
-INSERT INTO "schema_branch" ("id", "name", "description") VALUES ("SCHEMA_BRANCH".NEXTVAL , 'MASTER', 'Schemas in this branch are meant to be consumed for production environment');
-
 CREATE OR REPLACE PROCEDURE update_schema_version_branch AUTHID CURRENT_USER AS
   branch_id  NUMBER;
+  master_desc VARCHAR2(4000);
 BEGIN
-    SELECT "id" INTO branch_id FROM "schema_branch" WHERE "name" = 'MASTER';
-
-    FOR ptr IN (SELECT "id" FROM "schema_version_info")
+    FOR metadata_ptr IN (SELECT "name" FROM "schema_metadata_info")
     LOOP
+        master_desc := '''MASTER'' branch for schema metadata ''' || metadata_ptr."name" || '''';
+        INSERT INTO "schema_branch" ("id", "name", "schemaMetadataName", "description") VALUES ("SCHEMA_BRANCH".NEXTVAL, 'MASTER', metadata_ptr."name", master_desc);
+    END LOOP;
+
+    FOR ptr IN (SELECT "id","name" FROM "schema_version_info")
+    LOOP
+        SELECT "id" INTO branch_id FROM "schema_branch" WHERE "name" = 'MASTER' AND "schemaMetadataName" = ptr."name";
         INSERT INTO "schema_branch_version_mapping" VALUES (branch_id, ptr."id");
     END LOOP;
     COMMIT;

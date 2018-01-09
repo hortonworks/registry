@@ -27,7 +27,12 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleContext;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
+import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+import com.hortonworks.registries.schemaregistry.state.details.InitializedStateDetails;
+import com.hortonworks.registries.schemaregistry.state.details.MergeInfo;
+import com.hortonworks.registries.schemaregistry.utils.ObjectMapperUtils;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
@@ -48,7 +53,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -131,8 +135,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private SchemaBranchCache.SchemaBranchFetcher createSchemaBranchFetcher() {
         return new SchemaBranchCache.SchemaBranchFetcher() {
             @Override
-            public SchemaBranch getSchemaBranch(String name) throws SchemaBranchNotFoundException {
-                return DefaultSchemaRegistry.this.getSchemaBranch(name);
+            public SchemaBranch getSchemaBranch(SchemaBranchKey schemaBranchKey) throws SchemaBranchNotFoundException {
+                return DefaultSchemaRegistry.this.getSchemaBranch(schemaBranchKey);
             }
 
             @Override
@@ -237,6 +241,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setId(nextId);
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
         storageManager.addOrUpdate(givenSchemaMetadataStorable);
+
+        // Add a schema branch for this metadata
+        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
+        schemaBranchStorable.setId(storageManager.nextId(SchemaBranchStorable.NAME_SPACE));
+        storageManager.add(schemaBranchStorable);
+
         return givenSchemaMetadataStorable.getId();
     }
 
@@ -366,22 +376,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery)
-            throws SchemaBranchNotFoundException, SchemaNotFoundException {
-        return findSchemasByFields(SchemaBranch.MASTER_BRANCH, schemaFieldQuery);
-    }
-
-    @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(String schemaBranchName, SchemaFieldQuery schemaFieldQuery)
-            throws SchemaBranchNotFoundException, SchemaNotFoundException {
-
-        Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
-
+    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
         List<QueryParam> queryParams = buildQueryParam(schemaFieldQuery);
 
         Collection<SchemaFieldInfoStorable> fieldInfos = storageManager.find(SchemaFieldInfoStorable.STORABLE_NAME_SPACE, queryParams);
-        List<SchemaVersionInfo> schemaVersionInfos = schemaVersionLifecycleManager.getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName)));
-        Set<Long> schemaVersionIds = schemaVersionInfos.stream().map(storable -> storable.getId()).collect(Collectors.toSet());
         Collection<SchemaVersionKey> schemaVersionKeys;
         if (fieldInfos != null && !fieldInfos.isEmpty()) {
             List<Long> schemaIds = new ArrayList<>();
@@ -393,11 +391,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             // add OR query to find items from store
             schemaVersionKeys = new ArrayList<>();
             for (Long schemaId : schemaIds) {
-                if(schemaVersionIds.contains(schemaId)) {
-                    SchemaVersionKey schemaVersionKey = getSchemaKey(schemaId);
-                    if (schemaVersionKey != null) {
-                        schemaVersionKeys.add(schemaVersionKey);
-                    }
+                SchemaVersionKey schemaVersionKey = getSchemaKey(schemaId);
+                if (schemaVersionKey != null) {
+                    schemaVersionKeys.add(schemaVersionKey);
                 }
             }
         } else {
@@ -533,7 +529,29 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         Collection<AggregatedSchemaBranch> aggregatedSchemaBranches = new ArrayList<>();
         for (SchemaBranch schemaBranch : getSchemaBranches(schemaName)) {
             Long rootVersion = schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH) ? null: schemaVersionLifecycleManager.getRootVersion(schemaBranch).getId();
-            aggregatedSchemaBranches.add(new AggregatedSchemaBranch(schemaBranch, rootVersion, getAllVersions(schemaBranch.getName(), schemaName)));
+            Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaBranch.getName(), schemaName);
+            schemaVersionInfos.stream().forEach(schemaVersionInfo -> {
+                SchemaVersionLifecycleContext context = null;
+                try {
+                    context = schemaVersionLifecycleManager.createSchemaVersionLifeCycleContext(schemaVersionInfo.getId(), SchemaVersionLifecycleStates.INITIATED);
+                    MergeInfo mergeInfo = null;
+                    if (context.getDetails() == null) {
+                        mergeInfo = null;
+                    } else {
+                        try {
+                            InitializedStateDetails details = ObjectMapperUtils.deserialize(context.getDetails(), InitializedStateDetails.class);
+                            mergeInfo = details.getMergeInfo();
+                        } catch (IOException e) {
+                            throw new RuntimeException(String.format("Failed to serialize state details of schema version : '%s'",context.getSchemaVersionId()),e);
+                        }
+                    }
+                    schemaVersionInfo.setMergeInfo(mergeInfo);
+                } catch (SchemaNotFoundException e) {
+                    // If the schema version has never been in 'INITIATED' state, then SchemaNotFoundException error is thrown which is expected
+                    schemaVersionInfo.setMergeInfo(null);
+                }
+            });
+            aggregatedSchemaBranches.add(new AggregatedSchemaBranch(schemaBranch, rootVersion, schemaVersionInfos));
         }
         return aggregatedSchemaBranches;
     }
@@ -561,27 +579,29 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         Preconditions.checkNotNull(schemaBranch.getName(), "Schema branch name can't be null");
 
+        SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
+
+        SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranch.getName(), schemaVersionInfo.getName());
         SchemaBranch existingSchemaBranch = null;
         try {
-            existingSchemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranch.getName()));
+            existingSchemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey));
         } catch (SchemaBranchNotFoundException e) {
             // Ignore this error
         }
 
         if (existingSchemaBranch != null)
-           throw new SchemaBranchAlreadyExistsException(String.format("A schema branch with name : \"%s\" already exists", schemaBranch.getName()));
+           throw new SchemaBranchAlreadyExistsException(String.format("A schema branch with name : '%s' already exists", schemaBranch.getName()));
         SchemaBranchStorable schemaBranchStorable = SchemaBranchStorable.from(schemaBranch);
+        schemaBranchStorable.setSchemaMetadataName(schemaVersionInfo.getName());
         schemaBranchStorable.setId(storageManager.nextId(SchemaBranchStorable.NAME_SPACE));
         storageManager.add(schemaBranchStorable);
 
         SchemaBranch persistedSchemaBranch;
         try {
-           persistedSchemaBranch  = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranch.getName()));
+           persistedSchemaBranch  = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey));
         } catch (SchemaBranchNotFoundException e) {
             throw new RuntimeException(String.format("Failed to fetch persisted schema branch : '%s' from the database", schemaBranch.getName()));
         }
-
-        SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
 
         SchemaBranchVersionMapping schemaBranchVersionMapping = new SchemaBranchVersionMapping(persistedSchemaBranch.getId(), schemaVersionInfo.getId());
         storageManager.add(schemaBranchVersionMapping);
@@ -635,13 +655,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             try {
                 schemaVersionLifecycleManager.deleteSchemaVersion(schemaBranchVersionMapping.getSchemaVersionInfoId());
             } catch (SchemaLifecycleException e) {
-                throw new InvalidSchemaBranchDeletionException(String.format("Failed to transition schema version : '%s' of schema branch : '%s' to delete state",schemaVersionId.toString(), schemaBranchId), e);
+                throw new InvalidSchemaBranchDeletionException(String.format("Failed to delete schema branch : '%s', all the schema versions should be either in 'INITIATED' or 'ChangesRequired' state ", schemaBranchId), e);
             } catch (SchemaNotFoundException e) {
                 throw new RuntimeException(String.format("Failed to delete schema version : '%s' of schema branch : '%s'",schemaVersionId.toString(), schemaBranchId), e);
             }
         }
 
-        storageManager.remove(new SchemaBranchStorable(schemaBranch.getName()).getStorableKey());
+        storageManager.remove(new SchemaBranchStorable(schemaBranchId).getStorableKey());
 
     }
 
@@ -768,11 +788,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                                 serDesInfos);
     }
 
-    private SchemaBranch getSchemaBranch(String name) throws SchemaBranchNotFoundException {
-        SchemaBranchStorable schemaBranchStorable = storageManager.get(new SchemaBranchStorable(name).getStorableKey());
-        if (schemaBranchStorable == null)
-            throw new SchemaBranchNotFoundException(String.format("Schema branch '%s' not found", name));
-        return schemaBranchStorable.toSchemaBranch();
+    private SchemaBranch getSchemaBranch(SchemaBranchKey schemaBranchKey) throws SchemaBranchNotFoundException {
+        List<QueryParam> queryParams = new ArrayList<>();
+        queryParams.add(new QueryParam(SchemaBranchStorable.NAME, schemaBranchKey.getSchemaBranchName()));
+        queryParams.add(new QueryParam(SchemaBranchStorable.SCHEMA_METADATA_NAME, schemaBranchKey.getSchemaMetadataName()));
+        Collection <SchemaBranchStorable> schemaBranchStorables = storageManager.find(SchemaBranchStorable.NAME_SPACE, queryParams);
+        if (schemaBranchStorables == null || schemaBranchStorables.isEmpty())
+            throw new SchemaBranchNotFoundException(String.format("Schema branch with key : %s not found", schemaBranchKey));
+        else if (schemaBranchStorables.size() > 1)
+            throw new SchemaBranchNotFoundException(String.format("Failed to unique determine a schema branch with key : %s", schemaBranchKey));
+        return schemaBranchStorables.iterator().next().toSchemaBranch();
     }
 
     private SchemaBranch getSchemaBranch(Long id) throws SchemaBranchNotFoundException {

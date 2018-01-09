@@ -33,7 +33,9 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
 
     @Override
     public Response toResponse(Throwable ex) {
-        if (ex instanceof ProcessingException) {
+        if (ex instanceof ProcessingException
+                || ex instanceof IllegalArgumentException
+                || ex instanceof NullPointerException) {
             return BadRequestException.of().getResponse();
         } else if (ex instanceof WebServiceException) {
             return ((WebServiceException) ex).getResponse();

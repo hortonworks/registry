@@ -39,6 +39,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateTransition;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionService;
+import com.hortonworks.registries.schemaregistry.utils.ObjectMapperUtils;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
@@ -74,7 +75,6 @@ public class SchemaVersionLifecycleManager {
     private SchemaVersionInfoCache schemaVersionInfoCache;
     private SchemaVersionRetriever schemaVersionRetriever;
     private static final int DEFAULT_RETRY_CT = 5;
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private StorageManager storageManager;
     private SchemaBranchCache schemaBranchCache;
     private DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher;
@@ -141,6 +141,10 @@ public class SchemaVersionLifecycleManager {
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaMetadata, "schemaMetadata can't be null");
+        Preconditions.checkNotNull(schemaVersion, "schemaVersion can't be null");
+
+        checkSchemaText(schemaVersion.getSchemaText());
 
         SchemaVersionInfo schemaVersionInfo;
         String schemaName = schemaMetadata.getName();
@@ -169,12 +173,22 @@ public class SchemaVersionLifecycleManager {
         return new SchemaIdVersion(schemaMetadataId, schemaVersionInfo.getVersion(), schemaVersionInfo.getId());
     }
 
+    private void checkSchemaText(String schemaText) throws InvalidSchemaException {
+        if(schemaText == null || schemaText.trim().isEmpty()) {
+            throw new InvalidSchemaException();
+        }
+    }
+
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             String schemaName,
                                             SchemaVersion schemaVersion)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
+        Preconditions.checkNotNull(schemaVersion, "schemaVersion can't be null");
+
+        checkSchemaText(schemaVersion.getSchemaText());
 
         // check whether there exists schema-metadata for schema-metadata-key
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
@@ -191,13 +205,14 @@ public class SchemaVersionLifecycleManager {
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        checkSchemaText(schemaVersion.getSchemaText());
 
         SchemaVersionInfo schemaVersionInfo;
         // check whether there exists schema-metadata for schema-metadata-key
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
         // check whether the same schema text exists
         schemaVersionInfo = findSchemaVersion(schemaBranchName, schemaMetadata.getType(), schemaVersion.getSchemaText(), schemaMetadataInfo
-                    .getId());
+                    .getSchemaMetadata().getName());
         if (schemaVersionInfo == null) {
             schemaVersionInfo = createSchemaVersion(schemaBranchName,
                                                     schemaMetadata,
@@ -211,6 +226,7 @@ public class SchemaVersionLifecycleManager {
     public SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
 
         return getLatestSchemaVersionInfo(schemaBranchName, schemaName, SchemaVersionLifecycleStates.ENABLED.getId());
     }
@@ -218,14 +234,17 @@ public class SchemaVersionLifecycleManager {
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
 
         return getLatestSchemaVersionInfo(schemaBranchName, schemaName, null);
     }
 
-    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName,
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName,
+                                                        String schemaName,
                                                         Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
 
         Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaBranchName, schemaName);
 
@@ -243,11 +262,15 @@ public class SchemaVersionLifecycleManager {
     }
 
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName) throws SchemaNotFoundException {
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
+
         return getLatestSchemaVersionInfo(schemaName,(Byte) null);
     }
 
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaName,
                                                         Byte stateId) throws SchemaNotFoundException  {
+        Preconditions.checkNotNull(schemaName, "schemaName can't be null");
+
         Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
 
         SchemaVersionInfo latestSchema = null;
@@ -277,7 +300,18 @@ public class SchemaVersionLifecycleManager {
             throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
         }
 
-        SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName));
+        SchemaBranch schemaBranch = null;
+        try {
+            schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(new SchemaBranchKey(schemaBranchName, schemaMetadata.getName())));
+        } catch (SchemaBranchNotFoundException e) {
+            // Ignore this error
+        }
+
+        if (schemaBranch == null) {
+            if( getAllVersions(schemaBranchName, schemaMetadata.getName()).size() != 0 )
+                throw new RuntimeException(String.format("Schema name : '%s' and branch name : '%s' has schema version, yet failed to obtain schema branch instance", schemaMetadata.getName(), schemaBranchName));
+
+        }
 
         // generate fingerprint, it parses the schema and checks for semantic validation.
         // throws InvalidSchemaException for invalid schemas.
@@ -333,7 +367,7 @@ public class SchemaVersionLifecycleManager {
                 schemaVersionStorable.setVersion(version + 1);
 
                 storageManager.add(schemaVersionStorable);
-                updateSchemaVersionState(schemaVersionStorable.getId(), initialState, schemaVersion.getStateDetails());
+                updateSchemaVersionState(schemaVersionStorable.getId(), 1, initialState, schemaVersion.getStateDetails());
 
                 break;
             } catch (StorageException e) {
@@ -365,11 +399,11 @@ public class SchemaVersionLifecycleManager {
         return schemaVersionStorable.toSchemaVersionInfo();
     }
 
-    private void updateSchemaVersionState(Long schemaVersionId, Byte initialState, byte[] stateDetails) throws SchemaNotFoundException {
+    private void updateSchemaVersionState(Long schemaVersionId, Integer sequence, Byte initialState, byte[] stateDetails) throws SchemaNotFoundException {
         try {
             SchemaVersionLifecycleContext schemaVersionLifecycleContext =
                     new SchemaVersionLifecycleContext(schemaVersionId,
-                                                      1,
+                                                      sequence,
                                                       createSchemaVersionService(),
                                                       schemaVersionLifecycleStateMachine,
                                                       customSchemaStateExecutor);
@@ -444,12 +478,13 @@ public class SchemaVersionLifecycleManager {
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
 
         Collection<SchemaVersionInfo> schemaVersionInfos;
+        SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranchName, schemaName);
 
         if(schemaBranchName.equals(SchemaBranch.MASTER_BRANCH)) {
             List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
             Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams,
                     Collections.singletonList(OrderByField.of(SchemaVersionStorable.VERSION, true)));
-            Set<Long> schemaVersionIds = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName))).
+            Set<Long> schemaVersionIds = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey))).
                     stream().map(schemaVersionInfo -> schemaVersionInfo.getId()).collect(Collectors.toSet());
 
             if (storables != null && !storables.isEmpty() && schemaVersionIds !=null && !schemaVersionIds.isEmpty()) {
@@ -462,7 +497,7 @@ public class SchemaVersionLifecycleManager {
                 schemaVersionInfos = Collections.emptyList();
             }
         } else  {
-            schemaVersionInfos = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName)));
+            schemaVersionInfos = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey)));
             if(schemaVersionInfos == null || schemaVersionInfos.isEmpty())
                  schemaVersionInfos = Collections.emptyList();
         }
@@ -503,8 +538,7 @@ public class SchemaVersionLifecycleManager {
             throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
         }
 
-        Long schemaMetadataId = schemaMetadataInfo.getId();
-        return findSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaMetadataId);
+        return findSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadataInfo.getSchemaMetadata().getType(), schemaText, schemaName);
     }
 
     private SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
@@ -520,39 +554,38 @@ public class SchemaVersionLifecycleManager {
     private SchemaVersionInfo findSchemaVersion(String schemaBranchName,
                                                 String type,
                                                 String schemaText,
-                                                Long schemaMetadataId) throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+                                                String schemaMetadataName) throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
 
         String fingerPrint = getFingerprint(type, schemaText);
         LOG.debug("Fingerprint of the given schema [{}] is [{}]", schemaText, fingerPrint);
         List<QueryParam> queryParams = Lists.newArrayList(
-                new QueryParam(SchemaVersionStorable.SCHEMA_METADATA_ID, schemaMetadataId.toString()),
+                new QueryParam(SchemaVersionStorable.NAME, schemaMetadataName),
                 new QueryParam(SchemaVersionStorable.FINGERPRINT, fingerPrint));
 
         Collection<SchemaVersionStorable> versionedSchemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
 
-        SchemaVersionStorable schemaVersionStorable = null;
+        Set<Long> matchedSchemaVersionIds = null;
         if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
             if (versionedSchemas.size() > 1) {
-                LOG.warn("Exists more than one schema with schemaMetadataId: [{}] and schemaText [{}]", schemaMetadataId, schemaText);
+                LOG.warn("Exists more than one schema with schemaMetadataName: [{}] and schemaText [{}]", schemaMetadataName, schemaText);
             }
 
-            schemaVersionStorable = versionedSchemas.iterator().next();
+            matchedSchemaVersionIds = versionedSchemas.stream().map(schemaVersionStorable -> schemaVersionStorable.getId()).collect(Collectors.toSet());
         }
 
-        if (schemaVersionStorable == null) {
+        if (matchedSchemaVersionIds == null) {
             return null;
         } else {
+            SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(new SchemaBranchKey(schemaBranchName, schemaMetadataName)));
 
-            SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchName));
-            final Long schemaVersionId = schemaVersionStorable.getId();
+            for (SchemaVersionInfo schemaVersionInfo : getSortedSchemaVersions(schemaBranch)) {
+                if (matchedSchemaVersionIds.contains(schemaVersionInfo.getId()))
+                    return schemaVersionInfo;
+              }
 
-            if (getSortedSchemaVersions(schemaBranch).stream().filter( storable -> storable.getId().equals(schemaVersionId)).findAny().isPresent()) {
-                return schemaVersionStorable.toSchemaVersionInfo();
-            } else {
-                return null;
-            }
+            return null;
         }
     }
 
@@ -583,11 +616,19 @@ public class SchemaVersionLifecycleManager {
         try {
             SchemaVersionInfo schemaVersionInfo = getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
             SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaVersionInfo.getName());
-            Set<SchemaBranch> schemaBranches = getSchemaBranches(schemaVersionId);
-            if (schemaBranches.size() > 1)
-                throw new SchemaVersionMergeException(String.format("Can't determine a unique schema branch for schema version id : '%s' not found", schemaVersionId));
-            else if (schemaBranches.size() == 0)
+            Set<SchemaBranch> schemaBranches = getSchemaBranches(schemaVersionId).stream().filter(schemaBranch -> {
+                try {
+                    return !getRootVersion(schemaBranch).getId().equals(schemaVersionId);
+                } catch (SchemaNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }).collect(Collectors.toSet());
+
+            if (schemaBranches.size() > 1) {
+                throw new SchemaVersionMergeException(String.format("Can't determine a unique schema branch for schema version id : '%s'", schemaVersionId));
+            } else if (schemaBranches.size() == 0) {
                 throw new SchemaVersionMergeException(String.format("Schema version id : '%s' is not associated with any branch", schemaVersionId));
+            }
             Long schemaBranchId = schemaBranches.iterator().next().getId();
             SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchId));
 
@@ -602,27 +643,40 @@ public class SchemaVersionLifecycleManager {
 
             byte [] initializedStateDetails;
             try {
-                initializedStateDetails = objectMapper.writeValueAsBytes(new InitializedStateDetails(schemaBranch.getName(), schemaVersionInfo.getId()));
+                initializedStateDetails = ObjectMapperUtils.serialize(new InitializedStateDetails(schemaBranch.getName(), schemaVersionInfo.getId()));
             } catch (JsonProcessingException e) {
-                 throw new RuntimeException(String.format("Failed to serialize intializedState for %s and %s",schemaBranch.getName(), schemaVersionInfo.getId()));
+                 throw new RuntimeException(String.format("Failed to serialize initializedState for %s and %s",schemaBranch.getName(), schemaVersionInfo.getId()));
             }
 
-            SchemaIdVersion schemaIdVersion = null;
+            SchemaVersionInfo createdSchemaVersionInfo;
             try {
-                schemaIdVersion = addSchemaVersion(SchemaBranch.MASTER_BRANCH,
-                        schemaMetadataInfo,
+                SchemaVersionInfo existingSchemaVersionInfo = findSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadataInfo.getSchemaMetadata().getType(),
+                        schemaVersionInfo.getSchemaText(), schemaMetadataInfo.getSchemaMetadata().getName());
+                if (existingSchemaVersionInfo != null)
+                    return new SchemaIdVersion(schemaMetadataInfo.getId(), existingSchemaVersionInfo.getVersion(), existingSchemaVersionInfo.getId());
+                createdSchemaVersionInfo = createSchemaVersion(SchemaBranch.MASTER_BRANCH,
+                        schemaMetadataInfo.getSchemaMetadata(),
+                        schemaMetadataInfo.getId(),
                         new SchemaVersion(schemaVersionInfo.getSchemaText(),
                                 schemaVersionInfo.getDescription(),
                                 SchemaVersionLifecycleStates.INITIATED.getId(),
-                                initializedStateDetails)
-                );
+                                initializedStateDetails));
             } catch (InvalidSchemaException e) {
                 throw new SchemaVersionMergeException(String.format("Failed to merge schema version : '%s'", schemaVersionId.toString()), e);
             }
 
-            updateSchemaVersionState(schemaIdVersion.getSchemaVersionId(), SchemaVersionLifecycleStates.ENABLED.getId(), null);
+             Collection<SchemaVersionStateStorable> schemaVersionStates =
+                        storageManager.find(SchemaVersionStateStorable.NAME_SPACE,
+                            Collections.singletonList(new QueryParam(SchemaVersionStateStorable.SCHEMA_VERSION_ID,
+                                   schemaVersionId.toString())),
+                            Collections.singletonList(OrderByField.of(SchemaVersionStateStorable.SEQUENCE, true)));
 
-            return schemaIdVersion;
+             if (schemaVersionStates.isEmpty() || schemaVersionStates == null)
+                  throw new RuntimeException(String.format("The database doesn't have any state transition recorded for the schema version id : '%s'",schemaVersionId));
+
+             updateSchemaVersionState(createdSchemaVersionInfo.getId(), schemaVersionStates.iterator().next().getSequence(), SchemaVersionLifecycleStates.ENABLED.getId(), null);
+
+            return new SchemaIdVersion(schemaMetadataInfo.getId(), createdSchemaVersionInfo.getVersion(), createdSchemaVersionInfo.getId());
         } catch (SchemaBranchNotFoundException e) {
             throw new SchemaVersionMergeException(String.format("Failed to merge schema version : '%s'",schemaVersionId.toString()),e);
         }
@@ -652,6 +706,34 @@ public class SchemaVersionLifecycleManager {
                                                                                   schemaVersionLifecycleStateMachine,
                                                                                   customSchemaStateExecutor);
         return new ImmutablePair<>(context, schemaVersionLifecycleState);
+    }
+
+    public SchemaVersionLifecycleContext createSchemaVersionLifeCycleContext(Long schemaVersionId, SchemaVersionLifecycleState schemaVersionLifecycleState) throws SchemaNotFoundException {
+        // get the current state from storage for the given versionID
+        // we can use a query to get max value for the column for a given schema-version-id but StorageManager does not
+        // have API to take custom queries.
+
+        List<QueryParam> queryParams = new ArrayList<>();
+        queryParams.add(new QueryParam(SchemaVersionStateStorable.SCHEMA_VERSION_ID, schemaVersionId.toString()));
+        queryParams.add(new QueryParam(SchemaVersionStateStorable.STATE, schemaVersionLifecycleState.getId().toString()));
+
+        Collection<SchemaVersionStateStorable> schemaVersionStates =
+                storageManager.find(SchemaVersionStateStorable.NAME_SPACE,
+                        queryParams,
+                        Collections.singletonList(OrderByField.of(SchemaVersionStateStorable.SEQUENCE, true)));
+        if (schemaVersionStates.isEmpty()) {
+            throw new SchemaNotFoundException("No schema versions found with id " + schemaVersionId);
+        }
+        SchemaVersionStateStorable stateStorable = schemaVersionStates.iterator().next();
+
+        SchemaVersionService schemaVersionService = createSchemaVersionService();
+        SchemaVersionLifecycleContext context = new SchemaVersionLifecycleContext(stateStorable.getSchemaVersionId(),
+                stateStorable.getSequence(),
+                schemaVersionService,
+                schemaVersionLifecycleStateMachine,
+                customSchemaStateExecutor);
+        context.setDetails(stateStorable.getDetails());
+        return context;
     }
 
     private SchemaVersionService createSchemaVersionService() {
@@ -700,12 +782,8 @@ public class SchemaVersionLifecycleManager {
         stateStorable.setSequence(schemaVersionLifecycleContext.getSequence() + 1);
         stateStorable.setStateId(stateId);
         stateStorable.setTimestamp(System.currentTimeMillis());
+        stateStorable.setDetails(schemaVersionLifecycleContext.getDetails());
         stateStorable.setId(storageManager.nextId(SchemaVersionStateStorable.NAME_SPACE));
-        try {
-            stateStorable.setDetails(objectMapper.writeValueAsBytes(schemaVersionLifecycleContext.getDetails()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(String.format("Failed to persist state details for the schema version : '%s'", schemaVersionId.toString()), e);
-        }
 
         storageManager.add(stateStorable);
 
