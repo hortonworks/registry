@@ -36,27 +36,6 @@
         <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>com.hortonworks.registries</groupId>
-        <artifactId>schema-registry-core</artifactId>
-        <version>${project.version}</version>
-        <type>test-jar</type>
-        <scope>test</scope>
-        <exclusions>
-            <exclusion>
-                <groupId>com.fasterxml.jackson.jaxrs</groupId>
-                <artifactId>jackson-jaxrs-base</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>com.fasterxml.jackson.jaxrs</groupId>
-                <artifactId>jackson-jaxrs-json-provider</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-            </exclusion>
-        </exclusions>
-    </dependency>
-    <dependency>
         <groupId>io.dropwizard</groupId>
         <artifactId>dropwizard-testing</artifactId>
         <version>${dropwizard.version}</version>
