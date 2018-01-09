@@ -23,6 +23,7 @@ import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -1033,7 +1034,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas/versionsById/{versionId}/branch")
-    @ApiOperation(value = "Fork a new schema branch given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Fork a new schema branch given its schema name and version id",
+            response = SchemaBranch.class,
+            tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
     public Response createSchemaBranch( @ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId,
                                         @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch) {
@@ -1052,12 +1055,14 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas/{versionId}/merge")
-    @ApiOperation(value = "Merge a schema version to master given its version id", tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Merge a schema version to master given its version id",
+            response = SchemaVersionMergeResult.class,
+            tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
     public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
         try {
-            SchemaIdVersion schemaIdVersion = schemaRegistry.mergeSchemaVersion(schemaVersionId);
-            return WSUtils.respondEntity(schemaIdVersion, Response.Status.OK);
+            SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId);
+            return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
         } catch (IncompatibleSchemaException e) {

@@ -111,7 +111,7 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException
      * @throws IncompatibleSchemaException
      */
-    default SchemaIdVersion mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
+    default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
         throw new UnsupportedOperationException();
     }
 
