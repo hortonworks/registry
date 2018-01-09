@@ -30,6 +30,7 @@ export default class ChangeState extends Component{
     SchemaREST.changeStateOfVersion(version.id, this.refs.stateSelect.value, {}).then((res) => {
       version.stateId = parseInt(this.refs.stateSelect.value);
       this.setState({edit: false});
+      this.props.stateChangeCallback();
     }).catch(Utils.showError);
   }
   onEdit(){
