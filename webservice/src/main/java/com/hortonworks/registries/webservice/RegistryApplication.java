@@ -178,7 +178,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         environment.jersey().register(new TransactionEventListener(transactionManager));
 
         final ErrorPageErrorHandler errorPageErrorHandler = new ErrorPageErrorHandler();
-        errorPageErrorHandler.addErrorPage(Response.Status.UNAUTHORIZED.getStatusCode(), "/401.html");
+        errorPageErrorHandler.addErrorPage(Response.Status.UNAUTHORIZED.getStatusCode(), "/ui/401.html");
         environment.getApplicationContext().setErrorHandler(errorPageErrorHandler);
     }
 
