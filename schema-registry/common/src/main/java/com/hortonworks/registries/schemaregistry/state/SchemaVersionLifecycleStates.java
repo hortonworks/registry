@@ -368,6 +368,11 @@ public final class SchemaVersionLifecycleStates {
         }
 
         @Override
+        public void delete(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
+            transitionToDeleteState(schemaVersionLifecycleContext);
+        }
+
+        @Override
         public String toString() {
             return "ArchivedState{" + super.toString() + "}";
         }

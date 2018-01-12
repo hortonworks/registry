@@ -653,9 +653,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             SchemaBranchVersionMapping schemaBranchVersionMapping = schemaBranchVersionMappingIterator.next();
             Long schemaVersionId = schemaBranchVersionMapping.getSchemaVersionInfoId();
             try {
+                List<QueryParam> schemaVersionCountParam = new ArrayList<>();
+                schemaVersionCountParam.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_VERSION_INFO_ID, schemaBranchVersionMapping.getSchemaVersionInfoId().toString()));
+                Collection<SchemaBranchVersionMapping> mappingsForSchemaTiedToMutlipleBranch = storageManager.find(SchemaBranchVersionMapping.NAMESPACE, schemaVersionCountParam);
+                if (mappingsForSchemaTiedToMutlipleBranch.size() > 1) {
+                    SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
+                    Long forkedBranchId = mappingsForSchemaTiedToMutlipleBranch.stream().filter(mapping -> !mapping.getSchemaBranchId().equals(schemaBranchId)).findFirst().get().getSchemaBranchId();
+                    SchemaBranch forkedBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(forkedBranchId));
+                    throw new InvalidSchemaBranchDeletionException(String.format("Failed to delete schema branch, schema version : '%s' is tied to branch : '%s'", schemaVersionInfo.getVersion(), forkedBranch.getName()));
+                }
                 schemaVersionLifecycleManager.deleteSchemaVersion(schemaBranchVersionMapping.getSchemaVersionInfoId());
             } catch (SchemaLifecycleException e) {
-                throw new InvalidSchemaBranchDeletionException(String.format("Failed to delete schema branch : '%s', all the schema versions should be either in 'INITIATED' or 'ChangesRequired' state ", schemaBranchId), e);
+                throw new InvalidSchemaBranchDeletionException("Failed to delete schema branch, all schema versions in the branch should be in one of 'INITIATED', 'ChangesRequired' or 'Archived' state ", e);
             } catch (SchemaNotFoundException e) {
                 throw new RuntimeException(String.format("Failed to delete schema version : '%s' of schema branch : '%s'",schemaVersionId.toString(), schemaBranchId), e);
             }
