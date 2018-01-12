@@ -109,6 +109,9 @@ export class StateMachine {
   getStateById(id){
     return _.find(this.states, {id: id});
   }
+  getStateByName(name){
+    return _.find(this.states, {name: name});
+  }
   getTransitionStateOptions(id){
     var options = _.filter(this.transitions, (t) => {
       return t.sourceStateId == id;
