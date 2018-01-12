@@ -15,6 +15,9 @@
  */
 package com.hortonworks.registries.schemaregistry.webservice;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -35,6 +38,8 @@ import java.util.StringTokenizer;
  *
  */
 public class RewriteUriFilter implements Filter {
+    private static final Logger LOG = LoggerFactory.getLogger(RewriteUriFilter.class);
+
     private FilterConfig filterConfig;
     private Map<String, String> forwardPaths;
     private Map<String, String> redirectPaths;
@@ -68,6 +73,7 @@ public class RewriteUriFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         if (!handleRewriteUris(servletRequest, servletResponse)) {
+            LOG.debug("No rewrite or forward path found, ");
             filterChain.doFilter(servletRequest, servletResponse);
         }
     }
@@ -77,12 +83,16 @@ public class RewriteUriFilter implements Filter {
         String reqPath = ((HttpServletRequest) servletRequest).getRequestURI();
 
         String redirectPath = findRewritePath(reqPath, redirectPaths);
+        LOG.debug("request path [{}], redirectPath [{}]", reqPath, redirectPath);
         if(redirectPath != null) {
+            LOG.info("Redirecting request [{}] to [{}]", servletRequest, redirectPath);
             ((HttpServletResponse) servletResponse).sendRedirect(redirectPath);
             return true;
         } else {
             String forwardPath = findRewritePath(reqPath, forwardPaths);
+            LOG.debug("request path [{}], forwardPath [{}]", reqPath, forwardPath);
             if (forwardPath != null) {
+                LOG.info("Forwarding request [{}] to [{}]", servletRequest, forwardPath);
                 servletRequest.getRequestDispatcher(forwardPath + reqPath)
                               .forward(servletRequest, servletResponse);
                 return true;
