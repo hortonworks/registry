@@ -250,6 +250,12 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
 
     @Override
     public void rollbackTransaction() {
+        // The guarantee in interface is accomplished once the instance has an implementation of
+        // QueryExecutor which extends AbstractQueryExecutor,
+        // given that AbstractQueryExecutor.rollbackTransaction() guarantees the behavior.
+
+        // Another implementations of QueryExecutor should provide a way of guaranteeing the
+        // behavior, like call closeConnection() when rollbackTransaction() is failing.
         queryExecutor.rollbackTransaction();
     }
 
