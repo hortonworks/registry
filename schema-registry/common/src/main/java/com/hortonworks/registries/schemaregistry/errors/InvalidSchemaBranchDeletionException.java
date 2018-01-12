@@ -16,6 +16,10 @@
 
 package com.hortonworks.registries.schemaregistry.errors;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 public class InvalidSchemaBranchDeletionException extends Exception {
 
     public InvalidSchemaBranchDeletionException(String message) {
@@ -24,5 +28,15 @@ public class InvalidSchemaBranchDeletionException extends Exception {
 
     public InvalidSchemaBranchDeletionException(String message, Throwable throwable) {
         super(message, throwable);
+    }
+
+    public static InvalidSchemaBranchDeletionException getSchemaVersionTiedToOtherBranchException(Map<Integer, List<String>> versionToBranchMap) {
+        StringBuffer message = new StringBuffer();
+        message.append("Failed to delete branch");
+        versionToBranchMap.entrySet().stream().forEach(versionWithBranch -> {
+            message.append(", schema version : '").append(versionWithBranch.getKey()).append("'");
+            message.append(" is tied to branch : '").append(Arrays.toString(versionWithBranch.getValue().toArray())).append("'");
+        });
+        return new InvalidSchemaBranchDeletionException(message.toString());
     }
 }

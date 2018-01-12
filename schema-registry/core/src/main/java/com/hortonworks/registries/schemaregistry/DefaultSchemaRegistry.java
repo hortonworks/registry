@@ -649,6 +649,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaBranchVersionMapping rootVersionMapping = schemaBranchVersionMappingIterator.next();
         storageManager.remove(rootVersionMapping.getStorableKey());
 
+        // Validate if the schema versions in the branch to be deleted are the root versions for other branches
+        Map <Integer, List<String>> schemaVersionTiedToOtherBranch = new HashMap<>();
+        List <Long> schemaVersionsToBeDeleted = new ArrayList<>();
+
         while(schemaBranchVersionMappingIterator.hasNext()) {
             SchemaBranchVersionMapping schemaBranchVersionMapping = schemaBranchVersionMappingIterator.next();
             Long schemaVersionId = schemaBranchVersionMapping.getSchemaVersionInfoId();
@@ -658,15 +662,31 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 Collection<SchemaBranchVersionMapping> mappingsForSchemaTiedToMutlipleBranch = storageManager.find(SchemaBranchVersionMapping.NAMESPACE, schemaVersionCountParam);
                 if (mappingsForSchemaTiedToMutlipleBranch.size() > 1) {
                     SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
-                    Long forkedBranchId = mappingsForSchemaTiedToMutlipleBranch.stream().filter(mapping -> !mapping.getSchemaBranchId().equals(schemaBranchId)).findFirst().get().getSchemaBranchId();
-                    SchemaBranch forkedBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(forkedBranchId));
-                    throw new InvalidSchemaBranchDeletionException(String.format("Failed to delete schema branch, schema version : '%s' is tied to branch : '%s'", schemaVersionInfo.getVersion(), forkedBranch.getName()));
+                    List<String> forkedBranchName = mappingsForSchemaTiedToMutlipleBranch.stream().
+                            filter(mapping -> !mapping.getSchemaBranchId().equals(schemaBranchId)).
+                            map(mappping -> schemaBranchCache.get(SchemaBranchCache.Key.of(mappping.getSchemaBranchId())).getName()).
+                            collect(Collectors.toList());
+                    schemaVersionTiedToOtherBranch.put(schemaVersionInfo.getVersion(), forkedBranchName);
+                } else {
+                    schemaVersionsToBeDeleted.add(schemaVersionId);
                 }
-                schemaVersionLifecycleManager.deleteSchemaVersion(schemaBranchVersionMapping.getSchemaVersionInfoId());
-            } catch (SchemaLifecycleException e) {
-                throw new InvalidSchemaBranchDeletionException("Failed to delete schema branch, all schema versions in the branch should be in one of 'INITIATED', 'ChangesRequired' or 'Archived' state ", e);
             } catch (SchemaNotFoundException e) {
                 throw new RuntimeException(String.format("Failed to delete schema version : '%s' of schema branch : '%s'",schemaVersionId.toString(), schemaBranchId), e);
+            }
+        }
+
+        // Delete schema versions after validation
+        if (!schemaVersionTiedToOtherBranch.isEmpty()) {
+            throw InvalidSchemaBranchDeletionException.getSchemaVersionTiedToOtherBranchException(schemaVersionTiedToOtherBranch);
+        } else {
+            for (Long schemaVersionId : schemaVersionsToBeDeleted) {
+                try {
+                    schemaVersionLifecycleManager.deleteSchemaVersion(schemaVersionId);
+                } catch (SchemaLifecycleException e) {
+                    throw new InvalidSchemaBranchDeletionException("Failed to delete schema branch, all schema versions in the branch should be in one of 'INITIATED', 'ChangesRequired' or 'Archived' state ", e);
+                } catch (SchemaNotFoundException e) {
+                    throw new RuntimeException(String.format("Failed to delete schema version : '%s' of schema branch : '%s'", schemaVersionId.toString(), schemaBranchId), e);
+                }
             }
         }
 
