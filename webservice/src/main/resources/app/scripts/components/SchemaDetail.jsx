@@ -234,12 +234,22 @@ export default class SchemaDetail extends Component{
     }).catch(Utils.showError);
   }
   onMerge(v){
+    const {schema} = this.props;
     SchemaREST.mergeBranch(v.id, {}).then((res) => {
       if (res.responseMessage !== undefined) {
         FSReactToastr.error(<CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt);
       }else{
-        FSReactToastr.success(<strong>Branch Merged Successfully</strong>);
-        this.fetchAndSelectBranch();
+        FSReactToastr.success(<strong>{res.mergeMessage}</strong>);
+        let branchName = 'MASTER';
+        schema.schemaBranches.forEach((b)=>{
+          const hasVersion = b.schemaVersionInfos.find((v)=>{
+            return v.version == res.schemaIdVersion.version && v.id == res.schemaIdVersion.schemaVersionId;
+          });
+          if(hasVersion) {
+            branchName = b.schemaBranch.name;
+          }
+        });
+        this.fetchAndSelectBranch(branchName);
       }
     }).catch(Utils.showError);
   }
@@ -324,6 +334,16 @@ export default class SchemaDetail extends Component{
   }
   branchValueRenderer = (val) => {
     return val.schemaBranch.name;
+  }
+  stateChangeCallback = () =>{
+    let branchName = this.state.selectedBranch.schemaBranch.name;
+    const {schema} = this.props;
+    this.getAggregatedSchema().then((res)=>{
+      const currentBranch = _.find(schema.schemaBranches, (branch) => {
+        return branch.schemaBranch.name == branchName;
+      });
+      this.setState({selectedBranch: currentBranch});
+    });
   }
   render(){
     const {schema, key, StateMachine} = this.props;
@@ -435,6 +455,7 @@ export default class SchemaDetail extends Component{
                         version={v}
                         StateMachine={StateMachine}
                         showEditBtn={currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1)}
+                        stateChangeCallback={this.stateChangeCallback}
                       />
                       {currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1) ? 
                       forkMergeComp
