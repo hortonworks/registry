@@ -30,7 +30,7 @@ import {
     Tooltip,
     Popover
 } from 'react-bootstrap';
-import FSModal from './FSModal';
+import FSModal, {Confirm} from './FSModal';
 import {toastOpt} from '../utils/Constants';
 import FSReactToastr from './FSReactToastr';
 import CommonNotification from '../utils/CommonNotification';
@@ -43,6 +43,7 @@ import SchemaVersionDiff from '../containers/Registry-Services/SchemaRegistry/Sc
 import SchemaVersionForm from '../containers/Registry-Services/SchemaRegistry/SchemaVersionForm';
 import ChangeState from './SchemaChangeState';
 import ForkBranch from './ForkBranchForm';
+import SchemaBranches from './SchemaBranches';
 
 export default class SchemaDetail extends Component{
   constructor(props){
@@ -223,49 +224,56 @@ export default class SchemaDetail extends Component{
   onFork(v){
     this.refs.ForkBranch.show();
   }
-  fetchAndSelectBranch = (branchName) => {
+  fetchAndSelectBranch = (branchName, version) => {
     branchName = branchName || 'MASTER';
     this.getAggregatedSchema().then(() => {
       const newBranch = _.find(this.props.schema.schemaBranches, (branch) => {
         return branch.schemaBranch.name == branchName;
       });
-      const currentVersion = Utils.sortArray(newBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
+      const currentVersion = version || Utils.sortArray(newBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
       this.setState({selectedBranch: newBranch, currentVersion});
     }).catch(Utils.showError);
   }
   onMerge(v){
     const {schema} = this.props;
-    SchemaREST.mergeBranch(v.id, {}).then((res) => {
-      if (res.responseMessage !== undefined) {
-        FSReactToastr.error(<CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt);
-      }else{
-        FSReactToastr.success(<strong>{res.mergeMessage}</strong>);
-        let branchName = 'MASTER';
-        schema.schemaBranches.forEach((b)=>{
-          const hasVersion = b.schemaVersionInfos.find((v)=>{
-            return v.version == res.schemaIdVersion.version && v.id == res.schemaIdVersion.schemaVersionId;
+    this.refs.Confirm.show({title: 'Are you sure you want to merge this branch?'}).then((confirmBox) => {
+      SchemaREST.mergeBranch(v.id, {}).then((res) => {
+        if (res.responseMessage !== undefined) {
+          FSReactToastr.error(<CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt);
+        }else{
+          FSReactToastr.success(<strong>{res.mergeMessage}</strong>);
+          let branchName = 'MASTER';
+          schema.schemaBranches.forEach((b)=>{
+            const hasVersion = b.schemaVersionInfos.find((v)=>{
+              return v.version == res.schemaIdVersion.version && v.id == res.schemaIdVersion.schemaVersionId;
+            });
+
+            if(hasVersion) {
+              branchName = b.schemaBranch.name;
+            }
           });
-          if(hasVersion) {
-            branchName = b.schemaBranch.name;
-          }
-        });
-        this.fetchAndSelectBranch(branchName);
-      }
-    }).catch(Utils.showError);
+          this.fetchAndSelectBranch(branchName, res.schemaIdVersion.version);
+        }
+      }).catch(Utils.showError);
+      confirmBox.cancel();
+    });
   }
   onDeleteBranch = () => {
     const {selectedBranch} = this.state;
     const branchId = selectedBranch.schemaBranch.id;
-    SchemaREST.deleteBranch(branchId, {}).then((res) => {
-      if (res.responseMessage !== undefined) {
-        FSReactToastr.error(<CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt);
-      }else{
-        FSReactToastr.success(
-          <strong>Branch Deleted Successfully</strong>
-        );
-        this.fetchAndSelectBranch();
-      }
-    }).catch(Utils.showError);
+    this.refs.Confirm.show({title: 'Are you sure you want to delete this branch?'}).then((confirmBox) => {
+      SchemaREST.deleteBranch(branchId, {}).then((res) => {
+        if (res.responseMessage !== undefined) {
+          FSReactToastr.error(<CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt);
+        } else {
+          FSReactToastr.success(
+            <strong>Branch Deleted Successfully</strong>
+          );
+          this.fetchAndSelectBranch();
+        }
+      }).catch(Utils.showError);
+      confirmBox.cancel();
+    });
   }
   handleSaveFork(){
     const {currentVersion} = this.state;
@@ -314,7 +322,7 @@ export default class SchemaDetail extends Component{
         </div>
         <div className="panel-sections">
           <h6 className="schema-th">Branch</h6>
-          <h4 className={`schema-td ${!collapsed ? "font-blue-color" : ''}`}>{s.schemaBranches.length}</h4>
+          <h4 className={`schema-td ${!collapsed ? "font-blue-color" : ''}`}>{s.schemaBranches.length}&nbsp;&nbsp;<a title="View Branches" style={{display: 'inline', cursor: 'pointer'}} onClick={this.showSchemaBranches}><i className="fa fa-code-fork fa-rotate-90"></i></a></h4>
         </div>
         <div className="panel-sections">
           <h6 className="schema-th">Serializer & Deserializer</h6>
@@ -345,12 +353,20 @@ export default class SchemaDetail extends Component{
       this.setState({selectedBranch: currentBranch});
     });
   }
+  showSchemaBranches = (e) => {
+    this.setState({
+      modalTitle: 'Schema Branches',
+      showBranchesModal: true
+    });
+    e.stopPropagation();
+  }
   render(){
     const {schema, key, StateMachine} = this.props;
     const {selectedBranch, collapsed, renderCodemirror, currentVersion} = this.state;
     const s = schema;
     const {name, evolve} = s.schemaMetadata;
     const currentBranchName = selectedBranch.schemaBranch.name;
+    const enabledStateId = StateMachine.getStateByName('Enabled').id;
 
     const jsonoptions = {
       lineNumbers: true,
@@ -364,7 +380,7 @@ export default class SchemaDetail extends Component{
 
     var versionObj = _.find(selectedBranch.schemaVersionInfos, {version: currentVersion});
     var sortedVersions =  Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'version', false);
-    
+
     const expandButton = ' ' || <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
       <i className="fa fa-arrows-alt"></i>
     </button>;
@@ -405,6 +421,12 @@ export default class SchemaDetail extends Component{
                 <h6 className="schema-th"><strong>Version Description :</strong></h6>
                 <p>{versionObj.description}</p>
               </div>
+              {currentBranchName == 'MASTER' && versionObj.mergeInfo !== null?
+                <div className="row">
+                <h6 className="schema-th"><strong>Merge Detail :</strong></h6>
+                <p>{'Merged from version ' + versionObj.mergeInfo.schemaVersionId + ' of branch "' + versionObj.mergeInfo.schemaBranchName + '".'}</p>
+                </div>
+              : ''}
             </div>
             <div className="col-sm-6">
               {renderCodemirror ?
@@ -457,7 +479,7 @@ export default class SchemaDetail extends Component{
                         showEditBtn={currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1)}
                         stateChangeCallback={this.stateChangeCallback}
                       />
-                      {currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1) ? 
+                      {currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1) && v.stateId == enabledStateId ?
                       forkMergeComp
                       : ''}
                   </li>
@@ -524,6 +546,18 @@ export default class SchemaDetail extends Component{
         <FSModal ref="ForkBranch" data-title={"Fork a New Schema Branch"} data-resolve={this.handleSaveFork.bind(this)}>
           <ForkBranch ref="ForkBranchForm" FormData={{}}/>
         </FSModal>
+        <Modal ref="schemaBranchesModal" bsSize="large" show={this.state.showBranchesModal} onHide={()=>{this.setState({ showBranchesModal: false });}}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.modalTitle}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <SchemaBranches schema={this.props.schema}/>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={()=>{this.setState({ showBranchesModal: false });}}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+        <Confirm ref="Confirm"/>
       </Panel>
     );
   }

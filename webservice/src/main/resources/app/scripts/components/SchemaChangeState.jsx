@@ -27,6 +27,10 @@ export default class ChangeState extends Component{
 
   changeState(e){
     const {version} = this.props;
+    if(version.stateId === parseInt(this.refs.stateSelect.value, 10)) {
+      this.setState({edit: false});
+      return;
+    }
     SchemaREST.changeStateOfVersion(version.id, this.refs.stateSelect.value, {}).then((res) => {
       version.stateId = parseInt(this.refs.stateSelect.value);
       this.setState({edit: false});

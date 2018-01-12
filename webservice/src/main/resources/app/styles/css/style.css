@@ -876,6 +876,13 @@ footer {
   background-color: #999;
 }
 
+.modal-lg .modal-body {
+  max-width: 900px;
+  overflow-y: auto;
+  max-height: 470px;
+  overflow-y: auto;
+}
+
 .close {
   font-size: 24px;
   opacity: 1;
@@ -951,7 +958,7 @@ label {
   border-radius: 4px;
 }
 
-.CodeMirror-lint-tooltip {
+.CodeMirror-lint-tooltip, .gitgraph-tooltip {
   z-index: 9999;
 }
 
@@ -1078,6 +1085,10 @@ label {
 
 .panel-registry-body .schema-th {
   margin-bottom: 10px;
+}
+
+.panel-registry-body p {
+  word-wrap: break-word;
 }
 
 .schema-status-icon {
