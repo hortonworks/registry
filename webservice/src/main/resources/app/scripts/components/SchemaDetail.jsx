@@ -325,6 +325,16 @@ export default class SchemaDetail extends Component{
   branchValueRenderer = (val) => {
     return val.schemaBranch.name;
   }
+  stateChangeCallback = () =>{
+    let branchName = this.state.selectedBranch.schemaBranch.name;
+    const {schema} = this.props;
+    this.getAggregatedSchema().then((res)=>{
+      const currentBranch = _.find(schema.schemaBranches, (branch) => {
+        return branch.schemaBranch.name == branchName;
+      });
+      this.setState({selectedBranch: currentBranch});
+    });
+  }
   render(){
     const {schema, key, StateMachine} = this.props;
     const {selectedBranch, collapsed, renderCodemirror, currentVersion} = this.state;
@@ -435,6 +445,7 @@ export default class SchemaDetail extends Component{
                         version={v}
                         StateMachine={StateMachine}
                         showEditBtn={currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1)}
+                        stateChangeCallback={this.stateChangeCallback}
                       />
                       {currentVersion === v.version && !(currentBranchName !== 'MASTER' && i == sortedVersions.length-1) ? 
                       forkMergeComp
