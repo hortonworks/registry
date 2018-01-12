@@ -174,12 +174,9 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         for (Object resource : resourcesToRegister) {
             environment.jersey().register(resource);
         }
+        
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(new TransactionEventListener(transactionManager));
-
-        final ErrorPageErrorHandler errorPageErrorHandler = new ErrorPageErrorHandler();
-        errorPageErrorHandler.addErrorPage(Response.Status.UNAUTHORIZED.getStatusCode(), "/401.html");
-        environment.getApplicationContext().setErrorHandler(errorPageErrorHandler);
     }
 
     private void enableCORS(Environment environment) {
