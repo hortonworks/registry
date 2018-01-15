@@ -649,15 +649,50 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaBranchVersionMapping rootVersionMapping = schemaBranchVersionMappingIterator.next();
         storageManager.remove(rootVersionMapping.getStorableKey());
 
+        // Validate if the schema versions in the branch to be deleted are the root versions for other branches
+        Map <Integer, List<String>> schemaVersionTiedToOtherBranch = new HashMap<>();
+        List <Long> schemaVersionsToBeDeleted = new ArrayList<>();
+
         while(schemaBranchVersionMappingIterator.hasNext()) {
             SchemaBranchVersionMapping schemaBranchVersionMapping = schemaBranchVersionMappingIterator.next();
             Long schemaVersionId = schemaBranchVersionMapping.getSchemaVersionInfoId();
             try {
-                schemaVersionLifecycleManager.deleteSchemaVersion(schemaBranchVersionMapping.getSchemaVersionInfoId());
-            } catch (SchemaLifecycleException e) {
-                throw new InvalidSchemaBranchDeletionException(String.format("Failed to delete schema branch : '%s', all the schema versions should be either in 'INITIATED' or 'ChangesRequired' state ", schemaBranchId), e);
+                List<QueryParam> schemaVersionCountParam = new ArrayList<>();
+                schemaVersionCountParam.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_VERSION_INFO_ID, schemaBranchVersionMapping.getSchemaVersionInfoId().toString()));
+                Collection<SchemaBranchVersionMapping> mappingsForSchemaTiedToMutlipleBranch = storageManager.find(SchemaBranchVersionMapping.NAMESPACE, schemaVersionCountParam);
+                if (mappingsForSchemaTiedToMutlipleBranch.size() > 1) {
+                    SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
+                    List<String> forkedBranchName = mappingsForSchemaTiedToMutlipleBranch.stream().
+                            filter(mapping -> !mapping.getSchemaBranchId().equals(schemaBranchId)).
+                            map(mappping -> schemaBranchCache.get(SchemaBranchCache.Key.of(mappping.getSchemaBranchId())).getName()).
+                            collect(Collectors.toList());
+                    schemaVersionTiedToOtherBranch.put(schemaVersionInfo.getVersion(), forkedBranchName);
+                } else {
+                    schemaVersionsToBeDeleted.add(schemaVersionId);
+                }
             } catch (SchemaNotFoundException e) {
                 throw new RuntimeException(String.format("Failed to delete schema version : '%s' of schema branch : '%s'",schemaVersionId.toString(), schemaBranchId), e);
+            }
+        }
+
+        // Delete schema versions after validation
+        if (!schemaVersionTiedToOtherBranch.isEmpty()) {
+            StringBuilder message = new StringBuilder();
+            message.append("Failed to delete branch");
+            schemaVersionTiedToOtherBranch.entrySet().stream().forEach(versionWithBranch -> {
+                message.append(", schema version : '").append(versionWithBranch.getKey()).append("'");
+                message.append(" is tied to branch : '").append(Arrays.toString(versionWithBranch.getValue().toArray())).append("'");
+            });
+            throw new InvalidSchemaBranchDeletionException(message.toString());
+        } else {
+            for (Long schemaVersionId : schemaVersionsToBeDeleted) {
+                try {
+                    schemaVersionLifecycleManager.deleteSchemaVersion(schemaVersionId);
+                } catch (SchemaLifecycleException e) {
+                    throw new InvalidSchemaBranchDeletionException("Failed to delete schema branch, all schema versions in the branch should be in one of 'INITIATED', 'ChangesRequired' or 'Archived' state ", e);
+                } catch (SchemaNotFoundException e) {
+                    throw new RuntimeException(String.format("Failed to delete schema version : '%s' of schema branch : '%s'", schemaVersionId.toString(), schemaBranchId), e);
+                }
             }
         }
 
