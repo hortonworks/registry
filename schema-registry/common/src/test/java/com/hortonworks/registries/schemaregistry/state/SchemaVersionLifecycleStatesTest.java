@@ -158,7 +158,6 @@ public class SchemaVersionLifecycleStatesTest {
         checkEnableNotSupported(archived, context);
         checkDisableNotSupported(archived, context);
         checkArchiveNotSupported(archived, context);
-        checkDeleteNotSupported(archived, context);
     }
 
     @Test
