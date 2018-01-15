@@ -69,7 +69,6 @@ public class SchemaBranchCache {
         try {
             schemaBranch = loadingCache.get(key);
         } catch (UncheckedExecutionException e) {
-            LOG.error("Error occurred while retrieving schema branch for [{}]", key, e);
             Throwable cause = e.getCause();
             if (cause instanceof SchemaBranchNotFoundException) {
                 throw (SchemaBranchNotFoundException) cause;

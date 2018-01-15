@@ -677,7 +677,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         // Delete schema versions after validation
         if (!schemaVersionTiedToOtherBranch.isEmpty()) {
-            throw InvalidSchemaBranchDeletionException.getSchemaVersionTiedToOtherBranchException(schemaVersionTiedToOtherBranch);
+            StringBuilder message = new StringBuilder();
+            message.append("Failed to delete branch");
+            schemaVersionTiedToOtherBranch.entrySet().stream().forEach(versionWithBranch -> {
+                message.append(", schema version : '").append(versionWithBranch.getKey()).append("'");
+                message.append(" is tied to branch : '").append(Arrays.toString(versionWithBranch.getValue().toArray())).append("'");
+            });
+            throw new InvalidSchemaBranchDeletionException(message.toString());
         } else {
             for (Long schemaVersionId : schemaVersionsToBeDeleted) {
                 try {
