@@ -772,9 +772,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaBranch> getSchemaBranches(String schemaName) {
-        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/branches"),
-                SchemaBranch.class);
+    public Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException {
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/branches");
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request().get();
+            }
+        });
+
+        int status = response.getStatus();
+        if (status == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new SchemaNotFoundException(response.readEntity(String.class));
+        } else if (status != Response.Status.OK.getStatusCode()) {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
+
+        return parseResponseAsEntities(response.readEntity(String.class), SchemaBranch.class);
     }
 
     @Override
@@ -1017,13 +1031,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
-        List<T> entities = new ArrayList<>();
         String response = Subject.doAs(subject, new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
             }
         });
+        return parseResponseAsEntities(response, clazz);
+    }
+
+    private <T> List<T> parseResponseAsEntities(String response, Class<T> clazz) {
+        List<T> entities = new ArrayList<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode node = mapper.readTree(response);

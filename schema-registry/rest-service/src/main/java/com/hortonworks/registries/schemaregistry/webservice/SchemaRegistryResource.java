@@ -1026,6 +1026,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             Collection<SchemaBranch> schemaBranches = schemaRegistry.getSchemaBranches(schemaName);
             return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
+        }  catch(SchemaNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schema branches", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());

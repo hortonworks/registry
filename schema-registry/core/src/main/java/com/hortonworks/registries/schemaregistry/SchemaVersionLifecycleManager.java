@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -891,7 +892,8 @@ public class SchemaVersionLifecycleManager {
         }
 
         if (storables.size() > 1) {
-            throw new RuntimeException(String.format("Schema version with id : '%s' is tied with more than one branch", schemaVersionId));
+            List<String> branchNamesTiedToSchema = storables.stream().map(storable -> schemaBranchCache.get(SchemaBranchCache.Key.of(storable.getSchemaBranchId())).getName()).collect(Collectors.toList());
+            throw new RuntimeException(String.format("Schema version with id : '%s' is tied with more than one branch : '%s' ", schemaVersionId.toString(), Arrays.toString(branchNamesTiedToSchema.toArray())));
         }
 
         storageManager.remove(new StorableKey(SchemaBranchVersionMapping.NAMESPACE,
