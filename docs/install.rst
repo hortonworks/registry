@@ -166,3 +166,35 @@ Edit the following section to add appropriate database and user settings
 6. Start the registry server
 
 ``sudo ./bin/registry start``
+
+
+Running Schema Registry in Docker Mode
+--------------------------------------
+
+1. Install and run Docker Engine from https://docs.docker.com/engine/installation/
+
+2. Configure `registry-dev.yaml`. To create Schema Registry docker image,
+
+::
+
+    mvn -f $REGISTRY_HOME/pom.xml clean package
+    mvn -f $REGISTRY_HOME/docker/pom.xml package -Pdocker
+
+3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
+
+4. To run the schema registry from image in detached mode,
+
+::
+
+   cd $REGISTRY_HOME/docker
+   docker-compose -f docker-compose.yml up -d
+
+5. Use `$REGISTRY_HOME/docker/docker-compose.yml` to configure the ports exposed from the container.
+
+6. To view the registry logs,
+::
+
+    docker container ls
+    docker container logs `CONTAINER ID`
+
+7. To view client, use "http://localhost:3090"
