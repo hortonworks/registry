@@ -59,7 +59,7 @@ public class ManagedTransaction {
      * @throws Exception
      */
     public <R> R executeFunction(ManagedTransactionFunction.Arg0<R> fn) throws Exception {
-        return executeTransactionBlockInternal((_void) -> fn.apply());
+        return executeTransactionBlockInternal(() -> fn.apply());
     }
 
     /**
@@ -72,7 +72,7 @@ public class ManagedTransaction {
      * @throws Exception
      */
     public <T1, R> R executeFunction(ManagedTransactionFunction.Arg1<T1, R> fn, T1 t) throws Exception {
-        return executeTransactionBlockInternal((_void) -> fn.apply(t));
+        return executeTransactionBlockInternal(() -> fn.apply(t));
     }
 
     /**
@@ -86,7 +86,7 @@ public class ManagedTransaction {
      * @throws Exception
      */
     public <T1, T2, R> R executeFunction(ManagedTransactionFunction.Arg2<T1, T2, R> fn, T1 t1, T2 t2) throws Exception {
-        return executeTransactionBlockInternal((_void) -> fn.apply(t1, t2));
+        return executeTransactionBlockInternal(() -> fn.apply(t1, t2));
     }
 
     /**
@@ -102,7 +102,7 @@ public class ManagedTransaction {
      */
     public <T1, T2, T3, R> R executeFunction(ManagedTransactionFunction.Arg3<T1, T2, T3, R> fn,
                                              T1 t1, T2 t2, T3 t3) throws Exception {
-        return executeTransactionBlockInternal((_void) -> fn.apply(t1, t2, t3));
+        return executeTransactionBlockInternal(() -> fn.apply(t1, t2, t3));
     }
 
     /**
@@ -119,7 +119,7 @@ public class ManagedTransaction {
      */
     public <T1, T2, T3, T4, R> R executeFunction(ManagedTransactionFunction.Arg4<T1, T2, T3, T4, R> fn,
                                                  T1 t1, T2 t2, T3 t3, T4 t4) throws Exception {
-        return executeTransactionBlockInternal((_void) -> fn.apply(t1, t2, t3, t4));
+        return executeTransactionBlockInternal(() -> fn.apply(t1, t2, t3, t4));
     }
 
     /**
@@ -137,7 +137,7 @@ public class ManagedTransaction {
      */
     public <T1, T2, T3, T4, T5, R> R executeFunction(ManagedTransactionFunction.Arg5<T1, T2, T3, T4, T5, R> fn,
                                                      T1 t1, T2 t2, T3 t3, T4 t4, T5 t5) throws Exception {
-        return executeTransactionBlockInternal((_void) -> fn.apply(t1, t2, t3, t4, t5));
+        return executeTransactionBlockInternal(() -> fn.apply(t1, t2, t3, t4, t5));
     }
 
     /**
@@ -147,7 +147,7 @@ public class ManagedTransaction {
      * @throws Exception
      */
     public void executeConsumer(ManagedTransactionConsumer.Arg0 fn) throws Exception {
-        executeTransactionBlockInternal((_void) -> {
+        executeTransactionBlockInternal(() -> {
             fn.apply();
             return null;
         });
@@ -161,7 +161,7 @@ public class ManagedTransaction {
      * @throws Exception
      */
     public <T1> void executeConsumer(ManagedTransactionConsumer.Arg1<T1> fn, T1 t) throws Exception {
-        executeTransactionBlockInternal((_void) -> {
+        executeTransactionBlockInternal(() -> {
             fn.apply(t);
             return null;
         });
@@ -176,7 +176,7 @@ public class ManagedTransaction {
      * @throws Exception
      */
     public <T1, T2> void executeConsumer(ManagedTransactionConsumer.Arg2<T1, T2> fn, T1 t1, T2 t2) throws Exception {
-        executeTransactionBlockInternal((_void) -> {
+        executeTransactionBlockInternal(() -> {
             fn.apply(t1, t2);
             return null;
         });
@@ -193,7 +193,7 @@ public class ManagedTransaction {
      */
     public <T1, T2, T3> void executeConsumer(ManagedTransactionConsumer.Arg3<T1, T2, T3> fn,
                                              T1 t1, T2 t2, T3 t3) throws Exception {
-        executeTransactionBlockInternal((_void) -> {
+        executeTransactionBlockInternal(() -> {
             fn.apply(t1, t2, t3);
             return null;
         });
@@ -211,7 +211,7 @@ public class ManagedTransaction {
      */
     public <T1, T2, T3, T4> void executeConsumer(ManagedTransactionConsumer.Arg4<T1, T2, T3, T4> fn,
                                                  T1 t1, T2 t2, T3 t3, T4 t4) throws Exception {
-        executeTransactionBlockInternal((_void) -> {
+        executeTransactionBlockInternal(() -> {
             fn.apply(t1, t2, t3, t4);
             return null;
         });
@@ -230,17 +230,17 @@ public class ManagedTransaction {
      */
     public <T1, T2, T3, T4, T5> void executeConsumer(ManagedTransactionConsumer.Arg5<T1, T2, T3, T4, T5> fn,
                                                      T1 t1, T2 t2, T3 t3, T4 t4, T5 t5) throws Exception {
-        executeTransactionBlockInternal((_void) -> {
+        executeTransactionBlockInternal(() -> {
             fn.apply(t1, t2, t3, t4, t5);
             return null;
         });
     }
 
-    private <R> R executeTransactionBlockInternal(FunctionCapableOfThrowingException<Void, R> fn) throws Exception {
+    private <R> R executeTransactionBlockInternal(SupplierCapableOfThrowingException<R> fn) throws Exception {
         boolean committed = false;
         try {
             transactionManager.beginTransaction(transactionIsolation);
-            R r = fn.apply(null);
+            R r = fn.get();
             transactionManager.commitTransaction();
             committed = true;
             return r;
@@ -265,8 +265,8 @@ public class ManagedTransaction {
         }
     }
 
-    private interface FunctionCapableOfThrowingException<T, R> {
-        R apply(T t) throws Exception;
+    private interface SupplierCapableOfThrowingException<R> {
+        R get() throws Exception;
     }
 
 }
