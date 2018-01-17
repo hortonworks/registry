@@ -293,7 +293,7 @@ public class SchemaBranchLifeCycleTest {
         schemaRegistryClient.deleteSchemaBranch(schemaBranch1.getId());
     }
 
-    @Test (expected = RuntimeException.class)
+    @Test (expected = SchemaLifecycleException.class)
     public void deleteRootSchemaOfBranch() throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, SchemaBranchAlreadyExistsException, SchemaLifecycleException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 

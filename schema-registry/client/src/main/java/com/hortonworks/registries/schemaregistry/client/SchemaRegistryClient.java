@@ -528,7 +528,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         schemaVersionInfoCache.invalidateSchema(new SchemaVersionInfoCache.Key(schemaVersionKey));
 
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey
@@ -543,11 +543,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         handleDeleteSchemaResponse(response);
     }
 
-    private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException {
+    private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException, SchemaLifecycleException {
         String msg = response.readEntity(String.class);
         switch (Response.Status.fromStatusCode(response.getStatus())) {
             case NOT_FOUND:
                 throw new SchemaNotFoundException(msg);
+            case BAD_REQUEST:
+                throw new SchemaLifecycleException(msg);
             case INTERNAL_SERVER_ERROR:
                 throw new RuntimeException(msg);
         }
