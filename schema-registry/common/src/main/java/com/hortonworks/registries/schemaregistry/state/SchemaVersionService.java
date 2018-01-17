@@ -31,7 +31,7 @@ public interface SchemaVersionService {
 
     public void updateSchemaVersionState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaNotFoundException;
 
-    public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException;
+    public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
 
     SchemaMetadataInfo getSchemaMetadata(long schemaVersionId) throws SchemaNotFoundException;
 

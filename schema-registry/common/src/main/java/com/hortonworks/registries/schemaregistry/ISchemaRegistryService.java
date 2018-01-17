@@ -169,7 +169,7 @@ public interface ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException when there is no schema version exists with the given {@code schemaVersionKey}
      */
-    void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
+    void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException;
 
     /**
      * @param schemaVersionKey key identifying a schema and a version
