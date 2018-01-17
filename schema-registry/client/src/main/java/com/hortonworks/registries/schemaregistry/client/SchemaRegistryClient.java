@@ -528,7 +528,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         schemaVersionInfoCache.invalidateSchema(new SchemaVersionInfoCache.Key(schemaVersionKey));
 
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey
@@ -543,11 +543,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         handleDeleteSchemaResponse(response);
     }
 
-    private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException {
+    private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException, SchemaLifecycleException {
         String msg = response.readEntity(String.class);
         switch (Response.Status.fromStatusCode(response.getStatus())) {
             case NOT_FOUND:
                 throw new SchemaNotFoundException(msg);
+            case BAD_REQUEST:
+                throw new SchemaLifecycleException(msg);
             case INTERNAL_SERVER_ERROR:
                 throw new RuntimeException(msg);
         }
@@ -772,9 +774,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaBranch> getSchemaBranches(String schemaName) {
-        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/branches"),
-                SchemaBranch.class);
+    public Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException {
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/branches");
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request().get();
+            }
+        });
+
+        int status = response.getStatus();
+        if (status == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new SchemaNotFoundException(response.readEntity(String.class));
+        } else if (status != Response.Status.OK.getStatusCode()) {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
+
+        return parseResponseAsEntities(response.readEntity(String.class), SchemaBranch.class);
     }
 
     @Override
@@ -1017,13 +1033,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
-        List<T> entities = new ArrayList<>();
         String response = Subject.doAs(subject, new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
             }
         });
+        return parseResponseAsEntities(response, clazz);
+    }
+
+    private <T> List<T> parseResponseAsEntities(String response, Class<T> clazz) {
+        List<T> entities = new ArrayList<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode node = mapper.readTree(response);

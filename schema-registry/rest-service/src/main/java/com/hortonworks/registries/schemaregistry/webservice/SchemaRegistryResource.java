@@ -1006,8 +1006,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.deleteSchemaVersion(schemaVersionKey);
             return WSUtils.respond(Response.Status.OK);
         } catch (SchemaNotFoundException e) {
-            LOG.info("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
+            LOG.error("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
+        } catch (SchemaLifecycleException e) {
+            LOG.error("Failed to delete schema name: [{}], version : [{}]", schemaName, versionNumber, e);
+            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while deleting schemaVersion with name: [{}], version : [{}]", schemaName, versionNumber, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1026,6 +1029,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             Collection<SchemaBranch> schemaBranches = schemaRegistry.getSchemaBranches(schemaName);
             return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
+        }  catch(SchemaNotFoundException e) {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
         } catch (Exception ex) {
             LOG.error("Encountered error while listing schema branches", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());

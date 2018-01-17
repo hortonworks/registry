@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -619,7 +620,7 @@ public class SchemaVersionLifecycleManager {
         return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
     }
 
-    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = new SchemaVersionInfoCache.Key(schemaVersionKey);
         SchemaVersionInfo schemaVersionInfo = schemaVersionInfoCache.getSchema(schemaVersionCacheKey);
         schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
@@ -793,7 +794,7 @@ public class SchemaVersionLifecycleManager {
                 storeSchemaVersionState(schemaVersionLifecycleContext);
             }
 
-            public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException {
+            public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
                 doDeleteSchemaVersion(schemaVersionId);
             }
 
@@ -863,7 +864,7 @@ public class SchemaVersionLifecycleManager {
         ((InbuiltSchemaVersionLifecycleState) pair.getRight()).delete(pair.getLeft());
     }
 
-    private void doDeleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException {
+    private void doDeleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId));
         schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
         storageManager.remove(createSchemaVersionStorableKey(schemaVersionId));
@@ -876,7 +877,7 @@ public class SchemaVersionLifecycleManager {
         return schemaVersionStorable.getStorableKey();
     }
 
-    private void deleteSchemaVersionBranchMapping(Long schemaVersionId) throws SchemaNotFoundException {
+    private void deleteSchemaVersionBranchMapping(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
         List<QueryParam> schemaVersionMappingStorableQueryParams = Lists.newArrayList();
         schemaVersionMappingStorableQueryParams.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_VERSION_INFO_ID, schemaVersionId
                 .toString()));
@@ -891,7 +892,8 @@ public class SchemaVersionLifecycleManager {
         }
 
         if (storables.size() > 1) {
-            throw new RuntimeException(String.format("Schema version with id : '%s' is tied with more than one branch", schemaVersionId));
+            List<String> branchNamesTiedToSchema = storables.stream().map(storable -> schemaBranchCache.get(SchemaBranchCache.Key.of(storable.getSchemaBranchId())).getName()).collect(Collectors.toList());
+            throw new SchemaLifecycleException(String.format("Schema version with id : '%s' is tied with more than one branch : '%s' ", schemaVersionId.toString(), Arrays.toString(branchNamesTiedToSchema.toArray())));
         }
 
         storageManager.remove(new StorableKey(SchemaBranchVersionMapping.NAMESPACE,

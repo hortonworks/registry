@@ -485,7 +485,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+    public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         schemaVersionLifecycleManager.deleteSchemaVersion(schemaVersionKey);
     }
 
@@ -675,7 +675,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             }
         }
 
-        // Delete schema versions after validation
         if (!schemaVersionTiedToOtherBranch.isEmpty()) {
             StringBuilder message = new StringBuilder();
             message.append("Failed to delete branch");
@@ -685,6 +684,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             });
             throw new InvalidSchemaBranchDeletionException(message.toString());
         } else {
+
+            // Delete schema versions after validation
+
             for (Long schemaVersionId : schemaVersionsToBeDeleted) {
                 try {
                     schemaVersionLifecycleManager.deleteSchemaVersion(schemaVersionId);
