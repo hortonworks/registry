@@ -4,7 +4,7 @@ SchemaRegistry
 SchemaRegistry provides a central repository for a message’s metadata. A
 schema specifies the message structure and type. Schema Registry will
 allow us to store these schemas efficiently and provides a pluggable
-serializerserializer interfaces and run-time provision of
+serializer/deserializer interfaces and run-time provision of
 serializer/deserializer implementations based on incoming messages.
 Schema registry will also enable reuse/discovery/authoring/collaboration
 related to schemas.
