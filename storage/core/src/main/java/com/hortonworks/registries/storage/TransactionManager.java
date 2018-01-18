@@ -17,6 +17,7 @@
 package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.exception.IgnoreTransactionRollbackException;
 
 public interface TransactionManager {
 
@@ -27,13 +28,24 @@ public interface TransactionManager {
 
 
     /**
-     * Discards the changes made to the storage layer and reverts to the last committed point
+     * Discards the changes made to the storage layer and reverts to the last committed point.
+     *
+     * Implementation of this method must guarantee transaction is closed after calling this method,
+     * whether it throws Exception or not, because without guarantee, caller should try calling
+     * this method infinitely unless it succeeds, to avoid transaction left in open and possibly be leaked.
+     *
+     * With this guarantee, caller can just call a method once (and optionally handles Exception)
+     * without worrying about the status of transaction.
      */
     void rollbackTransaction();
 
 
     /**
-     * Flushes the changes made to the storage layer
+     * Flushes the changes made to the storage layer.
+     *
+     * Unlike of rollbackTransaction(), implementation of this method doesn't need to guarantee
+     * transaction is closed, since in normal caller would want to call rollbackTransaction()
+     * when commitTransaction() throws Exception.
      */
     void commitTransaction();
 }
