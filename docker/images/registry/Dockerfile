@@ -15,8 +15,9 @@
 FROM centos:7.2.1511
 
 ARG REGISTRY_VERSION
+ENV REG_VER $REGISTRY_VERSION
 
-ENV JAVA_HOME /opt/jdk1.8.0_111/
+ENV JAVA_HOME /opt/jdk1.8.0_141/
 
 # Add Hortonworks Registry binary. Maven profile "-Pdocker" will place the binary in the correct location
 ADD hortonworks-registry-$REGISTRY_VERSION.tar.gz /
@@ -26,9 +27,9 @@ RUN yum install -y wget
 
 # Install Java
 RUN wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz" \
-    && tar xzf jdk-8u111-linux-x64.tar.gz \
-    && mv jdk1.8.0_111 /opt \
-    && cd /opt/jdk1.8.0_111/ \
-    && alternatives --install /usr/bin/java java /opt/jdk1.8.0_111/bin/java 1
+    && tar xzf jdk-8u141-linux-x64.tar.gz \
+    && mv jdk1.8.0_141 /opt \
+    && cd /opt/jdk1.8.0_141/ \
+    && alternatives --install /usr/bin/java java /opt/jdk1.8.0_141/bin/java 1
 
-CMD hortonworks-registry-$REGISTRY_VERSION/bin/registry-server-start.sh hortonworks-registry-$REGISTRY_VERSION/conf/registry-dev.yaml
+CMD hortonworks-registry-$REG_VER/bin/registry-server-start.sh hortonworks-registry-$REG_VER/conf/registry-dev.yaml
