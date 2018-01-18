@@ -13,8 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static com.hortonworks.registries.storage.transaction.ManagedTransactionTestHelper.INTENDED_EXCEPTION;
-
 @RunWith(JMockit.class)
 public class ManagedTransactionTest {
     @Injectable
@@ -91,7 +89,7 @@ public class ManagedTransactionTest {
             managedTransaction.executeFunction(this::callHelperWithThrowException);
             Assert.fail("It should propagate Exception!");
         } catch (Exception e) {
-            Assert.assertEquals(INTENDED_EXCEPTION, e);
+            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
             verifyInteractionWithTransactionManagerWithExceptionCase();
         }
     }
@@ -104,7 +102,7 @@ public class ManagedTransactionTest {
         } catch (Exception e) {
             // it should propagate cause, not exception itself
             Assert.assertFalse(e instanceof IgnoreTransactionRollbackException);
-            Assert.assertEquals(INTENDED_EXCEPTION, e);
+            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
             verifyInteractionWithTransactionManagerWithIgnoreRollbackCase();
         }
     }
@@ -152,7 +150,7 @@ public class ManagedTransactionTest {
             managedTransaction.executeConsumer(this::callHelperWithThrowException);
             Assert.fail("It should propagate Exception");
         } catch (Exception e) {
-            Assert.assertEquals(INTENDED_EXCEPTION, e);
+            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
             verifyInteractionWithTransactionManagerWithExceptionCase();
         }
     }
@@ -165,7 +163,7 @@ public class ManagedTransactionTest {
         } catch (Exception e) {
             // it should propagate cause, not exception itself
             Assert.assertFalse(e instanceof IgnoreTransactionRollbackException);
-            Assert.assertEquals(INTENDED_EXCEPTION, e);
+            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
             verifyInteractionWithTransactionManagerWithIgnoreRollbackCase();
         }
     }

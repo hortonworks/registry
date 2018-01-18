@@ -18,9 +18,11 @@ package com.hortonworks.registries.storage.transaction;
 import com.hortonworks.registries.storage.exception.IgnoreTransactionRollbackException;
 
 public class ManagedTransactionTestHelper {
-    public static final Exception INTENDED_EXCEPTION = new Exception("Intended exception!");
-    public static final IgnoreTransactionRollbackException IGNORE_ROLLBACK_EXCEPTION =
-            new IgnoreTransactionRollbackException(INTENDED_EXCEPTION);
+    class IntendedException extends Exception {
+        public IntendedException() {
+            super("Intended exception!");
+        }
+    }
 
     private boolean called = false;
     private Object[] calledArgs;
@@ -32,12 +34,12 @@ public class ManagedTransactionTestHelper {
 
     public void throwException(Object...args) throws Exception {
         call(args);
-        throw INTENDED_EXCEPTION;
+        throw new IntendedException();
     }
 
     public void throwIgnoreRollbackException(Object...args) throws Exception {
         call(args);
-        throw IGNORE_ROLLBACK_EXCEPTION;
+        throw new IgnoreTransactionRollbackException(new IntendedException());
     }
 
     public boolean isCalled() {
