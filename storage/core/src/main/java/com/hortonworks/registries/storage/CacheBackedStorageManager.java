@@ -68,7 +68,6 @@ public class CacheBackedStorageManager implements StorageManager {
             if (!storable.equals(cachedStorable)) {
                 LOG.warn("Possible cache inconsistency. Storable from DB '{}', Storable from cache '{}'",
                         storable, cachedStorable);
-                storable = cachedStorable;
             }
             cache.remove(key);
         }
