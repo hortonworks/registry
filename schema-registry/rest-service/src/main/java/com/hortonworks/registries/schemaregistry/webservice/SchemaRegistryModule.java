@@ -23,6 +23,8 @@ import com.hortonworks.registries.common.ha.LeadershipAware;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
+import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
+import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -41,12 +43,13 @@ import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_P
 /**
  *
  */
-public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, LeadershipAware {
+public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, LeadershipAware, HAServersAware {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
 
     private Map<String, Object> config;
     private FileStorage fileStorage;
     private StorageManager storageManager;
+    private HAServerNotificationManager haServerNotificationManager;
     private AtomicReference<LeadershipParticipant> leadershipParticipant;
 
     @Override
@@ -63,7 +66,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     @Override
     public List<Object> getResources() {
         Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
-        DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
+        DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders, haServerNotificationManager);
         schemaRegistry.init(config);
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipParticipant);
         ConfluentSchemaRegistryCompatibleResource
@@ -102,5 +105,10 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     public void setLeadershipParticipant(AtomicReference<LeadershipParticipant> leadershipParticipant) {
         Preconditions.checkState(this.leadershipParticipant == null, "leadershipParticipant " + leadershipParticipant + " is already set!!");
         this.leadershipParticipant = leadershipParticipant;
+    }
+
+    @Override
+    public void setHAServerConfigManager(HAServerNotificationManager haServerNotificationManager) {
+        this.haServerNotificationManager = haServerNotificationManager;
     }
 }

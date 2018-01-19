@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
+import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchVersionMapping;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -77,15 +79,18 @@ public class SchemaVersionLifecycleManager {
     private static final int DEFAULT_RETRY_CT = 5;
     private StorageManager storageManager;
     private SchemaBranchCache schemaBranchCache;
+    private HAServerNotificationManager haServerNotificationManager;
     private DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher;
 
     public SchemaVersionLifecycleManager(StorageManager storageManager,
                                          Map<String, Object> props,
                                          DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher,
-                                         SchemaBranchCache schemaBranchCache) {
+                                         SchemaBranchCache schemaBranchCache,
+                                         HAServerNotificationManager haServerNotificationManager) {
         this.storageManager = storageManager;
         this.schemaMetadataFetcher = schemaMetadataFetcher;
         this.schemaBranchCache = schemaBranchCache;
+        this.haServerNotificationManager = haServerNotificationManager;
         SchemaVersionLifecycleStateMachine.Builder builder = SchemaVersionLifecycleStateMachine.newBuilder();
 
         DefaultSchemaRegistry.Options options = new DefaultSchemaRegistry.Options(props);
@@ -623,7 +628,7 @@ public class SchemaVersionLifecycleManager {
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = new SchemaVersionInfoCache.Key(schemaVersionKey);
         SchemaVersionInfo schemaVersionInfo = schemaVersionInfoCache.getSchema(schemaVersionCacheKey);
-        schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
+        invalidateSchemaInAllHAServer(schemaVersionCacheKey);
         storageManager.remove(createSchemaVersionStorableKey(schemaVersionInfo.getId()));
         deleteSchemaVersionBranchMapping(schemaVersionInfo.getId());
     }
@@ -851,7 +856,7 @@ public class SchemaVersionLifecycleManager {
 
         // invalidate schema version from cache
         SchemaVersionInfoCache.Key schemaVersionCacheKey = SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId));
-        schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
+        invalidateSchemaInAllHAServer(schemaVersionCacheKey);
     }
 
     public void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
@@ -866,7 +871,7 @@ public class SchemaVersionLifecycleManager {
 
     private void doDeleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId));
-        schemaVersionInfoCache.invalidateSchema(schemaVersionCacheKey);
+        invalidateSchemaInAllHAServer(schemaVersionCacheKey);
         storageManager.remove(createSchemaVersionStorableKey(schemaVersionId));
         deleteSchemaVersionBranchMapping(schemaVersionId);
     }
@@ -1080,6 +1085,29 @@ public class SchemaVersionLifecycleManager {
             throw new SchemaNotFoundException(String.format("There were no schema versions attached to schema branch '%s'",
                                                             schemaBranch.getName()));
         return sortedVersionInfo.iterator().next();
+    }
+
+    public void invalidateAllSchemaVersionCache() {
+        schemaVersionInfoCache.invalidateAll();
+    }
+
+    public void invalidateSchemaVersionCache(SchemaVersionInfoCache.Key key) {
+        schemaVersionInfoCache.invalidateSchema(key);
+    }
+
+    private void invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key key) {
+        schemaVersionInfoCache.invalidateSchema(key);
+
+        String keyAsString;
+
+        try {
+            keyAsString = ObjectMapperUtils.serializeToString(key);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
+        }
+
+        haServerNotificationManager.notifyCacheInvalidation(schemaVersionInfoCache.getCacheType(),keyAsString);
+
     }
 
 }
