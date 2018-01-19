@@ -29,7 +29,15 @@ public class ObjectMapperUtils {
         return OBJECT_MAPPER.readValue(bytes, klass);
     }
 
+    public static <T> T deserialize(String str, Class<T> klass) throws IOException {
+        return OBJECT_MAPPER.readValue(str, klass);
+    }
+
     public static <T> byte[] serialize(Object obj) throws JsonProcessingException {
         return OBJECT_MAPPER.writeValueAsBytes(obj);
+    }
+
+    public static <T> String serializeToString(Object obj) throws JsonProcessingException {
+        return OBJECT_MAPPER.writeValueAsString(obj);
     }
 }

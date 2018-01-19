@@ -14,8 +14,10 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.schemaregistry;
+package com.hortonworks.registries.schemaregistry.cache;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -24,14 +26,17 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
+import com.hortonworks.registries.schemaregistry.SchemaBranchKey;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
+import com.hortonworks.registries.schemaregistry.utils.ObjectMapperUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class SchemaBranchCache {
+public class SchemaBranchCache implements AbstractCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaBranchCache.class);
 
     private final LoadingCache<Key, SchemaBranch> loadingCache;
@@ -91,12 +96,29 @@ public class SchemaBranchCache {
         return loadingCache.getIfPresent(key);
     }
 
+
     public void invalidateSchemaBranch(SchemaBranchCache.Key key) {
         LOG.info("Invalidating cache entry for key [{}]", key);
+
+        // If the cache doesn't have entry for the key, then no need to invalidate the cache
+        if(loadingCache.getIfPresent(key) == null)
+            return;
+
         loadingCache.invalidate(key);
 
         Key otherKey = key.id == null ? Key.of(schemaBranchNameToIdMap.get(key.getSchemaBranchKey())) : Key.of(schemaBranchNameToIdMap.inverse().get(key.id));
         loadingCache.invalidate(otherKey);
+    }
+
+    public void invalidateAll() {
+        LOG.info("Invalidating all the cache entries");
+
+        loadingCache.invalidateAll();
+    }
+
+    @Override
+    public SchemaRegistryCacheType getCacheType() {
+        return SchemaRegistryCacheType.SCHEMA_BRANCH_CACHE;
     }
 
     public interface SchemaBranchFetcher {
@@ -105,8 +127,13 @@ public class SchemaBranchCache {
         SchemaBranch getSchemaBranch(Long id) throws SchemaBranchNotFoundException;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Key {
+
+        @JsonProperty
         private SchemaBranchKey schemaBranchKey;
+
+        @JsonProperty
         private Long id;
 
         private Key(SchemaBranchKey schemaBranchKey) {
@@ -117,6 +144,11 @@ public class SchemaBranchCache {
         private Key(Long id) {
             Preconditions.checkNotNull(id, "id can not be null");
             this.id = id;
+        }
+
+        // For JSON serialization/deserialization
+        private Key() {
+
         }
 
         public SchemaBranchKey getSchemaBranchKey() {

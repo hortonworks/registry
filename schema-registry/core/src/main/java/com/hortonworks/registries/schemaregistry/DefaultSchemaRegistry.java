@@ -18,6 +18,9 @@ package com.hortonworks.registries.schemaregistry;
 import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.FileStorage;
+import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
+import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
+import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -74,13 +77,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private List<SchemaProviderInfo> schemaProviderInfos;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
     private SchemaBranchCache schemaBranchCache;
+    private HAServerNotificationManager haServerNotificationManager;
 
     public DefaultSchemaRegistry(StorageManager storageManager,
                                  FileStorage fileStorage,
-                                 Collection<Map<String, Object>> schemaProvidersConfig) {
+                                 Collection<Map<String, Object>> schemaProvidersConfig,
+                                 HAServerNotificationManager haServerNotificationManager) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaProvidersConfig = schemaProvidersConfig;
+        this.haServerNotificationManager = haServerNotificationManager;
     }
 
     @Override
@@ -95,7 +101,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SerDesInfoStorable.class,
                         SchemaSerDesMapping.class,
                         SchemaBranchStorable.class,
-                        SchemaBranchVersionMapping.class));
+                        SchemaBranchVersionMapping.class,
+                        HostConfigStorable.class));
 
         Options options = new Options(props);
         schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),
@@ -106,7 +113,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         schemaVersionLifecycleManager = new SchemaVersionLifecycleManager(storageManager,
                                                                           props,
                                                                           schemaMetadataFetcher,
-                                                                          schemaBranchCache);
+                                                                          schemaBranchCache,
+                haServerNotificationManager);
 
         Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig,
                                                                                    schemaVersionLifecycleManager.getSchemaVersionRetriever());
@@ -557,6 +565,41 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString) {
+        switch (schemaRegistryCacheType) {
+            case SCHEMA_BRANCH_CACHE:
+                SchemaBranchCache.Key schemaBranchKey;
+                try {
+                    schemaBranchKey = ObjectMapperUtils.deserialize(keyAsString, SchemaBranchCache.Key.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(String.format("Failed to deserialize keyString : [%s]", keyAsString),e);
+                }
+                schemaBranchCache.invalidateSchemaBranch(schemaBranchKey);
+                break;
+            case SCHEMA_VERSION_CACHE:
+                SchemaVersionInfoCache.Key schemaVersionKey;
+                try {
+                    schemaVersionKey = ObjectMapperUtils.deserialize(keyAsString, SchemaVersionInfoCache.Key.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(String.format("Failed to deserialize keyString : [%s]", keyAsString),e);
+                }
+                schemaVersionLifecycleManager.invalidateSchemaVersionCache(schemaVersionKey);
+                break;
+            case ALL:
+                schemaBranchCache.invalidateAll();
+                schemaVersionLifecycleManager.invalidateAllSchemaVersionCache();
+                break;
+            default:
+                throw new RuntimeException(String.format("Invalid cache type : '%s'",schemaRegistryCacheType.name()));
+        }
+    }
+
+    @Override
+    public void registerNodeDebut(String nodeUrl) {
+        haServerNotificationManager.addNodeUrl(nodeUrl);
+    }
+
+    @Override
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY));
     }
@@ -631,7 +674,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH))
             throw new InvalidSchemaBranchDeletionException(String.format("Can't delete '%s' branch", SchemaBranch.MASTER_BRANCH));
 
-        schemaBranchCache.invalidateSchemaBranch(SchemaBranchCache.Key.of(schemaBranchId));
+        SchemaBranchCache.Key keyOfSchemaBranchToDelete = SchemaBranchCache.Key.of(schemaBranchId);
+        schemaBranchCache.invalidateSchemaBranch(keyOfSchemaBranchToDelete);
 
         List<QueryParam> schemaVersionMappingStorableQueryParams = new ArrayList<>();
         schemaVersionMappingStorableQueryParams.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_BRANCH_ID, schemaBranch.getId().toString()));
@@ -700,6 +744,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         storageManager.remove(new SchemaBranchStorable(schemaBranchId).getStorableKey());
 
+        invalidateSchemaBranchInAllHAServers(keyOfSchemaBranchToDelete);
     }
 
     @Override
@@ -875,5 +920,19 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             return Long.valueOf(getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS)
                                         .toString());
         }
+    }
+
+    private void invalidateSchemaBranchInAllHAServers(SchemaBranchCache.Key key) {
+        schemaBranchCache.invalidateSchemaBranch(key);
+
+        String keyAsString;
+
+        try {
+           keyAsString = ObjectMapperUtils.serializeToString(key);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
+        }
+
+        haServerNotificationManager.notifyCacheInvalidation(schemaBranchCache.getCacheType(),keyAsString);
     }
 }
