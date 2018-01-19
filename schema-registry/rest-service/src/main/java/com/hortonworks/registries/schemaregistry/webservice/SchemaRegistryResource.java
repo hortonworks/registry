@@ -37,6 +37,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
+import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -1093,6 +1094,30 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (Exception ex) {
             LOG.error("Encountered error while deleting a branch with name: [{}]", schemaBranchId, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/cache/invalidate/{cacheType}")
+    @UnitOfWork
+    public Response invalidateCache(@ApiParam(value = "Cache Id to be invalidated", required = true) @PathParam("cacheType") SchemaRegistryCacheType cacheType, String keyString) {
+        try {
+            schemaRegistry.invalidateCache(cacheType, keyString);
+            return WSUtils.respond(Response.Status.OK);
+        } catch (Exception e) {
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, e.getMessage());
+        }
+    }
+
+
+    @POST
+    @Path(("/register/node/debut"))
+    public Response registerNodeDebut(String nodeUrl) {
+        try {
+            schemaRegistry.registerNodeDebut(nodeUrl);
+            return WSUtils.respond(Response.Status.OK);
+        } catch (Exception e) {
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, e.getMessage());
         }
     }
 

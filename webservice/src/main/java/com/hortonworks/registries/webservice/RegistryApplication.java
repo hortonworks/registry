@@ -17,6 +17,11 @@ package com.hortonworks.registries.webservice;
 
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.cron.RefreshHAServerListTask;
+import com.hortonworks.registries.schemaregistry.HAServerConfigManager;
+import com.hortonworks.registries.schemaregistry.HAServersAware;
+import com.hortonworks.registries.schemaregistry.HostConfigStorable;
 import com.hortonworks.registries.storage.transaction.TransactionEventListener;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
@@ -33,13 +38,13 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
+import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -48,12 +53,12 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -62,6 +67,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
     protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
+    protected StorageManager storageManager;
+    protected HAServerConfigManager haServerConfigManager = new HAServerConfigManager();
+    protected TransactionManager transactionManager;
+    protected String serverUrl = null;
+    protected Long HOST_LIST_SYNC_INTERVAL_IN_MILLISEC = 15000l;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
@@ -78,6 +88,43 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
 
         addServletFilters(registryConfiguration, environment);
+
+    }
+
+    private void registerTaskToSyncHostListForHA(Environment environment) {
+        environment.lifecycle().manage(new Managed() {
+
+            RefreshHAServerListTask refreshHAServerListTask = new RefreshHAServerListTask(storageManager, transactionManager, haServerConfigManager);
+            Timer timer = new Timer();
+
+            @Override
+            public void start() {
+                timer.scheduleAtFixedRate(refreshHAServerListTask, 0, HOST_LIST_SYNC_INTERVAL_IN_MILLISEC);
+            }
+
+            @Override
+            public void stop() throws Exception {
+                timer.cancel();
+            }
+
+        });
+    }
+
+    private void registerAndNotifyOtherServers() {
+        try {
+            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+            HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverUrl).getStorableKey());
+            if (hostConfigStorable == null) {
+                storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverUrl, System.currentTimeMillis()));
+            }
+            haServerConfigManager.refresh(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
+            transactionManager.commitTransaction();
+        } catch (Exception e) {
+            transactionManager.rollbackTransaction();
+            throw e;
+        }
+
+        haServerConfigManager.notifyDebut();
     }
 
     private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
@@ -85,7 +132,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
                 @Override
                 public void serverStarted(Server server) {
-                    String serverUrl = server.getURI().toString();
+                    serverUrl = server.getURI().toString();
                     LOG.info("Received callback as server is started with server URL:[{}]", server);
                     LOG.info("HA configuration: [{}]", haConfiguration);
                     String className = haConfiguration.getClassName();
@@ -107,6 +154,12 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                         throw new RuntimeException(e);
                     }
                     LOG.info("Registered for leadership with participant [{}]", leadershipParticipant);
+
+                    haServerConfigManager.setHomeNodeURL(serverUrl);
+
+                    registerAndNotifyOtherServers();
+
+                    registerTaskToSyncHostListForHA(environment);
                 }
             });
         } else {
@@ -135,8 +188,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        StorageManager storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
-        TransactionManager transactionManager;
+        storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
         if (storageManager instanceof TransactionManager)
             transactionManager = (TransactionManager) storageManager;
         else
@@ -165,6 +217,12 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 LOG.info("Module [{}] is registered for LeadershipParticipant registration.");
                 LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
                 leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
+            }
+
+            if(moduleRegistration instanceof HAServersAware) {
+                LOG.info("Module [{}] is registered for HAServersAware registration.");
+                HAServersAware leadershipAware = (HAServersAware) moduleRegistration;
+                leadershipAware.setHAServerConfigManager(haServerConfigManager);
             }
 
             resourcesToRegister.addAll(moduleRegistration.getResources());
