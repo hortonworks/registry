@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.hortonworks.registries.schemaregistry;
+package com.hortonworks.registries.schemaregistry.cache;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Loading cache for {@link Key} with values {@link SchemaVersionInfo}.
  */
-public class SchemaVersionInfoCache {
+public class SchemaVersionInfoCache implements AbstractCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaVersionInfoCache.class);
 
     private final LoadingCache<Key, SchemaVersionInfo> loadingCache;
@@ -126,9 +132,24 @@ public class SchemaVersionInfoCache {
         }
     }
 
+    public void invalidateAll() {
+        LOG.info("Invalidating all the cache entries");
+
+        loadingCache.invalidateAll();
+    }
+
+    @Override
+    public SchemaRegistryCacheType getCacheType() {
+        return SchemaRegistryCacheType.SCHEMA_VERSION_CACHE;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Key {
 
+        @JsonProperty
         private SchemaVersionKey schemaVersionKey;
+
+        @JsonProperty
         private SchemaIdVersion schemaIdVersion;
 
         public Key(SchemaVersionKey schemaVersionKey) {
@@ -147,9 +168,14 @@ public class SchemaVersionInfoCache {
             return new Key(schemaIdVersion);
         }
 
+        // For JSON serialization/deserialization
+        private Key () {
+
+        }
+
         @Override
         public String toString() {
-            return "Key{" +
+            return "Key {" +
                     "schemaVersionKey=" + schemaVersionKey +
                     ", schemaIdVersion=" + schemaIdVersion +
                     '}';

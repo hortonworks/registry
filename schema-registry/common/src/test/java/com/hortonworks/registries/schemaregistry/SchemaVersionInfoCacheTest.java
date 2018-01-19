@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.collect.Sets;
+import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import org.junit.Assert;

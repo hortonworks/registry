@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
@@ -124,5 +125,20 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
     Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+
+
+    /**
+     *  Invalidates a cache entry given its cache type and its key, invalidates all entries in all the caches if the cache type is 'ALL'
+     *
+     * @param schemaRegistryCacheType cache type
+     * @param keyAsString serialized version of the key of the cache
+     */
+    void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString);
+
+    /**
+     *  A node which comes online in HA mode will notify all the existing node about its presence in the cluster, existing node will update their in memory cache of the complete list of nodes in HA mode.
+     * @param nodeUrl URL of the node making a debut in a HA environment
+     */
+    void registerNodeDebut(String nodeUrl);
 
 }
