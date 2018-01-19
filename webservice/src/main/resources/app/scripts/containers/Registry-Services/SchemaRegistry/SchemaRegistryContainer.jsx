@@ -251,7 +251,7 @@ export default class SchemaRegistryContainer extends Component {
             <strong>{msg}</strong>
           );
         }
-      });
+      }).catch(Utils.showError);
     }
   }
 
