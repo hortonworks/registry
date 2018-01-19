@@ -70,7 +70,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     protected StorageManager storageManager;
     protected HAServerConfigManager haServerConfigManager = new HAServerConfigManager();
     protected TransactionManager transactionManager;
-    protected String serverUrl = null;
     protected Long HOST_LIST_SYNC_INTERVAL_IN_MILLISEC = 15000l;
 
     @Override
@@ -89,7 +88,10 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
+        registerAndNotifyOtherServers(environment);
+
     }
+
 
     private void registerTaskToSyncHostListForHA(Environment environment) {
         environment.lifecycle().manage(new Managed() {
@@ -110,21 +112,35 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         });
     }
 
-    private void registerAndNotifyOtherServers() {
-        try {
-            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
-            HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverUrl).getStorableKey());
-            if (hostConfigStorable == null) {
-                storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverUrl, System.currentTimeMillis()));
-            }
-            haServerConfigManager.refresh(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
-            transactionManager.commitTransaction();
-        } catch (Exception e) {
-            transactionManager.rollbackTransaction();
-            throw e;
-        }
+    private void registerAndNotifyOtherServers(Environment environment) {
+        environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
+            @Override
+            public void serverStarted(Server server) {
 
-        haServerConfigManager.notifyDebut();
+                String serverURL = server.getURI().toString();
+
+                haServerConfigManager.setHomeNodeURL(serverURL);
+
+                try {
+                    transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+                    HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
+                    if (hostConfigStorable == null) {
+                        storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
+                                System.currentTimeMillis()));
+                    }
+                    haServerConfigManager.refresh(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
+                    transactionManager.commitTransaction();
+                } catch (Exception e) {
+                    transactionManager.rollbackTransaction();
+                    throw e;
+                }
+
+                haServerConfigManager.notifyDebut();
+
+                registerTaskToSyncHostListForHA(environment);
+            }
+        });
+
     }
 
     private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
@@ -132,7 +148,9 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
                 @Override
                 public void serverStarted(Server server) {
-                    serverUrl = server.getURI().toString();
+
+                    String serverUrl = server.getURI().toString();
+
                     LOG.info("Received callback as server is started with server URL:[{}]", server);
                     LOG.info("HA configuration: [{}]", haConfiguration);
                     String className = haConfiguration.getClassName();
@@ -154,12 +172,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                         throw new RuntimeException(e);
                     }
                     LOG.info("Registered for leadership with participant [{}]", leadershipParticipant);
-
-                    haServerConfigManager.setHomeNodeURL(serverUrl);
-
-                    registerAndNotifyOtherServers();
-
-                    registerTaskToSyncHostListForHA(environment);
                 }
             });
         } else {
