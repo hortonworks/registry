@@ -77,16 +77,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private List<SchemaProviderInfo> schemaProviderInfos;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
     private SchemaBranchCache schemaBranchCache;
-    private HAServerConfigManager haServerConfigManager;
+    private HAServerNotificationManager haServerNotificationManager;
 
     public DefaultSchemaRegistry(StorageManager storageManager,
                                  FileStorage fileStorage,
                                  Collection<Map<String, Object>> schemaProvidersConfig,
-                                 HAServerConfigManager haServerConfigManager) {
+                                 HAServerNotificationManager haServerNotificationManager) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaProvidersConfig = schemaProvidersConfig;
-        this.haServerConfigManager = haServerConfigManager;
+        this.haServerNotificationManager = haServerNotificationManager;
     }
 
     @Override
@@ -114,7 +114,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                                                           props,
                                                                           schemaMetadataFetcher,
                                                                           schemaBranchCache,
-                                                                          haServerConfigManager);
+                haServerNotificationManager);
 
         Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig,
                                                                                    schemaVersionLifecycleManager.getSchemaVersionRetriever());
@@ -596,7 +596,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public void registerNodeDebut(String nodeUrl) {
-        haServerConfigManager.addNodeUrl(nodeUrl);
+        haServerNotificationManager.addNodeUrl(nodeUrl);
     }
 
     @Override
@@ -933,6 +933,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
         }
 
-        haServerConfigManager.notifyCacheInvalidation(schemaBranchCache.getCacheType(),keyAsString);
+        haServerNotificationManager.notifyCacheInvalidation(schemaBranchCache.getCacheType(),keyAsString);
     }
 }

@@ -1098,10 +1098,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @POST
-    @Path("/cache/invalidate/{cacheType}")
+    @Path("/cache/{cacheType}/invalidate")
     @UnitOfWork
     public Response invalidateCache(@ApiParam(value = "Cache Id to be invalidated", required = true) @PathParam("cacheType") SchemaRegistryCacheType cacheType, String keyString) {
         try {
+            LOG.debug("Request to invalidate cache : {} with key : {} accepted", cacheType.name(), keyString);
             schemaRegistry.invalidateCache(cacheType, keyString);
             return WSUtils.respond(Response.Status.OK);
         } catch (Exception e) {
@@ -1111,9 +1112,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
 
     @POST
-    @Path(("/register/node/debut"))
+    @Path(("/notifications/node/debut"))
     public Response registerNodeDebut(String nodeUrl) {
         try {
+            LOG.debug("Acknowledged another peer server : {}", nodeUrl);
             schemaRegistry.registerNodeDebut(nodeUrl);
             return WSUtils.respond(Response.Status.OK);
         } catch (Exception e) {

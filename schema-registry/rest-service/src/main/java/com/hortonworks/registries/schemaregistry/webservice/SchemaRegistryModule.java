@@ -23,7 +23,7 @@ import com.hortonworks.registries.common.ha.LeadershipAware;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.HAServerConfigManager;
+import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.storage.StorageManager;
@@ -49,7 +49,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     private Map<String, Object> config;
     private FileStorage fileStorage;
     private StorageManager storageManager;
-    private HAServerConfigManager haServerConfigManager;
+    private HAServerNotificationManager haServerNotificationManager;
     private AtomicReference<LeadershipParticipant> leadershipParticipant;
 
     @Override
@@ -66,7 +66,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     @Override
     public List<Object> getResources() {
         Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
-        DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders, haServerConfigManager);
+        DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders, haServerNotificationManager);
         schemaRegistry.init(config);
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipParticipant);
         ConfluentSchemaRegistryCompatibleResource
@@ -108,7 +108,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     }
 
     @Override
-    public void setHAServerConfigManager(HAServerConfigManager haServerConfigManager) {
-        this.haServerConfigManager = haServerConfigManager;
+    public void setHAServerConfigManager(HAServerNotificationManager haServerNotificationManager) {
+        this.haServerNotificationManager = haServerNotificationManager;
     }
 }

@@ -79,18 +79,18 @@ public class SchemaVersionLifecycleManager {
     private static final int DEFAULT_RETRY_CT = 5;
     private StorageManager storageManager;
     private SchemaBranchCache schemaBranchCache;
-    private HAServerConfigManager haServerConfigManager;
+    private HAServerNotificationManager haServerNotificationManager;
     private DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher;
 
     public SchemaVersionLifecycleManager(StorageManager storageManager,
                                          Map<String, Object> props,
                                          DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher,
                                          SchemaBranchCache schemaBranchCache,
-                                         HAServerConfigManager haServerConfigManager) {
+                                         HAServerNotificationManager haServerNotificationManager) {
         this.storageManager = storageManager;
         this.schemaMetadataFetcher = schemaMetadataFetcher;
         this.schemaBranchCache = schemaBranchCache;
-        this.haServerConfigManager = haServerConfigManager;
+        this.haServerNotificationManager = haServerNotificationManager;
         SchemaVersionLifecycleStateMachine.Builder builder = SchemaVersionLifecycleStateMachine.newBuilder();
 
         DefaultSchemaRegistry.Options options = new DefaultSchemaRegistry.Options(props);
@@ -1106,7 +1106,7 @@ public class SchemaVersionLifecycleManager {
             throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
         }
 
-        haServerConfigManager.notifyCacheInvalidation(schemaVersionInfoCache.getCacheType(),keyAsString);
+        haServerNotificationManager.notifyCacheInvalidation(schemaVersionInfoCache.getCacheType(),keyAsString);
 
     }
 

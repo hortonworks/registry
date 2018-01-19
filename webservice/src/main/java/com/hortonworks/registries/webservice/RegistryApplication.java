@@ -18,8 +18,8 @@ package com.hortonworks.registries.webservice;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.common.transaction.TransactionIsolation;
-import com.hortonworks.registries.cron.RefreshHAServerListTask;
-import com.hortonworks.registries.schemaregistry.HAServerConfigManager;
+import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
+import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.HostConfigStorable;
 import com.hortonworks.registries.storage.transaction.TransactionEventListener;
@@ -58,7 +58,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -68,9 +67,9 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
     protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
     protected StorageManager storageManager;
-    protected HAServerConfigManager haServerConfigManager = new HAServerConfigManager();
+    protected HAServerNotificationManager haServerNotificationManager = new HAServerNotificationManager();
     protected TransactionManager transactionManager;
-    protected Long HOST_LIST_SYNC_INTERVAL_IN_MILLISEC = 15000l;
+    protected RefreshHAServerManagedTask refreshHAServerManagedTask;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
@@ -92,26 +91,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     }
 
-
-    private void registerTaskToSyncHostListForHA(Environment environment) {
-        environment.lifecycle().manage(new Managed() {
-
-            RefreshHAServerListTask refreshHAServerListTask = new RefreshHAServerListTask(storageManager, transactionManager, haServerConfigManager);
-            Timer timer = new Timer();
-
-            @Override
-            public void start() {
-                timer.scheduleAtFixedRate(refreshHAServerListTask, 0, HOST_LIST_SYNC_INTERVAL_IN_MILLISEC);
-            }
-
-            @Override
-            public void stop() throws Exception {
-                timer.cancel();
-            }
-
-        });
-    }
-
     private void registerAndNotifyOtherServers(Environment environment) {
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
             @Override
@@ -119,7 +98,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
                 String serverURL = server.getURI().toString();
 
-                haServerConfigManager.setHomeNodeURL(serverURL);
+                haServerNotificationManager.setHomeNodeURL(serverURL);
 
                 try {
                     transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
@@ -128,16 +107,18 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                         storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
                                 System.currentTimeMillis()));
                     }
-                    haServerConfigManager.refresh(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
+                    haServerNotificationManager.refreshServerInfo(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
                     transactionManager.commitTransaction();
                 } catch (Exception e) {
                     transactionManager.rollbackTransaction();
                     throw e;
                 }
 
-                haServerConfigManager.notifyDebut();
+                haServerNotificationManager.notifyDebut();
 
-                registerTaskToSyncHostListForHA(environment);
+                refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager,transactionManager, haServerNotificationManager);
+                environment.lifecycle().manage(refreshHAServerManagedTask);
+                refreshHAServerManagedTask.start();
             }
         });
 
@@ -234,7 +215,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             if(moduleRegistration instanceof HAServersAware) {
                 LOG.info("Module [{}] is registered for HAServersAware registration.");
                 HAServersAware leadershipAware = (HAServersAware) moduleRegistration;
-                leadershipAware.setHAServerConfigManager(haServerConfigManager);
+                leadershipAware.setHAServerConfigManager(haServerNotificationManager);
             }
 
             resourcesToRegister.addAll(moduleRegistration.getResources());
@@ -247,6 +228,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(new TransactionEventListener(transactionManager));
+
     }
 
     private void enableCORS(Environment environment) {

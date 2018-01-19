@@ -13,10 +13,10 @@
 -- limitations under the License.;
 -- ;
 
-CREATE TABLE `host_config` (
-  `id`                   BIGINT(20)      NOT NULL AUTO_INCREMENT,
-  `hostUrl`                 VARCHAR(255)    NOT NULL,
-  `timestamp`            BIGINT(20)      DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_HOST_CONFIG` (`hostUrl`)
+CREATE TABLE "host_config" (
+  "id"                   SERIAL          NOT NULL ,
+  "hostUrl"              VARCHAR(255)    NOT NULL,
+  "timestamp"            BIGINT          NOT NULL,
+  PRIMARY KEY ("hostUrl"),
+  UNIQUE ("id")
 );
