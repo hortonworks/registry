@@ -76,22 +76,22 @@ public class HAServerNotificationManager {
                 try {
                    response = target.request().post(Entity.json(postBody));
                 } catch (Exception e) {
-                    LOG.debug("Failed to notify the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
+                    LOG.warn("Failed to notify the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
                 }
 
                 if ( (response == null || response.getStatus() != Response.Status.OK.getStatusCode()) && priorityWithHostIp.getLeft() < MAX_RETRY) {
                     queue.add(Pair.of(priorityWithHostIp.getLeft() + 1, priorityWithHostIp.getRight()));
                 } else if (priorityWithHostIp.getLeft() < MAX_RETRY ) {
-                    LOG.debug("Notified the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
+                    LOG.info("Notified the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
                 } else if (priorityWithHostIp.getLeft() >= MAX_RETRY) {
-                    LOG.debug("Failed to notify the peer server '{}' about the current host debut, giving up after {} attempts.",
+                    LOG.warn("Failed to notify the peer server '{}' about the current host debut, giving up after {} attempts.",
                             priorityWithHostIp.getRight(), MAX_RETRY);
                 }
 
                 try {
                     Thread.sleep(priorityWithHostIp.getLeft() * 100);
                 } catch (InterruptedException e) {
-                    LOG.debug("Failed to notify the peer server '{}'",priorityWithHostIp.getRight(), e);
+                    LOG.warn("Failed to notify the peer server '{}'",priorityWithHostIp.getRight(), e);
                 }
             }
 
