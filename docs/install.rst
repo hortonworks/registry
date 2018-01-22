@@ -173,8 +173,7 @@ Running Schema Registry in Docker Mode
 
 1. Install and run Docker Engine from https://docs.docker.com/engine/installation/
 
-2. Configure `registry-dev.yaml`. To create Schema Registry docker image,
-
+2. To create Schema Registry docker image,
 ::
 
     mvn -f $REGISTRY_HOME/pom.xml clean package
@@ -182,19 +181,49 @@ Running Schema Registry in Docker Mode
 
 3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
 
-4. To run the schema registry from image in detached mode,
+4. Schema Registry can run with three database types: mysql, oracle and postgresql. Use the corresponding docker-compose
+   configuration file accordingly to connect with that particular db type. Also, edit this configuration to update the
+   ports / db credentials.
 
+    a) docker-compose-mysql.yml
+    b) docker-compose-oracle.yml
+    c) docker-compose-postgresql.yml
+
+4. To run the schema registry from image in detached mode,
 ::
 
    cd $REGISTRY_HOME/docker
-   docker-compose -f docker-compose.yml up -d
+   docker-compose -d -f docker-compose-`db_type`.yml up registry-app
 
-5. Use `$REGISTRY_HOME/docker/docker-compose.yml` to configure the ports exposed from the container.
-
-6. To view the registry logs,
+5. To view the registry / container logs,
 ::
 
     docker container ls
-    docker container logs `CONTAINER ID`
+    docker-compose logs -f `CONTAINER_ID`
 
-7. To view client, use "http://localhost:3090"
+6. To login into the docker container, (Schema Registry working dir is /registryapp/)
+::
+
+    docker exec -it `CONTAINER_ID` /bin/bash
+
+7. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
+::
+
+    docker-compose -f docker-compose-`db_type`.yml scale registry-app=5
+
+8. To view client, use "http://localhost:9010"
+
+9. Other useful docker commands,
+::
+
+    `docker images` - lists all the available images stored in the local repository
+    `docker rmi IMAGE_ID` - to delete a particular image. Use `-f` option to delete the image forcefully
+
+    `docker container ps` - lists all the running containers
+    `docker container ps -a` - lists all the running and exited containers
+    `docker container stop CONTAINER_ID` - stops the container
+    `docker container rm CONTAINER_ID` - removes the container from the memory
+    `docker container prune` - removes all the exited containers from the memory
+
+    `docker exec -it `CONTAINER_ID` mysql -uroot -ppassword db_name` - to login into the mysql client shell
+

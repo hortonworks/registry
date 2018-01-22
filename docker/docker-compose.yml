@@ -1,5 +1,0 @@
-hwxregistry:
-  image: registry
-  ports:
-    - 3090:9090
-    - 3091:9091

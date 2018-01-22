@@ -1,0 +1,34 @@
+version: '3'
+services:
+
+  registry-app:
+    image: registry
+    ports:
+      - "9010-9020:9090"
+      - "9030-9040:9091"
+    depends_on:
+      - pgdb
+    links:
+      - pgdb
+    environment:
+      DB_TYPE: postgresql
+      DATA_SRC_CLASS_NAME: org.postgresql.ds.PGSimpleDataSource
+      DB_URL: jdbc:postgresql://pgdb/schema_registry
+
+      DB_NAME: schema_registry
+      DB_USER: appuser
+      DB_PASSWORD: password
+      DB_HOST: pgdb
+    volumes:
+      - "./logs:/registryapp/hortonworks-registry-0.4.0-SNAPSHOT/logs:rw"
+
+  pgdb:
+    image: postgres
+    environment:
+      POSTGRES_DB: schema_registry
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./postgres_data:/var/lib/postgresql/data"

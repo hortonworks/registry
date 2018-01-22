@@ -1,0 +1,49 @@
+version: '3'
+services:
+
+  registry-app:
+    image: registry
+    ports:
+      - "9010-9020:9090"
+      - "9030-9040:9091"
+    depends_on:
+      - oracle-dev
+    links:
+      - oracle-dev
+    environment:
+      DB_TYPE: oracle
+      DATA_SRC_CLASS_NAME: oracle.jdbc.pool.OracleDataSource
+      DB_URL: jdbc:oracle:thin:@oracle-dev:1521/orclpdb1.localdomain
+      DB_NAME: schema_registry
+      DB_USER: appuser
+      DB_PASSWORD: password
+      DB_HOST: oracle-dev
+    volumes:
+      - "./logs:/registryapp/hortonworks-registry-0.4.0-SNAPSHOT/logs:rw"
+
+  oracle-dev:
+    image: sath89/oracle-12c
+    environment:
+      DBCA_TOTAL_MEMORY: 1024
+    ports:
+      - "1521:1521"
+      - "8080:8080"
+    volumes:
+      - ./oracle_data:/u01/app/oracle
+
+
+  #Connect database with following setting:
+  #
+  #hostname: localhost
+  #port: 1521
+  #sid: xe
+  #service name: xe
+  #username: system
+  #password: oracle
+  #To connect using sqlplus:
+  #
+  #<pre> sqlplus system/oracle@//localhost:1521/xe </pre>
+  #
+  #Password for SYS & SYSTEM:
+  #
+  #oracle
