@@ -814,6 +814,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     }
 
+    @Override
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName).queryParam("state", stateId);
+        return getEntities(webTarget, SchemaVersionInfo.class);
+    }
+
     private boolean transitionSchemaVersionState(Long schemaVersionId,
                                                  String operationOrTargetState,
                                                  byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {

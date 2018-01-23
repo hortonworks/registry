@@ -748,6 +748,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        if(stateId == null)
+            return getAllVersions(schemaBranchName, schemaName);
+        else
+            return schemaVersionLifecycleManager.getAllVersions(schemaBranchName, schemaName, stateId);
+    }
+
+    @Override
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaVersionLifecycleManager.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
     }

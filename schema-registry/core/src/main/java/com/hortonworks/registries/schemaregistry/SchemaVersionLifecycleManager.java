@@ -496,10 +496,30 @@ public class SchemaVersionLifecycleManager {
         Collection<SchemaVersionInfo> schemaVersionInfos;
         SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranchName, schemaName);
 
+        schemaVersionInfos = Lists.reverse(getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey))));
+        if (schemaVersionInfos == null || schemaVersionInfos.isEmpty())
+            schemaVersionInfos = Collections.emptyList();
+
+        return schemaVersionInfos;
+    }
+
+
+    public Collection<SchemaVersionInfo> getAllVersions(final String schemaBranchName,
+                                                        final String schemaName,
+                                                        final Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+
+        Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(stateId, "State Id can't be null");
+
+        Collection<SchemaVersionInfo> schemaVersionInfos;
+        SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranchName, schemaName);
+
         if (schemaBranchName.equals(SchemaBranch.MASTER_BRANCH)) {
-            List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
+            List<QueryParam> queryParams = new ArrayList<>();
+            queryParams.add(new QueryParam(SchemaVersionStorable.NAME, schemaName));
+            queryParams.add(new QueryParam(SchemaVersionStorable.STATE, stateId.toString()));
             Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams,
-                                                                              Collections.singletonList(OrderByField.of(SchemaVersionStorable.VERSION, true)));
+                    Collections.singletonList(OrderByField.of(SchemaVersionStorable.VERSION, true)));
             Set<Long> schemaVersionIds = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey)))
                     .
                             stream()
@@ -516,13 +536,16 @@ public class SchemaVersionLifecycleManager {
                 schemaVersionInfos = Collections.emptyList();
             }
         } else {
-            schemaVersionInfos = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey)));
+            schemaVersionInfos = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey))).stream().
+                    filter(schemaVersionInfo -> schemaVersionInfo.getStateId().equals(stateId)).
+                    collect(Collectors.toList());
             if (schemaVersionInfos == null || schemaVersionInfos.isEmpty())
                 schemaVersionInfos = Collections.emptyList();
         }
 
         return schemaVersionInfos;
     }
+
 
     public Collection<SchemaVersionInfo> getAllVersions(final String schemaName) throws SchemaNotFoundException {
         List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));

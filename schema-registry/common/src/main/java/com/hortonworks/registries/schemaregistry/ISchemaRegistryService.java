@@ -357,4 +357,17 @@ public interface ISchemaRegistryService {
      */
 
     void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException;
+
+
+    /**
+     * Get all the schema metadata with given schemaName and in given stateId
+     * @param schemaBranchName name of the schema branch
+     * @param schemaName name identifying a schema
+     * @param stateId state id of the schema version
+     *
+     * @return all versions of the schemas for given schemaName and stateId
+     *
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+     */
+    Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 }

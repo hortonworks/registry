@@ -278,6 +278,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
         schemaRegistry.deleteSchemaBranch(schemaBranchId);
     }
 
+    @Override
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, Byte stateId) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateId);
+    }
+
     public <T> T createSerializerInstance(SerDesInfo serDesInfo) {
         return null;
     }
