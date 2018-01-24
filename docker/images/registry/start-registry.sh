@@ -27,11 +27,11 @@ update_config() {
     local db_user="${DB_USER}"
     local db_password="${DB_PASSWORD}"
 
-    sed -r -i -e "s@(db.type:) \"(.*)\"@\1 \"$db_type\"@" $REGISTRY_CONFIG
-    sed -r -i -e "s@(dataSourceClassName:) \"(.*)\"@\1 \"$data_src_class_name\"@" $REGISTRY_CONFIG
-    sed -r -i -e "s@(dataSource.url:) \"(.*)\"@\1 \"$db_url\"@" $REGISTRY_CONFIG
-    sed -r -i -e "s@(dataSource.user:) \"(.*)\"@\1 \"$db_user\"@" $REGISTRY_CONFIG
-    sed -r -i -e "s@(dataSource.password:) \"(.*)\"@\1 \"$db_password\"@" $REGISTRY_CONFIG
+    sed -r -i -e "s#(db.type:) \"(.*)\"#\1 \"$db_type\"#" $REGISTRY_CONFIG
+    sed -r -i -e "s#(dataSourceClassName:) \"(.*)\"#\1 \"$data_src_class_name\"#" $REGISTRY_CONFIG
+    sed -r -i -e "s#(dataSource.url:) \"(.*)\"#\1 \"$db_url\"#" $REGISTRY_CONFIG
+    sed -r -i -e "s#(dataSource.user:) \"(.*)\"#\1 \"$db_user\"#" $REGISTRY_CONFIG
+    sed -r -i -e "s#(dataSource.password:) \"(.*)\"#\1 \"$db_password\"#" $REGISTRY_CONFIG
 }
 
 run_bootstrap() {

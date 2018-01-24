@@ -18,8 +18,8 @@ services:
       DB_USER: appuser
       DB_PASSWORD: password
       DB_HOST: oracle-dev
-    volumes:
-      - "./logs:/registryapp/hortonworks-registry-0.4.0-SNAPSHOT/logs:rw"
+#    volumes:
+#      - "./logs:$REGISTRY_HOME/logs:rw"
 
   oracle-dev:
     image: sath89/oracle-12c
@@ -30,7 +30,13 @@ services:
       - "8080:8080"
     volumes:
       - ./oracle_data:/u01/app/oracle
-
+    environment:
+      USER: appuser
+      PASS: password
+      PORT: 1521
+      SID: XE
+      HTTP_PORT: 8080
+      #HOST: oracle-dev
 
   #Connect database with following setting:
   #
@@ -47,3 +53,13 @@ services:
   #Password for SYS & SYSTEM:
   #
   #oracle
+
+  # Download this jar manually, and add it in SR and bootstrap classpath - http://www.oracle.com/technetwork/database/features/jdbc/default-2280470.html
+
+
+#  USER=sys
+#  PASS=oracle
+#  HOST=oracle-database
+#  PORT=1521
+#  SID=XE
+#  HTTP_PORT=8080

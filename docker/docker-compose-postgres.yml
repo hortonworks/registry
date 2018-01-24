@@ -19,8 +19,8 @@ services:
       DB_USER: appuser
       DB_PASSWORD: password
       DB_HOST: pgdb
-    volumes:
-      - "./logs:/registryapp/hortonworks-registry-0.4.0-SNAPSHOT/logs:rw"
+#    volumes:
+#      - "./logs:$REGISTRY_HOME/logs:rw"
 
   pgdb:
     image: postgres
@@ -32,3 +32,8 @@ services:
       - "5432:5432"
     volumes:
       - "./postgres_data:/var/lib/postgresql/data"
+
+#  admin:
+#    image: adminer
+#    ports:
+#      - 8080:8080

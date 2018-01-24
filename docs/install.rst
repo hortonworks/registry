@@ -181,19 +181,19 @@ Running Schema Registry in Docker Mode
 
 3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
 
-4. Schema Registry can run with three database types: mysql, oracle and postgresql. Use the corresponding docker-compose
+4. Schema Registry can run with three database types: mysql, oracle and postgres. Use the corresponding docker-compose
    configuration file accordingly to connect with that particular db type. Also, edit this configuration to update the
    ports / db credentials.
 
     a) docker-compose-mysql.yml
     b) docker-compose-oracle.yml
-    c) docker-compose-postgresql.yml
+    c) docker-compose-postgres.yml
 
 4. To run the schema registry from image in detached mode,
 ::
 
    cd $REGISTRY_HOME/docker
-   docker-compose -d -f docker-compose-`db_type`.yml up registry-app
+   docker-compose -f docker-compose-`db_type`.yml -d up registry-app
 
 5. To view the registry / container logs,
 ::
@@ -204,7 +204,8 @@ Running Schema Registry in Docker Mode
 6. To login into the docker container, (Schema Registry working dir is /registryapp/)
 ::
 
-    docker exec -it `CONTAINER_ID` /bin/bash
+    docker exec -it `CONTAINER_ID` /bin/bash [OR]
+    docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash
 
 7. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
 ::
@@ -225,5 +226,6 @@ Running Schema Registry in Docker Mode
     `docker container rm CONTAINER_ID` - removes the container from the memory
     `docker container prune` - removes all the exited containers from the memory
 
-    `docker exec -it `CONTAINER_ID` mysql -uroot -ppassword db_name` - to login into the mysql client shell
+    `docker exec -it `CONTAINER_ID` mysql -uappuser -ppassword db_name` - to login into the mysql client shell
+    `docker exec -it `CONTAINER_ID` psql -U appuser -W schema_registry` - to login into the postgres client shell
 
