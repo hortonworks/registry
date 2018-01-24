@@ -583,11 +583,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                          @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                         @QueryParam("state") Byte stateId) {
+                                         @QueryParam("states") List<Byte> stateIds) {
 
         Response response;
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateId);
+            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
             if (schemaVersionInfos != null) {
                 response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
             } else {

@@ -68,6 +68,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -592,9 +593,15 @@ public class AvroSchemaRegistryClientTest {
         SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(v2.getSchemaVersionId());
         SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(v3.getSchemaVersionId());
 
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, SchemaVersionLifecycleStates.ENABLED.getId()).size(), 1);
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, SchemaVersionLifecycleStates.ARCHIVED.getId()).size(),2);
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(schemaBranch.getName(), schemaName, SchemaVersionLifecycleStates.REVIEWED.getId()).size(), 1);
+        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ENABLED.getId())).size(), 1);
+        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ARCHIVED.getId())).size(),2);
+        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(schemaBranch.getName(), schemaName, Collections.singletonList(SchemaVersionLifecycleStates.REVIEWED.getId())).size(), 1);
+
+        List<Byte> statesToFetch = new ArrayList<>();
+        statesToFetch.add(SchemaVersionLifecycleStates.ARCHIVED.getId());
+        statesToFetch.add(SchemaVersionLifecycleStates.DISABLED.getId());
+        SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(v1.getSchemaVersionId());
+        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, statesToFetch).size(), 3);
     }
 
 }
