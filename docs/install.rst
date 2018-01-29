@@ -173,15 +173,7 @@ Running Schema Registry in Docker Mode
 
 1. Install and run Docker Engine from https://docs.docker.com/engine/installation/
 
-2. To create Schema Registry docker image,
-::
-
-    mvn -f $REGISTRY_HOME/pom.xml clean package
-    mvn -f $REGISTRY_HOME/docker/pom.xml package -Pdocker
-
-3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
-
-4. Schema Registry can run with three database types: mysql, oracle and postgres. Use the corresponding docker-compose
+2. Schema Registry can run with three database types: mysql, oracle and postgres. Use the corresponding docker-compose
    configuration file accordingly to connect with that particular db type. Also, edit this configuration to update the
    ports / db credentials.
 
@@ -189,10 +181,17 @@ Running Schema Registry in Docker Mode
     b) docker-compose-oracle.yml
     c) docker-compose-postgres.yml
 
+3. To create Schema Registry docker image,
+::
+
+    cd $REGISTRY_HOME/docker
+    docker-compose -f docker-compose-`db_type`.yml build
+
+3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
+
 4. To run the schema registry from image in detached mode,
 ::
 
-   cd $REGISTRY_HOME/docker
    docker-compose -f docker-compose-`db_type`.yml -d up registry-app
 
 5. To view the registry / container logs,
@@ -205,7 +204,8 @@ Running Schema Registry in Docker Mode
 ::
 
     docker exec -it `CONTAINER_ID` /bin/bash [OR]
-    docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash
+    docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash [OR]
+    docker-compose -f docker-compose-`db_type`.yml exec `service-name` date (executes the command `date` inside the container and shows the output)
 
 7. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
 ::

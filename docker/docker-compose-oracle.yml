@@ -1,13 +1,20 @@
 version: '3'
 services:
 
+  # Schema Registry application gets installed under /registryapp/hortonworks-registry-`version` directory
   registry-app:
+    build:
+      context: "images/registry"
+      dockerfile: "Dockerfile"
+      args:
+        - "REGISTRY_VERSION=0.5.0"
     image: registry
     ports:
       - "9010-9020:9090"
       - "9030-9040:9091"
     depends_on:
       - oracle-dev
+      - kafka
     links:
       - oracle-dev
     environment:
@@ -29,7 +36,7 @@ services:
       - "1521:1521"
       - "8080:8080"
     volumes:
-      - ./oracle_data:/u01/app/oracle
+      - ./oracle-data:/u01/app/oracle
     environment:
       USER: appuser
       PASS: password
@@ -37,6 +44,39 @@ services:
       SID: XE
       HTTP_PORT: 8080
       #HOST: oracle-dev
+
+  # Zookeeper gets installed under /opt/zookeeper directory
+  zookeeper:
+    image: zookeeper:3.4.11
+    ports:
+      - "2181:2181"
+    volumes:
+      - "./zk-data:/data:rw"
+      - "./zk-datalog:/datalog:rw"
+
+  # Kafka gets installed under /opt/kafka directory
+  kafka:
+    image: wurstmeister/kafka:0.10.2.1
+    ports:
+      - "9092:9092"
+      - "1099:1099"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "log_test0:1:3"
+      KAFKA_BROKER_ID: 0
+      KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false
+                       -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=127.0.0.1
+                       -Dcom.sun.management.jmxremote.rmi.port=1099"
+      JMX_PORT: 1099
+    depends_on:
+      - zookeeper
+    links:
+      - zookeeper
+    volumes:
+      - "./kafka-data:/kafka:rw"
 
   #Connect database with following setting:
   #

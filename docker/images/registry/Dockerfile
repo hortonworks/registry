@@ -36,16 +36,13 @@
 
 FROM openjdk:8
 
+ENV TZ="/usr/share/zoneinfo/Asia/Kolkata"
+
 ARG REGISTRY_VERSION
+ARG VERSION_SUFFIX="${REGISTRY_VERSION}"
 
 # Do not ask for confirmations when running apt-get, etc.
 ENV DEBIAN_FRONTEND noninteractive
-
-# Set the ducker.creator label so that we know that this is a ducker image.  This will make it
-# visible to 'ducker purge'.  The ducker.creator label also lets us know what UNIX user built this
-# image.
-ARG ducker_creator=default
-LABEL ducker.creator=$ducker_creator
 
 # update linux and install neccessary utilities.
 RUN apt update && apt install -y sudo netcat iptables rsync unzip wget curl jq coreutils openssh-server net-tools vim \
@@ -53,7 +50,11 @@ python-pip python-dev libffi-dev libssl-dev cmake pkg-config libfuse-dev bc && a
 
 RUN mkdir /registryapp
 
-ADD hortonworks-registry-$REGISTRY_VERSION.tar.gz /registryapp/
+ARG REGISTRY_MIRROR="https://github.com/hortonworks/registry/releases/download"
+ARG URL="${REGISTRY_MIRROR}"/v"${REGISTRY_VERSION}"/hortonworks-registry-"${VERSION_SUFFIX}".tar.gz
+
+RUN echo "Downloading Schema Registry from URL :: " ${URL}
+RUN mkdir -p "/registryapp" && wget -q "${URL}" && tar xvzf hortonworks-registry-"${VERSION_SUFFIX}".tar.gz -C "/registryapp"
 
 ENV REGISTRY_HOME /registryapp/hortonworks-registry-$REGISTRY_VERSION
 
