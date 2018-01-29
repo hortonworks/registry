@@ -225,6 +225,7 @@ Running Schema Registry in Docker Mode
 
     `docker images` - lists all the available images stored in the local repository
     `docker rmi IMAGE_ID` - to delete a particular image. Use `-f` option to delete the image forcefully
+    `docker-compose -f docker-compose-`db_type`.yml ps` - to view the running containers
 
     `docker container ps` - lists all the running containers
     `docker container ps -a` - lists all the running and exited containers
