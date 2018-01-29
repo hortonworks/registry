@@ -204,13 +204,13 @@ Running Schema Registry in Docker Mode
 ::
 
     docker container ls
-    docker-compose logs -f `CONTAINER_ID`
+    docker logs -f `CONTAINER_ID`
 
 7. To login into the docker container, (Schema Registry working dir is /registryapp/)
 ::
 
     docker exec -it `CONTAINER_ID` /bin/bash [OR]
-    docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash [OR]
+    docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash
 
 8. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
 ::
@@ -234,5 +234,7 @@ Running Schema Registry in Docker Mode
 
     `docker exec -it `CONTAINER_ID` mysql -uappuser -ppassword db_name` - to login into the mysql client shell
     `docker exec -it `CONTAINER_ID` psql -U appuser -W schema_registry` - to login into the postgres client shell
+
+    `docker-compose -f docker-compose-`db_type`.yml exec psql -U appuser -W schema_registry` - to login into the postgres client shell
     `docker-compose -f docker-compose-`db_type`.yml exec `service-name` date` - executes the command `date` inside the container and shows the output
 
