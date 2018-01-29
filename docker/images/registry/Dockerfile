@@ -46,15 +46,14 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # update linux and install neccessary utilities.
 RUN apt update && apt install -y sudo netcat iptables rsync unzip wget curl jq coreutils openssh-server net-tools vim \
-python-pip python-dev libffi-dev libssl-dev cmake pkg-config libfuse-dev bc && apt-get -y clean
-
-RUN mkdir /registryapp
+less python-pip python-dev libffi-dev libssl-dev cmake pkg-config libfuse-dev bc && apt-get -y clean
 
 ARG REGISTRY_MIRROR="https://github.com/hortonworks/registry/releases/download"
 ARG URL="${REGISTRY_MIRROR}"/v"${REGISTRY_VERSION}"/hortonworks-registry-"${VERSION_SUFFIX}".tar.gz
 
-RUN echo "Downloading Schema Registry from URL :: " ${URL}
-RUN mkdir -p "/registryapp" && wget -q "${URL}" && tar xvzf hortonworks-registry-"${VERSION_SUFFIX}".tar.gz -C "/registryapp"
+RUN mkdir /registryapp && echo "Downloading Schema Registry from URL :: " ${URL} \
+&& wget -q "${URL}" && tar xvzf hortonworks-registry-"${VERSION_SUFFIX}".tar.gz -C "/registryapp" \
+&& rm hortonworks-registry-"${VERSION_SUFFIX}".tar.gz
 
 ENV REGISTRY_HOME /registryapp/hortonworks-registry-$REGISTRY_VERSION
 
