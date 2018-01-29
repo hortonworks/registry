@@ -205,14 +205,14 @@ Running Schema Registry in Docker Mode
 
     docker exec -it `CONTAINER_ID` /bin/bash [OR]
     docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash [OR]
-    docker-compose -f docker-compose-`db_type`.yml exec `service-name` date (executes the command `date` inside the container and shows the output)
 
 7. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
 ::
 
     docker-compose -f docker-compose-`db_type`.yml scale registry-app=5
 
-8. To view client, use "http://localhost:9010"
+8. To view client, use "http://localhost:9010" (The app can bind on any available port provided in the allowed range.
+   Please check docker-compose-`db-type`.yml file)
 
 9. Other useful docker commands,
 ::
@@ -228,4 +228,5 @@ Running Schema Registry in Docker Mode
 
     `docker exec -it `CONTAINER_ID` mysql -uappuser -ppassword db_name` - to login into the mysql client shell
     `docker exec -it `CONTAINER_ID` psql -U appuser -W schema_registry` - to login into the postgres client shell
+    `docker-compose -f docker-compose-`db_type`.yml exec `service-name` date` - executes the command `date` inside the container and shows the output
 
