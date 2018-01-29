@@ -194,27 +194,33 @@ Running Schema Registry in Docker Mode
 
    docker-compose -f docker-compose-`db_type`.yml -d up registry-app
 
-5. To view the registry / container logs,
+5. To stop the schema registry application,
+::
+
+   docker-compose -f docker-compose-`db_type.yml` stop [`service_name` (optional)]
+   docker-compose -f docker-compose-`db_type.yml` rm [`service-name` (optional)]
+
+6. To view the registry / container logs,
 ::
 
     docker container ls
     docker-compose logs -f `CONTAINER_ID`
 
-6. To login into the docker container, (Schema Registry working dir is /registryapp/)
+7. To login into the docker container, (Schema Registry working dir is /registryapp/)
 ::
 
     docker exec -it `CONTAINER_ID` /bin/bash [OR]
     docker-compose -f docker-compose-`db_type`.yml exec `service-name` /bin/bash [OR]
 
-7. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
+8. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
 ::
 
     docker-compose -f docker-compose-`db_type`.yml scale registry-app=5
 
-8. To view client, use "http://localhost:9010" (The app can bind on any available port provided in the allowed range.
+9. To view client, use "http://localhost:9010" (The app can bind on any available port provided in the allowed range.
    Please check docker-compose-`db-type`.yml file)
 
-9. Other useful docker commands,
+10. Other useful docker commands,
 ::
 
     `docker images` - lists all the available images stored in the local repository
