@@ -28,6 +28,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Basic service interface for schema registry which should be implemented by client and server interfaces.
@@ -357,4 +358,17 @@ public interface ISchemaRegistryService {
      */
 
     void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException;
+
+
+    /**
+     * Get all the schema metadata with given schemaName and in one of the state ids
+     * @param schemaBranchName name of the schema branch
+     * @param schemaName name identifying a schema
+     * @param stateIds state ids of the schema version
+     *
+     * @return all versions of the schemas for given schemaName and in one of state ids
+     *
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+     */
+    Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 }
