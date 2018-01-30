@@ -192,7 +192,7 @@ Running Schema Registry in Docker Mode
 4. To run the schema registry from image in detached mode,
 ::
 
-   docker-compose -f docker-compose-`db_type`.yml -d up registry-app
+   docker-compose -f docker-compose-`db_type`.yml up -d registry-app
 
 5. To stop the schema registry application,
 ::
