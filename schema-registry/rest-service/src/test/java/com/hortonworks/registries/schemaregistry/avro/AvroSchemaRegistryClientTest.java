@@ -73,6 +73,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -593,15 +594,27 @@ public class AvroSchemaRegistryClientTest {
         SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(v2.getSchemaVersionId());
         SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(v3.getSchemaVersionId());
 
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ENABLED.getId())).size(), 1);
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ARCHIVED.getId())).size(),2);
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(schemaBranch.getName(), schemaName, Collections.singletonList(SchemaVersionLifecycleStates.REVIEWED.getId())).size(), 1);
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ENABLED.getId()))),
+                new HashSet<>(Arrays.asList(v1)));
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ARCHIVED.getId()))),
+                new HashSet<>(Arrays.asList(v2,v3)));
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(schemaBranch.getName(), schemaName, Collections.singletonList(SchemaVersionLifecycleStates.REVIEWED.getId()))),
+                new HashSet<>(Arrays.asList(v4)));
 
-        List<Byte> statesToFetch = new ArrayList<>();
-        statesToFetch.add(SchemaVersionLifecycleStates.ARCHIVED.getId());
-        statesToFetch.add(SchemaVersionLifecycleStates.DISABLED.getId());
         SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(v1.getSchemaVersionId());
-        Assert.assertEquals(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, statesToFetch).size(), 3);
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName,
+                        Arrays.asList(SchemaVersionLifecycleStates.ARCHIVED.getId(), SchemaVersionLifecycleStates.DISABLED.getId()))),
+                new HashSet<>(Arrays.asList(v1,v2,v3)));
+    }
+
+
+    private Set<SchemaIdVersion> transformToSchemaIdVersions(Collection<SchemaVersionInfo> versionInfos) {
+        return versionInfos.stream().map(versionInfo -> new SchemaIdVersion(versionInfo.getSchemaMetadataId(), versionInfo.getVersion(), versionInfo.getId()))
+                .collect(Collectors.toSet());
     }
 
 }
