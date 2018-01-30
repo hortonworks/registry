@@ -496,33 +496,28 @@ public class SchemaVersionLifecycleManager {
         Collection<SchemaVersionInfo> schemaVersionInfos;
         SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranchName, schemaName);
 
-        if (schemaBranchName.equals(SchemaBranch.MASTER_BRANCH)) {
-            List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
-            Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams,
-                                                                              Collections.singletonList(OrderByField.of(SchemaVersionStorable.VERSION, true)));
-            Set<Long> schemaVersionIds = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey)))
-                    .
-                            stream()
-                    .map(schemaVersionInfo -> schemaVersionInfo.getId())
-                    .collect(Collectors.toSet());
-
-            if (storables != null && !storables.isEmpty() && schemaVersionIds != null && !schemaVersionIds.isEmpty()) {
-                schemaVersionInfos = storables
-                        .stream()
-                        .filter(schemaVersionInfo -> schemaVersionIds.contains(schemaVersionInfo.getId()))
-                        .map(SchemaVersionStorable::toSchemaVersionInfo)
-                        .collect(Collectors.toList());
-            } else {
-                schemaVersionInfos = Collections.emptyList();
-            }
-        } else {
-            schemaVersionInfos = getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey)));
-            if (schemaVersionInfos == null || schemaVersionInfos.isEmpty())
-                schemaVersionInfos = Collections.emptyList();
-        }
+        schemaVersionInfos = Lists.reverse(getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey))));
+        if (schemaVersionInfos == null || schemaVersionInfos.isEmpty())
+            schemaVersionInfos = Collections.emptyList();
 
         return schemaVersionInfos;
     }
+
+
+    public Collection<SchemaVersionInfo> getAllVersions(final String schemaBranchName,
+                                                        final String schemaName,
+                                                        final List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+
+        Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
+        Preconditions.checkNotNull(stateIds, "State Ids can't be null");
+
+        Set<Byte> stateIdSet = stateIds.stream().collect(Collectors.toSet());
+
+        return getAllVersions(schemaBranchName, schemaName).stream().
+                filter(schemaVersionInfo -> stateIdSet.contains(schemaVersionInfo.getStateId())).
+                collect(Collectors.toList());
+    }
+
 
     public Collection<SchemaVersionInfo> getAllVersions(final String schemaName) throws SchemaNotFoundException {
         List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.NAME, schemaName));
