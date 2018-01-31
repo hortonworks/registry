@@ -221,7 +221,11 @@ Running Schema Registry in Docker Mode
     docker-compose -f docker-compose-`db_type`.yml scale registry-app=5
 
 9. To view client, use "http://localhost:9010" (The app can bind on any available port provided in the allowed range.
-   Please check docker-compose-`db-type`.yml file)
+   Please check docker-compose-`db-type`.yml file). Use the below command to check the host port which mapped with the
+   corresponding container port,
+::
+
+    docker port `CONTAINER_ID`
 
 10. Other useful docker commands,
 ::
@@ -242,3 +246,6 @@ Running Schema Registry in Docker Mode
     `docker-compose -f docker-compose-`db_type`.yml exec psql -U appuser -W schema_registry` - to login into the postgres client shell
     `docker-compose -f docker-compose-`db_type`.yml exec `service-name` date` - executes the command `date` inside the container and shows the output
 
+11. To run the Schema Registry with the ORACLE database. Download the latest `ojdbc.jar` for the corresponding oracle version
+    from `oracle technetwork <http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html>`_ (12c)
+    and copy it to `extlibs` directory before building the registry image.

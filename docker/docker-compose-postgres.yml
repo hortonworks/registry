@@ -23,11 +23,8 @@ services:
       DB_TYPE: postgresql
       DATA_SRC_CLASS_NAME: org.postgresql.ds.PGSimpleDataSource
       DB_URL: jdbc:postgresql://pgdb/schema_registry
-
-      DB_NAME: schema_registry
-      DB_USER: appuser
+      DB_USER: root
       DB_PASSWORD: password
-      DB_HOST: pgdb
     volumes:
       - "./logs:/opt/registrylogs:rw"
 
@@ -35,7 +32,7 @@ services:
     image: postgres
     environment:
       POSTGRES_DB: schema_registry
-      POSTGRES_USER: appuser
+      POSTGRES_USER: root
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"

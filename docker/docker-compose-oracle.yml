@@ -14,7 +14,7 @@ services:
       - "9030-9040:9091"
     depends_on:
       oracle-dev:
-        condition: service_healthy
+        condition: service_started #TODO, change it to service_healthy
       kafka:
         condition: service_started
     links:
@@ -23,10 +23,8 @@ services:
       DB_TYPE: oracle
       DATA_SRC_CLASS_NAME: oracle.jdbc.pool.OracleDataSource
       DB_URL: jdbc:oracle:thin:@oracle-dev:1521/orclpdb1.localdomain
-      DB_NAME: schema_registry
-      DB_USER: appuser
+      DB_USER: root
       DB_PASSWORD: password
-      DB_HOST: oracle-dev
     volumes:
       - "./logs:/opt/registrylogs:rw"
 
@@ -40,8 +38,6 @@ services:
     volumes:
       - ./oracle-data:/u01/app/oracle
     environment:
-      USER: appuser
-      PASS: password
       PORT: 1521
       SID: XE
       HTTP_PORT: 8080
@@ -49,7 +45,7 @@ services:
 
   # Zookeeper gets installed under /opt/zookeeper directory
   zookeeper:
-    image: zookeeper:3.4.11
+    image: zookeeper
     ports:
       - "2181:2181"
     volumes:

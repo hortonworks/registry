@@ -37,6 +37,9 @@ ENV REGISTRY_HOME /opt/hortonworks-registry-$REGISTRY_VERSION
 
 COPY start-registry.sh /opt/hortonworks-registry-$REGISTRY_VERSION/bin/
 
+COPY extlibs/*.jar /opt/hortonworks-registry-$REGISTRY_VERSION/libs/
+COPY extlibs/*.jar /opt/hortonworks-registry-$REGISTRY_VERSION/bootstrap/lib/
+
 WORKDIR /opt/hortonworks-registry-$REGISTRY_VERSION
 
 RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh \
