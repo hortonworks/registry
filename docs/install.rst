@@ -185,7 +185,10 @@ Running Schema Registry in Docker Mode
 ::
 
     cd $REGISTRY_HOME/docker
-    docker-compose -f docker-compose-`db_type`.yml build
+    docker-compose -f docker-compose-`db_type`.yml build [OR]
+
+    cd $REGISTRY_HOME/docker/images/registry
+    docker build -t registry . --build-arg "REGISTRY_VERSION=0.5.0"
 
 3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
 
@@ -206,7 +209,7 @@ Running Schema Registry in Docker Mode
     docker container ls
     docker logs -f `CONTAINER_ID`
 
-7. To login into the docker container, (Schema Registry working dir is /registryapp/)
+7. To login into the docker container, (Schema Registry working dir is /opt)
 ::
 
     docker exec -it `CONTAINER_ID` /bin/bash [OR]

@@ -1,20 +1,22 @@
-version: '3'
+version: '2.3'
 services:
 
-  # Schema Registry application gets installed under /registryapp/hortonworks-registry-`version` directory
-  registry-app:
+  # Schema Registry application gets installed under /opt/hortonworks-registry-`version` directory
+  registry:
     build:
       context: "images/registry"
       dockerfile: "Dockerfile"
       args:
         - "REGISTRY_VERSION=0.5.0"
-    image: registry
+    image: schema-registry
     ports:
       - "9010-9020:9090"
       - "9030-9040:9091"
     depends_on:
-      - mysql-dev
-      - kafka
+      mysql-dev:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     links:
       - mysql-dev
     environment:
@@ -39,6 +41,8 @@ services:
       - "3308:3306"
     volumes:
       - "./mysql-data:/var/lib/mysql:rw"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
 
   # Zookeeper gets installed under /opt/zookeeper directory
   zookeeper:
@@ -51,7 +55,7 @@ services:
 
   # Kafka gets installed under /opt/kafka directory
   kafka:
-    image: wurstmeister/kafka:0.10.2.1
+    image: wurstmeister/kafka
     ports:
       - "9092:9092"
       - "1099:1099"
@@ -67,7 +71,8 @@ services:
                        -Dcom.sun.management.jmxremote.rmi.port=1099"
       JMX_PORT: 1099
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_started
     links:
       - zookeeper
     volumes:
