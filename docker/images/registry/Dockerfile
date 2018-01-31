@@ -39,6 +39,7 @@ COPY start-registry.sh /opt/hortonworks-registry-$REGISTRY_VERSION/bin/
 
 WORKDIR /opt/hortonworks-registry-$REGISTRY_VERSION
 
-RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh
+RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh \
+&& ln -sf /opt/hortonworks-registry-$REGISTRY_VERSION/logs /opt/registrylogs
 
 ENTRYPOINT ["bin/start-registry.sh"]
