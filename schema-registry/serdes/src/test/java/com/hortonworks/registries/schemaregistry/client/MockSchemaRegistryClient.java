@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -276,6 +277,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
         schemaRegistry.deleteSchemaBranch(schemaBranchId);
+    }
+
+    @Override
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
     }
 
     public <T> T createSerializerInstance(SerDesInfo serDesInfo) {

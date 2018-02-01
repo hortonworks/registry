@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.test.IntegrationTest;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -37,6 +38,7 @@ import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestNam
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
@@ -66,10 +68,12 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -570,6 +574,47 @@ public class AvroSchemaRegistryClientTest {
         SCHEMA_REGISTRY_CLIENT.transitionState(schemaVersionInfo.getId(), targetStateId, null);
 
         Assert.assertEquals(targetStateId, SCHEMA_REGISTRY_CLIENT.getSchemaVersionInfo(schemaIdVersion_2).getStateId());
+    }
+
+    @Test
+    public void testGetSchemaVersionFromStates() throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException, SchemaLifecycleException, SchemaBranchAlreadyExistsException {
+        SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.NONE);
+        String schemaName = schemaMetadata.getName();
+
+        Long id = SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata);
+        SchemaIdVersion v1 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc"), "Initial version of the schema"));
+        SchemaIdVersion v2 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-2.avsc"), "Second version of the schema"));
+        SchemaIdVersion v3 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaName, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-3.avsc"), "Third version of the schema, removes name field"));
+
+        SchemaBranch schemaBranch = SCHEMA_REGISTRY_CLIENT.createSchemaBranch(v3.getSchemaVersionId(), new SchemaBranch("Branch-1", schemaName));
+        SchemaIdVersion v4 = SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaBranch.getName(), schemaName, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-4.avsc"), "Forth version of the schema, adds back name field, but different type"));
+        SCHEMA_REGISTRY_CLIENT.startSchemaVersionReview(v4.getSchemaVersionId());
+        SCHEMA_REGISTRY_CLIENT.transitionState(v4.getSchemaVersionId(), SchemaVersionLifecycleStates.REVIEWED.getId(), null);
+
+        SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(v2.getSchemaVersionId());
+        SCHEMA_REGISTRY_CLIENT.archiveSchemaVersion(v3.getSchemaVersionId());
+
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ENABLED.getId()))),
+                new HashSet<>(Arrays.asList(v1)));
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName, Collections.singletonList(SchemaVersionLifecycleStates.ARCHIVED.getId()))),
+                new HashSet<>(Arrays.asList(v2,v3)));
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(schemaBranch.getName(), schemaName, Collections.singletonList(SchemaVersionLifecycleStates.REVIEWED.getId()))),
+                new HashSet<>(Arrays.asList(v4)));
+
+        SCHEMA_REGISTRY_CLIENT.disableSchemaVersion(v1.getSchemaVersionId());
+        Assert.assertEquals(
+                transformToSchemaIdVersions(SCHEMA_REGISTRY_CLIENT.getAllVersions(SchemaBranch.MASTER_BRANCH, schemaName,
+                        Arrays.asList(SchemaVersionLifecycleStates.ARCHIVED.getId(), SchemaVersionLifecycleStates.DISABLED.getId()))),
+                new HashSet<>(Arrays.asList(v1,v2,v3)));
+    }
+
+
+    private Set<SchemaIdVersion> transformToSchemaIdVersions(Collection<SchemaVersionInfo> versionInfos) {
+        return versionInfos.stream().map(versionInfo -> new SchemaIdVersion(versionInfo.getSchemaMetadataId(), versionInfo.getVersion(), versionInfo.getId()))
+                .collect(Collectors.toSet());
     }
 
 }
