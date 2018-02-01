@@ -14,7 +14,7 @@ services:
       - "9030-9040:9091"
     depends_on:
       oracle-dev:
-        condition: service_started #TODO, change it to service_healthy
+        condition: service_healthy
       kafka:
         condition: service_started
     links:
@@ -28,6 +28,7 @@ services:
     volumes:
       - "./logs:/opt/registrylogs:rw"
 
+  # Oracle gets installed under /u01/app/oracle/product/12.1.0/xe directory
   oracle-dev:
     image: sath89/oracle-12c
     volumes:
