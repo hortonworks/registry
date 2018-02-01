@@ -23,7 +23,7 @@ services:
       DB_TYPE: mysql
       DATA_SRC_CLASS_NAME: com.mysql.jdbc.jdbc2.optional.MysqlDataSource
       DB_URL: jdbc:mysql://mysql-dev/schema_registry
-      DB_USER: root
+      DB_USER: registry_user
       DB_PASSWORD: password
     volumes:
       - "./logs:/opt/registrylogs:rw"
@@ -33,7 +33,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: schema_registry
-      MYSQL_USER: root
+      MYSQL_USER: registry_user
       MYSQL_PASSWORD: password
     ports:
       - "3308:3306"
