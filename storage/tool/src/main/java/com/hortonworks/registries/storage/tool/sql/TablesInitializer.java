@@ -30,6 +30,7 @@ public class TablesInitializer {
     private static final String OPTION_SCRIPT_ROOT_PATH = "script-root";
     private static final String OPTION_CONFIG_FILE_PATH = "config";
     private static final String OPTION_MYSQL_JAR_URL_PATH = "mysql-jar-url";
+    private static final String DISABLE_VALIDATE_ON_MIGRATE = "disable-validate-on-migrate";
 
 
     public static void main(String[] args) throws Exception {
@@ -115,6 +116,14 @@ public class TablesInitializer {
                         .build()
         );
 
+        options.addOption(
+                Option.builder()
+                    .hasArg(false)
+                    .longOpt(DISABLE_VALIDATE_ON_MIGRATE)
+                    .desc("Disable flyway validation checks while running migrate")
+                    .build()
+        );
+
         CommandLineParser parser = new BasicParser();
         CommandLine commandLine = parser.parse(options, args);
 
@@ -167,7 +176,11 @@ public class TablesInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath));
+        Boolean disableValidateOnMigrate = commandLine.hasOption(DISABLE_VALIDATE_ON_MIGRATE);
+        if(disableValidateOnMigrate) {
+            System.out.println("Disabling validation on schema migrate");
+        }
+        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath, disableValidateOnMigrate));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));

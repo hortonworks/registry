@@ -27,21 +27,20 @@ public class SchemaFlywayFactory {
     private static final String encoding = StandardCharsets.UTF_8.name();
     private static final String metaDataTableName = "DATABASE_CHANGE_LOG";
     private static final String sqlMigrationPrefix = "v";
-    private static final boolean validateOnMigrate = true;
     private static final boolean outOfOrder = false;
     private static final boolean baselineOnMigrate = true;
     private static final String baselineVersion = "000";
     private static final boolean cleanOnValidationError = false;
 
 
-    public static Flyway get(StorageProviderConfiguration conf, String scriptRootPath) {
+    public static Flyway get(StorageProviderConfiguration conf, String scriptRootPath, Boolean disableValidationOnMigrate) {
         Flyway flyway = new Flyway();
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
         flyway.setEncoding(encoding);
         flyway.setTable(metaDataTableName);
         flyway.setSqlMigrationPrefix(sqlMigrationPrefix);
-        flyway.setValidateOnMigrate(validateOnMigrate);
+        flyway.setValidateOnMigrate(!disableValidationOnMigrate);
         flyway.setOutOfOrder(outOfOrder);
         flyway.setBaselineOnMigrate(baselineOnMigrate);
         flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
