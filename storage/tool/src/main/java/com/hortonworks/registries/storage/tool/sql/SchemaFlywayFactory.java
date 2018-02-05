@@ -33,14 +33,14 @@ public class SchemaFlywayFactory {
     private static final boolean cleanOnValidationError = false;
 
 
-    public static Flyway get(StorageProviderConfiguration conf, String scriptRootPath, Boolean disableValidationOnMigrate) {
+    public static Flyway get(StorageProviderConfiguration conf, String scriptRootPath, boolean validateOnMigrate) {
         Flyway flyway = new Flyway();
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
         flyway.setEncoding(encoding);
         flyway.setTable(metaDataTableName);
         flyway.setSqlMigrationPrefix(sqlMigrationPrefix);
-        flyway.setValidateOnMigrate(!disableValidationOnMigrate);
+        flyway.setValidateOnMigrate(validateOnMigrate);
         flyway.setOutOfOrder(outOfOrder);
         flyway.setBaselineOnMigrate(baselineOnMigrate);
         flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));

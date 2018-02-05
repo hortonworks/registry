@@ -176,11 +176,11 @@ public class TablesInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        Boolean disableValidateOnMigrate = commandLine.hasOption(DISABLE_VALIDATE_ON_MIGRATE);
+        boolean disableValidateOnMigrate = commandLine.hasOption(DISABLE_VALIDATE_ON_MIGRATE);
         if(disableValidateOnMigrate) {
             System.out.println("Disabling validation on schema migrate");
         }
-        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath, disableValidateOnMigrate));
+        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath, !disableValidateOnMigrate));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));
