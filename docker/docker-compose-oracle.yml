@@ -2,6 +2,8 @@ version: '2.3'
 services:
 
   # Schema Registry application gets installed under /opt/hortonworks-registry-`version` directory
+  # If we assign a "Container name" to registry, then it might clash with other registry server while scaling the registry application.
+  # Let it take auto assigned unique container name.
   registry:
     build:
       context: "images/registry"
@@ -12,9 +14,9 @@ services:
     ports:
       - "9010-9020:9090"
       - "9030-9040:9091"
-    depends_on:
+    depends_on: # TODO add health check for oracle db
       oracle-dev:
-        condition: service_healthy
+        condition: service_started
       kafka:
         condition: service_started
     links:
@@ -30,15 +32,18 @@ services:
 
   # Oracle gets installed under /u01/app/oracle/product/12.1.0/xe directory
   oracle-dev:
-    image: sath89/oracle-12c
+    build:
+      context: "images/registry"
+      dockerfile: "DockerfileForOracle"
+    image: oracle-12c
     volumes:
-      - "./orclcustomscripts:/u01/app/oracle/scripts/startup:rw"
       - "./oracle-data:/u01/app/oracle:rw"
     environment:
       DBCA_TOTAL_MEMORY: 1024
     ports:
       - "1521:1521"
       - "8080:8080"
+    container_name: oracle
 
   # Zookeeper gets installed under /opt/zookeeper directory
   zookeeper:
@@ -48,6 +53,7 @@ services:
     volumes:
       - "./zk-data:/data:rw"
       - "./zk-datalog:/datalog:rw"
+    container_name: zookeeper
 
   # Kafka gets installed under /opt/kafka directory
   kafka:
@@ -73,6 +79,7 @@ services:
       - zookeeper
     volumes:
       - "./kafka-data:/kafka:rw"
+    container_name: kafka
 
   #Connect database with following setting:
   #

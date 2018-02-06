@@ -1,0 +1,11 @@
+# To run oracle 11g db, enable the below image
+# FROM sath89/oracle-xe-11g
+
+FROM sath89/oracle-12c
+
+# By default script / sqls files under the directory "docker-entrypoint-initdb.d" will be executed while setting up the db.
+# If you want to execute it again, enable this flag and create a new image.
+ENV IMPORT_FROM_VOLUME=false
+
+ADD orclcustomscripts/*.sql /docker-entrypoint-initdb.d/
+ADD orclcustomscripts/*.sh /docker-entrypoint-initdb.d/

@@ -2,6 +2,8 @@ version: '2.3'
 services:
 
   # Schema Registry application gets installed under /opt/hortonworks-registry-`version` directory
+  # If we assign a "Container name" to registry, then it might clash with other registry server while scaling the registry application.
+  # Let it take auto assigned unique container name.
   registry:
     build:
       context: "images/registry"
@@ -40,6 +42,7 @@ services:
       - "./postgres-data:/var/lib/postgresql/data"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "appuser"]
+    container_name: postgres
 
 #  admin:
 #    image: adminer
@@ -54,6 +57,7 @@ services:
     volumes:
       - "./zk-data:/data:rw"
       - "./zk-datalog:/datalog:rw"
+    container_name: zookeeper
 
   # Kafka gets installed under /opt/kafka directory
   kafka:
@@ -79,3 +83,4 @@ services:
       - zookeeper
     volumes:
       - "./kafka-data:/kafka:rw"
+    container_name: kafka
