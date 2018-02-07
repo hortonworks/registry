@@ -12,7 +12,7 @@ The following migration path is suggested.
 1. Sync / Mirror Schemas
 
   - First to do is to sync/mirror the existing shema's and id's from confluent's schema registry.
-  - It is important the schema id, is the same, as it will need to refernece the same schema even once migrated as data will exist in kafka.
+  - It is important the schema id, is the same, as it will need to reference the same schema even once migrated as data will exist in kafka.
 
 
 2. Redirect Confluent Serdes.
@@ -45,7 +45,7 @@ Third Party Tools.
 
 We are aware there are alot of third party tools only supporting currently confluent's protocol.
 
-As such the compatibility both at the Sedes REST API level and the wire protocol will be supported until this situation improves somewhat.
+As such the compatibility both at the Serdes REST API level and the wire protocol will be supported until this situation improves somewhat.
 In cases where these flows exist, you will simply need to:
 
 - ensure as mentioned above Producers set the wire protocol to 0x0
