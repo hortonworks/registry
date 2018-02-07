@@ -22,7 +22,7 @@ Running Kafka Producer with AvroSerializer
   key.serializer=org.apache.kafka.common.serialization.StringSerializer
   value.serializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer
 
-5. java -jar avro-examples-0.2.jar -d data/truck_events.csv -p data/kafka-producer.props -sm -s data/truck_events.avsc
+5. java -jar avro-examples-0.5.0-SNAPSHOT.jar -d data/truck_events.csv -p data/kafka-producer.props -sm -s data/truck_events.avsc
 6. The above command will register truck_events schema in data/truck_events.avsc into registry and ingests 200 messages into topic “truck_events_stream”
 
 
@@ -60,9 +60,9 @@ To run the producer in Secure cluster:
   }
   In the above config we are expecting Kafka brokers running with principal "kafka".
 
-5. kinit -kt your.keytab principal@EXAMPLE.com. Make sure you gave ACLs to the pricncipal refer to [2]
+5. kinit -kt your.keytab principal@EXAMPLE.COM. Make sure you gave ACLs to the principal refer to [2]
 
-6. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.4.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
+6. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.5.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
 
 
 
@@ -81,7 +81,7 @@ Running Kafka Consumer with AvroDeserializer
   group.id=truck_group
   auto.offset.reset=earliest
 
-2. java -jar avro-examples-0.2.jar -c data/kafka-consumer.props -cm -s data/truck_events.avsc
+2. java -jar avro-examples-0.5.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm -s data/truck_events.avsc
 
 
 
@@ -113,6 +113,6 @@ To run the consumer in Secure cluster:
    }
    In the above config we are expecting Kafka brokers running with principal "kafka".
 
-3. kinit -kt your.keytab principal@EXAMPLE.com. Make sure you gave ACLs to the pricncipal refer to [2]
+3. kinit -kt your.keytab principal@EXAMPLE.COM. Make sure you gave ACLs to the pricncipal refer to [2]
 
-4. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.4.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm
+4. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.5.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm
