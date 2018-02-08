@@ -190,12 +190,12 @@ Running Schema Registry in Docker Mode
     cd $REGISTRY_HOME/docker/images/registry
     docker build -t registry . --build-arg "REGISTRY_VERSION=0.5.0"
 
-3. Use `docker images` command to confirm that the `registry` image is stored in your local repository
+3. Use `docker images` command to confirm that the `schema-registry` image is stored in your local repository
 
 4. To run the schema registry from image in detached mode,
 ::
 
-   docker-compose -f docker-compose-`db_type`.yml up -d registry-app
+   docker-compose -f docker-compose-`db_type`.yml up -d registry
 
 5. To stop the schema registry application,
 ::
@@ -218,7 +218,7 @@ Running Schema Registry in Docker Mode
 8. To scale the Schema Registry application. NOTE: One instance of Schema Registry should be up and running
 ::
 
-    docker-compose -f docker-compose-`db_type`.yml scale registry-app=5
+    docker-compose -f docker-compose-`db_type`.yml scale registry=5
 
 9. To view client, use "http://localhost:9010" (The app can bind on any available port provided in the allowed range.
    Please check docker-compose-`db-type`.yml file). Use the below command to check the host port which mapped with the
