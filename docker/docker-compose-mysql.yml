@@ -27,9 +27,8 @@ services:
       DB_URL: jdbc:mysql://mysql-dev/schema_registry
       DB_USER: registry_user
       DB_PASSWORD: password
-    volumes:
-      - "./logs:/opt/registrylogs:rw"
 
+  # MySQL data are stored in /var/lib/mysql directory
   mysql-dev:
     image: mysql:5.7
     environment:
@@ -39,23 +38,19 @@ services:
       MYSQL_PASSWORD: password
     ports:
       - "3308:3306"
-    volumes:
-      - "./mysql-data:/var/lib/mysql:rw"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--silent"]
     container_name: mysql
 
   # Zookeeper gets installed under /opt/zookeeper directory
+  # Data & log are stored under /data and /datalog directories
   zookeeper:
     image: zookeeper:3.4.11
     ports:
       - "2181:2181"
-    volumes:
-      - "./zk-data:/data:rw"
-      - "./zk-datalog:/datalog:rw"
-    container_name: zookeeper
 
   # Kafka gets installed under /opt/kafka directory
+  # Data are stored under /kafka directory
   kafka:
     image: wurstmeister/kafka
     ports:
@@ -77,7 +72,4 @@ services:
         condition: service_started
     links:
       - zookeeper
-    volumes:
-      - "./kafka-data:/kafka:rw"
-    container_name: kafka
 

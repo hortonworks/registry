@@ -8,4 +8,3 @@ FROM sath89/oracle-12c
 ENV IMPORT_FROM_VOLUME=false
 
 ADD orclcustomscripts/*.sql /docker-entrypoint-initdb.d/
-ADD orclcustomscripts/*.sh /docker-entrypoint-initdb.d/

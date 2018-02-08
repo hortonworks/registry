@@ -240,10 +240,10 @@ Running Schema Registry in Docker Mode
     `docker container rm CONTAINER_ID` - removes the container from the memory
     `docker container prune` - removes all the exited containers from the memory
 
-    `docker exec -it `CONTAINER_ID` mysql -uappuser -ppassword db_name` - to login into the mysql client shell
-    `docker exec -it `CONTAINER_ID` psql -U appuser -W schema_registry` - to login into the postgres client shell
+    `docker exec -it `CONTAINER_ID` mysql -uregistry_user -ppassword db_name` - to login into the mysql client shell
+    `docker exec -it `CONTAINER_ID` psql -U registry_user -W schema_registry` - to login into the postgres client shell
 
-    `docker-compose -f docker-compose-`db_type`.yml exec psql -U appuser -W schema_registry` - to login into the postgres client shell
+    `docker-compose -f docker-compose-`db_type`.yml exec psql -U registry_user -W schema_registry` - to login into the postgres client shell
     `docker-compose -f docker-compose-`db_type`.yml exec `service-name` date` - executes the command `date` inside the container and shows the output
 
 11. To run the Schema Registry with the ORACLE database. Download the latest `ojdbc.jar` for the corresponding oracle version
