@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -35,7 +36,8 @@ import java.util.zip.ZipFile;
 public class MySqlDriverHelper {
     public static final String MYSQL_JAR_FILE_PATTERN = "mysql-connector-java.*?.jar";
 
-    public static void downloadMySQLJarIfNeeded(StorageProviderConfiguration storageProperties, String bootstrapDirPath, String mysqlJarUrl) throws Exception {
+    public static void downloadMySQLJarIfNeeded(StorageProviderConfiguration storageProperties, String bootstrapDirPath, String mysqlJarUrl, Proxy proxy) throws
+            Exception {
         /* Due to license issues we will not be able to ship mysql driver.
                If the dbtype is mysql we will prompt user to download the jar and place
                it under bootstrap/lib and libs folder. This runs only one-time and for
@@ -52,7 +54,7 @@ public class MySqlDriverHelper {
 
         if (storageProperties.getDbType().equals(DatabaseType.MYSQL)
                 && (!isMySQLJarFileAvailableOnAnyOfDirectories(Arrays.asList(bootstrapLibDir, libDir)))) {
-            downloadMySQLJar(mysqlJarUrl, bootstrapLibDir);
+            downloadMySQLJar(mysqlJarUrl, bootstrapLibDir, proxy);
         }
     }
 
@@ -60,11 +62,11 @@ public class MySqlDriverHelper {
         return directories.stream().anyMatch(dir -> MySqlDriverHelper.fileExists(dir, MYSQL_JAR_FILE_PATTERN));
     }
 
-    private static void downloadMySQLJar(String mysqlJarUrl, File bootstrapLibDir) throws Exception {
+    private static void downloadMySQLJar(String mysqlJarUrl, File bootstrapLibDir, Proxy proxy) throws Exception {
         if (mysqlJarUrl == null || mysqlJarUrl.equals(""))
             throw new IllegalArgumentException("Missing mysql client jar url. " +
                     "Please pass mysql client jar url using -m option.");
-        String mysqlJarFileName = MySqlDriverHelper.downloadMysqlJarAndCopyToLibDir(bootstrapLibDir, mysqlJarUrl, MYSQL_JAR_FILE_PATTERN);
+        String mysqlJarFileName = MySqlDriverHelper.downloadMysqlJarAndCopyToLibDir(bootstrapLibDir, mysqlJarUrl, MYSQL_JAR_FILE_PATTERN, proxy);
         if (mysqlJarFileName != null) {
             File mysqlJarFile = new File(bootstrapLibDir+ File.separator + mysqlJarFileName);
             System.out.println("mysqlJarFile " + mysqlJarFile);
@@ -80,17 +82,28 @@ public class MySqlDriverHelper {
       @params url mysql zip file URL
       @returns the mysql jar file name.
      */
-    public static String downloadMysqlJarAndCopyToLibDir(File bootstrapLibDir, String url, String fileNamePattern) throws IOException {
+    public static String downloadMysqlJarAndCopyToLibDir(File bootstrapLibDir, String url, String fileNamePattern, Proxy proxy) throws IOException {
         System.out.println("Downloading mysql jar from url: " + url);
         String tmpFileName;
         try {
             URL downloadUrl = new URL(url);
+            if (proxy == null || !Proxy.Type.HTTP.equals(proxy.type())) {
+                // defensive coding - if proxy is not set or set to some other type then default it to no proxy
+                proxy = Proxy.NO_PROXY;
+                System.out.println("Downloading mysql jar without using proxy.");
+            } else {
+                System.out.println("Downloading mysql jar using http proxy " + proxy);
+            }
             String[] pathSegments = downloadUrl.getPath().split("/");
             String fileName = pathSegments[pathSegments.length - 1];
             String tmpDir = System.getProperty("java.io.tmpdir");
             tmpFileName = tmpDir + File.separator + fileName;
             System.out.println("Downloading file " + fileName + " into " + tmpDir);
-            ReadableByteChannel rbc = Channels.newChannel(downloadUrl.openStream());
+            // Using openConnection with explicit proxy argument since setting the system property https.proxyHost and https.proxyPort did not mandate the use
+            // of proxy. As a result the jar was still downloaded successfully if an invalid proxy server was configured because it was falling on the wifi
+            // connection if the machine is connected. It was difficult to verify if the download was actually going through the proxy or not. This seems
+            // to be a better approach since passing proxy as an argument now forces it to go through the proxy server and Proxy.NO_PROXY by default works fine.
+            ReadableByteChannel rbc = Channels.newChannel(downloadUrl.openConnection(proxy).getInputStream());
             FileOutputStream fos = new FileOutputStream(tmpFileName);
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
         } catch(IOException ie) {
