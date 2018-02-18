@@ -1,4 +1,4 @@
-# Copyright 2016 Hortonworks.
+# Copyright 2018 Hortonworks.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,36 +12,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-FROM openjdk:8
-
-ENV TZ="/usr/share/zoneinfo/Asia/Kolkata"
+FROM minimal-ubuntu
 
 ARG REGISTRY_VERSION
-ARG VERSION_SUFFIX="${REGISTRY_VERSION}"
 
-# Do not ask for confirmations when running apt-get, etc.
+# Do not ask for confirmations when running apt, etc.
 ENV DEBIAN_FRONTEND noninteractive
 
-# update linux and install neccessary utilities.
-RUN apt update && apt install -y sudo netcat iptables rsync unzip wget curl jq coreutils openssh-server net-tools vim \
-less python-pip python-dev libffi-dev libssl-dev cmake pkg-config libfuse-dev bc && apt-get -y clean
+# kerberos client
+RUN apt install -y krb5-config krb5-user
 
-ARG REGISTRY_MIRROR="https://github.com/hortonworks/registry/releases/download"
-ARG URL="${REGISTRY_MIRROR}"/v"${REGISTRY_VERSION}"/hortonworks-registry-"${VERSION_SUFFIX}".tar.gz
+ADD hortonworks-registry-"${REGISTRY_VERSION}".tar.gz /opt/
 
-RUN echo "Downloading Schema Registry from URL :: " ${URL} \
-&& wget "${URL}" && tar xvzf hortonworks-registry-"${VERSION_SUFFIX}".tar.gz -C "/opt" \
-&& rm hortonworks-registry-"${VERSION_SUFFIX}".tar.gz
+RUN ln -s /opt/hortonworks-registry-"${REGISTRY_VERSION}" /opt/registry
 
-ENV REGISTRY_HOME /opt/hortonworks-registry-$REGISTRY_VERSION
+ENV REGISTRY_HOME /opt/registry
 
-COPY start-registry.sh /opt/hortonworks-registry-$REGISTRY_VERSION/bin/
+COPY start-registry.sh /opt/registry/bin/
+COPY extlibs/* /opt/registry/libs/
+COPY extlibs/* /opt/registry/bootstrap/lib/
 
-COPY extlibs/* /opt/hortonworks-registry-$REGISTRY_VERSION/libs/
-COPY extlibs/* /opt/hortonworks-registry-$REGISTRY_VERSION/bootstrap/lib/
+WORKDIR /opt/registry
 
-WORKDIR /opt/hortonworks-registry-$REGISTRY_VERSION
+RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh && mkdir /etc/security/keytabs/
 
-RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh
+# supervisord
+COPY ./supervisord.conf /etc/supervisord.conf
 
-ENTRYPOINT ["bin/start-registry.sh"]
+# when container is starting
+CMD ["/usr/local/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]

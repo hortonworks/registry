@@ -1,0 +1,32 @@
+{
+  "principals": [
+    {
+      "id": "kafka/hwx-kafka@EXAMPLE.COM",
+      "password": "apple",
+      "keytab": "kafka.service.keytab"
+    },
+    {
+      "id": "zookeeper/hwx-kafka@EXAMPLE.COM",
+      "password": "mango",
+      "keytab": "zookeeper.service.keytab"
+    },
+    {
+      "id": "HTTP/hwx-schema-registry.1",
+      "password": "papaya",
+      "keytab": "http1.keytab"
+    },
+    {
+      "id": "HTTP/hwx-schema-registry.2",
+      "password": "grape",
+      "keytab": "http2.keytab"
+    },
+    {
+      "id": "alice@EXAMPLE.COM",
+      "password": "kiwi",
+      "keytab": "alice.keytab"
+    }
+  ],
+  "domain": "example.com",
+  "realm": "EXAMPLE.COM",
+  "port": 48088
+}
