@@ -211,7 +211,7 @@ function cleanDocker {
     fi
 
     echo "Removing the temp krb5.conf and keytab files from the host machine"
-    rm -rvf tmp/krb5.conf tmp/keytabs/*.keytab
+    rm -rvf /tmp/kdc-registry
 
 #    ask_yes_no "Do you want to prune all the stopped containers? [Y/n]: "
 #    if [[ "${_return}" -eq 1 ]]; then
