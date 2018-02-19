@@ -166,3 +166,81 @@ Edit the following section to add appropriate database and user settings
 6. Start the registry server
 
 ``sudo ./bin/registry start``
+
+Running Schema Registry in Docker Mode
+--------------------------------------
+
+1. Install and run Docker Engine from https://docs.docker.com/engine/installation/ and jq (brew install jq)
+
+2. To build Schema Registry and all the dependent services,
+::
+
+    sh kdc-registry.sh build
+
+3. If you want to build Schema Registry from a particular tag release,
+::
+
+    export download_url="https://github.com/hortonworks/registry/releases/download/v0.5.0/hortonworks-registry-0.5.0.tar.gz"
+    sh kdc-registry.sh build
+
+4. To start the application,
+::
+
+    sh kdc-registry.sh start
+
+5. To stop the application with all the services,
+::
+
+    sh kdc-registry.sh stop
+
+6. To remove the images, user network and stopped containers,
+::
+
+    sh kdc-registry.sh clean
+
+7. To login into the container,
+::
+
+    sh kdc-registry.sh shell `CONTAINER_NAME`
+
+8. To view the container logs,
+::
+
+    sh kdc-registry.sh logs `CONTAINER_NAME`
+
+9. To start the registry application with more than 2 instances, then
+::
+
+    export scale=5
+    sh kdc-registry.sh start
+
+10. To view the active containers,
+::
+
+    sh kdc-registry.sh ps
+
+11. To view all the containers including the stopped ones,
+::
+
+    sh kdc-registry.sh ps-all
+
+
+10. Other useful docker commands,
+::
+
+    `docker port CONTAINER_ID` - displays the ports which are exposed to the outside world
+    `docker images` - lists all the available images stored in the local repository
+    `docker rmi IMAGE_ID` - to delete a particular image. Use `-f` option to delete the image forcefully
+
+    `docker container ps` - lists all the running containers
+    `docker container ps -a` - lists all the running and exited containers
+    `docker container start CONTAINER_ID` - starts the container
+    `docker container stop CONTAINER_ID` - stops the container
+    `docker container rm CONTAINER_ID` - removes the container from the memory
+    `docker container prune` - removes all the exited containers from the memory
+
+    `docker exec -it `CONTAINER_ID` psql -U registry_user -W schema_registry` - to login into the postgres client shell
+
+11. To run the Schema Registry with the ORACLE database. Download the latest `ojdbc.jar` for the corresponding oracle version
+    from `oracle technetwork <http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html>`_ (12c)
+    and copy it to `extlibs` directory before building the registry image.
