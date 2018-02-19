@@ -11,12 +11,12 @@
       "keytab": "zookeeper.service.keytab"
     },
     {
-      "id": "HTTP/hwx-schema-registry.1",
+      "id": "HTTP/hwx-schema-registry-1",
       "password": "papaya",
       "keytab": "http1.keytab"
     },
     {
-      "id": "HTTP/hwx-schema-registry.2",
+      "id": "HTTP/hwx-schema-registry-2",
       "password": "grape",
       "keytab": "http2.keytab"
     },

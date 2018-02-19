@@ -20,7 +20,9 @@ kdc_container_name="hwx-kdc"
 kdc_container_ip="10.5.0.8"
 kafka_container_name="hwx-kafka"
 kafka_container_ip="10.5.0.9"
-registry_container_name="hwx-schema-registry."
+
+# Beware before changing the registry container name, it's used in the internal scripts to find out the instance number.
+registry_container_name="hwx-schema-registry-"
 registry_container_ip="10.5.0.10"
 network_name="hwx-net"
 
@@ -325,10 +327,6 @@ function startMySQL {
 }
 
 function startOracle {
-#    NOTE: To run the Schema Registry with the ORACLE database. Download the latest `ojdbc.jar` for the corresponding oracle version
-#    from `oracle technetwork <http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html>`_ (12c)
-#    and copy it to `extlibs` directory before building the registry image.
-
     container_id=$(docker container ps -f name=${oracle_container_name} -q)
     if [[ -n ${container_id} ]]; then
         echo "Oracle docker container '${oracle_container_name}' already started"
@@ -542,6 +540,7 @@ function startSchemaRegistry {
         return 0
     fi
 
+    hwx_kafka_ip=$(docker exec ${kafka_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     SECONDS=0
     echo "Starting Schema Registry"
     docker create --name ${container_name} \
@@ -554,6 +553,7 @@ function startSchemaRegistry {
         -p 9010-9020:9090 \
         -p 9030-9040:9091 \
         --network ${network_name} \
+        --add-host=${kafka_container_name}:${hwx_kafka_ip} \
         ${registry_image}
 
     echo "Copying krb5 configuration and keytabs from KDC Server"
@@ -602,7 +602,14 @@ case "${option}" in
             3. postgres
         > " answer
         case "${answer}" in
-            m|o|p|mysql|oracle|postgres|postgresql) ;;
+            m|p|mysql|postgres|postgresql) ;;
+            o|oracle)
+                cat << EOF
+NOTE: To run the Schema Registry with the ORACLE database. Download the latest \`ojdbc.jar\` for the corresponding oracle version
+from \`oracle technetwork <http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html>\`_ (12c)
+and copy it to \`extlibs\` directory before building the registry image.
+EOF
+               ;;
             *) echo "Invalid db type : ${answer}"; exit;;
         esac
 
@@ -663,7 +670,9 @@ case "${option}" in
         docker logs -f "${1}"
         ;;
     list)
-        # TODO, list all the container names. Provide a facility to start / stop a single container
+        # TODO:
+        # - list all the container names.
+        # - provide a facility to start / stop a single container
         ;;
     *)
         echo "Usage: $0 build|start|stop|clean|ps|ps-all|shell|logs"

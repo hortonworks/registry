@@ -11,7 +11,7 @@ RUN apt update -y && \
     # editor
     apt install -y vim nano && \
     # general
-    apt install -y sudo sshpass less jq ntp bc && \
+    apt install -y man sudo sshpass less jq ntp bc && \
     # network commands
     apt install -y net-tools iputils-ping dnsutils lsof curl wget telnet
 

@@ -27,7 +27,7 @@ update_config() {
     local db_user="${DB_USER}"
     local db_password="${DB_PASSWORD}"
     local principal="HTTP/$(hostname -f)"
-    local keytab="/etc/security/keytabs/http$(hostname -f | cut -d '.' -f2).keytab"
+    local keytab="/etc/security/keytabs/http$(hostname -f | cut -d '-' -f4).keytab"
 
     uncomment '/AuthenticationFilter/,/favicon.ico/' $REGISTRY_CONFIG
 
