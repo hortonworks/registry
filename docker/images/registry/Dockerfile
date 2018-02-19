@@ -31,6 +31,7 @@ ENV REGISTRY_HOME /opt/registry
 COPY start-registry.sh /opt/registry/bin/
 COPY extlibs/* /opt/registry/libs/
 COPY extlibs/* /opt/registry/bootstrap/lib/
+COPY conf/registry_jaas.conf /opt/registry/conf
 
 WORKDIR /opt/registry
 
