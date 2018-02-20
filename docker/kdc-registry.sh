@@ -11,19 +11,13 @@ minimal_ubuntu_image="minimal-ubuntu"
 
 # Container name variables
 mysql_container_name="hwx-mysql"
-mysql_container_ip="10.5.0.5"
 oracle_container_name="hwx-oracle"
-oracle_container_ip="10.5.0.6"
 postgres_container_name="hwx-postgres"
-postgres_container_ip="10.5.0.7"
 kdc_container_name="hwx-kdc"
-kdc_container_ip="10.5.0.8"
 kafka_container_name="hwx-kafka"
-kafka_container_ip="10.5.0.9"
 
 # Beware before changing the registry container name, it's used in the internal scripts to find out the instance number.
 registry_container_name="hwx-schema-registry-"
-registry_container_ip="10.5.0.10"
 network_name="hwx-net"
 
 scale=${scale:-2}
