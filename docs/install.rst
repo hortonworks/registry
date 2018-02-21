@@ -170,7 +170,19 @@ Edit the following section to add appropriate database and user settings
 Running Schema Registry in Docker Mode
 --------------------------------------
 
-1. Install and run Docker Engine from https://docs.docker.com/engine/installation/ and jq (brew install jq)
+Dependencies
+============
+
+    *) Docker CE (https://www.docker.com/community-edition#/download)
+    *) Oracle Virtual Box (https://www.virtualbox.org/wiki/Downloads)
+    *) jq (brew install jq)
+
+
+1. Start the docker machine,
+::
+
+    sh kdc-registry.sh start-machine
+    eval $(docker-machine env `MACHINE_NAME`)
 
 2. To build Schema Registry and all the dependent services,
 ::
@@ -224,8 +236,13 @@ Running Schema Registry in Docker Mode
 
     sh kdc-registry.sh ps-all
 
+12. To stop the docker machine,
+::
 
-10. Other useful docker commands,
+    sh kdc-registry.sh stop-machine
+
+
+13. Other useful docker commands,
 ::
 
     `docker port CONTAINER_ID` - displays the ports which are exposed to the outside world
@@ -241,6 +258,6 @@ Running Schema Registry in Docker Mode
 
     `docker exec -it `CONTAINER_ID` psql -U registry_user -W schema_registry` - to login into the postgres client shell
 
-11. To run the Schema Registry with the ORACLE database. Download the latest `ojdbc.jar` for the corresponding oracle version
+14. To run the Schema Registry with the ORACLE database. Download the latest `ojdbc.jar` for the corresponding oracle version
     from `oracle technetwork <http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html>`_ (12c)
     and copy it to `extlibs` directory before building the registry image.

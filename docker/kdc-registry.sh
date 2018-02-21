@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+#
+# Docker Containerized Schema Registry application.
+#
+# Portions of this code is borrowed / inspired from https://github.com/tillt/docker-kdc
+#
+
+machine_name="sr-host"
 
 # Image name variables
 registry_image="schema-registry"
@@ -23,6 +30,8 @@ network_name="hwx-net"
 scale=${scale:-2}
 counter=0
 download_url=${download_url:-''}
+db_type=""
+tmp_dir="/tmp/kdc-registry"
 
 # Standard output variable
 std_output="/dev/null"
@@ -81,6 +90,22 @@ DEFAULT=`echo ${KDC_DOMAIN_NAME} | awk '{print toupper($0)}'`
 # Kerberos realm name.
 # Default derived from KDC_DOMAIN_NAME.
 KDC_REALM_NAME=${KDC_REALM_NAME:-$DEFAULT}
+
+# For OSX, starts docker-machine if not running
+function startMachine {
+    # Adjust container in case of OSX.
+	if [[ $OSTYPE =~ darwin.+ ]]; then
+	    docker-machine create --driver virtualbox "${machine_name}"
+		docker-machine start "${machine_name}"
+		docker-machine env "${machine_name}"
+	fi
+}
+
+function stopMachine {
+    if [[ $OSTYPE =~ darwin.+ ]]; then
+        docker-machine stop "${machine_name}"
+    fi
+}
 
 function buildKdc {
     pushd -- images/kdc &> ${std_output}
@@ -180,7 +205,75 @@ function buildDocker {
     docker pull ${postgres_image}
 }
 
+function startDocker {
+    for service in "${@}"
+    do
+        case "${service}" in
+             "${kdc_container_name}")
+                startKdc
+                ;;
+             "${kafka_container_name}")
+                startKafka
+                ;;
+             "${mysql_container_name}"|mysql)
+                startMySQL
+                ;;
+             "${oracle_container_name}"|oracle)
+                startOracle
+                ;;
+             "${postgres_container_name}"|postgresql)
+                startPostgres
+                ;;
+             "${registry_container_name}")
+                for ((i=1; i<=$scale; i++))
+                do
+                    startSchemaRegistry ${db_type} $i
+                    # Just providing enough time for the inited instance to bootstrap and start properly..
+                    if [[ $i -ne $scale ]]; then
+                        sleep 5
+                    fi
+                done
+                ;;
+             *)
+                echo "Invalid container name : ${service}"
+                ;;
+        esac
+    done
+
+    echo "# Add the following entries in your \"/etc/hosts\" file to access the containers"
+    for service in "${@}"
+    do
+        case "${service}" in
+             "${kdc_container_name}"|"${kafka_container_name}")
+                printHostInfo "${service}"
+                ;;
+             "${registry_container_name}")
+                for ((i=1; i<=$scale; i++))
+                do
+                    printHostInfo "${registry_container_name}${i}"
+                done
+                ;;
+             *) ;;
+        esac
+    done
+
+    if [[ $OSTYPE =~ darwin.+ ]]; then
+        ip_prefix=$(docker exec "${1}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2 | cut -d "." -f1 -f2)
+        echo "# Run this command to connect to the container"
+        echo "sudo route add -net ${ip_prefix}.0.0/16 $(docker-machine ip ${machine_name})"
+    fi
+}
+
+function printHostInfo {
+    echo "$(docker exec "${1}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)\t${1}"
+}
+
 function stopDocker {
+    if [[ $# -ne 0 ]]; then
+        docker container stop "${@}"
+        exit 0
+    fi
+
     ask_yes_no "Do you want to stop all the (hwx-*) docker containers? [Y/n]: "
     if [[ "${_return}" -eq 0 ]]; then
       exit 0
@@ -194,6 +287,11 @@ function stopDocker {
 }
 
 function cleanDocker {
+    if [[ $# -ne 0 ]]; then
+        docker container rm --force "${@}"
+        exit 0
+    fi
+
     ask_yes_no "Do you want to remove the (hwx-*) containers? [Y/n]: "
     if [[ "${_return}" -eq 0 ]]; then
       exit 0
@@ -207,7 +305,7 @@ function cleanDocker {
     fi
 
     echo "Removing the temp krb5.conf and keytab files from the host machine"
-    rm -rvf /tmp/kdc-registry
+    rm -rvf "${tmp_dir}"
 
 #    ask_yes_no "Do you want to prune all the stopped containers? [Y/n]: "
 #    if [[ "${_return}" -eq 1 ]]; then
@@ -446,10 +544,10 @@ function startKdc {
 	sed -e "s/HOST_NAME/$KDC_HOST_NAME:88/g"			\
 		-e "s/DOMAIN_NAME/$KDC_DOMAIN_NAME/g" 			\
 		-e "s/REALM_NAME/$KDC_REALM_NAME/g"			\
-		"images/kdc/$KDC_TEMPLATES_DIR/krb5.conf" >/tmp/kdc-registry/krb5.conf
+		"images/kdc/$KDC_TEMPLATES_DIR/krb5.conf" >"${tmp_dir}"/krb5.conf
 
     for kt in $(docker exec ${kdc_container_name} find /etc/security/keytabs/ -type f); do
-        docker cp ${KDC_HOST_NAME}:${kt} /tmp/kdc-registry/keytabs/
+        docker cp ${KDC_HOST_NAME}:${kt} "${tmp_dir}"/keytabs/
     done
 }
 
@@ -472,15 +570,13 @@ function startKafka {
     docker create --name ${kafka_container_name} \
         -h ${kafka_container_name} \
         -p 9092:9092 \
-        -p 9093:9093 \
         -p 2181:2181 \
-        -p 1099:1099 \
         --network ${network_name} \
         ${kafka_image}
 
     echo "Copying krb5 configuration and keytabs from KDC Server"
-    docker cp /tmp/kdc-registry/krb5.conf ${kafka_container_name}:/etc/
-    for kt in `find /tmp/kdc-registry/keytabs -type f`; do
+    docker cp "${tmp_dir}"/krb5.conf ${kafka_container_name}:/etc/
+    for kt in `find "${tmp_dir}"/keytabs -type f`; do
         docker cp ${kt} ${kafka_container_name}:/etc/security/keytabs/
     done
 
@@ -551,8 +647,8 @@ function startSchemaRegistry {
         ${registry_image}
 
     echo "Copying krb5 configuration and keytabs from KDC Server"
-    docker cp /tmp/kdc-registry/krb5.conf ${container_name}:/etc/
-    for kt in `find /tmp/kdc-registry/keytabs -type f`; do
+    docker cp "${tmp_dir}"/krb5.conf ${container_name}:/etc/
+    for kt in `find "${tmp_dir}"/keytabs -type f`; do
         docker cp ${kt} ${container_name}:/etc/security/keytabs/
     done
 
@@ -583,65 +679,125 @@ ask_yes_no() {
     done
 }
 
-option="${1}"
-shift
-case "${option}" in
-    build)
-        buildDocker
-        ;;
-    start)
-        read -p "Which underlying db type to use ?
+ask_db_type() {
+    read -p "Which underlying db type to use ?
             1. mysql
             2. oracle
             3. postgres
         > " answer
+
         case "${answer}" in
-            m|p|mysql|postgres|postgresql) ;;
-            o|oracle)
-                cat << EOF
-NOTE: To run the Schema Registry with the ORACLE database. Download the latest \`ojdbc.jar\` for the corresponding oracle version
-from \`oracle technetwork <http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html>\`_ (12c)
-and copy it to \`extlibs\` directory before building the registry image.
+            m|mysql) echo "mysql" ;;
+            p|postgres|postgresql) echo "postgresql";;
+            o|oracle) echo "oracle" ;;
+            *) echo "Invalid db type : ${answer}"; exit 1;;
+        esac
+}
+
+usage() {
+    local exit_status="${1}"
+    cat <<EOF
+kdc-registry.sh: a tool for running Schema Registry tests inside Docker images.
+
+Usage: $0 [command] [options]
+
+help|-h|--help
+    Display this help message
+
+start-machine
+    Creates a ${machine_name} Linux virtual machine and installs the Docker Engine on top of it.
+    This VM is used as Docker host machine as there are known problems in Docker Engine when
+    running it on Mac and Windows OS.
+
+    NOTE: Once the machine started, you should set the env variables which configures the shell
+    to execute the docker commands (docker / docker-compose) inside the ${machine_name} VM.
+
+build
+    Builds the KDC, Zookeeper, Kafka and Schema Registry images.
+    Pulls the community image of MySQL, Oracle and Postgres from the docker store.
+
+start
+    Starts Schema Registry application with all the dependent services (KDC, ZK, AK and DB)
+    Asks user which database type to use to store the data. All the containers are connected with
+    the private ${network_name} network.
+
+    To connect with the schema registry app, copy the krb5.conf from "${tmp_dir}" directory
+    and copy it to "/etc" directory in your machine. All the keytabs are stored under
+    "${tmp_dir}/keytabs" directory.
+
+    One can also be able to start a single service / container.
+    (eg) To start KDC server alone, you would run:
+        $0 start ${kdc_container_name}
+
+stop
+    Stops all the running containers that are connected with the ${network_name} network.
+
+    One can also be able to stop a single service / container.
+    (eg) To stop KDC container alone, you would run:
+        $0 stop ${kdc_container_name}
+
+clean
+    Removes all the stopped containers that are connected with the ${network_name} network.
+
+    This will also remove the images, dangling images and network created by $0. This will
+    free disk space. This operation will be performed only after taking confirmation from the user.
+
+    One can also be able to remove a single service / container.
+    (eg) To remove KDC server alone, you would run:
+        $0 clean ${kdc_container_name}
+
+stop-machine
+    This will power-off the ${machine_name} Linux Virtual machine.
+
+ps
+    Lists all the active containers that are connected with the ${network_name} network.
+
+ps-all
+    Lists all the containers that are connected with the ${network_name} network.
+
+shell
+    Logins the container and provides a Shell to the user.
+    (eg) $0 shell ${kdc_container_name}
+
+logs
+    Shows the logs from the container.
+    (eg) $0 logs ${kdc_container_name}
+
 EOF
-               ;;
-            *) echo "Invalid db type : ${answer}"; exit;;
-        esac
+    exit "${exit_status}"
+}
 
-        mkdir -p /tmp/kdc-registry/keytabs/
+option="${1}"
+shift
+case "${option}" in
+    h|-h|--help|help)
+        usage 0
+        ;;
+    start-machine)
+        startMachine
+        ;;
+    build)
+        buildDocker
+        ;;
+    start)
+        mkdir -p "${tmp_dir}"/keytabs/
+        db_type=$(ask_db_type)
+        services=("${kdc_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}")
+        if [[ $# -ne 0 ]]; then
+            services="${@}"
+        fi
+
         createUserNetwork
-        startKdc
-        startKafka
-
-        db_type="${answer}"
-        case "${answer}" in
-            mysql|m)
-                db_type="mysql"
-                startMySQL
-                ;;
-            oracle|o)
-                db_type="oracle"
-                startOracle
-                ;;
-            postgres|postgresql|p)
-                db_type="postgresql"
-                startPostgres
-                ;;
-        esac
-
-        for ((i=1; i<=$scale; i++))
-        do
-            startSchemaRegistry ${db_type} $i
-            # Just providing enough time for the inited instance to bootstrap and start properly..
-            if [[ $i -ne $scale ]]; then
-                sleep 5
-            fi
-        done
+        startDocker "${services[@]}"
         ;;
     stop)
-        stopDocker
+        stopDocker "${@}"
         ;;
     clean)
-        cleanDocker
+        cleanDocker "${@}"
+        ;;
+    stop-machine)
+        stopMachine
         ;;
     ps)
         docker ps -f name=hwx-*
@@ -663,12 +819,7 @@ EOF
         fi
         docker logs -f "${1}"
         ;;
-    list)
-        # TODO:
-        # - list all the container names.
-        # - provide a facility to start / stop a single container
-        ;;
     *)
-        echo "Usage: $0 build|start|stop|clean|ps|ps-all|shell|logs"
+        usage 0
         ;;
 esac
