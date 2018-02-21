@@ -47,7 +47,7 @@ find /opt/kafka/config/ -type f -exec sed -i "s/TODO_HOSTNAME/$host_name/g" {} \
 
 # for kerberos
 export KAFKA_KERBEROS_PARAMS=-Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf
-export KRB_DEBUG_PARAMS=-Dsun.security.krb5.debug=true
+export KRB_DEBUG_PARAMS=-Dsun.security.krb5.debug=false
 
 # apache kafka does not have KAFKA_KERBEROS_PARAMS so use KAFKA_HEAP_OPTS
 export KAFKA_HEAP_OPTS="-Xmx1G -Xms1G"

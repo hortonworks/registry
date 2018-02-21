@@ -68,7 +68,7 @@ uncomment() {
     sed -i "$1"' s/^#//' "$2"
 }
 
-export KRB_DEBUG_PARAMS=-Dsun.security.krb5.debug=true
+export KRB_DEBUG_PARAMS=-Dsun.security.krb5.debug=false
 export REGISTRY_HEAP_OPTS="-Xmx1G -Xms1G"
 export REGISTRY_HEAP_OPTS="$REGISTRY_HEAP_OPTS $KRB_DEBUG_PARAMS"
 
