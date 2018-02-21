@@ -37,6 +37,11 @@ And, pulls the official images of MySQL, Oracle and Postgresql database images f
 To run registry application with Oracle db, user needs to manually download the [ojdbc.jar](http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html) from the Oracle website and 
 copy it to `extlibs` directory before building the image.
 
+To build Schema Registry from specific tag release, export this variable before building the image. (Only tar file supported)
+```
+export download_url="https://github.com/hortonworks/registry/releases/download/v0.5.0/hortonworks-registry-0.5.0.tar.gz"
+```
+
 ### Run the container
 ```
 sh kdc-registry.sh start

@@ -719,6 +719,8 @@ build
     To run registry application with Oracle db, user needs to manually download the ojdbc.jar
     from the Oracle website and copy it to extlibs directory before building the image.
 
+    To build Schema Registry from specific tag release, export the "download_url" variable before building the image. (Only tar file supported)
+
 start
     Starts Schema Registry application with all the dependent services (KDC, ZK, AK and DB)
     Asks user which database to use to store the data. All the containers are connected with
