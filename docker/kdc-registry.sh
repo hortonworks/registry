@@ -705,7 +705,7 @@ help|-h|--help
     Display this help message
 
 start-machine
-    Creates a ${machine_name} Linux virtual machine and installs the Docker Engine on top of it.
+    Starts a ${machine_name} Linux virtual machine and installs the Docker Engine on top of it.
     This VM is used as Docker host machine as there are known problems in Docker Engine when
     running it on Mac and Windows OS.
 
@@ -716,13 +716,16 @@ build
     Builds the KDC, Zookeeper, Kafka and Schema Registry images.
     Pulls the community image of MySQL, Oracle and Postgres from the docker store.
 
+    To run registry application with Oracle db, user needs to manually download the ojdbc.jar
+    from the Oracle website and copy it to extlibs directory before building the image.
+
 start
     Starts Schema Registry application with all the dependent services (KDC, ZK, AK and DB)
-    Asks user which database type to use to store the data. All the containers are connected with
+    Asks user which database to use to store the data. All the containers are connected with
     the private ${network_name} network.
 
     To connect with the schema registry app, copy the krb5.conf from "${tmp_dir}" directory
-    and copy it to "/etc" directory in your machine. All the keytabs are stored under
+    and paste it in "/etc" directory in your machine. All the keytabs are stored under
     "${tmp_dir}/keytabs" directory.
 
     One can also be able to start a single service / container.
@@ -756,7 +759,7 @@ ps-all
     Lists all the containers that are connected with the ${network_name} network.
 
 shell
-    Logins the container and provides a Shell to the user.
+    Login into the container and provides a Shell to the user.
     (eg) $0 shell ${kdc_container_name}
 
 logs
