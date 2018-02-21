@@ -782,13 +782,13 @@ case "${option}" in
     start)
         mkdir -p "${tmp_dir}"/keytabs/
         db_type=$(ask_db_type)
-        services=("${kdc_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}")
-        if [[ $# -ne 0 ]]; then
-            services="${@}"
-        fi
 
         createUserNetwork
-        startDocker "${services[@]}"
+        if [[ $# -eq 0 ]]; then
+            startDocker "${kdc_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}"
+        else
+            startDocker "${@}"
+        fi
         ;;
     stop)
         stopDocker "${@}"
