@@ -60,8 +60,8 @@ Stops all the running containers that are connected with the private network.
 ```
 sh kdc-registry.sh clean
 ```
-Removes all the stopped containers that are connected with the private network. This will also remove the images, dangling images and network that created. This will
-free disk space. This operation will be performed only after taking confirmation from the user.
+Removes all the stopped containers that are connected with the private network. This will also remove the created images, dangling images and network. This will
+free disk space. 
 
 
 ### Stop the docker machine
@@ -72,13 +72,13 @@ This will stop and power-off the Linux Virtual machine.
 
 ### Lists the active containers
 ```
-ps
+sh kdc-registry.sh ps
 ```
 Lists all the active containers that are connected with the private network.
 
 ### Lists all containers
 ```
-ps-all
+sh kdc-registry.sh ps-all
 ```
 Lists all the containers that are connected with the private network.
 
@@ -96,13 +96,10 @@ Shows the logs from the container.
 
 ### Other docker commands
 
-- `docker port CONTAINER_ID` - displays the ports which are exposed to the outside world
 - `docker images` - lists all the available images stored in the local repository
 - `docker rmi IMAGE_ID` - to delete a particular image. Use `-f` option to delete the image forcefully
-- `docker container ps` - lists all the running containers
-- `docker container ps -a` - lists all the running and exited containers
+- `docker port CONTAINER_ID` - displays the ports which are exposed to the outside world
 - `docker container start CONTAINER_ID` - starts the container
 - `docker container stop CONTAINER_ID` - stops the container
-- `docker container rm CONTAINER_ID` - removes the container from the memory
-- `docker container prune` - removes all the exited containers from the memory
-- `docker exec -it CONTAINER_ID psql -U registry_user -W schema_registry` - to login into the postgres client shell
+- `docker container rm CONTAINER_ID` - removes the container
+- `docker container prune` - removes all the stopped containers

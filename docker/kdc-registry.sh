@@ -743,7 +743,7 @@ clean
     Removes all the stopped containers that are connected with the ${network_name} network.
 
     This will also remove the images, dangling images and network created by $0. This will
-    free disk space. This operation will be performed only after taking confirmation from the user.
+    free disk space.
 
     One can also be able to remove a single service / container.
     (eg) To remove KDC server alone, you would run:
