@@ -39,7 +39,7 @@ copy it to `extlibs` directory before building the image.
 
 To build Schema Registry from specific tag release, export this variable before building the image. (Only tar file supported)
 ```
-export download_url="https://github.com/hortonworks/registry/releases/download/v0.5.0/hortonworks-registry-0.5.0.tar.gz"
+export schema_registry_download_url="https://github.com/hortonworks/registry/releases/download/v0.5.0/hortonworks-registry-0.5.0.tar.gz"
 ```
 
 ### Run the container

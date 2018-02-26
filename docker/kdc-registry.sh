@@ -29,7 +29,7 @@ network_name="hwx-net"
 
 scale=${scale:-2}
 counter=0
-download_url=${download_url:-''}
+schema_registry_download_url=${schema_registry_download_url:-''}
 db_type=""
 tmp_dir="/tmp/kdc-registry"
 
@@ -154,7 +154,7 @@ function buildKdc {
 }
 
 function buildSchemaRegistry {
-    if [[ -z ${download_url} ]]; then
+    if [[ -z ${schema_registry_download_url} ]]; then
         rversion=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep -Ev '(^\[|Download\w+:)')
         if [[ "$(docker images -q ${registry_image}:${rversion} 2> ${std_output})" == "" ]]; then
             echo "Building Schema Registry distribution from the master branch."
@@ -167,12 +167,12 @@ function buildSchemaRegistry {
                 "If you want to re-build, remove the existing image and build again"
         fi
     else
-        filename=$(echo ${download_url} | cut -d '/' -f9)
+        filename=$(echo ${schema_registry_download_url} | cut -d '/' -f9)
         rversion=$(echo ${filename} | awk -F "hortonworks-registry-" '{print $2}' | awk -F ".tar.gz" '{print $1}')
 
         if [[ "$(docker images -q ${registry_image}:${rversion} 2> ${std_output})" == "" ]]; then
-            echo "Downloading Schema Registry distribution from URL :: " ${download_url}
-            curl -O -C - "${download_url}"
+            echo "Downloading Schema Registry distribution from URL :: " ${schema_registry_download_url}
+            curl -O -C - "${schema_registry_download_url}"
             mv ${filename} images/registry/
             docker build -t ${registry_image}:${rversion} images/registry --build-arg "REGISTRY_VERSION=${rversion}"
         else
@@ -318,11 +318,11 @@ function cleanDocker {
     fi
     echo "=== Removing the docker images ==="
     image_names=("${kdc_image}" "${oracle_image}" "${kafka_image}")
-    if [[ -z ${download_url} ]]; then
+    if [[ -z ${schema_registry_download_url} ]]; then
         rversion=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep -Ev '(^\[|Download\w+:)')
         image_names[3]="${registry_image}":"${rversion}"
     else
-        filename=$(echo ${download_url} | cut -d '/' -f9)
+        filename=$(echo ${schema_registry_download_url} | cut -d '/' -f9)
         rversion=$(echo ${filename} | awk -F "hortonworks-registry-" '{print $2}' | awk -F ".tar.gz" '{print $1}')
         image_names[3]="${registry_image}":"${rversion}"
     fi
@@ -719,7 +719,8 @@ build
     To run registry application with Oracle db, user needs to manually download the ojdbc.jar
     from the Oracle website and copy it to extlibs directory before building the image.
 
-    To build Schema Registry from specific tag release, export the "download_url" variable before building the image. (Only tar file supported)
+    To build Schema Registry from specific tag release, export the "schema_registry_download_url"
+    variable before building the image. (Only tar file supported)
 
 start
     Starts Schema Registry application with all the dependent services (KDC, ZK, AK and DB)
