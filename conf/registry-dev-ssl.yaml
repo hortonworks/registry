@@ -86,6 +86,11 @@ swagger:
 #enable CORS, may want to disable in production
 enableCors: false
 
+#Set below 3 properties if server needs a proxy to connect. Useful to download mysql jar
+#httpProxyUrl: "http://proxyHost:port"
+#httpProxyUsername: "username"
+#httpProxyPassword: "password"
+
 server:
   applicationConnectors:
     - type: https

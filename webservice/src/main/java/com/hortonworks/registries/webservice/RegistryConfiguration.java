@@ -49,6 +49,34 @@ public class RegistryConfiguration extends Configuration {
     @JsonProperty
     private boolean enableCors;
 
+    private String httpProxyUrl;
+    private String httpProxyUsername;
+    private String httpProxyPassword;
+
+    public String getHttpProxyUrl() {
+        return httpProxyUrl;
+    }
+
+    public void setHttpProxyUrl(String httpProxyUrl) {
+        this.httpProxyUrl = httpProxyUrl;
+    }
+
+    public String getHttpProxyUsername() {
+        return httpProxyUsername;
+    }
+
+    public void setHttpProxyUsername(String httpProxyUsername) {
+        this.httpProxyUsername = httpProxyUsername;
+    }
+
+    public String getHttpProxyPassword() {
+        return httpProxyPassword;
+    }
+
+    public void setHttpProxyPassword(String httpProxyPassword) {
+        this.httpProxyPassword = httpProxyPassword;
+    }
+
     @JsonProperty("swagger")
     private SwaggerBundleConfiguration swaggerBundleConfiguration;
 
