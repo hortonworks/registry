@@ -21,7 +21,7 @@ kstop() {
     fi
 
     echo "Removing the nohup, logs and data"
-    rm -rvf nohup.out bin/nohup.out logs /tmp/zookeeper /tmp/kafka-logs
+    rm -rvf nohup.out bin/nohup.out logs /kafka/zk-data /kafka/ak-data
 }
 
 
@@ -30,7 +30,7 @@ kstart() {
     cd /opt/kafka/bin
     JMX_PORT=9990 nohup sh zookeeper-server-start.sh ../config/zookeeper.properties &
     SLEEP_SECS=3
-    echo "Sleeping for ${SLEEP_SECS} seconds" 
+    echo "Sleeping for ${SLEEP_SECS} seconds"
     sleep "${SLEEP_SECS}"
 
     cd /opt/kafka

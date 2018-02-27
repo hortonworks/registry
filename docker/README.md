@@ -14,6 +14,9 @@ Dockerized Schema Registry application to run System tests.
 
 ### Starts the docker machine
 
+If you're running on windows / Mac OS X, you need to use Docker machine to start the Docker host. Docker runs natively on
+Linux, so the Docker host will be your machine. 
+
 ```
 sh kdc-registry.sh start-machine
 ```
@@ -21,10 +24,9 @@ It starts a Linux virtual machine setup and installs the Docker Engine on top of
 This VM is used as Docker host machine as there are known problems in Docker Engine when
 running it on Mac and Windows OS.
 
-<B>NOTE:</B> Once the machine started, you should set the environmental variables which configures the shell
-to execute the docker commands (docker / docker-compose) inside the VM.
+<B>NOTE:</B> Once the machine started, you should configure your terminal window to attach it to your new Docker Machine.
 
-``` eval $(docker-machine env sr-host)```
+``` eval $(docker-machine env reg_machine)```
 
 ### Build the Registry Image
 ```

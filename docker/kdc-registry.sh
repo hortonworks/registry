@@ -5,7 +5,7 @@
 # Portions of this code is borrowed / inspired from https://github.com/tillt/docker-kdc
 #
 
-machine_name="sr-host"
+machine_name="reg_machine"
 
 # Image name variables
 registry_image="schema-registry"
@@ -27,7 +27,7 @@ kafka_container_name="hwx-kafka"
 registry_container_name="hwx-schema-registry-"
 network_name="hwx-net"
 
-scale=${scale:-2}
+registry_nodes=${registry_nodes:-2}
 counter=0
 schema_registry_download_url=${schema_registry_download_url:-''}
 db_type=""
@@ -95,7 +95,7 @@ KDC_REALM_NAME=${KDC_REALM_NAME:-$DEFAULT}
 function startMachine {
     # Adjust container in case of OSX.
 	if [[ $OSTYPE =~ darwin.+ ]]; then
-	    docker-machine create --driver virtualbox "${machine_name}"
+	    docker-machine create --driver virtualbox --virtualbox-memory 4096 "${machine_name}"
 		docker-machine start "${machine_name}"
 		docker-machine env "${machine_name}"
 	fi
@@ -225,11 +225,11 @@ function startDocker {
                 startPostgres
                 ;;
              "${registry_container_name}")
-                for ((i=1; i<=$scale; i++))
+                for ((i=1; i<=${registry_nodes}; i++))
                 do
                     startSchemaRegistry ${db_type} $i
                     # Just providing enough time for the inited instance to bootstrap and start properly..
-                    if [[ $i -ne $scale ]]; then
+                    if [[ $i -ne ${registry_nodes} ]]; then
                         sleep 5
                     fi
                 done
@@ -248,7 +248,7 @@ function startDocker {
                 printHostInfo "${service}"
                 ;;
              "${registry_container_name}")
-                for ((i=1; i<=$scale; i++))
+                for ((i=1; i<=${registry_nodes}; i++))
                 do
                     printHostInfo "${registry_container_name}${i}"
                 done
