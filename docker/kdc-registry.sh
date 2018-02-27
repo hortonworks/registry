@@ -368,24 +368,36 @@ function createUserNetwork {
     docker network create ${network_name}
 }
 
+function isContainerExists() {
+    local cname="${1}"
+    local log_name="${2}"
+
+    container_id=$(docker container ps -f name=${cname} -q)
+    if [[ -n ${container_id} ]]; then
+        echo "${log_name} docker container '${cname}' already started"
+        return 1
+    fi
+
+    container_id=$(docker container ps -a -f name=${cname} -q)
+    if [[ -n ${container_id} ]]; then
+        echo "Restarting the existing ${log_name} docker container '${cname}' with id : '${container_id}'"
+        docker container start ${cname}
+        return 1
+    fi
+
+    return 0
+}
+
 function startMySQL {
+    isContainerExists ${mysql_container_name} "MySQL"
+    if [[ $? -eq 1 ]]; then
+        return 0;
+    fi
+
     local root_pwd="password"
     local user="registry_user"
     local pwd="password"
     local db="schema_registry"
-
-    container_id=$(docker container ps -f name=${mysql_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "MySQL docker container '${mysql_container_name}' already started"
-        return 0
-    fi
-
-    container_id=$(docker container ps -a -f name=${mysql_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing MySQL docker container '${mysql_container_name}' with id : '${container_id}'"
-        docker container start ${mysql_container_name}
-        return 0
-    fi
 
     SECONDS=0
     echo "Starting MySQL server from image : ${mysql_image}"
@@ -419,17 +431,9 @@ function startMySQL {
 }
 
 function startOracle {
-    container_id=$(docker container ps -f name=${oracle_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Oracle docker container '${oracle_container_name}' already started"
-        return 0
-    fi
-
-    container_id=$(docker container ps -a -f name=${oracle_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing Oracle docker container '${oracle_container_name}' with id : '${container_id}'"
-        docker container start ${oracle_container_name}
-        return 0
+    isContainerExists ${oracle_container_name} "Oracle"
+    if [[ $? -eq 1 ]]; then
+        return 0;
     fi
 
     SECONDS=0
@@ -467,22 +471,14 @@ function startOracle {
 }
 
 function startPostgres {
+    isContainerExists ${postgres_container_name} "Postgres"
+    if [[ $? -eq 1 ]]; then
+        return 0;
+    fi
+
     local user="registry_user"
     local pwd="password"
     local db="schema_registry"
-
-    container_id=$(docker container ps -f name=${postgres_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Postgres docker container '${postgres_container_name}' already started"
-        return 0
-    fi
-
-    container_id=$(docker container ps -a -f name=${postgres_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing Postgres docker container '${postgres_container_name}' with id : '${container_id}'"
-        docker container start ${postgres_container_name}
-        return 0
-    fi
 
     SECONDS=0
     echo "Starting Postgres server from image : ${postgres_image}"
@@ -516,17 +512,9 @@ function startPostgres {
 
 function startKdc {
     # For logs, check /var/log/heimdal-kdc.log
-    container_id=$(docker container ps -f name=${kdc_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "KDC docker container '${kdc_container_name}' already started"
-        return 0
-    fi
-
-    container_id=$(docker container ps -a -f name=${kdc_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing KDC docker container '${kdc_container_name}' with id : '${container_id}'"
-        docker container start ${kdc_container_name}
-        return 0
+    isContainerExists ${kdc_container_name} "KDC"
+    if [[ $? -eq 1 ]]; then
+        return 0;
     fi
 
     SECONDS=0
@@ -552,17 +540,9 @@ function startKdc {
 }
 
 function startKafka {
-    container_id=$(docker container ps -f name=${kafka_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Apache Kafka docker container '${kafka_container_name}' already started"
-        return 0
-    fi
-
-    container_id=$(docker container ps -a -f name=${kafka_container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing Kafka docker container '${kafka_container_name}' with id : '${container_id}'"
-        docker container start ${kafka_container_name}
-        return 0
+    isContainerExists ${kafka_container_name} "Kafka"
+    if [[ $? -eq 1 ]]; then
+        return 0;
     fi
 
     SECONDS=0
@@ -591,8 +571,14 @@ function startKafka {
 }
 
 function startSchemaRegistry {
-    local db_type="${1}"
     local container_name="${registry_container_name}${2}"
+
+    isContainerExists ${container_name} "Schema Registry"
+    if [[ $? -eq 1 ]]; then
+        return 0;
+    fi
+
+    local db_type="${1}"
     local db_name="schema_registry"
     local user="registry_user"
     local pwd="password"
@@ -616,19 +602,6 @@ function startSchemaRegistry {
             echo "Invalid db type : ${db_type} not supported"
             exit 1
     esac
-
-    container_id=$(docker container ps -f name=${container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Schema Registry container '${container_name}' already started"
-        return 0
-    fi
-
-    container_id=$(docker container ps -a -f name=${container_name} -q)
-    if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing Schema Registry docker container '${container_name}' with id : '${container_id}'"
-        docker container start ${container_name}
-        return 0
-    fi
 
     hwx_kafka_ip=$(docker exec ${kafka_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     SECONDS=0
