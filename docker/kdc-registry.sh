@@ -13,7 +13,7 @@ kdc_image="docker-kdc"
 mysql_image="mysql:5.7"
 oracle_image="oracle-hwx-xe-12c"
 postgres_image="postgres:10"
-kafka_image="hwx-kafka"
+kafka_image="apache-kafka:1.0.0"
 minimal_ubuntu_image="minimal-ubuntu"
 
 # Container name variables
@@ -21,6 +21,7 @@ mysql_container_name="hwx-mysql"
 oracle_container_name="hwx-oracle"
 postgres_container_name="hwx-postgres"
 kdc_container_name="hwx-kdc"
+zk_container_name="hwx-zk"
 kafka_container_name="hwx-kafka"
 
 # Beware before changing the registry container name, it's used in the internal scripts to find out the instance number.
@@ -212,6 +213,9 @@ function startDocker {
              "${kdc_container_name}")
                 startKdc
                 ;;
+             "${zk_container_name}")
+                startZookeeper
+                ;;
              "${kafka_container_name}")
                 startKafka
                 ;;
@@ -244,7 +248,7 @@ function startDocker {
     for service in "${@}"
     do
         case "${service}" in
-             "${kdc_container_name}"|"${kafka_container_name}")
+             "${kdc_container_name}"|"${zk_container_name}"|"${kafka_container_name}")
                 printHostInfo "${service}"
                 ;;
              "${registry_container_name}")
@@ -541,6 +545,27 @@ function startKdc {
     done
 }
 
+function startZookeeper {
+    isContainerExists ${zk_container_name} "Zookeeper"
+    if [[ $? -eq 1 ]]; then
+        return 0;
+    fi
+
+    SECONDS=0
+    echo "Starting Apache Zookeeper container"
+    docker run --name ${zk_container_name} \
+        -h ${zk_container_name} \
+        -p 2181:2181 \
+        -v ${sasl_secrets_dir}:/etc/registry/secrets \
+        -e KAFKA_HEAP_OPTS="-Xmx512M -Xms512M -Djava.security.auth.login.config=/opt/kafka/config/zookeeper_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
+        --network ${network_name} \
+        -d ${kafka_image} \
+        bin/zookeeper-server-start.sh config/zookeeper.properties
+
+    checkStatus $? "Zookeeper"
+    echo "Apache Zookeeper started successfully. Time taken : ${SECONDS}s"
+}
+
 function startKafka {
     isContainerExists ${kafka_container_name} "Kafka"
     if [[ $? -eq 1 ]]; then
@@ -548,18 +573,21 @@ function startKafka {
     fi
 
     SECONDS=0
-    echo "Creating Apache Zookeeper and Kafka containers"
+    echo "Starting Apache Kafka container"
+    hwx_zk_ip=$(docker exec ${zk_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     docker run --name ${kafka_container_name} \
         -h ${kafka_container_name} \
         -p 9092:9092 \
-        -p 2181:2181 \
+        -p 9991:9991 \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
-        -e KERBEROS_PARAMS="-Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
+        -e ZK_CONNECT="${zk_container_name}":2181 \
+        -e KAFKA_HEAP_OPTS="-Xmx1G -Xms1G -Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
         --network ${network_name} \
+        --add-host=${zk_container_name}:${hwx_zk_ip} \
         -d ${kafka_image}
 
     checkStatus $? "Kafka"
-    echo "Apache ZK and Kafka started successfully. Time taken : ${SECONDS}s"
+    echo "Apache Kafka started successfully. Time taken : ${SECONDS}s"
 }
 
 function startSchemaRegistry {
@@ -595,6 +623,7 @@ function startSchemaRegistry {
             exit 1
     esac
 
+    hwx_zk_ip=$(docker exec ${zk_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     hwx_kafka_ip=$(docker exec ${kafka_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     SECONDS=0
     echo "Starting Schema Registry"
@@ -608,6 +637,7 @@ function startSchemaRegistry {
         -p 9010-9020:9090 \
         -p 9030-9040:9091 \
         --network ${network_name} \
+        --add-host=${zk_container_name}:${hwx_zk_ip} \
         --add-host=${kafka_container_name}:${hwx_kafka_ip} \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
         -e KERBEROS_PARAMS="-Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
@@ -746,7 +776,7 @@ case "${option}" in
 
         createUserNetwork
         if [[ $# -eq 0 ]]; then
-            startDocker "${kdc_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}"
+            startDocker "${kdc_container_name}" "${zk_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}"
         else
             startDocker "${@}"
         fi

@@ -6,7 +6,7 @@
       "keytab": "kafka.service.keytab"
     },
     {
-      "id": "zookeeper/hwx-kafka@EXAMPLE.COM",
+      "id": "zookeeper/hwx-zk@EXAMPLE.COM",
       "password": "mango",
       "keytab": "zookeeper.service.keytab"
     },
@@ -24,6 +24,16 @@
       "id": "alice@EXAMPLE.COM",
       "password": "kiwi",
       "keytab": "alice.keytab"
+    },
+    {
+      "id": "kafkaclient@EXAMPLE.COM",
+      "password": "banana",
+      "keytab": "kafkaclient.keytab"
+    },
+    {
+      "id": "zkclient@EXAMPLE.COM",
+      "password": "sapota",
+      "keytab": "zkclient.keytab"
     }
   ],
   "domain": "example.com",
