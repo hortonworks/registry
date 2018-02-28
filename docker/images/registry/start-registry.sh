@@ -27,7 +27,7 @@ update_config() {
     local db_user="${DB_USER}"
     local db_password="${DB_PASSWORD}"
     local principal="HTTP/$(hostname -f)"
-    local keytab="/etc/security/keytabs/http$(hostname -f | cut -d '-' -f4).keytab"
+    local keytab="/etc/registry/secrets/http.keytab"
 
     uncomment '/AuthenticationFilter/,/favicon.ico/' $REGISTRY_CONFIG
 
@@ -67,10 +67,6 @@ run_registry() {
 uncomment() {
     sed -i "$1"' s/^#//' "$2"
 }
-
-export KRB_DEBUG_PARAMS=-Dsun.security.krb5.debug=false
-export REGISTRY_HEAP_OPTS="-Xmx1G -Xms1G"
-export REGISTRY_HEAP_OPTS="$REGISTRY_HEAP_OPTS $KRB_DEBUG_PARAMS"
 
 update_config
 run_bootstrap

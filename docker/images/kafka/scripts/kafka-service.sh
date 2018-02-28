@@ -1,5 +1,6 @@
 #!/bin/bash
 
+find /opt/kafka/config/ -type f -exec sed -i "s/TODO_BROKER_ID/${BROKER_ID}/g" {} \;
 find /opt/kafka/config/ -type f -exec sed -i "s/TODO_HOSTNAME/$(hostname -f)/g" {} \;
 find /opt/kafka/config/ -type f -exec sed -i "s/TODO_ZK_CONNECT/${ZK_CONNECT}/g" {} \;
 

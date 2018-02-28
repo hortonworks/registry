@@ -22,14 +22,14 @@ oracle_container_name="hwx-oracle"
 postgres_container_name="hwx-postgres"
 kdc_container_name="hwx-kdc"
 zk_container_name="hwx-zk"
-kafka_container_name="hwx-kafka"
+kafka_container_name="hwx-kafka-"
 
 # Beware before changing the registry container name, it's used in the internal scripts to find out the instance number.
 registry_container_name="hwx-schema-registry-"
 network_name="hwx-net"
 
+broker_nodes=${broker_nodes:-3}
 registry_nodes=${registry_nodes:-2}
-counter=0
 schema_registry_download_url=${schema_registry_download_url:-''}
 db_type=""
 sasl_secrets_dir=${sasl_secrets_dir:-"$(pwd)/secrets"}
@@ -207,33 +207,58 @@ function buildDocker {
 }
 
 function startDocker {
+    local containers=()
+    j=0
     for service in "${@}"
     do
         case "${service}" in
              "${kdc_container_name}")
                 startKdc
+                containers[${j}]=${service}
+                j=$((j+1))
                 ;;
              "${zk_container_name}")
                 startZookeeper
+                containers[${j}]=${service}
+                j=$((j+1))
                 ;;
              "${kafka_container_name}")
-                startKafka
+                for ((i=0; i<${broker_nodes}; i++))
+                do
+                    cname=${kafka_container_name}${i}
+                    startKafka ${i} ${cname}
+                    containers[${j}]=${cname}
+                    j=$((j+1))
+                    # Just providing enough time for the inited instance to bootstrap and start properly..
+                    if [[ $i -ne $(echo ${broker_nodes}-1 | bc) ]]; then
+                        sleep 5
+                    fi
+                done
                 ;;
              "${mysql_container_name}"|mysql)
                 startMySQL
+                containers[${j}]=${mysql_container_name}
+                j=$((j+1))
                 ;;
              "${oracle_container_name}"|oracle)
                 startOracle
+                containers[${j}]=${oracle_container_name}
+                j=$((j+1))
                 ;;
              "${postgres_container_name}"|postgresql)
                 startPostgres
+                containers[${j}]=${postgres_container_name}
+                j=$((j+1))
                 ;;
              "${registry_container_name}")
-                for ((i=1; i<=${registry_nodes}; i++))
+                for ((i=0; i<${registry_nodes}; i++))
                 do
-                    startSchemaRegistry ${db_type} $i
+                    cname=${registry_container_name}${i}
+                    startSchemaRegistry ${i} ${cname} ${db_type}
+                    containers[${j}]=${cname}
+                    j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
-                    if [[ $i -ne ${registry_nodes} ]]; then
+                    if [[ $i -ne $(echo ${registry_nodes}-1 | bc) ]]; then
                         sleep 5
                     fi
                 done
@@ -245,20 +270,9 @@ function startDocker {
     done
 
     echo "# Add the following entries in your \"/etc/hosts\" file to access the containers"
-    for service in "${@}"
+    for service in "${containers[@]}"
     do
-        case "${service}" in
-             "${kdc_container_name}"|"${zk_container_name}"|"${kafka_container_name}")
-                printHostInfo "${service}"
-                ;;
-             "${registry_container_name}")
-                for ((i=1; i<=${registry_nodes}; i++))
-                do
-                    printHostInfo "${registry_container_name}${i}"
-                done
-                ;;
-             *) ;;
-        esac
+        echo "$(docker exec "${service}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)\t${service}"
     done
 
     if [[ $OSTYPE =~ darwin.+ ]]; then
@@ -266,10 +280,6 @@ function startDocker {
         echo "# Run this command to connect to the container"
         echo "sudo route add -net ${ip_prefix}.0.0/16 $(docker-machine ip ${machine_name})"
     fi
-}
-
-function printHostInfo {
-    echo "$(docker exec "${1}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)\t${1}"
 }
 
 function stopDocker {
@@ -546,6 +556,7 @@ function startKdc {
 }
 
 function startZookeeper {
+    # For data, check /data/zk-data
     isContainerExists ${zk_container_name} "Zookeeper"
     if [[ $? -eq 1 ]]; then
         return 0;
@@ -567,20 +578,24 @@ function startZookeeper {
 }
 
 function startKafka {
-    isContainerExists ${kafka_container_name} "Kafka"
+    # For data, check /data/ak-data
+    local brokerId="${1}"
+    local cname="${2}"
+    isContainerExists ${cname} "Kafka"
     if [[ $? -eq 1 ]]; then
         return 0;
     fi
 
     SECONDS=0
-    echo "Starting Apache Kafka container"
+    echo "Starting Apache Kafka container : ${brokerId}"
     hwx_zk_ip=$(docker exec ${zk_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
-    docker run --name ${kafka_container_name} \
-        -h ${kafka_container_name} \
-        -p 9092:9092 \
-        -p 9991:9991 \
+    docker run --name ${cname} \
+        -h ${cname} \
+        -p 9092 \
+        -p 9991 \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
         -e ZK_CONNECT="${zk_container_name}":2181 \
+        -e BROKER_ID="${brokerId}" \
         -e KAFKA_HEAP_OPTS="-Xmx1G -Xms1G -Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
         --network ${network_name} \
         --add-host=${zk_container_name}:${hwx_zk_ip} \
@@ -591,14 +606,15 @@ function startKafka {
 }
 
 function startSchemaRegistry {
-    local container_name="${registry_container_name}${2}"
+    local sid="${1}"
+    local container_name="${2}"
 
     isContainerExists ${container_name} "Schema Registry"
     if [[ $? -eq 1 ]]; then
         return 0;
     fi
 
-    local db_type="${1}"
+    local db_type="${3}"
     local db_name="schema_registry"
     local user="registry_user"
     local pwd="password"
@@ -623,10 +639,17 @@ function startSchemaRegistry {
             exit 1
     esac
 
+    add_kafka_hosts_cmd=""
+    while read line
+    do
+        kname="${kafka_container_name}${line}"
+        kip=$(docker exec ${kname} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
+        add_kafka_hosts_cmd="${add_kafka_hosts_cmd} --add-host=${kname}:${kip}"
+    done <<< "$(seq 0 $(echo ${broker_nodes}-1 | bc))"
+
     hwx_zk_ip=$(docker exec ${zk_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
-    hwx_kafka_ip=$(docker exec ${kafka_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     SECONDS=0
-    echo "Starting Schema Registry"
+    echo "Starting Schema Registry ${sid}"
     docker run --name ${container_name} \
         -h ${container_name} \
         -e DB_TYPE=${db_type} \
@@ -638,9 +661,9 @@ function startSchemaRegistry {
         -p 9030-9040:9091 \
         --network ${network_name} \
         --add-host=${zk_container_name}:${hwx_zk_ip} \
-        --add-host=${kafka_container_name}:${hwx_kafka_ip} \
+        ${add_kafka_hosts_cmd} \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
-        -e KERBEROS_PARAMS="-Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
+        -e REGISTRY_HEAP_OPTS="-Xmx1G -Xms1G -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
         -d ${registry_image}
 
     checkStatus $? "Schema Registry"
@@ -754,6 +777,10 @@ logs
     Shows the logs from the container.
     (eg) $0 logs ${kdc_container_name}
 
+port
+    Shows the ports that are exposed from the container to the host machine.
+    (eg) $0 port ${kdc_container_name}
+
 EOF
     exit "${exit_status}"
 }
@@ -809,6 +836,13 @@ case "${option}" in
             exit 1
         fi
         docker logs -f "${1}"
+        ;;
+    port)
+        if [[ $# -ne 1 ]]; then
+            echo "Usage: $0 shell CONTAINER_NAME"
+            exit 1
+        fi
+        docker port "${1}"
         ;;
     *)
         usage 0
