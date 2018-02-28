@@ -10,6 +10,15 @@ Dockerized Schema Registry application to run System tests.
 - [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
 - jq (brew install jq)
 
+Due to import regulations in some countries, the Oracle implementation limits the strength of cryptographic algorithms 
+available by default. If stronger algorithms are needed (for example, AES with 256-bit keys), the [JCE Unlimited Strength
+Jurisdiction Policy Files](http://www.oracle.com/technetwork/java/javase/downloads/index.html) must be obtained and 
+installed in the JDK/JRE. See the [JCA Providers Documentation](https://docs.oracle.com/javase/8/docs/technotes/guides/security/SunProviders.html) 
+for more information.
+ 
+Note that if you are using Oracle Java, you will need to download JCE policy files for your Java version and copy them 
+to $JAVA_HOME/jre/lib/security.
+
 # Usage
 
 ### Starts the docker machine
@@ -25,8 +34,9 @@ This VM is used as Docker host machine as there are known problems in Docker Eng
 running it on Mac and Windows OS.
 
 <B>NOTE:</B> Once the machine started, you should configure your terminal window to attach it to your new Docker Machine.
+Always, run the below command whenever opening a new terminal.
 
-``` eval $(docker-machine env reg_machine)```
+``` eval $(docker-machine env reg-machine)```
 
 ### Build the Registry Image
 ```
@@ -53,8 +63,9 @@ Starts Schema Registry application with all the dependent services (KDC, ZK, AK 
 which underlying database to use to store the data. All the containers are connected with the 
 private network.
 
-To connect with the schema registry app, copy the `krb5.conf` from `/tmp/kdc-registry` directory and paste it in `/etc` directory in 
-your machine. All the keytabs are stored under `/tmp/kdc-registry/keytabs` directory.
+To connect with the schema registry app, copy the krb5.conf and keytabs from the `$(pwd)/secrets` directory (where pwd 
+denotes ~/registry/docker directory) and paste it to respective directories [OR] point those files using the System property.
+(-Djava.security.auth.login.config=path/abc_jaas.conf, -Djava.security.krb5.conf=path/krb5.conf)
 
 
 ### Stop the container
@@ -100,6 +111,12 @@ Login into the container and provides a Shell to the user.
 sh kdc-registry.sh logs ${name}
 ```
 Shows the logs from the container.
+
+### Container Exposed ports
+```
+sh kdc-registry.sh port ${name}
+```
+Shows the ports that are exposed from the container to the host machine.
 
 ### Other docker commands
 
