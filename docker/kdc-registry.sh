@@ -31,7 +31,7 @@ registry_nodes=${registry_nodes:-2}
 counter=0
 schema_registry_download_url=${schema_registry_download_url:-''}
 db_type=""
-tmp_dir="/tmp/kdc-registry"
+sasl_secrets_dir=${sasl_secrets_dir:-"$(pwd)/secrets"}
 
 # Standard output variable
 std_output="/dev/null"
@@ -304,8 +304,8 @@ function cleanDocker {
         docker container rm --force ${container_ids}
     fi
 
-    echo "Removing the temp krb5.conf and keytab files from the host machine"
-    rm -rvf "${tmp_dir}"
+    echo "Removing the krb5.conf and keytabs files"
+    rm -rvf "${sasl_secrets_dir}"
 
 #    ask_yes_no "Do you want to prune all the stopped containers? [Y/n]: "
 #    if [[ "${_return}" -eq 1 ]]; then
@@ -534,10 +534,10 @@ function startKdc {
 	sed -e "s/HOST_NAME/$KDC_HOST_NAME:88/g"			\
 		-e "s/DOMAIN_NAME/$KDC_DOMAIN_NAME/g" 			\
 		-e "s/REALM_NAME/$KDC_REALM_NAME/g"			\
-		"images/kdc/$KDC_TEMPLATES_DIR/krb5.conf" >"${tmp_dir}"/krb5.conf
+		"images/kdc/$KDC_TEMPLATES_DIR/krb5.conf" >"${sasl_secrets_dir}"/krb5.conf
 
     for kt in $(docker exec ${kdc_container_name} find /etc/security/keytabs/ -type f); do
-        docker cp ${KDC_HOST_NAME}:${kt} "${tmp_dir}"/keytabs/
+        docker cp ${KDC_HOST_NAME}:${kt} "${sasl_secrets_dir}"/
     done
 }
 
@@ -549,20 +549,14 @@ function startKafka {
 
     SECONDS=0
     echo "Creating Apache Zookeeper and Kafka containers"
-    docker create --name ${kafka_container_name} \
+    docker run --name ${kafka_container_name} \
         -h ${kafka_container_name} \
         -p 9092:9092 \
         -p 2181:2181 \
+        -v ${sasl_secrets_dir}:/etc/registry/secrets \
+        -e KERBEROS_PARAMS="-Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
         --network ${network_name} \
-        ${kafka_image}
-
-    echo "Copying krb5 configuration and keytabs from KDC Server"
-    docker cp "${tmp_dir}"/krb5.conf ${kafka_container_name}:/etc/
-    for kt in `find "${tmp_dir}"/keytabs -type f`; do
-        docker cp ${kt} ${kafka_container_name}:/etc/security/keytabs/
-    done
-
-    docker start ${kafka_container_name}
+        -d ${kafka_image}
 
     checkStatus $? "Kafka"
     echo "Apache ZK and Kafka started successfully. Time taken : ${SECONDS}s"
@@ -604,7 +598,7 @@ function startSchemaRegistry {
     hwx_kafka_ip=$(docker exec ${kafka_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     SECONDS=0
     echo "Starting Schema Registry"
-    docker create --name ${container_name} \
+    docker run --name ${container_name} \
         -h ${container_name} \
         -e DB_TYPE=${db_type} \
         -e DATA_SRC_CLASS_NAME=${classname} \
@@ -615,15 +609,9 @@ function startSchemaRegistry {
         -p 9030-9040:9091 \
         --network ${network_name} \
         --add-host=${kafka_container_name}:${hwx_kafka_ip} \
-        ${registry_image}
-
-    echo "Copying krb5 configuration and keytabs from KDC Server"
-    docker cp "${tmp_dir}"/krb5.conf ${container_name}:/etc/
-    for kt in `find "${tmp_dir}"/keytabs -type f`; do
-        docker cp ${kt} ${container_name}:/etc/security/keytabs/
-    done
-
-    docker start ${container_name}
+        -v ${sasl_secrets_dir}:/etc/registry/secrets \
+        -e KERBEROS_PARAMS="-Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
+        -d ${registry_image}
 
     checkStatus $? "Schema Registry"
     echo "Schema Registry started successfully. Time taken : ${SECONDS}s"
@@ -694,9 +682,9 @@ start
     Asks user which database to use to store the data. All the containers are connected with
     the private ${network_name} network.
 
-    To connect with the schema registry app, copy the krb5.conf from "${tmp_dir}" directory
-    and paste it in "/etc" directory in your machine. All the keytabs are stored under
-    "${tmp_dir}/keytabs" directory.
+    To connect with the schema registry app, copy the krb5.conf and keytabs from the "${sasl_secrets_dir}"
+    directory and paste it to respective directories [OR] point the files using the System property.
+    (-Djava.security.auth.login.config, -Djava.security.krb5.conf)
 
     One can also be able to start a single service / container.
     (eg) To start KDC server alone, you would run:
@@ -753,7 +741,7 @@ case "${option}" in
         buildDocker
         ;;
     start)
-        mkdir -p "${tmp_dir}"/keytabs/
+        mkdir -p "${sasl_secrets_dir}"
         db_type=$(ask_db_type)
 
         createUserNetwork
