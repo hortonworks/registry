@@ -214,12 +214,12 @@ function startDocker {
         case "${service}" in
              "${kdc_container_name}")
                 startKdc
-                containers[${j}]=${service}
+                containers[${j}]=${kdc_container_name}
                 j=$((j+1))
                 ;;
              "${zk_container_name}")
                 startZookeeper
-                containers[${j}]=${service}
+                containers[${j}]=${zk_container_name}
                 j=$((j+1))
                 ;;
              "${kafka_container_name}")
@@ -235,20 +235,15 @@ function startDocker {
                     fi
                 done
                 ;;
+             # MySQL, Oracle and Postgres don't need entry in "/etc/hosts" so skipping those.
              "${mysql_container_name}"|mysql)
                 startMySQL
-                containers[${j}]=${mysql_container_name}
-                j=$((j+1))
                 ;;
              "${oracle_container_name}"|oracle)
                 startOracle
-                containers[${j}]=${oracle_container_name}
-                j=$((j+1))
                 ;;
              "${postgres_container_name}"|postgresql)
                 startPostgres
-                containers[${j}]=${postgres_container_name}
-                j=$((j+1))
                 ;;
              "${registry_container_name}")
                 for ((i=0; i<${registry_nodes}; i++))
@@ -270,10 +265,19 @@ function startDocker {
     done
 
     echo "# Add the following entries in your \"/etc/hosts\" file to access the containers"
+    local tmp_hosts="_hosts.txt"
     for service in "${containers[@]}"
     do
-        echo "$(docker exec "${service}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)\t${service}"
+        echo "$(docker exec "${service}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)\t${service}" >>${tmp_hosts}
     done
+
+    local container_hosts=$(<${tmp_hosts})
+    for service in "${containers[@]}"
+    do
+        docker exec -it ${service} /bin/bash -c "sudo echo \"${container_hosts}\" >> /etc/hosts"
+    done
+    echo "${container_hosts}"
+    rm -f "${tmp_hosts}"
 
     if [[ $OSTYPE =~ darwin.+ ]]; then
         ip_prefix=$(docker exec "${1}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2 | cut -d "." -f1 -f2)
@@ -639,15 +643,6 @@ function startSchemaRegistry {
             exit 1
     esac
 
-    add_kafka_hosts_cmd=""
-    while read line
-    do
-        kname="${kafka_container_name}${line}"
-        kip=$(docker exec ${kname} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
-        add_kafka_hosts_cmd="${add_kafka_hosts_cmd} --add-host=${kname}:${kip}"
-    done <<< "$(seq 0 $(echo ${broker_nodes}-1 | bc))"
-
-    hwx_zk_ip=$(docker exec ${zk_container_name} ifconfig | grep -v 127.0.0.1 | grep inet | awk '{print $2}' | cut -d ":" -f2)
     SECONDS=0
     echo "Starting Schema Registry ${sid}"
     docker run --name ${container_name} \
@@ -660,8 +655,6 @@ function startSchemaRegistry {
         -p 9010-9020:9090 \
         -p 9030-9040:9091 \
         --network ${network_name} \
-        --add-host=${zk_container_name}:${hwx_zk_ip} \
-        ${add_kafka_hosts_cmd} \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
         -e REGISTRY_HEAP_OPTS="-Xmx1G -Xms1G -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
         -d ${registry_image}
