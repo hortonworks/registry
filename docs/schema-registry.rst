@@ -4,7 +4,7 @@ SchemaRegistry
 SchemaRegistry provides a central repository for a message’s metadata. A
 schema specifies the message structure and type. Schema Registry will
 allow us to store these schemas efficiently and provides a pluggable
-serializerserializer interfaces and run-time provision of
+serializer/deserializer interfaces and run-time provision of
 serializer/deserializer implementations based on incoming messages.
 Schema registry will also enable reuse/discovery/authoring/collaboration
 related to schemas.
@@ -125,7 +125,7 @@ Kafka Producer Integration with SchemaRegistry
 .. code:: java
 
      config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-     config.putAll(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
+     config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
      config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
      config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
 
@@ -147,7 +147,7 @@ Run consumer to retrieve schema and deserialze the messages
 
 ::
 
-    java -jar avro-examples-0.1.0-SNAPSHOT.jar -cm -c data/kafka-consumer.props
+    java -jar avro-examples-0.5.0-SNAPSHOT.jar -cm -c data/kafka-consumer.props
     press ctrl + c to stop
 
 Kafka Consumer Integration with SchemaRegistry
@@ -167,7 +167,7 @@ Kafka Consumer Integration with SchemaRegistry
 .. code:: java
 
      config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-     config.putAll(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
+     config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
      config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
      config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
 
@@ -176,14 +176,14 @@ Important settings from the above are
 **schema.registry.url**:
   This should be set to where the registry server is running ex: http://localhost:9090/api/v1
 
-**key.serializer**:
-  *StringSerializer* is used in the above example.
+**key.deserializer**:
+  *StringDeserializer* is used in the above example.
 
-**value.serializer**:
-  *com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer* is used in the above example.
+**value.deserializer**:
+  *com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer* is used in the above example.
 
-This deserializer tries to find schema.id in the message paylod. If it
-finds schema.id, makes a call to schemaregistry to fetch the avro
+This deserializer tries to find schema.id in the message payload. If it
+finds schema.id, makes a call to schema registry to fetch the avro
 schema. If it doesn't find schema.id it falls back to using topic name
 to fetch a schema.
 
@@ -200,17 +200,18 @@ serializer/deserializer for a given schema
 
 .. code:: java
 
+   String schema1 = getSchema(""/device.avsc");
    SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
    // registering a new schema
    SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
-   LOG.info("Registered schema metadata [{}] and returned version [{}]", schema1, v1);
+   LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
 
    // adding a new version of the schema
    String schema2 = getSchema("/device-next.avsc");
    SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
    SchemaIdVersion v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-   LOG.info("Registered schema metadata [{}] and returned version [{}]", schema2, v2);
+   LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
 
    //adding same schema returns the earlier registered version
    SchemaIdVersion version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
@@ -254,11 +255,12 @@ retrieved with the below APIs.
 Using serializer and deserializer related APIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Registering serializer and deserializer is done with the below steps -
-Upload jar file which contains serializer and deserializer classes and
-its dependencies - Register serializer/deserializer - Map
-serializer/deserializer with a registered schema. - Fetch
-Serializer/Deserializer and use it to marshal/unmarshal payloads.
+Registering serializer and deserializer is done with the below steps
+
+- Upload jar file which contains serializer and deserializer classes and
+its dependencies - Register serializer/deserializer.
+- Map serializer/deserializer with a registered schema.
+- Fetch Serializer/Deserializer and use it to marshal/unmarshal payloads.
 
 Uploading jar file
 ''''''''''''''''''

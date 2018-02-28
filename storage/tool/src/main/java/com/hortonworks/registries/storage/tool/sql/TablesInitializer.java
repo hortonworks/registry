@@ -24,12 +24,21 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.URL;
 import java.util.Map;
 
 public class TablesInitializer {
     private static final String OPTION_SCRIPT_ROOT_PATH = "script-root";
     private static final String OPTION_CONFIG_FILE_PATH = "config";
     private static final String OPTION_MYSQL_JAR_URL_PATH = "mysql-jar-url";
+    private static final String DISABLE_VALIDATE_ON_MIGRATE = "disable-validate-on-migrate";
+    private static final String HTTP_PROXY_URL = "httpProxyUrl";
+    private static final String HTTP_PROXY_USERNAME = "httpProxyUsername";
+    private static final String HTTP_PROXY_PASSWORD = "httpProxyPassword";
 
 
     public static void main(String[] args) throws Exception {
@@ -115,6 +124,14 @@ public class TablesInitializer {
                         .build()
         );
 
+        options.addOption(
+                Option.builder()
+                    .hasArg(false)
+                    .longOpt(DISABLE_VALIDATE_ON_MIGRATE)
+                    .desc("Disable flyway validation checks while running migrate")
+                    .build()
+        );
+
         CommandLineParser parser = new BasicParser();
         CommandLine commandLine = parser.parse(options, args);
 
@@ -146,8 +163,9 @@ public class TablesInitializer {
         String mysqlJarUrl = commandLine.getOptionValue(OPTION_MYSQL_JAR_URL_PATH);
 
         StorageProviderConfiguration storageProperties;
+        Map<String, Object> conf;
         try {
-            Map<String, Object> conf = Utils.readConfig(confFilePath);
+            conf = Utils.readConfig(confFilePath);
 
             StorageProviderConfigurationReader confReader = new StorageProviderConfigurationReader();
             storageProperties = confReader.readStorageConfig(conf);
@@ -160,14 +178,29 @@ public class TablesInitializer {
         String bootstrapDirPath = null;
         try {
             bootstrapDirPath = System.getProperty("bootstrap.dir");
-            MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl);
+            Proxy proxy = Proxy.NO_PROXY;
+            String httpProxyUrl = (String) conf.get(HTTP_PROXY_URL);
+            String httpProxyUsername = (String) conf.get(HTTP_PROXY_USERNAME);
+            String httpProxyPassword = (String) conf.get(HTTP_PROXY_PASSWORD);
+            if ((httpProxyUrl != null) && !httpProxyUrl.isEmpty()) {
+                URL url = new URL(httpProxyUrl);
+                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(url.getHost(), url.getPort()));
+                if ((httpProxyUsername != null) && !httpProxyUsername.isEmpty()) {
+                    Authenticator.setDefault(getBasicAuthenticator(url.getHost(), url.getPort(), httpProxyUsername, httpProxyPassword));
+                }
+            }
+            MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {
             System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
             System.exit(1);
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath));
+        boolean disableValidateOnMigrate = commandLine.hasOption(DISABLE_VALIDATE_ON_MIGRATE);
+        if(disableValidateOnMigrate) {
+            System.out.println("Disabling validation on schema migrate");
+        }
+        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath, !disableValidateOnMigrate));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));
@@ -183,4 +216,19 @@ public class TablesInitializer {
         formatter.printHelp("TableInitializer [options]", options);
     }
 
+    private static Authenticator getBasicAuthenticator(String host, int port, String username, String password) {
+        return new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                if (getRequestorType() == RequestorType.PROXY) {
+                    if (getRequestingHost().equalsIgnoreCase(host)) {
+                        if (getRequestingPort() == port) {
+                            return new PasswordAuthentication(username, password.toCharArray());
+                        }
+                    }
+                }
+                return null;
+            }
+        };
+    }
 }

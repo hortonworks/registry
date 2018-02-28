@@ -72,13 +72,13 @@ public class SampleSchemaRegistryClientApp {
 
         // registering a new schema
         SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
-        LOG.info("Registered schema metadata [{}] and returned version [{}]", schema1, v1);
+        LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
 
         // adding a new version of the schema
         String schema2 = getSchema("/device-next.avsc");
         SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
         SchemaIdVersion v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
-        LOG.info("Registered schema metadata [{}] and returned version [{}]", schema2, v2);
+        LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
 
         //adding same schema returns the earlier registered version
         SchemaIdVersion version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);

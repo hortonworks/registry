@@ -1,0 +1,78 @@
+version: '2.3'
+services:
+
+  # Schema Registry application gets installed under /opt/hortonworks-registry-`version` directory
+  # If we assign a "Container name" to registry, then it might clash with other registry server while scaling the registry application.
+  # Let it take auto assigned unique container name.
+  registry:
+    build:
+      context: "images/registry"
+      dockerfile: "Dockerfile"
+      args:
+        - "REGISTRY_VERSION=0.5.0"
+    image: schema-registry
+    ports:
+      - "9010-9020:9090"
+      - "9030-9040:9091"
+    depends_on:
+      pgdb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    links:
+      - pgdb
+    environment:
+      DB_TYPE: postgresql
+      DATA_SRC_CLASS_NAME: org.postgresql.ds.PGSimpleDataSource
+      DB_URL: jdbc:postgresql://pgdb/schema_registry
+      DB_USER: registry_user
+      DB_PASSWORD: password
+
+  # Data are stored under /var/lib/postgresql/data directory
+  pgdb:
+    image: postgres
+    environment:
+      POSTGRES_DB: schema_registry
+      POSTGRES_USER: registry_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "appuser"]
+    container_name: postgres
+
+#  admin:
+#    image: adminer
+#    ports:
+#      - 8080:8080
+
+  # Zookeeper gets installed under /opt/zookeeper directory
+  # Data & log are stored under /data and /datalog directories
+  zookeeper:
+    image: zookeeper
+    ports:
+      - "2181:2181"
+
+  # Kafka gets installed under /opt/kafka directory
+  # Data are stored under /kafka directory
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+      - "1099:1099"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "log_test0:1:1"
+      KAFKA_BROKER_ID: 0
+      KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false
+                       -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=127.0.0.1
+                       -Dcom.sun.management.jmxremote.rmi.port=1099"
+      JMX_PORT: 1099
+    depends_on:
+      zookeeper:
+        condition: service_started
+    links:
+      - zookeeper

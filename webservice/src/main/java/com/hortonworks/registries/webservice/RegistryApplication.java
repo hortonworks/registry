@@ -207,7 +207,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             }
 
             if(moduleRegistration instanceof LeadershipAware) {
-                LOG.info("Module [{}] is registered for LeadershipParticipant registration.");
+                LOG.info("Module [{}] is registered for LeadershipParticipant registration.", moduleName);
                 LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
                 leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
             }

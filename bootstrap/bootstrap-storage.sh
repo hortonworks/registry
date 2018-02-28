@@ -47,12 +47,12 @@ do
     CLASSPATH="$CLASSPATH":"$file"
 done
 
-function execute {
+execute() {
     echo "Using Configuration file: ${CONFIG_FILE_PATH}"
     ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -m ${MYSQL_JAR_URL_PATH} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --${1}
 }
 
-function printUsage {
+printUsage() {
     cat <<-EOF
 USAGE: $0 [create|migrate|info|validate|drop|drop-create|repair|check-connection]
    create           : Creates the tables. The target database should be empty
