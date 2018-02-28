@@ -5,7 +5,7 @@
 # Portions of this code is borrowed / inspired from https://github.com/tillt/docker-kdc
 #
 
-machine_name="reg_machine"
+machine_name="reg-machine"
 
 # Image name variables
 registry_image="schema-registry"
@@ -370,22 +370,32 @@ function createUserNetwork {
 
 function isContainerExists() {
     local cname="${1}"
-    local log_name="${2}"
+    local component="${2}"
 
     container_id=$(docker container ps -f name=${cname} -q)
     if [[ -n ${container_id} ]]; then
-        echo "${log_name} docker container '${cname}' already started"
+        echo "${component} docker container '${cname}' already started"
         return 1
     fi
 
     container_id=$(docker container ps -a -f name=${cname} -q)
     if [[ -n ${container_id} ]]; then
-        echo "Restarting the existing ${log_name} docker container '${cname}' with id : '${container_id}'"
+        echo "Restarting the existing ${component} docker container '${cname}' with id : '${container_id}'"
         docker container start ${cname}
         return 1
     fi
 
     return 0
+}
+
+function checkStatus {
+    local status="${1}"
+    local component="${2}"
+
+    if [[ ${status} -ne 0 ]]; then
+        echo "ERROR: Unable to start / load the ${component} container."
+        exit 1
+    fi
 }
 
 function startMySQL {
@@ -411,10 +421,7 @@ function startMySQL {
         --network ${network_name} \
         -d ${mysql_image}
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Unable to start / load the MySQL image from the docker repository."
-        exit 1
-    fi
+    checkStatus $? "MySQL"
 
     echo "MySQL health check"
     while :
@@ -446,10 +453,7 @@ function startOracle {
         --network ${network_name} \
         -d ${oracle_image}
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Unable to start / load the oracle image from the docker repository."
-        exit 1
-    fi
+    checkStatus $? "Oracle"
 
     echo "Oracle health check"
     retry=0
@@ -491,10 +495,7 @@ function startPostgres {
         --network ${network_name} \
         -d ${postgres_image}
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Unable to start / load the Postgres image from the docker repository."
-        exit 1
-    fi
+    checkStatus $? "Postgres"
 
     echo "Postgres health check"
     while :
@@ -526,6 +527,7 @@ function startKdc {
 		--network ${network_name} \
 		-d ${kdc_image}
 
+    checkStatus $? "Kerberos"
 	echo "Kerberos KDC now reachable at '$(hostname):$KDC_PORT'. Time taken : ${SECONDS}s"
 
     # Note the KDC containers are connected to the same user network. So they can directly contact each other over any port.
@@ -562,12 +564,8 @@ function startKafka {
 
     docker start ${kafka_container_name}
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Unable to start / load the Kafka image from the docker repository."
-        exit 1
-    else
-        echo "ZK and AK started successfully. Time taken : ${SECONDS}s"
-    fi
+    checkStatus $? "Kafka"
+    echo "Apache ZK and Kafka started successfully. Time taken : ${SECONDS}s"
 }
 
 function startSchemaRegistry {
@@ -627,12 +625,8 @@ function startSchemaRegistry {
 
     docker start ${container_name}
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Unable to start / load the Schema Registry image from the docker repository."
-        exit 1
-    else
-        echo "Schema Registry started successfully. Time taken : ${SECONDS}s"
-    fi
+    checkStatus $? "Schema Registry"
+    echo "Schema Registry started successfully. Time taken : ${SECONDS}s"
 
     echo "Connect with the below ports to start the registry client"
     docker port ${container_name}

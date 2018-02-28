@@ -33,9 +33,7 @@ RUN chmod a+x /tmp/download-kafka.sh \
  && rm /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
  && ln -s /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka \
  && rm /tmp/download-kafka.sh \
- && mkdir -p /etc/security/keytabs
-
-VOLUME ["/kafka"]
+ && mkdir -p /etc/security/keytabs /data
 
 COPY scripts/kafka-service.sh /opt/kafka/
 COPY config/* /opt/kafka/config/
