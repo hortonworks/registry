@@ -173,7 +173,7 @@ function buildSchemaRegistry {
 
         if [[ "$(docker images -q ${registry_image}:${rversion} 2> ${std_output})" == "" ]]; then
             echo "Downloading Schema Registry distribution from URL :: " ${schema_registry_download_url}
-            curl -O -C - "${schema_registry_download_url}"
+            wget -q --show-progress "${schema_registry_download_url}"
             mv ${filename} images/registry/
             docker build -t ${registry_image}:${rversion} images/registry --build-arg "REGISTRY_VERSION=${rversion}"
         else
