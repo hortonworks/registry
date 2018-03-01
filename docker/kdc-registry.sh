@@ -5,7 +5,7 @@
 # Portions of this code is borrowed / inspired from https://github.com/tillt/docker-kdc
 #
 
-machine_name="reg-machine"
+machine_name="hwx-machine"
 
 # Image name variables
 registry_image="schema-registry"
@@ -231,7 +231,7 @@ function startDocker {
                     j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
                     if [[ $i -ne $(echo ${broker_nodes}-1 | bc) ]]; then
-                        sleep 5
+                        sleep 2
                     fi
                 done
                 ;;
@@ -254,7 +254,7 @@ function startDocker {
                     j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
                     if [[ $i -ne $(echo ${registry_nodes}-1 | bc) ]]; then
-                        sleep 5
+                        sleep 2
                     fi
                 done
                 ;;
@@ -688,9 +688,9 @@ ask_db_type() {
         > " answer
 
         case "${answer}" in
-            m|mysql) echo "mysql" ;;
-            p|postgres|postgresql) echo "postgresql";;
-            o|oracle) echo "oracle" ;;
+            1|m|mysql) echo "mysql" ;;
+            2|p|postgres|postgresql) echo "postgresql";;
+            3|o|oracle) echo "oracle" ;;
             *) echo "Invalid db type : ${answer}"; exit 1;;
         esac
 }
