@@ -231,7 +231,7 @@ function startDocker {
                     j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
                     if [[ $i -ne $(echo ${broker_nodes}-1 | bc) ]]; then
-                        sleep 5
+                        sleep 2
                     fi
                 done
                 ;;
@@ -254,7 +254,7 @@ function startDocker {
                     j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
                     if [[ $i -ne $(echo ${registry_nodes}-1 | bc) ]]; then
-                        sleep 5
+                        sleep 2
                     fi
                 done
                 ;;
