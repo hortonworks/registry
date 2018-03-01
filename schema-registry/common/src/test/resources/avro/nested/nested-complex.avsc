@@ -1,0 +1,40 @@
+{
+  "namespace": "nested.complex",
+  "name": "Record_A",
+  "type": "record",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "value",
+      "type": "string"
+    },
+    {
+      "name": "child",
+      "type": {
+        "namespace": "nested.complex",
+        "name": "Record_B",
+        "type": "record",
+        "fields": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "value",
+            "type": "string"
+          },
+          {
+            "name": "parent",
+            "type": [
+              "null",
+              "Record_A"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
