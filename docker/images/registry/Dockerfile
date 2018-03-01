@@ -32,9 +32,7 @@ COPY conf/registry_client_jaas.conf /opt/registry/conf/
 
 WORKDIR /opt/registry
 
-RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh \
-    && chmod -R 755 libs \
-    && mkdir /etc/security/keytabs/
+RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh && mkdir /etc/security/keytabs/
 
 # supervisord
 COPY ./supervisord.conf /etc/supervisord.conf
