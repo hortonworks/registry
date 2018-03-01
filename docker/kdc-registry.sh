@@ -698,7 +698,7 @@ ask_db_type() {
 usage() {
     local exit_status="${1}"
     cat <<EOF
-kdc-registry.sh: a tool for running Schema Registry tests inside Docker images.
+$0: a tool for running Schema Registry tests inside Docker images.
 
 Usage: $0 [command] [options]
 
