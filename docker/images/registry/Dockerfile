@@ -16,15 +16,12 @@ FROM minimal-ubuntu
 
 ARG REGISTRY_VERSION
 
-# Do not ask for confirmations when running apt, etc.
-ENV DEBIAN_FRONTEND noninteractive
-
-# kerberos client
-RUN apt install -y krb5-config krb5-user
-
 ADD hortonworks-registry-"${REGISTRY_VERSION}".tar.gz /opt/
 
-RUN ln -s /opt/hortonworks-registry-"${REGISTRY_VERSION}" /opt/registry
+# kerberos client
+RUN apt update -y \
+    && apt install -y krb5-config krb5-user \
+    && ln -s /opt/hortonworks-registry-"${REGISTRY_VERSION}" /opt/registry
 
 ENV REGISTRY_HOME /opt/registry
 

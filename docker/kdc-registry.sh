@@ -9,12 +9,12 @@ machine_name="reg-machine"
 
 # Image name variables
 registry_image="schema-registry"
-kdc_image="docker-kdc"
+kdc_image="docker-kdc:0.1"
 mysql_image="mysql:5.7"
-oracle_image="oracle-hwx-xe-12c"
+oracle_image="oracle-hwx-xe-12c:0.1"
 postgres_image="postgres:10"
 kafka_image="apache-kafka:1.0.0"
-minimal_ubuntu_image="minimal-ubuntu"
+minimal_ubuntu_image="minimal-ubuntu:0.1"
 
 # Container name variables
 mysql_container_name="hwx-mysql"

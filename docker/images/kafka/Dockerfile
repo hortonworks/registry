@@ -13,29 +13,21 @@
 #  limitations under the License.
 FROM minimal-ubuntu
 
-# environment variables
-ENV DEBIAN_FRONTEND noninteractive
-
 ARG kafka_version=1.0.0
 ARG scala_version=2.12
 
 ENV KAFKA_VERSION=$kafka_version \
     SCALA_VERSION=$scala_version
 
-# kerberos client
-RUN apt install -y krb5-config krb5-user
+ARG FILE_NAME=kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+ADD http://redrockdigimark.com/apachemirror/kafka/${KAFKA_VERSION}/${FILE_NAME} /opt/
 
-COPY scripts/download-kafka.sh /tmp/
+RUN tar -xf /opt/${FILE_NAME} -C /opt/ \
+    && ln -sf /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka \
+    && mkdir -p /etc/security/keytabs /data \
+    && apt update -y && apt install -y krb5-config krb5-user
 
-RUN chmod a+x /tmp/download-kafka.sh \
- && /tmp/download-kafka.sh \
- && tar xfz /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt \
- && rm /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
- && ln -s /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka \
- && rm /tmp/download-kafka.sh \
- && mkdir -p /etc/security/keytabs /data
-
-COPY scripts/kafka-service.sh /opt/kafka/
+COPY ./kafka-service.sh /opt/kafka/
 COPY config/* /opt/kafka/config/
 
 # supervisord

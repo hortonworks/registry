@@ -1,11 +1,9 @@
 FROM minimal-ubuntu
 
-ARG DEBIAN_FRONTEND=noninteractive
-
 ADD krb5.conf /etc/krb5.conf
 
 RUN echo package heimdal/realm string REALM | debconf-set-selections
-RUN apt install -y heimdal-kdc libsasl2-modules-gssapi-heimdal
+RUN apt update -y && apt install -y heimdal-kdc libsasl2-modules-gssapi-heimdal
 
 EXPOSE 88
 
