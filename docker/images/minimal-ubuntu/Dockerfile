@@ -1,5 +1,5 @@
 # Dockerfile - minimal-ubuntu
-# usage: docker build -t minimal-ubuntu .
+# usage: docker build -t minimal-ubuntu:0.1 .
 
 FROM ubuntu:16.04
 

@@ -1,4 +1,4 @@
-FROM minimal-ubuntu
+FROM minimal-ubuntu:0.1
 
 ADD krb5.conf /etc/krb5.conf
 
