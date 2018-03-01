@@ -11,31 +11,29 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 FROM minimal-ubuntu:0.1
 
-ARG REGISTRY_VERSION
+ARG kafka_version=1.0.0
+ARG scala_version=2.12
 
-ADD hortonworks-registry-"${REGISTRY_VERSION}".tar.gz /opt/
+ENV KAFKA_VERSION=$kafka_version \
+    SCALA_VERSION=$scala_version
 
-# kerberos client
-RUN apt update -y \
-    && apt install -y krb5-config krb5-user \
-    && ln -s /opt/hortonworks-registry-"${REGISTRY_VERSION}" /opt/registry
+ARG FILE_NAME=kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+ADD http://redrockdigimark.com/apachemirror/kafka/${KAFKA_VERSION}/${FILE_NAME} /opt/
 
-ENV REGISTRY_HOME /opt/registry
+RUN tar -xf /opt/${FILE_NAME} -C /opt/ \
+    && ln -sf /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka \
+    && mkdir -p /etc/security/keytabs /data \
+    && apt update -y && apt install -y krb5-config krb5-user
 
-COPY start-registry.sh /opt/registry/bin/
-COPY extlibs/* /opt/registry/libs/
-COPY extlibs/* /opt/registry/bootstrap/lib/
-COPY conf/registry_client_jaas.conf /opt/registry/conf/
-
-WORKDIR /opt/registry
-
-RUN chmod a+x bin/*.sh bootstrap/bootstrap-storage.sh && mkdir /etc/security/keytabs/
+COPY ./kafka-service.sh /opt/kafka/
+COPY config/* /opt/kafka/config/
 
 # supervisord
 COPY ./supervisord.conf /etc/supervisord.conf
+
+WORKDIR /opt/kafka
 
 # when container is starting
 CMD ["/usr/local/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]
