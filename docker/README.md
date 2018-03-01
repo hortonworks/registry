@@ -36,7 +36,7 @@ running it on Mac and Windows OS.
 <B>NOTE:</B> Once the machine started, you should configure your terminal window to attach it to your new Docker Machine.
 Always, run the below command whenever opening a new terminal.
 
-``` eval $(docker-machine env reg-machine)```
+``` eval $(docker-machine env hwx-machine)```
 
 ### Build the Registry Image
 ```
@@ -66,6 +66,12 @@ private network.
 To connect with the schema registry app, copy the krb5.conf and keytabs from the `$(pwd)/secrets` directory (where pwd 
 denotes ~/registry/docker directory) and paste it to respective directories [OR] point those files using the System property.
 (-Djava.security.auth.login.config=path/abc_jaas.conf, -Djava.security.krb5.conf=path/krb5.conf)
+
+#### Run a single container
+```
+sh kdc-registry.sh start ${name}
+```
+Starts a single container with the specified name.
 
 ### Lists the active containers
 ```
@@ -101,14 +107,26 @@ Shows the exposed ports from the container to the host machine.
 ```
 sh kdc-registry.sh stop
 ```
-Stops all the running containers that are connected with the private network. 
+Stops all the running containers that are connected with the private network.
+
+#### Stop a single container
+```
+sh kdc-registry.sh stop ${name}
+```
+Stops the container with the specified name
 
 ### Clean
 ```
 sh kdc-registry.sh clean
 ```
-Removes all the stopped containers that are connected with the private network. This will also remove the created images, dangling images and network. This will
-free disk space. 
+Removes all the stopped containers that are connected with the private network. This will also remove the created images, 
+dangling images and network. This will free disk space. 
+
+#### Clean a single container
+```
+sh kdc-registry.sh clean ${name}
+```
+Removes only the container with the specified name
 
 ### Stop the docker machine
 ```
