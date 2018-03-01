@@ -689,8 +689,8 @@ ask_db_type() {
 
         case "${answer}" in
             1|m|mysql) echo "mysql" ;;
-            2|p|postgres|postgresql) echo "postgresql";;
-            3|o|oracle) echo "oracle" ;;
+            2|o|oracle) echo "oracle" ;;
+            3|p|postgres|postgresql) echo "postgresql";;
             *) echo "Invalid db type : ${answer}"; exit 1;;
         esac
 }
