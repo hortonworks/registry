@@ -1,7 +1,7 @@
-Docker Containerized Schema Registry
-====================================
+Schema Registry cluster deployment using SASL
+=============================================
 
-Dockerized Schema Registry application to run System tests. 
+Dockerized Schema Registry application with SASL enabled to run System tests. 
 
 
 # Dependencies
@@ -67,27 +67,6 @@ To connect with the schema registry app, copy the krb5.conf and keytabs from the
 denotes ~/registry/docker directory) and paste it to respective directories [OR] point those files using the System property.
 (-Djava.security.auth.login.config=path/abc_jaas.conf, -Djava.security.krb5.conf=path/krb5.conf)
 
-
-### Stop the container
-```
-sh kdc-registry.sh stop
-```
-Stops all the running containers that are connected with the private network. 
-
-### Clean
-```
-sh kdc-registry.sh clean
-```
-Removes all the stopped containers that are connected with the private network. This will also remove the created images, dangling images and network. This will
-free disk space. 
-
-
-### Stop the docker machine
-```
-sh kdc-registry.sh stop-machine
-```
-This will stop and power-off the Linux Virtual machine.
-
 ### Lists the active containers
 ```
 sh kdc-registry.sh ps
@@ -116,7 +95,26 @@ Shows the logs from the container.
 ```
 sh kdc-registry.sh port ${name}
 ```
-Shows the ports that are exposed from the container to the host machine.
+Shows the exposed ports from the container to the host machine.
+
+### Stop the container
+```
+sh kdc-registry.sh stop
+```
+Stops all the running containers that are connected with the private network. 
+
+### Clean
+```
+sh kdc-registry.sh clean
+```
+Removes all the stopped containers that are connected with the private network. This will also remove the created images, dangling images and network. This will
+free disk space. 
+
+### Stop the docker machine
+```
+sh kdc-registry.sh stop-machine
+```
+This will stop and power-off the Linux Virtual machine.
 
 ### Other docker commands
 
