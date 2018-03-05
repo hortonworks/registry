@@ -35,6 +35,20 @@
           }
         ]
       }
+    },
+    {
+      "name": "arrayTest",
+      "type": {
+        "type": "array",
+        "items": "Record_A"
+      }
+    },
+    {
+      "name": "mapTest",
+      "type": {
+        "type": "map",
+        "values": "Record_A"
+      }
     }
   ]
 }
