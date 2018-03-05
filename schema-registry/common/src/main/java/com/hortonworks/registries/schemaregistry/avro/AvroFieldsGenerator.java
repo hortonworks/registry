@@ -83,11 +83,8 @@ public class AvroFieldsGenerator {
 
                 String completeName = schema.getFullName();
 
-                if (visitedRecords.contains(completeName)) {
-                    // Since we are only interested in primitive data types, if we encounter a record that was already parsed it can be ignored
-                    break;
-                }
-                else {
+                // Since we are only interested in primitive data types, if we encounter a record that was already parsed it can be ignored
+                if (!visitedRecords.contains(completeName)) {
                     visitedRecords.add(completeName);
 
                     // store fields of a record.

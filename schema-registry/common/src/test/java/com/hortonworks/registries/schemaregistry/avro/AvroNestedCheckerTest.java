@@ -15,14 +15,12 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.avro.Schema;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 
 public class AvroNestedCheckerTest {
 
