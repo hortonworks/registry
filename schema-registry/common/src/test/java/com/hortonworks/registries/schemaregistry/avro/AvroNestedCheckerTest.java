@@ -15,11 +15,14 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.avro.Schema;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.List;
 
 public class AvroNestedCheckerTest {
 
@@ -34,25 +37,40 @@ public class AvroNestedCheckerTest {
     }
 
     @Test
-    public void testAvroFieldsGenerator_Simple() throws IOException {
-        // As long as no exceptions are thrown, this passes.
-        new AvroFieldsGenerator().generateFields(simpleNestedSchema);
+    public void testSimpleAvroFieldsGenerator() throws IOException {
+        /*
+            Should return 3 fields;
+            - SimpleRecord.id : int
+            - SimpleRecord.value : string
+            - SimpleRecord.parent : Union(null, Record(Record_B))
+         */
+        Assert.assertEquals(3 , new AvroFieldsGenerator().generateFields(simpleNestedSchema).size());
     }
 
     @Test
-    public void testAvroFieldsGenerator_Complex() throws IOException {
-        // As long as no exceptions are thrown, this passes.
-        new AvroFieldsGenerator().generateFields(complexNestedSchema);
+    public void testComplexAvroFieldsGenerator() throws IOException {
+        /*
+            Should return 8 fields;
+            - Record_A.id : int
+            - Record_A.value : string
+            - Record_A.child : Record(Record_B)
+            - Record_A.child.id : int
+            - Record_A.child.value : string
+            - Record_A.child.parent : Union(null, Record(Record_A))
+            - Record_A.arrayTest : array(Record_A)
+            - Record_A.mapTest : map(Record_A)
+         */
+        Assert.assertEquals(8 , new AvroFieldsGenerator().generateFields(complexNestedSchema).size());
     }
 
     @Test
-    public void testAvroSchemaProvider_Simple() throws IOException {
+    public void testSimpleAvroSchemaProvider() throws IOException {
         // As long as no exceptions are thrown, this passes.
         new AvroSchemaProvider().normalize(simpleNestedSchema);
     }
 
     @Test
-    public void testAvroSchemaProvider_Complex() throws IOException {
+    public void testComplexAvroSchemaProvider() throws IOException {
         // As long as no exceptions are thrown, this passes.
         new AvroSchemaProvider().normalize(complexNestedSchema);
     }

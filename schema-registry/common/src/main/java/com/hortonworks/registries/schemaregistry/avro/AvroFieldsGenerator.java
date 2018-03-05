@@ -49,6 +49,7 @@ public class AvroFieldsGenerator {
 
             List<Schema.Field> fields = schema.getFields();
             Set<String> visitedRecords = new HashSet<>();
+            visitedRecords.add(schema.getFullName());
             for (Schema.Field field : fields) {
                 parseField(field, schemaFieldInfos, visitedRecords);
             }
@@ -83,8 +84,7 @@ public class AvroFieldsGenerator {
                 String completeName = schema.getFullName();
 
                 if (visitedRecords.contains(completeName)) {
-                    // It seems like the goal of this class is to only return a list of all primitive fields.
-                    //   If we encounter a record that was already parsed, then just ignore it...
+                    // Since we are only interested in primitive data types, if we encounter a record that was already parsed it can be ignored
                     break;
                 }
                 else {
