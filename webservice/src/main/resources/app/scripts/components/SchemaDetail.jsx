@@ -158,7 +158,8 @@ export default class SchemaDetail extends Component{
       description: obj ? obj.description : '',
       schemaText: obj ? obj.schemaText : '',
       versionId: obj ? obj.version : '',
-      branch: selectedBranch
+      branch: selectedBranch,
+      type: this.props.schema.schemaMetadata.type
     };
     this.setState({
       modalTitle: 'Edit Version'
