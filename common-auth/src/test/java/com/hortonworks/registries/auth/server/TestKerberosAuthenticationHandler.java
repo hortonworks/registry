@@ -18,7 +18,6 @@ import com.hortonworks.registries.auth.KerberosTestUtils;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.client.KerberosAuthenticator;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.auth.util.KerberosUtil;
 import org.ietf.jgss.GSSContext;
@@ -32,7 +31,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.ietf.jgss.Oid;
 
-import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -40,8 +38,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.File;
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
