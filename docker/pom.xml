@@ -46,7 +46,7 @@ limitations under the License.
                             </execution>
                         </executions>
                         <configuration>
-                            <imageName>registry</imageName>
+                            <imageName>schema-registry</imageName>
                             <dockerDirectory>${project.basedir}/images/registry</dockerDirectory>
                             <imageTags>
                                 <imageTag>${parent.version}</imageTag>

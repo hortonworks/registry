@@ -26,12 +26,19 @@ update_config() {
     local db_url="${DB_URL}"
     local db_user="${DB_USER}"
     local db_password="${DB_PASSWORD}"
+    local principal="HTTP/$(hostname -f)"
+    local keytab="/etc/registry/secrets/http.keytab"
 
-    sed -r -i -e "s#(db.type:) \"(.*)\"#\1 \"$db_type\"#" $REGISTRY_CONFIG
-    sed -r -i -e "s#(dataSourceClassName:) \"(.*)\"#\1 \"$data_src_class_name\"#" $REGISTRY_CONFIG
-    sed -r -i -e "s#(dataSource.url:) \"(.*)\"#\1 \"$db_url\"#" $REGISTRY_CONFIG
-    sed -r -i -e "s#(dataSource.user:) \"(.*)\"#\1 \"$db_user\"#" $REGISTRY_CONFIG
-    sed -r -i -e "s#(dataSource.password:) \"(.*)\"#\1 \"$db_password\"#" $REGISTRY_CONFIG
+    uncomment '/AuthenticationFilter/,/favicon.ico/' $REGISTRY_CONFIG
+
+    sed -r -i -e "s#(db.type:) \"(.*)\"#\1 \"$db_type\"#"                   \
+        -e "s#(dataSourceClassName:) \"(.*)\"#\1 \"$data_src_class_name\"#" \
+        -e "s#(dataSource.url:) \"(.*)\"#\1 \"$db_url\"#"                   \
+        -e "s#(dataSource.user:) \"(.*)\"#\1 \"$db_user\"#"                 \
+        -e "s#(dataSource.password:) \"(.*)\"#\1 \"$db_password\"#" \
+        -e "s#(kerberos.principal:) \"(.*)\"#\1 \"$principal\"#" \
+        -e "s#(kerberos.keytab:) \"(.*)\"#\1 \"$keytab\"#" \
+        $REGISTRY_CONFIG
 }
 
 run_bootstrap() {
@@ -57,12 +64,10 @@ run_registry() {
     must_popd
 }
 
-freeze_container() {
-    timeout=`echo 2^63-1 | bc`
-    sleep ${timeout}
+uncomment() {
+    sed -i "$1"' s/^#//' "$2"
 }
 
 update_config
 run_bootstrap
 run_registry "${@}"
-freeze_container

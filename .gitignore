@@ -40,3 +40,6 @@ logs
 hs_err_pid*
 node_modules
 public
+
+# Registry Kerberos SASL secrets directory
+secrets
