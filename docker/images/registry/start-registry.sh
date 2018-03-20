@@ -29,7 +29,7 @@ update_config() {
     local principal="HTTP/$(hostname -f)"
     local keytab="/etc/registry/secrets/http.keytab"
 
-    uncomment '/AuthenticationFilter/,/favicon.ico/' $REGISTRY_CONFIG
+    uncomment '/AuthenticationFilter/,/public.key.pem/' $REGISTRY_CONFIG
 
     sed -r -i -e "s#(db.type:) \"(.*)\"#\1 \"$db_type\"#"                   \
         -e "s#(dataSourceClassName:) \"(.*)\"#\1 \"$data_src_class_name\"#" \
