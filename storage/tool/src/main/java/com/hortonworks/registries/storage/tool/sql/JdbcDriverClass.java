@@ -16,16 +16,16 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
-public enum DatabaseType {
+public enum JdbcDriverClass {
 
-    MYSQL("mysql"),
-    POSTGRES("postgresql"),
-    ORACLE("oracle");
+    MYSQL("com.mysql.jdbc.Driver"),
+    POSTGRES("org.postgresql.Driver"),
+    ORACLE("oracle.jdbc.driver.OracleDriver");
 
     private final String value;
 
-    DatabaseType(String dbType) {
-        value = dbType;
+    JdbcDriverClass(String className) {
+        value = className;
     }
 
     public String getValue() {
@@ -37,11 +37,11 @@ public enum DatabaseType {
         return value;
     }
 
-    public static DatabaseType fromValue(String otherValue) {
-        for (DatabaseType databaseType : values()) {
-            if (databaseType.value.equals(otherValue))
-                return databaseType;
+    public static JdbcDriverClass fromDatabaseType(DatabaseType databaseType) {
+        for (JdbcDriverClass jdbcDriverClass : values()) {
+            if (jdbcDriverClass.name().equals(databaseType.name()))
+                return jdbcDriverClass;
         }
-        throw new IllegalArgumentException("Unknown Database Type : " + otherValue);
+        throw new IllegalArgumentException("Unknown Database Type : " + databaseType);
     }
 }
