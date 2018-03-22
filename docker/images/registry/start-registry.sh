@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-REGISTRY_CONFIG=$REGISTRY_HOME/conf/registry.yaml
+REGISTRY_CONFIG="${REGISTRY_HOME}"/conf/registry.yaml
 
 die() {
     echo "${@}"
@@ -29,7 +29,9 @@ update_config() {
     local principal="HTTP/$(hostname -f)"
     local keytab="/etc/registry/secrets/http.keytab"
 
-    uncomment '/AuthenticationFilter/,/favicon.ico/' $REGISTRY_CONFIG
+    if [[ "${IS_SECURED}" == "yes" ]]; then
+        uncomment '/servletFilters/,+7' $REGISTRY_CONFIG
+    fi
 
     sed -r -i -e "s#(db.type:) \"(.*)\"#\1 \"$db_type\"#"                   \
         -e "s#(dataSourceClassName:) \"(.*)\"#\1 \"$data_src_class_name\"#" \
@@ -38,11 +40,11 @@ update_config() {
         -e "s#(dataSource.password:) \"(.*)\"#\1 \"$db_password\"#" \
         -e "s#(kerberos.principal:) \"(.*)\"#\1 \"$principal\"#" \
         -e "s#(kerberos.keytab:) \"(.*)\"#\1 \"$keytab\"#" \
-        $REGISTRY_CONFIG
+        "${REGISTRY_CONFIG}"
 }
 
 run_bootstrap() {
-    must_pushd $REGISTRY_HOME/bootstrap
+    must_pushd "${REGISTRY_HOME}"/bootstrap
     echo "Bootstrap dir : " $PWD
     "./bootstrap-storage.sh" migrate
     if [[ $? -ne 0 ]]; then
@@ -54,7 +56,7 @@ run_bootstrap() {
 }
 
 run_registry() {
-    must_pushd $REGISTRY_HOME/bin
+    must_pushd "${REGISTRY_HOME}"/bin
     "./registry" start "${@}"
     if [[ $? -ne 0 ]]; then
         die "Starting the Schema Registry failed!"
