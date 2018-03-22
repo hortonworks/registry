@@ -154,9 +154,19 @@ function buildKdc {
 	popd &> ${std_output}
 }
 
-function buildSchemaRegistry {
+function registryVersion {
     if [[ -z ${schema_registry_download_url} ]]; then
         rversion=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep -Ev '(^\[|Download\w+:)')
+    else
+        filename=$(echo ${schema_registry_download_url} | cut -d '/' -f9)
+        rversion=$(echo ${filename} | awk -F "hortonworks-registry-" '{print $2}' | awk -F ".tar.gz" '{print $1}')
+    fi
+    echo "${rversion}"
+}
+
+function buildSchemaRegistry {
+    rversion=$(registryVersion)
+    if [[ -z ${schema_registry_download_url} ]]; then
         if [[ "$(docker images -q ${registry_image}:${rversion} 2> ${std_output})" == "" ]]; then
             echo "Building Schema Registry distribution from the master branch."
             pushd -- "../" &> ${std_output}
@@ -168,9 +178,6 @@ function buildSchemaRegistry {
                 "If you want to re-build, remove the existing image and build again"
         fi
     else
-        filename=$(echo ${schema_registry_download_url} | cut -d '/' -f9)
-        rversion=$(echo ${filename} | awk -F "hortonworks-registry-" '{print $2}' | awk -F ".tar.gz" '{print $1}')
-
         if [[ "$(docker images -q ${registry_image}:${rversion} 2> ${std_output})" == "" ]]; then
             echo "Downloading Schema Registry distribution from URL :: " ${schema_registry_download_url}
             wget -q --show-progress "${schema_registry_download_url}"
@@ -208,17 +215,21 @@ function buildDocker {
 
 function startDocker {
     local containers=()
+    local is_secured="${1}"
+    shift
     j=0
     for service in "${@}"
     do
         case "${service}" in
              "${kdc_container_name}")
-                startKdc
-                containers[${j}]=${kdc_container_name}
-                j=$((j+1))
+                if [[ ${is_secured} == "yes" ]]; then
+                    startKdc
+                    containers[${j}]=${kdc_container_name}
+                    j=$((j+1))
+                fi
                 ;;
              "${zk_container_name}")
-                startZookeeper
+                startZookeeper ${is_secured}
                 containers[${j}]=${zk_container_name}
                 j=$((j+1))
                 ;;
@@ -226,7 +237,7 @@ function startDocker {
                 for ((i=0; i<${broker_nodes}; i++))
                 do
                     cname=${kafka_container_name}${i}
-                    startKafka ${i} ${cname}
+                    startKafka ${i} ${cname} ${is_secured}
                     containers[${j}]=${cname}
                     j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
@@ -249,7 +260,7 @@ function startDocker {
                 for ((i=0; i<${registry_nodes}; i++))
                 do
                     cname=${registry_container_name}${i}
-                    startSchemaRegistry ${i} ${cname} ${db_type}
+                    startSchemaRegistry ${i} ${cname} ${db_type} ${is_secured}
                     containers[${j}]=${cname}
                     j=$((j+1))
                     # Just providing enough time for the inited instance to bootstrap and start properly..
@@ -280,7 +291,7 @@ function startDocker {
     rm -f "${tmp_hosts}"
 
     if [[ $OSTYPE =~ darwin.+ ]]; then
-        ip_prefix=$(docker exec "${1}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2 | cut -d "." -f1 -f2)
+        ip_prefix=$(docker exec "${containers[0]}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2 | cut -d "." -f1 -f2)
         echo "# Run this command to connect to the container"
         echo "sudo route add -net ${ip_prefix}.0.0/16 $(docker-machine ip ${machine_name})"
     fi
@@ -335,15 +346,7 @@ function cleanDocker {
         exit 0
     fi
     echo "=== Removing the docker images ==="
-    image_names=("${kdc_image}" "${oracle_image}" "${kafka_image}")
-    if [[ -z ${schema_registry_download_url} ]]; then
-        rversion=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep -Ev '(^\[|Download\w+:)')
-        image_names[3]="${registry_image}":"${rversion}"
-    else
-        filename=$(echo ${schema_registry_download_url} | cut -d '/' -f9)
-        rversion=$(echo ${filename} | awk -F "hortonworks-registry-" '{print $2}' | awk -F ".tar.gz" '{print $1}')
-        image_names[3]="${registry_image}":"${rversion}"
-    fi
+    image_names=("${kdc_image}" "${oracle_image}" "${kafka_image}" "${registry_image}":"$(registryVersion)")
     docker rmi ${image_names[@]}
 
     ask_yes_no "Do you want to remove the dangling docker images? [Y/n]: "
@@ -566,13 +569,20 @@ function startZookeeper {
         return 0;
     fi
 
+    local is_secured="${1}"
+    if [[ "${is_secured}" == "yes" ]]; then
+        KRB_OPTS="-Djava.security.auth.login.config=/opt/kafka/config/zookeeper_jaas.conf
+            -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf
+            -Dsun.security.krb5.debug=true"
+    fi
+
     SECONDS=0
     echo "Starting Apache Zookeeper container"
     docker run --name ${zk_container_name} \
         -h ${zk_container_name} \
         -p 2181:2181 \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
-        -e KAFKA_HEAP_OPTS="-Xmx512M -Xms512M -Djava.security.auth.login.config=/opt/kafka/config/zookeeper_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
+        -e KAFKA_HEAP_OPTS="-Xmx512M -Xms512M ${KRB_OPTS}" \
         --network ${network_name} \
         -d ${kafka_image} \
         bin/zookeeper-server-start.sh config/zookeeper.properties
@@ -585,9 +595,16 @@ function startKafka {
     # For data, check /data/ak-data
     local brokerId="${1}"
     local cname="${2}"
+    local is_secured="${3}"
     isContainerExists ${cname} "Kafka"
     if [[ $? -eq 1 ]]; then
         return 0;
+    fi
+
+    if [[ "${is_secured}" == "yes" ]]; then
+        KRB_OPTS="-Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf
+            -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf
+            -Dsun.security.krb5.debug=true"
     fi
 
     SECONDS=0
@@ -600,7 +617,8 @@ function startKafka {
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
         -e ZK_CONNECT="${zk_container_name}":2181 \
         -e BROKER_ID="${brokerId}" \
-        -e KAFKA_HEAP_OPTS="-Xmx1G -Xms1G -Djava.security.auth.login.config=/opt/kafka/config/kafka_jaas.conf -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
+        -e KAFKA_HEAP_OPTS="-Xmx1G -Xms1G ${KRB_OPTS}" \
+        -e IS_SECURED="${is_secured}" \
         --network ${network_name} \
         --add-host=${zk_container_name}:${hwx_zk_ip} \
         -d ${kafka_image}
@@ -612,6 +630,7 @@ function startKafka {
 function startSchemaRegistry {
     local sid="${1}"
     local container_name="${2}"
+    local is_secured="${4}"
 
     isContainerExists ${container_name} "Schema Registry"
     if [[ $? -eq 1 ]]; then
@@ -643,6 +662,10 @@ function startSchemaRegistry {
             exit 1
     esac
 
+    if [[ "${is_secured}" == "yes" ]]; then
+        KRB_OPTS="-Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true"
+    fi
+
     SECONDS=0
     echo "Starting Schema Registry ${sid}"
     docker run --name ${container_name} \
@@ -656,8 +679,9 @@ function startSchemaRegistry {
         -p 9030-9040:9091 \
         --network ${network_name} \
         -v ${sasl_secrets_dir}:/etc/registry/secrets \
-        -e REGISTRY_HEAP_OPTS="-Xmx1G -Xms1G -Djava.security.krb5.conf=/etc/registry/secrets/krb5.conf -Dsun.security.krb5.debug=true" \
-        -d ${registry_image}
+        -e REGISTRY_HEAP_OPTS="-Xmx1G -Xms1G ${KRB_OPTS}" \
+        -e IS_SECURED="${is_secured}" \
+        -d ${registry_image}:$(registryVersion)
 
     checkStatus $? "Schema Registry"
     echo "Schema Registry started successfully. Time taken : ${SECONDS}s"
@@ -692,6 +716,19 @@ ask_db_type() {
             2|o|oracle) echo "oracle" ;;
             3|p|postgres|postgresql) echo "postgresql";;
             *) echo "Invalid db type : ${answer}"; exit 1;;
+        esac
+}
+
+ask_cluster_security() {
+    read -p "Do you want Kerberos secured cluster ?
+            1. yes
+            2. no
+        > " answer
+
+        case "${answer}" in
+            1|y|[yY][eE][sS]) echo "yes" ;;
+            2|n|[nN][oO]) echo "no" ;;
+            *) echo "Invalid option : ${answer}"; exit 1;;
         esac
 }
 
@@ -796,9 +833,9 @@ case "${option}" in
 
         createUserNetwork
         if [[ $# -eq 0 ]]; then
-            startDocker "${kdc_container_name}" "${zk_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}"
+            startDocker "$(ask_cluster_security)" "${kdc_container_name}" "${zk_container_name}" "${kafka_container_name}" "${db_type}" "${registry_container_name}"
         else
-            startDocker "${@}"
+            startDocker "$(ask_cluster_security)" "${@}"
         fi
         ;;
     stop)
