@@ -16,6 +16,10 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
+import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreator;
+import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreatorFactory;
+import com.hortonworks.registries.storage.tool.sql.initenv.UserCreator;
+import com.hortonworks.registries.storage.tool.sql.initenv.UserCreatorFactory;
 import org.apache.commons.cli.*;
 import org.codehaus.plexus.util.StringUtils;
 
@@ -26,12 +30,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
 public class DatabaseUserInitializer {
-    private static final String OPTION_SCRIPT_ROOT_PATH = "script-root";
     private static final String OPTION_MYSQL_JAR_URL_PATH = "mysql-jar-url";
     private static final String OPTION_CONFIG_FILE_PATH = "config";
     private static final String OPTION_ADMIN_JDBC_URL = "admin-jdbc-url";
@@ -47,14 +49,6 @@ public class DatabaseUserInitializer {
 
     public static void main(String[] args) throws Exception {
         Options options = new Options();
-
-        options.addOption(
-                Option.builder("s")
-                        .numberOfArgs(1)
-                        .longOpt(OPTION_SCRIPT_ROOT_PATH)
-                        .desc("Root directory of script path")
-                        .build()
-        );
 
         options.addOption(
                 Option.builder("c")
@@ -124,7 +118,7 @@ public class DatabaseUserInitializer {
         CommandLine commandLine = parser.parse(options, args);
 
         String[] neededOptions = {
-                OPTION_SCRIPT_ROOT_PATH, OPTION_CONFIG_FILE_PATH, OPTION_MYSQL_JAR_URL_PATH,
+                OPTION_CONFIG_FILE_PATH, OPTION_MYSQL_JAR_URL_PATH,
                 OPTION_ADMIN_JDBC_URL, OPTION_ADMIN_DB_USER, OPTION_ADMIN_PASSWORD,
                 OPTION_TARGET_USER, OPTION_TARGET_PASSWORD, OPTION_TARGET_DATABASE
         };
@@ -135,7 +129,6 @@ public class DatabaseUserInitializer {
             System.exit(1);
         }
 
-        String scriptRootPath = commandLine.getOptionValue(OPTION_SCRIPT_ROOT_PATH);
         String confFilePath = commandLine.getOptionValue(OPTION_CONFIG_FILE_PATH);
         String mysqlJarUrl = commandLine.getOptionValue(OPTION_MYSQL_JAR_URL_PATH);
 
@@ -191,30 +184,55 @@ public class DatabaseUserInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        createUser(databaseType, adminOptions, targetOptions, scriptRootPath);
-        createDatabase(databaseType, adminOptions, targetOptions, scriptRootPath);
-        grantPrivilegesToUser(databaseType, adminOptions, targetOptions, scriptRootPath);
+        try (Connection conn = getConnectionViaAdmin(adminOptions)) {
+            DatabaseCreator databaseCreator = DatabaseCreatorFactory.newInstance(adminOptions.getDatabaseType(), conn);
+            UserCreator userCreator = UserCreatorFactory.newInstance(adminOptions.getDatabaseType(), conn);
+
+            String database = targetOptions.getDatabase();
+            String username = targetOptions.getUsername();
+
+            createDatabase(databaseCreator, database);
+            createUser(targetOptions, userCreator, username);
+            grantPrivileges(databaseCreator, database, username);
+        }
     }
 
-    private static void createUser(DatabaseType databaseType, AdminOptions adminOptions,
-                                   TargetOptions targetOptions, String scriptRootPath) throws IOException, ClassNotFoundException {
-        String scriptPath = scriptRootPath + File.separator + databaseType.getValue();
-        File scriptFile = subUserAndPasswordAndDatabase(scriptPath, "create_user.sql", targetOptions);
-        executeScriptFile(adminOptions, scriptFile);
+    private static void createDatabase(DatabaseCreator databaseCreator, String database) {
+        try {
+            if (!databaseCreator.exists(database)) {
+                databaseCreator.create(database);
+                System.out.println("Database " + database + " created.");
+            } else {
+                System.out.println("Database " + database + " already exists. Skip creating...");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error occurred while creating database!");
+            throw new RuntimeException(e);
+        }
     }
 
-    private static void createDatabase(DatabaseType databaseType, AdminOptions adminOptions,
-                                   TargetOptions targetOptions, String scriptRootPath) throws IOException, ClassNotFoundException {
-        String scriptPath = scriptRootPath + File.separator + databaseType.getValue();
-        File scriptFile = subUserAndPasswordAndDatabase(scriptPath, "create_database.sql", targetOptions);
-        executeScriptFile(adminOptions, scriptFile);
+    private static void createUser(TargetOptions targetOptions, UserCreator userCreator, String username) {
+        try {
+            if (!userCreator.exists(username)) {
+                userCreator.create(username, targetOptions.getPassword());
+                System.out.println("User " + username + " created.");
+            } else {
+                System.out.println("User " + username + " already exists. Skip creating...");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error occurred while creating user!");
+            throw new RuntimeException(e);
+        }
     }
 
-    private static void grantPrivilegesToUser(DatabaseType databaseType, AdminOptions adminOptions,
-                                              TargetOptions targetOptions, String scriptRootPath) throws IOException, ClassNotFoundException {
-        String scriptPath = scriptRootPath + File.separator + databaseType.getValue();
-        File scriptFile = subUserAndPasswordAndDatabase(scriptPath, "grant_privileges.sql", targetOptions);
-        executeScriptFile(adminOptions, scriptFile);
+    private static void grantPrivileges(DatabaseCreator databaseCreator, String database, String username) {
+        try {
+            databaseCreator.grantPrivileges(database, username);
+            System.out.println("Granted privileges on database " + database + " to user " + username + ".");
+        } catch (SQLException e) {
+            System.err.println("Error occurred while granting privileges!");
+            throw new RuntimeException(e);
+        }
     }
 
     private static DatabaseType findDatabaseType(String adminJdbcUrl) {
@@ -232,57 +250,6 @@ public class DatabaseUserInitializer {
         }
 
         return DatabaseType.fromValue(jdbcParts[1]);
-    }
-
-    private static File subUserAndPasswordAndDatabase(String parent, String filename, TargetOptions targetOptions) throws IOException {
-        File newTempFile = File.createTempFile("temp-script-", ".sql");
-        BufferedWriter writer = new BufferedWriter(new FileWriter(newTempFile));
-        File proto = new File(parent, filename);
-        BufferedReader reader = new BufferedReader(new FileReader(proto));
-        reader.lines()
-                .map(s -> s.replace("_REPLACE_WITH_USER_", targetOptions.getUsername())
-                        .replace("_REPLACE_WITH_PASSWORD_", targetOptions.getPassword())
-                        .replace("_REPLACE_WITH_DATABASE_", targetOptions.getDatabase()))
-                .forEach(s -> {
-                    try {
-                        writer.write(s);
-                        writer.newLine();
-                    } catch (IOException e) {
-                        throw new RuntimeException("Unable to write to tmp file ", e);
-                    }
-                });
-        reader.close();
-        writer.close();
-        return newTempFile;
-    }
-
-    private static void executeScriptFile(AdminOptions adminOptions, File scriptFile) throws ClassNotFoundException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(scriptFile))) {
-            try (Connection conn = getConnectionViaAdmin(adminOptions)) {
-                try (Statement stmt = conn.createStatement()) {
-                    reader.lines()
-                            .map(String::trim)
-                            .filter(s -> !StringUtils.isEmpty(s))
-                            .forEach(s -> {
-                                assert s.charAt(s.length() - 1) == ';';
-                                try {
-                                    stmt.execute(s.substring(0, s.length() - 1));
-                                } catch (SQLException e) {
-                                    System.err.println("statement <" + s.substring(0, s.length() - 1) + "> failed");
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Caught IOException trying to read modified script " +
-                    scriptFile.getAbsolutePath());
-            throw new RuntimeException(e);
-        } catch (SQLException e) {
-            System.err.println("Got exception trying to run modified script " +
-                    scriptFile.getAbsolutePath());
-            throw new RuntimeException(e);
-        }
     }
 
     private static Connection getConnectionViaAdmin(AdminOptions adminOptions) throws SQLException, ClassNotFoundException {
