@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 public class MySqlDatabaseCreator implements DatabaseCreator {
 
-    private static final String QUERY_DATABASE_TEMPLATE = "SELECT count(*) AS cnt FROM INFORMATION_SCHEMA.SCHEMATA WHERE schema_name = '%s'";
+    private static final String QUERY_DATABASE_TEMPLATE = "SELECT count(*) AS cnt FROM information_schema.schemata WHERE schema_name = '%s'";
     private static final String CREATE_DATABASE_TEMPLATE = "CREATE DATABASE %s";
     private static final String[] GRANT_PRIVILEGES_TEMPLATE = {
         "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'localhost'",
