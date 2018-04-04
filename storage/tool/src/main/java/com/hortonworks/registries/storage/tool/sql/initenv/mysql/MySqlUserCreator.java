@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class MySqlUserCreator implements UserCreator {
-    private static final String QUERY_USER_TEMPLATE = "SELECT count(*) AS cnt FROM MYSQL.USER WHERE USER = '%s'";
+    private static final String QUERY_USER_TEMPLATE = "SELECT count(*) AS cnt FROM mysql.user WHERE user = '%s'";
     private static final String[] CREATE_USER_TEMPLATE = {
             "create user '%s'@'localhost' IDENTIFIED BY '%s'",
             "create user '%s'@'%%' IDENTIFIED BY '%s'"
