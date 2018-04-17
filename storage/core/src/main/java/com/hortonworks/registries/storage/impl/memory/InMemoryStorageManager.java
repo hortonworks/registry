@@ -25,6 +25,7 @@ import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
+import com.hortonworks.registries.storage.exception.NotFoundException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
@@ -92,7 +93,7 @@ public class InMemoryStorageManager implements StorageManager {
         String namespace = storable.getNameSpace();
         PrimaryKey pk = storable.getPrimaryKey();
         if (!storageMap.containsKey(namespace)) {
-            throw new StorageException("Row could not be updated");
+            throw new NotFoundException("Entity not found for such key: " + storable.getStorableKey());
         }
         storageMap.get(namespace).put(pk, storable);
     }
