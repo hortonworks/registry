@@ -230,8 +230,11 @@ export default class SchemaDetail extends Component{
     this.getAggregatedSchema().then(() => {
       const newBranch = _.find(this.props.schema.schemaBranches, (branch) => {
         return branch.schemaBranch.name == branchName;
-      });
-      const currentVersion = version || Utils.sortArray(newBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
+      });      
+      if(!version && (newBranch && newBranch.schemaVersionInfos)) {
+         version = Utils.sortArray(newBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
+      } 
+      const currentVersion = version;       
       this.setState({selectedBranch: newBranch, currentVersion});
     }).catch(Utils.showError);
   }
