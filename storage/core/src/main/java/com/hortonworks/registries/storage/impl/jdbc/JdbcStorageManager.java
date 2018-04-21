@@ -28,7 +28,7 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
-import com.hortonworks.registries.storage.exception.NotFoundException;
+import com.hortonworks.registries.storage.exception.StorableNotFoundException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
@@ -141,7 +141,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
 
             final Storable existing = get(storable.getStorableKey());
             if (existing == null) {
-                throw new NotFoundException("Entity not found for such key: " + storable.getStorableKey());
+                throw new StorableNotFoundException("Entity not found for such key: " + storable.getStorableKey());
             }
             queryExecutor.update(storable);
 
