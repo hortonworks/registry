@@ -28,6 +28,7 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
+import com.hortonworks.registries.storage.exception.StorableNotFoundException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
@@ -61,29 +62,96 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
 
     @Override
     public void add(Storable storable) throws AlreadyExistsException {
-        log.debug("Adding storable [{}]", storable);
-        queryExecutor.insert(storable);
+        boolean committed = false;
+        try {
+            beginTransaction(TransactionIsolation.DEFAULT);
+
+            log.debug("Adding storable [{}]", storable);
+            final Storable existing = get(storable.getStorableKey());
+            if (existing == null) {
+                queryExecutor.insert(storable);
+            } else if (!existing.equals(storable)) {
+                throw new AlreadyExistsException("Another instance with same id = " + storable.getPrimaryKey()
+                        + " exists with different value in namespace " + storable.getNameSpace()
+                        + " Consider using addOrUpdate method if you always want to overwrite.");
+            }
+
+            commitTransaction();
+            committed = true;
+        } finally {
+            if (!committed) {
+                rollbackTransaction();
+            }
+        }
     }
 
     @Override
     public <T extends Storable> T remove(StorableKey key) throws StorageException {
-        T oldVal = get(key);
-        if (key != null) {
-            log.debug("Removing storable key [{}]", key);
-            queryExecutor.delete(key);
+        boolean committed = false;
+        try {
+            beginTransaction(TransactionIsolation.DEFAULT);
+
+            T oldVal = get(key);
+            if (key != null) {
+                log.debug("Removing storable key [{}]", key);
+                queryExecutor.delete(key);
+            }
+
+            commitTransaction();
+            committed = true;
+
+            return oldVal;
+        } finally {
+            if (!committed) {
+                rollbackTransaction();
+            }
         }
-        return oldVal;
     }
 
     @Override
     public void addOrUpdate(Storable storable) throws StorageException {
+        boolean committed = false;
+        try {
+            beginTransaction(TransactionIsolation.DEFAULT);
+
+            final Storable existing = get(storable.getStorableKey());
+            if (existing == null) {
+                queryExecutor.insert(storable);
+            } else {
+                queryExecutor.update(storable);
+            }
+
+            commitTransaction();
+            committed = true;
+        } finally {
+            if (!committed) {
+                rollbackTransaction();
+            }
+        }
+
         log.debug("Adding or updating storable [{}]", storable);
         queryExecutor.insertOrUpdate(storable);
     }
 
     @Override
     public void update(Storable storable) {
-        queryExecutor.update(storable);
+        boolean committed = false;
+        try {
+            beginTransaction(TransactionIsolation.DEFAULT);
+
+            final Storable existing = get(storable.getStorableKey());
+            if (existing == null) {
+                throw new StorableNotFoundException("Entity not found for such key: " + storable.getStorableKey());
+            }
+            queryExecutor.update(storable);
+
+            commitTransaction();
+            committed = true;
+        } finally {
+            if (!committed) {
+                rollbackTransaction();
+            }
+        }
     }
 
     @Override
