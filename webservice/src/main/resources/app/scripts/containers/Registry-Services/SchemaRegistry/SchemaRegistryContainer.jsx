@@ -103,12 +103,14 @@ export default class SchemaRegistryContainer extends Component {
     return {SchemaRegistryContainer: this};
   }
   componentDidMount(){
-    this.fetchData().then((entities) => {
+    const fetchData = this.fetchData();
+    const stateMachine = this.fetchStateMachine();
+    Promise.all([fetchData, stateMachine]).then((res) => {
+      const entities = res[0];
       if(!entities.length){
         this.setState({dataFound: false});
       }
     });
-    this.fetchStateMachine();
   }
   fetchStateMachine(){
     return SchemaREST.getSchemaVersionStateMachine().then((res) => {
