@@ -49,9 +49,9 @@ public interface LeadershipParticipant {
      * Exits from leadership participation. This may throw an Exception if the current latch is not yet started
      * or it has already been closed.
      *
-     * @throws IOException if any IO related errors occur.
+     * @throws Exception if any errors occur.
      */
-    void exitFromLeaderParticipation() throws IOException;
+    void exitFromLeaderParticipation() throws Exception;
 
     /**
      * Returns true if the current participant is a leader
@@ -59,10 +59,10 @@ public interface LeadershipParticipant {
     boolean isLeader();
 
     /**
-     * Closes the underlying ZK client resources.
+     * Closes the underlying client resources.
      *
-     * @throws IOException if any io errors occurred during this operation.
+     * @throws Exception if any errors occur.
      */
-    void close() throws IOException;
+    void close() throws Exception;
 
 }
