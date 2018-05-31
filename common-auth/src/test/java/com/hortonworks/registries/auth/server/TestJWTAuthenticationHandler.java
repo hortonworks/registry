@@ -73,7 +73,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             fail("alternateAuthentication should have thrown a ServletException");
         } catch (ServletException se) {
@@ -105,7 +105,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Assert.assertEquals("bob", token.getUserName());
         } catch (ServletException se) {
@@ -138,7 +138,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             fail("alternateAuthentication should have thrown an AuthenticationException");
         } catch (ServletException se) {
@@ -175,7 +175,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Mockito.verify(response).sendRedirect(REDIRECT_LOCATION);
         } catch (ServletException se) {
@@ -214,7 +214,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Mockito.verify(response).sendRedirect(REDIRECT_LOCATION);
         } catch (ServletException se) {
@@ -244,7 +244,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Mockito.verify(response).sendRedirect(REDIRECT_LOCATION);
         } catch (ServletException se) {
@@ -273,7 +273,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Assert.assertNotNull("Token should not be null.", token);
             Assert.assertEquals("bob", token.getUserName());
@@ -306,7 +306,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Mockito.verify(response).sendRedirect(REDIRECT_LOCATION);
         } catch (ServletException se) {
@@ -338,7 +338,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Assert.assertEquals("bob", token.getUserName());
         } catch (ServletException se) {
@@ -368,7 +368,7 @@ public class TestJWTAuthenticationHandler extends
             Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
                     SERVICE_URL);
 
-            AuthenticationToken token = handler.alternateAuthenticate(request,
+            AuthenticationToken token = handler.authenticate(request,
                     response);
             Assert.assertNotNull("Token should not be null.", token);
             Assert.assertEquals("alice", token.getUserName());
