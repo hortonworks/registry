@@ -40,8 +40,8 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 /**
- * The {@link JWTAuthenticationHandler} extends
- * AltKerberosAuthenticationHandler to add WebSSO behavior for UIs. The expected
+ * The {@link JWTAuthenticationHandler} implements
+ * AuthenticationHandler to add WebSSO behavior for UIs. The expected
  * SSO token is a JsonWebToken (JWT). The supported algorithm is RS256 which
  * uses PKI between the token issuer and consumer. The flow requires a redirect
  * to a configured authentication server URL and a subsequent request with the
@@ -68,11 +68,11 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
  * Default value is "hadoop-jwt".</li>
  * </ul>
  */
-public class JWTAuthenticationHandler extends
-        AltKerberosAuthenticationHandler {
+public class JWTAuthenticationHandler implements AuthenticationHandler {
     private static Logger LOG = LoggerFactory
             .getLogger(JWTAuthenticationHandler.class);
 
+    public static final String TYPE = "jwt";
     public static final String AUTHENTICATION_PROVIDER_URL =
             "authentication.provider.url";
     public static final String PUBLIC_KEY_PEM = "public.key.pem";
@@ -94,6 +94,11 @@ public class JWTAuthenticationHandler extends
         publicKey = pk;
     }
 
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
     /**
      * Initializes the authentication handler instance.
      * <p>
@@ -107,7 +112,6 @@ public class JWTAuthenticationHandler extends
      */
     @Override
     public void init(Properties config) throws ServletException {
-        super.init(config);
         LOG.info("Initializing JWT based websso handler....");
         // setup the URL to redirect to for authentication
         authenticationProviderUrl = config
@@ -146,7 +150,17 @@ public class JWTAuthenticationHandler extends
     }
 
     @Override
-    public AuthenticationToken alternateAuthenticate(HttpServletRequest request,
+    public void destroy() {
+
+    }
+
+    @Override
+    public boolean managementOperation(AuthenticationToken token, HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {
+        return true;
+    }
+
+    @Override
+    public AuthenticationToken authenticate(HttpServletRequest request,
                                                      HttpServletResponse response) throws IOException,
             AuthenticationException {
         LOG.info("authentication request received...");
