@@ -103,6 +103,14 @@
         </resource>
       </resources>
         <plugins>
+        <!-- apacheds-jdbm1-2.0.0-M2.bundle is no longer available on nexus.
+             This fix will download the correct artifact apacheds-jdbm1-2.0.0-M2.jar from nexus. -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <inherited>true</inherited>
+                <extensions>true</extensions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
