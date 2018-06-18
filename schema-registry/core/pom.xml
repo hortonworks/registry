@@ -35,6 +35,10 @@
                     <groupId>com.sun.jersey</groupId>
                     <artifactId>jersey-client</artifactId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>org.apache.zookeeper</artifactId>
+                    <groupId>zookeeper</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>

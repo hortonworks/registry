@@ -134,11 +134,6 @@ public class Schema implements Serializable {
         }
 
         @Override
-        public JavaType typeFromId(String s) {
-            return typeFromId(null, s);
-        }
-
-        @Override
         public JavaType typeFromId(DatabindContext databindContext, String s) {
             Type fieldType = Schema.Type.valueOf(s);
             JavaType javaType;

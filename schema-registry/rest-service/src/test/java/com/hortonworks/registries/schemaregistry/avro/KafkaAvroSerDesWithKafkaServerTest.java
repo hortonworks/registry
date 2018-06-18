@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -64,7 +65,9 @@ import java.util.concurrent.TimeUnit;
 @Category(IntegrationTest.class)
 public class KafkaAvroSerDesWithKafkaServerTest {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesWithKafkaServerTest.class);
-    private static EmbeddedKafkaCluster CLUSTER;
+
+    private static LocalKafkaCluster CLUSTER;
+
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
 
     @Rule
@@ -79,14 +82,46 @@ public class KafkaAvroSerDesWithKafkaServerTest {
     public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
-        CLUSTER =  new EmbeddedKafkaCluster(1);
-        CLUSTER.start();
+        CLUSTER =  new LocalKafkaCluster(1);
+        CLUSTER.startCluster();
     }
 
     @CustomParameterizedRunner.AfterParam
     public static void afterParam() throws Exception {
-        CLUSTER.stop();
+        CLUSTER.stopCluster();
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.stopTestServer();
+    }
+
+    private static class LocalKafkaCluster extends EmbeddedKafkaCluster {
+
+        public LocalKafkaCluster(int numBrokers) {
+            super(numBrokers);
+        }
+
+        public LocalKafkaCluster(int numBrokers, Properties brokerConfig) {
+            super(numBrokers, brokerConfig);
+        }
+
+        public LocalKafkaCluster(int numBrokers, Properties brokerConfig, long mockTimeMillisStart) {
+            super(numBrokers, brokerConfig, mockTimeMillisStart);
+        }
+
+        public LocalKafkaCluster(int numBrokers, Properties brokerConfig, long mockTimeMillisStart,
+                                 long mockTimeNanoStart) {
+            super(numBrokers, brokerConfig, mockTimeMillisStart, mockTimeNanoStart);
+        }
+
+        public void startCluster() {
+            try {
+                before();
+            } catch (Throwable throwable) {
+                throw new RuntimeException(throwable);
+            }
+        }
+
+        public void stopCluster() {
+            after();
+        }
     }
 
     public KafkaAvroSerDesWithKafkaServerTest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
