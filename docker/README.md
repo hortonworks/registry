@@ -16,8 +16,8 @@ Jurisdiction Policy Files](http://www.oracle.com/technetwork/java/javase/downloa
 installed in the JDK/JRE. See the [JCA Providers Documentation](https://docs.oracle.com/javase/8/docs/technotes/guides/security/SunProviders.html) 
 for more information.
  
-Note that if you are using Oracle Java, you will need to download JCE policy files for your Java version and copy them 
-to $JAVA_HOME/jre/lib/security.
+- Note that if you are using Oracle Java, you will need to download JCE policy files for your Java version and copy 
+  local_policy.jar and US_export_policy.jar to $JAVA_HOME/jre/lib/security. If file already exists, replace both of them.
 
 # Usage
 
@@ -63,9 +63,9 @@ Starts Schema Registry application with all the dependent services (KDC, ZK, AK 
 which underlying database to use to store the data. All the containers are connected with the 
 private network.
 
-To connect with the schema registry app, copy the krb5.conf and keytabs from the `$(pwd)/secrets` directory (where pwd 
-denotes ~/registry/docker directory) and paste it to respective directories [OR] point those files using the System property.
-(-Djava.security.auth.login.config=path/abc_jaas.conf, -Djava.security.krb5.conf=path/krb5.conf)
+To connect with the schema registry app when security enabled, copy the krb5.conf and keytabs from the `$(pwd)/secrets` 
+directory (where pwd denotes ~/registry/docker directory) and paste it to respective directories [OR] point those files
+ using the System property.(-Djava.security.auth.login.config=path/abc_jaas.conf, -Djava.security.krb5.conf=path/krb5.conf)
 
 #### Run a single container
 ```

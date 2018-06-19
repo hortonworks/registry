@@ -246,15 +246,20 @@ function startDocker {
                     fi
                 done
                 ;;
-             # MySQL, Oracle and Postgres don't need entry in "/etc/hosts" so skipping those.
              "${mysql_container_name}"|mysql)
                 startMySQL
+                containers[${j}]=${mysql_container_name}
+                j=$((j+1))
                 ;;
              "${oracle_container_name}"|oracle)
                 startOracle
+                containers[${j}]=${oracle_container_name}
+                j=$((j+1))
                 ;;
              "${postgres_container_name}"|postgresql)
                 startPostgres
+                containers[${j}]=${postgres_container_name}
+                j=$((j+1))
                 ;;
              "${registry_container_name}")
                 for ((i=0; i<${registry_nodes}; i++))
@@ -279,13 +284,17 @@ function startDocker {
     local tmp_hosts="_hosts.txt"
     for service in "${containers[@]}"
     do
-        echo "$(docker exec "${service}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)\t${service}" >>${tmp_hosts}
+        ip=$(docker exec "${service}" ifconfig | grep -v "127.0.0.1" | grep inet | awk '{print $2}' | cut -d ':' -f2)
+        if [[ -z "${ip}" ]]; then
+            ip=$(docker exec "${service}" cat /etc/hosts | grep "${service}" | awk '{print $1}')
+        fi
+        echo "${ip}\t${service}" >> ${tmp_hosts}
     done
 
     local container_hosts=$(<${tmp_hosts})
     for service in "${containers[@]}"
     do
-        docker exec -it ${service} /bin/bash -c "sudo echo \"${container_hosts}\" >> /etc/hosts"
+        docker exec -it ${service} /bin/bash -c "sudo echo \"${container_hosts}\" >> /etc/hosts 2> ${std_output}"
     done
     echo "${container_hosts}"
     rm -f "${tmp_hosts}"
