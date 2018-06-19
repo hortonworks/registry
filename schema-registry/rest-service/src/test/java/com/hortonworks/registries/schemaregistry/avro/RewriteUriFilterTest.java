@@ -67,8 +67,9 @@ public class RewriteUriFilterTest {
             LOG.info("Received path [{}]", requestPath);
             HttpServletRequest servletRequest = Mockito.mock(HttpServletRequest.class);
             Mockito.when(servletRequest.getRequestURI()).thenReturn(requestPath);
+            RequestDispatcher requestDispatcher = Mockito.mock(RequestDispatcher.class);
             Mockito.when(servletRequest.getRequestDispatcher(Mockito.anyString()))
-                   .thenReturn(Mockito.mock(RequestDispatcher.class));
+                   .thenReturn(requestDispatcher);
 
             HttpServletResponse servletResponse = Mockito.mock(HttpServletResponse.class);
 
