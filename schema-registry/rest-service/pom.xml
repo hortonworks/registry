@@ -170,6 +170,30 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>buildnumber-maven-plugin</artifactId>
+          <version>1.4</version>
+          <configuration>
+            <doCheck>false</doCheck>
+            <doUpdate>false</doUpdate>
+            <outputDirectory>${project.build.directory}/classes/registry</outputDirectory>
+            <outputName>VERSION</outputName>
+            <revisiononscmfailure>
+              <items>
+                <item>version=${project.version}</item>
+              </items>
+            </revisiononscmfailure>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>generate-resources</phase>
+              <goals>
+                <goal>create-metadata</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
       <resources>
         <resource>

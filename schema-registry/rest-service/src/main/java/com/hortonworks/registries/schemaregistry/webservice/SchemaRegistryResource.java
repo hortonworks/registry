@@ -49,6 +49,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
+import com.hortonworks.registries.webservice.SchemaRegistryVersion;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -101,9 +102,22 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     // reserved as schema related paths use these strings
     private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
+    private final SchemaRegistryVersion schemaRegistryVersion;
 
-    public SchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
+    public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
+                                  AtomicReference<LeadershipParticipant> leadershipParticipant,
+                                  SchemaRegistryVersion schemaRegistryVersion) {
         super(schemaRegistry, leadershipParticipant);
+        this.schemaRegistryVersion = schemaRegistryVersion;
+    }
+
+    @GET
+    @Path("/version")
+    @ApiOperation(value = "Get version info of this Schema Registry instance",
+            response = SchemaRegistryVersion.class)
+    @Timed
+    public Response getVersion(@Context UriInfo uriInfo) {
+        return WSUtils.respondEntity(schemaRegistryVersion, Response.Status.OK);
     }
 
     @GET
