@@ -19,6 +19,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.hortonworks.registries.common.ModuleRegistration;
+import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
+import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ha.LeadershipAware;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.FileStorage;
@@ -28,7 +30,6 @@ import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
-import com.hortonworks.registries.webservice.SchemaRegistryVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,32 +72,16 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
         DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders, haServerNotificationManager);
         schemaRegistry.init(config);
-        SchemaRegistryVersion schemaRegistryVersion = fetchRegistryVersion();
-        LOG.info("SchemaRegistry is starting with version: [{}]", schemaRegistryVersion);
+        SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
+        LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
                                                                                    leadershipParticipant,
                                                                                    schemaRegistryVersion);
         ConfluentSchemaRegistryCompatibleResource
             confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry, leadershipParticipant);
-        
-        return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource); 
-    }
 
-    private SchemaRegistryVersion fetchRegistryVersion() {
-        try(InputStream inputStream = this.getClass().getResourceAsStream("/registry/VERSION")) {
-            Properties props = new Properties();
-            props.load(inputStream);
-            String version = props.getProperty("version", "unknown");
-            String revision = props.getProperty("revision", "unknown");
-            String timestampProp = props.getProperty("timestamp");
-            Long timestamp = timestampProp != null ? Long.parseLong(timestampProp) : null;
-
-            return new SchemaRegistryVersion(version, revision, timestamp);
-        } catch (Exception e) {
-            LOG.warn("Error occured while reading version file", e);
-        }
-        return SchemaRegistryVersion.UNKNOWN;
+        return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
     }
 
     private Collection<? extends SchemaProvider> getSchemaProviders() {

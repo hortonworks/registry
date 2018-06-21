@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.transaction.UnitOfWork;
@@ -23,7 +24,6 @@ import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -35,6 +35,7 @@ import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
@@ -49,7 +50,6 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
-import com.hortonworks.registries.webservice.SchemaRegistryVersion;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -113,8 +113,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/version")
-    @ApiOperation(value = "Get version info of this Schema Registry instance",
-            response = SchemaRegistryVersion.class)
+    @ApiOperation(value = "Get the version information of this Schema Registry instance",
+            response = SchemaRegistryVersion.class,
+            tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response getVersion(@Context UriInfo uriInfo) {
         return WSUtils.respondEntity(schemaRegistryVersion, Response.Status.OK);
