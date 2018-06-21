@@ -22,6 +22,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 import com.hortonworks.registries.auth.KerberosLogin;
+import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
+import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -170,6 +172,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             subject = null;
         }
     }
+
+    private static final SchemaRegistryVersion CLIENT_VERSION = SchemaRegistryServiceInfo.get().version();
 
     private final Client client;
     private final UrlSelector urlSelector;
@@ -994,6 +998,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public void close() {
         client.close();
+    }
+
+    public SchemaRegistryVersion clientVersion() {
+        return CLIENT_VERSION;
     }
 
     private <T> T createInstance(SerDesInfo serDesInfo, boolean isSerializer) {

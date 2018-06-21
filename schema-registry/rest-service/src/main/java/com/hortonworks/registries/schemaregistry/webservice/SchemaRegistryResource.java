@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.transaction.UnitOfWork;
@@ -23,7 +24,6 @@ import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -35,6 +35,7 @@ import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
@@ -101,9 +102,23 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     // reserved as schema related paths use these strings
     private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
+    private final SchemaRegistryVersion schemaRegistryVersion;
 
-    public SchemaRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
+    public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
+                                  AtomicReference<LeadershipParticipant> leadershipParticipant,
+                                  SchemaRegistryVersion schemaRegistryVersion) {
         super(schemaRegistry, leadershipParticipant);
+        this.schemaRegistryVersion = schemaRegistryVersion;
+    }
+
+    @GET
+    @Path("/version")
+    @ApiOperation(value = "Get the version information of this Schema Registry instance",
+            response = SchemaRegistryVersion.class,
+            tags = OPERATION_GROUP_OTHER)
+    @Timed
+    public Response getVersion(@Context UriInfo uriInfo) {
+        return WSUtils.respondEntity(schemaRegistryVersion, Response.Status.OK);
     }
 
     @GET
