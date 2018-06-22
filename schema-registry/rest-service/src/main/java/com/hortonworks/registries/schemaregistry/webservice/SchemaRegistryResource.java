@@ -1113,6 +1113,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
     }
 
+
+    // When ever SCHEMA_BRANCH or SCHEMA_VERSION is updated in one of the node in the cluster, then it will use this API to notify rest of the node in the
+    // cluster to update their corresponding cache.
+    // TODO: This API was introduced as a temporary solution to address HA requirements with cache synchronization. A more permanent and stable fix should be incorporated.
     @POST
     @Path("/cache/{cacheType}/invalidate")
     @UnitOfWork
@@ -1126,7 +1130,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
     }
 
-
+    // When a new node joins registry cluster, it invokes this API of every node which are already part of the cluster.
+    // The existing nodes then update their internal list of nodes part of their cluster.
+    // TODO: This API was introduced as a temporary solution to address HA requirements with cache synchronization. A more permanent and stable fix should be incorporated.
     @POST
     @Path(("/notifications/node/debut"))
     public Response registerNodeDebut(String nodeUrl) {
