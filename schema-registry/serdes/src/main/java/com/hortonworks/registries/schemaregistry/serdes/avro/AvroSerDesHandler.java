@@ -25,10 +25,13 @@ import org.apache.avro.Schema;
  */
 public interface AvroSerDesHandler {
 
-    void handlePayloadSerialization(OutputStream outputStream, Object input);
+    void handlePayloadSerialization(OutputStream outputStream,
+                                    Object input,
+                                    DatumWriterProvider datumWriterProvider);
 
     Object handlePayloadDeserialization(InputStream payloadInputStream,
                                         Schema writerSchema,
                                         Schema readerSchema,
-                                        boolean useSpecificAvroReader);
+                                        DatumReaderProvider datumReaderProvider);
+
 }

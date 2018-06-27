@@ -18,6 +18,8 @@ package com.hortonworks.registries.schemaregistry.serdes;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
+import com.hortonworks.registries.schemaregistry.serdes.avro.DatumReaderProvider;
+import com.hortonworks.registries.schemaregistry.serdes.avro.DatumWriterProvider;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
@@ -55,7 +57,7 @@ public interface SerDesProtocolHandler {
      * @param outputStream output stream
      * @param input        object to be serialized
      */
-    void handlePayloadSerialization(OutputStream outputStream, Object input) throws SerDesException;
+    void handlePayloadSerialization(OutputStream outputStream, Object input, DatumWriterProvider datumWriterProvider) throws SerDesException;
 
     /**
      * Handles deserialization of given input stream and returns the deserialized Object.
@@ -64,6 +66,6 @@ public interface SerDesProtocolHandler {
      * @param context     any context required for deserialization.
      * @return returns the deserialized Object.
      */
-    Object handlePayloadDeserialization(InputStream inputStream, Map<String, Object> context) throws SerDesException;
+    Object handlePayloadDeserialization(InputStream inputStream, Map<String, Object> context, DatumReaderProvider datumReaderProvider) throws SerDesException;
 
 }

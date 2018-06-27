@@ -44,6 +44,7 @@ public abstract class AbstractAvroSerDesProtocolHandler implements SerDesProtoco
 
     private final AvroSerDesHandler avroSerDesHandler;
 
+
     protected final Byte protocolId;
 
     protected AbstractAvroSerDesProtocolHandler(Byte protocolId, AvroSerDesHandler avroSerDesHandler) {
@@ -70,18 +71,17 @@ public abstract class AbstractAvroSerDesProtocolHandler implements SerDesProtoco
     }
 
     @Override
-    public void handlePayloadSerialization(OutputStream outputStream, Object input) {
-        avroSerDesHandler.handlePayloadSerialization(outputStream, input);
+    public void handlePayloadSerialization(OutputStream outputStream, Object input, DatumWriterProvider datumWriterProvider) {
+        avroSerDesHandler.handlePayloadSerialization(outputStream, input, datumWriterProvider);
     }
 
     @Override
-    public Object handlePayloadDeserialization(InputStream payloadInputStream, Map<String, Object> context) {
-        boolean useSpecificAvroReader = (boolean) context.getOrDefault(SPECIFIC_AVRO_READER, false);
+    public Object handlePayloadDeserialization(InputStream payloadInputStream, Map<String, Object> context, DatumReaderProvider datumReaderProvider) {
         Schema writerSchema = (Schema) context.get(WRITER_SCHEMA);
         Schema readerSchema = (Schema) context.get(READER_SCHEMA);
         return avroSerDesHandler.handlePayloadDeserialization(payloadInputStream,
                                                                      writerSchema,
                                                                      readerSchema,
-                                                                     useSpecificAvroReader);
+                                                                     datumReaderProvider);
     }
 }
