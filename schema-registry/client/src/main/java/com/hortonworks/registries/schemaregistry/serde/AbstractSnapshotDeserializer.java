@@ -103,7 +103,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     }
 
     private Long getCacheExpiryInSecs(Map<String, ?> config) {
-        Long value = (Long) getValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS);
+        Long value = Long.valueOf(getValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS).toString());
         if (value < 0) {
             throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + " must be non negative.");
         }
@@ -111,15 +111,15 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     }
 
     private Integer getCacheMaxSize(Map<String, ?> config) {
-        Integer value = (Integer) getValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+        Integer value = Integer.valueOf(getValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString());
         if (value < 0) {
             throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + " must be non negative.");
         }
         return value;
     }
 
-    protected Object getValue(Map<String, ?> config, String key, Object defaultValue) {
-        Object value = config.get(key);
+    protected <T> T getValue(Map<String, ?> config, String key, T defaultValue) {
+        T value = (T) config.get(key);
         if (value == null) {
             value = defaultValue;
         }
