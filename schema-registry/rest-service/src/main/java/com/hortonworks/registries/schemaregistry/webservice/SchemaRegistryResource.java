@@ -206,7 +206,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/search/schemas")
     @ApiOperation(value = "Search for schemas containing the given name and description",
             notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
-            response = SchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+            response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
     public Response findSchemas(@Context UriInfo uriInfo) {
@@ -270,7 +270,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/search/schemas/aggregated")
     @ApiOperation(value = "Search for schemas containing the given name and description",
             notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
-            response = AggregatedSchemaMetadataInfo.class, responseContainer = "Collection", tags = OPERATION_GROUP_SCHEMA)
+            response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
     public Response findAggregatedSchemas(@Context UriInfo uriInfo) {

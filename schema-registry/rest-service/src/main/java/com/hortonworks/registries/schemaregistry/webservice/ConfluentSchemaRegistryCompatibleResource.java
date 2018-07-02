@@ -98,7 +98,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @GET
     @Path("/subjects")
     @ApiOperation(value = "Get all registered subjects",
-            response = String.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
+            response = String.class, responseContainer = "List", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
     public Response getSubjects() {
@@ -169,7 +169,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @GET
     @Path("/subjects/{subject}/versions")
     @ApiOperation(value = "Get all schema versions of given subject",
-            response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
+            response = Integer.class, responseContainer = "List", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
     public Response getAllVersions(@ApiParam(value = "subject", required = true)
@@ -196,7 +196,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @GET
     @Path("/subjects/{subject}/versions/{versionId}")
     @ApiOperation(value = "Get the schema information for given subject and versionId",
-            response = Integer.class, responseContainer = "Collection", tags = OPERATION_GROUP_CONFLUENT_SR)
+            response = Integer.class, responseContainer = "List", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
     public Response getSchemaVersion(@ApiParam(value = "subject", required = true)
