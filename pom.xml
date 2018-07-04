@@ -99,7 +99,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/hortonworks/registry.git</connection>
-        <developerConnection>scm:git:git@github.com:harshach/registry.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:hortonworks/registry.git</developerConnection>
         <url>http://github.com/hortonworks/registry.git</url>
         <tag>HEAD</tag>
     </scm>
