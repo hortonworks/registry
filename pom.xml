@@ -355,10 +355,11 @@
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <spring.version>5.0.6.RELEASE</spring.version>
         <postgresql.version>9.4.1212</postgresql.version>
-        <flyway.version>4.2.0</flyway.version>
+        <flyway.version>5.1.4</flyway.version>
         <hikari.version>2.2.5</hikari.version>
         <h2database.version>1.4.188</h2database.version>
         <mockito-version>1.8.5</mockito-version>
+        <codehaus.plexus.version>3.1.0</codehaus.plexus.version>
     </properties>
 
     <distributionManagement>
@@ -597,6 +598,18 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>${flyway.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>3.1.0</version>
             </dependency>
             <dependency>
               <groupId>com.zaxxer</groupId>

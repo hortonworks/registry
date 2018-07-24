@@ -17,11 +17,11 @@
 package com.hortonworks.registries.storage.tool.shell;
 
 import org.apache.commons.lang3.StringUtils;
+import org.flywaydb.core.api.logging.Log;
+import org.flywaydb.core.api.logging.LogFactory;
 import org.flywaydb.core.api.resolver.MigrationExecutor;
 
 import org.flywaydb.core.api.FlywayException;
-import org.flywaydb.core.internal.util.logging.Log;
-import org.flywaydb.core.internal.util.logging.LogFactory;
 import org.flywaydb.core.internal.util.scanner.Resource;
 
 import java.sql.Connection;
