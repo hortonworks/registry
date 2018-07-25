@@ -49,7 +49,7 @@ public class ShellFlywayFactory {
         flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
         flyway.setCleanOnValidationError(cleanOnValidationError);
         flyway.setLocations(location);
-        flyway.setResolvers(new ShellMigrationResolver(flyway.getClassLoader(), location, shellMigrationPrefix, shellMigrationSeperator, shellMigrationSuffix));
+        flyway.setResolvers(new ShellMigrationResolver(flyway.getConfiguration(), location, shellMigrationPrefix, shellMigrationSeperator, shellMigrationSuffix));
         flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword(), null);
 
         return flyway;

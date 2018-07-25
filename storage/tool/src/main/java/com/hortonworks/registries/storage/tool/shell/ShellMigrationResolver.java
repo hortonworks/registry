@@ -17,27 +17,28 @@
 
 package com.hortonworks.registries.storage.tool.shell;
 
+import com.hortonworks.registries.storage.tool.shell.exception.ShellMigrationException;
+import org.flywaydb.core.api.Location;
 import org.flywaydb.core.api.MigrationType;
 import org.flywaydb.core.api.MigrationVersion;
+import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.api.resolver.MigrationResolver;
 import org.flywaydb.core.api.resolver.ResolvedMigration;
 import org.flywaydb.core.internal.resolver.MigrationInfoHelper;
 import org.flywaydb.core.internal.resolver.ResolvedMigrationComparator;
 import org.flywaydb.core.internal.resolver.ResolvedMigrationImpl;
-import org.flywaydb.core.internal.util.Location;
-import org.flywaydb.core.internal.util.logging.Log;
-import org.flywaydb.core.internal.util.logging.LogFactory;
 import org.flywaydb.core.internal.util.Pair;
 import org.flywaydb.core.internal.util.scanner.Resource;
 import org.flywaydb.core.internal.util.scanner.Scanner;
+import org.apache.commons.io.IOUtils;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.CRC32;
 
 public class ShellMigrationResolver implements MigrationResolver {
-    private static final Log LOG = LogFactory.getLog(ShellMigrationResolver.class);
 
     /**
      * The scanner to use.
@@ -67,15 +68,15 @@ public class ShellMigrationResolver implements MigrationResolver {
     /**
      * Creates a new instance.
      *
-     * @param classLoader             The ClassLoader for loading migrations on the classpath.
+     * @param configuration           Flyway configuration.
      * @param location                The location on the classpath where to migrations are located.
      * @param shellMigrationPrefix    The prefix for shell migrations
      * @param shellMigrationSeparator The separator for shell migrations
      * @param shellMigrationSuffix    The suffix for shell migrations
      */
-    public ShellMigrationResolver(ClassLoader classLoader, String location, String shellMigrationPrefix,
+    public ShellMigrationResolver(Configuration configuration, String location, String shellMigrationPrefix,
                                   String shellMigrationSeparator, String shellMigrationSuffix) {
-        this.scanner = new Scanner(classLoader);
+        this.scanner = new Scanner(configuration);
         this.location = new Location(location);
         this.shellMigrationPrefix = shellMigrationPrefix;
         this.shellMigrationSeparator = shellMigrationSeparator;
@@ -85,7 +86,7 @@ public class ShellMigrationResolver implements MigrationResolver {
     public List<ResolvedMigration> resolveMigrations() {
         List<ResolvedMigration> migrations = new ArrayList<ResolvedMigration>();
 
-        Resource[] resources = scanner.scanForResources(location, shellMigrationPrefix, shellMigrationSuffix);
+        Resource[] resources = scanner.scanForResources(location, shellMigrationPrefix, new String[] {shellMigrationSuffix});
         for (Resource resource : resources) {
             ResolvedMigrationImpl resolvedMigration = extractMigrationInfo(resource);
             resolvedMigration.setPhysicalLocation(resource.getLocationOnDisk());
@@ -109,13 +110,21 @@ public class ShellMigrationResolver implements MigrationResolver {
 
         Pair<MigrationVersion, String> info =
                 MigrationInfoHelper.extractVersionAndDescription(resource.getFilename(),
-                        shellMigrationPrefix, shellMigrationSeparator, shellMigrationSuffix, false);
+                        shellMigrationPrefix, shellMigrationSeparator, new String [] {shellMigrationSuffix}, false);
         migration.setVersion(info.getLeft());
         migration.setDescription(info.getRight());
 
         migration.setScript(extractScriptName(resource));
 
-        migration.setChecksum(calculateChecksum(resource.loadAsBytes()));
+        byte [] migrationScriptAsBytes = null;
+        try {
+            migrationScriptAsBytes = IOUtils.toByteArray(new URI(resource.getFilename()));
+        } catch (Exception e) {
+            throw new ShellMigrationException(String.format("Failed to read the migration script : %s", resource.getFilename()), e);
+        }
+
+        migration.setChecksum(calculateChecksum(migrationScriptAsBytes));
+
         migration.setType(MigrationType.CUSTOM);
         return migration;
     }
