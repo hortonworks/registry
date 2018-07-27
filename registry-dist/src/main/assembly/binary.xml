@@ -115,6 +115,5 @@
             <source>${project.basedir}./NOTICE.txt</source>
             <outputDirectory>/</outputDirectory>
         </file>
-
     </files>
 </assembly>
