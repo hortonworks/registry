@@ -32,7 +32,7 @@ import org.flywaydb.core.internal.util.scanner.Resource;
 import org.flywaydb.core.internal.util.scanner.Scanner;
 import org.apache.commons.io.IOUtils;
 
-import java.net.URI;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -118,9 +118,9 @@ public class ShellMigrationResolver implements MigrationResolver {
 
         byte [] migrationScriptAsBytes = null;
         try {
-            migrationScriptAsBytes = IOUtils.toByteArray(new URI(resource.getFilename()));
+            migrationScriptAsBytes = IOUtils.toByteArray(new FileInputStream(resource.getLocation()));
         } catch (Exception e) {
-            throw new ShellMigrationException(String.format("Failed to read the migration script : %s", resource.getFilename()), e);
+            throw new ShellMigrationException(String.format("Failed to read the migration script : %s", resource.getLocation()), e);
         }
 
         migration.setChecksum(calculateChecksum(migrationScriptAsBytes));
