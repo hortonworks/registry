@@ -205,7 +205,7 @@ public class TablesInitializer {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));
         } catch (Exception e) {
-            System.err.println(String.format("\"%s\" option failed : %s", schemaMigrationOptionSpecified.toString(), e.getMessage()));
+            System.err.println(String.format("\"%s\" option failed : %s", schemaMigrationOptionSpecified.toString(), e));
             System.exit(1);
         }
 
