@@ -52,7 +52,10 @@ export default class SchemaDetail extends Component{
     const selectedBranch = _.find(schema.schemaBranches, (branch) => {
       return branch.schemaBranch.name == 'MASTER';
     });
-    const currentVersion = Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
+    let currentVersion = 0;
+    if(selectedBranch){
+      currentVersion = Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
+    }
     this.state = {
       collapsed: true,
       renderCodemirror: false,
@@ -136,8 +139,8 @@ export default class SchemaDetail extends Component{
     schema.collapsed = !s.collapsed;
     obj.schemaData = schemaData;
     SchemaRegistryContainer.setState(obj);*/
-    const {collapsed} = this.state;
-    this.setState({collapsed : !collapsed});
+    const {selectedBranch, collapsed} = this.state;
+    this.setState({collapsed : selectedBranch ? !collapsed : true});
   }
   handleOnEnter(s){
     this.setState({renderCodemirror: true});
@@ -305,7 +308,7 @@ export default class SchemaDetail extends Component{
     var btnClass = this.getBtnClass(compatibility);
     var iconClass = this.getIconClass(compatibility);
     // var totalVersions = s.versions.length;
-    
+
     var header = (
       <div>
         <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
@@ -366,7 +369,7 @@ export default class SchemaDetail extends Component{
     const {selectedBranch, collapsed, renderCodemirror, currentVersion} = this.state;
     const s = schema;
     const {name, evolve} = s.schemaMetadata;
-    const currentBranchName = selectedBranch.schemaBranch.name;
+    const currentBranchName = selectedBranch ? selectedBranch.schemaBranch.name : "MASTER";
     const enabledStateId = StateMachine.getStateByName('Enabled').id;
 
     const jsonoptions = {
@@ -379,8 +382,8 @@ export default class SchemaDetail extends Component{
       theme: 'default no-cursor schema-editor'
     };
 
-    var versionObj = _.find(selectedBranch.schemaVersionInfos, {version: currentVersion});
-    var sortedVersions =  Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'version', false);
+    var versionObj = selectedBranch ? _.find(selectedBranch.schemaVersionInfos, {version: currentVersion}) : {};
+    var sortedVersions =  selectedBranch ? Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'version', false) : [];
 
     const expandButton = ' ' || <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
       <i className="fa fa-arrows-alt"></i>
@@ -392,7 +395,7 @@ export default class SchemaDetail extends Component{
         headerRole="tabpanel"
         key={name}
         collapsible
-        expanded={collapsed ? false : true}
+        expanded={selectedBranch ? (collapsed ? false : true) : false}
         onSelect={this.handleSelect.bind(this, s)}
         onEntered={this.handleOnEnter.bind(this, s)}
         onExited={this.handleOnExit.bind(this, s)}
