@@ -60,6 +60,7 @@ import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -209,7 +210,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         configuration = new Configuration(conf);
 
         ClientConfig config = createClientConfig(conf);
-        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
+        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
                                                    .withConfig(config)
                                                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         if (conf.containsKey(SSL_CONFIGURATION_KEY)) {
