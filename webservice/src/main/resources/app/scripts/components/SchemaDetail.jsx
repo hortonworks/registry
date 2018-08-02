@@ -139,8 +139,8 @@ export default class SchemaDetail extends Component{
     schema.collapsed = !s.collapsed;
     obj.schemaData = schemaData;
     SchemaRegistryContainer.setState(obj);*/
-    const {selectedBranch, collapsed} = this.state;
-    this.setState({collapsed : selectedBranch ? !collapsed : true});
+    const {collapsed} = this.state;
+    this.setState({collapsed : !collapsed });
   }
   handleOnEnter(s){
     this.setState({renderCodemirror: true});
@@ -155,7 +155,7 @@ export default class SchemaDetail extends Component{
   }
   handleAddVersion (schemaObj) {
     const {selectedBranch, currentVersion} = this.state;
-    let obj = _.find(selectedBranch.schemaVersionInfos, {version: currentVersion});
+    let obj = selectedBranch ? _.find(selectedBranch.schemaVersionInfos, {version: currentVersion}) : undefined;
     this.schemaObj = {
       schemaName: schemaObj.schemaMetadata.name,
       description: obj ? obj.description : '',
@@ -184,7 +184,7 @@ export default class SchemaDetail extends Component{
             /*const {SchemaRegistryContainer} = this.context;
             SchemaRegistryContainer.fetchData();*/
             const {selectedBranch} = this.state;
-            this.fetchAndSelectBranch(selectedBranch.schemaBranch.name);
+            this.fetchAndSelectBranch(selectedBranch ? selectedBranch.schemaBranch.name : "MASTER");
             let msg = "Version added successfully";
             if (this.state.modalTitle === 'Edit Version') {
               msg = "Version updated successfully";
@@ -382,7 +382,7 @@ export default class SchemaDetail extends Component{
       theme: 'default no-cursor schema-editor'
     };
 
-    var versionObj = selectedBranch ? _.find(selectedBranch.schemaVersionInfos, {version: currentVersion}) : {};
+    var versionObj = selectedBranch ? _.find(selectedBranch.schemaVersionInfos, {version: currentVersion}) : null;
     var sortedVersions =  selectedBranch ? Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'version', false) : [];
 
     const expandButton = ' ' || <button key="e.3" type="button" className="btn btn-link btn-expand-schema" onClick={this.handleExpandView.bind(this, s)}>
@@ -395,7 +395,7 @@ export default class SchemaDetail extends Component{
         headerRole="tabpanel"
         key={name}
         collapsible
-        expanded={selectedBranch ? (collapsed ? false : true) : false}
+        expanded={collapsed ? false : true}
         onSelect={this.handleSelect.bind(this, s)}
         onEntered={this.handleOnEnter.bind(this, s)}
         onExited={this.handleOnExit.bind(this, s)}
@@ -501,7 +501,7 @@ export default class SchemaDetail extends Component{
           <div className="row">
           {evolve ? ([
             <div className="col-sm-3" key="v.k.1">
-              <h6 className="schema-th">Description</h6>
+              <h6 className="schema-th text-danger">There is no version associated for this particular schema.</h6>
               <p></p>
             </div>,
             <div className="col-sm-6" key="v.k.2">
@@ -524,9 +524,6 @@ export default class SchemaDetail extends Component{
                 </div>
               </div>)
               }
-            </div>,
-            <div className="col-sm-3" key="v.k.3">
-              <h6 className="schema-th">Change Log</h6>
             </div>])
             : <div style={{'textAlign': 'center'}}>NO DATA FOUND</div>
             }
