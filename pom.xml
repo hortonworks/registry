@@ -6,7 +6,7 @@
 
     <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
-    <version>0.5.2-SNAPSHOT</version>
+    <version>0.5.3</version>
     <packaging>pom</packaging>
     <name>Registry</name>
     <description>

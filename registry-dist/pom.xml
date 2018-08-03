@@ -20,7 +20,7 @@
     <parent>
         <artifactId>registries</artifactId>
         <groupId>com.hortonworks.registries</groupId>
-        <version>0.5.2-SNAPSHOT</version>
+        <version>0.5.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>hortonworks-registries-bin</artifactId>
