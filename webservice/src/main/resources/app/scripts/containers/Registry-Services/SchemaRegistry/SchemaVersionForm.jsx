@@ -122,10 +122,10 @@ export default class SchemaVersionForm extends Component {
       schemaText,
       description
     };
-    return SchemaREST.getCompatibility(this.props.schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
+    return SchemaREST.getCompatibility(schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
       .then((result)=>{
         if(result.compatible){
-          return SchemaREST.postVersion(this.props.schemaObj.schemaName, {body: JSON.stringify(data)}, schemaObj.branch.schemaBranch.name);
+          return SchemaREST.postVersion(schemaObj.schemaName, {body: JSON.stringify(data)}, schemaObj.branch ? schemaObj.branch.schemaBranch.name : "MASTER");
         } else {
           return result;
         }
