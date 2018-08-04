@@ -37,11 +37,7 @@
                     <doUpdate>false</doUpdate>
                     <outputDirectory>${project.build.directory}/classes/registry</outputDirectory>
                     <outputName>VERSION</outputName>
-                    <revisiononscmfailure>
-                        <items>
-                            <item>version=${project.version}</item>
-                        </items>
-                    </revisiononscmfailure>
+                    <revisionOnScmFailure>unknown</revisionOnScmFailure>
                 </configuration>
                 <executions>
                     <execution>
