@@ -210,7 +210,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         configuration = new Configuration(conf);
 
         ClientConfig config = createClientConfig(conf);
-        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
+        ClientBuilder clientBuilder = new JerseyClientBuilder()
                                                    .withConfig(config)
                                                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         if (conf.containsKey(SSL_CONFIGURATION_KEY)) {
