@@ -18,7 +18,7 @@ package com.hortonworks.registries.schemaregistry.serde;
 import com.hortonworks.registries.schemaregistry.Resourceable;
 
 /**
- * Deserializer interface for deserializing input {@code I} into output {@code O} according to the Schema {@code S}.
+ * Deserializer interface for de-serializing input {@code I} into output {@code O} according to the Schema {@code S}.
  * <p>Common way to use this deserializer implementation is like below. </p>
  * <pre>{@code
  *     SnapshotDeserializer deserializer = ...
@@ -33,19 +33,30 @@ import com.hortonworks.registries.schemaregistry.Resourceable;
  * }</pre>
  *
  * @param <I>  Input type of the payload
- * @param <O>  Output type of the deserialized content.
+ * @param <O>  Output type of the de-serialized content.
  * @param <RS> Reader schema information.
  */
 public interface SnapshotDeserializer<I, O, RS> extends Resourceable {
 
     /**
-     * Returns output {@code O} after deserializing the given {@code input} according to the writer schema {@code WS} and
-     * it may be projected if reader schema {@code RS} is given.
+     * De-serializes the given {@code input} according to the writer schema {@code WS} and
+     * projects it based on the reader schema {@code RS} (if not null).
      *
-     * @param input input payload to be deserialized
-     * @param readerSchemaInfo schema information about reading/projection
-     * @return O output to be deserialized into
+     * @param input input payload to be de-serialized
+     * @param readerSchemaInfo schema information for reading/projection
+     * @return O the de-serialized output
      */
     O deserialize(I input, RS readerSchemaInfo) throws SerDesException;
+
+  /**
+   * De-serializes the given {@code input} according to the writer schema {@code WS}.
+   *
+   * @param input input payload to be de-serialized
+   * @return O the de-serialized output
+   * @throws SerDesException
+   */
+    default O deserialize(I input) throws SerDesException {
+      return deserialize(input, null);
+    }
 
 }
