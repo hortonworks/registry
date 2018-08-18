@@ -143,11 +143,12 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
         String result;
         Predicate.Operation operation = predicate.getOperation();
         String fq = fieldEncloser();
-        boolean addToFieldValues = true;
+
+        Object predicateValue = predicate.getValue();
         switch (operation) {
             case CONTAINS:
-                result = " " + fq + predicate.getField() + fq + " LIKE '%" + predicate.getValue() + "%' ";
-                addToFieldValues = false;
+                result = " " + fq + predicate.getField() + fq + " LIKE ?";
+                predicateValue = "%" + predicateValue + "%";
                 break;
             case EQ:
                 result = " " + fq + predicate.getField() + fq + " = ? ";
@@ -168,10 +169,8 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
                 throw new IllegalArgumentException("Given operation " + operation + " is not supported!");
         }
 
-        if (addToFieldValues) {
-            Schema.Field field = schema.getField(predicate.getField());
-            fieldsToValues.put(field, predicate.getValue());
-        }
+        Schema.Field field = schema.getField(predicate.getField());
+        fieldsToValues.put(field, predicateValue);
 
         return result;
     }
