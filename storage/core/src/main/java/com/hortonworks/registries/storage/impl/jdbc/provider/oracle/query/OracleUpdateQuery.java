@@ -20,6 +20,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.exception.OracleQueryException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractStorableUpdateQuery;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,8 +63,10 @@ public class OracleUpdateQuery extends AbstractStorableUpdateQuery {
     }
 
     private Map<Schema.Field, Object> createWhereClauseColumnToValueMap() {
-        Map<Schema.Field, Object> bindingMap = getBindings().stream().
-                collect(Collectors.toMap(keyValuePair -> keyValuePair.getKey(), keyValuePair -> keyValuePair.getValue()));
+        Map<Schema.Field, Object> bindingMap = new HashMap<>();
+        for (Pair<Schema.Field, Object> fieldObjectPair : getBindings()) {
+            bindingMap.put(fieldObjectPair.getKey(), fieldObjectPair.getValue());
+        }
         return whereFields.stream().collect(Collectors.toMap(f -> f, f -> bindingMap.get(f)));
     }
 }
