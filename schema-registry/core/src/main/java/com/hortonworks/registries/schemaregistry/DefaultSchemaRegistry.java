@@ -248,7 +248,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         final Long nextId = storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
         givenSchemaMetadataStorable.setId(nextId);
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
-        storageManager.addOrUpdate(givenSchemaMetadataStorable);
+        storageManager.add(givenSchemaMetadataStorable);
 
         // Add a schema branch for this metadata
         SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
@@ -313,7 +313,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
         if (schemaMetadataStorable != null) {
             schemaMetadataStorable = SchemaMetadataStorable.updateSchemaMetadata(schemaMetadataStorable, schemaMetadata);
-            storageManager.addOrUpdate(schemaMetadataStorable);
+            storageManager.update(schemaMetadataStorable);
             return schemaMetadataStorable.toSchemaMetadataInfo();
         } else {
             return null;

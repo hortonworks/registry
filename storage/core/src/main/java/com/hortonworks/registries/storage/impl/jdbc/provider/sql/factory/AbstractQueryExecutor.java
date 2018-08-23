@@ -223,10 +223,32 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         long currentThreadId = Thread.currentThread().getId();
         try {
             if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
-                log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
                 Connection connection = connectionBuilder.getConnection();
-                if (transactionIsolationLevel != TransactionIsolation.DEFAULT)
+                if (transactionIsolationLevel == TransactionIsolation.DEFAULT) {
+                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
+                    // Use the transaction isolation as recommended by the JDBC driver
+                } else if (transactionIsolationLevel == TransactionIsolation.DATABASE_SENSITIVE) {
+                    int transactionIsolation;
+                    switch (config.getDatabaseType()) {
+                        case MYSQL:
+                            transactionIsolation = Connection.TRANSACTION_REPEATABLE_READ;
+                            break;
+                        case POSTGRESQL:
+                            transactionIsolation = Connection.TRANSACTION_REPEATABLE_READ;
+                            break;
+                        case ORACLE:
+                            transactionIsolation = Connection.TRANSACTION_SERIALIZABLE;
+                            break;
+                        default:
+                            throw new TransactionException(String.format("Failed to set transaction isolation level for unknown database : %s", config.getDatabaseType().toString()));
+                    }
+                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} and jdbc transaction isolation level : {} --- ",
+                            currentThreadId, transactionIsolationLevel.name(), transactionIsolation);
+                    connection.setTransactionIsolation(transactionIsolation);
+                } else {
+                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
                     connection.setTransactionIsolation(transactionIsolationLevel.getValue());
+                }
                 log.debug("Opened connection {}", connection);
                 activeConnections.add(connection);
                 connection.setAutoCommit(false);

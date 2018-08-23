@@ -45,6 +45,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  *
@@ -68,7 +72,7 @@ public class SampleSchemaRegistryClientApp {
 
         String schemaFileName = "/device.avsc";
         String schema1 = getSchema(schemaFileName);
-        SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
+        SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + UUID.randomUUID().toString());
 
         // registering a new schema
         SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
@@ -117,7 +121,7 @@ public class SampleSchemaRegistryClientApp {
 
         Object deviceObject = createGenericRecordForDevice("/device.avsc");
 
-        SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + System.currentTimeMillis());
+        SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + UUID.randomUUID());
         byte[] serializedData = avroSnapshotSerializer.serialize(deviceObject, schemaMetadata);
         Object deserializedObj = avroSnapshotDeserializer.deserialize(new ByteArrayInputStream(serializedData), null);
 
@@ -165,7 +169,7 @@ public class SampleSchemaRegistryClientApp {
 
         Object deviceObject = createGenericRecordForDevice("/device.avsc");
 
-        SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + System.currentTimeMillis());
+        SchemaMetadata schemaMetadata = createSchemaMetadata("avro-serializer-schema-" + UUID.randomUUID().toString());
         byte[] serializedData = serializer.serialize(deviceObject, schemaMetadata);
         Object deserializedObj = deserializer.deserialize(new ByteArrayInputStream(serializedData), null);
 
@@ -182,7 +186,7 @@ public class SampleSchemaRegistryClientApp {
         }
         String fileId = schemaRegistryClient.uploadFile(serdesJarInputStream);
 
-        SchemaMetadata schemaMetadata = createSchemaMetadata("serdes-device-" + System.currentTimeMillis());
+        SchemaMetadata schemaMetadata = createSchemaMetadata("serdes-device-" + UUID.randomUUID().toString());
         SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata,
                                                                    new SchemaVersion(getSchema("/device.avsc"),
                                                                                      "Initial version of the schema"));
@@ -241,11 +245,29 @@ public class SampleSchemaRegistryClientApp {
         Map<String, Object> config = createConfig(schemaRegistryUrl);
         SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(config);
 
-        sampleSchemaRegistryClientApp.runSchemaApis();
+        int threads = 10;
+        ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
+        executorService.prestartAllCoreThreads();
 
-        sampleSchemaRegistryClientApp.runCustomSerDesApi();
+        CountDownLatch latch = new CountDownLatch(threads);
+        for (int i = 0; i < threads; i++) {
+            executorService.submit(() -> {
+                try {
+                    sampleSchemaRegistryClientApp.runSchemaApis();
 
-        sampleSchemaRegistryClientApp.runAvroSerDesApis();
+                    sampleSchemaRegistryClientApp.runCustomSerDesApi();
+
+                    sampleSchemaRegistryClientApp.runAvroSerDesApis();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executorService.shutdownNow();
     }
 
     public static Map<String, Object> createConfig(String schemaRegistryUrl) {
