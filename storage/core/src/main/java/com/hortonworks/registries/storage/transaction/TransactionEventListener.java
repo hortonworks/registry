@@ -90,18 +90,12 @@ public class TransactionEventListener implements ApplicationEventListener {
                     isTransactionActive = true;
                 }
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {
-                // not supporting transactions to filters
-            } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
                 if (useTransactionForUnitOfWork && isTransactionActive) {
-                    transactionManager.rollbackTransaction();
-                    isTransactionActive = false;
-                }
-            } else if (eventType == RequestEvent.Type.FINISHED) {
-                if (useTransactionForUnitOfWork && event.isSuccess()) {
                     transactionManager.commitTransaction();
                     isTransactionActive = false;
                 }
-                else if (useTransactionForUnitOfWork && !event.isSuccess() && isTransactionActive) {
+            } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
+                if (useTransactionForUnitOfWork && isTransactionActive) {
                     transactionManager.rollbackTransaction();
                     isTransactionActive = false;
                 }

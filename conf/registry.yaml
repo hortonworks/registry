@@ -64,15 +64,15 @@ fileStorageConfiguration:
 
 # MySQL based jdbc provider configuration is:
 storageProviderConfiguration:
-  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
-  properties:
-    db.type: "postgresql"
-    queryTimeoutInSecs: 30
-    db.properties:
-      dataSourceClassName: "org.postgresql.ds.PGSimpleDataSource"
-      dataSource.url: "jdbc:postgresql://localhost/schema_registry"
-      dataSource.user: "postgres"
-      dataSource.password: "postgres"
+ providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+ properties:
+   db.type: "mysql"
+   queryTimeoutInSecs: 30
+   db.properties:
+     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+     dataSource.url: "jdbc:mysql://localhost/schema_registry"
+     dataSource.user: "registry_user"
+     dataSource.password: "registry_password"
 
 #swagger configuration
 swagger:
