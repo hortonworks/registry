@@ -17,6 +17,7 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider;
 
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.storage.impl.jdbc.DatabaseType;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
@@ -42,7 +43,7 @@ public class QueryExecutorFactory {
     public static QueryExecutor get(String type, Map<String, Object> dbProperties) {
 
         HikariCPConnectionBuilder connectionBuilder = getHikariCPConnnectionBuilder(dbProperties);
-        ExecutionConfig executionConfig = getExecutionConfig(dbProperties);
+        ExecutionConfig executionConfig = getExecutionConfig(type, dbProperties);
 
         QueryExecutor queryExecutor = null;
         switch (type) {
@@ -78,7 +79,7 @@ public class QueryExecutorFactory {
         return new HikariCPConnectionBuilder(hikariConfig);
     }
 
-    private static ExecutionConfig getExecutionConfig(Map<String, Object> dbProperties) {
+    private static ExecutionConfig getExecutionConfig(String type, Map<String, Object> dbProperties) {
         int queryTimeOutInSecs = -1;
         if (dbProperties.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) dbProperties.get("queryTimeoutInSecs");
@@ -87,6 +88,6 @@ public class QueryExecutorFactory {
             }
         }
 
-        return new ExecutionConfig(queryTimeOutInSecs);
+        return new ExecutionConfig(queryTimeOutInSecs, DatabaseType.fromValue(type));
     }
 }
