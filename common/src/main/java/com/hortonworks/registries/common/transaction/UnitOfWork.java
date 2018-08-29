@@ -32,5 +32,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface UnitOfWork {
     boolean transactional() default true;
-    TransactionIsolation transactionIsolation() default TransactionIsolation.SERIALIZABLE;
+    TransactionIsolation transactionIsolation() default TransactionIsolation.DATABASE_SENSITIVE;
 }

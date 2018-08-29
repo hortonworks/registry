@@ -17,11 +17,9 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query;
 
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
-import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.statement.OracleDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.transaction.TransactionBookKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
