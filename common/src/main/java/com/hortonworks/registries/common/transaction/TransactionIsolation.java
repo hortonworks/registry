@@ -3,6 +3,11 @@ package com.hortonworks.registries.common.transaction;
 import java.sql.Connection;
 
 public enum TransactionIsolation {
+
+    // Depending upon the target database the transaction isolation is set.
+    // For MYSQL and POSTGRES it is REPEATABLE_READ and
+    // for Oracle it is SERIALIZABLE
+    DATABASE_SENSITIVE(-2),
     // Set default isolation level as recommended by the JDBC driver.
     // When used inside a nested transaction retains current transaction isolation.
     DEFAULT(-1),
