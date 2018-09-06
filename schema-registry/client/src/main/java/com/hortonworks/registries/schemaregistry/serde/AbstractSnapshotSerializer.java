@@ -24,8 +24,6 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class implements {@link SnapshotSerializer} and internally creates schema registry client to connect to the
@@ -38,7 +36,6 @@ import org.slf4j.LoggerFactory;
  * </ul>
  */
 public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes implements SnapshotSerializer<I, O, SchemaMetadata> {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractSnapshotSerializer.class);
 
     public AbstractSnapshotSerializer() {
     }
@@ -49,12 +46,7 @@ public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes im
 
     @Override
     public final O serialize(I input, SchemaMetadata schemaMetadata) throws SerDesException {
-        if(!initialized) {
-            throw new IllegalStateException("init should be invoked before invoking serialize operation");
-        }
-        if(closed) {
-            throw new IllegalStateException("This serializer is already closed");
-        }
+        ensureInitialized();
 
         // compute schema based on input object
         String schema = getSchemaText(input);
@@ -84,5 +76,15 @@ public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes im
      * @throws SerDesException when any ser/des Exception occurs
      */
     protected abstract O doSerialize(I input, SchemaIdVersion schemaIdVersion) throws SerDesException;
+
+    private void ensureInitialized() {
+        if (!initialized) {
+            throw new IllegalStateException("init should be invoked before invoking serialize operation");
+        }
+
+        if (closed) {
+            throw new IllegalStateException("This serializer is already closed");
+        }
+    }
 
 }

@@ -77,7 +77,4 @@ public class SchemaVersionIdAsIntProtocolHandler extends AbstractAvroSerDesProto
         return new SchemaIdVersion((long) schemaVersionId);
     }
 
-    public Byte getProtocolId() {
-        return protocolId;
-    }
 }

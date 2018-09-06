@@ -44,7 +44,7 @@ public final class SchemaVersionKey implements Serializable {
      * @param version    version of the schema
      */
     public SchemaVersionKey(String schemaName, Integer version) {
-        Preconditions.checkNotNull(schemaName, "schemaMetadataKey can not be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
         this.schemaName = schemaName;
         this.version = version;

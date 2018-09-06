@@ -15,8 +15,6 @@
  */
 package com.hortonworks.registries.schemaregistry.state;
 
-import java.io.Serializable;
-
 /**
  * Schema version life cycle state to be defined.
  */
