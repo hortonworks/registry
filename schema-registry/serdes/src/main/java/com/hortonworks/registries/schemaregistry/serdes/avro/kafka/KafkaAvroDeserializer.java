@@ -17,7 +17,11 @@ package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
-import org.apache.kafka.common.serialization.Deserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroDeserializer;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.ExtendedDeserializer;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
@@ -58,7 +62,7 @@ import java.util.Map;
  * }</pre>
  *
  */
-public class KafkaAvroDeserializer implements Deserializer<Object> {
+public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
 
     /**
      * This property represents the version of a reader schema to be used in deserialization for each topic in
@@ -75,22 +79,43 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
      */
     public static final String READER_VERSIONS = "schemaregistry.reader.schema.versions";
 
-    private final AvroSnapshotDeserializer avroSnapshotDeserializer;
+    private boolean isKey;
     private Map<String, Integer> readerVersions;
+
+    private final AvroSnapshotDeserializer avroSnapshotDeserializer;
+    private final MessageContextBasedAvroDeserializer messageContextBasedAvroDeserializer;
+    private String keySchemaHeaderName;
+    private String valueSchemaHeaderName;
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
+        messageContextBasedAvroDeserializer = new MessageContextBasedAvroDeserializer();
     }
 
     public KafkaAvroDeserializer(ISchemaRegistryClient schemaRegistryClient) {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer(schemaRegistryClient);
+        messageContextBasedAvroDeserializer = new MessageContextBasedAvroDeserializer(schemaRegistryClient);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {
-        avroSnapshotDeserializer.init(configs);
+        this.isKey = isKey;
+        this.keySchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
+        this.valueSchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
         Map<String, Integer> versions = (Map<String, Integer>) ((Map<String, Object>) configs).get(READER_VERSIONS);
         readerVersions = versions != null ? versions : Collections.emptyMap();
+
+        avroSnapshotDeserializer.init(configs);
+        messageContextBasedAvroDeserializer.init(configs);
+    }
+
+    private static String getOrDefault(Map<String, ?> configs, String key, String defaultValue) {
+        String value = (String) configs.get(key);
+        if (value == null || value.trim().isEmpty()) {
+            value = defaultValue;
+        }
+        return value;
     }
 
     @Override
@@ -99,9 +124,21 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     }
 
     @Override
+    public Object deserialize(String topic, Headers headers, byte[] data) {
+        if (headers != null) {
+            final Header header = headers.lastHeader(isKey ? keySchemaHeaderName : valueSchemaHeaderName);
+            if (header != null) {
+                return messageContextBasedAvroDeserializer.deserialize(new MessageContext(header.value(), data), readerVersions.get(topic));
+            }
+        }
+        return deserialize(topic, data);
+    }
+
+    @Override
     public void close() {
         try {
             avroSnapshotDeserializer.close();
+            messageContextBasedAvroDeserializer.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

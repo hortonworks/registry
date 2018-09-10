@@ -23,12 +23,16 @@ import java.util.Map;
 
 public class KafkaAvroSerde implements Serde<Object> {
 
-    private Serializer ser = new KafkaAvroSerializer();
-    private Deserializer deser = new KafkaAvroDeserializer();
+    public static final String KEY_SCHEMA_HEADER_NAME = "key_schema_header_name";
+    public static final String VALUE_SCHEMA_HEADER_NAME = "value_schema_header_name";
 
+    private Serializer<Object> ser = new KafkaAvroSerializer();
+    private Deserializer<Object> deser = new KafkaAvroDeserializer();
+
+    @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {
-        ser.configure(configs,isKey);
-        deser.configure(configs,isKey);
+        ser.configure(configs, isKey);
+        deser.configure(configs, isKey);
     }
 
     public void close(){

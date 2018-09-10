@@ -15,20 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.avro.serdes;
-
-import java.io.InputStream;
-import java.util.Map;
+package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 /**
  *
  */
 public class MessageContext {
-    final Map<String, Object> headers;
-    final InputStream payloadEntity;
 
-    public MessageContext(Map<String, Object> headers, InputStream payloadEntity) {
-        this.headers = headers;
-        this.payloadEntity = payloadEntity;
+    private final byte[] metadata;
+    private final byte[] payload;
+
+    public MessageContext(final byte[] metadata, final byte[] payload) {
+        this.metadata = metadata;
+        this.payload = payload;
+    }
+
+    public byte[] metadata() {
+        return metadata;
+    }
+
+    public byte[] payload() {
+        return payload;
     }
 }

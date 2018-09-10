@@ -26,6 +26,9 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroSerializer;
 import com.hortonworks.registries.serdes.Device;
 import mockit.Expectations;
 import mockit.Mocked;
@@ -53,7 +56,7 @@ public class MessageContextBasedAvroSerDesTest {
                         .build();
         SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1, 1L);
         Device input = new Device(1L, "device", 1, System.currentTimeMillis());
-        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1l, input.getName().toString(), schemaIdVersion.getVersion(),
+        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1L, input.getName().toString(), schemaIdVersion.getVersion(),
                                                                     input.getSchema().toString(),
                                                                     System.currentTimeMillis(),
                                                                     "");
@@ -80,5 +83,6 @@ public class MessageContextBasedAvroSerDesTest {
         deserializer.init(Collections.emptyMap());
         Object deserializedObject = deserializer.deserialize(messageContext, null);
 
-        Assert.assertTrue(SpecificData.get().compare(input, deserializedObject, input.getSchema()) == 0);    }
+        Assert.assertEquals(0, SpecificData.get().compare(input, deserializedObject, input.getSchema()));
+    }
 }

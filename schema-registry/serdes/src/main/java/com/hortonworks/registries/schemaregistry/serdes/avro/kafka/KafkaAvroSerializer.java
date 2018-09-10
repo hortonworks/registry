@@ -16,18 +16,21 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import org.apache.kafka.common.serialization.Serializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroSerializer;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.ExtendedSerializer;
 
 import java.util.Map;
 
 /**
  *
  */
-public class KafkaAvroSerializer implements Serializer<Object> {
+public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
 
     /**
      * Compatibility property to be set on configs for registering message's schema to schema registry.
@@ -37,13 +40,20 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     public static final String SCHEMA_GROUP = "schema.group";
     public static final String SCHEMA_NAME_KEY_SUFFIX_ = "schema.name.key.suffix";
     public static final String SCHEMA_NAME_VALUE_SUFFIX_= "schema.name.value.suffix";
+    public static final String STORE_SCHEMA_IN_HEADER = "store.schema.in.header";
 
     public static final String DEFAULT_SCHEMA_GROUP = "kafka";
     public static final String DEFAULT_SCHEMA_NAME_KEY_SUFFIX = ":k";
     public static final String DEFAULT_SCHEMA_NAME_VALUE_SUFFIX = null;
+    public static final String DEFAULT_STORE_SCHEMA_IN_HEADER = "true";
 
-    private final AvroSnapshotSerializer avroSnapshotSerializer;
     private boolean isKey;
+    private final AvroSnapshotSerializer avroSnapshotSerializer;
+
+    private final MessageContextBasedAvroSerializer messageContextBasedAvroSerializer;
+    private String keySchemaHeaderName;
+    private String valueSchemaHeaderName;
+    private boolean useRecordHeader;
 
     private SchemaCompatibility compatibility;
 
@@ -51,13 +61,14 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     private String schemaNameKeySuffix;
     private String schemaNameValueSuffix;
 
-
     public KafkaAvroSerializer() {
         avroSnapshotSerializer = new AvroSnapshotSerializer();
+        messageContextBasedAvroSerializer = new MessageContextBasedAvroSerializer();
     }
 
     public KafkaAvroSerializer(ISchemaRegistryClient schemaRegistryClient) {
         avroSnapshotSerializer = new AvroSnapshotSerializer(schemaRegistryClient);
+        messageContextBasedAvroSerializer = new MessageContextBasedAvroSerializer(schemaRegistryClient);
     }
 
     @Override
@@ -69,8 +80,12 @@ public class KafkaAvroSerializer implements Serializer<Object> {
         schemaNameValueSuffix = getOrDefault(configs, SCHEMA_NAME_VALUE_SUFFIX_, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
 
         this.isKey = isKey;
+        keySchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
+        valueSchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
+        useRecordHeader = Boolean.valueOf(getOrDefault(configs, STORE_SCHEMA_IN_HEADER, DEFAULT_STORE_SCHEMA_IN_HEADER));
 
         avroSnapshotSerializer.init(configs);
+        messageContextBasedAvroSerializer.init(configs);
     }
 
     private static String getOrDefault(Map<String, ?> configs, String key, String defaultValue) {
@@ -84,6 +99,17 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     @Override
     public byte[] serialize(String topic, Object data) {
         return avroSnapshotSerializer.serialize(data, createSchemaMetadata(topic));
+    }
+
+    @Override
+    public byte[] serialize(String topic, Headers headers, Object data) {
+        if (useRecordHeader) {
+            final MessageContext context = messageContextBasedAvroSerializer.serialize(data, createSchemaMetadata(topic));
+            headers.add(isKey ? keySchemaHeaderName : valueSchemaHeaderName, context.metadata());
+            return context.payload();
+        } else {
+            return serialize(topic, data);
+        }
     }
 
     private SchemaMetadata createSchemaMetadata(String topic) {
@@ -111,6 +137,7 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     public void close() {
         try {
             avroSnapshotSerializer.close();
+            messageContextBasedAvroSerializer.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
