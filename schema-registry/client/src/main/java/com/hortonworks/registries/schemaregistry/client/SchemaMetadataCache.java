@@ -99,12 +99,12 @@ public class SchemaMetadataCache {
         private Long id;
 
         private Key(String name) {
-            Preconditions.checkNotNull("name can not be null", name);
+            Preconditions.checkNotNull(name, "name can not be null");
             this.name = name;
         }
 
         private Key(Long id) {
-            Preconditions.checkNotNull("id can not be null", id);
+            Preconditions.checkNotNull(id, "id can not be null");
             this.id = id;
         }
 

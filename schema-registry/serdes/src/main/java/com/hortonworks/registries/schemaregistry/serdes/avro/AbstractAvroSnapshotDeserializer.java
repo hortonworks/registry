@@ -65,29 +65,32 @@ import java.util.Map;
  *
  * public class MessageContextBasedDeserializer extends AbstractAvroSnapshotDeserializer<MessageContext> {
  *
- * {@literal @}Override
+ * {@code
+ * @Override
  * protected Object doDeserialize(MessageContext input,
- * byte protocolId,
- * SchemaMetadata schemaMetadata,
- * Integer writerSchemaVersion,
- * Integer readerSchemaVersion) throws SerDesException {
- * return buildDeserializedObject(protocolId,
- * input.payloadEntity,
- * schemaMetadata,
- * writerSchemaVersion,
- * readerSchemaVersion);
+ *                                byte protocolId,
+ *                                SchemaMetadata schemaMetadata,
+ *                                Integer writerSchemaVersion,
+ *                                Integer readerSchemaVersion) throws SerDesException {
+ *  return buildDeserializedObject(protocolId,
+ *                                 input.payloadEntity,
+ *                                 schemaMetadata,
+ *                                 writerSchemaVersion,
+ *                                 readerSchemaVersion);
  * }
  *
- * {@literal @}Override
+ * {@literal
+ * @Override
  * protected byte retrieveProtocolId(MessageContext input) throws SerDesException {
- * return (byte) input.headers.get("protocol.id");
+ *  return (byte) input.headers.get("protocol.id");
  * }
  *
- * {@literal @}Override
+ * {@literal
+ * @Override
  * protected SchemaIdVersion retrieveSchemaIdVersion(byte protocolId, MessageContext input) throws SerDesException {
- * Long id = (Long) input.headers.get("schema.metadata.id");
- * Integer version = (Integer) input.headers.get("schema.version");
- * return new SchemaIdVersion(id, version);
+ *  Long id = (Long) input.headers.get("schema.metadata.id");
+ *  Integer version = (Integer) input.headers.get("schema.version");
+ *  return new SchemaIdVersion(id, version);
  * }
  * }
  *
@@ -156,7 +159,6 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
                                              SchemaMetadata schemaMetadata,
                                              Integer writerSchemaVersion,
                                              Integer readerSchemaVersion) throws SerDesException {
-        Object deserializedObj;
         String schemaName = schemaMetadata.getName();
         SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
@@ -166,9 +168,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         }
         Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 
-        deserializedObj = deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema, readerSchema);
-
-        return deserializedObj;
+        return deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema, readerSchema);
     }
 
     protected Object deserializePayloadForProtocol(byte protocolId,

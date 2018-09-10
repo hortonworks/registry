@@ -11,7 +11,7 @@ Running Kafka Producer with AvroSerializer
 1. Login into one of the Kafka broker hosts
 2. bin/kafka-topics.sh --zookeeper zk:2181 --topic truck_events_stream --partitions 2 --replication-factor 1 --create
 3. On registry host; cd /usr/hdf/2.1.0.0-164/registry/examples/schema-registry/avro/
-4. Edit data/kafka-producer.props, vi data/kafka-producer.props
+4. Edit data/kafka-producer.props
 
 .. code-block:: ruby
 
@@ -21,8 +21,9 @@ Running Kafka Producer with AvroSerializer
   security.protocol=PLAINTEXT
   key.serializer=org.apache.kafka.common.serialization.StringSerializer
   value.serializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer
+  ignoreInvalidMessages=true
 
-5. java -jar avro-examples-0.5.0-SNAPSHOT.jar -d data/truck_events.csv -p data/kafka-producer.props -sm -s data/truck_events.avsc
+5. java -jar avro-examples-0.5.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
 6. The above command will register truck_events schema in data/truck_events.avsc into registry and ingests 200 messages into topic “truck_events_stream”
 
 
@@ -76,6 +77,7 @@ Running Kafka Consumer with AvroDeserializer
   topic=truck_events_stream
   bootstrap.servers=localhost:9092
   schema.registry.url=http://localhost:9090/api/v1
+  security.protocol=PLAINTEXT
   key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
   value.deserializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer
   group.id=truck_group
@@ -92,7 +94,7 @@ To run the consumer in Secure cluster:
 
 .. code-block:: ruby
 
- topic=truck_events
+ topic=truck_events_stream
  bootstrap.servers=pm-eng1-cluster4.field.hortonworks.com:6667
  schema.registry.url=http://pm-eng1-cluster4.field.hortonworks.com:7788/api/v1
  security.protocol=SASL_PLAINTEXT
