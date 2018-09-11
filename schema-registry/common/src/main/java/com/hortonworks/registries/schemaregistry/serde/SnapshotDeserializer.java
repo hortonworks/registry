@@ -45,18 +45,19 @@ public interface SnapshotDeserializer<I, O, RS> extends Resourceable {
      * @param input input payload to be de-serialized
      * @param readerSchemaInfo schema information for reading/projection
      * @return O the de-serialized output
+     * @throws SerDesException
      */
     O deserialize(I input, RS readerSchemaInfo) throws SerDesException;
 
-  /**
-   * De-serializes the given {@code input} according to the writer schema {@code WS}.
-   *
-   * @param input input payload to be de-serialized
-   * @return O the de-serialized output
-   * @throws SerDesException
-   */
+    /**
+     * De-serializes the given {@code input} according to the writer schema {@code WS}.
+     *
+     * @param input input payload to be de-serialized
+     * @return O the de-serialized output
+     * @throws SerDesException
+     */
     default O deserialize(I input) throws SerDesException {
-      return deserialize(input, null);
+        return deserialize(input, null);
     }
 
 }
