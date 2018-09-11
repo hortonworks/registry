@@ -90,6 +90,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     protected SerDesProtocolHandler serDesProtocolHandler;
 
     @Override
+    @SuppressWarnings("unchecked")
     public void doInit(Map<String, ?> config) {
 
         Number number = (Number) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION,
@@ -118,6 +119,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
      * @param input avro object
      * @return textual representation of the schema of the given {@code input} avro object
      */
+    @Override
     protected String getSchemaText(Object input) {
         Schema schema = AvroUtils.computeSchema(input);
         return schema.toString();

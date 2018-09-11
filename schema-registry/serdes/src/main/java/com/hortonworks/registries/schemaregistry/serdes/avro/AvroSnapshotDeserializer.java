@@ -21,8 +21,6 @@ import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +30,6 @@ import java.io.InputStream;
  * This is the default implementation of {@link AbstractAvroSnapshotDeserializer}.
  */
 public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<InputStream> {
-    private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
 
     public AvroSnapshotDeserializer() {
     }
@@ -79,7 +76,6 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
                                    SchemaMetadata schemaMetadata,
                                    Integer writerSchemaVersion,
                                    Integer readerSchemaVersion) throws SerDesException {
-
         return buildDeserializedObject(protocolId, payloadInputStream, schemaMetadata, writerSchemaVersion, readerSchemaVersion);
     }
     

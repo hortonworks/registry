@@ -37,7 +37,6 @@ public interface InbuiltSchemaVersionLifecycleState extends SchemaVersionLifecyc
 
     default void disable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
-
     }
 
     default void archive(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
