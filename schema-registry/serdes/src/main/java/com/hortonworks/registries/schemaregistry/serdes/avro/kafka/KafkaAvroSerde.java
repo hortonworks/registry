@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
+import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
@@ -26,8 +27,18 @@ public class KafkaAvroSerde implements Serde<Object> {
     public static final String KEY_SCHEMA_HEADER_NAME = "key_schema_header_name";
     public static final String VALUE_SCHEMA_HEADER_NAME = "value_schema_header_name";
 
-    private Serializer<Object> ser = new KafkaAvroSerializer();
-    private Deserializer<Object> deser = new KafkaAvroDeserializer();
+    private final Serializer<Object> ser;
+    private final Deserializer<Object> deser;
+
+    public KafkaAvroSerde() {
+        ser = new KafkaAvroSerializer();
+        deser = new KafkaAvroDeserializer();
+    }
+
+    public KafkaAvroSerde(ISchemaRegistryClient client) {
+        ser = new KafkaAvroSerializer(client);
+        deser = new KafkaAvroDeserializer(client);
+    }
 
     @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {

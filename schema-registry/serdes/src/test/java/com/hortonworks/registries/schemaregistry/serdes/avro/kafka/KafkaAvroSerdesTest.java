@@ -27,6 +27,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +39,9 @@ import org.junit.Test;
 public class KafkaAvroSerdesTest {
 
     private ISchemaRegistryClient schemaRegistryClient;
+    private final String topic = "topic";
+    private final Schema schema = new Schema.Parser().parse(
+            "{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
 
     @Before
     public void setup(){
@@ -44,36 +49,36 @@ public class KafkaAvroSerdesTest {
     }
 
     @Test
-    public void testGenericSerializedSpecificDeserialized() throws Exception {
+    public void testGenericSerializedSpecificDeserialized() {
         Map<String, Object> config = new HashMap<>();
         config.put(AvroSnapshotDeserializer.SPECIFIC_AVRO_READER, true);
         KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
         kafkaAvroDeserializer.configure(config, false);
-        
+
         KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer(schemaRegistryClient);
         kafkaAvroSerializer.configure(Collections.emptyMap(), false);
 
-        Schema schema = new Schema.Parser().parse("{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
-
         GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
 
+        byte[] payload = kafkaAvroSerializer.serialize(topic, record);
+        Object o = kafkaAvroDeserializer.deserialize(topic, payload);
+        checkGenericSerializedSpecificDeserializedEquals(record, o);
 
-        byte[] bytes = kafkaAvroSerializer.serialize("topic" , record);
-        
-        Object o = kafkaAvroDeserializer.deserialize("topic", bytes);
+        Headers headers = new RecordHeaders();
+        payload = kafkaAvroSerializer.serialize(topic, headers, record);
+        o = kafkaAvroDeserializer.deserialize(topic, headers, payload);
+        checkGenericSerializedSpecificDeserializedEquals(record, o);
+    }
 
+    private void checkGenericSerializedSpecificDeserializedEquals(GenericRecord expected, Object o) {
         Assert.assertEquals(o.getClass(), TestRecord.class);
-        
-        TestRecord result = (TestRecord) o; 
-        
-        Assert.assertEquals(record.get("field1"), result.getField1());
-        Assert.assertEquals(record.get("field2"), result.getField2());
-
-
+        TestRecord actual = (TestRecord) o;
+        Assert.assertEquals(expected.get("field1"), actual.getField1());
+        Assert.assertEquals(expected.get("field2"), actual.getField2());
     }
 
     @Test
-    public void testSpecificSerializedSpecificDeserialized() throws Exception {
+    public void testSpecificSerializedSpecificDeserialized() {
         Map<String, Object> config = new HashMap<>();
         config.put(AvroSnapshotDeserializer.SPECIFIC_AVRO_READER, true);
         KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
@@ -85,23 +90,26 @@ public class KafkaAvroSerdesTest {
         TestRecord record = new TestRecord();
         record.setField1("some value");
         record.setField1("some other value");
-        
-        byte[] bytes = kafkaAvroSerializer.serialize("topic" , record);
 
-        Object o = kafkaAvroDeserializer.deserialize("topic", bytes);
+        byte[] bytes = kafkaAvroSerializer.serialize(topic, record);
+        Object o = kafkaAvroDeserializer.deserialize(topic, bytes);
+        checkSpecificSerializedSpecificDeserializedEquals(record, o);
 
-        Assert.assertEquals(o.getClass(), TestRecord.class);
-
-        TestRecord result = (TestRecord) o;
-
-        Assert.assertEquals(record.getField1(), result.getField1());
-        Assert.assertEquals(record.getField2(), result.getField2());
-
+        Headers headers = new RecordHeaders();
+        bytes = kafkaAvroSerializer.serialize(topic, headers, record);
+        o = kafkaAvroDeserializer.deserialize(topic, headers, bytes);
+        checkSpecificSerializedSpecificDeserializedEquals(record, o);
     }
 
+    private void checkSpecificSerializedSpecificDeserializedEquals(TestRecord expected, Object o) {
+        Assert.assertEquals(o.getClass(), TestRecord.class);
+        TestRecord actual = (TestRecord) o;
+        Assert.assertEquals(expected.getField1(), actual.getField1());
+        Assert.assertEquals(expected.getField2(), actual.getField2());
+    }
 
     @Test
-    public void testSpecificSerializedGenericDeserialized() throws Exception {
+    public void testSpecificSerializedGenericDeserialized() {
         Map<String, Object> config = new HashMap<>();
         config.put(AvroSnapshotDeserializer.SPECIFIC_AVRO_READER, false);
         KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
@@ -114,21 +122,26 @@ public class KafkaAvroSerdesTest {
         record.setField1("some value");
         record.setField1("some other value");
 
-        byte[] bytes = kafkaAvroSerializer.serialize("topic" , record);
+        byte[] bytes = kafkaAvroSerializer.serialize(topic, record);
+        Object o = kafkaAvroDeserializer.deserialize(topic, bytes);
+        checkSpecificSerializedGenericDeserializedEquals(record, o);
 
-        Object o = kafkaAvroDeserializer.deserialize("topic", bytes);
+        Headers headers = new RecordHeaders();
+        bytes = kafkaAvroSerializer.serialize(topic, headers, record);
+        o = kafkaAvroDeserializer.deserialize(topic, headers, bytes);
+        checkSpecificSerializedGenericDeserializedEquals(record, o);
+    }
 
+    private void checkSpecificSerializedGenericDeserializedEquals(TestRecord expected, Object o) {
         Assert.assertEquals(o.getClass(), GenericData.Record.class);
-
         GenericRecord result = (GenericRecord) o;
-
-        Assert.assertEquals(record.getField1(), result.get("field1"));
-        Assert.assertEquals(record.getField2(), result.get("field2"));
-
+        Assert.assertEquals(expected.getField1(), result.get("field1"));
+        Assert.assertEquals(expected.getField2(), result.get("field2"));
     }
 
     @Test
-    public void testGenericSerializedGenericDeserialized() throws Exception {
+    public void testGenericSerializedGenericDeserialized() {
+        String topic = "topic";
         Map<String, Object> config = new HashMap<>();
         config.put(AvroSnapshotDeserializer.SPECIFIC_AVRO_READER, false);
         KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
@@ -137,20 +150,22 @@ public class KafkaAvroSerdesTest {
         KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer(schemaRegistryClient);
         kafkaAvroSerializer.configure(config, false);
 
-        Schema schema = new Schema.Parser().parse("{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
-
         GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
 
-        byte[] bytes = kafkaAvroSerializer.serialize("topic" , record);
+        byte[] bytes = kafkaAvroSerializer.serialize(topic , record);
+        Object o = kafkaAvroDeserializer.deserialize(topic, bytes);
+        checkGenericSerializedGenericDeserializedEquals(record, o);
 
-        Object o = kafkaAvroDeserializer.deserialize("topic", bytes);
+        Headers headers = new RecordHeaders();
+        bytes = kafkaAvroSerializer.serialize(topic, headers, record);
+        o = kafkaAvroDeserializer.deserialize(topic, headers, bytes);
+        checkGenericSerializedGenericDeserializedEquals(record, o);
+    }
 
+    private void checkGenericSerializedGenericDeserializedEquals(GenericRecord expected, Object o) {
         Assert.assertEquals(o.getClass(), GenericData.Record.class);
-
-        GenericRecord result = (GenericRecord) o;
-
-        Assert.assertEquals(record.get("field1"), result.get("field1"));
-        Assert.assertEquals(record.get("field2"), result.get("field2"));
-
+        GenericRecord actual = (GenericRecord) o;
+        Assert.assertEquals(expected.get("field1"), actual.get("field1"));
+        Assert.assertEquals(expected.get("field2"), actual.get("field2"));
     }
 }

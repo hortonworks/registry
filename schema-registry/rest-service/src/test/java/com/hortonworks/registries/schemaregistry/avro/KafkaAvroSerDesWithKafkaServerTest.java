@@ -22,6 +22,7 @@ import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRu
 import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestName;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerde;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -36,6 +37,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -72,6 +74,8 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
     @Rule
     public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
+
+    private final Random random = new Random();
 
     @CustomParameterizedRunner.Parameters
     public static Iterable<SchemaRegistryTestProfileType> profiles() {
@@ -152,9 +156,13 @@ public class KafkaAvroSerDesWithKafkaServerTest {
     }
 
     private void _testWithKafkaCluster(String topicName, Object msg) throws InterruptedException {
+        _testWithKafkaCluster(topicName, msg, random.nextBoolean());
+    }
+
+    private void _testWithKafkaCluster(String topicName, Object msg, boolean storeSchemaInHeader) throws InterruptedException {
         createTopic(topicName);
         try {
-            String bootstrapServers = produceMessage(topicName, msg);
+            String bootstrapServers = produceMessage(topicName, msg, storeSchemaInHeader);
 
             String consumerGroup = topicName + "-group-" + new Random().nextLong();
             ConsumerRecords<String, Object> consumerRecords = consumeMessage(topicName, bootstrapServers, consumerGroup);
@@ -162,6 +170,10 @@ public class KafkaAvroSerDesWithKafkaServerTest {
             Assert.assertEquals(1, consumerRecords.count());
 
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
+            final Headers headers = consumerRecord.headers();
+            Assert.assertEquals(storeSchemaInHeader, headers.lastHeader(KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME) != null);
+            Assert.assertEquals(storeSchemaInHeader, headers.lastHeader(KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME) != null);
+
             Object value = consumerRecord.value();
             Assert.assertEquals(getKey(msg), consumerRecord.key());
             AvroSchemaRegistryClientUtil.assertAvroObjs(msg, value);
@@ -187,7 +199,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         }
     }
 
-    private ConsumerRecords<String, Object> consumeMessage(String topicName, String bootstrapServers, String consumerGroup) throws InterruptedException {
+    private ConsumerRecords<String, Object> consumeMessage(String topicName, String bootstrapServers, String consumerGroup) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true));
@@ -223,13 +235,14 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         return consumerRecords;
     }
 
-    private String produceMessage(String topicName, Object msg) {
+    private String produceMessage(String topicName, Object msg, Boolean storeSchemaInHeader) {
         String bootstrapServers = CLUSTER.bootstrapServers();
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true));
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+        config.put(KafkaAvroSerializer.STORE_SCHEMA_IN_HEADER, storeSchemaInHeader.toString());
 
         final Producer<String, Object> producer = new KafkaProducer<>(config);
         final Callback callback = new ProducerCallback();
