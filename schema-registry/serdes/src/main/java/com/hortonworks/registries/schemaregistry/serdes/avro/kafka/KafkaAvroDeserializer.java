@@ -18,8 +18,8 @@ package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.Utils;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
-import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadata;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadataAvroDeserializer;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.ExtendedDeserializer;
@@ -84,18 +84,18 @@ public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
     private Map<String, Integer> readerVersions;
 
     private final AvroSnapshotDeserializer avroSnapshotDeserializer;
-    private final MessageContextBasedAvroDeserializer messageContextBasedAvroDeserializer;
+    private final MessageAndMetadataAvroDeserializer messageAndMetadataAvroDeserializer;
     private String keySchemaHeaderName;
     private String valueSchemaHeaderName;
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
-        messageContextBasedAvroDeserializer = new MessageContextBasedAvroDeserializer();
+        messageAndMetadataAvroDeserializer = new MessageAndMetadataAvroDeserializer();
     }
 
     public KafkaAvroDeserializer(ISchemaRegistryClient schemaRegistryClient) {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer(schemaRegistryClient);
-        messageContextBasedAvroDeserializer = new MessageContextBasedAvroDeserializer(schemaRegistryClient);
+        messageAndMetadataAvroDeserializer = new MessageAndMetadataAvroDeserializer(schemaRegistryClient);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
         readerVersions = versions != null ? versions : Collections.emptyMap();
 
         avroSnapshotDeserializer.init(configs);
-        messageContextBasedAvroDeserializer.init(configs);
+        messageAndMetadataAvroDeserializer.init(configs);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
         if (headers != null) {
             final Header header = headers.lastHeader(isKey ? keySchemaHeaderName : valueSchemaHeaderName);
             if (header != null) {
-                return messageContextBasedAvroDeserializer.deserialize(new MessageContext(header.value(), data), readerVersions.get(topic));
+                return messageAndMetadataAvroDeserializer.deserialize(new MessageAndMetadata(header.value(), data), readerVersions.get(topic));
             }
         }
         return deserialize(topic, data);
@@ -138,7 +138,7 @@ public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
     @Override
     public void close() {
         try {
-            Utils.closeAll(avroSnapshotDeserializer, messageContextBasedAvroDeserializer);
+            Utils.closeAll(avroSnapshotDeserializer, messageAndMetadataAvroDeserializer);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

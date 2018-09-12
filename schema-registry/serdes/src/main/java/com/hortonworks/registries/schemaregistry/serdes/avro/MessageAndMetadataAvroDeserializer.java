@@ -27,17 +27,17 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroExce
 
 import java.io.ByteArrayInputStream;
 
-public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDeserializer<MessageContext> {
+public class MessageAndMetadataAvroDeserializer extends AbstractAvroSnapshotDeserializer<MessageAndMetadata> {
 
-    public MessageContextBasedAvroDeserializer() {
+    public MessageAndMetadataAvroDeserializer() {
     }
 
-    public MessageContextBasedAvroDeserializer(ISchemaRegistryClient schemaRegistryClient) {
+    public MessageAndMetadataAvroDeserializer(ISchemaRegistryClient schemaRegistryClient) {
         super(schemaRegistryClient);
     }
 
     @Override
-    public Object deserialize(MessageContext context,
+    public Object deserialize(MessageAndMetadata context,
                               Integer readerSchemaVersion) throws SerDesException {
         byte protocolId = retrieveProtocolId(context);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, context);
@@ -53,7 +53,7 @@ public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDes
     }
 
     @Override
-    protected Object doDeserialize(MessageContext context,
+    protected Object doDeserialize(MessageAndMetadata context,
                                    byte protocolId,
                                    SchemaMetadata schemaMetadata,
                                    Integer writerSchemaVersion,
@@ -63,7 +63,7 @@ public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDes
     }
 
     @Override
-    protected byte retrieveProtocolId(MessageContext context) throws SerDesException {
+    protected byte retrieveProtocolId(MessageAndMetadata context) throws SerDesException {
         final byte[] metadata = context.metadata();
         byte protocolId = metadata[0];
         checkProtocolHandlerExists(protocolId);
@@ -77,7 +77,7 @@ public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDes
     }
 
     @Override
-    protected SchemaIdVersion retrieveSchemaIdVersion(byte protocolId, MessageContext context) throws SerDesException {
+    protected SchemaIdVersion retrieveSchemaIdVersion(byte protocolId, MessageAndMetadata context) throws SerDesException {
         final byte[] metadata = context.metadata();
         return SerDesProtocolHandlerRegistry.get()
                 .getSerDesProtocolHandler(protocolId)

@@ -21,8 +21,8 @@ import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.Utils;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
-import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
-import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroSerializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadata;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadataAvroSerializer;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.ExtendedSerializer;
 
@@ -51,7 +51,7 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     private boolean isKey;
     private final AvroSnapshotSerializer avroSnapshotSerializer;
 
-    private final MessageContextBasedAvroSerializer messageContextBasedAvroSerializer;
+    private final MessageAndMetadataAvroSerializer messageAndMetadataAvroSerializer;
     private String keySchemaHeaderName;
     private String valueSchemaHeaderName;
     private boolean useRecordHeader;
@@ -64,12 +64,12 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
 
     public KafkaAvroSerializer() {
         avroSnapshotSerializer = new AvroSnapshotSerializer();
-        messageContextBasedAvroSerializer = new MessageContextBasedAvroSerializer();
+        messageAndMetadataAvroSerializer = new MessageAndMetadataAvroSerializer();
     }
 
     public KafkaAvroSerializer(ISchemaRegistryClient schemaRegistryClient) {
         avroSnapshotSerializer = new AvroSnapshotSerializer(schemaRegistryClient);
-        messageContextBasedAvroSerializer = new MessageContextBasedAvroSerializer(schemaRegistryClient);
+        messageAndMetadataAvroSerializer = new MessageAndMetadataAvroSerializer(schemaRegistryClient);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
         useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, STORE_SCHEMA_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_ID_IN_HEADER));
 
         avroSnapshotSerializer.init(configs);
-        messageContextBasedAvroSerializer.init(configs);
+        messageAndMetadataAvroSerializer.init(configs);
     }
 
     @Override
@@ -105,7 +105,7 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     @Override
     public byte[] serialize(String topic, Headers headers, Object data) {
         if (useRecordHeader) {
-            final MessageContext context = messageContextBasedAvroSerializer.serialize(data, createSchemaMetadata(topic));
+            final MessageAndMetadata context = messageAndMetadataAvroSerializer.serialize(data, createSchemaMetadata(topic));
             headers.add(isKey ? keySchemaHeaderName : valueSchemaHeaderName, context.metadata());
             return context.payload();
         } else {
@@ -137,7 +137,7 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     @Override
     public void close() {
         try {
-            Utils.closeAll(avroSnapshotSerializer, messageContextBasedAvroSerializer);
+            Utils.closeAll(avroSnapshotSerializer, messageAndMetadataAvroSerializer);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

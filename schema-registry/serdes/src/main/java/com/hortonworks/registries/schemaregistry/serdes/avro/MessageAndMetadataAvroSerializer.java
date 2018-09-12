@@ -25,17 +25,17 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetr
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class MessageContextBasedAvroSerializer extends AbstractAvroSnapshotSerializer<MessageContext> {
+public class MessageAndMetadataAvroSerializer extends AbstractAvroSnapshotSerializer<MessageAndMetadata> {
 
-    public MessageContextBasedAvroSerializer() {
+    public MessageAndMetadataAvroSerializer() {
     }
 
-    public MessageContextBasedAvroSerializer(ISchemaRegistryClient schemaRegistryClient) {
+    public MessageAndMetadataAvroSerializer(ISchemaRegistryClient schemaRegistryClient) {
         super(schemaRegistryClient);
     }
 
     @Override
-    protected MessageContext doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
+    protected MessageAndMetadata doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             serializeSchemaVersion(baos, schemaIdVersion);
             byte[] header = baos.toByteArray();
@@ -43,7 +43,7 @@ public class MessageContextBasedAvroSerializer extends AbstractAvroSnapshotSeria
 
             serializePayload(baos, input);
             byte[] payload = baos.toByteArray();
-            return new MessageContext(header, payload);
+            return new MessageAndMetadata(header, payload);
         } catch (IOException ex) {
             throw new AvroRetryableException(ex);
         }
