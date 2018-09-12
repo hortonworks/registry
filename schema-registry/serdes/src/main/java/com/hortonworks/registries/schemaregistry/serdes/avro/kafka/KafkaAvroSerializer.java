@@ -29,7 +29,42 @@ import org.apache.kafka.common.serialization.ExtendedSerializer;
 import java.util.Map;
 
 /**
+ * KafkaAvroSerializer serializes the input data using Avro and registers the corresponding schema in the
+ * Schema Registry if it's doesn't exists.
  *
+ * <p>
+ * It is configurable to store the {@link com.hortonworks.registries.schemaregistry.SchemaIdVersion} either in
+ * the message payload [or] Kafka Record header.
+ * <ul>
+ *     <li> Kafka Record Header feature is introduced in v0.11.0. Storing schema information in Record Header have some advantages.
+ *         You can use pure Avro serializer to serialize your payload.</li>
+ *     <li> Kafka version with lesser than v0.11.0 should store the schema information with the payload.</li>
+ * </ul>
+ * </p>
+ *
+ * (ex)
+ * <pre>
+ *     final Properties props = new Properties();
+ *     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+ *     props.put(ProducerConfig.CLIENT_ID_CONFIG, "bottleProducer");
+ *
+ *     // schema registry config
+ *     props.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl);
+ *
+ *     // key serializer
+ *     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+ *     // value serializer
+ *     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+ *
+ *     // If {@code True}, stores the schema information in the Record Header. Otherwise, stores the schema information
+ *     // with the payload. (Refer: {@link KafkaAvroSerializer#DEFAULT_STORE_SCHEMA_ID_IN_HEADER})
+ *     props.put(KafkaAvroSerializer.STORE_SCHEMA_ID_IN_HEADER, "true");
+ *
+ *     try (KafkaProducer<> producer = new KafkaProducer<>(props)) {
+ *         ...
+ *     }
+ *
+ * </pre>
  */
 public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
 
