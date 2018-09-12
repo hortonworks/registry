@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serdes.Utils;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroDeserializer;
@@ -101,21 +102,21 @@ public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
     @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {
         this.isKey = isKey;
-        this.keySchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
-        this.valueSchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
+        this.keySchemaHeaderName = Utils.getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
+        if (keySchemaHeaderName == null || keySchemaHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("KeySchemaHeaderName should not be null or empty");
+        }
+
+        this.valueSchemaHeaderName = Utils.getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
+        if (valueSchemaHeaderName == null || valueSchemaHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("ValueSchemaHeaderName should not be null or empty");
+        }
+
         Map<String, Integer> versions = (Map<String, Integer>) ((Map<String, Object>) configs).get(READER_VERSIONS);
         readerVersions = versions != null ? versions : Collections.emptyMap();
 
         avroSnapshotDeserializer.init(configs);
         messageContextBasedAvroDeserializer.init(configs);
-    }
-
-    private static String getOrDefault(Map<String, ?> configs, String key, String defaultValue) {
-        String value = (String) configs.get(key);
-        if (value == null || value.trim().isEmpty()) {
-            value = defaultValue;
-        }
-        return value;
     }
 
     @Override
@@ -137,8 +138,7 @@ public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
     @Override
     public void close() {
         try {
-            avroSnapshotDeserializer.close();
-            messageContextBasedAvroDeserializer.close();
+            Utils.closeAll(avroSnapshotDeserializer, messageContextBasedAvroDeserializer);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

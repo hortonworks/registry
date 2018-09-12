@@ -75,8 +75,6 @@ public class KafkaAvroSerDesWithKafkaServerTest {
     @Rule
     public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
 
-    private final Random random = new Random();
-
     @CustomParameterizedRunner.Parameters
     public static Iterable<SchemaRegistryTestProfileType> profiles() {
         return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
@@ -137,32 +135,33 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         Object[] msgs = AvroSchemaRegistryClientUtil.generatePrimitivePayloads();
 
-        _testWithKafkaCluster(topicPrefix, msgs);
+        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix, msgs);
     }
 
     @Test
     public void testAvroRecordsInKafkaCluster() throws Exception {
         String topicPrefix = TEST_NAME_RULE.getMethodName();
 
-        _testWithKafkaCluster(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
-        _testWithKafkaCluster(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
+        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
+        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
     }
 
-    private void _testWithKafkaCluster(String topicPrefix, Object[] msgs) throws InterruptedException {
+    private void _testByStoringSchemaIdInHeaderOrPayload(String topicPrefix, Object[] msgs) throws InterruptedException {
         for (Object msg : msgs) {
             String topicName = topicPrefix + (msg != null ? msg.getClass().getName().replace("$", "_") : "null");
-            _testWithKafkaCluster(topicName, msg);
+            _testByStoringSchemaIdInHeaderOrPayload(topicName, msg);
         }
     }
 
-    private void _testWithKafkaCluster(String topicName, Object msg) throws InterruptedException {
-        _testWithKafkaCluster(topicName, msg, random.nextBoolean());
+    private void _testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg) throws InterruptedException {
+        _testByStoringSchemaIdInHeaderOrPayload(topicName, msg, false);
+        _testByStoringSchemaIdInHeaderOrPayload(topicName, msg, true);
     }
 
-    private void _testWithKafkaCluster(String topicName, Object msg, boolean storeSchemaInHeader) throws InterruptedException {
+    private void _testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg, boolean storeSchemaIdInHeader) throws InterruptedException {
         createTopic(topicName);
         try {
-            String bootstrapServers = produceMessage(topicName, msg, storeSchemaInHeader);
+            String bootstrapServers = produceMessage(topicName, msg, storeSchemaIdInHeader);
 
             String consumerGroup = topicName + "-group-" + new Random().nextLong();
             ConsumerRecords<String, Object> consumerRecords = consumeMessage(topicName, bootstrapServers, consumerGroup);
@@ -171,8 +170,8 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
             final Headers headers = consumerRecord.headers();
-            Assert.assertEquals(storeSchemaInHeader, headers.lastHeader(KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME) != null);
-            Assert.assertEquals(storeSchemaInHeader, headers.lastHeader(KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME) != null);
+            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME) != null);
+            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME) != null);
 
             Object value = consumerRecord.value();
             Assert.assertEquals(getKey(msg), consumerRecord.key());
@@ -242,7 +241,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         config.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true));
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-        config.put(KafkaAvroSerializer.STORE_SCHEMA_IN_HEADER, storeSchemaInHeader.toString());
+        config.put(KafkaAvroSerializer.STORE_SCHEMA_ID_IN_HEADER, storeSchemaInHeader.toString());
 
         final Producer<String, Object> producer = new KafkaProducer<>(config);
         final Callback callback = new ProducerCallback();
@@ -274,12 +273,12 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         // send initial message
         Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
-        _testWithKafkaCluster(topic, initialMsg);
+        _testByStoringSchemaIdInHeaderOrPayload(topic, initialMsg);
 
         // send a message with incompatible version of the schema
         Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
-            _testWithKafkaCluster(topic, incompatMsg);
+            _testByStoringSchemaIdInHeaderOrPayload(topic, incompatMsg);
             Assert.fail("An error should have been received here because of incompatible schemas");
         } catch (Exception e) {
             // should have received an error.
@@ -287,7 +286,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         // send a message with compatible version of the schema
         Object compatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForCompatDevice();
-        _testWithKafkaCluster(topic, compatMsg);
+        _testByStoringSchemaIdInHeaderOrPayload(topic, compatMsg);
     }
 
 }

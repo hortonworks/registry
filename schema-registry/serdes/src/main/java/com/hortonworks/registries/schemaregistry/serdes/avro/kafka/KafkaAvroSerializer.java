@@ -19,6 +19,7 @@ import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serdes.Utils;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContext;
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageContextBasedAvroSerializer;
@@ -40,12 +41,12 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     public static final String SCHEMA_GROUP = "schema.group";
     public static final String SCHEMA_NAME_KEY_SUFFIX_ = "schema.name.key.suffix";
     public static final String SCHEMA_NAME_VALUE_SUFFIX_= "schema.name.value.suffix";
-    public static final String STORE_SCHEMA_IN_HEADER = "store.schema.in.header";
+    public static final String STORE_SCHEMA_ID_IN_HEADER = "store.schema-id.in.header";
 
     public static final String DEFAULT_SCHEMA_GROUP = "kafka";
     public static final String DEFAULT_SCHEMA_NAME_KEY_SUFFIX = ":k";
     public static final String DEFAULT_SCHEMA_NAME_VALUE_SUFFIX = null;
-    public static final String DEFAULT_STORE_SCHEMA_IN_HEADER = "true";
+    public static final String DEFAULT_STORE_SCHEMA_ID_IN_HEADER = "false";
 
     private boolean isKey;
     private final AvroSnapshotSerializer avroSnapshotSerializer;
@@ -75,25 +76,25 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     public void configure(Map<String, ?> configs, boolean isKey) {
         compatibility = (SchemaCompatibility) configs.get(SCHEMA_COMPATIBILITY);
 
-        schemaGroup = getOrDefault(configs, SCHEMA_GROUP, DEFAULT_SCHEMA_GROUP);
-        schemaNameKeySuffix = getOrDefault(configs, SCHEMA_NAME_KEY_SUFFIX_, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
-        schemaNameValueSuffix = getOrDefault(configs, SCHEMA_NAME_VALUE_SUFFIX_, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
+        schemaGroup = Utils.getOrDefaultAsString(configs, SCHEMA_GROUP, DEFAULT_SCHEMA_GROUP);
+        schemaNameKeySuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_KEY_SUFFIX_, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
+        schemaNameValueSuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_VALUE_SUFFIX_, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
 
         this.isKey = isKey;
-        keySchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
-        valueSchemaHeaderName = getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
-        useRecordHeader = Boolean.valueOf(getOrDefault(configs, STORE_SCHEMA_IN_HEADER, DEFAULT_STORE_SCHEMA_IN_HEADER));
+        keySchemaHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
+        if (keySchemaHeaderName == null || keySchemaHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("KeySchemaHeaderName cannot be null or empty");
+        }
+
+        valueSchemaHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
+        if (valueSchemaHeaderName == null || valueSchemaHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("ValueSchemaHeaderName cannot be null or empty");
+        }
+
+        useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, STORE_SCHEMA_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_ID_IN_HEADER));
 
         avroSnapshotSerializer.init(configs);
         messageContextBasedAvroSerializer.init(configs);
-    }
-
-    private static String getOrDefault(Map<String, ?> configs, String key, String defaultValue) {
-        String value = (String) configs.get(key);
-        if (value == null || value.trim().isEmpty()) {
-            value = defaultValue;
-        }
-        return value;
     }
 
     @Override
@@ -136,10 +137,9 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     @Override
     public void close() {
         try {
-            avroSnapshotSerializer.close();
-            messageContextBasedAvroSerializer.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            Utils.closeAll(avroSnapshotSerializer, messageContextBasedAvroSerializer);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 }
