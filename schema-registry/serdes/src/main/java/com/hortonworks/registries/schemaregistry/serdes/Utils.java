@@ -19,7 +19,10 @@ package com.hortonworks.registries.schemaregistry.serdes;
 
 import java.util.Map;
 
-public class Utils {
+public final class Utils {
+
+    private Utils() {
+    }
 
     public static void closeAll(AutoCloseable... closeables) throws Exception {
         Exception exception = null;
@@ -38,8 +41,20 @@ public class Utils {
             throw exception;
     }
 
-    public static String getOrDefaultAsString(Map<String, ?> configs, String key, String defaultValue) {
-        String value = (String) configs.get(key);
+    /**
+     * Returns the value to which the specified key is mapped or
+     * {@code defaultValue} if the provided map contains no mapping for the key /
+     * the trimmed value is empty.
+     *
+     * @param map the mappings
+     * @param key the key whose associated value is to be returned
+     * @param defaultValue the default mapping of the key
+     * @return the value to which the specified key is mapped or
+     * {@code defaultValue} if the provided map contains no mapping for the key /
+     * the trimmed value is empty.
+     */
+    public static String getOrDefaultAsString(Map<String, ?> map, String key, String defaultValue) {
+        String value = (String) map.get(key);
         if (value == null || value.trim().isEmpty()) {
             value = defaultValue;
         }
@@ -47,8 +62,8 @@ public class Utils {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T getOrDefault(Map<String, ?> configs, String key, T defaultValue) {
-        T result = (T) configs.get(key);
-        return result != null ? result : defaultValue;
+    public static <T> T getOrDefault(Map<String, ?> map, String key, T defaultValue) {
+        T value = (T) map.get(key);
+        return value != null ? value : defaultValue;
     }
 }

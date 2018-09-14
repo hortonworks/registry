@@ -170,8 +170,8 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
             final Headers headers = consumerRecord.headers();
-            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME) != null);
-            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME) != null);
+            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID) != null);
+            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID) != null);
 
             Object value = consumerRecord.value();
             Assert.assertEquals(getKey(msg), consumerRecord.key());
@@ -241,7 +241,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         config.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true));
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-        config.put(KafkaAvroSerializer.STORE_SCHEMA_ID_IN_HEADER, storeSchemaInHeader.toString());
+        config.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, storeSchemaInHeader.toString());
 
         final Producer<String, Object> producer = new KafkaProducer<>(config);
         final Callback callback = new ProducerCallback();

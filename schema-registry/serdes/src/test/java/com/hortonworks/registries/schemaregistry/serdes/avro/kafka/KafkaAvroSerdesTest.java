@@ -178,7 +178,7 @@ public class KafkaAvroSerdesTest {
 
     @Test
     public void testDefaultSchemaHeaderNames() {
-        testSchemaHeaderNames(KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
+        testSchemaHeaderNames(KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
     }
 
     @Test
@@ -193,9 +193,9 @@ public class KafkaAvroSerdesTest {
         record.setField2("World");
 
         Map<String, Object> configs = new HashMap<>();
-        configs.put(KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, customKeySchemaHeaderName);
-        configs.put(KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, customValueSchemaHeaderName);
-        configs.put(KafkaAvroSerializer.STORE_SCHEMA_ID_IN_HEADER, "true");
+        configs.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, customKeySchemaHeaderName);
+        configs.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, customValueSchemaHeaderName);
+        configs.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, "true");
         configs.put(AbstractAvroSnapshotDeserializer.SPECIFIC_AVRO_READER, true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -211,7 +211,7 @@ public class KafkaAvroSerdesTest {
             final byte[] bytes = serializer.serialize(topic, headers, record);
             Assert.assertArrayEquals(outputStream.toByteArray(), bytes);
             Assert.assertEquals(isKey, headers.lastHeader(customKeySchemaHeaderName) != null);
-            Assert.assertEquals(isKey, headers.lastHeader(customValueSchemaHeaderName) == null);
+            Assert.assertEquals(!isKey, headers.lastHeader(customValueSchemaHeaderName) != null);
 
             final ExtendedDeserializer<Object> deserializer = serde.extendedDeserializer();
             deserializer.configure(configs, isKey);
@@ -225,11 +225,11 @@ public class KafkaAvroSerdesTest {
         TestRecord record = new TestRecord();
         record.setField1("Hello");
         record.setField2("World");
-        String keySchemaHeaderName = KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME;
+        String keySchemaHeaderName = KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID;
 
         for (Boolean storeScheamIdInHeader : Arrays.asList(true, false)) {
             Map<String, Object> configs = new HashMap<>();
-            configs.put(KafkaAvroSerializer.STORE_SCHEMA_ID_IN_HEADER, storeScheamIdInHeader.toString());
+            configs.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, storeScheamIdInHeader.toString());
             configs.put(AbstractAvroSnapshotDeserializer.SPECIFIC_AVRO_READER, true);
 
             KafkaAvroSerde serde = new KafkaAvroSerde(schemaRegistryClient);

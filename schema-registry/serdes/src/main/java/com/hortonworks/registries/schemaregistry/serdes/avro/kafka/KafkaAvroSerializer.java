@@ -30,11 +30,11 @@ import java.util.Map;
 
 /**
  * KafkaAvroSerializer serializes the input data using Avro and registers the corresponding schema in the
- * Schema Registry if it's doesn't exists.
+ * Schema Registry if it doesn't exist.
  *
  * <p>
  * It is configurable to store the {@link com.hortonworks.registries.schemaregistry.SchemaIdVersion} either in
- * the message payload [or] Kafka Record header.
+ * the message payload [or] in the Kafka Record header.
  * <ul>
  *     <li> Kafka Record Header feature is introduced in v0.11.0. Storing schema information in Record Header have some advantages.
  *         You can use pure Avro serializer to serialize your payload.</li>
@@ -47,18 +47,17 @@ import java.util.Map;
  *     final Properties props = new Properties();
  *     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
  *     props.put(ProducerConfig.CLIENT_ID_CONFIG, "bottleProducer");
- *
- *     // schema registry config
- *     props.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl);
- *
- *     // key serializer
- *     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
- *     // value serializer
- *     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+ *     props.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl); // schema registry config
+ *     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName()); // key serializer
+ *     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName()); // value serializer
  *
  *     // If {@code True}, stores the schema information in the Record Header. Otherwise, stores the schema information
- *     // with the payload. (Refer: {@link KafkaAvroSerializer#DEFAULT_STORE_SCHEMA_ID_IN_HEADER})
- *     props.put(KafkaAvroSerializer.STORE_SCHEMA_ID_IN_HEADER, "true");
+ *     // with the payload. (Refer: {@link KafkaAvroSerializer#DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER})
+ *     props.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, "true");
+ *
+ *     // Optional configuration to rename the key / value schema header name if STORE_SCHEMA_VERSION_ID_IN_HEADER is enabled
+ *     props.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, "ksvid");
+ *     props.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, "vsvid");
  *
  *     try (KafkaProducer<> producer = new KafkaProducer<>(props)) {
  *         ...
@@ -76,19 +75,19 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     public static final String SCHEMA_GROUP = "schema.group";
     public static final String SCHEMA_NAME_KEY_SUFFIX_ = "schema.name.key.suffix";
     public static final String SCHEMA_NAME_VALUE_SUFFIX_= "schema.name.value.suffix";
-    public static final String STORE_SCHEMA_ID_IN_HEADER = "store.schema-id.in.header";
+    public static final String STORE_SCHEMA_VERSION_ID_IN_HEADER = "store.schema.version.id.in.header";
 
     public static final String DEFAULT_SCHEMA_GROUP = "kafka";
     public static final String DEFAULT_SCHEMA_NAME_KEY_SUFFIX = ":k";
     public static final String DEFAULT_SCHEMA_NAME_VALUE_SUFFIX = null;
-    public static final String DEFAULT_STORE_SCHEMA_ID_IN_HEADER = "false";
+    public static final String DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER = "false";
 
     private boolean isKey;
     private final AvroSnapshotSerializer avroSnapshotSerializer;
 
     private final MessageAndMetadataAvroSerializer messageAndMetadataAvroSerializer;
-    private String keySchemaHeaderName;
-    private String valueSchemaHeaderName;
+    private String keySchemaVersionIdHeaderName;
+    private String valueSchemaVersionIdHeaderName;
     private boolean useRecordHeader;
 
     private SchemaCompatibility compatibility;
@@ -116,17 +115,17 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
         schemaNameValueSuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_VALUE_SUFFIX_, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
 
         this.isKey = isKey;
-        keySchemaHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME, KafkaAvroSerde.KEY_SCHEMA_HEADER_NAME);
-        if (keySchemaHeaderName == null || keySchemaHeaderName.isEmpty()) {
-            throw new IllegalArgumentException("KeySchemaHeaderName cannot be null or empty");
+        keySchemaVersionIdHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID);
+        if (keySchemaVersionIdHeaderName == null || keySchemaVersionIdHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("keySchemaVersionIdHeaderName should not be null or empty");
         }
 
-        valueSchemaHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME, KafkaAvroSerde.VALUE_SCHEMA_HEADER_NAME);
-        if (valueSchemaHeaderName == null || valueSchemaHeaderName.isEmpty()) {
-            throw new IllegalArgumentException("ValueSchemaHeaderName cannot be null or empty");
+        valueSchemaVersionIdHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
+        if (valueSchemaVersionIdHeaderName == null || valueSchemaVersionIdHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("valueSchemaVersionIdHeaderName should not be null or empty");
         }
 
-        useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, STORE_SCHEMA_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_ID_IN_HEADER));
+        useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, STORE_SCHEMA_VERSION_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER));
 
         avroSnapshotSerializer.init(configs);
         messageAndMetadataAvroSerializer.init(configs);
@@ -141,7 +140,7 @@ public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
     public byte[] serialize(String topic, Headers headers, Object data) {
         if (useRecordHeader) {
             final MessageAndMetadata context = messageAndMetadataAvroSerializer.serialize(data, createSchemaMetadata(topic));
-            headers.add(isKey ? keySchemaHeaderName : valueSchemaHeaderName, context.metadata());
+            headers.add(isKey ? keySchemaVersionIdHeaderName : valueSchemaVersionIdHeaderName, context.metadata());
             return context.payload();
         } else {
             return serialize(topic, data);

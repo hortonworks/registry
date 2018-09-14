@@ -38,12 +38,12 @@ public class MessageAndMetadataAvroSerializer extends AbstractAvroSnapshotSerial
     protected MessageAndMetadata doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             serializeSchemaVersion(baos, schemaIdVersion);
-            byte[] header = baos.toByteArray();
+            byte[] serializedSchemaVersion = baos.toByteArray();
             baos.reset();
 
             serializePayload(baos, input);
             byte[] payload = baos.toByteArray();
-            return new MessageAndMetadata(header, payload);
+            return new MessageAndMetadata(serializedSchemaVersion, payload);
         } catch (IOException ex) {
             throw new AvroRetryableException(ex);
         }

@@ -26,8 +26,11 @@ import java.util.Map;
 
 public class KafkaAvroSerde implements Serde<Object> {
 
-    public static final String KEY_SCHEMA_HEADER_NAME = "key_schema_header_name";
-    public static final String VALUE_SCHEMA_HEADER_NAME = "value_schema_header_name";
+    public static final String KEY_SCHEMA_VERSION_ID_HEADER_NAME = "key_schema_version_id_header_name";
+    public static final String VALUE_SCHEMA_VERSION_ID_HEADER_NAME = "value_schema_version_id_header_name";
+
+    public static final String DEFAULT_KEY_SCHEMA_VERSION_ID = "key.schema.version.id";
+    public static final String DEFAULT_VALUE_SCHEMA_VERSION_ID = "value.schema.version.id";
 
     private final ExtendedSerializer<Object> ser;
     private final ExtendedDeserializer<Object> deser;
