@@ -44,6 +44,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +107,7 @@ public class KafkaAvroSerDesApp {
             String line;
             while (current++ < limit && (line = bufferedReader.readLine()) != null) {
                 // convert json to avro records
-                Object avroMsg = null;
+                Object avroMsg;
                 try {
                     avroMsg = jsonToAvro(line, schema);
                 } catch (Exception ex) {
@@ -140,7 +141,7 @@ public class KafkaAvroSerDesApp {
     }
 
     private Object jsonToAvro(String jsonString, Schema schema) throws Exception {
-        DatumReader<Object> reader = new GenericDatumReader<Object>(schema);
+        DatumReader<Object> reader = new GenericDatumReader<>(schema);
         Object object = reader.read(null, DecoderFactory.get().jsonDecoder(schema, jsonString));
 
         if (schema.getType().equals(Schema.Type.STRING)) {
@@ -158,7 +159,7 @@ public class KafkaAvroSerDesApp {
 
     public void consumeMessages() throws Exception {
         Properties props = new Properties();
-        try (FileInputStream inputStream = new FileInputStream(this.consumerProps);) {
+        try (FileInputStream inputStream = new FileInputStream(this.consumerProps)) {
             props.load(inputStream);
         }
         String topicName = props.getProperty(TOPIC);
@@ -169,7 +170,8 @@ public class KafkaAvroSerDesApp {
             ConsumerRecords<String, Object> records = consumer.poll(1000);
             LOG.info("records size " + records.count());
             for (ConsumerRecord<String, Object> record : records) {
-                LOG.info("Received message: (" + record.key() + ", " + record.value() + ") at offset " + record.offset());
+                LOG.info("Received message: (" + record.key() + ", " + record.value() + ") at offset " + record.offset()
+                        + " with headers : " + Arrays.toString(record.headers().toArray()));
             }
         }
     }
@@ -195,7 +197,7 @@ public class KafkaAvroSerDesApp {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         Option sendMessages = Option.builder("sm").longOpt("send-messages").desc("Send Messages to Kafka").type(Boolean.class).build();
         Option consumeMessages = Option.builder("cm").longOpt("consume-messages").desc("Consume Messages from Kafka").type(Boolean.class).build();

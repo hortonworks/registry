@@ -22,6 +22,7 @@ import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRu
 import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestName;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerde;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -36,6 +37,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -133,28 +135,33 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         Object[] msgs = AvroSchemaRegistryClientUtil.generatePrimitivePayloads();
 
-        _testWithKafkaCluster(topicPrefix, msgs);
+        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix, msgs);
     }
 
     @Test
     public void testAvroRecordsInKafkaCluster() throws Exception {
         String topicPrefix = TEST_NAME_RULE.getMethodName();
 
-        _testWithKafkaCluster(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
-        _testWithKafkaCluster(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
+        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
+        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
     }
 
-    private void _testWithKafkaCluster(String topicPrefix, Object[] msgs) throws InterruptedException {
+    private void _testByStoringSchemaIdInHeaderOrPayload(String topicPrefix, Object[] msgs) throws InterruptedException {
         for (Object msg : msgs) {
             String topicName = topicPrefix + (msg != null ? msg.getClass().getName().replace("$", "_") : "null");
-            _testWithKafkaCluster(topicName, msg);
+            _testByStoringSchemaIdInHeaderOrPayload(topicName, msg);
         }
     }
 
-    private void _testWithKafkaCluster(String topicName, Object msg) throws InterruptedException {
+    private void _testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg) throws InterruptedException {
+        _testByStoringSchemaIdInHeaderOrPayload(topicName, msg, false);
+        _testByStoringSchemaIdInHeaderOrPayload(topicName, msg, true);
+    }
+
+    private void _testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg, boolean storeSchemaIdInHeader) throws InterruptedException {
         createTopic(topicName);
         try {
-            String bootstrapServers = produceMessage(topicName, msg);
+            String bootstrapServers = produceMessage(topicName, msg, storeSchemaIdInHeader);
 
             String consumerGroup = topicName + "-group-" + new Random().nextLong();
             ConsumerRecords<String, Object> consumerRecords = consumeMessage(topicName, bootstrapServers, consumerGroup);
@@ -162,6 +169,10 @@ public class KafkaAvroSerDesWithKafkaServerTest {
             Assert.assertEquals(1, consumerRecords.count());
 
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
+            final Headers headers = consumerRecord.headers();
+            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID) != null);
+            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID) != null);
+
             Object value = consumerRecord.value();
             Assert.assertEquals(getKey(msg), consumerRecord.key());
             AvroSchemaRegistryClientUtil.assertAvroObjs(msg, value);
@@ -187,7 +198,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         }
     }
 
-    private ConsumerRecords<String, Object> consumeMessage(String topicName, String bootstrapServers, String consumerGroup) throws InterruptedException {
+    private ConsumerRecords<String, Object> consumeMessage(String topicName, String bootstrapServers, String consumerGroup) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true));
@@ -223,13 +234,14 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         return consumerRecords;
     }
 
-    private String produceMessage(String topicName, Object msg) {
+    private String produceMessage(String topicName, Object msg, Boolean storeSchemaInHeader) {
         String bootstrapServers = CLUSTER.bootstrapServers();
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.putAll(SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.exportClientConf(true));
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+        config.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, storeSchemaInHeader.toString());
 
         final Producer<String, Object> producer = new KafkaProducer<>(config);
         final Callback callback = new ProducerCallback();
@@ -261,12 +273,12 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         // send initial message
         Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
-        _testWithKafkaCluster(topic, initialMsg);
+        _testByStoringSchemaIdInHeaderOrPayload(topic, initialMsg);
 
         // send a message with incompatible version of the schema
         Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
-            _testWithKafkaCluster(topic, incompatMsg);
+            _testByStoringSchemaIdInHeaderOrPayload(topic, incompatMsg);
             Assert.fail("An error should have been received here because of incompatible schemas");
         } catch (Exception e) {
             // should have received an error.
@@ -274,7 +286,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         // send a message with compatible version of the schema
         Object compatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForCompatDevice();
-        _testWithKafkaCluster(topic, compatMsg);
+        _testByStoringSchemaIdInHeaderOrPayload(topic, compatMsg);
     }
 
 }
