@@ -34,9 +34,9 @@ public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDes
                                    Integer writerSchemaVersion,
                                    Integer readerSchemaVersion) throws SerDesException {
         return buildDeserializedObject(protocolId,
-                                       input.payloadEntity,
-                                       schemaMetadata,
-                                       writerSchemaVersion, readerSchemaVersion);
+                input.payloadEntity,
+                schemaMetadata,
+                writerSchemaVersion, readerSchemaVersion);
     }
 
     @Override
