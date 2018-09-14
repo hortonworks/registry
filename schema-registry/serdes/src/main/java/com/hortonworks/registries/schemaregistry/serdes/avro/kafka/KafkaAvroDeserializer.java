@@ -16,8 +16,13 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
+import com.hortonworks.registries.schemaregistry.serdes.Utils;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
-import org.apache.kafka.common.serialization.Deserializer;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadata;
+import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadataAvroDeserializer;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.ExtendedDeserializer;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
@@ -36,9 +41,6 @@ import java.util.Map;
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1000");
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
 
-        // key deserializer
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-
         // schema registry config
         props.putAll(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl));
 
@@ -48,17 +50,27 @@ import java.util.Map;
         readerVersions.put("users", 1);
         props.put(KafkaAvroDeserializer.READER_VERSIONS, readerVersions);
 
-        // value deserializer
+        // key deserializer
         // current props are passed to KafkaAvroDeserializer instance by invoking #configure(Map, boolean) method.
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
+
+        // value deserializer
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
 
+        // If STORE_SCHEMA_VERSION_ID_IN_HEADER is enabled in {@code {@link KafkaAvroSerializer}} and
+        // KEY_SCHEMA_VERSION_ID_HEADER_NAME / VALUE_SCHEMA_VERSION_ID_HEADER_NAME is renamed,
+        // then the updated name should be specified here
+        props.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, "ksvid");
+        props.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, "vsvid");
 
-        KafkaConsumer<String, Object> consumer = new KafkaConsumer<>(props);
+        try (KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(props)) {
+            ...
+        }
 
  * }</pre>
  *
  */
-public class KafkaAvroDeserializer implements Deserializer<Object> {
+public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
 
     /**
      * This property represents the version of a reader schema to be used in deserialization for each topic in
@@ -75,22 +87,43 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
      */
     public static final String READER_VERSIONS = "schemaregistry.reader.schema.versions";
 
-    private final AvroSnapshotDeserializer avroSnapshotDeserializer;
+    private boolean isKey;
     private Map<String, Integer> readerVersions;
+
+    private final AvroSnapshotDeserializer avroSnapshotDeserializer;
+    private final MessageAndMetadataAvroDeserializer messageAndMetadataAvroDeserializer;
+    private String keySchemaVersionIdHeaderName;
+    private String valueSchemaVersionIdHeaderName;
 
     public KafkaAvroDeserializer() {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer();
+        messageAndMetadataAvroDeserializer = new MessageAndMetadataAvroDeserializer();
     }
 
     public KafkaAvroDeserializer(ISchemaRegistryClient schemaRegistryClient) {
         avroSnapshotDeserializer = new AvroSnapshotDeserializer(schemaRegistryClient);
+        messageAndMetadataAvroDeserializer = new MessageAndMetadataAvroDeserializer(schemaRegistryClient);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {
-        avroSnapshotDeserializer.init(configs);
+        this.isKey = isKey;
+        this.keySchemaVersionIdHeaderName = Utils.getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID);
+        if (keySchemaVersionIdHeaderName == null || keySchemaVersionIdHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("keySchemaVersionIdHeaderName should not be null or empty");
+        }
+
+        this.valueSchemaVersionIdHeaderName = Utils.getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
+        if (valueSchemaVersionIdHeaderName == null || valueSchemaVersionIdHeaderName.isEmpty()) {
+            throw new IllegalArgumentException("valueSchemaVersionIdHeaderName should not be null or empty");
+        }
+
         Map<String, Integer> versions = (Map<String, Integer>) ((Map<String, Object>) configs).get(READER_VERSIONS);
         readerVersions = versions != null ? versions : Collections.emptyMap();
+
+        avroSnapshotDeserializer.init(configs);
+        messageAndMetadataAvroDeserializer.init(configs);
     }
 
     @Override
@@ -99,9 +132,20 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     }
 
     @Override
+    public Object deserialize(String topic, Headers headers, byte[] data) {
+        if (headers != null) {
+            final Header header = headers.lastHeader(isKey ? keySchemaVersionIdHeaderName : valueSchemaVersionIdHeaderName);
+            if (header != null) {
+                return messageAndMetadataAvroDeserializer.deserialize(new MessageAndMetadata(header.value(), data), readerVersions.get(topic));
+            }
+        }
+        return deserialize(topic, data);
+    }
+
+    @Override
     public void close() {
         try {
-            avroSnapshotDeserializer.close();
+            Utils.closeAll(avroSnapshotDeserializer, messageAndMetadataAvroDeserializer);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
