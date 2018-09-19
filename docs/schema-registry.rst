@@ -139,6 +139,26 @@ Important settings from the above are
 **value.serializer**:
   *com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer* is used in the above example. This serializer has integration with schema registry. It will take the producer config and retrieves schema.registry.url and the topic name to find out the schema. If there is no schema defined it will publish a first version of that schema.
 
+3. For KafkaProducer, to save the schema version information in the Record Header, user need to include the following config:
+
+.. code:: java
+
+    config.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, "true");
+    config.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, "key.schema.version.id"); // optional
+    config.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, "value.schema.version.id"); // optional
+
+**store.schema.version.id.in.header**
+By default, this is set to 'false' to maintain backward compatibility. User needs to enable it to save the schema version
+information in the header.
+
+**key_schema_version_id_header_name**
+Configurable header name to save the Record Key schema version information. This configuration is applicable only when
+key.serializer is set to 'KafkaAvroSerializer'.
+
+**value_schema_version_id_header_name**
+Configurable header name to save the Record Value schema version information. This configuration is applicable only when
+value.serializer is set to 'KafkaAvroSerializer'.
+
 Run consumer to retrieve schema and deserialze the messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -182,10 +202,22 @@ Important settings from the above are
 **value.deserializer**:
   *com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer* is used in the above example.
 
-This deserializer tries to find schema.id in the message payload. If it
-finds schema.id, makes a call to schema registry to fetch the avro
-schema. If it doesn't find schema.id it falls back to using topic name
-to fetch a schema.
+This deserializer tries to find schema.id in the message payload.
+
+3. For KafkaConsumer, to retrieve the schema version information from the Record Header, user may have to include the
+below configs, if they were supplied in the KafkaProducer.
+
+.. code:: java
+
+    config.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, "key.schema.version.id"); // optional
+    config.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, "value.schema.version.id"); // optional
+
+KafkaAvroDeserializer tries to find schema.id from the message header. If it's not available, tries to find the
+schema.id from the message payload. So, a topic can contain messages that can hold version information (schema.id)
+either in the header / payload.
+
+If the deserializer finds schema.id, makes a call to schema registry to fetch the avro schema.
+If it doesn't find schema.id it falls back to using topic name to fetch a schema.
 
 API examples
 ============
