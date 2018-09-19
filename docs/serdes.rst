@@ -15,7 +15,8 @@ information in the header rather than prepending it in the body of the message. 
 Message Format 1
 """"""""""""""""
 |header:| |body:<version_info><payload>|
-Prepends the schema version information along with the user payload in the body of the Message.
+This is the default format to maintain backward compatibility. Prepends the schema version information along with the
+user payload in the body of the Message.
 
 Message Format 2
 """"""""""""""""
