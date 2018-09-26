@@ -40,10 +40,11 @@ import java.util.Map;
  *         You can use pure Avro serializer to serialize your payload.</li>
  *     <li> Kafka version with lesser than v0.11.0 should store the schema information with the payload.</li>
  * </ul>
- * </p>
+ * <p>
  *
- * (ex)
+ * For example:
  * <pre>
+ * {@code
  *     final Properties props = new Properties();
  *     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
  *     props.put(ProducerConfig.CLIENT_ID_CONFIG, "bottleProducer");
@@ -59,10 +60,10 @@ import java.util.Map;
  *     props.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, "ksvid");
  *     props.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, "vsvid");
  *
- *     try (KafkaProducer<> producer = new KafkaProducer<>(props)) {
+ *     try (KafkaProducer producer = new KafkaProducer(props)) {
  *         ...
  *     }
- *
+ * }
  * </pre>
  */
 public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
