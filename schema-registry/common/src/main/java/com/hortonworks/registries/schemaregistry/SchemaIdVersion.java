@@ -22,7 +22,7 @@ import java.io.Serializable;
 
 /**
  * This class represents versioned instance of schema with respective information like schemaMetadataId/version,
- * schemaVersionId. To represent a unique schema either the fields (schemaMetadataId & version) [or] (schemaVersionId)
+ * schemaVersionId. To represent a unique schema either the fields (schemaMetadataId and version) [or] (schemaVersionId)
  * required.
  *
  * It is not necessary that all fields are always available but the minimum information to find schema version is available.
