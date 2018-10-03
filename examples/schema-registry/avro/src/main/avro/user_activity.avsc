@@ -6,7 +6,7 @@
         {"name" : "id", "type" : "long"},
         {"name" : "name", "type" : "string"},
         {"name" : "age", "type" : "int"},
-        {"name" : "country", "type" : "string"},
+        {"name" : "region", "type" : "string"},
         {"name" : "page", "type" : "string"}
     ]
 }
