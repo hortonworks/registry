@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.streams.examples;
 
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
@@ -54,6 +55,7 @@ import java.util.Properties;
 public class ClickStreamEnrichmentDriver {
 
     static final String BOOTSTRAP_SERVERS = "localhost:9092";
+    static final String SCHEMA_REGISTRY_URL = "http://localhost:9090/api/v1";
     static final String USER_PROFILE_TOPIC = "user-profile";
     static final String PAGE_VIEWS_TOPIC = "page-views";
     static final String USER_ACTIVITY_TOPIC = "user-activity";
@@ -100,6 +102,7 @@ public class ClickStreamEnrichmentDriver {
 
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        props.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), SCHEMA_REGISTRY_URL);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         props.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, STORE_SCHEMA_VERSION_ID_IN_HEADER_POLICY);
@@ -115,6 +118,7 @@ public class ClickStreamEnrichmentDriver {
     void consumeUserActivity() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        props.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), SCHEMA_REGISTRY_URL);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "user-activity-reader");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
@@ -125,8 +129,7 @@ public class ClickStreamEnrichmentDriver {
             consumer.subscribe(Collections.singleton(USER_ACTIVITY_TOPIC));
             while (true) {
                 final ConsumerRecords<Integer, UserActivity> consumerRecords = consumer.poll(Duration.ofSeconds(1));
-                consumerRecords.forEach(record -> System.out.println("[offset : " + record.offset() +
-                        ", key : " + record.key() + ", value : " + record.value() + "]"));
+                consumerRecords.forEach(record -> System.out.println(record));
             }
         }
     }

@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.streams.examples;
 
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerde;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
@@ -37,6 +38,8 @@ public class ClickStreamEnrichment {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "click_stream_enrichment");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, ClickStreamEnrichmentDriver.BOOTSTRAP_SERVERS);
+        props.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(),
+                ClickStreamEnrichmentDriver.SCHEMA_REGISTRY_URL);
         props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp");
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.LongSerde.class);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, KafkaAvroSerde.class);
