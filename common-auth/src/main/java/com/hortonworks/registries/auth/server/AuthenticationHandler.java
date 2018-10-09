@@ -30,6 +30,10 @@ import java.util.Properties;
 public interface AuthenticationHandler {
 
     public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+    public static final String JWT_SSO_ENABLED = "jwtSSOEnabled";
+    public static final String NON_BROWSER_USER_AGENTS = "non-browser.user-agents";
+    public static final String NON_BROWSER_USER_AGENTS_DEFAULT =
+            "java,curl,wget,perl,Jersey";
 
     /**
      * Returns the authentication type of the authentication handler.
@@ -113,5 +117,25 @@ public interface AuthenticationHandler {
      */
     public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response)
             throws IOException, AuthenticationException;
+
+    /**
+     * Should the request be authenticated by the handler or not.
+     * <p>
+     * This is useful for deciding if a request should be handled by this handler
+     * or just forwarded to the next filter in chain. For example, if it's a java
+     * client in a long running application then the SSO handler can decide to not
+     * authenticate it and pass it on to the next filter
+     * <p>
+     * If the method returns <code>TRUE</code> the request will have to go through
+     * this authentication handler
+     * <p>
+     * If the method returns <code>FALSE</code> the request is expected to be
+     * passed on to the next filter in the chain
+     *
+     * @param request the HTTP client request.
+     * @return <code>TRUE</code> if this request should be authenticated by the handler,
+     * <code>FALSE</code> otherwise.
+     */
+    public boolean shouldAuthenticate( HttpServletRequest request);
 
 }
