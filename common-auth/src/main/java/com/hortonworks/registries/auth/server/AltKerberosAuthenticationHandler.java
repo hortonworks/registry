@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.hortonworks.registries.auth.client.AuthenticationException;
+import com.hortonworks.registries.auth.util.Utils;
 
 /**
  * The {@link AltKerberosAuthenticationHandler} behaves exactly the same way as
@@ -65,14 +66,8 @@ public abstract class AltKerberosAuthenticationHandler
     @Override
     public void init(Properties config) throws ServletException {
         super.init(config);
-
-        nonBrowserUserAgents = config.getProperty(
-                NON_BROWSER_USER_AGENTS, NON_BROWSER_USER_AGENTS_DEFAULT)
-                .split("\\W*,\\W*");
-        for (int i = 0; i < nonBrowserUserAgents.length; i++) {
-            nonBrowserUserAgents[i] =
-                    nonBrowserUserAgents[i].toLowerCase(Locale.ENGLISH);
-        }
+        nonBrowserUserAgents = Utils.getNonBrowserUserAgents(config.getProperty(
+                NON_BROWSER_USER_AGENTS, NON_BROWSER_USER_AGENTS_DEFAULT));
     }
 
     /**
@@ -95,42 +90,12 @@ public abstract class AltKerberosAuthenticationHandler
                                             HttpServletResponse response)
             throws IOException, AuthenticationException {
         AuthenticationToken token;
-        if (isBrowser(request.getHeader("User-Agent"))) {
+        if (Utils.isBrowser(nonBrowserUserAgents, request)) {
             token = alternateAuthenticate(request, response);
         } else {
             token = super.authenticate(request, response);
         }
         return token;
-    }
-
-    /**
-     * This method parses the User-Agent String and returns whether or not it
-     * refers to a browser.  If its not a browser, then Kerberos authentication
-     * will be used; if it is a browser, alternateAuthenticate from the subclass
-     * will be used.
-     * <p>
-     * A User-Agent String is considered to be a browser if it does not contain
-     * any of the values from alt-kerberos.non-browser.user-agents; the default
-     * behavior is to consider everything a browser unless it contains one of:
-     * "java", "curl", "wget", or "perl".  Subclasses can optionally override
-     * this method to use different behavior.
-     *
-     * @param userAgent The User-Agent String, or null if there isn't one
-     * @return true if the User-Agent String refers to a browser, false if not
-     */
-    protected boolean isBrowser(String userAgent) {
-        if (userAgent == null) {
-            return false;
-        }
-        userAgent = userAgent.toLowerCase(Locale.ENGLISH);
-        boolean isBrowser = true;
-        for (String nonBrowserUserAgent : nonBrowserUserAgents) {
-            if (userAgent.contains(nonBrowserUserAgent)) {
-                isBrowser = false;
-                break;
-            }
-        }
-        return isBrowser;
     }
 
     /**
