@@ -489,16 +489,17 @@ public class AuthenticationFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
-        boolean unauthorizedResponse = true;
-        int errCode = HttpServletResponse.SC_UNAUTHORIZED;
-        AuthenticationException authenticationEx = null;
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        boolean isHttps = "https".equals(httpRequest.getScheme());
-        if (isResourceAllowed(httpRequest)) {
-            LOG.debug("Skipping kerberos authentication filter for {}", httpRequest);
+        if (isResourceAllowed(httpRequest) || !authHandler.shouldAuthenticate(httpRequest)) {
+            LOG.debug("Skipping authentication filter of type {} for {}", authHandler.getType(), httpRequest);
             doFilter(filterChain, httpRequest, httpResponse);
         } else {
+            LOG.debug("Performing authentication filter of type {} for {}", authHandler.getType(), httpRequest);
+            boolean unauthorizedResponse = true;
+            int errCode = HttpServletResponse.SC_UNAUTHORIZED;
+            AuthenticationException authenticationEx = null;
+            boolean isHttps = "https".equals(httpRequest.getScheme());
             try {
                 boolean newToken = false;
                 AuthenticationToken token;
@@ -532,18 +533,18 @@ public class AuthenticationFilter implements Filter {
 
                             @Override
                             public String getAuthType() {
-                                return authToken.getType();
-                            }
+                            return authToken.getType();
+                        }
 
                             @Override
                             public String getRemoteUser() {
-                                return authToken.getUserName();
-                            }
+                            return authToken.getUserName();
+                        }
 
                             @Override
                             public Principal getUserPrincipal() {
-                                return (authToken != AuthenticationToken.ANONYMOUS) ? authToken : null;
-                            }
+                            return (authToken != AuthenticationToken.ANONYMOUS) ? authToken : null;
+                        }
                         };
                         if (newToken && !token.isExpired() && token != AuthenticationToken.ANONYMOUS) {
                             String signedToken = signer.sign(token.toString());

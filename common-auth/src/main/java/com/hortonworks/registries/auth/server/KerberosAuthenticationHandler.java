@@ -17,6 +17,7 @@ import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.client.KerberosAuthenticator;
 import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.auth.util.KerberosUtil;
+import com.hortonworks.registries.auth.util.Utils;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSManager;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -147,6 +149,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     private GSSManager gssManager;
     private Subject serverSubject = new Subject();
     private List<LoginContext> loginContexts = new ArrayList<LoginContext>();
+    private String[] nonBrowserUserAgents;
 
     /**
      * Creates a Kerberos SPNEGO authentication handler with the default
@@ -180,6 +183,8 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void init(Properties config) throws ServletException {
         try {
+            nonBrowserUserAgents = Utils.getNonBrowserUserAgents(config.getProperty(
+                    NON_BROWSER_USER_AGENTS, NON_BROWSER_USER_AGENTS_DEFAULT));
             String principal = config.getProperty(PRINCIPAL);
             if (principal == null || principal.trim().length() == 0) {
                 throw new ServletException("Principal not defined in configuration");
@@ -400,4 +405,16 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
         return token;
     }
 
+    @Override
+    public boolean shouldAuthenticate(HttpServletRequest request) {
+        boolean isSSOEnabled = false;
+        if ((request.getAttribute(JWT_SSO_ENABLED) != null) && Boolean.TRUE.toString().equals(request.getAttribute(JWT_SSO_ENABLED))) {
+            isSSOEnabled = true;
+        }
+        LOG.debug("isSSOEnabled is " + isSSOEnabled);
+        if (Utils.isBrowser(nonBrowserUserAgents, request) && isSSOEnabled) {
+            return false;
+        }
+        return true;
+    }
 }

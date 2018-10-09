@@ -18,6 +18,9 @@ package com.hortonworks.registries.auth.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Locale;
+
 public class Utils {
     private static final Logger LOG = LoggerFactory.getLogger(Utils.class);
     /**
@@ -36,5 +39,41 @@ public class Utils {
             }
         });
         return thread;
+    }
+
+    /**
+     * Return non browser user agents as an array from a config string
+     * @param nonBrowserUserAgentsConfig config string
+     * @return array of strings converted to lowercase where each string is a non browser user agent
+     */
+    public static String[] getNonBrowserUserAgents (String nonBrowserUserAgentsConfig) {
+        String[] result = nonBrowserUserAgentsConfig.split("\\W*,\\W*");
+        for (int i = 0; i < result.length; i++) {
+            result[i] = result[i].toLowerCase(Locale.ENGLISH);
+        }
+        return result;
+    }
+
+    /**
+     * Checks if HttpServletRequest is from a browser by inspecting header named User-Agent
+     * @param nonBrowserUserAgents array of strings representing non browser user agents
+     * @param request http request
+     * @return true if header is not present in array representing non browser agents, false otherwise
+     */
+    public static boolean isBrowser(String[] nonBrowserUserAgents, HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        LOG.debug("User agent is " + userAgent);
+        if (userAgent == null) {
+            return false;
+        }
+        userAgent = userAgent.toLowerCase(Locale.ENGLISH);
+        boolean isBrowser = true;
+        for (String nonBrowserUserAgent : nonBrowserUserAgents) {
+            if (userAgent.contains(nonBrowserUserAgent)) {
+                isBrowser = false;
+                break;
+            }
+        }
+        return isBrowser;
     }
 }
