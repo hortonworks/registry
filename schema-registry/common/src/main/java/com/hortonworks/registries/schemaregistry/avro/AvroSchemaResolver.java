@@ -168,11 +168,15 @@ public class AvroSchemaResolver implements SchemaResolver {
                         hasUnionType = true;
                     }
                 }
-                updatedFields.add(new Schema.Field(field.name(),
+                Schema.Field rebuiltField = new Schema.Field(field.name(),
                                                    fieldSchema,
                                                    field.doc(),
                                                    currentFieldTypeIsUnion ? NullNode.getInstance() : field.defaultValue(),
-                                                   field.order()));
+                                                   field.order());
+                for (Map.Entry<String, Object> prop : field.getObjectProps().entrySet()) {
+                    rebuiltField.addProp(prop.getKey(), prop.getValue());
+                }
+                updatedFields.add(rebuiltField);
             }
 
             if (hasUnionType) {

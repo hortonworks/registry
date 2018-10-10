@@ -124,4 +124,25 @@ public class AvroCompositeSchemasTest {
         doTestSchemaResolution("/avro/composites/simple-union.avsc",
                                "/avro/composites/expected-simple-union.avsc");
     }
+
+    @Test
+    public void testUnionSchemasPropRetention() throws Exception {
+        AvroSchemaResolver avroSchemaResolver = new AvroSchemaResolver(null);
+        Schema schema = new Schema.Parser().parse(getResourceText("/avro/composites/unions-with-props.avsc"));
+        LOG.info("schema = %s", schema);
+
+        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
+        LOG.info("effectiveSchema = %s", effectiveSchema);
+        String returnedSchemaText = effectiveSchema.toString();
+        Assert.assertEquals("foo", effectiveSchema.getField("name").getProp("someProp"));
+        Assert.assertEquals("bar", effectiveSchema.getField("address").getProp("otherProp"));
+        Assert.assertEquals("baz", effectiveSchema.getField("address").schema().getField("pincode").getProp("anotherProp"));
+        Assert.assertEquals("quux", effectiveSchema.getField("secondaryAddress").getProp("moreProps"));
+
+        // double check whether the effective schema is semantically right parsing
+        Schema.Parser parser = new Schema.Parser();
+        Schema parsedReturnedSchema = parser.parse(returnedSchemaText);
+        Assert.assertEquals(effectiveSchema, parsedReturnedSchema);
+    }
+
 }
