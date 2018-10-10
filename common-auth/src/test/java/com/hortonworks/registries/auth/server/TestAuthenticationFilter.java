@@ -150,6 +150,11 @@ public class TestAuthenticationFilter {
             }
             return token;
         }
+
+        @Override
+        public boolean shouldAuthenticate(HttpServletRequest request) {
+            return true;
+        }
     }
 
     @Test

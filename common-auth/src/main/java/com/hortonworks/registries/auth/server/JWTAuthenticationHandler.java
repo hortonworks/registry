@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.text.ParseException;
 
@@ -30,6 +31,7 @@ import java.security.interfaces.RSAPublicKey;
 
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.util.CertificateUtil;
+import com.hortonworks.registries.auth.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +85,7 @@ public class JWTAuthenticationHandler implements AuthenticationHandler {
     private RSAPublicKey publicKey = null;
     private List<String> audiences = null;
     private String cookieName = "hadoop-jwt";
+    private String[] nonBrowserUserAgents;
 
     /**
      * Primarily for testing, this provides a way to set the publicKey for
@@ -147,6 +150,8 @@ public class JWTAuthenticationHandler implements AuthenticationHandler {
         if (customCookieName != null) {
             cookieName = customCookieName;
         }
+        nonBrowserUserAgents = Utils.getNonBrowserUserAgents(config.getProperty(
+                NON_BROWSER_USER_AGENTS, NON_BROWSER_USER_AGENTS_DEFAULT));
     }
 
     @Override
@@ -199,6 +204,15 @@ public class JWTAuthenticationHandler implements AuthenticationHandler {
             }
         }
         return token;
+    }
+
+    @Override
+    public boolean shouldAuthenticate(HttpServletRequest request) {
+        if (Utils.isBrowser(nonBrowserUserAgents, request)) {
+            request.setAttribute(AuthenticationHandler.JWT_SSO_ENABLED, Boolean.TRUE.toString());
+            return true;
+        }
+        return false;
     }
 
     /**
