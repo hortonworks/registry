@@ -1,0 +1,10 @@
+{
+    "type" : "record",
+    "name" : "PageView",
+    "namespace" : "com.hortonworks.registries.streams.examples.dtos",
+    "doc" : "User viewed page",
+    "fields" : [
+        {"name" : "userId", "type" : "long"},
+        {"name" : "page", "type" : "string"}
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "type" : "record",
+    "name" : "UserActivity",
+    "namespace" : "com.hortonworks.registries.streams.examples.dtos",
+    "fields" : [
+        {"name" : "id", "type" : "long"},
+        {"name" : "name", "type" : "string"},
+        {"name" : "age", "type" : "int"},
+        {"name" : "region", "type" : "string"},
+        {"name" : "page", "type" : "string"}
+    ]
+}
