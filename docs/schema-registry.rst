@@ -65,7 +65,7 @@ Installation
 
 ::
 
-   cp $REGISTRY_HOME/conf/registry.yaml.inmemory.example $REGISTRY_HOME/conf/registry.yaml
+   cp $REGISTRY_HOME/conf/registry-inmemory-example.yaml $REGISTRY_HOME/conf/registry.yaml
    # start the server in fore-ground
    $REGISTRY_HOME/bin/registry-server-start conf/registry.yaml
    # To start in daemon mode
