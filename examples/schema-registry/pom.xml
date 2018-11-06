@@ -18,4 +18,15 @@
         <module>schema-lifecycle</module>
     </modules>
 
+    <properties>
+        <commons-codec.version>1.11</commons-codec.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons-codec.version}</version>
+        </dependency>
+    </dependencies>
 </project>
