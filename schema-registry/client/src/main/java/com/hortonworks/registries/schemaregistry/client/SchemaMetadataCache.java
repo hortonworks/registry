@@ -19,6 +19,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Maps;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
@@ -37,21 +41,31 @@ public class SchemaMetadataCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaMetadataCache.class);
 
     private final LoadingCache<Key, SchemaMetadataInfo> loadingCache;
+    private final BiMap<String, Long> schemaNameToIdMap;
 
     public SchemaMetadataCache(Long size, Long expiryInSecs, final SchemaMetadataFetcher schemaMetadataFetcher) {
+        schemaNameToIdMap = Maps.synchronizedBiMap(HashBiMap.create());
         loadingCache = CacheBuilder.newBuilder()
                 .maximumSize(size)
                 .expireAfterAccess(expiryInSecs, TimeUnit.SECONDS)
                 .build(new CacheLoader<Key, SchemaMetadataInfo>() {
                     @Override
                     public SchemaMetadataInfo load(Key key) throws Exception {
+                        SchemaMetadataInfo schemaMetadataInfo;
+                        Key otherKey;
                         if (key.getName() != null) {
-                            return schemaMetadataFetcher.fetch(key.getName());
+                            schemaMetadataInfo = schemaMetadataFetcher.fetch(key.getName());
+                            otherKey = Key.of(schemaMetadataInfo.getId());
+                            schemaNameToIdMap.put(key.getName(), schemaMetadataInfo.getId());
                         } else if (key.getId() != null) {
-                            return schemaMetadataFetcher.fetch(key.getId());
+                            schemaMetadataInfo = schemaMetadataFetcher.fetch(key.getId());
+                            otherKey = Key.of(schemaMetadataInfo.getSchemaMetadata().getName());
+                            schemaNameToIdMap.put(schemaMetadataInfo.getSchemaMetadata().getName(), schemaMetadataInfo.getId());
                         } else {
                             throw new RegistryException("Key should have name or id as non null");
                         }
+                        loadingCache.put(otherKey, schemaMetadataInfo);
+                        return schemaMetadataInfo;
                     }
                 });
     }
@@ -79,7 +93,19 @@ public class SchemaMetadataCache {
 
         return schemaMetadataInfo;
     }
-    
+
+    public void invalidateSchemaMetadata (SchemaMetadataCache.Key key) {
+        LOG.info("Invalidating cache entry for key [{}]", key);
+
+        // If the cache doesn't have entry for the key, then no need to invalidate the cache
+        if(loadingCache.getIfPresent(key) != null)
+            loadingCache.invalidate(key);
+
+        Key otherKey = key.id == null ? Key.of(schemaNameToIdMap.get(key.name)) : Key.of(schemaNameToIdMap.inverse().get(key.id));
+        if(loadingCache.getIfPresent(otherKey) != null)
+            loadingCache.invalidate(otherKey);
+    }
+
     public void put(Key key, SchemaMetadataInfo schemaMetadataInfo) {
         loadingCache.put(key, schemaMetadataInfo);
     }

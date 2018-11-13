@@ -107,6 +107,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public void deleteSchema(String schemaName) throws SchemaNotFoundException {
+        schemaRegistry.deleteSchema(schemaName);
+    }
+
+    @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         try {

@@ -87,6 +87,15 @@ public interface ISchemaRegistryService {
     SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId);
 
     /**
+     * Deletes a schema metadata and all related data given {@code schemaName}, throws an SchemaNotFoundException if schema is absent.
+     *
+     * @param schemaName schema metadata name
+     *
+     * @throws SchemaNotFoundException when there is no schema with the given {@code schemaName}
+     */
+    void deleteSchema(String schemaName) throws SchemaNotFoundException;
+
+    /**
      * Returns version of the schema added with the given schemaInfo.
      * <pre>
      * It tries to fetch an existing schema or register the given schema with the below conditions

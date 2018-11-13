@@ -485,6 +485,24 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         return response;
     }
 
+    @DELETE
+    @Path("/schemas/{name}")
+    @ApiOperation(value = "Delete a schema metadata and all related data", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response deleteSchemaMetadata(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                        @Context UriInfo uriInfo) {
+        try {
+            schemaRegistry.deleteSchema(schemaName);
+            return WSUtils.respond(Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            LOG.error("No schema metadata found with name: [{}]", schemaName);
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while deleting schema with name: [{}]", schemaName, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
     @POST
     @Path("/schemas/{name}/versions/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
