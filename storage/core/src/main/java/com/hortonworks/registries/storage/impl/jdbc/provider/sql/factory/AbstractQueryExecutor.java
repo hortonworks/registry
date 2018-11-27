@@ -20,6 +20,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
@@ -34,7 +35,8 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelect
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.StorageDataTypeContext;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
+import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 import com.hortonworks.registries.storage.transaction.TransactionBookKeeper;
 import com.hortonworks.registries.storage.transaction.TransactionState;
 
@@ -126,15 +128,16 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     }
 
     @Override
-    public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
-        CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
+    public Columns getColumns(String namespace) throws SQLException {
+        Columns columns = new Columns();
         Connection connection = null;
         try {
             connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
                                                                              new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
-                columns.add(rsMetadata.getColumnName(i));
+                columns.add(rsMetadata.getColumnName(i),
+                        getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
             }
             return columns;
         } catch (SQLException e) {
@@ -145,6 +148,10 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 closeConnection(connection);
             }
         }
+    }
+
+    protected Schema.Type getType(int sqlType, int precision) {
+        return Schema.Type.fromJavaType(Util.getJavaType(sqlType, precision));
     }
 
     public void closeConnection(Connection connection) {

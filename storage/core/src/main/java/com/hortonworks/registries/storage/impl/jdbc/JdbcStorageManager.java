@@ -32,7 +32,7 @@ import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,15 +186,14 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         StorableKey storableKey = null;
 
         try {
-            CaseAgnosticStringSet columnNames = queryExecutor.getColumnNames(namespace);
+            Columns columns = queryExecutor.getColumns(namespace);
             for (QueryParam qp : queryParams) {
-                if (!columnNames.contains(qp.getName())) {
+                Schema.Type type = columns.getType(qp.getName());
+                if (type == null) {
                     log.warn("Query parameter [{}] does not exist for namespace [{}]. Query parameter ignored.", qp.getName(), namespace);
                 } else {
-                    final String val = qp.getValue();
-                    final Schema.Type typeOfVal = Schema.Type.getTypeOfVal(val);
-                    fieldsToVal.put(new Schema.Field(qp.getName(), typeOfVal),
-                            typeOfVal.getJavaType().getConstructor(String.class).newInstance(val)); // instantiates object of the appropriate type
+                    fieldsToVal.put(new Schema.Field(qp.getName(), type),
+                            type.getJavaType().getConstructor(String.class).newInstance(qp.getValue()));
                 }
             }
 

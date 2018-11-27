@@ -34,6 +34,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,16 @@ public class Schema implements Serializable {
 
         private final Class<?> javaType;
 
+        private static final Map<Class<?>, Type> classToTypes = buildClassToTypes();
+
+        private static Map<Class<?>, Type> buildClassToTypes() {
+            Map<Class<?>, Type> res = new HashMap<>();
+            for (Type type: values()) {
+                res.put(type.getJavaType(), type);
+            }
+            return res;
+        }
+
         Type(Class<?> javaType) {
             this.javaType = javaType;
         }
@@ -79,11 +90,9 @@ public class Schema implements Serializable {
         public static Type getTypeOfVal(String val) {
             Type type = null;
             Type[] types = Type.values();
-
             if (val != null && (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
                 type = BOOLEAN;
             }
-
             for (int i = 1; type == null && i < STRING.ordinal(); i++) {
                 final Class clazz = types[i].getJavaType();
                 try {
@@ -97,12 +106,14 @@ public class Schema implements Serializable {
                     /* Exception is thrown if type does not match. Ignore to search next type */
                 }
             }
-
             if (type == null) {
                 type = STRING;
             }
-
             return type;
+        }
+
+        public static Type fromJavaType(Class<?> javaType) {
+            return classToTypes.getOrDefault(javaType, STRING);
         }
     }
 
