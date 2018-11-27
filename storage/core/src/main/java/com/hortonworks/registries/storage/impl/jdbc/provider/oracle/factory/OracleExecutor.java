@@ -34,7 +34,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.statement.Or
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.sql.Connection;
@@ -123,15 +123,16 @@ public class OracleExecutor extends AbstractQueryExecutor {
     }
 
     @Override
-    public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
-        CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
+    public Columns getColumns(String namespace) throws SQLException {
+        Columns columns = new Columns();
         Connection connection = null;
         try {
             connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
-                columns.add(rsMetadata.getColumnName(i));
+                columns.add(rsMetadata.getColumnName(i),
+                        getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
             }
             return columns;
         } catch (SQLException e) {
