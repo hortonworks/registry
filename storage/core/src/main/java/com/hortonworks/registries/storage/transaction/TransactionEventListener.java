@@ -34,6 +34,7 @@ public class TransactionEventListener implements ApplicationEventListener {
     private final ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap = new ConcurrentHashMap<>();
     private final TransactionManager transactionManager;
     private final boolean runWithTxnIfNotConfigured;
+    private TransactionIsolation defaultTransactionIsolation;
 
     /**
      * Creates instance by taking the below arguments and webservice methods are not run in transaction unless they use
@@ -45,6 +46,12 @@ public class TransactionEventListener implements ApplicationEventListener {
         this(transactionManager, false);
     }
 
+    public TransactionEventListener(TransactionManager transactionManager,
+                                    TransactionIsolation defaultTransactionIsolation) {
+        this(transactionManager, false);
+        this.defaultTransactionIsolation = defaultTransactionIsolation;
+    }
+
     /**
      * Creates instance by taking the below arguments.
      *
@@ -52,24 +59,36 @@ public class TransactionEventListener implements ApplicationEventListener {
      * @param runWithTxnIfNotConfigured All webservice resource methods are invoked in a transaction even if they are
      *                                  not set with {@link UnitOfWork}.
      */
-    public TransactionEventListener(TransactionManager transactionManager, boolean runWithTxnIfNotConfigured) {
+    public TransactionEventListener(TransactionManager transactionManager,
+                                    boolean runWithTxnIfNotConfigured) {
         this.transactionManager = transactionManager;
         this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
+    }
+
+    public TransactionEventListener(TransactionManager transactionManager,
+                                    boolean runWithTxnIfNotConfigured,
+                                    TransactionIsolation defaultTransactionIsolation) {
+        this.transactionManager = transactionManager;
+        this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
+        this.defaultTransactionIsolation = defaultTransactionIsolation;
     }
 
     private static class UnitOfWorkEventListener implements RequestEventListener {
         private final ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap;
         private final TransactionManager transactionManager;
         private final boolean runWithTxnIfNotConfigured;
+        private final TransactionIsolation defaultTransactionIsolation;
         private boolean useTransactionForUnitOfWork = true;
         private boolean isTransactionActive = false;
 
         public UnitOfWorkEventListener(ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap,
                                        TransactionManager transactionManager,
-                                       boolean runWithTxnIfNotConfigured) {
+                                       boolean runWithTxnIfNotConfigured,
+                                       TransactionIsolation defaultTransactionIsolation) {
             this.methodMap = methodMap;
             this.transactionManager = transactionManager;
             this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
+            this.defaultTransactionIsolation = defaultTransactionIsolation;
         }
 
         @Override
@@ -86,9 +105,24 @@ public class TransactionEventListener implements ApplicationEventListener {
 
                 // get property whether to have unitOfWork with DB default transaction by default
                 useTransactionForUnitOfWork =
-                        unitOfWork.isPresent() ? unitOfWork.get().transactional() : runWithTxnIfNotConfigured;
-                TransactionIsolation transactionIsolation = unitOfWork.map(UnitOfWork::transactionIsolation)
-                                                                      .orElse(TransactionIsolation.DEFAULT);
+                        unitOfWork.map(UnitOfWork::transactional).orElse(runWithTxnIfNotConfigured);
+
+                TransactionIsolation transactionIsolation = null;
+
+                if (unitOfWork.isPresent()) {
+                    if (unitOfWork.get().transactionIsolation() == TransactionIsolation.APPLICATION_DEFAULT) {
+                        if (defaultTransactionIsolation == null) {
+                            transactionIsolation = TransactionIsolation.DATABASE_SENSITIVE;
+                        } else {
+                            transactionIsolation = defaultTransactionIsolation;
+                        }
+                    } else {
+                        transactionIsolation = unitOfWork.get().transactionIsolation();
+                    }
+                } else {
+                    transactionIsolation = TransactionIsolation.DATABASE_SENSITIVE;
+                }
+
                 if (useTransactionForUnitOfWork) {
                     transactionManager.beginTransaction(transactionIsolation);
                     isTransactionActive = true;
@@ -109,7 +143,12 @@ public class TransactionEventListener implements ApplicationEventListener {
                 // an error that E1 is not found even thought the operation of adding E1 had succeeded from the client's point of view.
 
                 if (useTransactionForUnitOfWork && isTransactionActive) {
-                    transactionManager.commitTransaction();
+                    if (event.getContainerResponse().getStatus() < 400) {
+                        transactionManager.commitTransaction();
+                    } else {
+                        transactionManager.rollbackTransaction();
+                    }
+
                     isTransactionActive = false;
                 }
             } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
@@ -138,6 +177,6 @@ public class TransactionEventListener implements ApplicationEventListener {
 
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
-        return new UnitOfWorkEventListener(methodMap, transactionManager, runWithTxnIfNotConfigured);
+        return new UnitOfWorkEventListener(methodMap, transactionManager, runWithTxnIfNotConfigured, defaultTransactionIsolation);
     }
 }
