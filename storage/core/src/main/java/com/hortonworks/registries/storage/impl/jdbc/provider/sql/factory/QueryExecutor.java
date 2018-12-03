@@ -22,7 +22,6 @@ import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
-import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
 import com.hortonworks.registries.storage.search.SearchQuery;
@@ -138,4 +137,15 @@ public interface QueryExecutor {
      *  Flushes the changes made to the storage layer
      */
     void commitTransaction();
+
+    /**
+     * @return all entries that match the specified {@link StorableKey} with share lock
+     */
+    <T extends Storable> Collection<T> selectForShare(StorableKey storableKey);
+
+    /**
+     * @return all entries that match the specified {@link StorableKey} with update lock
+     */
+    <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey);
+
 }
