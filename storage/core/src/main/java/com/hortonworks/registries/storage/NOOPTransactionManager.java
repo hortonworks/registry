@@ -21,6 +21,8 @@ import com.hortonworks.registries.storage.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 public class NOOPTransactionManager implements TransactionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(NOOPTransactionManager.class);
@@ -39,4 +41,15 @@ public class NOOPTransactionManager implements TransactionManager {
     public void commitTransaction() {
         LOG.debug(String.format("--- Ignore call to commit transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
     }
+
+    @Override
+    public boolean readLock(StorableKey key, Long time, TimeUnit timeUnit) throws StorageException {
+        return true;
+    }
+
+    @Override
+    public boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit) throws StorageException {
+        return true;
+    }
+
 }
