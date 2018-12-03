@@ -131,18 +131,22 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     }
 
     private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
-        Long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
-        Long startTime = System.currentTimeMillis();
-        while (remainingTime > 0) {
+        long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
+
+        if(remainingTime < 0) {
+            throw new IllegalArgumentException("Wait time for obtaining the lock can't be negative");
+        }
+
+        long startTime = System.currentTimeMillis();
+        do {
             Collection<Storable> storables = supplier.get();
             if (storables != null && !storables.isEmpty()) {
                 return true;
             } else {
                 Thread.sleep(500);
-                remainingTime -= (System.currentTimeMillis() - startTime);
-                startTime = System.currentTimeMillis();
             }
-        }
+        } while((System.currentTimeMillis() - startTime) < remainingTime);
+
 
         return false;
     }

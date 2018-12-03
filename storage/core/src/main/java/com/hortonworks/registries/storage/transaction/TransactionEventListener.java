@@ -107,21 +107,15 @@ public class TransactionEventListener implements ApplicationEventListener {
                 useTransactionForUnitOfWork =
                         unitOfWork.map(UnitOfWork::transactional).orElse(runWithTxnIfNotConfigured);
 
-                TransactionIsolation transactionIsolation = null;
-
-                if (unitOfWork.isPresent()) {
-                    if (unitOfWork.get().transactionIsolation() == TransactionIsolation.APPLICATION_DEFAULT) {
-                        if (defaultTransactionIsolation == null) {
-                            transactionIsolation = TransactionIsolation.DATABASE_SENSITIVE;
-                        } else {
-                            transactionIsolation = defaultTransactionIsolation;
-                        }
-                    } else {
-                        transactionIsolation = unitOfWork.get().transactionIsolation();
-                    }
-                } else {
-                    transactionIsolation = TransactionIsolation.DATABASE_SENSITIVE;
-                }
+                TransactionIsolation transactionIsolation =
+                        unitOfWork.map(x -> {
+                                    TransactionIsolation result = x.transactionIsolation();
+                                    if (result == TransactionIsolation.APPLICATION_DEFAULT) {
+                                        result = defaultTransactionIsolation == null ? TransactionIsolation.DATABASE_SENSITIVE : defaultTransactionIsolation;
+                                    }
+                                    return result;
+                                }
+                        ).orElse(TransactionIsolation.DATABASE_SENSITIVE);
 
                 if (useTransactionForUnitOfWork) {
                     transactionManager.beginTransaction(transactionIsolation);

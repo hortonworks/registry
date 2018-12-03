@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.schemaregistry.locks;
 
+import com.google.common.base.Preconditions;
 import com.hortonworks.registries.storage.TransactionManager;
 
 public class SchemaLockManager {
@@ -23,6 +24,7 @@ public class SchemaLockManager {
     private TransactionManager transactionManager;
 
     public SchemaLockManager(TransactionManager transactionManager) {
+        Preconditions.checkNotNull(transactionManager,"Transaction manager can't be null");
         this.transactionManager = transactionManager;
     }
 
