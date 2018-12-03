@@ -20,10 +20,13 @@ import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
+import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertUpdateDuplicate;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectForShareQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectForUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MysqlUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
@@ -111,6 +114,16 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         return executeQuery(storableKey.getNameSpace(), new MySqlSelectQuery(storableKey, orderByFields));
     }
 
+    @Override
+    public <T extends Storable> Collection<T> selectForShare(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new MySqlSelectForShareQuery(storableKey));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new MySqlSelectForUpdateQuery(storableKey));
+    }
+
     private void insertOrUpdateWithUniqueId(final Storable storable, final SqlQuery sqlQuery) {
         try {
             Long id = storable.getId();
@@ -122,6 +135,8 @@ public class MySqlExecutor extends AbstractQueryExecutor {
             }
         } catch (UnsupportedOperationException e) {
             executeUpdate(sqlQuery);
+        } catch (Exception e) {
+            throw new StorageException(e);
         }
     }
 

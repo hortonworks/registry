@@ -22,6 +22,7 @@ import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.HostConfigStorable;
+import com.hortonworks.registries.storage.TransactionManagerAware;
 import com.hortonworks.registries.storage.transaction.TransactionEventListener;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
@@ -206,6 +207,12 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 storageManagerAware.setStorageManager(storageManager);
             }
 
+            if (moduleRegistration instanceof TransactionManagerAware) {
+                LOG.info("Module [{}] is TransactionManagerAware and setting TransactionManager.", moduleName);
+                TransactionManagerAware transactionManagerAware = (TransactionManagerAware) moduleRegistration;
+                transactionManagerAware.setTransactionManager(transactionManager);
+            }
+
             if(moduleRegistration instanceof LeadershipAware) {
                 LOG.info("Module [{}] is registered for LeadershipParticipant registration.");
                 LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
@@ -227,7 +234,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
         
         environment.jersey().register(MultiPartFeature.class);
-        environment.jersey().register(new TransactionEventListener(transactionManager));
+        environment.jersey().register(new TransactionEventListener(transactionManager, TransactionIsolation.READ_COMMITTED));
 
     }
 

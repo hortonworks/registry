@@ -27,6 +27,8 @@ import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertUpdateDuplicate;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectForShareQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectForUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSequenceIdQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleUpdateQuery;
@@ -105,6 +107,16 @@ public class OracleExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields) {
         return executeQuery(storableKey.getNameSpace(), new OracleSelectQuery(storableKey, orderByFields));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForShare(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new OracleSelectForShareQuery(storableKey));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new OracleSelectForUpdateQuery(storableKey));
     }
 
     @Override
