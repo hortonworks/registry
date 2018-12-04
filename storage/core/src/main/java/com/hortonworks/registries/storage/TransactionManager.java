@@ -17,7 +17,7 @@
 package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.common.transaction.TransactionIsolation;
-import com.hortonworks.registries.storage.exception.IgnoreTransactionRollbackException;
+import java.util.concurrent.TimeUnit;
 
 public interface TransactionManager {
 
@@ -48,4 +48,15 @@ public interface TransactionManager {
      * when commitTransaction() throws Exception.
      */
     void commitTransaction();
+
+    /**
+     * @return true if able to obtain a read lock on a row with {@link StorableKey} within the specified time
+     */
+    boolean readLock(StorableKey key, Long time, TimeUnit timeUnit);
+
+    /**
+     * @return true if able to obtain a write lock on a row with {@link StorableKey} within the specified time
+     */
+    boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit);
+
 }

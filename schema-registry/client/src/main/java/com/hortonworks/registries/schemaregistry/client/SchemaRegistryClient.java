@@ -71,6 +71,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -407,7 +408,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
 
     private Long doRegisterSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
-        return postEntity(schemasTarget, schemaMetadata, Long.class);
+        try {
+            return postEntity(schemasTarget, schemaMetadata, Long.class);
+        } catch(BadRequestException ex) {
+            Response response = ex.getResponse();
+            CatalogResponse catalogResponse = SchemaRegistryClient.readCatalogResponse(response.readEntity(String.class));
+            if(catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ENTITY_CONFLICT.getCode()) {
+                return getSchemaMetadataInfo(schemaMetadata.getName()).getId();
+            } else {
+                throw ex;
+            }
+        }
     }
 
     @Override

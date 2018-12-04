@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
 public class JdbcStorageManager implements TransactionManager, StorageManager {
@@ -100,6 +102,53 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         }
         log.debug("Querying key = [{}]\n\t returned [{}]", key, entry);
         return entry;
+    }
+
+    @Override
+    public boolean readLock(StorableKey key, Long time, TimeUnit timeUnit) {
+        log.debug("Obtaining a read lock for entry with storable key [{}]", key);
+
+        Supplier<Collection<Storable>> supplier = () -> queryExecutor.selectForShare(key);
+
+        try {
+            return getLock(supplier, time, timeUnit);
+        } catch (InterruptedException e) {
+            throw new StorageException("Failed to obtain a write lock for storable key : " + key);
+        }
+    }
+
+    @Override
+    public boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit) {
+        log.debug("Obtaining a write lock for entry with storable key [{}]", key);
+
+        Supplier<Collection<Storable>> supplier = () -> queryExecutor.selectForUpdate(key);
+
+        try {
+            return getLock(supplier, time, timeUnit);
+        } catch (InterruptedException e) {
+            throw new StorageException("Failed to obtain a write lock for storable key : " + key);
+        }
+    }
+
+    private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
+        long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
+
+        if(remainingTime < 0) {
+            throw new IllegalArgumentException("Wait time for obtaining the lock can't be negative");
+        }
+
+        long startTime = System.currentTimeMillis();
+        do {
+            Collection<Storable> storables = supplier.get();
+            if (storables != null && !storables.isEmpty()) {
+                return true;
+            } else {
+                Thread.sleep(500);
+            }
+        } while((System.currentTimeMillis() - startTime) < remainingTime);
+
+
+        return false;
     }
 
     @Override

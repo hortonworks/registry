@@ -47,6 +47,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
+import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
 import io.swagger.annotations.Api;
@@ -367,7 +368,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             } catch (UnsupportedSchemaTypeException ex) {
                 LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
-            } catch (Exception ex) {
+            } catch (StorageException ex) {
+                LOG.error("Unable to add schema metadata [{}]", schemaMetadata, ex);
+                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_CONFLICT, ex.getMessage());
+            }
+            catch (Exception ex) {
                 LOG.error("Error encountered while adding schema info [{}] ", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR,
                                            CatalogResponse.ResponseMessage.EXCEPTION,
