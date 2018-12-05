@@ -22,7 +22,7 @@ public enum TransactionIsolation {
      * Set default isolation level as recommended by the JDBC driver.
      * When used inside a nested transaction retains current transaction isolation.
      **/
-    JDBC_DEFAULT(-1),
+    DEFAULT(-1),
 
     // Commenting out below isolation level as Oracle doesn't support it.
     //READ_UNCOMMITTED(Connection.TRANSACTION_READ_UNCOMMITTED),
