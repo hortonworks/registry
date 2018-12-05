@@ -36,7 +36,7 @@ public class ManagedTransaction {
      */
     public ManagedTransaction(TransactionManager transactionManager) {
         this.transactionManager = transactionManager;
-        this.transactionIsolation = TransactionIsolation.JDBC_DEFAULT;
+        this.transactionIsolation = TransactionIsolation.DEFAULT;
     }
 
     /**

@@ -82,7 +82,7 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     public void insertOrUpdate(final Storable storable) {
         boolean committed = false;
         try {
-            beginTransaction(TransactionIsolation.JDBC_DEFAULT);
+            beginTransaction(TransactionIsolation.DEFAULT);
             Collection<Storable> entities = select(storable.getStorableKey());
             if (entities.isEmpty()) {
                 insert(storable);
