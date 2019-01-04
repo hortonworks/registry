@@ -16,19 +16,22 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.util;
 
-import java.util.HashSet;
+import com.hortonworks.registries.common.Schema;
 
-public class CaseAgnosticStringSet extends HashSet<String> {
+import java.util.HashMap;
 
-    public boolean add(String e) {
-        return super.add(e.toLowerCase());
-    }
+public class Columns {
+  private HashMap<String, Schema.Type> colums = new HashMap<>();
 
-    public boolean contains(String o) {
-        return super.contains(o.toLowerCase());
-    }
+  public Schema.Type add(String name, Schema.Type type) {
+    return colums.put(name.toLowerCase(), type);
+  }
 
-    public boolean remove(String o) {
-        return super.remove(o.toLowerCase());
-    }
+  public Schema.Type getType(String name) {
+    return colums.get(name.toLowerCase());
+  }
+
+  public Schema.Type remove(String name) {
+    return colums.remove(name.toLowerCase());
+  }
 }
