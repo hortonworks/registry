@@ -23,7 +23,7 @@ import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,9 +117,9 @@ public interface QueryExecutor {
     <T extends Storable> Collection<T> select(SearchQuery searchQuery);
 
     /**
-     *  @return returns set of column names for a given table
+     *  @return returns set of columns for a given table
      */
-    CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException;
+    Columns getColumns(String namespace) throws SQLException;
 
     /**
      *  Begins the transaction
