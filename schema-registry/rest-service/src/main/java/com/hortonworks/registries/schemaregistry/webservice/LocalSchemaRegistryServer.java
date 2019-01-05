@@ -153,4 +153,9 @@ public class LocalSchemaRegistryServer {
         }
 
     }
+
+    public static void main(String[] args) throws Exception {
+        LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer("/Users/sraju/WorkSpace/github/hdf/registry/conf/registry.yaml");
+        localSchemaRegistryServer.start();
+    }
 }

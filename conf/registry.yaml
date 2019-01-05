@@ -64,15 +64,15 @@ fileStorageConfiguration:
 
 # MySQL based jdbc provider configuration is:
 storageProviderConfiguration:
- providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
- properties:
-   db.type: "mysql"
-   queryTimeoutInSecs: 30
-   db.properties:
-     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
-     dataSource.url: "jdbc:mysql://localhost/schema_registry"
-     dataSource.user: "registry_user"
-     dataSource.password: "registry_password"
+  providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+  properties:
+    db.type: "oracle"
+    queryTimeoutInSecs: 5
+    db.properties:
+      dataSourceClassName: "oracle.jdbc.pool.OracleDataSource"
+      dataSource.url: "jdbc:oracle:thin:@localhost:1521/orclpdb1.localdomain"
+      dataSource.user: "zeus"
+      dataSource.password: "bolt"
 
 #swagger configuration
 swagger:

@@ -1,6 +1,6 @@
 #Created by build system. Do not modify
-#Fri Jul 27 08:56:39 IST 2018
-version=0.5.2-SNAPSHOT
-revision=d51f7012cf97ac416fdf7db4b477ef8887248012
+#Mon Dec 17 14:11:02 IST 2018
+version=0.5.3
+revision=faad5b71db24956c9ccf9dbcd6fbba7a812871fd
 name=Registry Binary Distribution
-timestamp=1532661999223
+timestamp=1545036062381

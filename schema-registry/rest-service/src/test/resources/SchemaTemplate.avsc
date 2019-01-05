@@ -1,0 +1,205 @@
+{
+  "type" : "record",
+  "name" : "${name}",
+  "namespace" : "${namespace}",
+  "fields" : [ {
+    "name" : "appPayld",
+    "type" : {
+      "type" : "record",
+      "name" : "LegacyTrainActivatedPayld",
+      "fields" : [ {
+        "name" : "trnId",
+        "type" : "string"
+      }, {
+        "name" : "rptgGrpCd",
+        "type" : "string"
+      }, {
+        "name" : "halagCd",
+        "type" : "string"
+      }, {
+        "name" : "trnLoadEmptyStatCd",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "trnPrmryCmdtyTypNme",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "evtCd",
+        "type" : "string"
+      }, {
+        "name" : "evtStatCd",
+        "type" : "string"
+      }, {
+        "name" : "devtnCd",
+        "type" : "string"
+      }, {
+        "name" : "devtnMin",
+        "type" : "string"
+      }, {
+        "name" : "lstRptdTrnSchdlLoctnSeqNbr",
+        "type" : "string"
+      }, {
+        "name" : "svcTyp",
+        "type" : "string"
+      }, {
+        "name" : "trnOwnrScac",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "pasngrTrnInd",
+        "type" : [ "null", "boolean" ],
+        "default" : null
+      }, {
+        "name" : "lgcyLoadEmptyStatCd",
+        "type" : "string"
+      }, {
+        "name" : "trnPrmryBusnsUnitNme",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "extraTrnInd",
+        "type" : [ "null", "boolean" ],
+        "default" : null
+      }, {
+        "name" : "unitTrnCyclCnt",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "trnTypNme",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "trnRunOcurncNbr",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "forgnTrnTrakagRghtsTypNme",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "trnDturAgrmtInd",
+        "type" : [ "null", "boolean" ],
+        "default" : null
+      }, {
+        "name" : "trnSchdlCretnRsn",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "unitCmdtyDesc",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "origUserFullNme",
+        "type" : "string"
+      }, {
+        "name" : "trnSchdlLoctnRoutPrgrsnStat",
+        "type" : "string"
+      }, {
+        "name" : "trnParkdStatRsn",
+        "type" : "string"
+      }, {
+        "name" : "trnDlayRsn",
+        "type" : "string"
+      } ]
+    }
+  }, {
+    "name" : "appHdrs",
+    "type" : [ "null", {
+      "type" : "array",
+      "items" : {
+        "type" : "record",
+        "name" : "AppHdr",
+        "namespace" : "com.bnsf.tsm.event.model",
+        "fields" : [ {
+          "name" : "name",
+          "type" : "string"
+        }, {
+          "name" : "value",
+          "type" : "string"
+        } ]
+      }
+    } ],
+    "default" : null
+  }, {
+    "name" : "bnsfCntxt",
+    "type" : {
+      "type" : "record",
+      "name" : "BNSFContext",
+      "namespace" : "com.bnsf",
+      "fields" : [ {
+        "name" : "appRsrcNme",
+        "type" : "string"
+      }, {
+        "name" : "appDomnNmspc",
+        "type" : "string"
+      }, {
+        "name" : "appRsrcVrsnNbr",
+        "type" : {
+          "type" : "int",
+          "java-class" : "java.lang.Integer"
+        }
+      }, {
+        "name" : "origAppNme",
+        "type" : "string"
+      }, {
+        "name" : "appCmpntNme",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "origUserId",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "cretDttm",
+        "type" : "string"
+      }, {
+        "name" : "cretDttmLocleId",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "cretDttmLocleUtcOffset",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "hostId",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "origAppTrcId",
+        "type" : "string"
+      }, {
+        "name" : "appSpanId",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "parntAppSpanId",
+        "type" : [ "null", "string" ],
+        "default" : null
+      } ]
+    }
+  }, {
+    "name" : "evtClsfctnNme",
+    "type" : [ "null", {
+      "type" : "enum",
+      "name" : "EvtClsfctnNme",
+      "namespace" : "com.bnsf.tsm.event.model",
+      "symbols" : [ "ACTIONABLE", "INFORMATIONAL", "AUDIT", "WARNING", "ERROR", "CRITICAL", "FATAL" ]
+    } ]
+  }, {
+    "name" : "evtSevrtyId",
+    "type" : [ "null", {
+      "type" : "int",
+      "java-class" : "java.lang.Integer"
+    } ],
+    "default" : null
+  }, {
+    "name" : "evtTypNme",
+    "type" : {
+      "type" : "enum",
+      "name" : "EvtTypNme",
+      "namespace" : "com.bnsf.tsm.event.model",
+      "symbols" : [ "BUSINESS_EVENT", "TELEMETRY_EVENT", "LOG_EVENT" ]
+    }
+  } ]
+}
