@@ -48,19 +48,12 @@ import SchemaBranches from './SchemaBranches';
 export default class SchemaDetail extends Component{
   constructor(props){
     super(props);
-    const {schema} = props;
-    const selectedBranch = _.find(schema.schemaBranches, (branch) => {
-      return branch.schemaBranch.name == 'MASTER';
-    });
-    let currentVersion = 0;
-    if(selectedBranch){
-      currentVersion = Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
-    }
+    const {selectedBranch, currentVersion} = this.getSchemaVersions(props);
     this.state = {
       collapsed: true,
       renderCodemirror: false,
-      selectedBranch: selectedBranch,
-      currentVersion: currentVersion
+      selectedBranch,
+      currentVersion
     };
     // this.fetchBranches();
   }
@@ -83,6 +76,22 @@ export default class SchemaDetail extends Component{
       });
       this.forceUpdate();
     }).catch(Utils.showError);
+  }
+  getSchemaVersions(props) {
+    const selectedBranch = _.find(props.schema.schemaBranches, (branch) => {
+      return branch.schemaBranch.name == 'MASTER';
+    });
+    let currentVersion = 0;
+    if(selectedBranch){
+      currentVersion = Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
+    }
+    return { selectedBranch, currentVersion };
+  }
+  componentWillReceiveProps(newProps) {
+    if(this.props.schema.id !== newProps.schema.id) {
+      const {selectedBranch, currentVersion} = this.getSchemaVersions(newProps);
+      this.setState({collapsed: true, renderCodemirror: false, selectedBranch, currentVersion});
+    }
   }
   componentDidMount(){
     this.btnClassChange();
