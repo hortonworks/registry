@@ -847,7 +847,7 @@ public class SchemaVersionLifecycleManager {
             throw new SchemaNotFoundException("No Schema version exists with id " + schemaVersionId);
         }
         versionedSchema.setState(stateId);
-        storageManager.addOrUpdate(versionedSchema);
+        storageManager.update(versionedSchema);
 
         // invalidate schema version from cache
         SchemaVersionInfoCache.Key schemaVersionCacheKey = SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId));
