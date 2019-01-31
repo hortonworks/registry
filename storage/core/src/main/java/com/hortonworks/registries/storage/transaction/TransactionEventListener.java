@@ -75,6 +75,7 @@ public class TransactionEventListener implements ApplicationEventListener {
         @Override
         public void onEvent(RequestEvent event) {
             final RequestEvent.Type eventType = event.getType();
+
             if (eventType == RequestEvent.Type.RESOURCE_METHOD_START) {
                 Optional<UnitOfWork> unitOfWork = methodMap.computeIfAbsent(event.getUriInfo()
                                                                                  .getMatchedResourceMethod(),
@@ -90,18 +91,34 @@ public class TransactionEventListener implements ApplicationEventListener {
                     isTransactionActive = true;
                 }
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {
-                // not supporting transactions to filters
-            } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
+
+                // Once the response from the resource method is available we should either rollback or commit the
+                // transaction. In case the resource method throws an error, ON_EXCEPTION is called first which will
+                // rollback the transaction and eventually RESP_FILTERS_START is called (which won't do anything)
+                // after exception mapper handles the exception. In case the exception is not thrown, RESP_FILTERS_START
+                // is called which then commits the transaction.
+                //      Its not advisable to handle rollbacks and commits when the request transitions to FINISHED state.
+                // For example, we might have a client which add an entity (E1) and lets say entity id is returned as a response.
+                // Lets say the client then adds a second entity (E2) which has foreign key reference to the first entity (E1).
+                // If we commit the transaction in FINISHED state, then the client received the entity id after adding E1
+                // at time say t1 and adding entity E2 at t2, then we might run into a scenario where we might commit the changes
+                // to E1 only after t2 as responses to the client are dispatched before FINISHED, then client will receive
+                // an error that E1 is not found even thought the operation of adding E1 had succeeded from the client's point of view.
+
                 if (useTransactionForUnitOfWork && isTransactionActive) {
-                    transactionManager.rollbackTransaction();
+                    if (event.getContainerResponse().getStatus() < 400) {
+                        transactionManager.commitTransaction();
+                    } else {
+                        transactionManager.rollbackTransaction();
+                    }
+
                     isTransactionActive = false;
                 }
-            } else if (eventType == RequestEvent.Type.FINISHED) {
-                if (useTransactionForUnitOfWork && event.isSuccess()) {
-                    transactionManager.commitTransaction();
-                    isTransactionActive = false;
-                }
-                else if (useTransactionForUnitOfWork && !event.isSuccess() && isTransactionActive) {
+            } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
+
+                // Rollback the transaction in case an exception is thrown from the resource method.
+
+                if (useTransactionForUnitOfWork && isTransactionActive) {
                     transactionManager.rollbackTransaction();
                     isTransactionActive = false;
                 }
