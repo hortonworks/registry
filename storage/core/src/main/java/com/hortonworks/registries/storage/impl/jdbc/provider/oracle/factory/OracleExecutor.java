@@ -27,6 +27,8 @@ import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertUpdateDuplicate;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectForShareQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectForUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSequenceIdQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleUpdateQuery;
@@ -34,7 +36,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.statement.Or
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.sql.Connection;
@@ -108,6 +110,16 @@ public class OracleExecutor extends AbstractQueryExecutor {
     }
 
     @Override
+    public <T extends Storable> Collection<T> selectForShare(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new OracleSelectForShareQuery(storableKey));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new OracleSelectForUpdateQuery(storableKey));
+    }
+
+    @Override
     public Long nextId(String namespace) {
         OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT);
         Connection connection = null;
@@ -123,15 +135,16 @@ public class OracleExecutor extends AbstractQueryExecutor {
     }
 
     @Override
-    public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
-        CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
+    public Columns getColumns(String namespace) throws SQLException {
+        Columns columns = new Columns();
         Connection connection = null;
         try {
             connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
-                columns.add(rsMetadata.getColumnName(i));
+                columns.add(rsMetadata.getColumnName(i),
+                        getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
             }
             return columns;
         } catch (SQLException e) {

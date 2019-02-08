@@ -76,7 +76,6 @@ public class SchemaVersionLifecycleManager {
     private CustomSchemaStateExecutor customSchemaStateExecutor;
     private SchemaVersionInfoCache schemaVersionInfoCache;
     private SchemaVersionRetriever schemaVersionRetriever;
-    private static final int DEFAULT_RETRY_CT = 5;
     private StorageManager storageManager;
     private SchemaBranchCache schemaBranchCache;
     private HAServerNotificationManager haServerNotificationManager;
@@ -347,48 +346,34 @@ public class SchemaVersionLifecycleManager {
             schemaVersion.setStateDetails(null);
         }
 
-        // take a lock for a schema with same name.
-        int retryCt = 0;
-        while (true) {
-            try {
-                Integer version = 0;
-                Byte initialState = schemaVersion.getInitialState();
-                if (schemaMetadata.isEvolve()) {
-                    // if the given version is added with enabled or initiated state then only check for compatibility
-                    if (SchemaVersionLifecycleStates.ENABLED.getId().equals(initialState) ||
-                            SchemaVersionLifecycleStates.INITIATED.getId().equals(initialState)) {
-                        CompatibilityResult compatibilityResult = checkCompatibility(schemaBranchName, schemaName, schemaVersion
-                                .getSchemaText());
-                        if (!compatibilityResult.isCompatible()) {
-                            String errMsg = String.format("Given schema is not compatible with latest schema versions. \n" +
-                                                                  "Error location: [%s] \n" +
-                                                                  "Error encountered is: [%s]",
-                                                          compatibilityResult.getErrorLocation(),
-                                                          compatibilityResult.getErrorMessage());
-                            LOG.error(errMsg);
-                            throw new IncompatibleSchemaException(errMsg);
-                        }
-                    }
-                    SchemaVersionInfo latestSchemaVersionInfo = getLatestSchemaVersionInfo(schemaName);
-                    if (latestSchemaVersionInfo != null) {
-                        version = latestSchemaVersionInfo.getVersion();
-                    }
+        Integer version = 0;
+        Byte initialState = schemaVersion.getInitialState();
+        if (schemaMetadata.isEvolve()) {
+            // if the given version is added with enabled or initiated state then only check for compatibility
+            if (SchemaVersionLifecycleStates.ENABLED.getId().equals(initialState) ||
+                    SchemaVersionLifecycleStates.INITIATED.getId().equals(initialState)) {
+                CompatibilityResult compatibilityResult = checkCompatibility(schemaBranchName, schemaName, schemaVersion
+                        .getSchemaText());
+                if (!compatibilityResult.isCompatible()) {
+                    String errMsg = String.format("Given schema is not compatible with latest schema versions. \n" +
+                                    "Error location: [%s] \n" +
+                                    "Error encountered is: [%s]",
+                            compatibilityResult.getErrorLocation(),
+                            compatibilityResult.getErrorMessage());
+                    LOG.error(errMsg);
+                    throw new IncompatibleSchemaException(errMsg);
                 }
-                schemaVersionStorable.setVersion(version + 1);
-
-                storageManager.add(schemaVersionStorable);
-                updateSchemaVersionState(schemaVersionStorable.getId(), 1, initialState, schemaVersion.getStateDetails());
-
-                break;
-            } catch (StorageException e) {
-                // optimistic to try the next try would be successful. When retry attempts are exhausted, throw error back to invoker.
-                if (++retryCt == DEFAULT_RETRY_CT) {
-                    LOG.error("Giving up after retry attempts [{}] while trying to add new version of schema with metadata [{}]", retryCt, schemaMetadata, e);
-                    throw e;
-                }
-                LOG.debug("Encountered storage exception while trying to add a new version, attempting again : [{}] with error: [{}]", retryCt, e);
+            }
+            SchemaVersionInfo latestSchemaVersionInfo = getLatestSchemaVersionInfo(schemaName);
+            if (latestSchemaVersionInfo != null) {
+                version = latestSchemaVersionInfo.getVersion();
             }
         }
+
+        schemaVersionStorable.setVersion(version + 1);
+
+        storageManager.add(schemaVersionStorable);
+        updateSchemaVersionState(schemaVersionStorable.getId(), 1, initialState, schemaVersion.getStateDetails());
 
         // fetching this as the ID may have been set by storage manager.
         Long schemaInstanceId = schemaVersionStorable.getId();

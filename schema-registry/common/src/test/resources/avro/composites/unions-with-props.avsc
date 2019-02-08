@@ -1,0 +1,50 @@
+{
+  "name": "unions",
+  "namespace": "com.hortonworks.types",
+  "type": "record",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "someProp": "foo"
+    },
+    {
+      "name": "address",
+      "otherProp": "bar",
+      "type": {
+        "name": "addressType",
+        "type": "record",
+        "fields": [
+          {
+            "name": "houseNo",
+            "type": "string"
+          },
+          {
+            "name": "street",
+            "type": "string"
+          },
+          {
+            "name": "pincode",
+            "anotherProp": "baz",
+            "type": [
+              "null",
+              "long"
+            ]
+          },
+          {
+            "name": "subAddress",
+            "type": "addressType"
+          }
+        ]
+      }
+    },
+    {
+      "name": "secondaryAddress",
+      "moreProps": "quux",
+      "type": [
+        "null",
+        "addressType"
+      ]
+    }
+  ]
+}

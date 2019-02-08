@@ -22,9 +22,8 @@ import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.NonIncrementalColumnException;
-import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,9 +117,9 @@ public interface QueryExecutor {
     <T extends Storable> Collection<T> select(SearchQuery searchQuery);
 
     /**
-     *  @return returns set of column names for a given table
+     *  @return returns set of columns for a given table
      */
-    CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException;
+    Columns getColumns(String namespace) throws SQLException;
 
     /**
      *  Begins the transaction
@@ -138,4 +137,15 @@ public interface QueryExecutor {
      *  Flushes the changes made to the storage layer
      */
     void commitTransaction();
+
+    /**
+     * @return all entries that match the specified {@link StorableKey} with share lock
+     */
+    <T extends Storable> Collection<T> selectForShare(StorableKey storableKey);
+
+    /**
+     * @return all entries that match the specified {@link StorableKey} with update lock
+     */
+    <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey);
+
 }

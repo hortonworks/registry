@@ -1,0 +1,12 @@
+{
+    "type" : "record",
+    "name" : "UserProfile",
+    "namespace" : "com.hortonworks.registries.streams.examples.dtos",
+    "doc" : "Profile of the User",
+    "fields" : [
+        {"name" : "id", "type" : "long"},
+        {"name" : "name", "type" : "string"},
+        {"name" : "age", "type" : "int"},
+        {"name" : "region", "type" : "string"}
+    ]
+}

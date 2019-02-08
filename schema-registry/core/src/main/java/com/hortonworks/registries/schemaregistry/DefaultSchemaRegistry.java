@@ -28,6 +28,8 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExist
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.schemaregistry.locks.Lock;
+import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleContext;
@@ -57,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,6 +71,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public static final String ORDER_BY_FIELDS_PARAM_NAME = "_orderByFields";
     public static final String DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY = "OPTIMISTIC";
+    private static final Long DEFAULT_SCHEMA_LOCK_TIMEOUT_IN_SECS = 120L;
 
     private final StorageManager storageManager;
     private final FileStorage fileStorage;
@@ -78,15 +82,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
     private SchemaBranchCache schemaBranchCache;
     private HAServerNotificationManager haServerNotificationManager;
+    private SchemaLockManager schemaLockManager;
 
     public DefaultSchemaRegistry(StorageManager storageManager,
                                  FileStorage fileStorage,
                                  Collection<Map<String, Object>> schemaProvidersConfig,
-                                 HAServerNotificationManager haServerNotificationManager) {
+                                 HAServerNotificationManager haServerNotificationManager,
+                                 SchemaLockManager schemaLockManager) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaProvidersConfig = schemaProvidersConfig;
         this.haServerNotificationManager = haServerNotificationManager;
+        this.schemaLockManager = schemaLockManager;
     }
 
     @Override
@@ -102,7 +109,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaSerDesMapping.class,
                         SchemaBranchStorable.class,
                         SchemaBranchVersionMapping.class,
-                        HostConfigStorable.class));
+                        HostConfigStorable.class,
+                        SchemaLockStorable.class));
 
         Options options = new Options(props);
         schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),
@@ -235,6 +243,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                   boolean throwErrorIfExists) throws UnsupportedSchemaTypeException {
         SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata));
         String type = schemaMetadata.getType();
+
         if (schemaTypeWithProviders.get(type) == null) {
             throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
         }
@@ -245,6 +254,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 return schemaMetadataStorable.getId();
             }
         }
+
         final Long nextId = storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
         givenSchemaMetadataStorable.setId(nextId);
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
@@ -254,6 +264,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
         schemaBranchStorable.setId(storageManager.nextId(SchemaBranchStorable.NAME_SPACE));
         storageManager.add(schemaBranchStorable);
+
+        storageManager.add(new SchemaLockStorable(givenSchemaMetadataStorable.getNameSpace(), givenSchemaMetadataStorable.getName(), System.currentTimeMillis()));
 
         return givenSchemaMetadataStorable.getId();
     }
@@ -442,6 +454,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata,
                                             SchemaVersion schemaVersion)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        lockSchemaMetadata(schemaMetadata.getName());
         return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x));
     }
 
@@ -449,12 +462,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                             SchemaMetadata schemaMetadata,
                                             SchemaVersion schemaVersion)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        lockSchemaMetadata(schemaMetadata.getName());
         return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x));
     }
 
     public SchemaIdVersion addSchemaVersion(String schemaName,
                                             SchemaVersion schemaVersion)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
+        lockSchemaMetadata(schemaName);
         return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion);
     }
 
@@ -462,7 +477,16 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                             String schemaName,
                                             SchemaVersion schemaVersion)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
+        lockSchemaMetadata(schemaName);
         return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaName, schemaVersion);
+    }
+
+    private void lockSchemaMetadata(String schemaName) {
+        String lockName = new SchemaLockStorable(SchemaMetadataStorable.NAME_SPACE, schemaName).getName();
+        Lock writeLock = schemaLockManager.getWriteLock(lockName);
+        if (!writeLock.lock(DEFAULT_SCHEMA_LOCK_TIMEOUT_IN_SECS, TimeUnit.SECONDS)) {
+            throw new RuntimeException("Failed to obtain write lock : " + lockName + " in " + DEFAULT_SCHEMA_LOCK_TIMEOUT_IN_SECS + " sec");
+        }
     }
 
     @Override

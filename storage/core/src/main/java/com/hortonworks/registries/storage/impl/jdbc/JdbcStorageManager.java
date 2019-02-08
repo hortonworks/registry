@@ -32,7 +32,7 @@ import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
 public class JdbcStorageManager implements TransactionManager, StorageManager {
@@ -100,6 +102,53 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         }
         log.debug("Querying key = [{}]\n\t returned [{}]", key, entry);
         return entry;
+    }
+
+    @Override
+    public boolean readLock(StorableKey key, Long time, TimeUnit timeUnit) {
+        log.debug("Obtaining a read lock for entry with storable key [{}]", key);
+
+        Supplier<Collection<Storable>> supplier = () -> queryExecutor.selectForShare(key);
+
+        try {
+            return getLock(supplier, time, timeUnit);
+        } catch (InterruptedException e) {
+            throw new StorageException("Failed to obtain a write lock for storable key : " + key);
+        }
+    }
+
+    @Override
+    public boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit) {
+        log.debug("Obtaining a write lock for entry with storable key [{}]", key);
+
+        Supplier<Collection<Storable>> supplier = () -> queryExecutor.selectForUpdate(key);
+
+        try {
+            return getLock(supplier, time, timeUnit);
+        } catch (InterruptedException e) {
+            throw new StorageException("Failed to obtain a write lock for storable key : " + key);
+        }
+    }
+
+    private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
+        long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
+
+        if(remainingTime < 0) {
+            throw new IllegalArgumentException("Wait time for obtaining the lock can't be negative");
+        }
+
+        long startTime = System.currentTimeMillis();
+        do {
+            Collection<Storable> storables = supplier.get();
+            if (storables != null && !storables.isEmpty()) {
+                return true;
+            } else {
+                Thread.sleep(500);
+            }
+        } while((System.currentTimeMillis() - startTime) < remainingTime);
+
+
+        return false;
     }
 
     @Override
@@ -186,15 +235,14 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         StorableKey storableKey = null;
 
         try {
-            CaseAgnosticStringSet columnNames = queryExecutor.getColumnNames(namespace);
+            Columns columns = queryExecutor.getColumns(namespace);
             for (QueryParam qp : queryParams) {
-                if (!columnNames.contains(qp.getName())) {
+                Schema.Type type = columns.getType(qp.getName());
+                if (type == null) {
                     log.warn("Query parameter [{}] does not exist for namespace [{}]. Query parameter ignored.", qp.getName(), namespace);
                 } else {
-                    final String val = qp.getValue();
-                    final Schema.Type typeOfVal = Schema.Type.getTypeOfVal(val);
-                    fieldsToVal.put(new Schema.Field(qp.getName(), typeOfVal),
-                            typeOfVal.getJavaType().getConstructor(String.class).newInstance(val)); // instantiates object of the appropriate type
+                    fieldsToVal.put(new Schema.Field(qp.getName(), type),
+                            type.getJavaType().getConstructor(String.class).newInstance(qp.getValue()));
                 }
             }
 

@@ -29,6 +29,8 @@ import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlInsertQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectForShareQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectForUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
@@ -80,7 +82,7 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     public void insertOrUpdate(final Storable storable) {
         boolean committed = false;
         try {
-            beginTransaction(TransactionIsolation.DEFAULT);
+            beginTransaction(TransactionIsolation.JDBC_DEFAULT);
             Collection<Storable> entities = select(storable.getStorableKey());
             if (entities.isEmpty()) {
                 insert(storable);
@@ -136,6 +138,16 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     public <T extends Storable> Collection<T> select(SearchQuery searchQuery) {
         Schema schema = storableFactory.create(searchQuery.getNameSpace()).getSchema();
         return executeQuery(searchQuery.getNameSpace(), new PostgresqlSelectQuery(searchQuery, schema));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForShare(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new PostgresqlSelectForShareQuery(storableKey));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new PostgresqlSelectForUpdateQuery(storableKey));
     }
 
     // this is required since the Id type in Storable is long and Postgres supports Int type for SERIAL (auto increment) field
