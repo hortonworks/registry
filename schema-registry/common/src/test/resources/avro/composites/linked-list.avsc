@@ -1,0 +1,16 @@
+{
+  "name": "linked_list",
+  "namespace": "com.hortonworks.types",
+  "includeSchemas": [
+    {
+      "name": "node"
+    }
+  ],
+  "type": "record",
+  "fields": [
+    {
+      "name": "list",
+      "type": "com.hortonworks.types.node"
+    }
+  ]
+}

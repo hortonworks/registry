@@ -23,17 +23,17 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.codehaus.jackson.node.NullNode;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.apache.avro.Schema.Type.RECORD;
 
@@ -132,21 +132,19 @@ public class AvroSchemaResolver implements SchemaResolver {
         Schema.Parser parser = new Schema.Parser();
         parser.addTypes(complexTypes);
         Schema schema = parser.parse(schemaText);
-        Set<String> visitingTypes = new HashSet<>();
+        Map<String, Schema> visitingTypes = new HashMap<>();
         Schema updatedSchema = handleUnionFieldsWithNull(schema, visitingTypes);
-
         return (schema == updatedSchema && complexTypes.isEmpty()) ? schemaText : updatedSchema.toString();
     }
 
-    public Schema handleUnionFieldsWithNull(Schema schema, Set<String> visitingTypes) {
-        if (visitingTypes.contains(schema.getFullName())) {
+    public Schema handleUnionFieldsWithNull(Schema schema, Map<String, Schema> visitingTypes) {
+        if (visitingTypes.containsKey(schema.getFullName())) {
             return schema;
         }
-        visitingTypes.add(schema.getFullName());
+        visitingTypes.put(schema.getFullName(), schema);
 
-        Schema updatedRootSchema = schema;
         if (schema.getType() == RECORD) {
-            List<Schema.Field> fields = updatedRootSchema.getFields();
+            List<Schema.Field> fields = schema.getFields();
             List<Schema.Field> updatedFields = new ArrayList<>(fields.size());
             boolean hasUnionType = false;
 
@@ -155,24 +153,38 @@ public class AvroSchemaResolver implements SchemaResolver {
                 // check for union
 
                 boolean currentFieldTypeIsUnion = fieldSchema.getType() == Schema.Type.UNION;
-                if (currentFieldTypeIsUnion) {
-                    // check for the fields with in union
-                    // if it is union and first type is null then set default value as null
-                    if (fieldSchema.getTypes().get(0).getType() == Schema.Type.NULL) {
-                        hasUnionType = true;
-                    }
+                Schema.Field rebuiltField;
+                // check for the fields with in union
+                // if it is union and first type is null then set default value as null
+                if (currentFieldTypeIsUnion && fieldSchema.getTypes().get(0).getType() == Schema.Type.NULL) {
+                    hasUnionType = true;
+                    visitingTypes.put(schema.getFullName(),
+                            Schema.createRecord(schema.getName(), schema.getDoc(), schema.getNamespace(), schema.isError()));
+                    rebuiltField = new Schema.Field(field.name(),
+                            cloneUnion(fieldSchema, visitingTypes),
+                            field.doc(),
+                            field.defaultVal() == null ? JsonProperties.NULL_VALUE : field.defaultVal(),
+                            field.order());
                 } else {
                     // go through non-union fields, which may be records
                     Schema updatedFieldSchema = handleUnionFieldsWithNull(fieldSchema, visitingTypes);
                     if (fieldSchema != updatedFieldSchema) {
                         hasUnionType = true;
+                        visitingTypes.put(schema.getFullName(),
+                                Schema.createRecord(schema.getName(), schema.getDoc(), schema.getNamespace(), schema.isError()));
+                        rebuiltField = new Schema.Field(field.name(),
+                                updatedFieldSchema,
+                                field.doc(),
+                                field.defaultVal(),
+                                field.order());
+                    } else {
+                        rebuiltField = new Schema.Field(field.name(),
+                                visitingTypes.getOrDefault(fieldSchema.getFullName(), fieldSchema),
+                                field.doc(),
+                                field.defaultVal(),
+                                field.order());
                     }
                 }
-                Schema.Field rebuiltField = new Schema.Field(field.name(),
-                                                   fieldSchema,
-                                                   field.doc(),
-                                                   currentFieldTypeIsUnion ? NullNode.getInstance() : field.defaultValue(),
-                                                   field.order());
                 for (Map.Entry<String, Object> prop : field.getObjectProps().entrySet()) {
                     rebuiltField.addProp(prop.getKey(), prop.getValue());
                 }
@@ -180,18 +192,29 @@ public class AvroSchemaResolver implements SchemaResolver {
             }
 
             if (hasUnionType) {
-                updatedRootSchema = Schema.createRecord(schema.getName(), schema.getDoc(), schema.getNamespace(), schema.isError());
+                Schema updatedRootSchema = visitingTypes.get(schema.getFullName());
                 updatedRootSchema.setFields(updatedFields);
                 for (String alias : schema.getAliases()) {
                     updatedRootSchema.addAlias(alias);
                 }
-                for (Map.Entry<String, org.codehaus.jackson.JsonNode> nodeEntry : schema.getJsonProps().entrySet()) {
+                for (Map.Entry<String, Object> nodeEntry : schema.getObjectProps().entrySet()) {
                     updatedRootSchema.addProp(nodeEntry.getKey(), nodeEntry.getValue());
                 }
+                return updatedRootSchema;
             }
         }
 
-        return updatedRootSchema;
+        return schema;
+    }
+
+    private Schema cloneUnion(Schema fieldSchema, Map<String, Schema> visitingTypes) {
+        SchemaBuilder.UnionAccumulator<Schema> unionAccumulator = SchemaBuilder.unionOf().nullType();
+        for (int i = 1; i < fieldSchema.getTypes().size(); i++) {
+            Schema innerSchema = fieldSchema.getTypes().get(i);
+            unionAccumulator = unionAccumulator.and()
+                    .type(visitingTypes.getOrDefault(innerSchema.getFullName(), innerSchema));
+        }
+        return unionAccumulator.endUnion();
     }
 
     private Schema updateUnionFields(Schema schema) {
@@ -275,6 +298,9 @@ public class AvroSchemaResolver implements SchemaResolver {
     }
 
     private void collectComplexTypes(Schema schema, Map<String, Schema> complexTypes) {
+        if (complexTypes.containsKey(schema.getFullName())) {
+            return;
+        }
         switch (schema.getType()) {
             case RECORD:
                 complexTypes.put(schema.getFullName(), schema);
@@ -285,18 +311,15 @@ public class AvroSchemaResolver implements SchemaResolver {
                 }
                 break;
             case ARRAY:
-                complexTypes.put(schema.getFullName(), schema);
                 collectComplexTypes(schema.getElementType(), complexTypes);
                 break;
             case UNION:
-                complexTypes.put(schema.getFullName(), schema);
                 List<Schema> unionSchemas = schema.getTypes();
                 for (Schema schemaEntry : unionSchemas) {
                     collectComplexTypes(schemaEntry, complexTypes);
                 }
                 break;
             case MAP:
-                complexTypes.put(schema.getFullName(), schema);
                 collectComplexTypes(schema.getValueType(), complexTypes);
                 break;
             default:

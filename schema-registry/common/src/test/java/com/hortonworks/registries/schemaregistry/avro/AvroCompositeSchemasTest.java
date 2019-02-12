@@ -52,6 +52,7 @@ public class AvroCompositeSchemasTest {
         versions.put("account", cretaeSchemaVersionInfo("/avro/composites/account.avsc"));
         versions.put("account-cyclic", cretaeSchemaVersionInfo("/avro/composites/account-cyclic.avsc"));
         versions.put("account-dep", cretaeSchemaVersionInfo("/avro/composites/account-dep.avsc"));
+        versions.put("node", cretaeSchemaVersionInfo("/avro/composites/node.avsc"));
 
         avroSchemaProvider = new AvroSchemaProvider();
         SchemaVersionRetriever schemaVersionRetriever = new SchemaVersionRetriever() {
@@ -95,6 +96,15 @@ public class AvroCompositeSchemasTest {
     }
 
     @Test
+    public void testSelfRefAndUnions() throws Exception {
+        String linkedListSchemaText = avroSchemaProvider.getResultantSchema(getResourceText("/avro/composites/linked-list.avsc"));
+        LOG.info("linkedListSchemaText [{}] ", linkedListSchemaText);
+        Schema.Parser parser = new Schema.Parser();
+        Schema parsedSchema = parser.parse(linkedListSchemaText);
+        LOG.info("parsedSchema [{}] ", parsedSchema);
+    }
+
+    @Test
     public void testUnionSchemas() throws Exception {
         String givenSchemaLocation = "/avro/composites/unions.avsc";
         String expectedSchemaLocation = "/avro/composites/expected-unions.avsc";
@@ -107,7 +117,7 @@ public class AvroCompositeSchemasTest {
         Schema schema = new Schema.Parser().parse(getResourceText(givenSchemaLocation));
         LOG.info("schema = %s", schema);
 
-        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
+        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashMap<>());
         LOG.info("effectiveSchema = %s", effectiveSchema);
         String returnedSchemaText = effectiveSchema.toString();
         Assert.assertEquals(getResourceText(expectedSchemaLocation).replace(" ", ""),
@@ -129,10 +139,10 @@ public class AvroCompositeSchemasTest {
     public void testUnionSchemasPropRetention() throws Exception {
         AvroSchemaResolver avroSchemaResolver = new AvroSchemaResolver(null);
         Schema schema = new Schema.Parser().parse(getResourceText("/avro/composites/unions-with-props.avsc"));
-        LOG.info("schema = %s", schema);
+        LOG.info("schema = {}", schema);
 
-        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
-        LOG.info("effectiveSchema = %s", effectiveSchema);
+        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashMap<>());
+        LOG.info("effectiveSchema = {}", effectiveSchema);
         String returnedSchemaText = effectiveSchema.toString();
         Assert.assertEquals("foo", effectiveSchema.getField("name").getProp("someProp"));
         Assert.assertEquals("bar", effectiveSchema.getField("address").getProp("otherProp"));

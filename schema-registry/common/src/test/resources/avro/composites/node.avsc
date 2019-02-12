@@ -1,0 +1,21 @@
+{
+  "name": "node",
+  "namespace": "com.hortonworks.types",
+  "type": "record",
+  "fields": [
+    {
+      "name": "data",
+      "type": [
+        "null",
+        "long"
+      ]
+    },
+    {
+      "name": "next",
+      "type": [
+        "null",
+        "com.hortonworks.types.node"
+      ]
+    }
+  ]
+}
