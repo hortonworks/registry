@@ -209,7 +209,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         configuration = new Configuration(conf);
-
         ClientConfig config = createClientConfig(conf);
         ClientBuilder clientBuilder = new JerseyClientBuilder()
                                                    .withConfig(config)
@@ -434,6 +433,33 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId) {
         return schemaMetadataCache.get(SchemaMetadataCache.Key.of(schemaMetadataId));
+    }
+
+    @Override
+    public void deleteSchema(String schemaName) throws SchemaNotFoundException {
+        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
+        schemaMetadataCache.invalidateSchemaMetadata(SchemaMetadataCache.Key.of(schemaName));
+        if (schemaVersionInfos != null) {
+            for (SchemaVersionInfo schemaVersionInfo: schemaVersionInfos) {
+                SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaVersionInfo.getId());
+                schemaVersionInfoCache.invalidateSchema(SchemaVersionInfoCache.Key.of(schemaIdVersion));
+            }
+        }
+
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s", schemaName));
+        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+            @Override
+            public Response run() {
+                return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+            }
+        });
+
+        int status = response.getStatus();
+        if (status == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new SchemaNotFoundException(response.readEntity(String.class));
+        } else if (status == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+            throw new RuntimeException(response.readEntity(String.class));
+        }
     }
 
     @Override

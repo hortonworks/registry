@@ -290,6 +290,38 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public void deleteSchema(String schemaName) throws SchemaNotFoundException {
+        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
+        Long schemaMetadataId = null;
+        // Remove all the schema version state entities for this schema name, invalidate relevant caches and notify all HA servers
+        if (schemaVersionInfos != null) {
+            for (SchemaVersionInfo schemaVersionInfo: schemaVersionInfos) {
+                invalidateCachesAndNotifyAllHAServers(schemaVersionInfo);
+                schemaMetadataId = schemaVersionInfo.getSchemaMetadataId();
+                List<QueryParam> queryParams = new ArrayList<>();
+                queryParams.add(new QueryParam(SchemaVersionStateStorable.SCHEMA_VERSION_ID, schemaVersionInfo.getId().toString()));
+                Collection<SchemaVersionStateStorable> schemaVersionStateStorables = storageManager.find(SchemaVersionStateStorable.NAME_SPACE, queryParams);
+                if (schemaVersionStateStorables != null) {
+                    for (SchemaVersionStateStorable schemaVersionStateStorable : schemaVersionStateStorables) {
+                        storageManager.remove(schemaVersionStateStorable.getStorableKey());
+                    }
+                }
+            }
+        }
+        // Remove all serdes mappings for this schema name
+        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
+        if (schemaSerDesMappings != null) {
+            for (SchemaSerDesMapping schemaSerDesMapping: schemaSerDesMappings) {
+                storageManager.remove(schemaSerDesMapping.getStorableKey());
+            }
+        }
+        // Finally remove the schema metadata entry that will remove other related entries on cascade at DB level
+        SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
+        schemaMetadataStorable.setName(schemaName);
+        storageManager.remove(schemaMetadataStorable.getStorableKey());
+    }
+
+    @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(String schemaName) {
         SchemaMetadataStorable givenSchemaMetadataStorable = new SchemaMetadataStorable();
         givenSchemaMetadataStorable.setName(schemaName);
@@ -966,5 +998,17 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         haServerNotificationManager.notifyCacheInvalidation(schemaBranchCache.getCacheType(),keyAsString);
+    }
+
+    // Clear the relevant caches for this schema version and notify HA servers
+    private void invalidateCachesAndNotifyAllHAServers(SchemaVersionInfo schemaVersionInfo) {
+        Collection<SchemaBranch> schemaBranches = schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId());
+        if (schemaBranches != null) {
+            for (SchemaBranch schemaBranch: schemaBranches) {
+                invalidateSchemaBranchInAllHAServers(SchemaBranchCache.Key.of(schemaBranch.getId()));
+            }
+        }
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaVersionInfo.getName(), schemaVersionInfo.getVersion());
+        schemaVersionLifecycleManager.invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key.of(schemaVersionKey));
     }
 }
