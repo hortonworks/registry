@@ -1075,7 +1075,7 @@ public class SchemaVersionLifecycleManager {
         schemaVersionInfoCache.invalidateSchema(key);
     }
 
-    private void invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key key) {
+    public void invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key key) {
         schemaVersionInfoCache.invalidateSchema(key);
 
         String keyAsString;
