@@ -84,7 +84,7 @@ Running Kafka Example
 SchemaRegistry makes it very easy to integrate with Kafka, Storm and
 Nifi and any other systems. We've an example code on how to integrate
 with kafka `here
-<https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples/avro/TruckEventsKafkaAvroSerDesApp.java>`_.
+<https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples/avro/KafkaAvroSerDesApp.java>`_.
 
 To run this example, follow the steps below
 
@@ -232,7 +232,7 @@ serializer/deserializer for a given schema
 
 .. code:: java
 
-   String schema1 = getSchema(""/device.avsc");
+   String schema1 = getSchema("/device.avsc");
    SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
    // registering a new schema

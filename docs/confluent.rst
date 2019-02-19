@@ -1,7 +1,7 @@
 Migration from Confluent Schema Registry
 ----------------------------------------
 
-We support a comparability and a migration path from Confluent Schema Registry.
+We support a compatibility and a migration path from Confluent Schema Registry.
 
 =========
 Migration
@@ -11,7 +11,7 @@ The following migration path is suggested.
 
 1. Sync / Mirror Schemas
 
-  - First to do is to sync/mirror the existing shema's and id's from confluent's schema registry.
+  - First to do is to sync/mirror the existing schema's and id's from confluent's schema registry.
   - It is important the schema id, is the same, as it will need to reference the same schema even once migrated as data will exist in kafka.
 
 
