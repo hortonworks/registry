@@ -12,7 +12,7 @@ Hadoop project and slightly modified. The reasons for doing so are to
 avoid having a dependency on hadoop-auth module which brings in some
 other modules, avoid conflicts with other versions of hadoop-auth module
 and having more control over the changes needed in future. Some text for
-this document has been borrowed from SECURITY.md of Apache Storm
+this document has been borrowed from SECURITY.md of Apache Storm.
 
 By default, registry and streamline web-services are running with
 authentication disabled and therefore anyone can access the web-services
