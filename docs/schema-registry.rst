@@ -270,6 +270,9 @@ serializer/deserializer for a given schema
    SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
    Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
    LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
+   
+   // deleting a schema metadata and all data associated with it including versions, branches, etc
+   schemaRegistryClient.deleteSchema(schemaName);
 
 
 Default serializer and deserializer APIs.
