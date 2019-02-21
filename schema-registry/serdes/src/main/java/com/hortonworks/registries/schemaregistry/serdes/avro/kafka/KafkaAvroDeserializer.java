@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadata;
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadataAvroDeserializer;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.serialization.ExtendedDeserializer;
+import org.apache.kafka.common.serialization.Deserializer;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
@@ -70,7 +70,7 @@ import java.util.Map;
  * }</pre>
  *
  */
-public class KafkaAvroDeserializer implements ExtendedDeserializer<Object> {
+public class KafkaAvroDeserializer implements Deserializer<Object> {
 
     /**
      * This property represents the version of a reader schema to be used in deserialization for each topic in

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,7 +97,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
     private static class LocalKafkaCluster extends EmbeddedKafkaCluster {
 
-        public LocalKafkaCluster(int numBrokers) {
+        private LocalKafkaCluster(int numBrokers) {
             super(numBrokers);
         }
 
@@ -113,7 +114,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
             super(numBrokers, brokerConfig, mockTimeMillisStart, mockTimeNanoStart);
         }
 
-        public void startCluster() {
+        void startCluster() {
             try {
                 before();
             } catch (Throwable throwable) {
@@ -121,7 +122,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
             }
         }
 
-        public void stopCluster() {
+        void stopCluster() {
             after();
         }
     }
@@ -177,7 +178,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
             Assert.assertEquals(getKey(msg), consumerRecord.key());
             AvroSchemaRegistryClientUtil.assertAvroObjs(msg, value);
         } finally {
-            CLUSTER.deleteTopic(topicName);
+            CLUSTER.deleteTopicAndWait(topicName);
         }
     }
 
@@ -226,7 +227,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         int ct = 0;
         while (ct++ < 100 && (consumerRecords == null || consumerRecords.isEmpty())) {
             LOG.info("Polling for consuming messages");
-            consumerRecords = consumer.poll(500);
+            consumerRecords = consumer.poll(Duration.ofMillis(500));
         }
         consumer.commitSync();
         consumer.close();

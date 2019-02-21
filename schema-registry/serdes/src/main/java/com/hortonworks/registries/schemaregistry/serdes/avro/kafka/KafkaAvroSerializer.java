@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Hortonworks.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSeriali
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadata;
 import com.hortonworks.registries.schemaregistry.serdes.avro.MessageAndMetadataAvroSerializer;
 import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.serialization.ExtendedSerializer;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
 
@@ -66,7 +66,7 @@ import java.util.Map;
  * }
  * </pre>
  */
-public class KafkaAvroSerializer implements ExtendedSerializer<Object> {
+public class KafkaAvroSerializer implements Serializer<Object> {
 
     /**
      * Compatibility property to be set on configs for registering message's schema to schema registry.

@@ -60,15 +60,7 @@ public class ClickStreamEnrichmentDriver {
     static final String PAGE_VIEWS_TOPIC = "page-views";
     static final String USER_ACTIVITY_TOPIC = "user-activity";
 
-    // Streams doesn't pass the header information when serializing / de-serializing the key / value while writing the
-    // record to the sink topics. (Cf. org.apache.kafka.streams.processor.internals.RecordCollectorImpl.java#L153).
-    //
-    // The Headers are passed as is b/w the processor nodes and to the sink topic. This leads to incorrect results as
-    // the `key.schema.version.id` and `value.schema.version.id` in the header is invalid for the sink topic.
-    //
-    // This issue is filed https://issues.apache.org/jira/browse/KAFKA-7483 and resolved in v2.1.0. The below flag
-    // can be updated to true by updating the respective dependency when KAFKA 2.1.0 is released.
-    static final String STORE_SCHEMA_VERSION_ID_IN_HEADER_POLICY = "false";
+    static final String STORE_SCHEMA_VERSION_ID_IN_HEADER_POLICY = "true";
 
     private ClickStreamEnrichmentDriver() {
     }
