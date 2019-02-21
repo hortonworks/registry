@@ -15,12 +15,6 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.client.MockSchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
@@ -34,11 +28,17 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.apache.kafka.common.serialization.ExtendedDeserializer;
-import org.apache.kafka.common.serialization.ExtendedSerializer;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -204,7 +204,7 @@ public class KafkaAvroSerdesTest {
 
         for (Boolean isKey : Arrays.asList(true, false)) {
             KafkaAvroSerde serde = new KafkaAvroSerde(schemaRegistryClient);
-            final ExtendedSerializer<Object> serializer = serde.extendedSerializer();
+            final Serializer<Object> serializer = serde.serializer();
             serializer.configure(configs, isKey);
 
             Headers headers = new RecordHeaders();
@@ -213,7 +213,7 @@ public class KafkaAvroSerdesTest {
             Assert.assertEquals(isKey, headers.lastHeader(customKeySchemaHeaderName) != null);
             Assert.assertEquals(!isKey, headers.lastHeader(customValueSchemaHeaderName) != null);
 
-            final ExtendedDeserializer<Object> deserializer = serde.extendedDeserializer();
+            final Deserializer<Object> deserializer = serde.deserializer();
             deserializer.configure(configs, isKey);
             final TestRecord actual = (TestRecord) deserializer.deserialize(topic, headers, bytes);
             Assert.assertEquals(record, actual);
@@ -233,14 +233,14 @@ public class KafkaAvroSerdesTest {
             configs.put(AbstractAvroSnapshotDeserializer.SPECIFIC_AVRO_READER, true);
 
             KafkaAvroSerde serde = new KafkaAvroSerde(schemaRegistryClient);
-            final ExtendedSerializer<Object> serializer = serde.extendedSerializer();
+            final Serializer<Object> serializer = serde.serializer();
             serializer.configure(configs, true);
 
             Headers headers = new RecordHeaders();
             final byte[] bytes = serializer.serialize(topic, headers, record);
             Assert.assertEquals(storeScheamIdInHeader, headers.lastHeader(keySchemaHeaderName) != null);
 
-            final ExtendedDeserializer<Object> deserializer = serde.extendedDeserializer();
+            final Deserializer<Object> deserializer = serde.deserializer();
             deserializer.configure(configs, true);
             final TestRecord actual = (TestRecord) deserializer.deserialize(topic, headers, bytes);
             Assert.assertEquals(record, actual);

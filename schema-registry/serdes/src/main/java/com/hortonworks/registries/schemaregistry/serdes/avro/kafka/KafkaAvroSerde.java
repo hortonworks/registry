@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 Hortonworks.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,6 @@ package com.hortonworks.registries.schemaregistry.serdes.avro.kafka;
 
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.ExtendedDeserializer;
-import org.apache.kafka.common.serialization.ExtendedSerializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -32,8 +30,8 @@ public class KafkaAvroSerde implements Serde<Object> {
     public static final String DEFAULT_KEY_SCHEMA_VERSION_ID = "key.schema.version.id";
     public static final String DEFAULT_VALUE_SCHEMA_VERSION_ID = "value.schema.version.id";
 
-    private final ExtendedSerializer<Object> ser;
-    private final ExtendedDeserializer<Object> deser;
+    private final Serializer<Object> ser;
+    private final Deserializer<Object> deser;
 
     public KafkaAvroSerde() {
         ser = new KafkaAvroSerializer();
@@ -45,7 +43,6 @@ public class KafkaAvroSerde implements Serde<Object> {
         deser = new KafkaAvroDeserializer(client);
     }
 
-    @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {
         ser.configure(configs, isKey);
         deser.configure(configs, isKey);
@@ -64,11 +61,4 @@ public class KafkaAvroSerde implements Serde<Object> {
         return deser;
     }
 
-    public ExtendedSerializer<Object> extendedSerializer() {
-        return ser;
-    }
-
-    public ExtendedDeserializer<Object> extendedDeserializer() {
-        return deser;
-    }
 }
