@@ -18,7 +18,7 @@ package com.hortonworks.registries.tag.service;
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.exception.service.exception.request.EntityNotFoundException;
-import com.hortonworks.registries.common.transaction.UnitOfWork;
+import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.tag.Tag;
 import com.hortonworks.registries.tag.TaggedEntity;

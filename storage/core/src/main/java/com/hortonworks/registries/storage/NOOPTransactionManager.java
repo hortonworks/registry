@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.storage;
 
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

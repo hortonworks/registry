@@ -16,8 +16,6 @@
 
 package com.hortonworks.registries.storage.transaction;
 
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
-import com.hortonworks.registries.common.transaction.UnitOfWork;
 import com.hortonworks.registries.storage.TransactionManager;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;

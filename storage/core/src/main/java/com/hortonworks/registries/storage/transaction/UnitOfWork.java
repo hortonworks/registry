@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.common.transaction;
+package com.hortonworks.registries.storage.transaction;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

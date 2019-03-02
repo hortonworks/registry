@@ -21,7 +21,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory
 
 import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
