@@ -15,11 +15,6 @@
         <!-- module dependency -->
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>registry-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hortonworks.registries</groupId>
             <artifactId>cache</artifactId>
             <version>${project.version}</version>
         </dependency>
