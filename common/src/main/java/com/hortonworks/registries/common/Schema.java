@@ -172,7 +172,7 @@ public class Schema implements Serializable {
         }
     }
 
-    @JsonTypeInfo(use= JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+    @JsonTypeInfo(use= JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
     @JsonTypeIdResolver(SchemaJsonTypeIdResolver.class)
     public static class Field implements Serializable {
         String name;
