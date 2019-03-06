@@ -1,6 +1,5 @@
 package com.hortonworks.registries.storage.transaction;
 
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.exception.IgnoreTransactionRollbackException;
 import mockit.Expectations;

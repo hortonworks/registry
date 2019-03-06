@@ -1,4 +1,4 @@
-package com.hortonworks.registries.common.transaction;
+package com.hortonworks.registries.storage.transaction;
 
 import java.sql.Connection;
 

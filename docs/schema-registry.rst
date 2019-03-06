@@ -84,7 +84,7 @@ Running Kafka Example
 SchemaRegistry makes it very easy to integrate with Kafka, Storm and
 Nifi and any other systems. We've an example code on how to integrate
 with kafka `here
-<https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples/avro/TruckEventsKafkaAvroSerDesApp.java>`_.
+<https://github.com/hortonworks/registry/blob/master/examples/schema-registry/avro/src/main/java/com/hortonworks/registries/schemaregistry/examples/avro/KafkaAvroSerDesApp.java>`_.
 
 To run this example, follow the steps below
 
@@ -232,7 +232,7 @@ serializer/deserializer for a given schema
 
 .. code:: java
 
-   String schema1 = getSchema(""/device.avsc");
+   String schema1 = getSchema("/device.avsc");
    SchemaMetadata schemaMetadata = createSchemaMetadata("com.hwx.schemas.sample-" + System.currentTimeMillis());
 
    // registering a new schema
@@ -270,6 +270,9 @@ serializer/deserializer for a given schema
    SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
    Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
    LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
+   
+   // deleting a schema metadata and all data associated with it including versions, branches, etc
+   schemaRegistryClient.deleteSchema(schemaName);
 
 
 Default serializer and deserializer APIs.

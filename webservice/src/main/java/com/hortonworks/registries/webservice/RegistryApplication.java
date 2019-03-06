@@ -17,7 +17,7 @@ package com.hortonworks.registries.webservice;
 
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
@@ -39,7 +39,6 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
-import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
