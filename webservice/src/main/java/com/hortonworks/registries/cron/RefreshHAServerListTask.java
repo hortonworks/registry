@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.cron;
 
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HostConfigStorable;
 import com.hortonworks.registries.storage.StorageManager;

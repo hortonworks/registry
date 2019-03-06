@@ -18,7 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;

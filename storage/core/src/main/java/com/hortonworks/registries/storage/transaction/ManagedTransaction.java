@@ -16,7 +16,6 @@
 
 package com.hortonworks.registries.storage.transaction;
 
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.transaction.functional.ManagedTransactionConsumer;
 import com.hortonworks.registries.storage.transaction.functional.ManagedTransactionFunction;

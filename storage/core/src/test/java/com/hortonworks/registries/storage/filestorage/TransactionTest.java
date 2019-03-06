@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.storage.filestorage;
 
-import com.hortonworks.registries.common.transaction.TransactionIsolation;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
