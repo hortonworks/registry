@@ -34,6 +34,7 @@ public class TransactionEventListener implements ApplicationEventListener {
     private final ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap = new ConcurrentHashMap<>();
     private final TransactionManager transactionManager;
     private final boolean runWithTxnIfNotConfigured;
+    private TransactionIsolation defaultTransactionIsolation;
 
     /**
      * Creates instance by taking the below arguments and webservice methods are not run in transaction unless they use
@@ -45,6 +46,12 @@ public class TransactionEventListener implements ApplicationEventListener {
         this(transactionManager, false);
     }
 
+    public TransactionEventListener(TransactionManager transactionManager,
+                                    TransactionIsolation defaultTransactionIsolation) {
+        this(transactionManager, false);
+        this.defaultTransactionIsolation = defaultTransactionIsolation;
+    }
+
     /**
      * Creates instance by taking the below arguments.
      *
@@ -52,56 +59,97 @@ public class TransactionEventListener implements ApplicationEventListener {
      * @param runWithTxnIfNotConfigured All webservice resource methods are invoked in a transaction even if they are
      *                                  not set with {@link UnitOfWork}.
      */
-    public TransactionEventListener(TransactionManager transactionManager, boolean runWithTxnIfNotConfigured) {
+    public TransactionEventListener(TransactionManager transactionManager,
+                                    boolean runWithTxnIfNotConfigured) {
         this.transactionManager = transactionManager;
         this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
+    }
+
+    public TransactionEventListener(TransactionManager transactionManager,
+                                    boolean runWithTxnIfNotConfigured,
+                                    TransactionIsolation defaultTransactionIsolation) {
+        this.transactionManager = transactionManager;
+        this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
+        this.defaultTransactionIsolation = defaultTransactionIsolation;
     }
 
     private static class UnitOfWorkEventListener implements RequestEventListener {
         private final ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap;
         private final TransactionManager transactionManager;
         private final boolean runWithTxnIfNotConfigured;
+        private final TransactionIsolation defaultTransactionIsolation;
         private boolean useTransactionForUnitOfWork = true;
         private boolean isTransactionActive = false;
 
         public UnitOfWorkEventListener(ConcurrentMap<ResourceMethod, Optional<UnitOfWork>> methodMap,
                                        TransactionManager transactionManager,
-                                       boolean runWithTxnIfNotConfigured) {
+                                       boolean runWithTxnIfNotConfigured,
+                                       TransactionIsolation defaultTransactionIsolation) {
             this.methodMap = methodMap;
             this.transactionManager = transactionManager;
             this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
+            this.defaultTransactionIsolation = defaultTransactionIsolation;
         }
 
         @Override
         public void onEvent(RequestEvent event) {
             final RequestEvent.Type eventType = event.getType();
+
             if (eventType == RequestEvent.Type.RESOURCE_METHOD_START) {
+
+                // Start transaction before invoking the resource method for the request
+
                 Optional<UnitOfWork> unitOfWork = methodMap.computeIfAbsent(event.getUriInfo()
-                                                                                 .getMatchedResourceMethod(),
-                                                                            UnitOfWorkEventListener::registerUnitOfWorkAnnotations);
+                                .getMatchedResourceMethod(),
+                        UnitOfWorkEventListener::registerUnitOfWorkAnnotations);
 
                 // get property whether to have unitOfWork with DB default transaction by default
                 useTransactionForUnitOfWork =
-                        unitOfWork.isPresent() ? unitOfWork.get().transactional() : runWithTxnIfNotConfigured;
-                TransactionIsolation transactionIsolation = unitOfWork.map(UnitOfWork::transactionIsolation)
-                                                                      .orElse(TransactionIsolation.DEFAULT);
+                        unitOfWork.map(UnitOfWork::transactional).orElse(runWithTxnIfNotConfigured);
+
+                TransactionIsolation transactionIsolation =
+                        unitOfWork.map(x -> {
+                                    TransactionIsolation result = x.transactionIsolation();
+                                    if (result == TransactionIsolation.APPLICATION_DEFAULT) {
+                                        result = defaultTransactionIsolation == null ? TransactionIsolation.DATABASE_SENSITIVE : defaultTransactionIsolation;
+                                    }
+                                    return result;
+                                }
+                        ).orElse(TransactionIsolation.DATABASE_SENSITIVE);
+
                 if (useTransactionForUnitOfWork) {
                     transactionManager.beginTransaction(transactionIsolation);
                     isTransactionActive = true;
                 }
             } else if (eventType == RequestEvent.Type.RESP_FILTERS_START) {
-                // not supporting transactions to filters
-            } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
+
+                // Once the response from the resource method is available we should either rollback or commit the
+                // transaction. In case the resource method throws an error, ON_EXCEPTION is called first which will
+                // rollback the transaction and eventually RESP_FILTERS_START is called (which won't do anything)
+                // after exception mapper handles the exception. In case the exception is not thrown, RESP_FILTERS_START
+                // is called which then commits the transaction.
+                //      Its not advisable to handle rollbacks and commits when the request transitions to FINISHED state.
+                // For example, we might have a client which add an entity (E1) and lets say entity id is returned as a response.
+                // Lets say the client then adds a second entity (E2) which has foreign key reference to the first entity (E1).
+                // If we commit the transaction in FINISHED state, then the client received the entity id after adding E1
+                // at time say t1 and adding entity E2 at t2, then we might run into a scenario where we might commit the changes
+                // to E1 only after t2 as responses to the client are dispatched before FINISHED, then client will receive
+                // an error that E1 is not found even thought the operation of adding E1 had succeeded from the client's point of view.
+
                 if (useTransactionForUnitOfWork && isTransactionActive) {
-                    transactionManager.rollbackTransaction();
+                    if (event.getContainerResponse().getStatus() < 400) {
+                        transactionManager.commitTransaction();
+                    } else {
+                        transactionManager.rollbackTransaction();
+                    }
+
                     isTransactionActive = false;
                 }
-            } else if (eventType == RequestEvent.Type.FINISHED) {
-                if (useTransactionForUnitOfWork && event.isSuccess()) {
-                    transactionManager.commitTransaction();
-                    isTransactionActive = false;
-                }
-                else if (useTransactionForUnitOfWork && !event.isSuccess() && isTransactionActive) {
+            } else if (eventType == RequestEvent.Type.ON_EXCEPTION) {
+
+                // Rollback the transaction in case an exception is thrown from the resource method.
+
+                if (useTransactionForUnitOfWork && isTransactionActive) {
                     transactionManager.rollbackTransaction();
                     isTransactionActive = false;
                 }
@@ -123,6 +171,6 @@ public class TransactionEventListener implements ApplicationEventListener {
 
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
-        return new UnitOfWorkEventListener(methodMap, transactionManager, runWithTxnIfNotConfigured);
+        return new UnitOfWorkEventListener(methodMap, transactionManager, runWithTxnIfNotConfigured, defaultTransactionIsolation);
     }
 }
