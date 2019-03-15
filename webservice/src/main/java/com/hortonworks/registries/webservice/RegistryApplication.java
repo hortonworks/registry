@@ -227,7 +227,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
         
         environment.jersey().register(MultiPartFeature.class);
-        environment.jersey().register(new TransactionEventListener(transactionManager));
+        environment.jersey().register(new TransactionEventListener(transactionManager, TransactionIsolation.READ_COMMITTED));
 
     }
 
