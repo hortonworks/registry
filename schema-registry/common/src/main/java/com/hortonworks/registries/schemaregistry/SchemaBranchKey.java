@@ -16,10 +16,10 @@
 
 package com.hortonworks.registries.schemaregistry;
 
-import avro.shaded.com.google.common.base.Preconditions;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * This class contains schema branch name and schema metadata name.
@@ -44,8 +44,8 @@ public final class SchemaBranchKey implements Serializable {
      * @param schemaMetadataName    schema metadata name from which the schema branch was created
      */
     public SchemaBranchKey(String schemaBranchName, String schemaMetadataName) {
-        Preconditions.checkNotNull(schemaBranchName, "schemaBranchName can not be null");
-        Preconditions.checkNotNull(schemaMetadataName, "schemaMetadataName can not be null");
+        Objects.requireNonNull(schemaBranchName, "schemaBranchName can not be null");
+        Objects.requireNonNull(schemaMetadataName, "schemaMetadataName can not be null");
         this.schemaBranchName = schemaBranchName;
         this.schemaMetadataName = schemaMetadataName;
     }

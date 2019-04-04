@@ -23,7 +23,6 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
-import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +181,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
                     appendable.append("{\"name\":\"").append(field.name()).append("\"").append(",\"type\":");
 
                     // handle default value
-                    JsonNode defaultValue = field.defaultValue();
+                    Object defaultValue = field.defaultVal();
                     if (defaultValue != null) {
                         appendable.append(defaultValue.toString());
                     }

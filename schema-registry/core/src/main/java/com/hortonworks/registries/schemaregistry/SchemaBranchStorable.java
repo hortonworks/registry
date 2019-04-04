@@ -16,10 +16,10 @@
 
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.util.HashMap;
 import java.util.Map;
