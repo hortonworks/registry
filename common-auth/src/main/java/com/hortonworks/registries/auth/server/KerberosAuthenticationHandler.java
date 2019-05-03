@@ -37,9 +37,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.hortonworks.registries.auth.PlatformName.IBM_JAVA;
@@ -139,10 +144,19 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     public static final String KEYTAB = TYPE + ".keytab";
 
     /**
+     * Constant for the configuration property that indicates the Trusted Proxy setting.
+     */
+    public static final String ENABLE_TRUSTED_PROXY = "enable.trusted.proxy";
+
+
+    /**
      * Constant for the configuration property that indicates the Kerberos name
      * rules for the Kerberos principals.
      */
     public static final String NAME_RULES = TYPE + ".name.rules";
+
+    public static final String QUERY_STRING_DELIMITER = "&";
+    public static final String DOAS_QUERY_STRING = "doAs=";
 
     private String type;
     private String keytab;
@@ -150,6 +164,8 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     private Subject serverSubject = new Subject();
     private List<LoginContext> loginContexts = new ArrayList<LoginContext>();
     private String[] nonBrowserUserAgents;
+    private boolean trustedProxyEnabled = false;
+    private ProxyUserAuthorization proxyUserAuthorization;
 
     /**
      * Creates a Kerberos SPNEGO authentication handler with the default
@@ -230,6 +246,12 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                 }
                 loginContexts.add(loginContext);
             }
+
+            trustedProxyEnabled = Boolean.parseBoolean(config.getProperty(ENABLE_TRUSTED_PROXY));
+            if (trustedProxyEnabled) {
+                proxyUserAuthorization = new ProxyUserAuthorization(config);
+            }
+
             try {
                 gssManager = Subject.doAs(serverSubject, new PrivilegedExceptionAction<GSSManager>() {
 
@@ -379,6 +401,15 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                                 String clientPrincipal = gssContext.getSrcName().toString();
                                 KerberosName kerberosName = new KerberosName(clientPrincipal);
                                 String userName = kerberosName.getShortName();
+                                String doAsUser = null;
+                                if (trustedProxyEnabled && (doAsUser = getDoasUser(request)) != null) {
+                                    if (!proxyUserAuthorization.authorize(userName, request.getRemoteAddr())) {
+                                        LOG.info("{} is not authorized to act as proxy user from {}", userName, request.getRemoteAddr());
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                        return null;
+                                    }
+                                    clientPrincipal = userName = doAsUser;
+                                }
                                 token = new AuthenticationToken(userName, clientPrincipal, getType());
                                 response.setStatus(HttpServletResponse.SC_OK);
                                 LOG.trace("SPNEGO completed for principal [{}]", clientPrincipal);
@@ -416,5 +447,71 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
             return false;
         }
         return true;
+    }
+
+    protected static String getDoasUser(HttpServletRequest request) {
+        String doAsUser = null;
+        String queryString = request.getQueryString();
+        if (queryString != null) {
+            String[] pairs = queryString.split(QUERY_STRING_DELIMITER);
+            try {
+                for (String pair : pairs) {
+                    if (pair.startsWith(DOAS_QUERY_STRING)) {
+                        doAsUser = URLDecoder.decode(pair.substring(DOAS_QUERY_STRING.length()), "UTF-8").trim();
+                        if (doAsUser.isEmpty()) {
+                            return null;
+                        }
+                    }
+                    break;
+                }
+            } catch (UnsupportedEncodingException ex) {
+                //We are providing "UTF-8". This should not be happening ideally.
+                LOG.error("Invalid encoding provided.");
+            }
+        }
+        return doAsUser;
+    }
+
+    /**
+     * Utility class to support proxy user authorizations.
+     *
+     * An example config will look like this:
+     * proxyuser.knox.hosts = 10.222.0.0
+     * proxyuser.admin.hosts = 10.222.0.0,10.113.221.221
+     */
+    class ProxyUserAuthorization {
+
+        /**
+         * Regex for the configuration property that indicates the Trusted Proxy user against approved host list.
+         */
+        static final String PROXYUSER_REGEX_PATTERN = "proxyuser\\.(.+)\\.hosts";
+        static final String DELIMITER = "\\s*,\\s*";
+
+        private Map<String, List<String>> proxyUserHostsMap = new HashMap<>();
+
+        ProxyUserAuthorization(Properties config) {
+            Pattern pattern = Pattern.compile(PROXYUSER_REGEX_PATTERN);
+            config.stringPropertyNames().forEach((propertyName -> {
+                Matcher matcher = pattern.matcher(propertyName);
+                if (matcher.find()) {
+                    String proxyUser = matcher.group(1);
+                    String hostList = config.getProperty(propertyName).trim();
+                    List<String> hosts = hostList.equals("*") ? new ArrayList<>() : Arrays.asList(hostList.split(DELIMITER));
+                    proxyUserHostsMap.put(proxyUser, hosts);
+                }
+            }));
+        }
+
+        public boolean authorize(String proxyUser, String host) {
+            List<String> proxyHosts = proxyUserHostsMap.get(proxyUser);
+            if (proxyHosts == null) {
+                return false;
+            } else if (proxyHosts.isEmpty()) {
+                return true;
+            }
+
+            return proxyHosts.contains(host);
+        }
+
     }
 }
