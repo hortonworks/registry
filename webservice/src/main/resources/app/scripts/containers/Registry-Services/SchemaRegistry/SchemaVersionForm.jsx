@@ -175,11 +175,6 @@ export default class SchemaVersionForm extends Component {
               : "form-control"} value={this.state.description} required={true}/>
           </div>
         </div>
-        <div className="form-group">
-          <div className="checkbox">
-            <label><input name="disableCanonicalCheck" onChange={this.handleToggleCanonicalCheck.bind(this)} type="checkbox" value={disableCanonicalCheck} checked={disableCanonicalCheck}/> Disable Canonical Check</label>
-          </div>
-        </div>
         <div className="form-group version-codemirror-container">
           <label>Schema Text <span className="text-danger">*</span></label>
           {showCodemirror
@@ -236,6 +231,11 @@ export default class SchemaVersionForm extends Component {
                 </div>
               </div>
             }
+          </div>
+        </div>
+        <div className="form-group" style={{marginBottom: '-10px'}}>
+          <div className="checkbox" title="If checked, the schema version will be added despite being canonically similar to an existing schema version">
+            <label><input name="disableCanonicalCheck" onChange={this.handleToggleCanonicalCheck.bind(this)} type="checkbox" value={disableCanonicalCheck} checked={disableCanonicalCheck}/> Disable Canonical Check</label>
           </div>
         </div>
       </form>

@@ -565,7 +565,7 @@ export default class SchemaDetail extends Component{
         <Confirm ref="Confirm"/>
         <Confirm ref="ConfirmMerge" >
           <div className="form-group" style={{margin: '-12px 0'}}>
-            <div className="checkbox">
+            <div className="checkbox" title="If checked, the schema version will be added despite being canonically similar to an existing schema version">
               <label>
               <input name="disableCanonicalCheck"
                 onChange={this.handleToggleCanonicalCheck.bind(this)}
