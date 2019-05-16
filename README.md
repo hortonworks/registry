@@ -33,7 +33,7 @@ limitations under the License.
 
 ## Project Lead
 
-* Sriharsha Chintalapani ([@d3fmacro](http://twitter.com/d3fmacro))
+* Satish Duggana ([@0xeed](https://twitter.com/0xeed))
 
 ## Committers
 
