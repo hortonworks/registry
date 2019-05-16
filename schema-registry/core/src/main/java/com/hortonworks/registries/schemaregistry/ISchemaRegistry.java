@@ -73,6 +73,7 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      *
      * @param schemaName name of the schema
      * @param schemaText text of the schema
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
      *
      * @return SchemaVersionInfo instance about the registered version of schema which is same as the given {@code schemaText}
      *
@@ -136,7 +137,10 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      *  Merges a given schema version to 'MASTER' branch with a merge strategy
      * @param schemaVersionId             id of the schema version to be merged
      * @param schemaVersionMergeStrategy  merge strategy to be used for merging to 'MASTER'
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     *
      * @return
+     *
      * @throws SchemaNotFoundException
      * @throws IncompatibleSchemaException
      */

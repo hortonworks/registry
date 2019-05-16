@@ -604,6 +604,7 @@ public class SchemaVersionLifecycleManager {
             SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(new SchemaBranchKey(schemaBranchName, schemaMetadataName)));
             SchemaVersionInfo matchedSchemaVersionInfo = null;
 
+            // If the disableCanonicalCheck is set to false, then return the lastest schema version that matches the fingerprint
             for (SchemaVersionInfo schemaVersionInfo : getSortedSchemaVersions(schemaBranch)) {
                 if (matchedSchemaVersionMap.containsKey(schemaVersionInfo.getId())) {
                     if (!disableCanonicalCheck || schemaVersionInfo.getSchemaText().equals(schemaText)) {
