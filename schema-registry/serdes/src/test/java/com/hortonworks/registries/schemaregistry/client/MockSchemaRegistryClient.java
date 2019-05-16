@@ -107,21 +107,22 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion)
+    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         try {
 
            return schemaRegistry.addSchemaVersion(schemaMetadata,
                                                           new SchemaVersion(schemaVersion.getSchemaText(),
-                                                                            schemaMetadata.getDescription()));
+                                                                            schemaMetadata.getDescription()),
+                                                                            disableCanonicalCheck);
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
-        return schemaRegistry.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion);
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaRegistry.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, disableCanonicalCheck);
     }
 
     @Override
@@ -131,20 +132,21 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion)
+    public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         try {
 
             return schemaRegistry.addSchemaVersion(schemaName,
                                                           new SchemaVersion(schemaVersion.getSchemaText(),
-                                                                            schemaVersion.getDescription()));
+                                                                            schemaVersion.getDescription()),
+                                                                            disableCanonicalCheck);
         } catch (UnsupportedSchemaTypeException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return null;
     }
 
@@ -294,10 +296,9 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
-         return schemaRegistry.mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC);
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
+         return schemaRegistry.mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC, disableCanonicalCheck);
     }
-
 
     @Override
     public void close() throws Exception {

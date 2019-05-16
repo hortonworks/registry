@@ -116,7 +116,13 @@ export class Confirm extends FSModal {
     );
   }
   body() {
-    return '';
+    if(this.props.children) {
+      return <Modal.Body>
+        {this.props.children}
+      </Modal.Body>;
+    } else {
+      return '';
+    }
   }
   footer() {
     return (
