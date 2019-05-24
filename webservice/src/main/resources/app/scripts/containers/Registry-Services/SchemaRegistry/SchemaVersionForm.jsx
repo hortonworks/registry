@@ -52,7 +52,8 @@ export default class SchemaVersionForm extends Component {
       showError: false,
       changedFields: [],
       showCodemirror: true,
-      schemaTextCompatibility: statusCode.Ok
+      schemaTextCompatibility: statusCode.Ok,
+      disableCanonicalCheck: false
     };
   }
 
@@ -64,6 +65,10 @@ export default class SchemaVersionForm extends Component {
 
   handleJSONChange(json) {
     this.setState({schemaText: json});
+  }
+
+  handleToggleCanonicalCheck(e) {
+    this.setState({disableCanonicalCheck: e.target.checked});
   }
 
   handleOnDrop(e) {
@@ -116,7 +121,7 @@ export default class SchemaVersionForm extends Component {
   }
 
   handleSave() {
-    let {schemaText, description} = this.state;
+    let {schemaText, description, disableCanonicalCheck} = this.state;
     let {schemaObj} = this.props;
     let data = {
       schemaText,
@@ -125,7 +130,8 @@ export default class SchemaVersionForm extends Component {
     return SchemaREST.getCompatibility(schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
       .then((result)=>{
         if(result.compatible){
-          return SchemaREST.postVersion(schemaObj.schemaName, {body: JSON.stringify(data)}, schemaObj.branch ? schemaObj.branch.schemaBranch.name : "MASTER");
+          return SchemaREST.postVersion(schemaObj.schemaName, {body: JSON.stringify(data)},
+            schemaObj.branch ? schemaObj.branch.schemaBranch.name : "MASTER", disableCanonicalCheck);
         } else {
           return result;
         }
@@ -158,7 +164,7 @@ export default class SchemaVersionForm extends Component {
       gutters: this.props.schemaObj.type.toLowerCase() == 'avro' ? ["CodeMirror-lint-markers"] : [],
       lint: this.props.schemaObj.type.toLowerCase() == 'avro'
     };
-    let {schemaText, showError, changedFields, showCodemirror, schemaTextCompatibility} = this.state;
+    let {schemaText, showError, changedFields, showCodemirror, schemaTextCompatibility, disableCanonicalCheck} = this.state;
     return (
       <form>
         <div className="form-group">
@@ -225,6 +231,11 @@ export default class SchemaVersionForm extends Component {
                 </div>
               </div>
             }
+          </div>
+        </div>
+        <div className="form-group" style={{marginBottom: '-10px'}}>
+          <div className="checkbox" title="If checked, the schema version will be added despite being canonically similar to an existing schema version">
+            <label><input name="disableCanonicalCheck" onChange={this.handleToggleCanonicalCheck.bind(this)} type="checkbox" value={disableCanonicalCheck} checked={disableCanonicalCheck}/> Disable Canonical Check</label>
           </div>
         </div>
       </form>
