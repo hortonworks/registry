@@ -210,6 +210,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaRegistryClient(Map<String, ?> conf) {
         configuration = new Configuration(conf);
         ClientConfig config = createClientConfig(conf);
+
         ClientBuilder clientBuilder = new JerseyClientBuilder()
                                                    .withConfig(config)
                                                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
