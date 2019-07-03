@@ -212,7 +212,11 @@ public class AuthenticationFilter implements Filter {
             authHandlerClassName = PseudoAuthenticationHandler.class.getName();
         } else if (authHandlerName.toLowerCase(Locale.ENGLISH).equals(
                 KerberosAuthenticationHandler.TYPE)) {
-            authHandlerClassName = KerberosAuthenticationHandler.class.getName();
+            if (Boolean.parseBoolean(config.getProperty(KerberosLoginAuthenticationHandler.LOGIN_ENABLED_CONFIG))) {
+                authHandlerClassName = KerberosLoginAuthenticationHandler.class.getName();
+            } else {
+                authHandlerClassName = KerberosAuthenticationHandler.class.getName();
+            }
         } else {
             authHandlerClassName = authHandlerName;
         }
