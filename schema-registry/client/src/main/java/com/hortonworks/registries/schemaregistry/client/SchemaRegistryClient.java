@@ -41,6 +41,7 @@ import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryRetryableException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -95,6 +96,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
@@ -146,11 +150,15 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
     private static Subject subject;
+    private static ReadWriteLock registryWithKerberosSynchronizationLock = null;
+    private static final long REGISTRY_WITH_KERBEROS_SYNCHRONIZATION_LOCK_TIMEOUT_MS = 120000;
 
     static {
         String jaasConfigFile = System.getProperty("java.security.auth.login.config");
         if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
-            KerberosLogin kerberosLogin = new KerberosLogin();
+            registryWithKerberosSynchronizationLock = new ReentrantReadWriteLock(true);
+            Lock kerberosTGTRenewalLock = registryWithKerberosSynchronizationLock.writeLock();
+            KerberosLogin kerberosLogin = new KerberosLogin(kerberosTGTRenewalLock, REGISTRY_WITH_KERBEROS_SYNCHRONIZATION_LOCK_TIMEOUT_MS);
             kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
             try {
                 subject = kerberosLogin.login().getSubject();
@@ -439,7 +447,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         .bodyPart(streamDataBodyPart);
 
         Entity<MultiPart> multiPartEntity = Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA);
-        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+        Response response = doPrivilegedAction(new PrivilegedAction<Response>() {
             @Override
             public Response run() {
                 return target.request().post(multiPartEntity, Response.class);
@@ -491,7 +499,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         schemaVersionInfoCache.invalidateSchema(new SchemaVersionInfoCache.Key(schemaVersionKey));
 
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey.getSchemaName(), schemaVersionKey.getVersion()));
-        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+        Response response = doPrivilegedAction(new PrivilegedAction<Response>() {
             @Override
             public Response run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
@@ -518,7 +526,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions");
-        Response response = Subject.doAs(subject, new PrivilegedAction<Response>() {
+        Response response = doPrivilegedAction(new PrivilegedAction<Response>() {
             @Override
             public Response run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
@@ -622,7 +630,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException {
         WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility");
-        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+        String response = doPrivilegedAction(new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return webTarget.request().post(Entity.text(toSchemaText), String.class);
@@ -651,7 +659,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         MultiPart multiPart = new MultiPart();
         BodyPart filePart = new StreamDataBodyPart("file", inputStream, "file");
         multiPart.bodyPart(filePart);
-        return Subject.doAs(subject, new PrivilegedAction<String>() {
+        return doPrivilegedAction(new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return currentSchemaRegistryTargets().filesTarget.request().post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
@@ -661,7 +669,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public InputStream downloadFile(String fileId) {
-        return Subject.doAs(subject, new PrivilegedAction<InputStream>() {
+        return doPrivilegedAction(new PrivilegedAction<InputStream>() {
             @Override
             public InputStream run() {
                 return currentSchemaRegistryTargets().filesTarget.path("download/" + encode(fileId)).request().get(InputStream.class);
@@ -777,7 +785,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
         List<T> entities = new ArrayList<>();
-        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+        String response = doPrivilegedAction(new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
@@ -797,7 +805,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
-        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+        String response = doPrivilegedAction(new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
@@ -816,7 +824,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T getEntity(WebTarget target, Class<T> clazz) {
-        String response = Subject.doAs(subject, new PrivilegedAction<String>() {
+        String response = doPrivilegedAction(new PrivilegedAction<String>() {
             @Override
             public String run() {
                 return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
@@ -824,6 +832,29 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         });
 
         return readEntity(response, clazz);
+    }
+
+    private <T> T doPrivilegedAction(PrivilegedAction<T> action) {
+        if (registryWithKerberosSynchronizationLock == null) {
+            return Subject.doAs(subject, action);
+        } else {
+            Lock schemaRegistryLock = registryWithKerberosSynchronizationLock.readLock();
+            try {
+                if (schemaRegistryLock.tryLock(REGISTRY_WITH_KERBEROS_SYNCHRONIZATION_LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    T result;
+                    try {
+                        result = Subject.doAs(subject, action);
+                    } finally {
+                        schemaRegistryLock.unlock();
+                    }
+                    return result;
+                } else {
+                    throw new RegistryRetryableException("Timeout while schema registry was waiting for Kerberos TGT renewal");
+                }
+            } catch (InterruptedException e) {
+                throw new RegistryRetryableException("Error while schema registry was waiting for Kerberos TGT renewal", e);
+            }
+        }
     }
 
     public static final class Configuration {
