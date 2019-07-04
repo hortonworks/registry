@@ -30,6 +30,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * This class is responsible for logging in to Kerberos and refreshing credentials for
@@ -62,6 +64,9 @@ public class KerberosLogin extends AbstractLogin {
     private long minTimeBeforeRelogin = 1 * 60 * 1000;
     private String kinitCmd = "/usr/bin/kinit";
 
+    private Lock kerberosTGTRenewalLock;
+    private long kerberosTGTRenewalLockTimeoutMS;
+
     /**
      * Method to configure this instance with specific properties
      * @param loginContextName
@@ -83,6 +88,15 @@ public class KerberosLogin extends AbstractLogin {
         if (configs.get(KINIT_CMD) != null) {
             this.kinitCmd = (String) configs.get(KINIT_CMD);
         }
+    }
+
+    public KerberosLogin() {
+
+    }
+
+    public KerberosLogin(Lock kerberosTGTRenewalLock, long kerberosTGTRenewalLockTimeoutMS) {
+        this.kerberosTGTRenewalLock = kerberosTGTRenewalLock;
+        this.kerberosTGTRenewalLockTimeoutMS = kerberosTGTRenewalLockTimeoutMS;
     }
 
     /**
@@ -208,7 +222,7 @@ public class KerberosLogin extends AbstractLogin {
                         }
                     }
                     try {
-                        reLogin();
+                        synchronizeReLogin();
                     } catch (LoginException le) {
                         log.error("Failed to refresh TGT: refresh thread exiting now.", le);
                         return;
@@ -244,6 +258,23 @@ public class KerberosLogin extends AbstractLogin {
             }
         }
         return null;
+    }
+
+    private void synchronizeReLogin() throws LoginException {
+        if (kerberosTGTRenewalLock != null) {
+            try {
+                if (kerberosTGTRenewalLock.tryLock(kerberosTGTRenewalLockTimeoutMS, TimeUnit.MILLISECONDS)) {
+                    reLogin();
+                    kerberosTGTRenewalLock.unlock();
+                } else {
+                    throw new LoginException("Failed to acquire the lock for renewing kerberos TGT");
+                }
+            } catch (InterruptedException e) {
+                throw new LoginException(e.getMessage());
+            }
+        } else {
+            reLogin();
+        }
     }
 
     /**
