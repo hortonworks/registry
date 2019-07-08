@@ -264,8 +264,11 @@ public class KerberosLogin extends AbstractLogin {
         if (kerberosTGTRenewalLock != null) {
             try {
                 if (kerberosTGTRenewalLock.tryLock(kerberosTGTRenewalLockTimeoutMS, TimeUnit.MILLISECONDS)) {
-                    reLogin();
-                    kerberosTGTRenewalLock.unlock();
+                    try {
+                        reLogin();
+                    } finally {
+                        kerberosTGTRenewalLock.unlock();
+                    }
                 } else {
                     throw new LoginException("Failed to acquire the lock for renewing kerberos TGT");
                 }

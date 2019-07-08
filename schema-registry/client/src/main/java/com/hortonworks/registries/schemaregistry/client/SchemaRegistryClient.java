@@ -1118,8 +1118,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             Lock schemaRegistryLock = registryWithKerberosSynchronizationLock.readLock();
             try {
                 if (schemaRegistryLock.tryLock(REGISTRY_WITH_KERBEROS_SYNCHRONIZATION_LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    T result = Subject.doAs(subject, action);
-                    schemaRegistryLock.unlock();
+                    T result;
+                    try {
+                        result = Subject.doAs(subject, action);
+                    } finally {
+                        schemaRegistryLock.unlock();
+                    }
                     return result;
                 } else {
                     throw new RegistryRetryableException("Timeout while schema registry was waiting for Kerberos TGT renewal");
