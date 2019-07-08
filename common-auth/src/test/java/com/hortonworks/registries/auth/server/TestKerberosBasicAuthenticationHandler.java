@@ -1,7 +1,6 @@
 package com.hortonworks.registries.auth.server;
 
 import com.hortonworks.registries.auth.KerberosTestUtils;
-import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.client.KerberosAuthenticator;
 import com.hortonworks.registries.auth.util.AuthToken;
 import com.hortonworks.registries.auth.util.KerberosUtil;
@@ -17,30 +16,26 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.security.auth.kerberos.KerberosPrincipal;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.security.Principal;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 import static org.mockito.Mockito.times;
 
-public class TestKerberosLoginAuthenticationHandler
+public class TestKerberosBasicAuthenticationHandler
         extends KerberosSecurityTestcase {
 
-    protected KerberosLoginAuthenticationHandler handler;
+    protected KerberosBasicAuthenticationHandler handler;
 
-    protected KerberosLoginAuthenticationHandler getNewAuthenticationHandler() {
-        return new KerberosLoginAuthenticationHandler();
+    protected KerberosBasicAuthenticationHandler getNewAuthenticationHandler() {
+        return new KerberosBasicAuthenticationHandler();
     }
 
     protected String getExpectedType() {
-        return KerberosLoginAuthenticationHandler.TYPE;
+        return KerberosBasicAuthenticationHandler.TYPE;
     }
 
     protected Properties getDefaultProperties() {
@@ -107,7 +102,7 @@ public class TestKerberosLoginAuthenticationHandler
     public void testRequestWithInvalidAuthorization() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        Mockito.when(request.getHeader(KerberosLoginAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("invalid");
+        Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("invalid");
         Mockito.when(request.getMethod()).thenReturn("POST");
 
         Assert.assertNull(handler.authenticate(request, response));
@@ -119,7 +114,7 @@ public class TestKerberosLoginAuthenticationHandler
     public void testRequestWithInvalidCredentials() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        Mockito.when(request.getHeader(KerberosLoginAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic invalid");
+        Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic invalid");
         Mockito.when(request.getMethod()).thenReturn("POST");
 
         Assert.assertNull(handler.authenticate(request, response));
@@ -131,7 +126,7 @@ public class TestKerberosLoginAuthenticationHandler
     public void testRequestWithValidCredentials() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        Mockito.when(request.getHeader(KerberosLoginAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic Y2xpZW50MTpjbGllbnQxMjM=");
+        Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic Y2xpZW50MTpjbGllbnQxMjM=");
         Mockito.when(request.getMethod()).thenReturn("POST");
         Mockito.when(request.isSecure()).thenReturn(true);
 
@@ -151,7 +146,7 @@ public class TestKerberosLoginAuthenticationHandler
     public void testRequestWithValidCredentialsInvalidMethod() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        Mockito.when(request.getHeader(KerberosLoginAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic Y2xpZW50MTpjbGllbnQxMjM=");
+        Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic Y2xpZW50MTpjbGllbnQxMjM=");
         Mockito.when(request.getMethod()).thenReturn("GET");
         Mockito.when(request.isSecure()).thenReturn(true);
 
@@ -168,7 +163,7 @@ public class TestKerberosLoginAuthenticationHandler
     public void testRequestWithValidCredentialsNonSecure() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        Mockito.when(request.getHeader(KerberosLoginAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic Y2xpZW50MTpjbGllbnQxMjM=");
+        Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic Y2xpZW50MTpjbGllbnQxMjM=");
         Mockito.when(request.getMethod()).thenReturn("POST");
         Mockito.when(request.isSecure()).thenReturn(false);
 
@@ -242,7 +237,7 @@ public class TestKerberosLoginAuthenticationHandler
     public void testRequestWithSPNEGODisabled() throws Exception {
         AuthenticationHandler handler = getNewAuthenticationHandler();
         Properties props = getDefaultProperties();
-        props.setProperty(KerberosLoginAuthenticationHandler.SPNEGO_ENABLED_CONFIG, Boolean.FALSE.toString());
+        props.setProperty(KerberosBasicAuthenticationHandler.SPNEGO_ENABLED_CONFIG, Boolean.FALSE.toString());
         try {
             handler.init(props);
         } catch (Exception ex) {

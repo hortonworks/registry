@@ -25,7 +25,7 @@ import java.util.Base64;
 import java.util.Properties;
 
 /**
- * The {@link KerberosLoginAuthenticationHandler} augments the Kerberos SPNEGO authentication mechanism with the Kerberos Login authentication
+ * The {@link KerberosBasicAuthenticationHandler} augments the Kerberos SPNEGO authentication mechanism with the Kerberos Basic Login authentication
  * mechanism. If a user provides user credentials in a HTTPS, POST call, then a Kerberos login is attempted. In the authentication failure scenario,
  * the SPNEGO sequence is invoked.
  *
@@ -35,12 +35,13 @@ import java.util.Properties;
  * <li>login.enabled: a boolean string to indicate whether the enabling of Kerberos login.</li>
  * </ul>
  */
-public class KerberosLoginAuthenticationHandler extends KerberosAuthenticationHandler {
+public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHandler {
 
     public static final String LOGIN_ENABLED_CONFIG = "login.enabled";
     public static final String SPNEGO_ENABLED_CONFIG = "spnego.enabled";
     public static final String TYPE = "kerberos-login";
     public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String BASIC_AUTHENTICATION = "Basic";
 
     private static final Logger LOG = LoggerFactory.getLogger(KerberosAuthenticationHandler.class);
     private static final String METHOD = "POST";
@@ -48,7 +49,7 @@ public class KerberosLoginAuthenticationHandler extends KerberosAuthenticationHa
     private KerberosAuthenticationProvider provider;
     private boolean spnegoEnabled;
 
-    KerberosLoginAuthenticationHandler () {
+    KerberosBasicAuthenticationHandler() {
     }
 
     @Override
@@ -80,6 +81,13 @@ public class KerberosLoginAuthenticationHandler extends KerberosAuthenticationHa
 
     }
 
+    /**
+     * Perform Basic authentication through Kerberos, if the authentication fails, delegates to KerberosAuthenticationHandler for SPNEGO exchange.
+     *
+     * @return an authentication token if the request is authorized or null
+     * @throws IOException
+     * @throws AuthenticationException
+     */
     @Override
     public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {
         AuthenticationToken token = kerberosLogin(request, response);
@@ -92,6 +100,11 @@ public class KerberosLoginAuthenticationHandler extends KerberosAuthenticationHa
         return token;
     }
 
+    /**
+     * Perform Basic Authentication using Kerberos credentials the http request.
+     * @return an AuthenticationToken on successful authentication or null.
+     * @throws IOException
+     */
     private AuthenticationToken kerberosLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (provider == null) {
             LOG.error("The Kerberos authentication provider is not initialized.");
@@ -107,7 +120,7 @@ public class KerberosLoginAuthenticationHandler extends KerberosAuthenticationHa
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return null;
         }
-        String credentials = authorization.split("Basic ")[1].trim();
+        String credentials = authorization.split(BASIC_AUTHENTICATION)[1].trim();
         byte[] credentialsArray = Base64.getDecoder().decode(credentials);
         String[] userPassword = new String(credentialsArray, StandardCharsets.UTF_8).split(":");
         if (userPassword.length != 2) {
