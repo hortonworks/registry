@@ -285,7 +285,7 @@ public class TestKerberosBasicAuthenticationHandler
         AuthenticationToken authToken = handler.authenticate(request, response);
 
         if (authToken != null) {
-            Assert.fail("AuthToken should have been null if the SPNEGO is disabled in KerberosAuthenticationLoginHandler.");
+            Assert.fail("AuthToken should have been null if the SPNEGO is disabled in KerberosBasicAuthenticationHandler.");
         } else {
             Mockito.verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
