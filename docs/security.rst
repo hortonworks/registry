@@ -87,6 +87,47 @@ above:
 default UI jetty server request header size. If using MIT Kerberos with
 jettty server, make sure you set HTTP header buffer bytes to 65536
 
+SPNEGO+BASIC
+------------
+SPNEGO Authentication handler can be extended to support Kerberos credentials based Basic Authentication as long as the incoming HTTP request
+is secure and the HTTP method is POST. If a user provides user credentials in a HTTPS, POST call under Authorization Header, then a Kerberos
+login is attempted. In the authentication failure scenario, the SPNEGO sequence is invoked.
+
+This mechanism can be enabled by adding a property(login.enabled) to the existing Kerberos configuration. Below is an example.
+
+.. code:: yaml
+
+    servletFilters:
+     - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
+       params:
+         type: "kerberos"
+         kerberos.principal: "HTTP/web-service-host.com"
+         kerberos.keytab: "/path/to/keytab"
+         kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
+         token.validity: 36000
+         login.enabled: "true"
+
+
+Here's an example of how a login call would like("Z3VydTI6Z3VydTI=" is base64 encoded username and password):
+
+.. code:: bash
+
+    curl -k -X POST -H "Authorization: Basic Z3VydTI6Z3VydTI=" https://host-172-22-74-66.example.com:8587/api/v1/admin/auth/login
+
+
+SPNEGO authentication sequence is by default attempted, however, it can be skipped by adding another property.
+
+.. code:: yaml
+
+    servletFilters:
+     - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
+       params:
+         type: "kerberos"
+         kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
+         token.validity: 36000
+         login.enabled: "true"
+         spnego.enabled: "false"
+
 SSL
 ---
 This section talks about enabling SSL for Registry Server. Below steps mention about how to generate self signed certificates and use them with Registry Server.

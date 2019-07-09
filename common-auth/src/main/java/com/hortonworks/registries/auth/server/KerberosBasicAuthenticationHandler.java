@@ -57,7 +57,7 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
     public static final String BASIC_AUTHENTICATION = "Basic";
 
     private static final Logger LOG = LoggerFactory.getLogger(KerberosBasicAuthenticationHandler.class);
-    private static final String METHOD = "POST";
+    private static final String HTTP_LOGIN_METHOD = "POST";
 
     private KerberosAuthenticationProvider provider;
     private boolean spnegoEnabled;
@@ -80,7 +80,9 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         try {
             provider = new KerberosAuthenticationProvider();
             SunJaasKerberosClient client = new SunJaasKerberosClient();
-            client.setDebug(true);
+            if (LOG.isDebugEnabled()) {
+                client.setDebug(true);
+            }
             provider.setKerberosClient(client);
             provider.setUserDetailsService(new KerberosUserDetailsService());
         } catch (Exception ex) {
@@ -125,7 +127,7 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
             return null;
         }
         String authorization =  request.getHeader(AUTHORIZATION_HEADER);
-        if (!request.getMethod().equals(METHOD) || !request.isSecure() || authorization.isEmpty()) {
+        if (!request.getMethod().equals(HTTP_LOGIN_METHOD) || !request.isSecure() || authorization.isEmpty()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Kerberos Login is not attempted because method: {}, secure: {}, authorization is empty: {}", request.getMethod(),
                         request.isSecure(), authorization.isEmpty());
@@ -135,14 +137,14 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         }
         String credentials = authorization.split(BASIC_AUTHENTICATION)[1].trim();
         byte[] credentialsArray = Base64.getDecoder().decode(credentials);
-        String[] userPassword = new String(credentialsArray, StandardCharsets.UTF_8).split(":");
-        if (userPassword.length != 2) {
-            LOG.error("Login credentials of invalid length is passed to the Authorization header {}.", userPassword.length);
+        String[] principalAndPassword = new String(credentialsArray, StandardCharsets.UTF_8).split(":");
+        if (principalAndPassword.length != 2) {
+            LOG.error("Login credentials of invalid length is passed to the Authorization header {}.", principalAndPassword.length);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return null;
         }
-        String rawPrincipal = userPassword[0];
-        String password = userPassword[1];
+        String rawPrincipal = principalAndPassword[0];
+        String password = principalAndPassword[1];
 
         final KerberosName kerberosName = new KerberosName(rawPrincipal);
         String identity = getUserIdentity(kerberosName, rawPrincipal);
@@ -204,7 +206,7 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         return identity;
     }
 
-    static class KerberosUserDetailsService implements UserDetailsService {
+    class KerberosUserDetailsService implements UserDetailsService {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

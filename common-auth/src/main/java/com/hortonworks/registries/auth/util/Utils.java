@@ -81,16 +81,16 @@ public class Utils {
      * Checks if the given CharSequence has any blank space.
      */
     public static boolean isBlank(CharSequence cs) {
-        int strLen;
-        if (cs != null && (strLen = cs.length()) != 0) {
-            for(int i = 0; i < strLen; ++i) {
-                if (!Character.isWhitespace(cs.charAt(i))) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
+        if (cs == null || cs.length() == 0) {
             return true;
         }
+
+        int strLen = cs.length();
+        for(int i = 0; i < strLen; ++i) {
+            if (!Character.isWhitespace(cs.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
