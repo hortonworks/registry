@@ -31,10 +31,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-## Project Lead
-
-* Sriharsha Chintalapani ([@d3fmacro](http://twitter.com/d3fmacro))
-
 ## Committers
 
 * Satish Duggana ([@0xeed](https://twitter.com/0xeed))

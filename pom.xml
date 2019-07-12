@@ -6,7 +6,7 @@
 
     <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
-    <version>0.7.0</version>
+    <version>0.8.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Registry</name>
     <description>
@@ -678,7 +678,7 @@
         </repository>
         <repository>
             <id>hortonworks.repo</id>
-            <url>http://nexus-private.hortonworks.com/nexus/content/groups/public/</url>
+            <url>https://nexus-private.hortonworks.com/nexus/content/groups/public/</url>
             <name>Hortonworks Repo</name>
             <releases>
                 <enabled>true</enabled>

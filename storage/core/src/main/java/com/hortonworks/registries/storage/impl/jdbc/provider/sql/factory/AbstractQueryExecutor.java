@@ -365,8 +365,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
         <T extends Storable> Collection<T> executeQuery(String namespace) {
             Collection<T> result;
-            try {
-                ResultSet resultSet = getPreparedStatement().executeQuery();
+            try (PreparedStatement preparedStatement = getPreparedStatement();
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
                 result = getStorablesFromResultSet(resultSet, namespace);
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);

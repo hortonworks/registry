@@ -47,6 +47,10 @@ public class KerberosTestUtils {
         return "client@EXAMPLE.COM";
     }
 
+    public static String getClientPrincipal1() {
+        return "client1@EXAMPLE.COM";
+    }
+
     public static String getServerPrincipal() {
         return "HTTP/localhost@EXAMPLE.COM";
     }

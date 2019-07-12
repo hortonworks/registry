@@ -53,7 +53,8 @@ export default class SchemaDetail extends Component{
       collapsed: true,
       renderCodemirror: false,
       selectedBranch,
-      currentVersion
+      currentVersion,
+      disableCanonicalCheck: false
     };
     // this.fetchBranches();
   }
@@ -247,10 +248,13 @@ export default class SchemaDetail extends Component{
       this.setState({selectedBranch: newBranch, currentVersion});
     }).catch(Utils.showError);
   }
+  handleToggleCanonicalCheck(e) {
+    this.setState({disableCanonicalCheck: e.target.checked});
+  }
   onMerge(v){
     const {schema} = this.props;
-    this.refs.Confirm.show({title: 'Are you sure you want to merge this branch?'}).then((confirmBox) => {
-      SchemaREST.mergeBranch(v.id, {}).then((res) => {
+    this.refs.ConfirmMerge.show({title: 'Are you sure you want to merge this branch ?'}).then((confirmBox) => {
+      SchemaREST.mergeBranch(v.id, this.state.disableCanonicalCheck, {}).then((res) => {
         if (res.responseMessage !== undefined) {
           FSReactToastr.error(<CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt);
         }else{
@@ -260,7 +264,6 @@ export default class SchemaDetail extends Component{
             const hasVersion = b.schemaVersionInfos.find((v)=>{
               return v.version == res.schemaIdVersion.version && v.id == res.schemaIdVersion.schemaVersionId;
             });
-
             if(hasVersion) {
               branchName = b.schemaBranch.name;
             }
@@ -268,6 +271,7 @@ export default class SchemaDetail extends Component{
           this.fetchAndSelectBranch(branchName, res.schemaIdVersion.version);
         }
       }).catch(Utils.showError);
+      this.setState({disableCanonicalCheck: false});
       confirmBox.cancel();
     });
   }
@@ -375,7 +379,7 @@ export default class SchemaDetail extends Component{
   }
   render(){
     const {schema, key, StateMachine} = this.props;
-    const {selectedBranch, collapsed, renderCodemirror, currentVersion} = this.state;
+    const {selectedBranch, collapsed, renderCodemirror, currentVersion, disableCanonicalCheck} = this.state;
     const s = schema;
     const {name, evolve} = s.schemaMetadata;
     const currentBranchName = selectedBranch ? selectedBranch.schemaBranch.name : "MASTER";
@@ -568,6 +572,18 @@ export default class SchemaDetail extends Component{
           </Modal.Footer>
         </Modal>
         <Confirm ref="Confirm"/>
+        <Confirm ref="ConfirmMerge" >
+          <div className="form-group" style={{margin: '-12px 0'}}>
+            <div className="checkbox" title="If checked, the schema version will be added despite being canonically similar to an existing schema version">
+              <label>
+              <input name="disableCanonicalCheck"
+                onChange={this.handleToggleCanonicalCheck.bind(this)}
+                type="checkbox"
+                value={disableCanonicalCheck}
+                checked={disableCanonicalCheck}/> Disable Canonical Check</label>
+            </div>
+          </div>
+        </Confirm>
       </Panel>
     );
   }

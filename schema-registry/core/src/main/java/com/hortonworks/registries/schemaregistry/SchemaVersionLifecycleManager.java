@@ -142,7 +142,8 @@ public class SchemaVersionLifecycleManager {
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             SchemaMetadata schemaMetadata,
                                             SchemaVersion schemaVersion,
-                                            Function<SchemaMetadata, Long> registerSchemaMetadataFn)
+                                            Function<SchemaMetadata, Long> registerSchemaMetadataFn,
+                                            boolean disableCanonicalCheck)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
@@ -159,7 +160,7 @@ public class SchemaVersionLifecycleManager {
         if (retrievedschemaMetadataInfo != null) {
             schemaMetadataId = retrievedschemaMetadataInfo.getId();
             // check whether the same schema text exists
-            schemaVersionInfo = getSchemaVersionInfo(schemaName, schemaVersion.getSchemaText());
+            schemaVersionInfo = getSchemaVersionInfo(schemaName, schemaVersion.getSchemaText(), disableCanonicalCheck);
             if (schemaVersionInfo == null) {
                 schemaVersionInfo = createSchemaVersion(schemaBranchName,
                                                         schemaMetadata,
@@ -186,7 +187,8 @@ public class SchemaVersionLifecycleManager {
 
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             String schemaName,
-                                            SchemaVersion schemaVersion)
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
@@ -198,7 +200,7 @@ public class SchemaVersionLifecycleManager {
         // check whether there exists schema-metadata for schema-metadata-key
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo != null) {
-            return addSchemaVersion(schemaBranchName, schemaMetadataInfo, schemaVersion);
+            return addSchemaVersion(schemaBranchName, schemaMetadataInfo, schemaVersion, disableCanonicalCheck);
         } else {
             throw new SchemaNotFoundException("SchemaMetadata not found with the schemaName: " + schemaName);
         }
@@ -206,7 +208,8 @@ public class SchemaVersionLifecycleManager {
 
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             SchemaMetadataInfo schemaMetadataInfo,
-                                            SchemaVersion schemaVersion)
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
@@ -217,7 +220,7 @@ public class SchemaVersionLifecycleManager {
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
         // check whether the same schema text exists
         schemaVersionInfo = findSchemaVersion(schemaBranchName, schemaMetadata.getType(), schemaVersion.getSchemaText(), schemaMetadataInfo
-                .getSchemaMetadata().getName());
+                .getSchemaMetadata().getName(), disableCanonicalCheck);
         if (schemaVersionInfo == null) {
             schemaVersionInfo = createSchemaVersion(schemaBranchName,
                                                     schemaMetadata,
@@ -531,14 +534,18 @@ public class SchemaVersionLifecycleManager {
     }
 
     public SchemaVersionInfo getSchemaVersionInfo(String schemaName,
-                                                  String schemaText) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
+                                                  String schemaText,
+                                                  boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
             throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
         }
 
-        return findSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadataInfo.getSchemaMetadata()
-                                                                               .getType(), schemaText, schemaName);
+        return findSchemaVersion(SchemaBranch.MASTER_BRANCH,
+                                 schemaMetadataInfo.getSchemaMetadata().getType(),
+                                 schemaText,
+                                 schemaName,
+                                 disableCanonicalCheck);
     }
 
     private SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
@@ -554,7 +561,8 @@ public class SchemaVersionLifecycleManager {
     private SchemaVersionInfo findSchemaVersion(String schemaBranchName,
                                                 String type,
                                                 String schemaText,
-                                                String schemaMetadataName) throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+                                                String schemaMetadataName,
+                                                boolean disableCanonicalCheck) throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
 
@@ -566,28 +574,31 @@ public class SchemaVersionLifecycleManager {
 
         Collection<SchemaVersionStorable> versionedSchemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
 
-        Set<Long> matchedSchemaVersionIds = null;
+        Map<Long, SchemaVersionStorable> matchedSchemaVersionMap = null;
         if (versionedSchemas != null && !versionedSchemas.isEmpty()) {
             if (versionedSchemas.size() > 1) {
                 LOG.warn("Exists more than one schema with schemaMetadataName: [{}] and schemaText [{}]", schemaMetadataName, schemaText);
             }
 
-            matchedSchemaVersionIds = versionedSchemas.stream()
-                                                      .map(schemaVersionStorable -> schemaVersionStorable.getId())
-                                                      .collect(Collectors.toSet());
+            matchedSchemaVersionMap = versionedSchemas.stream().collect(Collectors.toMap(SchemaVersionStorable::getId, v -> v));
         }
 
-        if (matchedSchemaVersionIds == null) {
+        if (matchedSchemaVersionMap == null) {
             return null;
         } else {
             SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(new SchemaBranchKey(schemaBranchName, schemaMetadataName)));
+            SchemaVersionInfo matchedSchemaVersionInfo = null;
 
+            // If the disableCanonicalCheck is set to false, then return the lastest schema version that matches the fingerprint
             for (SchemaVersionInfo schemaVersionInfo : getSortedSchemaVersions(schemaBranch)) {
-                if (matchedSchemaVersionIds.contains(schemaVersionInfo.getId()))
-                    return schemaVersionInfo;
+                if (matchedSchemaVersionMap.containsKey(schemaVersionInfo.getId())) {
+                    if (!disableCanonicalCheck || schemaVersionInfo.getSchemaText().equals(schemaText)) {
+                        matchedSchemaVersionInfo = schemaVersionInfo;
+                    }
+                }
             }
 
-            return null;
+            return matchedSchemaVersionInfo;
         }
     }
 
@@ -614,7 +625,8 @@ public class SchemaVersionLifecycleManager {
     }
 
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
-                                                       SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
+                                                       SchemaVersionMergeStrategy schemaVersionMergeStrategy,
+                                                       boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
 
         try {
             SchemaVersionInfo schemaVersionInfo = getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
@@ -661,11 +673,10 @@ public class SchemaVersionLifecycleManager {
             SchemaVersionInfo createdSchemaVersionInfo;
             try {
                 SchemaVersionInfo existingSchemaVersionInfo = findSchemaVersion(SchemaBranch.MASTER_BRANCH,
-                                                                                schemaMetadataInfo.getSchemaMetadata()
-                                                                                                  .getType(),
+                                                                                schemaMetadataInfo.getSchemaMetadata().getType(),
                                                                                 schemaVersionInfo.getSchemaText(),
-                                                                                schemaMetadataInfo.getSchemaMetadata()
-                                                                                                  .getName());
+                                                                                schemaMetadataInfo.getSchemaMetadata().getName(),
+                                                                                disableCanonicalCheck);
                 if (existingSchemaVersionInfo != null) {
                     String mergeMessage = String.format("Given version %d is already merged to master with version %d",
                                                         schemaVersionId, existingSchemaVersionInfo.getVersion());
