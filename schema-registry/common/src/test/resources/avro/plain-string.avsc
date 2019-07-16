@@ -1,0 +1,15 @@
+{
+    "name" : "user",
+    "type" : "record",
+    "namespace" : "users",
+    "fields" : [
+        {
+           "name" : "id",
+           "type" : "long"
+        },
+        {
+           "name" : "name",
+           "type" : "string"
+        }
+    ]
+}
