@@ -319,6 +319,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
         schemaMetadataStorable.setName(schemaName);
         storageManager.remove(schemaMetadataStorable.getStorableKey());
+
+        SchemaLockStorable schemaLockStorable = new SchemaLockStorable(SchemaMetadataStorable.NAME_SPACE, schemaName);
+        storageManager.remove(schemaLockStorable.getStorableKey());
     }
 
     @Override
