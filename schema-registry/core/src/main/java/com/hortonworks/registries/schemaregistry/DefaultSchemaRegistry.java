@@ -558,6 +558,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
+    public SchemaVersionInfo findSchemaVersionByFingerprint(String fingerprint) throws SchemaNotFoundException {
+        return schemaVersionLifecycleManager.findSchemaVersionInfoByFingerprint(fingerprint);
+    }
+
+    @Override
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         schemaVersionLifecycleManager.deleteSchemaVersion(schemaVersionKey);
     }

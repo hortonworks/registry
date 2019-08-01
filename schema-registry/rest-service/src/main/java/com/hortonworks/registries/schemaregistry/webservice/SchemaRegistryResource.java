@@ -693,6 +693,25 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @GET
+    @Path("/schemas/versionsByFingerprint/{fingerprint}")
+    @ApiOperation(value = "Get a version of the schema with the given fingerprint",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaVersionByFingerprint(@ApiParam(value = "fingerprint of the schema text", required = true) @PathParam("fingerprint") String fingerprint) {
+        try {
+            final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
+            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            LOG.info("No schema version is found with fingerprint : [{}]", fingerprint);
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, fingerprint);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while getting schema version with fingerprint [{}]", fingerprint, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+    }
+
+    @GET
     @Path("/schemas/versions/statemachine")
     @ApiOperation(value = "Get schema version life cycle states",
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)

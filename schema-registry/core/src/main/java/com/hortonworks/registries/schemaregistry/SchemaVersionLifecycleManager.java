@@ -616,6 +616,22 @@ public class SchemaVersionLifecycleManager {
         return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
     }
 
+    public SchemaVersionInfo findSchemaVersionInfoByFingerprint(final String fingerprint) throws SchemaNotFoundException {
+        final List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.FINGERPRINT, fingerprint));
+
+        final Collection<SchemaVersionStorable> schemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
+
+        if (schemas.isEmpty()) {
+            throw new SchemaNotFoundException(String.format("No schema found for fingerprint: %s", fingerprint));
+        } else {
+            if (schemas.size() > 1) {
+                LOG.warn(String.format("Multiple schemas found for the same fingerprint: %s", fingerprint));
+            }
+
+            return schemas.iterator().next().toSchemaVersionInfo();
+        }
+    }
+
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = new SchemaVersionInfoCache.Key(schemaVersionKey);
         SchemaVersionInfo schemaVersionInfo = schemaVersionInfoCache.getSchema(schemaVersionCacheKey);
