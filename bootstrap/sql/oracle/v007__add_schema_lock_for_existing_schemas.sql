@@ -16,4 +16,4 @@
 INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX ("schema_lock" ("name")) */ INTO "schema_lock"
   SELECT
     CONCAT('schema_metadata_info-', "schema_metadata_info"."name") AS "name", "schema_metadata_info"."timestamp"
-  FROM "schema_metadata_info";q
+  FROM "schema_metadata_info";
