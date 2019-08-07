@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Hortonworks.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
-
- *   http://www.apache.org/licenses/LICENSE-2.0
-
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * This class is responsible for logging in to Kerberos and refreshing credentials for
@@ -62,6 +64,9 @@ public class KerberosLogin extends AbstractLogin {
     private long minTimeBeforeRelogin = 1 * 60 * 1000;
     private String kinitCmd = "/usr/bin/kinit";
 
+    private Lock kerberosTGTRenewalLock;
+    private long kerberosTGTRenewalTimeoutMS;
+
     /**
      * Method to configure this instance with specific properties
      * @param loginContextName
@@ -83,6 +88,15 @@ public class KerberosLogin extends AbstractLogin {
         if (configs.get(KINIT_CMD) != null) {
             this.kinitCmd = (String) configs.get(KINIT_CMD);
         }
+    }
+
+    public KerberosLogin() {
+
+    }
+
+    public KerberosLogin(Lock kerberosTGTRenewalLock, long kerberosTGTRenewalTimeoutMS) {
+        this.kerberosTGTRenewalLock = kerberosTGTRenewalLock;
+        this.kerberosTGTRenewalTimeoutMS = kerberosTGTRenewalTimeoutMS;
     }
 
     /**
@@ -147,7 +161,7 @@ public class KerberosLogin extends AbstractLogin {
         }
     }
 
-    private void spawnReloginThread () {
+    private void spawnReloginThread() {
         // Refresh the Ticket Granting Ticket (TGT) periodically. How often to refresh is determined by the
         // TGT's existing expiry date and the configured minTimeBeforeRelogin. For testing and development,
         // you can decrease the interval of expiration of tickets (for example, to 3 minutes) by running:
@@ -208,7 +222,7 @@ public class KerberosLogin extends AbstractLogin {
                         }
                     }
                     try {
-                        reLogin();
+                        synchronizeReLogin();
                     } catch (LoginException le) {
                         log.error("Failed to refresh TGT: refresh thread exiting now.", le);
                         return;
@@ -244,6 +258,26 @@ public class KerberosLogin extends AbstractLogin {
             }
         }
         return null;
+    }
+
+    private void synchronizeReLogin() throws LoginException {
+        if (kerberosTGTRenewalLock != null) {
+            try {
+                if (kerberosTGTRenewalLock.tryLock(kerberosTGTRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                    try {
+                        reLogin();
+                    } finally {
+                        kerberosTGTRenewalLock.unlock();
+                    }
+                } else {
+                    throw new LoginException("Timed out while waiting to acquire a lock for renewing Kerberos TGT");
+                }
+            } catch (InterruptedException e) {
+                throw new LoginException("Error while acquiring lock for renewing Kerberos TGT : " + e.getMessage());
+            }
+        } else {
+            reLogin();
+        }
     }
 
     /**
