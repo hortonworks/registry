@@ -26,12 +26,14 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import java.security.PrivilegedAction;
 import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This class is responsible for logging in to Kerberos and refreshing credentials for
@@ -64,8 +66,8 @@ public class KerberosLogin extends AbstractLogin {
     private long minTimeBeforeRelogin = 1 * 60 * 1000;
     private String kinitCmd = "/usr/bin/kinit";
 
-    private Lock kerberosTGTRenewalLock;
-    private long kerberosTGTRenewalTimeoutMS;
+    private ReentrantReadWriteLock tgtRenewalLock;
+    private long tgtRenewalTimeoutMS;
 
     /**
      * Method to configure this instance with specific properties
@@ -94,9 +96,9 @@ public class KerberosLogin extends AbstractLogin {
 
     }
 
-    public KerberosLogin(Lock kerberosTGTRenewalLock, long kerberosTGTRenewalTimeoutMS) {
-        this.kerberosTGTRenewalLock = kerberosTGTRenewalLock;
-        this.kerberosTGTRenewalTimeoutMS = kerberosTGTRenewalTimeoutMS;
+    public KerberosLogin(long tgtRenewalTimeoutMS) {
+        this.tgtRenewalLock = new ReentrantReadWriteLock(true);
+        this.tgtRenewalTimeoutMS = tgtRenewalTimeoutMS;
     }
 
     /**
@@ -260,14 +262,38 @@ public class KerberosLogin extends AbstractLogin {
         return null;
     }
 
-    private void synchronizeReLogin() throws LoginException {
-        if (kerberosTGTRenewalLock != null) {
+    public <T> T doAction(PrivilegedAction<T> action) throws LoginException {
+        if (tgtRenewalLock != null) {
+            Lock readLock = tgtRenewalLock.readLock();
             try {
-                if (kerberosTGTRenewalLock.tryLock(kerberosTGTRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                if (readLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                    T result;
+                    try {
+                        result = super.doAction(action);
+                    } finally {
+                        readLock.unlock();
+                    }
+                    return result;
+                } else {
+                    throw new LoginException("Timed out while schema registry client was waiting for Kerberos TGT renewal");
+                }
+            } catch (InterruptedException e) {
+                throw new LoginException("Error while schema registry client was waiting for Kerberos TGT renewal : " + e.getLocalizedMessage());
+            }
+        } else {
+            return super.doAction(action);
+        }
+    }
+
+    private void synchronizeReLogin() throws LoginException {
+        if (tgtRenewalLock != null) {
+            Lock writeLock = tgtRenewalLock.writeLock();
+            try {
+                if (writeLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
                     try {
                         reLogin();
                     } finally {
-                        kerberosTGTRenewalLock.unlock();
+                        writeLock.unlock();
                     }
                 } else {
                     throw new LoginException("Timed out while waiting to acquire a lock for renewing Kerberos TGT");

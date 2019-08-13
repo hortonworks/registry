@@ -18,6 +18,7 @@ package com.hortonworks.registries.auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -26,6 +27,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.RealmCallback;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 /**
@@ -53,6 +55,11 @@ public abstract class AbstractLogin implements Login {
         loginContext.login();
         log.info("Successfully logged in.");
         return loginContext;
+    }
+
+    @Override
+    public <T> T doAction(PrivilegedAction<T> action) throws LoginException {
+        return Subject.doAs(loginContext == null ? null : loginContext.getSubject(), action);
     }
 
     /**
