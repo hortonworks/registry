@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -628,7 +629,10 @@ public class SchemaVersionLifecycleManager {
                 LOG.warn(String.format("Multiple schemas found for the same fingerprint: %s", fingerprint));
             }
 
-            return schemas.iterator().next().toSchemaVersionInfo();
+            return schemas.stream()
+                    .max(Comparator.comparingLong(SchemaVersionStorable::getTimestamp))
+                    .get()
+                    .toSchemaVersionInfo();
         }
     }
 
