@@ -275,10 +275,10 @@ public class KerberosLogin extends AbstractLogin {
                     }
                     return result;
                 } else {
-                    throw new LoginException("Timed out while schema registry client was waiting for Kerberos TGT renewal");
+                    throw new LoginException("Timed out while the client was waiting for Kerberos TGT renewal");
                 }
             } catch (InterruptedException e) {
-                throw new LoginException("Error while schema registry client was waiting for Kerberos TGT renewal : " + e.getLocalizedMessage());
+                throw new LoginException("Error while the client was waiting for Kerberos TGT renewal : " + e.getLocalizedMessage());
             }
         } else {
             return super.doAction(action);
