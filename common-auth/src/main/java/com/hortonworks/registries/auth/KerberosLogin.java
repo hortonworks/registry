@@ -69,6 +69,8 @@ public class KerberosLogin extends AbstractLogin {
     private ReentrantReadWriteLock tgtRenewalLock;
     private long tgtRenewalTimeoutMS;
 
+    private static final long DEFAULT_TGT_RENEWAL_TIMEOUT_MS = 3 * 60 * 1000;
+
     /**
      * Method to configure this instance with specific properties
      * @param loginContextName
@@ -93,7 +95,8 @@ public class KerberosLogin extends AbstractLogin {
     }
 
     public KerberosLogin() {
-
+        this.tgtRenewalLock = new ReentrantReadWriteLock(true);
+        this.tgtRenewalTimeoutMS = DEFAULT_TGT_RENEWAL_TIMEOUT_MS;
     }
 
     public KerberosLogin(long tgtRenewalTimeoutMS) {
@@ -224,7 +227,7 @@ public class KerberosLogin extends AbstractLogin {
                         }
                     }
                     try {
-                        synchronizeReLogin();
+                        reLogin();
                     } catch (LoginException le) {
                         log.error("Failed to refresh TGT: refresh thread exiting now.", le);
                         return;
@@ -263,66 +266,53 @@ public class KerberosLogin extends AbstractLogin {
     }
 
     public <T> T doAction(PrivilegedAction<T> action) throws LoginException {
-        if (tgtRenewalLock != null) {
-            Lock readLock = tgtRenewalLock.readLock();
-            try {
-                if (readLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
-                    T result;
-                    try {
-                        result = super.doAction(action);
-                    } finally {
-                        readLock.unlock();
-                    }
-                    return result;
-                } else {
-                    throw new LoginException("Timed out while the client was waiting for Kerberos TGT renewal");
+        Lock readLock = tgtRenewalLock.readLock();
+        try {
+            if (readLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                T result;
+                try {
+                    result = super.doAction(action);
+                } finally {
+                    readLock.unlock();
                 }
-            } catch (InterruptedException e) {
-                throw new LoginException("Error while the client was waiting for Kerberos TGT renewal : " + e.getLocalizedMessage());
+                return result;
+            } else {
+                throw new LoginException("Timed out while the client was waiting for Kerberos TGT renewal");
             }
-        } else {
-            return super.doAction(action);
-        }
-    }
-
-    private void synchronizeReLogin() throws LoginException {
-        if (tgtRenewalLock != null) {
-            Lock writeLock = tgtRenewalLock.writeLock();
-            try {
-                if (writeLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
-                    try {
-                        reLogin();
-                    } finally {
-                        writeLock.unlock();
-                    }
-                } else {
-                    throw new LoginException("Timed out while waiting to acquire a lock for renewing Kerberos TGT");
-                }
-            } catch (InterruptedException e) {
-                throw new LoginException("Error while acquiring lock for renewing Kerberos TGT : " + e.getMessage());
-            }
-        } else {
-            reLogin();
+        } catch (InterruptedException e) {
+            throw new LoginException("Error while the client was waiting for Kerberos TGT renewal : " + e.getLocalizedMessage());
         }
     }
 
     /**
      * Re-login a principal. This method assumes that {@link #login()} has happened already.
+     *
      * @throws javax.security.auth.login.LoginException on a failure
      */
     private void reLogin() throws LoginException {
-        log.info("Initiating logout for {}", principal);
-        //clear up the kerberos state. But the tokens are not cleared! As per
-        //the Java kerberos login module code, only the kerberos credentials
-        //are cleared
-        loginContext.logout();
-        //login and also update the subject field of the original LoginContext to
-        //have the new credentials (pass it to the LoginContext constructor)
-        loginContext = new LoginContext(loginContextName, loginContext.getSubject());
-        log.info("Initiating re-login for {}", principal);
-        loginContext.login();
-        log.info("Successfully logged in from auto relogin thread");
+        Lock writeLock = tgtRenewalLock.writeLock();
+        try {
+            if (writeLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                try {
+                    log.info("Initiating logout for {}", principal);
+                    //clear up the kerberos state. But the tokens are not cleared! As per
+                    //the Java kerberos login module code, only the kerberos credentials
+                    //are cleared
+                    loginContext.logout();
+                    //login and also update the subject field of the original LoginContext to
+                    //have the new credentials (pass it to the LoginContext constructor)
+                    loginContext = new LoginContext(loginContextName, loginContext.getSubject());
+                    log.info("Initiating re-login for {}", principal);
+                    loginContext.login();
+                    log.info("Successfully logged in from auto relogin thread");
+                } finally {
+                    writeLock.unlock();
+                }
+            } else {
+                throw new LoginException("Timed out while waiting to acquire a lock for renewing Kerberos TGT");
+            }
+        } catch (InterruptedException e) {
+            throw new LoginException("Error while acquiring lock for renewing Kerberos TGT : " + e.getMessage());
+        }
     }
-
-
 }
