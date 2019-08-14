@@ -17,6 +17,7 @@ package com.hortonworks.registries.auth;
 
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 /**
@@ -33,6 +34,11 @@ public interface Login {
      * Performs login for each login module specified for the login context of this instance.
      */
     LoginContext login() throws LoginException;
+
+    /**
+     *  Execute a privileged action which respect to the login context of this instance.
+     */
+    <T> T doAction(PrivilegedAction<T> action) throws LoginException;
 
     /**
      * Closes this instance.
