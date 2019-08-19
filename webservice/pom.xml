@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.hortonworks.registries</groupId>
         <artifactId>registries</artifactId>
-        <version>0.8.0</version>
+        <version>0.9.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -146,7 +146,7 @@
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-core</artifactId>
-            <version>0.8.0</version>
+            <version>0.9.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>

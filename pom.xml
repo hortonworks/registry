@@ -4,7 +4,7 @@
 
     <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Registry</name>
     <description>
@@ -99,7 +99,7 @@
         <connection>scm:git:git://github.com/hortonworks/registry.git</connection>
         <developerConnection>scm:git:git@github.com:hortonworks/registry.git</developerConnection>
         <url>http://github.com/hortonworks/registry.git</url>
-        <tag>v0.8.0-rc1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
