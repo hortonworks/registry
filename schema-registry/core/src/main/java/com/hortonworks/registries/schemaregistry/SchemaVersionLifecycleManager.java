@@ -45,7 +45,7 @@ import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
-import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.search.OrderBy;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
@@ -619,8 +619,9 @@ public class SchemaVersionLifecycleManager {
 
     public SchemaVersionInfo findSchemaVersionInfoByFingerprint(final String fingerprint) throws SchemaNotFoundException {
         final List<QueryParam> queryParams = Collections.singletonList(new QueryParam(SchemaVersionStorable.FINGERPRINT, fingerprint));
+        final List<OrderByField> orderParams = Collections.singletonList(OrderByField.of(SchemaVersionStorable.TIMESTAMP, true));
 
-        final Collection<SchemaVersionStorable> schemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams);
+        final Collection<SchemaVersionStorable> schemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams, orderParams);
 
         if (schemas.isEmpty()) {
             throw new SchemaNotFoundException(String.format("No schema found for fingerprint: %s", fingerprint));
@@ -630,7 +631,7 @@ public class SchemaVersionLifecycleManager {
             }
 
             return schemas.stream()
-                    .max(Comparator.comparingLong(SchemaVersionStorable::getTimestamp))
+                    .findFirst()
                     .get()
                     .toSchemaVersionInfo();
         }

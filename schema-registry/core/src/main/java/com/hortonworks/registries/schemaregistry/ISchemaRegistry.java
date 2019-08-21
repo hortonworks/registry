@@ -83,7 +83,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
     SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText, boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException;
 
     /**
-     * If there is a version of the schema with the given fingerprint then it returns the respective {@link SchemaVersionInfo}, else it returns null.
+     * If there is a version of the schema with the given fingerprint then it returns the respective {@link SchemaVersionInfo},
+     * else it throws a {@link SchemaNotFoundException}.
      *
      * @param fingerprint MD5 hash of the schemaText
      * @return the {@link SchemaVersionInfo} of the schema version with the given fingerprint.
