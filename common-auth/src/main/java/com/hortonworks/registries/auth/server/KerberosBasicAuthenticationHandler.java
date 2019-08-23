@@ -127,10 +127,10 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
             return null;
         }
         String authorization =  request.getHeader(AUTHORIZATION_HEADER);
-        if (!request.getMethod().equals(HTTP_LOGIN_METHOD) || !request.isSecure() || authorization.isEmpty()) {
+        if (!request.getMethod().equals(HTTP_LOGIN_METHOD) || !request.isSecure() || (authorization == null) || authorization.isEmpty()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Kerberos Login is not attempted because method: {}, secure: {}, authorization is empty: {}", request.getMethod(),
-                        request.isSecure(), authorization.isEmpty());
+                        request.isSecure(), (authorization == null || authorization.isEmpty()));
             }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return null;
