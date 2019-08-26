@@ -504,7 +504,7 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
                 if (writerField == null) {
                     // Reader field does not correspond to any field in the writer
                     // record schema, so the reader field must have a default value.
-                    if (readerField.defaultValue() == null) {
+                    if (readerField.defaultVal() == null) {
                         if (!isUnionWithFirstTypeAsNull(readerFieldSchema)) {
                             // reader field has no default value
                             String message = String.format("Reader schema missing default value for field: %s", readerField
