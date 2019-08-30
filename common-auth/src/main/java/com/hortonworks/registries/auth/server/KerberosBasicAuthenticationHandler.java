@@ -105,7 +105,12 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
      */
     @Override
     public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {
-        AuthenticationToken token = kerberosLogin(request, response);
+        AuthenticationToken token = null;
+        try {
+            token = kerberosLogin(request, response);
+        } catch (Exception ex) {
+            LOG.error("Exception while attempting Basic Authentication.", ex);
+        }
 
         if (token == null && spnegoEnabled) {
             LOG.debug("Attempting SPNEGO authentication sequence as kerberos login failed.");
@@ -127,7 +132,8 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
             return null;
         }
         String authorization =  request.getHeader(AUTHORIZATION_HEADER);
-        if (!request.getMethod().equals(HTTP_LOGIN_METHOD) || !request.isSecure() || (authorization == null) || authorization.isEmpty()) {
+        if (!request.getMethod().equals(HTTP_LOGIN_METHOD) || !request.isSecure() || authorization == null ||
+                !authorization.startsWith(BASIC_AUTHENTICATION)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Kerberos Login is not attempted because method: {}, secure: {}, authorization is empty: {}", request.getMethod(),
                         request.isSecure(), (authorization == null || authorization.isEmpty()));

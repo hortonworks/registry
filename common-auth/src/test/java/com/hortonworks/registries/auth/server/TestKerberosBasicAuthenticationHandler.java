@@ -189,7 +189,7 @@ public class TestKerberosBasicAuthenticationHandler
         }
     }
 
-
+    //Attempt SPNEGO Auth when Basic authentication preconditions are not met.
     @Test(timeout = 60000)
     public void testRequestWithKerberosAuthorization() throws Exception {
         String token = KerberosTestUtils.doAsClient(new Callable<String>() {
@@ -228,6 +228,64 @@ public class TestKerberosBasicAuthenticationHandler
                 .thenReturn(KerberosAuthenticator.NEGOTIATE + " " + token);
         Mockito.when(request.getServerName()).thenReturn("localhost");
         Mockito.when(request.getMethod()).thenReturn("GET");
+
+        AuthenticationToken authToken = handler.authenticate(request, response);
+
+        if (authToken != null) {
+            Mockito.verify(response).setHeader(Mockito.eq(KerberosAuthenticator.WWW_AUTHENTICATE),
+                    Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
+            Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
+
+            Assert.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
+            Assert.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
+            Assert.assertEquals(getExpectedType(), authToken.getType());
+        } else {
+            Mockito.verify(response).setHeader(Mockito.eq(KerberosAuthenticator.WWW_AUTHENTICATE),
+                    Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
+            Mockito.verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }
+    }
+
+    //Attempt SPNEGO Auth even when Basic authentication preconditions are met but the Authorization header is for Negotiate mechanism.
+    @Test(timeout = 60000)
+    public void testRequestWithKerberosAuthorizationWithPostAndSecure() throws Exception {
+        String token = KerberosTestUtils.doAsClient(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                GSSManager gssManager = GSSManager.getInstance();
+                GSSContext gssContext = null;
+                try {
+                    String servicePrincipal = KerberosTestUtils.getServerPrincipal();
+                    Oid oid = KerberosUtil.getOidInstance("NT_GSS_KRB5_PRINCIPAL");
+                    GSSName serviceName = gssManager.createName(servicePrincipal,
+                            oid);
+                    oid = KerberosUtil.getOidInstance("GSS_KRB5_MECH_OID");
+                    gssContext = gssManager.createContext(serviceName, oid, null,
+                            GSSContext.DEFAULT_LIFETIME);
+                    gssContext.requestCredDeleg(true);
+                    gssContext.requestMutualAuth(true);
+
+                    byte[] inToken = new byte[0];
+                    byte[] outToken = gssContext.initSecContext(inToken, 0, inToken.length);
+                    Base64 base64 = new Base64(0);
+                    return base64.encodeToString(outToken);
+
+                } finally {
+                    if (gssContext != null) {
+                        gssContext.dispose();
+                    }
+                }
+            }
+        });
+
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+
+        Mockito.when(request.getHeader(KerberosAuthenticator.AUTHORIZATION))
+                .thenReturn(KerberosAuthenticator.NEGOTIATE + " " + token);
+        Mockito.when(request.getServerName()).thenReturn("localhost");
+        Mockito.when(request.getMethod()).thenReturn("POST");
+        Mockito.when(request.isSecure()).thenReturn(true);
 
         AuthenticationToken authToken = handler.authenticate(request, response);
 
