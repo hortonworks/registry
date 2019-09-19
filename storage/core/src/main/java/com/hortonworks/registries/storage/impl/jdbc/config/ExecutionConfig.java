@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.config;
 
-import com.hortonworks.registries.storage.impl.jdbc.DatabaseType;
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 

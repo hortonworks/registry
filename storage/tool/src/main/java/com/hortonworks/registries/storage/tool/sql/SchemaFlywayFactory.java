@@ -16,11 +16,15 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
+import com.hortonworks.registries.storage.common.DatabaseType;
+import com.hortonworks.registries.storage.common.util.DataSourceUtil;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class SchemaFlywayFactory {
 
@@ -50,6 +54,13 @@ public class SchemaFlywayFactory {
         flyway.setCleanOnValidationError(cleanOnValidationError);
         flyway.setLocations(location);
         flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
+
+        Map<String, Object> connectionProperties = conf.getConnectionProperties();
+
+        if (conf.getDbType().equals(DatabaseType.ORACLE) && connectionProperties != null && !connectionProperties.isEmpty()) {
+            DataSource dataSource = flyway.getDataSource();
+            DataSourceUtil.addConnectionProperties(DatabaseType.ORACLE, dataSource, connectionProperties);
+        }
 
         return flyway;
     }

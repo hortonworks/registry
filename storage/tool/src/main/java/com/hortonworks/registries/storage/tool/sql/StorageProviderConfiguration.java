@@ -16,23 +16,47 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
+import com.hortonworks.registries.storage.common.DatabaseType;
+
+import java.util.Collections;
+import java.util.Map;
+
 public class StorageProviderConfiguration {
+
+    private DatabaseType dbType;
 
     private String url;
     private String user = "";
     private String password = "";
-    private DatabaseType dbType;
 
-    private StorageProviderConfiguration(String url, String user, String password, DatabaseType dbType) {
+    private Map<String, Object> connectionProperties;
+
+    private StorageProviderConfiguration(DatabaseType dbType, String url, String user, String password, Map<String, Object> connectionProperties) {
+        this.dbType = dbType;
         this.url = url;
         this.user = user;
         this.password = password;
-        this.dbType = dbType;
+        this.connectionProperties = connectionProperties;
     }
 
 
-    public static StorageProviderConfiguration get(String url, String user, String password, DatabaseType databaseType) {
-        return new StorageProviderConfiguration(url, user, password, databaseType);
+    public static StorageProviderConfiguration get(DatabaseType databaseType,
+                                                   String url,
+                                                   String user,
+                                                   String password,
+                                                   Map<String, Object> connectionProperties) {
+        return new StorageProviderConfiguration(databaseType, url, user, password, connectionProperties);
+    }
+
+    public static StorageProviderConfiguration get(DatabaseType databaseType,
+                                                   String url,
+                                                   String user,
+                                                   String password) {
+        return new StorageProviderConfiguration(databaseType, url, user, password, Collections.emptyMap());
+    }
+
+    public DatabaseType getDbType() {
+        return dbType;
     }
 
     public String getUrl() {
@@ -47,8 +71,9 @@ public class StorageProviderConfiguration {
         return password;
     }
 
-    public DatabaseType getDbType() {
-        return dbType;
+    public Map<String, Object> getConnectionProperties() {
+        return connectionProperties;
     }
+
 
 }

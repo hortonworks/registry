@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreator;
 import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreatorFactory;
 import com.hortonworks.registries.storage.tool.sql.initenv.UserCreator;
@@ -173,8 +174,8 @@ public class DatabaseUserInitializer {
                 }
             }
 
-            StorageProviderConfiguration storageProperties = StorageProviderConfiguration.get(adminOptions.getJdbcUrl(),
-                    adminOptions.getUsername(), adminOptions.getPassword(), adminOptions.getDatabaseType());
+            StorageProviderConfiguration storageProperties = StorageProviderConfiguration.get(adminOptions.getDatabaseType(),
+                    adminOptions.getJdbcUrl(), adminOptions.getUsername(), adminOptions.getPassword());
 
             classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {

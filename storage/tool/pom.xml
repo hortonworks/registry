@@ -57,7 +57,13 @@
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-utils</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>storage-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
+
     <build>
       <resources>
         <resource>
