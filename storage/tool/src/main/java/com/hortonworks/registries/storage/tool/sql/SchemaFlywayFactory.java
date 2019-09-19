@@ -17,14 +17,14 @@
 package com.hortonworks.registries.storage.tool.sql;
 
 import com.hortonworks.registries.storage.common.DatabaseType;
-import com.hortonworks.registries.storage.common.util.DataSourceUtil;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
+import org.flywaydb.core.internal.util.jdbc.DriverDataSource;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Properties;
 
 public class SchemaFlywayFactory {
 
@@ -53,13 +53,17 @@ public class SchemaFlywayFactory {
         flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
         flyway.setCleanOnValidationError(cleanOnValidationError);
         flyway.setLocations(location);
-        flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
 
         Map<String, Object> connectionProperties = conf.getConnectionProperties();
 
         if (conf.getDbType().equals(DatabaseType.ORACLE) && connectionProperties != null && !connectionProperties.isEmpty()) {
-            DataSource dataSource = flyway.getDataSource();
-            DataSourceUtil.addConnectionProperties(DatabaseType.ORACLE, dataSource, connectionProperties);
+            Properties properties = new Properties();
+            properties.putAll(connectionProperties);
+            DriverDataSource dataSource = new DriverDataSource(flyway.getClassLoader(),
+                    null, conf.getUrl(), conf.getUser(), conf.getPassword(), properties, null);
+            flyway.setDataSource(dataSource);
+        } else {
+            flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword(), null);
         }
 
         return flyway;

@@ -18,10 +18,8 @@ package com.hortonworks.registries.storage.impl.jdbc.config;
 
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.common.util.Constants;
-import com.hortonworks.registries.storage.common.util.DataSourceUtil;
 import com.zaxxer.hikari.HikariConfig;
 
-import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -57,12 +55,9 @@ public class HikariConfigFactory {
         propsCopy.remove(Constants.DataSource.CONNECTION_PROPERTY);
         HikariConfig hikariConfig = mysqlConfig(propsCopy);
         if (dbProperties.containsKey(Constants.DataSource.CONNECTION_PROPERTY)) {
-            DataSource dataSource = hikariConfig.getDataSource();
-            DataSourceUtil.addConnectionProperties(DatabaseType.ORACLE,
-                                                   dataSource,
-                                                   (Map<String, Object>)
-                                                       dbProperties.get(Constants.DataSource.CONNECTION_PROPERTY));
-            hikariConfig.setDataSource(dataSource);
+            Properties properties = new Properties();
+            properties.putAll((Map<?, ?>) dbProperties.get(Constants.DataSource.CONNECTION_PROPERTY));
+            hikariConfig.addDataSourceProperty("connectionProperties", properties);
         }
 
         return hikariConfig;
