@@ -116,6 +116,7 @@
         <module>docker</module>
         <module>model-registry</module>
         <module>common-auth</module>
+        <module>ranger-plugin</module>
     </modules>
 
     <profiles>
