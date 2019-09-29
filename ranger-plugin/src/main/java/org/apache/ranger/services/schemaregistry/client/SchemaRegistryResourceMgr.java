@@ -19,7 +19,7 @@ public class SchemaRegistryResourceMgr {
     private static final String  BRANCH = "branch";
     private static final String  VERSION = "schema-version";
 
-    private static final int TIMEOUT = 5; // Seconds
+    private static final int LOOKUP_TIMEOUT_SEC = 5;
 
 
     public static List<String> getSchemaRegistryResources(String serviceName, Map<String, String> configs, ResourceLookupContext context) throws Exception {
@@ -40,23 +40,11 @@ public class SchemaRegistryResourceMgr {
                 && resourceMap != null
                 && !resourceMap.isEmpty()) {
             //TODO: Add logging
-            final SchemaRegistryClient registryClient = SchemaRegistryConnectionMgr.getSchemaRegistryClient(serviceName, configs);
+            final RangerSRClient registryClient = SchemaRegistryConnectionMgr.getSchemaRegistryClient(serviceName, configs);
             if (registryClient != null) {
                 Callable<List<String>> callableObj = null;
                 try {
                     switch (resource.trim().toLowerCase()) {
-                        case SERDE: {
-                            List<String> serdeList = resourceMap.get(SERDE);
-                            // get the SerdeList for given Input
-                            final String finalSerdeName = userInput + "*";
-                            callableObj = new Callable<List<String>>() {
-                                @Override
-                                public List<String> call() {
-                                    return registryClient.getSerdeList(finalSerdeName, serdeList);
-                                }
-                            };
-                            break;
-                        }
                         case FILE: {
                             List<String> fileList = resourceMap.get(FILE);
                             // get the SerdeList for given Input
@@ -77,6 +65,19 @@ public class SchemaRegistryResourceMgr {
                                 @Override
                                 public List<String> call() {
                                     return registryClient.getSchemaList(finalSchemaName, schemaList);
+                                }
+                            };
+                            break;
+                        }
+                        case SERDE: {
+                            List<String> schemaList = resourceMap.get(SCHEMA);
+                            List<String> serdeList = resourceMap.get(SERDE);
+                            // get the SerdeList for given Input
+                            final String finalSerdeName = userInput + "*";
+                            callableObj = new Callable<List<String>>() {
+                                @Override
+                                public List<String> call() {
+                                    return registryClient.getSerdeList(finalSerdeName, schemaList, serdeList);
                                 }
                             };
                             break;
@@ -118,7 +119,7 @@ public class SchemaRegistryResourceMgr {
                 }
                 if (callableObj != null) {
                     synchronized (registryClient) {
-                        resultList = TimedEventUtil.timedTask(callableObj, TIMEOUT,
+                        resultList = TimedEventUtil.timedTask(callableObj, LOOKUP_TIMEOUT_SEC,
                                 TimeUnit.SECONDS);
                     }
                 } else {
