@@ -36,10 +36,10 @@ import java.util.zip.ZipFile;
 public class MySqlDriverHelper {
     public static final String MYSQL_JAR_FILE_PATTERN = "mysql-connector-java.*?.jar";
 
-    public static void downloadMySQLJarIfNeeded(StorageProviderConfiguration storageProperties,
-                                                String bootstrapDirPath,
-                                                String mysqlJarUrl,
-                                                Proxy proxy) throws Exception {
+    public static ClassLoader downloadMySQLJarIfNeeded(StorageProviderConfiguration storageProperties,
+                                                       String bootstrapDirPath,
+                                                       String mysqlJarUrl,
+                                                       Proxy proxy) throws Exception {
         /* Due to license issues we will not be able to ship mysql driver.
                If the dbtype is mysql we will prompt user to download the jar and place
                it under bootstrap/lib and libs folder. This runs only one-time and for
@@ -56,15 +56,16 @@ public class MySqlDriverHelper {
 
         if (storageProperties.getDbType().equals(DatabaseType.MYSQL)
                 && (!isMySQLJarFileAvailableOnAnyOfDirectories(Arrays.asList(bootstrapLibDir, libDir)))) {
-            downloadMySQLJar(mysqlJarUrl, bootstrapLibDir, proxy);
+            return downloadMySQLJar(mysqlJarUrl, bootstrapLibDir, proxy);
         }
+        return null;
     }
 
     private static boolean isMySQLJarFileAvailableOnAnyOfDirectories(List<File> directories) {
         return directories.stream().anyMatch(dir -> fileExists(dir, MYSQL_JAR_FILE_PATTERN));
     }
 
-    private static void downloadMySQLJar(String mysqlJarUrl, File bootstrapLibDir, Proxy proxy) throws Exception {
+    private static ClassLoader downloadMySQLJar(String mysqlJarUrl, File bootstrapLibDir, Proxy proxy) throws Exception {
         if (mysqlJarUrl == null || mysqlJarUrl.equals(""))
             throw new IllegalArgumentException("Missing mysql client jar url. " +
                     "Please pass mysql client jar url using -m option.");
@@ -72,8 +73,9 @@ public class MySqlDriverHelper {
         if (mysqlJarFileName != null) {
             File mysqlJarFile = new File(bootstrapLibDir+ File.separator + mysqlJarFileName);
             System.out.println("mysqlJarFile " + mysqlJarFile);
-            Utils.loadJarIntoClasspath(mysqlJarFile);
+            return Utils.loadJarIntoClasspath(mysqlJarFile);
         }
+        return null;
     }
 
     /*

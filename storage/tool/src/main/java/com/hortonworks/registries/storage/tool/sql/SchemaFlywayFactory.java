@@ -33,10 +33,11 @@ public class SchemaFlywayFactory {
     private static final boolean cleanOnValidationError = false;
 
 
-    public static Flyway get(StorageProviderConfiguration conf,
+    public static Flyway get(ClassLoader classLoader,
+                             StorageProviderConfiguration conf,
                              String scriptRootPath,
                              boolean validateOnMigrate) {
-        Flyway flyway = new Flyway();
+        Flyway flyway = new Flyway(classLoader);
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
         flyway.setEncoding(encoding);

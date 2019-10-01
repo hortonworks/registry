@@ -21,9 +21,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 public class Utils {
@@ -32,16 +33,27 @@ public class Utils {
         return objectMapper.readValue(new File(configFilePath), Map.class);
     }
 
-    public static void loadJarIntoClasspath(File jarFile) throws Exception {
+    public static ClassLoader loadJarIntoClasspath(final File jarFile) throws Exception {
         try {
-            URL url = jarFile.toURI().toURL();
-            URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-            Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-            method.setAccessible(true);
-            method.invoke(classLoader, url);
-        } catch(Exception e) {
+            final MyURLClassLoader customClassLoader = AccessController.doPrivileged((PrivilegedAction<MyURLClassLoader>) () ->
+                    new MyURLClassLoader(new URL[0], Thread.currentThread().getContextClassLoader()));
+            final URL url = jarFile.toURI().toURL();
+            customClassLoader.addUrl(url);
+            return customClassLoader;
+        } catch (final Exception e) {
             System.out.println("Failed to load " + jarFile + " into classpath.");
             throw new Exception(e);
+        }
+    }
+
+    static class MyURLClassLoader extends URLClassLoader {
+
+        MyURLClassLoader(final URL[] urls, final ClassLoader parent) {
+            super(urls, parent);
+        }
+
+        void addUrl(final URL url) {
+            super.addURL(url);
         }
     }
 }

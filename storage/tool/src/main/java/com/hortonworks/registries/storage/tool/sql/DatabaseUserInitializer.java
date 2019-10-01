@@ -21,17 +21,17 @@ import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreatorFactor
 import com.hortonworks.registries.storage.tool.sql.initenv.UserCreator;
 import com.hortonworks.registries.storage.tool.sql.initenv.UserCreatorFactory;
 import org.apache.commons.cli.*;
-import org.codehaus.plexus.util.StringUtils;
 
 import java.io.*;
 import java.net.*;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 public class DatabaseUserInitializer {
     private static final String OPTION_MYSQL_JAR_URL_PATH = "mysql-jar-url";
@@ -114,7 +114,7 @@ public class DatabaseUserInitializer {
                     .build()
         );
 
-        CommandLineParser parser = new BasicParser();
+        CommandLineParser parser = new DefaultParser();
         CommandLine commandLine = parser.parse(options, args);
 
         String[] neededOptions = {
@@ -148,8 +148,6 @@ public class DatabaseUserInitializer {
 
         TargetOptions targetOptions = targetOptionsOptional.get();
 
-        DatabaseType databaseType = findDatabaseType(adminOptions.getJdbcUrl());
-
         Map<String, Object> conf;
         try {
             conf = Utils.readConfig(confFilePath);
@@ -160,6 +158,7 @@ public class DatabaseUserInitializer {
         }
 
         String bootstrapDirPath = null;
+        ClassLoader classLoader;
         try {
             bootstrapDirPath = System.getProperty("bootstrap.dir");
             Proxy proxy = Proxy.NO_PROXY;
@@ -177,14 +176,14 @@ public class DatabaseUserInitializer {
             StorageProviderConfiguration storageProperties = StorageProviderConfiguration.get(adminOptions.getJdbcUrl(),
                     adminOptions.getUsername(), adminOptions.getPassword(), adminOptions.getDatabaseType());
 
-            MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
+            classLoader = MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {
             System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
             System.exit(1);
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        try (Connection conn = getConnectionViaAdmin(adminOptions)) {
+        try (Connection conn = getConnectionViaAdmin(adminOptions, classLoader)) {
             DatabaseCreator databaseCreator = DatabaseCreatorFactory.newInstance(adminOptions.getDatabaseType(), conn);
             UserCreator userCreator = UserCreatorFactory.newInstance(adminOptions.getDatabaseType(), conn);
 
@@ -252,12 +251,29 @@ public class DatabaseUserInitializer {
         return DatabaseType.fromValue(jdbcParts[1]);
     }
 
-    private static Connection getConnectionViaAdmin(AdminOptions adminOptions) throws SQLException, ClassNotFoundException {
-        // load required JDBC driver
-        Class.forName(JdbcDriverClass.fromDatabaseType(adminOptions.getDatabaseType()).getValue());
-
+    private static Connection getConnectionViaAdmin(AdminOptions adminOptions,
+                                                    ClassLoader classLoader) throws Exception {
         // Connect using the JDBC URL and user/pass from conf
-        return DriverManager.getConnection(adminOptions.getJdbcUrl(), adminOptions.getUsername(), adminOptions.getPassword());
+        final Properties info = new Properties();
+        info.put("user", adminOptions.getUsername());
+        info.put("password", adminOptions.getPassword());
+        final String className = JdbcDriverClass.fromDatabaseType(adminOptions.getDatabaseType()).getValue();
+
+        // load required JDBC driver
+        if (classLoader != null) {
+            // DriverManager doesn't support passing a classloader when creating a new db connection.
+            // Some of the options explored are to set the classloader in the currentThread context.
+            // But, the DriverManager only uses the caller's classloader instead of currentThread contextClassLoader.
+            // https://community.oracle.com/thread/4011800
+            // So, the below approach is taken to create the connection directly from the driver.
+            // This case executes only when the script downloads the MySQL jar and loads it in the classpath.
+            final Driver driver = (Driver) Class.forName(className, true, classLoader)
+                    .getDeclaredConstructor().newInstance();
+            return driver.connect(adminOptions.jdbcUrl, info);
+        } else {
+            Class.forName(className);
+            return DriverManager.getConnection(adminOptions.getJdbcUrl(), info);
+        }
     }
 
     private static void usage(Options options) {
@@ -295,23 +311,23 @@ public class DatabaseUserInitializer {
             this.databaseType = findDatabaseType(jdbcUrl);
         }
 
-        public String getJdbcUrl() {
+        String getJdbcUrl() {
             return jdbcUrl;
         }
 
-        public DatabaseType getDatabaseType() {
+        DatabaseType getDatabaseType() {
             return databaseType;
         }
 
-        public String getUsername() {
+        String getUsername() {
             return username;
         }
 
-        public String getPassword() {
+        String getPassword() {
             return password;
         }
 
-        public static Optional<AdminOptions> from(CommandLine cli) {
+        static Optional<AdminOptions> from(CommandLine cli) {
             if (!cli.hasOption(OPTION_ADMIN_JDBC_URL) || !cli.hasOption(OPTION_ADMIN_DB_USER) ||
                     !cli.hasOption(OPTION_ADMIN_PASSWORD)) {
                 return Optional.empty();
@@ -333,19 +349,19 @@ public class DatabaseUserInitializer {
             this.database = database;
         }
 
-        public String getUsername() {
+        String getUsername() {
             return username;
         }
 
-        public String getPassword() {
+        String getPassword() {
             return password;
         }
 
-        public String getDatabase() {
+        String getDatabase() {
             return database;
         }
 
-        public static Optional<TargetOptions> from(CommandLine cli) {
+        static Optional<TargetOptions> from(CommandLine cli) {
             if (!cli.hasOption(OPTION_TARGET_USER) || !cli.hasOption(OPTION_TARGET_PASSWORD) ||
                     !cli.hasOption(OPTION_TARGET_DATABASE)) {
                 return Optional.empty();
