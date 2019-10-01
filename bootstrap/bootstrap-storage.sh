@@ -42,12 +42,17 @@ else
 fi
 
 TABLE_INITIALIZER_MAIN_CLASS=com.hortonworks.registries.storage.tool.sql.TablesInitializer
-for file in "${BOOTSTRAP_DIR}"/lib/*.jar;
-do
-    CLASSPATH="$CLASSPATH":"$file"
-done
+
+buildClasspath() {
+  for file in "${BOOTSTRAP_DIR}"/lib/*.jar;
+  do
+      CLASSPATH="$CLASSPATH":"$file"
+  done
+}
 
 execute() {
+    # Building the classpath for each option so that the driver jars gets loaded when using the "drop-create" option.
+    buildClasspath
     echo "Using Configuration file: ${CONFIG_FILE_PATH}"
     ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -m ${MYSQL_JAR_URL_PATH} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --${1}
 }
