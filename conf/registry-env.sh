@@ -15,3 +15,5 @@
 #  limitations under the License.
 #
 export REGISTRY_USER=`whoami`
+
+export DB_OPTS=""
