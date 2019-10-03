@@ -16,10 +16,10 @@ public class RangerServiceSchemaRegistry extends RangerBaseService {
     private static final Log LOG = LogFactory.getLog(RangerServiceSchemaRegistry.class);
 
     public static final String RESOURCE_FILE = "file";
-    public static final String RESOURCE_METADATA = "metadata";
     public static final String RESOURCE_SERDE = "serde";
-    public static final String RESOURCE_SCHEMA = "schema";
-    public static final String RESOURCE_BRANCH = "branch";
+    public static final String RESOURCE_GROUP = "schema-group";
+    public static final String RESOURCE_SCHEMA = "schema-metadata";
+    public static final String RESOURCE_BRANCH = "schema-branch";
     public static final String RESOURCE_SCHEMA_VERSION = "schema-version";
 
     public static final String ACCESS_TYPE_CREATE = "create";
@@ -72,54 +72,5 @@ public class RangerServiceSchemaRegistry extends RangerBaseService {
 
         return ret;
     }
-
-    @Override
-    public List<RangerPolicy> getDefaultRangerPolicies() throws Exception {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("==> RangerServiceSchemaRegistry.getDefaultRangerPolicies()");
-        }
-
-        List<RangerPolicy> ret = super.getDefaultRangerPolicies();
-
-        //Default policy for metadata resource
-        RangerPolicy metadataPolicy = createMetadataDefaultPolicy();
-        ret.add(metadataPolicy);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("<== RangerServiceSchemaRegistry.getDefaultRangerPolicies()");
-        }
-
-        return ret;
-    }
-
-    private RangerPolicy createMetadataDefaultPolicy() {
-        RangerPolicy metadataDefaultPolicy = new RangerPolicy();
-
-        metadataDefaultPolicy.setName(METADATA_POLICYNAME);
-        metadataDefaultPolicy.setService(serviceName);
-        metadataDefaultPolicy.setResources(createDefaultMetadataPolicyResource());
-        metadataDefaultPolicy.setPolicyItems(createDefaultMetadataPolicyItem());
-
-        return metadataDefaultPolicy;
-    }
-
-    private Map<String, RangerPolicy.RangerPolicyResource> createDefaultMetadataPolicyResource() {
-        Map<String, RangerPolicy.RangerPolicyResource> resources = new HashMap<>();
-
-        resources.put(RESOURCE_METADATA, new RangerPolicy.RangerPolicyResource(Arrays.asList(RESOURCE_METADATA), false, false));
-
-        return resources;
-    }
-
-    private List<RangerPolicy.RangerPolicyItem> createDefaultMetadataPolicyItem() {
-        List<RangerPolicy.RangerPolicyItemAccess> accesses = new ArrayList<RangerPolicy.RangerPolicyItemAccess>();
-
-        accesses.add(new RangerPolicy.RangerPolicyItemAccess(ACCESS_TYPE_READ));
-
-        RangerPolicy.RangerPolicyItem item = new RangerPolicy.RangerPolicyItem(accesses, null, Arrays.asList(RangerPolicyEngine.GROUP_PUBLIC), null, null, false);
-
-        return Collections.singletonList(item);
-    }
-
 
 }

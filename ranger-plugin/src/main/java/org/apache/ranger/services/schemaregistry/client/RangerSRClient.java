@@ -33,7 +33,7 @@ public class RangerSRClient extends BaseClient {
         String errMsg = errMessage;
         Map<String, Object> responseData = new HashMap<String, Object>();
         try {
-            getSchemaList(null, null);
+            getSchemaList(null, null, null);
             // If it doesn't throw exception, then assume the instance is
             // reachable
             String successMsg = "ConnectionTest Successful";
@@ -54,12 +54,21 @@ public class RangerSRClient extends BaseClient {
         throw new NotImplementedException();
     }
 
-    public List<String> getSchemaList(String finalSchemaName, List<String> schemaList) throws RuntimeException {
+    public List<String> getSchemaGroupList(String groupName, List<String> groupList) throws RuntimeException {
+        //TODO: Implementation should be added to SR client
+        return Arrays.asList("dummy-schema-group-1", "dummy-schema-group-2");
+    }
+
+    public List<String> getSchemaList(String schemaName,
+                                      List<String> schemaGroupList,
+                                      List<String> schemaList) throws RuntimeException {
         //TODO: Implementation should be added to SR client
         return Arrays.asList("dummy-schema-1", "dummy-schema-2");
     }
 
-    public List<String> getSerdeList(String finalSerdeName, List<String> schemaList, List<String> serdeList) throws RuntimeException {
+    public List<String> getSerdeList(String finalSerdeName,
+                                     List<String> schemaList,
+                                     List<String> serdeList) throws RuntimeException {
         List<String> res = serdeList;
         schemaList.forEach(schemaName -> {
             Collection<SerDesInfo> serdes = registryClient.getSerDes(schemaName);
@@ -74,42 +83,53 @@ public class RangerSRClient extends BaseClient {
         return res;
     }
 
-    public List<String> getBranchList(String finalBranchName, List<String> schemaList, List<String> branchList) {
+    public List<String> getBranchList(String finalBranchName,
+                                      List<String> schemaGroupList,
+                                      List<String> schemaList,
+                                      List<String> branchList) {
         List<String> res = branchList;
-        schemaList.forEach(schemaName -> {
-            try {
-                Collection<SchemaBranch> branches = registryClient.getSchemaBranches(schemaName);
-                branches.forEach(b -> {
-                    String bName = b.getName();
-                    if (!res.contains(bName) && bName.matches(finalBranchName)) {
-                        res.add(bName);
-                    }
-                });
-            } catch (SchemaNotFoundException e) {
-                // This exception should be ignored.
-                // Recource policy can contain names of schemas that can be created in future.
-            }
+        schemaGroupList.forEach( group -> {
+            schemaList.forEach(schemaName -> {
+                try {
+                    Collection<SchemaBranch> branches = registryClient.getSchemaBranches(schemaName);
+                    branches.forEach(b -> {
+                        String bName = b.getName();
+                        if (!res.contains(bName) && bName.matches(finalBranchName)) {
+                            res.add(bName);
+                        }
+                    });
+                } catch (SchemaNotFoundException e) {
+                    // This exception should be ignored.
+                    // Recource policy can contain names of schemas that can be created in future.
+                }
+            });
         });
 
         return res;
     }
 
-    public List<String> getVersionList(String finalVersionName, List<String> schemaList, List<String> branchList, List<String> versionList) throws RuntimeException {
+    public List<String> getVersionList(String finalVersionName,
+                                       List<String> schemaGroupList,
+                                       List<String> schemaList,
+                                       List<String> branchList,
+                                       List<String> versionList) throws RuntimeException {
         List<String> res = versionList;
-        schemaList.forEach(schemaName -> {
-            branchList.forEach(branch -> {
-                try {
-                    Collection<SchemaVersionInfo> vList = registryClient.getAllVersions(branch, schemaName);
-                    vList.forEach(v -> {
-                        String vName = v.getName();
-                        if (!res.contains(vName) && vName.matches(finalVersionName)) {
-                            res.add(vName);
-                        }
-                    });
-                } catch (SchemaNotFoundException e) {
-                    // This exception should be ignored.
-                    // Recource policy can contain names of schemas/branches that can be created in future.
-                }
+        schemaGroupList.forEach(group -> {
+            schemaList.forEach(schemaName -> {
+                branchList.forEach(branch -> {
+                    try {
+                        Collection<SchemaVersionInfo> vList = registryClient.getAllVersions(branch, schemaName);
+                        vList.forEach(v -> {
+                            String vName = v.getName();
+                            if (!res.contains(vName) && vName.matches(finalVersionName)) {
+                                res.add(vName);
+                            }
+                        });
+                    } catch (SchemaNotFoundException e) {
+                        // This exception should be ignored.
+                        // Recource policy can contain names of schemas/branches that can be created in future.
+                    }
+                });
             });
         });
 
