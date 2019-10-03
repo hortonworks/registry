@@ -407,7 +407,7 @@
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <spring.version>5.0.7.RELEASE</spring.version>
         <postgresql.version>9.4.1212</postgresql.version>
-        <flyway.version>5.1.4</flyway.version>
+        <flyway.version>6.0.4</flyway.version>
         <hikari.version>2.2.5</hikari.version>
         <h2database.version>1.4.188</h2database.version>
         <mockito-version>1.8.5</mockito-version>
