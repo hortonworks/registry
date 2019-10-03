@@ -59,4 +59,4 @@ then
 fi
 
 echo "Using Configuration file: ${CONFIG_FILE_PATH}"
-${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR -cp ${CLASSPATH} ${INITIALIZER_MAIN_CLASS} -m ${MYSQL_JAR_URL_PATH} -c ${CONFIG_FILE_PATH} --admin-jdbc-url ${1} --admin-username ${2} --admin-password ${3} --target-username ${4} --target-password ${5} --target-database ${6}
+${JAVA} ${DB_OPTS} -Dbootstrap.dir=$BOOTSTRAP_DIR -cp ${CLASSPATH} ${INITIALIZER_MAIN_CLASS} -m ${MYSQL_JAR_URL_PATH} -c ${CONFIG_FILE_PATH} --admin-jdbc-url ${1} --admin-username ${2} --admin-password ${3} --target-username ${4} --target-password ${5} --target-database ${6}
