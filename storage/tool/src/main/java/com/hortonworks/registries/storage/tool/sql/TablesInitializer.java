@@ -16,9 +16,9 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -72,7 +72,7 @@ public class TablesInitializer {
                 Option.builder()
                         .hasArg(false)
                         .longOpt(SchemaMigrationOption.CREATE.toString())
-                        .desc("Run sql migrations from scatch")
+                        .desc("Run sql migrations from scratch")
                         .build()
         );
 
@@ -132,7 +132,7 @@ public class TablesInitializer {
                     .build()
         );
 
-        CommandLineParser parser = new BasicParser();
+        CommandLineParser parser = new DefaultParser();
         CommandLine commandLine = parser.parse(options, args);
 
         if (!commandLine.hasOption(OPTION_CONFIG_FILE_PATH) || !commandLine.hasOption(OPTION_SCRIPT_ROOT_PATH)) {

@@ -33,7 +33,9 @@ public class SchemaFlywayFactory {
     private static final boolean cleanOnValidationError = false;
 
 
-    public static Flyway get(StorageProviderConfiguration conf, String scriptRootPath, boolean validateOnMigrate) {
+    public static Flyway get(StorageProviderConfiguration conf,
+                             String scriptRootPath,
+                             boolean validateOnMigrate) {
         Flyway flyway = new Flyway();
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
@@ -46,7 +48,7 @@ public class SchemaFlywayFactory {
         flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
         flyway.setCleanOnValidationError(cleanOnValidationError);
         flyway.setLocations(location);
-        flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword(), null);
+        flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
 
         return flyway;
     }
