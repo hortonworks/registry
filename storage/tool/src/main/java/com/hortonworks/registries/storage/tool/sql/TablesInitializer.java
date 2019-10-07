@@ -176,6 +176,7 @@ public class TablesInitializer {
         }
 
         String bootstrapDirPath = null;
+        ClassLoader classLoader;
         try {
             bootstrapDirPath = System.getProperty("bootstrap.dir");
             Proxy proxy = Proxy.NO_PROXY;
@@ -189,7 +190,7 @@ public class TablesInitializer {
                     Authenticator.setDefault(getBasicAuthenticator(url.getHost(), url.getPort(), httpProxyUsername, httpProxyPassword));
                 }
             }
-            MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
+            classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {
             System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
             System.exit(1);
@@ -200,7 +201,8 @@ public class TablesInitializer {
         if(disableValidateOnMigrate) {
             System.out.println("Disabling validation on schema migrate");
         }
-        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath, !disableValidateOnMigrate));
+        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(
+                SchemaFlywayFactory.get(classLoader, storageProperties, scriptRootPath, !disableValidateOnMigrate));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));

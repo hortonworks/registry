@@ -412,6 +412,10 @@
         <h2database.version>1.4.188</h2database.version>
         <mockito-version>1.8.5</mockito-version>
         <codehaus.plexus.version>3.1.0</codehaus.plexus.version>
+
+        <!-- JAXB-api v2.3.1 comes with CDDL 1.1 licence only so the older version 2.2.12 is used -->
+        <jaxb-api.version>2.2.12</jaxb-api.version>
+        <jaxb-runtime.version>2.3.1</jaxb-runtime.version>
     </properties>
 
     <distributionManagement>
@@ -686,6 +690,19 @@
               <groupId>commons-lang</groupId>
               <artifactId>commons-lang</artifactId>
               <version>${commons-lang.version}</version>
+            </dependency>
+
+            <!-- dependency that was available in the JDK before Java 9.
+                This is included by default so that the builds that are compiled on JDK8 can run on JRE11 -->
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${jaxb-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb-runtime.version}</version>
             </dependency>
 
             <!-- Test dependencies -->
