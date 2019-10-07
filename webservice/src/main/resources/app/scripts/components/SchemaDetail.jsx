@@ -383,7 +383,7 @@ export default class SchemaDetail extends Component{
     const s = schema;
     const {name, evolve} = s.schemaMetadata;
     const currentBranchName = selectedBranch ? selectedBranch.schemaBranch.name : "MASTER";
-    const enabledStateId = StateMachine.getStateByName('Enabled').id;
+    const enabledStateId = StateMachine.states ? StateMachine.getStateByName('Enabled').id : null;
 
     const jsonoptions = {
       lineNumbers: true,
