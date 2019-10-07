@@ -461,8 +461,8 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                         if (doAsUser.isEmpty()) {
                             return null;
                         }
+                        break;
                     }
-                    break;
                 }
             } catch (UnsupportedEncodingException ex) {
                 //We are providing "UTF-8". This should not be happening ideally.
