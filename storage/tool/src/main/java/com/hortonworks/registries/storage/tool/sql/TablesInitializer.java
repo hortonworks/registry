@@ -190,7 +190,7 @@ public class TablesInitializer {
                     Authenticator.setDefault(getBasicAuthenticator(url.getHost(), url.getPort(), httpProxyUsername, httpProxyPassword));
                 }
             }
-            classLoader = MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
+            classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {
             System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
             System.exit(1);

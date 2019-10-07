@@ -36,10 +36,10 @@ import java.util.zip.ZipFile;
 public class MySqlDriverHelper {
     public static final String MYSQL_JAR_FILE_PATTERN = "mysql-connector-java.*?.jar";
 
-    public static ClassLoader downloadMySQLJarIfNeeded(StorageProviderConfiguration storageProperties,
-                                                       String bootstrapDirPath,
-                                                       String mysqlJarUrl,
-                                                       Proxy proxy) throws Exception {
+    public static ClassLoader maybeLoadMySQLJar(StorageProviderConfiguration storageProperties,
+                                                String bootstrapDirPath,
+                                                String mysqlJarUrl,
+                                                Proxy proxy) throws Exception {
         /* Due to license issues we will not be able to ship mysql driver.
                If the dbtype is mysql we will prompt user to download the jar and place
                it under bootstrap/lib and libs folder. This runs only one-time and for

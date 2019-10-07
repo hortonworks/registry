@@ -176,7 +176,7 @@ public class DatabaseUserInitializer {
             StorageProviderConfiguration storageProperties = StorageProviderConfiguration.get(adminOptions.getJdbcUrl(),
                     adminOptions.getUsername(), adminOptions.getPassword(), adminOptions.getDatabaseType());
 
-            classLoader = MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
+            classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {
             System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
             System.exit(1);
