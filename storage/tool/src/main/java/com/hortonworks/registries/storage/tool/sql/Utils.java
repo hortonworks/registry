@@ -28,6 +28,8 @@ import java.security.PrivilegedAction;
 import java.util.Map;
 
 public class Utils {
+
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> readConfig(String configFilePath) throws IOException {
         ObjectMapper objectMapper = new YAMLMapper();
         return objectMapper.readValue(new File(configFilePath), Map.class);
@@ -35,8 +37,8 @@ public class Utils {
 
     public static ClassLoader loadJarIntoClasspath(final File jarFile) throws Exception {
         try {
-            final MyURLClassLoader customClassLoader = AccessController.doPrivileged((PrivilegedAction<MyURLClassLoader>) () ->
-                    new MyURLClassLoader(new URL[0], Thread.currentThread().getContextClassLoader()));
+            final JarClassLoader customClassLoader = AccessController.doPrivileged((PrivilegedAction<JarClassLoader>)
+                    () -> new JarClassLoader(new URL[0], Thread.currentThread().getContextClassLoader()));
             final URL url = jarFile.toURI().toURL();
             customClassLoader.addUrl(url);
             return customClassLoader;
@@ -46,9 +48,9 @@ public class Utils {
         }
     }
 
-    static class MyURLClassLoader extends URLClassLoader {
+    static class JarClassLoader extends URLClassLoader {
 
-        MyURLClassLoader(final URL[] urls, final ClassLoader parent) {
+        JarClassLoader(final URL[] urls, final ClassLoader parent) {
             super(urls, parent);
         }
 

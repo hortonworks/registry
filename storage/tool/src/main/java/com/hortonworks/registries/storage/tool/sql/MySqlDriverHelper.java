@@ -56,7 +56,7 @@ public class MySqlDriverHelper {
 
         if (storageProperties.getDbType().equals(DatabaseType.MYSQL)
                 && (!isMySQLJarFileAvailableOnAnyOfDirectories(Arrays.asList(bootstrapLibDir, libDir)))) {
-            return downloadMySQLJar(mysqlJarUrl, bootstrapLibDir, proxy);
+            return loadMySQLJar(mysqlJarUrl, bootstrapLibDir, proxy);
         }
         return null;
     }
@@ -65,7 +65,7 @@ public class MySqlDriverHelper {
         return directories.stream().anyMatch(dir -> fileExists(dir, MYSQL_JAR_FILE_PATTERN));
     }
 
-    private static ClassLoader downloadMySQLJar(String mysqlJarUrl, File bootstrapLibDir, Proxy proxy) throws Exception {
+    private static ClassLoader loadMySQLJar(String mysqlJarUrl, File bootstrapLibDir, Proxy proxy) throws Exception {
         if (mysqlJarUrl == null || mysqlJarUrl.equals(""))
             throw new IllegalArgumentException("Missing mysql client jar url. " +
                     "Please pass mysql client jar url using -m option.");
@@ -125,9 +125,6 @@ public class MySqlDriverHelper {
             System.out.println("Copying file to libs " + libFile);
             copyFile(bootstrapLibFile, libFile);
             return mysqlJarFileName;
-        } catch (IOException ie) {
-            ie.printStackTrace();
-            System.err.println("Failed to copy mysql driver into " + bootstrapLibDir + " and " + libDir);
         } catch (Exception e ) {
             e.printStackTrace();
             System.err.println("Failed to copy mysql driver into " + bootstrapLibDir + " and " + libDir);
@@ -148,7 +145,7 @@ public class MySqlDriverHelper {
                 File file = new File(dir, matchedFileName);
                 FileOutputStream fos = new FileOutputStream(file);
                 BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
-                byte data[] = new byte[BUFFER];
+                byte[] data = new byte[BUFFER];
                 BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
                 int currentByte;
                 while ((currentByte = is.read(data, 0, BUFFER)) != -1) {
@@ -172,11 +169,7 @@ public class MySqlDriverHelper {
     }
 
     public static boolean fileExists(File dir, String regex) {
-        File[] files = dir.listFiles(new FileFilter() {
-            public boolean accept(File pathname) {
-                return pathname.getName().matches(regex);
-            }
-        });
+        File[] files = dir.listFiles(pathname -> pathname.getName().matches(regex));
         return files != null && files.length == 1;
     }
 
