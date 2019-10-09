@@ -1,11 +1,32 @@
 {
-  "id": 66,
   "name": "schema-registry",
   "implClass": "org.apache.ranger.services.schemaregistry.RangerServiceSchemaRegistry",
   "label": "Schema Registry",
   "description": "Schema Registry",
   "resources":
   [
+
+    {
+      "itemId": 0,
+      "name": "registry-service",
+      "type": "string",
+      "level": 10,
+      "parent": "",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Registry Service",
+      "description": "Schema Registry Service"
+    },
 
     {
       "itemId": 1,
