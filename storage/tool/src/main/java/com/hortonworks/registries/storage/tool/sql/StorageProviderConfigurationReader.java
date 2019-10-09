@@ -56,7 +56,7 @@ public class StorageProviderConfigurationReader {
         String password = (String) dbProperties.getOrDefault(Constants.DataSource.PASSWORD, "");
 
         Map<String, Object> connectionProperties = (Map<String, Object>)
-                dbProperties.getOrDefault(Constants.DataSource.CONNECTION_PROPERTY, Collections.emptyMap());
+                dbProperties.getOrDefault(Constants.DataSource.CONNECTION_PROPERTIES, Collections.emptyMap());
 
         return StorageProviderConfiguration.get(databaseType, jdbcUrl, user, password, connectionProperties);
     }

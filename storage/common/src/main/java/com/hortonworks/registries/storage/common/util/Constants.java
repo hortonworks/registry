@@ -23,6 +23,6 @@ public final class Constants {
         public static final String URL = "dataSource.url";
         public static final String USER = "dataSource.user";
         public static final String PASSWORD = "dataSource.password";
-        public static final String CONNECTION_PROPERTY = "connection.properties";
+        public static final String CONNECTION_PROPERTIES = "connection.properties";
     }
 }

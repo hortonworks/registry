@@ -32,7 +32,7 @@ public class HikariConfigFactory {
             case MYSQL:
                 return mysqlConfig(dbProperties);
             case POSTGRESQL:
-                return postgresConfig(dbProperties);
+                return postgresqlConfig(dbProperties);
             case ORACLE:
                 return oracleConfig(dbProperties);
             default:
@@ -46,17 +46,17 @@ public class HikariConfigFactory {
         return new HikariConfig(hikariProperties);
     }
 
-    private static HikariConfig postgresConfig(Map<String, Object> props) {
+    private static HikariConfig postgresqlConfig(Map<String, Object> props) {
         return mysqlConfig(props);
     }
 
     private static HikariConfig oracleConfig(Map<String, Object> dbProperties) {
         Map<String, Object> propsCopy = new HashMap<>(dbProperties);
-        propsCopy.remove(Constants.DataSource.CONNECTION_PROPERTY);
+        propsCopy.remove(Constants.DataSource.CONNECTION_PROPERTIES);
         HikariConfig hikariConfig = mysqlConfig(propsCopy);
-        if (dbProperties.containsKey(Constants.DataSource.CONNECTION_PROPERTY)) {
+        if (dbProperties.containsKey(Constants.DataSource.CONNECTION_PROPERTIES)) {
             Properties properties = new Properties();
-            properties.putAll((Map<?, ?>) dbProperties.get(Constants.DataSource.CONNECTION_PROPERTY));
+            properties.putAll((Map<?, ?>) dbProperties.get(Constants.DataSource.CONNECTION_PROPERTIES));
             hikariConfig.addDataSourceProperty("connectionProperties", properties);
         }
 

@@ -44,7 +44,7 @@ public class SchemaFlywayFactory {
             case MYSQL:
                 return mysqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
             case POSTGRESQL:
-                return postgresFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+                return postgresqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
             case ORACLE:
                 return oracleFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
             default:
@@ -61,10 +61,10 @@ public class SchemaFlywayFactory {
         return flyway;
     }
 
-    private static Flyway postgresFlyway(ClassLoader classLoader,
-                                         StorageProviderConfiguration conf,
-                                         String scriptRootPath,
-                                         boolean validateOnMigrate) {
+    private static Flyway postgresqlFlyway(ClassLoader classLoader,
+                                           StorageProviderConfiguration conf,
+                                           String scriptRootPath,
+                                           boolean validateOnMigrate) {
         return mysqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
     }
 
@@ -79,10 +79,10 @@ public class SchemaFlywayFactory {
             Properties properties = new Properties();
             properties.putAll(connectionProperties);
             DriverDataSource dataSource = new DriverDataSource(flyway.getClassLoader(),
-                    null, conf.getUrl(), conf.getUser(), conf.getPassword(), properties, null);
+                    null, conf.getUrl(), conf.getUser(), conf.getPassword(), properties);
             flyway.setDataSource(dataSource);
         } else {
-            flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword(), null);
+            flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
         }
 
         return flyway;
