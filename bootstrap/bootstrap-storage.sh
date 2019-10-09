@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2017 Hortonworks.
+# Copyright 2017-2019 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
