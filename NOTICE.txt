@@ -1,5 +1,5 @@
-Hortonworks Schema Registry
-Copyright 2016-2017 Hortonworks, Inc.
+Cloudera Schema Registry
+Copyright 2016-2019 Cloudera, Inc.
 
 The following libraries are included in packaged versions of this project:
 

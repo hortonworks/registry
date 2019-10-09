@@ -17,7 +17,7 @@ Registry users or devs should send a message to [Registry Google Group](https://
 
 ## License
 
-Copyright 2016-2017 Hortonworks.
+Copyright 2016-2019 Cloudera.
  
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
