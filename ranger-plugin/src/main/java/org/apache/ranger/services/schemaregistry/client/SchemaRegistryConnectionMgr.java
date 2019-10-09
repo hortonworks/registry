@@ -4,10 +4,10 @@ import java.util.Map;
 
 public class SchemaRegistryConnectionMgr {
 
-    static public RangerSRClient getSchemaRegistryClient(String serviceName,
-                                                         Map<String, String> configs) {
-        RangerSRClient rangerSRClient = new RangerSRClient(serviceName, configs);
-        return rangerSRClient;
+    static public RangerRegistryClient getSchemaRegistryClient(String serviceName,
+                                                               Map<String, String> configs) {
+        RangerRegistryClient rangerRegistryClient = new RangerRegistryClient(serviceName, configs);
+        return rangerRegistryClient;
     }
 
     /**
@@ -17,7 +17,7 @@ public class SchemaRegistryConnectionMgr {
      */
     public static Map<String, Object> connectionTest(String serviceName,
                                                      Map<String, String> configs) throws Exception {
-        RangerSRClient serviceKafkaClient = getSchemaRegistryClient(serviceName,
+        RangerRegistryClient serviceKafkaClient = getSchemaRegistryClient(serviceName,
                 configs);
         return serviceKafkaClient.connectionTest();
     }

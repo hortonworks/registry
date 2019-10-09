@@ -41,7 +41,7 @@ public class SchemaRegistryResourceMgr {
                 && resourceMap != null
                 && !resourceMap.isEmpty()) {
             //TODO: Add logging
-            final RangerSRClient registryClient = SchemaRegistryConnectionMgr.getSchemaRegistryClient(serviceName, configs);
+            final RangerRegistryClient registryClient = SchemaRegistryConnectionMgr.getSchemaRegistryClient(serviceName, configs);
             if (registryClient != null) {
                 Callable<List<String>> callableObj = null;
                 try {
@@ -59,14 +59,13 @@ public class SchemaRegistryResourceMgr {
                             break;
                         }
                         case SERDE: {
-                            List<String> schemaList = resourceMap.get(SCHEMA_METADATA);
                             List<String> serdeList = resourceMap.get(SERDE);
                             // get the SerdeList for given Input
                             final String finalSerdeName = userInput + "*";
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
-                                    return registryClient.getSerdeList(finalSerdeName, schemaList, serdeList);
+                                    return registryClient.getSerdeList(finalSerdeName, serdeList);
                                 }
                             };
                             break;
@@ -91,7 +90,7 @@ public class SchemaRegistryResourceMgr {
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
-                                    return registryClient.getSchemaList(finalSchemaName, schemaGroupList, schemaMeatadataList);
+                                    return registryClient.getSchemaMetadataList(finalSchemaName, schemaGroupList, schemaMeatadataList);
                                 }
                             };
                             break;
