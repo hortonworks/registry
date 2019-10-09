@@ -38,9 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  Avro 1.9 deprecated access to APIs that exposes JSON nodes in its library. Unfortunately Confluent serdes
- *  still uses an older version of Avro so below test cases are broken against the latest Confluent serdes. Below test
- *  cases will be ignored for now and it will be enabled once Confluent serdes have updated their Avro dependency
+ *  Avro 1.9 removed APIs that exposes Jackson classes in its library. Unfortunately Confluent serdes still uses an older version
+ *  of Avro so below test cases are broken against the latest Confluent serdes. Below test cases will be ignored for now
+ *  and it will be enabled once Confluent serdes have updated their Avro dependency
  */
 @Ignore
 public class ConfluentProtocolCompatibleTest {
