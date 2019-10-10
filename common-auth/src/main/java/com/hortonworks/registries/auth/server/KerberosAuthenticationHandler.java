@@ -450,7 +450,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     }
 
     protected static String getDoasUser(HttpServletRequest request) {
-        String doAsUser = null;
+        String doAsUser = "";
         String queryString = request.getQueryString();
         if (queryString != null) {
             String[] pairs = queryString.split(QUERY_STRING_DELIMITER);
@@ -458,10 +458,6 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                 for (String pair : pairs) {
                     if (pair.startsWith(DOAS_QUERY_STRING)) {
                         doAsUser = URLDecoder.decode(pair.substring(DOAS_QUERY_STRING.length()), "UTF-8").trim();
-                        if (doAsUser.isEmpty()) {
-                            return null;
-                        }
-                        break;
                     }
                 }
             } catch (UnsupportedEncodingException ex) {
@@ -469,7 +465,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                 LOG.error("Invalid encoding provided.");
             }
         }
-        return doAsUser;
+        return doAsUser.isEmpty() ? null : doAsUser;
     }
 
     /**
