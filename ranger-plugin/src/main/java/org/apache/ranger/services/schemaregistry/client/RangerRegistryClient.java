@@ -59,13 +59,15 @@ public class RangerRegistryClient extends BaseClient {
     }
 
     public List<String> getSerdeList(String finalSerdeName,
-                                     List<String> serdeList) {
+                                     List<String> schemaMetadataNames, List<String> serdeList) {
         List<String> res = serdeList;
-        Collection<String> serdes = srClient.getSerDes();
-        serdes.forEach(sName -> {
-            if (!res.contains(sName) && sName.matches(finalSerdeName)) {
-                res.add(sName);
-            }
+        schemaMetadataNames.forEach(smName -> {
+            Collection<String> serdes = srClient.getSerDes(smName);
+            serdes.forEach(sName -> {
+                if (!res.contains(sName) && sName.matches(finalSerdeName)) {
+                    res.add(sName);
+                }
+            });
         });
 
         return res;
@@ -106,7 +108,7 @@ public class RangerRegistryClient extends BaseClient {
         List<String> res = branchList;
         schemaGroupList.forEach(schemaGroupName -> {
             schemaList.forEach(schemaMetadataName -> {
-                Collection<String> branches = srClient.getSchemaBranches(schemaGroupName, schemaMetadataName);
+                Collection<String> branches = srClient.getSchemaBranches(schemaMetadataName);
                 branches.forEach(bName -> {
                     if (!res.contains(bName) && bName.matches(finalBranchName)) {
                         res.add(bName);
@@ -127,7 +129,7 @@ public class RangerRegistryClient extends BaseClient {
         schemaGroupList.forEach(schemaGroupName -> {
             schemaList.forEach(schemaMetadataName -> {
                 branchList.forEach(schemaBranchName -> {
-                    List<String> vList = srClient.getSchemaVersions(schemaGroupName, schemaBranchName, schemaMetadataName);
+                    List<String> vList = srClient.getSchemaVersions(schemaBranchName, schemaMetadataName);
                     vList.forEach(vName -> {
                         if (!res.contains(vName) && vName.matches(finalVersionName)) {
                             res.add(vName);

@@ -59,13 +59,14 @@ public class SchemaRegistryResourceMgr {
                             break;
                         }
                         case SERDE: {
+                            List<String> schemaMeatadataList = resourceMap.get(SCHEMA_METADATA);
                             List<String> serdeList = resourceMap.get(SERDE);
                             // get the SerdeList for given Input
                             final String finalSerdeName = userInput + "*";
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
-                                    return registryClient.getSerdeList(finalSerdeName, serdeList);
+                                    return registryClient.getSerdeList(finalSerdeName, schemaMeatadataList, serdeList);
                                 }
                             };
                             break;
