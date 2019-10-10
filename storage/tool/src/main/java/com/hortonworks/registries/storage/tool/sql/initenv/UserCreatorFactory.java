@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.storage.tool.sql.initenv;
 
-import com.hortonworks.registries.storage.tool.sql.DatabaseType;
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.tool.sql.initenv.mysql.MySqlUserCreator;
 import com.hortonworks.registries.storage.tool.sql.initenv.postgres.PostgreSqlUserCreator;
 
@@ -31,7 +31,7 @@ public class UserCreatorFactory {
             case MYSQL:
                 return new MySqlUserCreator(connection);
 
-            case POSTGRES:
+            case POSTGRESQL:
                 return new PostgreSqlUserCreator(connection);
 
             default:

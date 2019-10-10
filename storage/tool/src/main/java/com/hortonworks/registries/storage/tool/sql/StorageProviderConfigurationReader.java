@@ -16,6 +16,10 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
+import com.hortonworks.registries.storage.common.DatabaseType;
+import com.hortonworks.registries.storage.common.util.Constants;
+
+import java.util.Collections;
 import java.util.Map;
 
 public class StorageProviderConfigurationReader {
@@ -23,9 +27,6 @@ public class StorageProviderConfigurationReader {
     private static final String PROPERTIES = "properties";
     private static final String DB_TYPE = "db.type";
     private static final String DB_PROPERTIES = "db.properties";
-    private static final String DATA_SOURCE_URL = "dataSource.url";
-    private static final String DATA_SOURCE_USER = "dataSource.user";
-    private static final String DATA_SOURCE_PASSWORD = "dataSource.password";
 
     public StorageProviderConfiguration readStorageConfig(Map<String, Object> conf) {
         Map<String, Object> storageConf = (Map<String, Object>) conf.get(
@@ -50,10 +51,13 @@ public class StorageProviderConfigurationReader {
     }
 
     private static StorageProviderConfiguration readDatabaseProperties(Map<String, Object> dbProperties, DatabaseType databaseType) {
-        String jdbcUrl = (String) dbProperties.get(DATA_SOURCE_URL);
-        String user = (String) dbProperties.getOrDefault(DATA_SOURCE_USER, "");
-        String password = (String) dbProperties.getOrDefault(DATA_SOURCE_PASSWORD, "");
+        String jdbcUrl = (String) dbProperties.get(Constants.DataSource.URL);
+        String user = (String) dbProperties.getOrDefault(Constants.DataSource.USER, "");
+        String password = (String) dbProperties.getOrDefault(Constants.DataSource.PASSWORD, "");
 
-        return StorageProviderConfiguration.get(jdbcUrl, user, password, databaseType);
+        Map<String, Object> connectionProperties = (Map<String, Object>)
+                dbProperties.getOrDefault(Constants.DataSource.CONNECTION_PROPERTIES, Collections.emptyMap());
+
+        return StorageProviderConfiguration.get(databaseType, jdbcUrl, user, password, connectionProperties);
     }
 }

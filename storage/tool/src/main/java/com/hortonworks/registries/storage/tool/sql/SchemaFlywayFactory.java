@@ -18,9 +18,12 @@ package com.hortonworks.registries.storage.tool.sql;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
+import org.flywaydb.core.internal.util.jdbc.DriverDataSource;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Properties;
 
 public class SchemaFlywayFactory {
 
@@ -33,10 +36,62 @@ public class SchemaFlywayFactory {
     private static final boolean cleanOnValidationError = false;
 
 
-    public static Flyway get(ClassLoader classLoader,
-                             StorageProviderConfiguration conf,
-                             String scriptRootPath,
-                             boolean validateOnMigrate) {
+    static Flyway get(ClassLoader classLoader,
+                      StorageProviderConfiguration conf,
+                      String scriptRootPath,
+                      boolean validateOnMigrate) {
+        switch (conf.getDbType()) {
+            case MYSQL:
+                return mysqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+            case POSTGRESQL:
+                return postgresqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+            case ORACLE:
+                return oracleFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+            default:
+                throw new IllegalArgumentException("Unknown database : " + conf.getDbType());
+        }
+    }
+
+    private static Flyway mysqlFlyway(ClassLoader classLoader,
+                                      StorageProviderConfiguration conf,
+                                      String scriptRootPath,
+                                      boolean validateOnMigrate) {
+        Flyway flyway = basicFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+        flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
+        return flyway;
+    }
+
+    private static Flyway postgresqlFlyway(ClassLoader classLoader,
+                                           StorageProviderConfiguration conf,
+                                           String scriptRootPath,
+                                           boolean validateOnMigrate) {
+        return mysqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+    }
+
+    private static Flyway oracleFlyway(ClassLoader classLoader,
+                                       StorageProviderConfiguration conf,
+                                       String scriptRootPath,
+                                       boolean validateOnMigrate) {
+        Flyway flyway = basicFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+        Map<String, Object> connectionProperties = conf.getConnectionProperties();
+
+        if (connectionProperties != null && !connectionProperties.isEmpty()) {
+            Properties properties = new Properties();
+            properties.putAll(connectionProperties);
+            DriverDataSource dataSource = new DriverDataSource(flyway.getClassLoader(),
+                    null, conf.getUrl(), conf.getUser(), conf.getPassword(), properties);
+            flyway.setDataSource(dataSource);
+        } else {
+            flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
+        }
+
+        return flyway;
+    }
+
+    private static Flyway basicFlyway(ClassLoader classLoader,
+                                      StorageProviderConfiguration conf,
+                                      String scriptRootPath,
+                                      boolean validateOnMigrate) {
         Flyway flyway = new Flyway(classLoader);
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
@@ -49,9 +104,7 @@ public class SchemaFlywayFactory {
         flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
         flyway.setCleanOnValidationError(cleanOnValidationError);
         flyway.setLocations(location);
-        flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
 
         return flyway;
     }
-
 }
