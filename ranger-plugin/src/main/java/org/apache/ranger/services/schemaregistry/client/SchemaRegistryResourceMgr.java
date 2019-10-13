@@ -59,14 +59,13 @@ public class SchemaRegistryResourceMgr {
                             break;
                         }
                         case SERDE: {
-                            List<String> schemaMeatadataList = resourceMap.get(SCHEMA_METADATA);
                             List<String> serdeList = resourceMap.get(SERDE);
                             // get the SerdeList for given Input
                             final String finalSerdeName = userInput + "*";
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
-                                    return registryClient.getSerdeList(finalSerdeName, schemaMeatadataList, serdeList);
+                                    return registryClient.getSerdeList(finalSerdeName, serdeList);
                                 }
                             };
                             break;
@@ -97,7 +96,6 @@ public class SchemaRegistryResourceMgr {
                             break;
                         }
                         case SCHEMA_BRANCH: {
-                            List<String> schemaGroupList = resourceMap.get(SCHEMA_GROUP);
                             List<String> schemaMeatadataList = resourceMap.get(SCHEMA_METADATA);
                             List<String> branchList = resourceMap.get(SCHEMA_BRANCH);
                             // get the SchemaBranchList for given Input
@@ -105,13 +103,12 @@ public class SchemaRegistryResourceMgr {
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
-                                    return registryClient.getBranchList(finalBranchName, schemaGroupList, schemaMeatadataList, branchList);
+                                    return registryClient.getBranchList(finalBranchName, schemaMeatadataList, branchList);
                                 }
                             };
                             break;
                         }
                         case SCHEMA_VERSION: {
-                            List<String> schemaGroupList = resourceMap.get(SCHEMA_GROUP);
                             List<String> schemaList = resourceMap.get(SCHEMA_METADATA);
                             List<String> branchList = resourceMap.get(SCHEMA_BRANCH);
                             List<String> versionList = resourceMap.get(SCHEMA_VERSION);
@@ -120,7 +117,7 @@ public class SchemaRegistryResourceMgr {
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
-                                    return registryClient.getVersionList(finalVersionName, schemaGroupList, schemaList, branchList, versionList);
+                                    return registryClient.getVersionList(finalVersionName, schemaList, branchList, versionList);
                                 }
                             };
                             break;

@@ -221,7 +221,7 @@ public class DefaultSRClient implements SRClient {
     }
 
     @Override
-    public List<String> getSerDes(String schemaMetadataName) {
+    public List<String> getSerDes() {
         // Server API doesn't allow to get list of SerDes
         return new ArrayList<>();
     }
@@ -229,8 +229,11 @@ public class DefaultSRClient implements SRClient {
     @Override
     public void testConnection() throws Exception {
         WebTarget webTarget = currentSchemaRegistryTargets().schemaRegistryVersion;
-        login.doAction(() ->
+        String responce = login.doAction(() ->
                 webTarget.request(MediaType.APPLICATION_JSON_TYPE).get(String.class));
+        if (!(responce.contains("version") && responce.contains("revision"))) {
+            throw new Exception("Connection failed.");
+        }
     }
 
     public static void main(String[] args) {

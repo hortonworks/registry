@@ -58,16 +58,13 @@ public class RangerRegistryClient extends BaseClient {
         return res;
     }
 
-    public List<String> getSerdeList(String finalSerdeName,
-                                     List<String> schemaMetadataNames, List<String> serdeList) {
+    public List<String> getSerdeList(String finalSerdeName, List<String> serdeList) {
         List<String> res = serdeList;
-        schemaMetadataNames.forEach(smName -> {
-            Collection<String> serdes = srClient.getSerDes(smName);
-            serdes.forEach(sName -> {
-                if (!res.contains(sName) && sName.matches(finalSerdeName)) {
-                    res.add(sName);
-                }
-            });
+        Collection<String> serdes = srClient.getSerDes();
+        serdes.forEach(sName -> {
+            if (!res.contains(sName) && sName.matches(finalSerdeName)) {
+                res.add(sName);
+            }
         });
 
         return res;
@@ -102,18 +99,15 @@ public class RangerRegistryClient extends BaseClient {
     }
 
     public List<String> getBranchList(String finalBranchName,
-                                      List<String> schemaGroupList,
                                       List<String> schemaList,
                                       List<String> branchList) {
         List<String> res = branchList;
-        schemaGroupList.forEach(schemaGroupName -> {
-            schemaList.forEach(schemaMetadataName -> {
-                Collection<String> branches = srClient.getSchemaBranches(schemaMetadataName);
-                branches.forEach(bName -> {
-                    if (!res.contains(bName) && bName.matches(finalBranchName)) {
-                        res.add(bName);
-                    }
-                });
+        schemaList.forEach(schemaMetadataName -> {
+            Collection<String> branches = srClient.getSchemaBranches(schemaMetadataName);
+            branches.forEach(bName -> {
+                if (!res.contains(bName) && bName.matches(finalBranchName)) {
+                    res.add(bName);
+                }
             });
         });
 
@@ -121,20 +115,17 @@ public class RangerRegistryClient extends BaseClient {
     }
 
     public List<String> getVersionList(String finalVersionName,
-                                       List<String> schemaGroupList,
                                        List<String> schemaList,
                                        List<String> branchList,
                                        List<String> versionList) {
         List<String> res = versionList;
-        schemaGroupList.forEach(schemaGroupName -> {
-            schemaList.forEach(schemaMetadataName -> {
-                branchList.forEach(schemaBranchName -> {
-                    List<String> vList = srClient.getSchemaVersions(schemaBranchName, schemaMetadataName);
-                    vList.forEach(vName -> {
-                        if (!res.contains(vName) && vName.matches(finalVersionName)) {
-                            res.add(vName);
-                        }
-                    });
+        schemaList.forEach(schemaMetadataName -> {
+            branchList.forEach(schemaBranchName -> {
+                List<String> vList = srClient.getSchemaVersions(schemaBranchName, schemaMetadataName);
+                vList.forEach(vName -> {
+                    if (!res.contains(vName) && vName.matches(finalVersionName)) {
+                        res.add(vName);
+                    }
                 });
             });
         });

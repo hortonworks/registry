@@ -8,7 +8,7 @@ public interface SRClient {
     List<String> getSchemaBranches(String schemaMetadataName);
     List<String> getSchemaVersions(String schemaMetadataName, String schemaBranchName);
     List<String> getFiles();
-    List<String> getSerDes(String schemaMetadataName);
+    List<String> getSerDes();
     void testConnection() throws Exception;
 }
 
