@@ -7,17 +7,18 @@ import org.apache.ranger.services.schemaregistry.client.srclient.SRClient;
 
 import java.util.*;
 
-public class RangerRegistryClient extends BaseClient {
+public class RangerRegistryClient {
     private static final Logger LOG = Logger.getLogger(RangerRegistryClient.class);
 
     private SRClient srClient;
+    private String serviceName;
 
     private static final String errMessage = " You can still save the repository and start creating "
             + "policies, but you would not be able to use autocomplete for "
             + "resource names. Check server logs for more info.";
 
     public RangerRegistryClient(String serviceName, Map<String, String> configs) {
-        super(serviceName, configs);
+        this.serviceName = serviceName;
         initRegistryClient(configs);
     }
 
@@ -25,9 +26,9 @@ public class RangerRegistryClient extends BaseClient {
         srClient = new DefaultSRClient(configs);
     }
 
-    public Map<String, Object> connectionTest() {
+    public HashMap<String, Object> connectionTest() {
         String errMsg = errMessage;
-        Map<String, Object> responseData = new HashMap<String, Object>();
+        HashMap<String, Object> responseData = new HashMap<String, Object>();
 
         try {
             srClient.testConnection();
@@ -50,7 +51,7 @@ public class RangerRegistryClient extends BaseClient {
         List<String> res = fileList;
         Collection<String> files = srClient.getFiles();
         files.forEach(fName -> {
-            if (!res.contains(fName) && fName.matches(finalFileName)) {
+            if (!res.contains(fName) && fName.contains(finalFileName)) {
                 res.add(fName);
             }
         });
@@ -62,7 +63,7 @@ public class RangerRegistryClient extends BaseClient {
         List<String> res = serdeList;
         Collection<String> serdes = srClient.getSerDes();
         serdes.forEach(sName -> {
-            if (!res.contains(sName) && sName.matches(finalSerdeName)) {
+            if (!res.contains(sName) && sName.contains(finalSerdeName)) {
                 res.add(sName);
             }
         });
@@ -74,7 +75,7 @@ public class RangerRegistryClient extends BaseClient {
         List<String> res = groupList;
         Collection<String> schemaGroups = srClient.getSchemaGroups();
         schemaGroups.forEach(gName -> {
-            if (!res.contains(gName) && gName.matches(finalGroupName)) {
+            if (!res.contains(gName) && gName.contains(finalGroupName)) {
                 res.add(gName);
             }
         });
@@ -89,7 +90,7 @@ public class RangerRegistryClient extends BaseClient {
         schemaGroupList.forEach(schemaGroupName -> {
             Collection<String> schemas = srClient.getSchemaMetadataNames(schemaGroupName);
             schemas.forEach(sName ->{
-                if (!res.contains(sName) && sName.matches(finalSchemaMetadataName)) {
+                if (!res.contains(sName) && sName.contains(finalSchemaMetadataName)) {
                     res.add(sName);
                 }
             });
@@ -105,7 +106,7 @@ public class RangerRegistryClient extends BaseClient {
         schemaList.forEach(schemaMetadataName -> {
             Collection<String> branches = srClient.getSchemaBranches(schemaMetadataName);
             branches.forEach(bName -> {
-                if (!res.contains(bName) && bName.matches(finalBranchName)) {
+                if (!res.contains(bName) && bName.contains(finalBranchName)) {
                     res.add(bName);
                 }
             });
@@ -135,7 +136,7 @@ public class RangerRegistryClient extends BaseClient {
 
     @Override
     public String toString() {
-        return "ServiceKafkaClient [serviceName=" + getSerivceName() + "]";
+        return "ServiceKafkaClient [serviceName=" + serviceName + "]";
     }
 
 }

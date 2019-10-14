@@ -229,7 +229,7 @@
 
     {
       "itemId": 3,
-      "name": "sr.url",
+      "name": "schema.registry.url",
       "type": "string",
       "mandatory": true,
       "defaultValue": "",

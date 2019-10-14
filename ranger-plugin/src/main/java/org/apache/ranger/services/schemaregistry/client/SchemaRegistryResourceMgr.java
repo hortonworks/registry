@@ -73,7 +73,7 @@ public class SchemaRegistryResourceMgr {
                         case SCHEMA_GROUP: {
                             List<String> schemaGroupList = resourceMap.get(SCHEMA_GROUP);
                             // get the SchemaGroupList for given Input
-                            final String finalSchemaGroupName = userInput + "*";
+                            final String finalSchemaGroupName = userInput;
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
@@ -86,7 +86,7 @@ public class SchemaRegistryResourceMgr {
                             List<String> schemaGroupList = resourceMap.get(SCHEMA_GROUP);
                             List<String> schemaMeatadataList = resourceMap.get(SCHEMA_METADATA);
                             // get the SchemaMetadataList for the given Input
-                            final String finalSchemaName = userInput + "*";
+                            final String finalSchemaName = userInput;
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
@@ -99,7 +99,7 @@ public class SchemaRegistryResourceMgr {
                             List<String> schemaMeatadataList = resourceMap.get(SCHEMA_METADATA);
                             List<String> branchList = resourceMap.get(SCHEMA_BRANCH);
                             // get the SchemaBranchList for given Input
-                            final String finalBranchName = userInput + "*";
+                            final String finalBranchName = userInput;
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {
@@ -113,7 +113,7 @@ public class SchemaRegistryResourceMgr {
                             List<String> branchList = resourceMap.get(SCHEMA_BRANCH);
                             List<String> versionList = resourceMap.get(SCHEMA_VERSION);
                             // get the SchemaVersionList for given Input
-                            final String finalVersionName = userInput + "*";
+                            final String finalVersionName = userInput;
                             callableObj = new Callable<List<String>>() {
                                 @Override
                                 public List<String> call() {

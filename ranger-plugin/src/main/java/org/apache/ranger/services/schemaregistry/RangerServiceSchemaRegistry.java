@@ -2,8 +2,8 @@ package org.apache.ranger.services.schemaregistry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.ranger.plugin.model.RangerPolicy;
-import org.apache.ranger.plugin.policyengine.RangerPolicyEngine;
+import org.apache.ranger.plugin.model.RangerService;
+import org.apache.ranger.plugin.model.RangerServiceDef;
 import org.apache.ranger.plugin.service.RangerBaseService;
 import org.apache.ranger.plugin.service.ResourceLookupContext;
 import org.apache.ranger.services.schemaregistry.client.SchemaRegistryConnectionMgr;
@@ -30,9 +30,18 @@ public class RangerServiceSchemaRegistry extends RangerBaseService {
 
     public static final String METADATA_POLICYNAME = "default database tables columns";
 
+    public RangerServiceSchemaRegistry() {
+        super();
+    }
+
     @Override
-    public Map<String, Object> validateConfig() throws Exception {
-        Map<String, Object> ret = new HashMap<String, Object>();
+    public void init(RangerServiceDef serviceDef, RangerService service) {
+        super.init(serviceDef, service);
+    }
+
+    @Override
+    public HashMap<String, Object> validateConfig() throws Exception {
+        HashMap<String, Object> ret = new HashMap<String, Object>();
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("==> RangerServiceSchemaRegistry.validateConfig(" + serviceName + ")");

@@ -4,19 +4,18 @@ import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.auth.Login;
 import com.hortonworks.registries.auth.NOOPLogin;
 import com.hortonworks.registries.schemaregistry.client.*;
-import org.glassfish.jersey.client.ClientConfig;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONObject;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.JerseyClientBuilder;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.jersey.api.client.Client;
 import javax.security.auth.login.LoginException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
@@ -65,11 +64,7 @@ public class DefaultSRClient implements SRClient {
     public DefaultSRClient(Map<String, ?> conf) {
         configuration = new SchemaRegistryClient.Configuration(conf);
         ClientConfig config = createClientConfig(conf);
-        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
-                .withConfig(config)
-                .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
-        client = clientBuilder.build();
-        client.register(MultiPartFeature.class);
+        client =  Client.create(config);
 
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
@@ -77,12 +72,13 @@ public class DefaultSRClient implements SRClient {
     }
 
     private ClientConfig createClientConfig(Map<String, ?> conf) {
-        ClientConfig config = new ClientConfig();
-        config.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
-        config.property(ClientProperties.READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
-        config.property(ClientProperties.FOLLOW_REDIRECTS, true);
+        ClientConfig config = new DefaultClientConfig();
+        Map<String, Object> props = config.getProperties();
+        props.put(ClientProperties.CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
+        props.put(ClientProperties.READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
+        props.put(ClientProperties.FOLLOW_REDIRECTS, true);
         for (Map.Entry<String, ?> entry : conf.entrySet()) {
-            config.property(entry.getKey(), entry.getValue());
+            props.put(entry.getKey(), entry.getValue());
         }
         return config;
     }
@@ -109,18 +105,18 @@ public class DefaultSRClient implements SRClient {
     }
 
     private static class SchemaRegistryTargets {
-        private final WebTarget schemaRegistryVersion;
-        private final WebTarget schemasTarget;
+        private final WebResource schemaRegistryVersion;
+        private final WebResource schemasTarget;
 
-        SchemaRegistryTargets(WebTarget rootTarget) {
-            schemaRegistryVersion = rootTarget.path(SCHEMA_REGISTRY_VERSION_PATH);
-            schemasTarget = rootTarget.path(SCHEMAS_PATH);
+        SchemaRegistryTargets(WebResource rootResource) {
+            schemaRegistryVersion = rootResource.path(SCHEMA_REGISTRY_VERSION_PATH);
+            schemasTarget = rootResource.path(SCHEMAS_PATH);
         }
     }
 
     private SchemaRegistryTargets currentSchemaRegistryTargets() {
         String url = urlSelector.select();
-        urlWithTargets.computeIfAbsent(url, s -> new SchemaRegistryTargets(client.target(s)));
+        urlWithTargets.computeIfAbsent(url, s -> new SchemaRegistryTargets(client.resource(s)));
         return urlWithTargets.get(url);
     }
 
@@ -135,17 +131,19 @@ public class DefaultSRClient implements SRClient {
     @Override
     public List<String> getSchemaGroups() {
         ArrayList<String> res = new ArrayList<>();
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget;
+        WebResource webResource = currentSchemaRegistryTargets().schemasTarget;
         try {
             String response = login.doAction(() ->
-                    webTarget.request(MediaType.APPLICATION_JSON_TYPE).get(String.class));
+                    webResource.accept(MediaType.APPLICATION_JSON_TYPE).get(String.class));
             JSONArray mDataList = new JSONObject(response).getJSONArray("entities");
-            mDataList.forEach(entity -> {
-                JSONObject schemaMetadata = (JSONObject)((JSONObject)entity).get("schemaMetadata");
+            int len = mDataList.length();
+            for(int i = 0; i < len; i++) {
+                JSONObject entity = mDataList.getJSONObject(i);
+                JSONObject schemaMetadata = (JSONObject)entity.get("schemaMetadata");
                 String group = (String) schemaMetadata.get("schemaGroup");
                 res.add(group);
-            });
-        } catch (LoginException e) {
+            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return res;
@@ -154,20 +152,22 @@ public class DefaultSRClient implements SRClient {
     @Override
     public List<String> getSchemaMetadataNames(String schemaGroup) {
         ArrayList<String> res = new ArrayList<>();
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget;
+        WebResource webTarget = currentSchemaRegistryTargets().schemasTarget;
         try {
             String response = login.doAction(() ->
-                    webTarget.request(MediaType.APPLICATION_JSON_TYPE).get(String.class));
+                    webTarget.accept(MediaType.APPLICATION_JSON_TYPE).get(String.class));
             JSONArray mDataList = new JSONObject(response).getJSONArray("entities");
-            mDataList.forEach(entity -> {
-                JSONObject schemaMetadata = (JSONObject)((JSONObject)entity).get("schemaMetadata");
+            int len = mDataList.length();
+            for(int i = 0; i < len; i++) {
+                JSONObject entity = mDataList.getJSONObject(i);
+                JSONObject schemaMetadata = (JSONObject)entity.get("schemaMetadata");
                 String group = (String) schemaMetadata.get("schemaGroup");
                 if(schemaGroup.matches(group)) {
                     String name = (String) schemaMetadata.get("name");
                     res.add(name);
                 }
-            });
-        } catch (LoginException e) {
+            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return res;
@@ -176,21 +176,23 @@ public class DefaultSRClient implements SRClient {
     @Override
     public List<String> getSchemaBranches(String schemaMetadataName) {
         ArrayList<String> res = new ArrayList<>();
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaMetadataName) + "/branches");
+        WebResource target = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaMetadataName) + "/branches");
         try {
             String response = login.doAction(() ->
-                    target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class));
+                    target.accept(MediaType.APPLICATION_JSON_TYPE).get(String.class));
             JSONArray mDataList = new JSONObject(response).getJSONArray("entities");
-            mDataList.forEach(entity -> {
-                JSONObject branchInfo = (JSONObject)entity;
+            int len = mDataList.length();
+            for(int i = 0; i < len; i++) {
+                JSONObject entity = mDataList.getJSONObject(i);
+                JSONObject branchInfo = entity;
                 String smName = (String) branchInfo.get("schemaMetadataName");
                 if (smName.matches(schemaMetadataName)) {
                     String bName = (String) branchInfo.get("name");
                     res.add(bName);
                 }
 
-            });
-        } catch (LoginException e) {
+            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return res;
@@ -199,16 +201,18 @@ public class DefaultSRClient implements SRClient {
     @Override
     public List<String> getSchemaVersions(String schemaMetadataName, String schemaBranchName) {
         ArrayList<String> res = new ArrayList<>();
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaMetadataName) + "/versions").queryParam("branch", schemaBranchName);
+        WebResource webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaMetadataName) + "/versions").queryParam("branch", schemaBranchName);
         try {
             String response = login.doAction(() ->
-                    webTarget.request(MediaType.APPLICATION_JSON_TYPE).get(String.class));
+                    webTarget.accept(MediaType.APPLICATION_JSON_TYPE).get(String.class));
             JSONArray mDataList = new JSONObject(response).getJSONArray("entities");
-            mDataList.forEach(entity -> {
+            int len = mDataList.length();
+            for(int i = 0; i < len; i++) {
+                JSONObject entity = mDataList.getJSONObject(i);
                 JSONObject versionInfo = (JSONObject)entity;
                 res.add(versionInfo.get("version").toString());
-            });
-        } catch (LoginException e) {
+            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return res;
@@ -228,9 +232,9 @@ public class DefaultSRClient implements SRClient {
 
     @Override
     public void testConnection() throws Exception {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemaRegistryVersion;
+        WebResource webTarget = currentSchemaRegistryTargets().schemaRegistryVersion;
         String responce = login.doAction(() ->
-                webTarget.request(MediaType.APPLICATION_JSON_TYPE).get(String.class));
+                webTarget.accept(MediaType.APPLICATION_JSON_TYPE).get(String.class));
         if (!(responce.contains("version") && responce.contains("revision"))) {
             throw new Exception("Connection failed.");
         }
