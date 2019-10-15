@@ -51,7 +51,7 @@ public class ConfluentProtocolCompatibleTest {
 
     @Test
     public void testConfluentProduceRegistryConsume() throws Exception {
-        String configPath = new File(Resources.getResource("schema-registry-test.yaml").toURI()).getAbsolutePath();
+        String configPath = new File(Resources.getResource("schema-registry.yaml").toURI()).getAbsolutePath();
         LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         try {
             localSchemaRegistryServer.start();
@@ -99,7 +99,7 @@ public class ConfluentProtocolCompatibleTest {
 
     @Test
     public void testRegistryProduceConfluentConsume() throws Exception {
-        String configPath = new File(Resources.getResource("schema-registry-test.yaml").toURI()).getAbsolutePath();
+        String configPath = new File(Resources.getResource("schema-registry.yaml").toURI()).getAbsolutePath();
         LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         try {
             localSchemaRegistryServer.start();

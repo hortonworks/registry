@@ -96,7 +96,9 @@ public class AvroSchemaRegistryClientTest {
 
     @CustomParameterizedRunner.Parameters
     public static Iterable<SchemaRegistryTestProfileType> profiles() {
-        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT,
+                             SchemaRegistryTestProfileType.SSL,
+                             SchemaRegistryTestProfileType.SSL_WITH_SERVER_AUTH);
     }
 
     @CustomParameterizedRunner.BeforeParam

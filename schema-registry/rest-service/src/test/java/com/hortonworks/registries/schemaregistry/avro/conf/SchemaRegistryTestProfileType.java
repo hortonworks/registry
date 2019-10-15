@@ -20,5 +20,6 @@ public enum SchemaRegistryTestProfileType {
     DEFAULT,
     SSL,
     DEFAULT_HA,
-    SSL_HA;
+    SSL_HA,
+    SSL_WITH_SERVER_AUTH;
 }
