@@ -1,4 +1,6 @@
 package org.apache.ranger.authorization.schemaregistry.authorizer;
 
-public class RangerSchemaRegistryAuditHandler {
+import org.apache.ranger.plugin.audit.RangerDefaultAuditHandler;
+
+public class RangerSchemaRegistryAuditHandler extends RangerDefaultAuditHandler {
 }
