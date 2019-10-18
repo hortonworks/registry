@@ -162,7 +162,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private static final String SSL_KEY_PASSWORD = "keyPassword";
     private static final String SSL_KEY_STORE_PATH = "keyStorePath";
-    private static final String SSL_TRUST_STORE_PATH = "trustStorePath";
 
     static {
         String jaasConfigFile = System.getProperty("java.security.auth.login.config");
@@ -289,14 +288,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             }
         }
 
-        if (sslConfigurations.containsKey(SSL_TRUST_STORE_PATH)) {
-            sslConfigurator.trustStoreType(sslConfigurations.get("trustStoreType"))
-                           .trustStoreFile(sslConfigurations.get(SSL_TRUST_STORE_PATH))
-                           .trustStorePassword(sslConfigurations.get("trustStorePassword"))
-                           .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
-                           .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
-                           .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"));
-        }
+
+        sslConfigurator.trustStoreType(sslConfigurations.get("trustStoreType"))
+                       .trustStoreFile(sslConfigurations.get("trustStorePath"))
+                       .trustStorePassword(sslConfigurations.get("trustStorePassword"))
+                       .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
+                       .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
+                       .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"));
 
         sslConfigurator.securityProtocol(sslConfigurations.get("protocol"));
 

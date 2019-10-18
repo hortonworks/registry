@@ -50,9 +50,9 @@ public class SchemaRegistryTestConfiguration {
                 serverYAMLFileName = "ssl-schema-registry-ha.yaml";
                 clientYAMLFileName = "ssl-schema-registry-client.yaml";
                 break;
-            case SSL_WITH_SERVER_AUTH:
-                serverYAMLFileName = "ssl-with-server-auth-schema-registry.yaml";
-                clientYAMLFileName = "ssl-with-server-auth-schema-registry-client.yaml";
+            case ONE_WAY_SSL:
+                serverYAMLFileName = "one-way-ssl-schema-registry.yaml";
+                clientYAMLFileName = "one-way-ssl-schema-registry-client.yaml";
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized SchemaRegistryTestProfileType : " + testProfileType);
