@@ -284,11 +284,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                            .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
                            .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
                            .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"));
+            if (sslConfigurations.containsKey(SSL_KEY_PASSWORD)) {
+                sslConfigurator.keyPassword(sslConfigurations.get(SSL_KEY_PASSWORD));
+            }
         }
 
         if (sslConfigurations.containsKey(SSL_TRUST_STORE_PATH)) {
             sslConfigurator.trustStoreType(sslConfigurations.get("trustStoreType"))
-                           .trustStoreFile(sslConfigurations.get("trustStorePath"))
+                           .trustStoreFile(sslConfigurations.get(SSL_TRUST_STORE_PATH))
                            .trustStorePassword(sslConfigurations.get("trustStorePassword"))
                            .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
                            .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
@@ -296,10 +299,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         sslConfigurator.securityProtocol(sslConfigurations.get("protocol"));
-
-        if (sslConfigurations.containsKey(SSL_KEY_PASSWORD)) {
-            sslConfigurator.keyPassword(sslConfigurations.get(SSL_KEY_PASSWORD));
-        }
 
         return sslConfigurator.createSSLContext();
     }
