@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.auth.Login;
 import com.hortonworks.registries.auth.NOOPLogin;
+import com.hortonworks.registries.auth.util.JaasConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
@@ -157,32 +158,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
-    private static Login login;
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
     private static final String SSL_KEY_PASSWORD = "keyPassword";
     private static final String SSL_KEY_STORE_PATH = "keyStorePath";
 
-    static {
-        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
-        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
-            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
-            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
-            try {
-                kerberosLogin.login();
-                login = kerberosLogin;
-            } catch (LoginException e) {
-                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
-                login = new NOOPLogin();
-            }
-        } else {
-            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
-            login = new NOOPLogin();
-        }
-    }
-
     private static final SchemaRegistryVersion CLIENT_VERSION = SchemaRegistryServiceInfo.get().version();
 
+    private Login login;
     private final Client client;
     private final UrlSelector urlSelector;
     private final Map<String, SchemaRegistryTargets> urlWithTargets;
@@ -215,6 +198,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         configuration = new Configuration(conf);
+        initializeSecurityContext();
         ClientConfig config = createClientConfig(conf);
         ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
                                                    .withConfig(config)
@@ -272,6 +256,39 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                                                                                   .name())).longValue(),
                                                          TimeUnit.SECONDS)
                                       .build();
+    }
+
+    protected void initializeSecurityContext() {
+        String saslJaasConfig = configuration.getValue(Configuration.SASL_JAAS_CONFIG.name());
+        if (saslJaasConfig != null) {
+            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
+            try {
+                kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
+                kerberosLogin.login();
+                login = kerberosLogin;
+                return;
+            } catch (LoginException e) {
+                LOG.error("Failed to initialize the dynamic JAAS config: " + saslJaasConfig + ". Attempting static JAAS config.");
+            } catch (Exception e) {
+                LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
+            }
+        }
+
+        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
+        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
+            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
+            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
+            try {
+                kerberosLogin.login();
+                login = kerberosLogin;
+            } catch (LoginException e) {
+                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
+                login = new NOOPLogin();
+            }
+        } else {
+            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
+            login = new NOOPLogin();
+        }
     }
 
     protected SSLContext createSSLContext(Map<String, String> sslConfigurations) {
@@ -1358,6 +1375,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      "Schema Registry URL selector class.",
                                      FailoverUrlSelector.class.getName(),
                                      ConfigEntry.NonEmptyStringValidator.get());
+
+        /**
+         *
+         */
+        public static final ConfigEntry<String> SASL_JAAS_CONFIG =
+                ConfigEntry.optional( "sasl.jaas.config",
+                        String.class,
+                        "Schema Registry Dynamic JAAS config for SASL connection.",
+                        null,
+                        ConfigEntry.NonEmptyStringValidator.get());
 
         // connection properties
         /**

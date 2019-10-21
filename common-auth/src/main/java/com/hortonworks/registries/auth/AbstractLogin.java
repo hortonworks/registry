@@ -24,6 +24,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.RealmCallback;
@@ -39,19 +40,33 @@ public abstract class AbstractLogin implements Login {
     protected String loginContextName;
     protected LoginContext loginContext;
     protected static final String JAAS_CONFIG_SYSTEM_PROPERTY = "java.security.auth.login.config";
+    protected Configuration jaasConfiguration;
 
     @Override
     public void configure(Map<String, ?> configs, String loginContextName) {
         this.loginContextName = loginContextName;
     }
 
+    /**
+     * Configures this login instance with a dynamic configuration.
+     */
+    public void configure(Map<String, ?> configs, String loginContextName, Configuration jaasConfiguration) {
+        this.loginContextName = loginContextName;
+        this.jaasConfiguration = jaasConfiguration;
+    }
+
     @Override
     public LoginContext login() throws LoginException {
         String jaasConfigFile = System.getProperty(JAAS_CONFIG_SYSTEM_PROPERTY);
-        if (jaasConfigFile == null) {
-            log.error("System property " + JAAS_CONFIG_SYSTEM_PROPERTY + " for jaas config file is not set, using default JAAS configuration.");
+        if (jaasConfiguration != null) {
+            loginContext =  new LoginContext(loginContextName, null, new LoginCallbackHandler(), jaasConfiguration);
+        } else {
+            if (jaasConfigFile == null) {
+                log.error("System property " + JAAS_CONFIG_SYSTEM_PROPERTY + " for jaas config file is not set, using default JAAS configuration.");
+            }
+            log.debug("Defaulting to static JAAS Config for {}", loginContextName);
+            loginContext = new LoginContext(loginContextName, new LoginCallbackHandler());
         }
-        loginContext = new LoginContext(loginContextName, new LoginCallbackHandler());
         loginContext.login();
         log.info("Successfully logged in.");
         return loginContext;

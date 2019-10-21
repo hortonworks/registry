@@ -94,6 +94,30 @@ public class KerberosLogin extends AbstractLogin {
         }
     }
 
+    /**
+     * Method to configure this instance with specific properties
+     * @param loginContextName
+     *               name of section in JAAS file that will be used to login.
+     *               Passed as first param to javax.security.auth.login.LoginContext().
+     * @param configs configure Login with the given key-value pairs.
+     */
+    @Override
+    public void configure(Map<String, ?> configs, final String loginContextName, Configuration jaasConfig) {
+        super.configure(configs, loginContextName, jaasConfig);
+        if (configs.get(TICKET_RENEW_WINDOW_FACTOR) != null) {
+            this.ticketRenewWindowFactor = Double.parseDouble((String) configs.get(TICKET_RENEW_WINDOW_FACTOR));
+        }
+        if (configs.get(TICKET_RENEW_JITTER) != null) {
+            this.ticketRenewJitter = Double.parseDouble((String) configs.get(TICKET_RENEW_JITTER));
+        }
+        if (configs.get(MIN_TIME_BEFORE_RELOGIN) != null) {
+            this.minTimeBeforeRelogin = Long.parseLong((String) configs.get(MIN_TIME_BEFORE_RELOGIN));
+        }
+        if (configs.get(KINIT_CMD) != null) {
+            this.kinitCmd = (String) configs.get(KINIT_CMD);
+        }
+    }
+
     public KerberosLogin() {
         this.tgtRenewalLock = new ReentrantReadWriteLock(true);
         this.tgtRenewalTimeoutMS = DEFAULT_TGT_RENEWAL_TIMEOUT_MS;
@@ -121,7 +145,8 @@ public class KerberosLogin extends AbstractLogin {
             return loginContext;
         }
         log.info("It is a Kerberos ticket");
-        AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
+        AppConfigurationEntry[] entries = (jaasConfiguration != null) ? jaasConfiguration.getAppConfigurationEntry(loginContextName) :
+                Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
         if (entries.length == 0) {
             isUsingTicketCache = false;
             principal = null;
