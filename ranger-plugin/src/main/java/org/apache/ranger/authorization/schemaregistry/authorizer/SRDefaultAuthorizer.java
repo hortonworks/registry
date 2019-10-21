@@ -1,11 +1,13 @@
 package org.apache.ranger.authorization.schemaregistry.authorizer;
 
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.ranger.plugin.policyengine.RangerAccessRequestImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 import org.apache.ranger.plugin.service.RangerBasePlugin;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -94,4 +96,19 @@ public class SRDefaultAuthorizer implements SRAuthorizer {
 
         return res != null && res.getIsAllowed();
     }
+
+    public static void main(String[] args) throws IOException {
+        Set<String> groups = new HashSet<>();
+        groups.add("vagrant");
+        SRAuthorizer srAuthorizer = new SRDefaultAuthorizer("schema-registy",
+                "vagrant", groups);
+       boolean isAuthorized = srAuthorizer.authorizeSchemaGroup("Group1", "read");
+        isAuthorized = srAuthorizer.authorizeSchema("Group1", "test1","read");
+
+       System.out.println("Authorized=" + isAuthorized);
+       System.out.println(UserGroupInformation.getCurrentUser().getGroupNames()[0]);
+       System.out.println(UserGroupInformation.getCurrentUser().getUserName());
+
+    }
+
 }
