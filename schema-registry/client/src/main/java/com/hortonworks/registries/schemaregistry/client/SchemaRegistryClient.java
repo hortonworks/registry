@@ -160,6 +160,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static Login login;
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
+    private static final String SSL_KEY_PASSWORD = "keyPassword";
+    private static final String SSL_KEY_STORE_PATH = "keyStorePath";
+
     static {
         String jaasConfigFile = System.getProperty("java.security.auth.login.config");
         if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
@@ -273,22 +276,28 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     protected SSLContext createSSLContext(Map<String, String> sslConfigurations) {
         SslConfigurator sslConfigurator = SslConfigurator.newInstance();
-        String keyPassword = "keyPassword";
-        sslConfigurator.keyStoreType(sslConfigurations.get("keyStoreType"))
-                       .keyStoreFile(sslConfigurations.get("keyStorePath"))
-                       .keyStorePassword(sslConfigurations.get("keyStorePassword"))
-                       .trustStoreType(sslConfigurations.get("trustStoreType"))
+        if (sslConfigurations.containsKey(SSL_KEY_STORE_PATH)) {
+            sslConfigurator.keyStoreType(sslConfigurations.get("keyStoreType"))
+                           .keyStoreFile(sslConfigurations.get(SSL_KEY_STORE_PATH))
+                           .keyStorePassword(sslConfigurations.get("keyStorePassword"))
+                           .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
+                           .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
+                           .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"));
+            if (sslConfigurations.containsKey(SSL_KEY_PASSWORD)) {
+                sslConfigurator.keyPassword(sslConfigurations.get(SSL_KEY_PASSWORD));
+            }
+        }
+
+
+        sslConfigurator.trustStoreType(sslConfigurations.get("trustStoreType"))
                        .trustStoreFile(sslConfigurations.get("trustStorePath"))
                        .trustStorePassword(sslConfigurations.get("trustStorePassword"))
-                       .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
                        .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
-                       .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
-                       .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"))
                        .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
-                       .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"))
-                       .securityProtocol(sslConfigurations.get("protocol"));
-        if (sslConfigurations.containsKey(keyPassword))
-            sslConfigurator.keyPassword(sslConfigurations.get(keyPassword));
+                       .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"));
+
+        sslConfigurator.securityProtocol(sslConfigurations.get("protocol"));
+
         return sslConfigurator.createSSLContext();
     }
 
