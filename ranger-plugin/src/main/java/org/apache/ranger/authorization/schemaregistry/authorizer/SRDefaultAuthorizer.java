@@ -19,14 +19,12 @@ public class SRDefaultAuthorizer implements SRAuthorizer {
     private final String uName;
     private final Set<String> uGroup;
 
-    public SRDefaultAuthorizer(String plgName,
+    public SRDefaultAuthorizer(RangerBasePlugin plg,
                                String uName,
                                Set<String> uGroup) {
-        this.plg = new RangerBasePlugin(PLG_TYPE, plgName);
+        this.plg = plg;
         this.uName = uName;
         this.uGroup = uGroup;
-        plg.setResultProcessor(new RangerSchemaRegistryAuditHandler());
-        plg.init();
     }
 
     @Override
@@ -100,7 +98,7 @@ public class SRDefaultAuthorizer implements SRAuthorizer {
     public static void main(String[] args) throws IOException {
         Set<String> groups = new HashSet<>();
         groups.add("vagrant");
-        SRAuthorizer srAuthorizer = new SRDefaultAuthorizer("schema-registy",
+        SRAuthorizer srAuthorizer = new SRDefaultAuthorizer(SRAuthorizationAgent.INSTANCE.getPlg(),
                 "vagrant", groups);
        boolean isAuthorized = srAuthorizer.authorizeSchemaGroup("Group1", "read");
         isAuthorized = srAuthorizer.authorizeSchema("Group1", "test1","read");

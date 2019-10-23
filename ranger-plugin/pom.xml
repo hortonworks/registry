@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.ranger</groupId>
     <artifactId>ranger-schema-registry-plugin</artifactId>
-    <version>0.7.0.2.6.3.0-235</version>
+    <version>0.7.0.2.6.3.0-235-SNAPSHOT</version>
     <name>Schema Registry Security Plugin</name>
     <description>Schema Registry Security Plugin</description>
     <packaging>jar</packaging>

@@ -54,6 +54,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.security.authorize.AuthorizationException;
+import org.apache.ranger.authorization.schemaregistry.authorizer.SRAuthorizationAgent;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -68,13 +70,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -621,11 +617,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                          @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                         @QueryParam("states") List<Byte> stateIds) {
+                                         @QueryParam("states") List<Byte> stateIds,
+                                         @Context SecurityContext securityContext) {
 
         Response response;
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
+            Collection<SchemaVersionInfo> schemaVersionInfos = SRAuthorizationAgent.INSTANCE
+                    .getAllSchemaVersionsWithAuthorization(securityContext,
+                            schemaRegistry.getSchemaMetadataInfo(schemaName),
+                            schemaBranchName,
+                            () -> schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds));
             if (schemaVersionInfos != null) {
                 response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
             } else {
@@ -633,7 +634,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
         } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, e.getMessage());
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (Exception ex) {
             LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -649,12 +652,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
-                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber) {
+                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                     @Context SecurityContext securityContext) {
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
 
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
+            SchemaVersionInfo schemaVersionInfo = SRAuthorizationAgent.INSTANCE
+                    .getSchemaVersionWithAuthorization(securityContext,
+                            schemaRegistry.getSchemaMetadataInfo(schemaMetadata),
+                            "FOO", //TODO: Impelement this
+                            versionNumber,
+                            () -> schemaRegistry.getSchemaVersionInfo(schemaVersionKey));
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
