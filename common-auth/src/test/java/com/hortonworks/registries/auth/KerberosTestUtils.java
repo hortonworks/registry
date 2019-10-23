@@ -47,6 +47,12 @@ public class KerberosTestUtils {
         return "client@EXAMPLE.COM";
     }
 
+    public static String getJaasConfigForClientPrincipal() {
+        System.out.println(keytabFile);
+        return "com.sun.security.auth.module.Krb5LoginModule required doNotPrompt=true useTicketCache=false principal=\"client@EXAMPLE.COM\" " +
+                "useKeyTab=true keyTab=\"" + keytabFile +"\" debug=true;";
+    }
+
     public static String getClientPrincipal1() {
         return "client1@EXAMPLE.COM";
     }
