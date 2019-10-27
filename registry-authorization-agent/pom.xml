@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>registries</artifactId>
+        <groupId>com.hortonworks.registries</groupId>
+        <version>0.8.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>registry-authorization-agent</artifactId>
+    <version>0.8.0-SNAPSHOT</version>
+
+    <repositories>
+        <repository>
+            <id>hortonworks.public.https</id>
+            <name>Apache Development Snapshot Repository</name>
+            <url>https://repo.hortonworks.com/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>apache.public.https</id>
+            <name>Apache Development Snapshot Repository</name>
+            <url>https://repository.apache.org/content/repositories/public</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.ranger</groupId>
+            <artifactId>ranger-schema-registry-plugin-shim</artifactId>
+            <version>0.7.0.2.6.3.0-235-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>ranger-schema-registry-plugin</artifactId>
+            <version>0.7.0.2.6.3.0-235-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>schema-registry-client</artifactId>
+            <version>0.8.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>

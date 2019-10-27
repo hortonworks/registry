@@ -185,6 +185,11 @@
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
+            <artifactId>registry-authorization-agent</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <build>
       <plugins>

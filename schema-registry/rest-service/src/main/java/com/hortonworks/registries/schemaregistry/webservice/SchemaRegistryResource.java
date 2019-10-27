@@ -18,6 +18,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.schemaregistry.authorization.RangerSchemaRegistryAuthorizationAgent;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
@@ -55,7 +56,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.security.authorize.AuthorizationException;
-import org.apache.ranger.authorization.schemaregistry.authorizer.SRAuthorizationAgent;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -622,7 +622,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = SRAuthorizationAgent.INSTANCE
+            Collection<SchemaVersionInfo> schemaVersionInfos = RangerSchemaRegistryAuthorizationAgent.INSTANCE
                     .getAllSchemaVersionsWithAuthorization(securityContext,
                             schemaRegistry.getSchemaMetadataInfo(schemaName),
                             schemaBranchName,
@@ -658,10 +658,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = SRAuthorizationAgent.INSTANCE
+            SchemaVersionInfo schemaVersionInfo = RangerSchemaRegistryAuthorizationAgent.INSTANCE
                     .getSchemaVersionWithAuthorization(securityContext,
                             schemaRegistry.getSchemaMetadataInfo(schemaMetadata),
-                            "FOO", //TODO: Impelement this
+                            "MASTER", //TODO: Impelement this
                             versionNumber,
                             () -> schemaRegistry.getSchemaVersionInfo(schemaVersionKey));
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);

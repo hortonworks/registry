@@ -28,6 +28,20 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>libs</outputDirectory>
             <unpack>false</unpack>
+            <excludes>
+                <exclude>
+                    org.apache.ranger:ranger-schema-registry-plugin
+                </exclude>
+                <exclude>
+                    org.apache.ranger:ranger-schema-registry-plugin-shim
+                </exclude>
+                <exclude>
+                    com.sun.jersey:jersey-servlet
+                </exclude>
+                <exclude>
+                    com.sun.jersey
+                </exclude>
+            </excludes>
         </dependencySet>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
@@ -105,6 +119,26 @@
                 <include>*</include>
             </includes>
         </fileSet>
+        <!--
+            RANGER-PLUGIN
+        -->
+        <fileSet>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/target</directory>
+            <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
+            <includes>
+                <include>*jar</include>
+            </includes>
+        </fileSet>
+        <!--
+            RANGER-PLUGIN-SHIM
+        -->
+        <fileSet>
+            <directory>${project.basedir}./ranger-schema-registry-plugin-shim/target</directory>
+            <outputDirectory>ranger-plugin</outputDirectory>
+            <includes>
+                <include>*jar</include>
+            </includes>
+        </fileSet>
     </fileSets>
     <files>
         <file>
@@ -120,4 +154,5 @@
             <outputDirectory>/</outputDirectory>
         </file>
     </files>
+
 </assembly>
