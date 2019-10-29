@@ -12,14 +12,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.hadoop.security.authorize.AuthorizationException;
-import org.apache.ranger.authorization.schemaregistry.authorizer.Authorizer;
-import org.apache.ranger.authorization.schemaregistry.authorizer.RangerSchemaRegistryAuthorizer;
+import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.Authorizer;
+import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.RangerSchemaRegistryAuthorizer;
 
 public enum RangerSchemaRegistryAuthorizationAgent {
     INSTANCE;
 
     private Authorizer authorizer = new RangerSchemaRegistryAuthorizer();
-    private boolean isAuthOn = false;
+    private boolean isAuthOn = true; // TODO: Read it from SR congfig
 
     public Collection<SchemaVersionInfo> getAllSchemaVersionsWithAuthorization
             (SecurityContext sc,
@@ -33,25 +33,13 @@ public enum RangerSchemaRegistryAuthorizationAgent {
             String sGroup = sM.getSchemaGroup();
             String sName = sM.getName();
 
-            boolean hasAccessToBranch = authorizer.authorizeSchemaBranch(sGroup,
+            boolean hasAccessToVersions = authorizer.authorizeSchemaVersion(sGroup,
                     sName,
                     schemaBranchName,
                     Authorizer.ACCESS_TYPE_READ,
                     getUserNameFromSC(sc),
                     getUserGroupsFromSC(sc));
-            raiseAuthorizationExceptionIfNeeded(hasAccessToBranch);
-
-            Collection<SchemaVersionInfo> versions = func.get();
-            //Only accessible versions will be kept
-            return versions.stream().filter(sVersion ->
-                    authorizer.authorizeSchemaVersion(sGroup,
-                            sName,
-                            schemaBranchName,
-                            sVersion.getVersion().toString(),
-                            Authorizer.ACCESS_TYPE_READ,
-                            getUserNameFromSC(sc),
-                            getUserGroupsFromSC(sc)))
-                    .collect(Collectors.toSet());
+            raiseAuthorizationExceptionIfNeeded(hasAccessToVersions);
         }
 
         return func.get();
@@ -72,7 +60,6 @@ public enum RangerSchemaRegistryAuthorizationAgent {
             boolean hasAccessToVersion = authorizer.authorizeSchemaVersion(sGroup,
                     sName,
                     schemaBranchName,
-                    schemaVersion.toString(),
                     Authorizer.ACCESS_TYPE_READ,
                     getUserNameFromSC(sc),
                     getUserGroupsFromSC(sc));
@@ -83,6 +70,7 @@ public enum RangerSchemaRegistryAuthorizationAgent {
     }
 
     private String getUserNameFromSC(SecurityContext sc) {
+        //TODO: Add correct implementation
         if(sc.getUserPrincipal() != null) {
             return sc.getUserPrincipal().getName();
         }

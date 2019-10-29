@@ -19,12 +19,11 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     }
 
     @Override
-    public boolean authorizeSerDe(String sName,
-                                  String accessType,
+    public boolean authorizeSerDe(String accessType,
                                   String uName,
                                   Set<String> uGroup) {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_SERDE, sName);
+        resource.setValue(RESOURCE_SERDE, "ANY");
 
         return authorize(resource, accessType, uName, uGroup);
     }
@@ -72,7 +71,6 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     public boolean authorizeSchemaVersion(String sGroupName,
                              String sMetadataName,
                              String sBranchName,
-                             String sVersion,
                              String accessType,
                              String uName,
                              Set<String> uGroup) {
@@ -80,7 +78,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
         resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
         resource.setValue(RESOURCE_SCHEMA_BRANCH, sBranchName);
-        resource.setValue(RESOURCE_SCHEMA_VERSION, sVersion);
+        resource.setValue(RESOURCE_SCHEMA_VERSION, "ANY");
 
         return authorize(resource, accessType, uName, uGroup);
     }
@@ -181,7 +179,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         System.out.println("SchemaBranch = " + sBranch);
         System.out.println("SchemaVersion = " + sVersion);
 
-        isAuthorized = authorizer.authorizeSchemaVersion(sGroup, sMetadataName, sBranch, sVersion, ACCESS_TYPE_READ,
+        isAuthorized = authorizer.authorizeSchemaVersion(sGroup, sMetadataName, sBranch, ACCESS_TYPE_READ,
                 user, groups);
 
         System.out.println("\nAUTHORIZED = " + isAuthorized);

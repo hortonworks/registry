@@ -17,8 +17,7 @@ public interface Authorizer {
     String RESOURCE_SCHEMA_VERSION = "schema-version";
 
 
-    boolean authorizeSerDe(String sName,
-                           String accessType,
+    boolean authorizeSerDe(String accessType,
                            String uName,
                            Set<String> uGroup);
 
@@ -43,7 +42,6 @@ public interface Authorizer {
     boolean authorizeSchemaVersion(String sGroupName,
                                    String sMetadataName,
                                    String sBranchName,
-                                   String sVersion,
                                    String accessType,
                                    String uName,
                                    Set<String> uGroup);

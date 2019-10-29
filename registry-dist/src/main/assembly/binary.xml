@@ -120,23 +120,33 @@
             </includes>
         </fileSet>
         <!--
-            RANGER-PLUGIN
+            RANGER-PLUGIN/AUTHORIZER
         -->
         <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/target</directory>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer/target</directory>
             <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
             <includes>
                 <include>*jar</include>
             </includes>
         </fileSet>
         <!--
-            RANGER-PLUGIN-SHIM
+            RANGER-PLUGIN/AUTHORIZER-SHIM
         -->
         <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin-shim/target</directory>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer-shim/target</directory>
             <outputDirectory>ranger-plugin</outputDirectory>
             <includes>
                 <include>*jar</include>
+            </includes>
+        </fileSet>
+        <!--
+            RANGER-PLUGIN/SERVICE
+        -->
+        <fileSet>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/ranger-plugin-service/target</directory>
+            <outputDirectory>ranger-plugin/service-def</outputDirectory>
+            <includes>
+                <include>*</include>
             </includes>
         </fileSet>
     </fileSets>
