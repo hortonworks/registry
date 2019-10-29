@@ -12,6 +12,7 @@ public class SchemaRegistryResourceMgr {
 
     private static final Logger LOG = Logger.getLogger(SchemaRegistryResourceMgr.class);
 
+    private static final String REGISTRY_SERVICE = "registry-service";
     private static final String SERDE = "serde";
     private static final String SCHEMA_GROUP = "schema-group";
     private static final String SCHEMA_METADATA = "schema-metadata";
@@ -84,7 +85,7 @@ public class SchemaRegistryResourceMgr {
                             };
                             break;
                         }
-                        case SCHEMA_VERSION: case SERDE: {
+                        case SCHEMA_VERSION: case SERDE: case REGISTRY_SERVICE: {
                             return asteriskList;
                         }
                         default:

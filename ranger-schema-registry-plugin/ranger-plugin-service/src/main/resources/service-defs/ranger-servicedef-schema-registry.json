@@ -21,7 +21,7 @@
         "wildCard":true,
         "ignoreCase":true
       },
-      "validationRegEx":"",
+      "validationRegEx": "^\\*$",
       "validationMessage": "",
       "uiHint":"",
       "label": "Schema Registry Service",
@@ -109,7 +109,7 @@
         "wildCard":true,
         "ignoreCase":true
       },
-      "validationRegEx":"",
+      "validationRegEx": "^\\*$",
       "validationMessage": "",
       "uiHint":"",
       "label": "Schema Version",
@@ -131,7 +131,7 @@
         "wildCard":true,
         "ignoreCase":true
       },
-      "validationRegEx":"",
+      "validationRegEx": "^\\*$",
       "validationMessage": "",
       "uiHint":"",
       "label": "Serializer/Deserializer",
