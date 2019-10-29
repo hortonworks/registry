@@ -83,13 +83,17 @@ public enum RangerSchemaRegistryAuthorizationAgent {
     }
 
     private String getUserNameFromSC(SecurityContext sc) {
-        return sc.getUserPrincipal().getName();
+        if(sc.getUserPrincipal() != null) {
+            return sc.getUserPrincipal().getName();
+        }
+
+        return "vagrant";
     }
 
     private Set<String> getUserGroupsFromSC(SecurityContext sc) {
         Set<String> res = new HashSet<>();
         //TODO: Add correct implementation
-        res.add(sc.getUserPrincipal().getName());
+        res.add("vagrant");
 
         return res;
     }

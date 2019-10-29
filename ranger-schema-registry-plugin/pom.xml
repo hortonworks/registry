@@ -4,18 +4,27 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.ranger</groupId>
+    <groupId>com.hortonworks.registries</groupId>
     <artifactId>ranger-schema-registry-plugin</artifactId>
-    <version>0.7.0.2.6.3.0-235-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
     <name>Schema Registry Security Plugin</name>
     <description>Schema Registry Security Plugin</description>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
+    <modules>
+        <module>ranger-plugin-service</module>
+        <module>authorizer</module>
+        <module>authorizer-shim</module>
+    </modules>
+
     <properties>
+        <ranger.version>0.7.0.2.6.3.0-235</ranger.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.version>3.8.0</maven.compiler.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <project.version>0.7.0.2.6.3.0-235</project.version>
+        <commons-logging.version>1.1.1</commons-logging.version>
     </properties>
+
     <repositories>
         <repository>
             <id>hortonworks.public.https</id>
@@ -26,167 +35,7 @@
             <id>apache.public.https</id>
             <name>Apache Development Snapshot Repository</name>
             <url>https://repository.apache.org/content/repositories/public</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
         </repository>
     </repositories>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>javax.ws.rs</groupId>
-                <artifactId>jsr311-api</artifactId>
-                <version>1.1.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-client</artifactId>
-                <version>1.12</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>jsr311-api</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>1.12</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-client</artifactId>
-            <version>0.8.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.ws.rs</groupId>
-                    <artifactId>javax.ws.rs-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ranger</groupId>
-            <artifactId>ranger-plugins-common</artifactId>
-            <version>0.7.0.2.6.3.0-235</version>
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.slf4j</groupId>-->
-                    <!--<artifactId>slf4j-log4j12</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>log4j</groupId>-->
-                    <!--<artifactId>log4j</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ranger</groupId>
-            <artifactId>ranger-plugins-audit</artifactId>
-            <version>0.7.0.2.6.3.0-235</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ranger</groupId>
-            <artifactId>credentialbuilder</artifactId>
-            <version>0.7.0.2.6.3.0-235</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.json/json -->
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-bundle</artifactId>
-            <version>1.12</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.jettison</groupId>
-            <artifactId>jettison</artifactId>
-            <version>1.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ranger</groupId>
-            <artifactId>ranger-schema-registry-plugin-shim</artifactId>
-            <version>0.7.0.2.6.3.0-235-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
 
-    </dependencies>
-    <build>
-        <resources>
-            <resource>
-                <directory>conf</directory>
-            </resource>
-        </resources>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                <execution>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>single</goal>
-                    </goals>
-                    <configuration>
-                        <descriptorRefs>
-                            <descriptorRef>jar-with-dependencies</descriptorRef>
-                        </descriptorRefs>
-                    </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-
-    </build>
 </project>

@@ -1,0 +1,261 @@
+{
+  "name": "schema-registry",
+  "implClass": "com.hortonworks.registries.ranger.services.schemaregistry.RangerServiceSchemaRegistry",
+  "label": "Schema Registry",
+  "description": "Schema Registry",
+  "resources":
+  [
+
+    {
+      "itemId": 0,
+      "name": "registry-service",
+      "type": "string",
+      "level": 10,
+      "parent": "",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Registry Service",
+      "description": "Schema Registry Service"
+    },
+
+    {
+      "itemId": 1,
+      "name": "schema-group",
+      "type": "string",
+      "level": 10,
+      "parent": "",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Group",
+      "description": "Schema Group"
+    },
+
+    {
+      "itemId": 2,
+      "name": "schema-metadata",
+      "type": "string",
+      "level": 20,
+      "parent": "schema-group",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Name",
+      "description": "Schema Name"
+    },
+
+    {
+      "itemId": 3,
+      "name": "schema-branch",
+      "type": "string",
+      "level": 30,
+      "parent": "schema-metadata",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Branch",
+      "description": "Schema Branch"
+    },
+
+    {
+      "itemId": 4,
+      "name": "schema-version",
+      "type": "string",
+      "level": 40,
+      "parent": "schema-branch",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Version",
+      "description": "Schema Version"
+    },
+
+    {
+      "itemId": 5,
+      "name": "serde",
+      "type": "string",
+      "level": 10,
+      "parent": "",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": false,
+      "excludesSupported": true,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+      "matcherOptions": {
+        "wildCard":true,
+        "ignoreCase":true
+      },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Serializer/Deserializer",
+      "description": "Serializer/Deserializer"
+    }
+
+  ],
+
+  "accessTypes":
+  [
+
+    {
+      "itemId": 1,
+      "name": "create",
+      "label": "Create"
+    },
+
+    {
+      "itemId": 2,
+      "name": "read",
+      "label": "Read"
+    },
+
+    {
+      "itemId": 3,
+      "name": "update",
+      "label": "Update"
+    },
+
+    {
+      "itemId": 4,
+      "name": "delete",
+      "label": "Delete"
+    },
+
+    {
+      "itemId": 5,
+      "name": "all",
+      "label": "All",
+      "impliedGrants":
+      [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    }
+  ],
+
+  "configs":
+  [
+    {
+      "itemId": 1,
+      "name": "username",
+      "type": "string",
+      "mandatory": true,
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Username"
+    },
+
+    {
+      "itemId": 2,
+      "name": "password",
+      "type": "password",
+      "mandatory": true,
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Password"
+    },
+
+    {
+      "itemId": 3,
+      "name": "schema.registry.url",
+      "type": "string",
+      "mandatory": true,
+      "defaultValue": "",
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Schema Registry URL"
+    },
+
+    {
+      "itemId": 4,
+      "name": "commonNameForCertificate",
+      "type": "string",
+      "mandatory": false,
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Ranger Plugin SSL CName"
+    }
+
+  ],
+
+  "enums":
+  [
+
+  ],
+
+  "contextEnrichers":
+  [
+
+  ],
+
+  "policyConditions":
+  [
+
+    {
+      "itemId":1,
+      "name":"ip-range",
+      "evaluator":"org.apache.ranger.plugin.conditionevaluator.RangerIpMatcher",
+      "evaluatorOptions":{
+
+      },
+      "validationRegEx":"",
+      "validationMessage":"",
+      "uiHint":"",
+      "label":"IP Address Range",
+      "description":"IP Address Range"
+    }
+
+  ]
+}
