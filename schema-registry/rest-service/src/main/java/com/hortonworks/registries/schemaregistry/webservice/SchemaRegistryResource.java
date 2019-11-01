@@ -472,15 +472,19 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId) {
+    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId,
+                                  @Context SecurityContext securityContext) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaId);
+            SchemaMetadataInfo schemaMetadataInfo = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+                    .getSchemaInfoWithAuthorization(securityContext, schemaRegistry.getSchemaMetadataInfo(schemaId));
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
             }
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with schemaId: [{}]", schemaId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -494,10 +498,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Delete a schema metadata and all related data", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
     public Response deleteSchemaMetadata(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                        @Context UriInfo uriInfo) {
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         try {
+            RangerSchemaRegistryAuthorizationAgent.INSTANCE.deleteSchemaMetadataWithAuthorization(securityContext,
+                    schemaRegistry.getSchemaMetadataInfo(schemaName));
             schemaRegistry.deleteSchema(schemaName);
             return WSUtils.respond(Response.Status.OK);
+        }catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (SchemaNotFoundException e) {
             LOG.error("No schema metadata found with name: [{}]", schemaName);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);

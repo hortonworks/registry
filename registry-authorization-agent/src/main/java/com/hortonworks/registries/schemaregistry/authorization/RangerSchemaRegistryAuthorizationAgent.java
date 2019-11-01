@@ -38,6 +38,25 @@ public enum RangerSchemaRegistryAuthorizationAgent {
         return schemaMetadataInfo;
     }
 
+    public void deleteSchemaMetadataWithAuthorization
+            (SecurityContext sc,
+             SchemaMetadataInfo schemaMetadataInfo)
+            throws  AuthorizationException {
+
+        if (isAuthOn) {
+            SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+            String sGroup = sM.getSchemaGroup();
+            String sName = sM.getName();
+
+            boolean hasAccess = authorizer.authorizeSchema(sGroup,
+                    sName,
+                    Authorizer.ACCESS_TYPE_DELETE,
+                    getUserNameFromSC(sc),
+                    getUserGroupsFromSC(sc));
+            raiseAuthorizationExceptionIfNeeded(hasAccess);
+        }
+    }
+
     public Collection<SchemaVersionInfo> getAllSchemaVersionsWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
