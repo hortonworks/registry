@@ -149,7 +149,7 @@
             <directory>${project.basedir}./ranger-schema-registry-plugin/ranger-plugin-service/target</directory>
             <outputDirectory>ranger-plugin/ranger-sr-service</outputDirectory>
             <includes>
-                <include>*-dependencies.jar</include>
+                <include>*jar</include>
             </includes>
         </fileSet>
         <!--
