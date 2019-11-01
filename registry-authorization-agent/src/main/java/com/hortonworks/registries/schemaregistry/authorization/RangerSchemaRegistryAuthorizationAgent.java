@@ -9,7 +9,6 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.Authorizer;
@@ -20,6 +19,24 @@ public enum RangerSchemaRegistryAuthorizationAgent {
 
     private Authorizer authorizer = new RangerSchemaRegistryAuthorizer();
     private boolean isAuthOn = true; // TODO: Read it from SR congfig
+
+    public SchemaMetadataInfo getSchemaInfoWithAuthorization
+            (SecurityContext sc,
+             SchemaMetadataInfo schemaMetadataInfo)
+            throws AuthorizationException {
+        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+        String sGroup = sM.getSchemaGroup();
+        String sName = sM.getName();
+
+        boolean hasAccessToSchemaMetadata = authorizer.authorizeSchema(sGroup,
+                sName,
+                Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSchemaMetadata);
+
+        return schemaMetadataInfo;
+    }
 
     public Collection<SchemaVersionInfo> getAllSchemaVersionsWithAuthorization
             (SecurityContext sc,

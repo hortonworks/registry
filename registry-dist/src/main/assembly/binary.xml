@@ -30,10 +30,13 @@
             <unpack>false</unpack>
             <excludes>
                 <exclude>
-                    org.apache.ranger:ranger-schema-registry-plugin
+                    com.hortonworks.registries:ranger-schema-registry-plugin
                 </exclude>
                 <exclude>
-                    org.apache.ranger:ranger-schema-registry-plugin-shim
+                    com.hortonworks.registries:authorizer
+                </exclude>
+                <exclude>
+                    com.hortonworks.registries:authorizer-shim
                 </exclude>
                 <exclude>
                     com.sun.jersey:jersey-servlet
@@ -144,7 +147,17 @@
         -->
         <fileSet>
             <directory>${project.basedir}./ranger-schema-registry-plugin/ranger-plugin-service/target</directory>
-            <outputDirectory>ranger-plugin/service-def</outputDirectory>
+            <outputDirectory>ranger-plugin/ranger-sr-service</outputDirectory>
+            <includes>
+                <include>*-dependencies.jar</include>
+            </includes>
+        </fileSet>
+        <!--
+            RANGER-PLUGIN/SERVICE/CONF
+        -->
+        <fileSet>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/ranger-plugin-service/src/main/resources/service-defs</directory>
+            <outputDirectory>ranger-plugin/ranger-sr-service/service-defs</outputDirectory>
             <includes>
                 <include>*</include>
             </includes>

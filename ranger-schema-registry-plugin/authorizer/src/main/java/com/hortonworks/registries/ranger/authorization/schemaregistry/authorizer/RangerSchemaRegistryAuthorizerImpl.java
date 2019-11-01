@@ -120,11 +120,12 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         String user = "vagrant";
         Set<String> groups = new HashSet<>();
         groups.add("vagrant");
-        Authorizer authorizer = new RangerSchemaRegistryAuthorizerImpl();
+        Class<RangerSchemaRegistryAuthorizerImpl> c = RangerSchemaRegistryAuthorizerImpl.class;
+        Authorizer authorizer = c.newInstance();
         String sGroup = "";
         String sMetadataName = "";
         String sBranch = "";

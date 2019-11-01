@@ -28,7 +28,6 @@
             <version>0.8.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -57,9 +56,10 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/main/assembly/binary.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
                 </executions>

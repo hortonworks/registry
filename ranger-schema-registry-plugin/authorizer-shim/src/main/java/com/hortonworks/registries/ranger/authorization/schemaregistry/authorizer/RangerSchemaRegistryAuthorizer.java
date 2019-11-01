@@ -1,14 +1,15 @@
 package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.ranger.plugin.classloader.RangerPluginClassLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.util.Set;
 
 public class RangerSchemaRegistryAuthorizer implements Authorizer {
 
-    private static final Log LOG = LogFactory.getLog(RangerSchemaRegistryAuthorizer.class);
+    private static final Logger LOG  = LoggerFactory.getLogger(RangerSchemaRegistryAuthorizer.class);
 
     private static final String   RANGER_PLUGIN_TYPE                      = "schema-registry";
     private static final String   RANGER_SR_AUTHORIZER_IMPL_CLASSNAME  =

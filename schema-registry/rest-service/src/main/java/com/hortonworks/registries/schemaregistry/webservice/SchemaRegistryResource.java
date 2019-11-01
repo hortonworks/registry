@@ -445,15 +445,19 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                  @Context SecurityContext securityContext) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
+            SchemaMetadataInfo schemaMetadataInfo = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+                    .getSchemaInfoWithAuthorization(securityContext, schemaRegistry.getSchemaMetadataInfo(schemaName));
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
