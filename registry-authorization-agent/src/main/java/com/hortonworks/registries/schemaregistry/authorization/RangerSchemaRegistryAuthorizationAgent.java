@@ -1,14 +1,15 @@
 package com.hortonworks.registries.schemaregistry.authorization;
 
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.*;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.Authorizer;
@@ -19,6 +20,86 @@ public enum RangerSchemaRegistryAuthorizationAgent {
 
     private Authorizer authorizer = new RangerSchemaRegistryAuthorizer();
     private boolean isAuthOn = true; // TODO: Read it from SR congfig
+
+    public Collection<SchemaMetadataInfo> findSchemasWithAuthorization(SecurityContext sc,
+                                                                       Supplier<Collection<SchemaMetadataInfo>> func) {
+        if (isAuthOn) {
+            return func.get().stream()
+                    .filter(schemaMetadataInfo -> {
+                        SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+                        String sGroup = schemaMetadata.getSchemaGroup();
+                        String sName = schemaMetadata.getName();
+                        return authorizer.authorizeSchema(sGroup,
+                                sName,
+                                Authorizer.ACCESS_TYPE_READ,
+                                getUserNameFromSC(sc),
+                                getUserGroupsFromSC(sc));
+                    }).collect(Collectors.toList());
+        }
+
+        return func.get();
+    }
+
+    public Collection<SchemaVersionKey> findSchemasByFieldsWithAuthorization
+            (SecurityContext sc,
+             Function<String, SchemaMetadataInfo> getSchemaMetadataFunc,
+             FunctionWithSchemaNotFoundException <SchemaVersionKey, SchemaVersionInfo> getVersionInfoFunc,
+             SupplierWithSchemaNotFoundException<Collection<SchemaVersionKey>> func)
+            throws SchemaNotFoundException {
+
+        if (isAuthOn) {
+            return func.get().stream()
+                    .filter(schemaVersionKey -> {
+                        String sName = schemaVersionKey.getSchemaName();
+                        String sGroup = getSchemaMetadataFunc.apply(sName).getSchemaMetadata().getSchemaGroup();
+                        SchemaVersionInfo svi;
+                        try {
+                            svi = getVersionInfoFunc.apply(schemaVersionKey);
+                        } catch (SchemaNotFoundException e) {
+                           throw new RuntimeException(e);
+                        }
+                        String sBranch = svi.getMergeInfo().getSchemaBranchName();
+                        return authorizer.authorizeSchemaVersion(sGroup,
+                                sName,
+                                sBranch
+                                Authorizer.ACCESS_TYPE_READ,
+                                getUserNameFromSC(sc),
+                                getUserGroupsFromSC(sc));
+                    }).collect(Collectors.toList());
+        }
+
+        return func.get();
+    }
+
+    public void  addSchemaInfoWithAuthorization(SecurityContext sc, SchemaMetadata schemaMetadata)
+            throws AuthorizationException {
+        if (isAuthOn) {
+            String sGroup = schemaMetadata.getSchemaGroup();
+            String sName = schemaMetadata.getName();
+
+            boolean hasAccess = authorizer.authorizeSchema(sGroup,
+                    sName,
+                    Authorizer.ACCESS_TYPE_CREATE,
+                    getUserNameFromSC(sc),
+                    getUserGroupsFromSC(sc));
+            raiseAuthorizationExceptionIfNeeded(hasAccess);
+        }
+    }
+
+    public void updateSchemaInfoWithAuthorization(SecurityContext sc, SchemaMetadata schemaMetadata)
+            throws AuthorizationException {
+        if (isAuthOn) {
+            String sGroup = schemaMetadata.getSchemaGroup();
+            String sName = schemaMetadata.getName();
+
+            boolean hasAccess = authorizer.authorizeSchema(sGroup,
+                    sName,
+                    Authorizer.ACCESS_TYPE_UPDATE,
+                    getUserNameFromSC(sc),
+                    getUserGroupsFromSC(sc));
+            raiseAuthorizationExceptionIfNeeded(hasAccess);
+        }
+    }
 
     public SchemaMetadataInfo getSchemaInfoWithAuthorization
             (SecurityContext sc,
@@ -131,6 +212,11 @@ public enum RangerSchemaRegistryAuthorizationAgent {
     @FunctionalInterface
     public interface SupplierWithSchemaNotFoundException<T> {
         T get() throws SchemaNotFoundException;
+    }
+
+    @FunctionalInterface
+    public interface FunctionWithSchemaNotFoundException<T, R> {
+        R apply(T arg) throws SchemaNotFoundException;
     }
 
 }

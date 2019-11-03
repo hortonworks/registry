@@ -195,7 +195,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response listSchemas(@Context UriInfo uriInfo) {
+    public Response listSchemas(@Context UriInfo uriInfo,
+                                @Context SecurityContext securityContext) {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             Map<String, String> filters = new HashMap<>();
@@ -204,7 +205,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
 
-            Collection<SchemaMetadataInfo> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
+            Collection<SchemaMetadataInfo> schemaMetadatas = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+                    .findSchemasWithAuthorization (securityContext, () -> schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (Exception ex) {
@@ -220,10 +222,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemas(@Context UriInfo uriInfo) {
+    public Response findSchemas(@Context UriInfo uriInfo,
+                                @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+                    .findSchemasWithAuthorization (securityContext, () -> findSchemaMetadataInfos(queryParameters));
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
@@ -284,7 +288,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
+    public Response findAggregatedSchemas(@Context UriInfo uriInfo,
+                                          @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(uriInfo.getQueryParameters());
@@ -318,10 +323,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemasByFields(@Context UriInfo uriInfo) {
+    public Response findSchemasByFields(@Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters));
+            Collection<SchemaVersionKey> schemaVersionKeys = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+                    .findSchemasByFieldsWithAuthorization(securityContext,
+                            schemaRegistry::getSchemaMetadataInfo,
+                            schemaRegistry::getSchemaVersionInfo,
+                            () -> schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
         } catch (Exception ex) {
@@ -360,7 +370,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
                                           SchemaMetadata schemaMetadata,
                                   @Context UriInfo uriInfo,
-                                  @Context HttpHeaders httpHeaders) {
+                                  @Context HttpHeaders httpHeaders,
+                                  @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
@@ -370,8 +381,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 checkValidNames(schemaMetadata.getName());
 
                 boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
+                RangerSchemaRegistryAuthorizationAgent
+                        .INSTANCE
+                        .addSchemaInfoWithAuthorization(securityContext, schemaMetadata);
                 Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
+            } catch (AuthorizationException e) {
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
@@ -402,16 +418,22 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
                                      @ApiParam(value = "Schema to be added to the registry", required = true)
                                          SchemaMetadata schemaMetadata,
-                                     @Context UriInfo uriInfo) {
+                                     @Context UriInfo uriInfo,
+                                     @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
+                RangerSchemaRegistryAuthorizationAgent
+                        .INSTANCE
+                        .updateSchemaInfoWithAuthorization(securityContext, schemaMetadata);
                 SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
                 if (schemaMetadataInfo != null) {
                     response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
                 } else {
                     response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
                 }
+            } catch (AuthorizationException e) {
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaName, schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
