@@ -18,6 +18,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.authorization.RangerSchemaRegistryAuthorizationAgent;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
@@ -99,12 +101,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     // reserved as schema related paths use these strings
     private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
     private final SchemaRegistryVersion schemaRegistryVersion;
+    private final AuthorizationAgent authorizationAgent;
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AtomicReference<LeadershipParticipant> leadershipParticipant,
                                   SchemaRegistryVersion schemaRegistryVersion) {
         super(schemaRegistry, leadershipParticipant);
         this.schemaRegistryVersion = schemaRegistryVersion;
+        //TODO: Security is hardcoded should be read from config.
+        this.authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(true);
     }
 
     @GET
@@ -205,7 +210,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
 
-            Collection<SchemaMetadataInfo> schemaMetadatas = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            Collection<SchemaMetadataInfo> schemaMetadatas = authorizationAgent
                     .findSchemasWithAuthorization (securityContext, () -> schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
@@ -226,7 +231,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                 @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
                     .findSchemasWithAuthorization (securityContext, () -> findSchemaMetadataInfos(queryParameters));
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
         } catch (Exception ex) {
@@ -327,7 +332,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaVersionKey> schemaVersionKeys = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            Collection<SchemaVersionKey> schemaVersionKeys = authorizationAgent
                     .findSchemasByFieldsWithAuthorization(securityContext,
                             schemaRegistry::getSchemaMetadataInfo,
                             schemaRegistry::getSchemaVersionInfo,
@@ -471,7 +476,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                   @Context SecurityContext securityContext) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfo = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            SchemaMetadataInfo schemaMetadataInfo = authorizationAgent
                     .getSchemaInfoWithAuthorization(securityContext, schemaRegistry.getSchemaMetadataInfo(schemaName));
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
@@ -498,7 +503,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                   @Context SecurityContext securityContext) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfo = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            SchemaMetadataInfo schemaMetadataInfo = authorizationAgent
                     .getSchemaInfoWithAuthorization(securityContext, schemaRegistry.getSchemaMetadataInfo(schemaId));
             if (schemaMetadataInfo != null) {
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
@@ -523,7 +528,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @Context UriInfo uriInfo,
                                         @Context SecurityContext securityContext) {
         try {
-            RangerSchemaRegistryAuthorizationAgent.INSTANCE.deleteSchemaMetadataWithAuthorization(securityContext,
+            authorizationAgent.deleteSchemaMetadataWithAuthorization(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaName));
             schemaRegistry.deleteSchema(schemaName);
             return WSUtils.respond(Response.Status.OK);
@@ -657,7 +662,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            Collection<SchemaVersionInfo> schemaVersionInfos = authorizationAgent
                     .getAllSchemaVersionsWithAuthorization(securityContext,
                             schemaRegistry.getSchemaMetadataInfo(schemaName),
                             schemaBranchName,
@@ -693,7 +698,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = RangerSchemaRegistryAuthorizationAgent.INSTANCE
+            SchemaVersionInfo schemaVersionInfo = authorizationAgent
                     .getSchemaVersionWithAuthorization(securityContext,
                             schemaRegistry.getSchemaMetadataInfo(schemaMetadata),
                             "MASTER", //TODO: Impelement this
