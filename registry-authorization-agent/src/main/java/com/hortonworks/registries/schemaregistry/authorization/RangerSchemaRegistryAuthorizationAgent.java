@@ -6,6 +6,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -21,8 +22,18 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     private Authorizer authorizer = new RangerSchemaRegistryAuthorizer();
 
     @Override
-    public Collection<SchemaMetadataInfo> findSchemasWithAuthorization(SecurityContext sc,
-                                                                       Supplier<Collection<SchemaMetadataInfo>> func) {
+    public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas(SecurityContext sc, SupplierWithSchemaNotFoundException<Collection<AggregatedSchemaMetadataInfo>> func) throws SchemaNotFoundException {
+        return null;
+    }
+
+    @Override
+    public AggregatedSchemaMetadataInfo getAggregatedSchemaInfo(SecurityContext sc, AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) throws AuthorizationException {
+        return null;
+    }
+
+    @Override
+    public Collection<SchemaMetadataInfo> findSchemas(SecurityContext sc,
+                                                      Supplier<Collection<SchemaMetadataInfo>> func) {
         return func.get().stream()
                 .filter(schemaMetadataInfo -> {
                     SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
@@ -34,6 +45,11 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                             getUserNameFromSC(sc),
                             getUserGroupsFromSC(sc));
                 }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(SecurityContext sc, List<AggregatedSchemaMetadataInfo> asmi) {
+        return null;
     }
 
     @Override
@@ -131,6 +147,96 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
+    public void uploadSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void addSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void getLatestSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void getSchemaVersionById(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void getSchemaVersionByFingerprint(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void authorizeVerisonStateOperation(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void checkCompatibilityWithSchema(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void getSerializers(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void uploadFile(SecurityContext securityContext) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void downloadFile(SecurityContext securityContext) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void addSerDes(SecurityContext securityContext) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void getSerDes(SecurityContext securityContext) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void mapSchemaWithSerDes(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void deleteSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public Collection<SchemaBranch> getAllBranches(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func) throws SchemaNotFoundException {
+        return null;
+    }
+
+    @Override
+    public void createSchemaBranch(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch, String branchTocreate) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void mergeSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
+    public void deleteSchemaBranch(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+
+    }
+
+    @Override
     public Collection<SchemaVersionInfo> getAllSchemaVersionsWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
@@ -154,13 +260,12 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
-    public SchemaVersionInfo getSchemaVersionWithAuthorization
+    public void getSchemaVersionWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
-             String schemaBranchName,
-             Integer schemaVersion,
-             SupplierWithSchemaNotFoundException<SchemaVersionInfo> func)
-            throws SchemaNotFoundException, AuthorizationException {
+             String schemaBranchName)
+            throws AuthorizationException {
+
         SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
@@ -172,9 +277,9 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                 getUserNameFromSC(sc),
                 getUserGroupsFromSC(sc));
         raiseAuthorizationExceptionIfNeeded(hasAccessToVersion);
-
-        return func.get();
     }
+
+
 
     private String getUserNameFromSC(SecurityContext sc) {
         //TODO: Add correct implementation
