@@ -11,7 +11,7 @@
 #  limitations under the License.
 language: java
 jdk:
-  - oraclejdk8
+  - openjdk8
 install: /bin/bash ./dev-tools/travis/travis-install.sh `pwd`
 script:
   - /bin/bash ./dev-tools/travis/travis-script.sh `pwd`
