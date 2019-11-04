@@ -729,7 +729,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent
                     .getSchemaVersionWithAuthorization(securityContext,
                             schemaRegistry.getSchemaMetadataInfo(schemaMetadata),
-                            schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                            schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
@@ -759,7 +759,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
             authorizationAgent.getSchemaVersionById(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaIdVersion.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
@@ -786,7 +786,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
             authorizationAgent.getSchemaVersionByFingerprint(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
@@ -831,7 +831,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
             authorizationAgent.authorizeVerisonStateOperation(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             schemaRegistry.enableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -867,7 +867,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
             authorizationAgent.authorizeVerisonStateOperation(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             schemaRegistry.disableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -900,7 +900,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
             authorizationAgent.authorizeVerisonStateOperation(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             schemaRegistry.archiveSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -934,7 +934,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
             authorizationAgent.authorizeVerisonStateOperation(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             schemaRegistry.deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -967,7 +967,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
             authorizationAgent.authorizeVerisonStateOperation(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             schemaRegistry.startSchemaVersionReview(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -1002,7 +1002,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
             authorizationAgent.authorizeVerisonStateOperation(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(versionId));
             schemaRegistry.transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -1278,7 +1278,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
             authorizationAgent.createSchemaBranch(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaBranch.getSchemaMetadataName()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName(),
+                    schemaRegistry.getSchemaBranchesForVersion(schemaVersionId),
                     schemaBranch.getName());
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
             return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK) ;
@@ -1307,7 +1307,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
             authorizationAgent.mergeSchemaVersion(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
-                    schemaVersionInfo.getMergeInfo().getSchemaBranchName());
+                    schemaRegistry.getSchemaBranchesForVersion(schemaVersionId));
             SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -1329,10 +1329,14 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branchId") Long schemaBranchId,
                                        @Context SecurityContext securityContext) {
         try {
-            //TODO: Implement authorization. For now, it is not possible ot get BranchName and ShcemaMetadata
-            // by branchId
+            SchemaBranch sb = schemaRegistry.getSchemaBranch(schemaBranchId);
+            authorizationAgent.deleteSchemaBranch(securityContext,
+                    schemaRegistry.getSchemaMetadataInfo(sb.getSchemaMetadataName()),
+                    sb.getName());
             schemaRegistry.deleteSchemaBranch(schemaBranchId);
             return WSUtils.respond(Response.Status.OK);
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaBranchId.toString());
         } catch (InvalidSchemaBranchDeletionException e) {

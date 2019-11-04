@@ -2,7 +2,6 @@ package com.hortonworks.registries.schemaregistry.authorization;
 
 import com.hortonworks.registries.schemaregistry.*;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import org.apache.hadoop.security.authorize.AuthorizationException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
@@ -61,7 +60,7 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     public void getSchemaVersionWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
-             String schemaBranchName) { }
+             Collection<SchemaBranch> branches) { }
 
     @Override
     public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
@@ -101,17 +100,17 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void getSchemaVersionById(SecurityContext securityContext,
                                      SchemaMetadataInfo schemaMetadataInfo,
-                                     String schemaBranch) { }
+                                     Collection<SchemaBranch> branches) { }
 
     @Override
     public void getSchemaVersionByFingerprint(SecurityContext securityContext,
                                               SchemaMetadataInfo schemaMetadataInfo,
-                                              String schemaBranch) { }
+                                              Collection<SchemaBranch> branches) { }
 
     @Override
     public void authorizeVerisonStateOperation(SecurityContext securityContext,
                                                SchemaMetadataInfo schemaMetadataInfo,
-                                               String schemaBranch) { }
+                                               Collection<SchemaBranch> branches) { }
 
     @Override
     public void checkCompatibilityWithSchema(SecurityContext securityContext,
@@ -152,13 +151,13 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void createSchemaBranch(SecurityContext securityContext,
                                    SchemaMetadataInfo schemaMetadataInfo,
-                                   String schemaBranch,
+                                   Collection<SchemaBranch> branches,
                                    String branchTocreate) { }
 
     @Override
     public void mergeSchemaVersion(SecurityContext securityContext,
                                    SchemaMetadataInfo schemaMetadataInfo,
-                                   String schemaBranch) { }
+                                   Collection<SchemaBranch> schemaBranches) { }
 
     @Override
     public void deleteSchemaBranch(SecurityContext securityContext,

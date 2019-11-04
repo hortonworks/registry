@@ -162,17 +162,17 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
-    public void getSchemaVersionById(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void getSchemaVersionById(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
 
     }
 
     @Override
-    public void getSchemaVersionByFingerprint(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void getSchemaVersionByFingerprint(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
 
     }
 
     @Override
-    public void authorizeVerisonStateOperation(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void authorizeVerisonStateOperation(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
 
     }
 
@@ -222,12 +222,12 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
-    public void createSchemaBranch(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch, String branchTocreate) throws AuthorizationException {
+    public void createSchemaBranch(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches, String branchTocreate) throws AuthorizationException {
 
     }
 
     @Override
-    public void mergeSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void mergeSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> schemaBranches) throws AuthorizationException {
 
     }
 
@@ -263,19 +263,20 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     public void getSchemaVersionWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
-             String schemaBranchName)
+             Collection<SchemaBranch> branches)
             throws AuthorizationException {
 
         SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
 
-        boolean hasAccessToVersion = authorizer.authorizeSchemaVersion(sGroup,
-                sName,
-                schemaBranchName,
-                Authorizer.ACCESS_TYPE_READ,
-                getUserNameFromSC(sc),
-                getUserGroupsFromSC(sc));
+        boolean hasAccessToVersion = branches.stream().anyMatch(schemaBranch ->
+                authorizer.authorizeSchemaVersion(sGroup,
+                        sName,
+                        schemaBranch.getName(),
+                        Authorizer.ACCESS_TYPE_READ,
+                        getUserNameFromSC(sc),
+                        getUserGroupsFromSC(sc)));
         raiseAuthorizationExceptionIfNeeded(hasAccessToVersion);
     }
 

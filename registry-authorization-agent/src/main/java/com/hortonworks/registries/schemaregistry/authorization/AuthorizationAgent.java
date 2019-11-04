@@ -55,7 +55,7 @@ public interface AuthorizationAgent {
     void getSchemaVersionWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
-             String schemaBranchName)
+             Collection<SchemaBranch> branches)
             throws SchemaNotFoundException, AuthorizationException;
 
     void deleteSchemaMetadataWithAuthorization
@@ -80,17 +80,17 @@ public interface AuthorizationAgent {
 
     void getSchemaVersionById(SecurityContext securityContext,
                               SchemaMetadataInfo schemaMetadataInfo,
-                              String schemaBranch)
+                              Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
     void getSchemaVersionByFingerprint(SecurityContext securityContext,
-                                   SchemaMetadataInfo schemaMetadataInfo,
-                                   String schemaBranch)
+                                       SchemaMetadataInfo schemaMetadataInfo,
+                                       Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
     void authorizeVerisonStateOperation(SecurityContext securityContext,
-                                       SchemaMetadataInfo schemaMetadataInfo,
-                                       String schemaBranch)
+                                        SchemaMetadataInfo schemaMetadataInfo,
+                                        Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
     void checkCompatibilityWithSchema(SecurityContext securityContext,
@@ -124,13 +124,13 @@ public interface AuthorizationAgent {
 
     void createSchemaBranch(SecurityContext securityContext,
                             SchemaMetadataInfo schemaMetadataInfo,
-                            String schemaBranch,
+                            Collection<SchemaBranch> branches,
                             String branchTocreate)
             throws AuthorizationException;
 
     void mergeSchemaVersion(SecurityContext securityContext,
                             SchemaMetadataInfo schemaMetadataInfo,
-                            String schemaBranch)
+                            Collection<SchemaBranch> schemaBranches)
             throws AuthorizationException;
 
     void deleteSchemaBranch(SecurityContext securityContext,
