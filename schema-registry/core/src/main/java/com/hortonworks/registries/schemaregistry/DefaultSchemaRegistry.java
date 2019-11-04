@@ -966,7 +966,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return schemaBranchStorables.iterator().next().toSchemaBranch();
     }
 
-    private SchemaBranch getSchemaBranch(Long id) throws SchemaBranchNotFoundException {
+    @Override
+    public SchemaBranch getSchemaBranch (Long id) throws SchemaBranchNotFoundException {
         List<QueryParam> schemaBranchQueryParam = new ArrayList<>();
         schemaBranchQueryParam.add(new QueryParam(SchemaBranchStorable.ID, id.toString()));
         Collection<SchemaBranchStorable> schemaBranchStorables = storageManager.find(SchemaBranchStorable.NAME_SPACE, schemaBranchQueryParam);
@@ -974,6 +975,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             throw new SchemaBranchNotFoundException(String.format("Schema branch with id : '%s' not found", id.toString()));
         // size of the collection will always be less than 2, as ID is a primary key, so no need handle the case where size > 1
         return schemaBranchStorables.iterator().next().toSchemaBranch();
+    }
+
+    @Override
+    public Collection<SchemaBranch> getSchemaBranchesForVersion(Long vertionId) throws SchemaBranchNotFoundException {
+        return schemaVersionLifecycleManager.getSchemaBranches(vertionId);
     }
 
 

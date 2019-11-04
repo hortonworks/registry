@@ -164,6 +164,24 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      */
     Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
+    /**
+     * @param schemaBranchId id of the branch
+     *
+     * @return schema branch with with the given {@code schemaBranchId}
+     *
+     * @throws SchemaBranchNotFoundException if there is no schema branch registered with the given {@code schemaBranchId}
+     */
+    SchemaBranch getSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException;
+
+    /**
+     * @param vertionId id of the schema version
+     *
+     * @return Collection schema branches that contain the given {@code vertionId}
+     *
+     * @throws SchemaBranchNotFoundException if there is no schema version registered with the given {@code vertionId}
+     */
+    Collection<SchemaBranch> getSchemaBranchesForVersion(Long vertionId) throws SchemaBranchNotFoundException;
+
 
     /**
      *  Invalidates a cache entry given its cache type and its key, invalidates all entries in all the caches if the cache type is 'ALL'
