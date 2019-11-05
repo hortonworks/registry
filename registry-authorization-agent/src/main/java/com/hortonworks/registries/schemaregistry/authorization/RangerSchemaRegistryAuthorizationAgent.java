@@ -280,7 +280,10 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         raiseAuthorizationExceptionIfNeeded(hasAccessToVersion);
     }
 
-
+    private SchemaBranch getPrimaryBranch(Collection<SchemaBranch> branches) {
+        return branches.stream().min((b1, b2) -> b1.getId() < b2.getId() ? -1 :
+                b1.getId() > b2.getId() ? 1 : 0).get();
+    }
 
     private String getUserNameFromSC(SecurityContext sc) {
         //TODO: Add correct implementation
