@@ -20,15 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgentFactory;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
-import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersion;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -37,6 +33,7 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +42,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -68,8 +62,13 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     private static final String OPERATION_GROUP_CONFLUENT_SR = "4. Confluent Schema Registry compatible API";
 
+    private final AuthorizationAgent authorizationAgent;
+
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         super(schemaRegistry, leadershipParticipant);
+
+        //TODO: Security is hardcoded should be read from config.
+        this.authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(true);
     }
 
     @GET
@@ -78,13 +77,19 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
-    public Response getSchemaById(@ApiParam(value = "schema version id", required = true) @PathParam("id") Long id) {
+    public Response getSchemaById(@ApiParam(value = "schema version id", required = true) @PathParam("id") Long id,
+                                  @Context SecurityContext securityContext) {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
+            authorizationAgent.getSchemaVersionById(securityContext,
+                    schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
+                    schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             SchemaString schema = new SchemaString();
             schema.setSchema(schemaVersionInfo.getSchemaText());
             response = WSUtils.respondEntity(schema, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema version found with id [{}]", id, ex);
             response = schemaNotFoundError();
@@ -101,11 +106,12 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             response = String.class, responseContainer = "List", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
-    public Response getSubjects() {
+    public Response getSubjects(@Context SecurityContext securityContext) {
         Response response;
         try {
-            List<String> registeredSubjects = schemaRegistry.findSchemaMetadata(Collections.emptyMap())
-                                                            .stream()
+            List<String> registeredSubjects = authorizationAgent.getSubjects(securityContext,
+                    schemaRegistry.findSchemaMetadata(Collections.emptyMap())
+                                                            .stream())
                                                             .map(x -> x.getSchemaMetadata().getName())
                                                             .collect(Collectors.toList());
 
@@ -174,13 +180,16 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @UnitOfWork
     public Response getAllVersions(@ApiParam(value = "subject", required = true)
                                    @PathParam("subject")
-                                           String subject) {
+                                           String subject,
+                                   @Context SecurityContext securityContext) {
         Response response;
         try {
-            List<Integer> registeredSubjects = schemaRegistry.getAllVersions(subject)
-                                                             .stream()
-                                                             .map(SchemaVersionInfo::getVersion)
-                                                             .collect(Collectors.toList());
+            List<Integer> registeredSubjects = authorizationAgent.getAllVersions(securityContext,
+                    schemaRegistry.getAllVersions(subject).stream(),
+                    schemaRegistry::getSchemaMetadataInfo,
+                    schemaRegistry::getSchemaBranchesForVersion)
+                    .map(SchemaVersionInfo::getVersion)
+                    .collect(Collectors.toList());
 
             response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
         } catch (SchemaNotFoundException ex) {
@@ -204,15 +213,15 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                              String subject,
                                      @ApiParam(value = "versionId", required = true)
                                      @PathParam("versionId")
-                                             String versionId) {
+                                             String versionId,
+                                     @Context SecurityContext securityContext) {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = null;
-
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
             if ("latest".equals(versionId)) {
                 schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(subject);
             } else {
-                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 if (schemaMetadataInfo == null) {
                     throw new SchemaNotFoundException();
                 }
@@ -243,12 +252,17 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo == null) {
                 response = versionNotFoundError();
             } else {
+                authorizationAgent.getSchemaVersionById(securityContext,
+                        schemaMetadataInfo,
+                        schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
                 Schema schema = new Schema(schemaVersionInfo.getName(),
                                                                                schemaVersionInfo.getVersion(),
                                                                                schemaVersionInfo.getId(),
                                                                                schemaVersionInfo.getSchemaText());
                 response = WSUtils.respondEntity(schema, Response.Status.OK);
             }
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
@@ -265,16 +279,21 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @Timed
     @UnitOfWork
     public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
-                                         @ApiParam(value = "The schema ", required = true) String schema) {
+                                         @ApiParam(value = "The schema ", required = true) String schema,
+                                         @Context SecurityContext securityContext) {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
 
             if (schemaVersionInfo != null) {
+                authorizationAgent.getSchemaVersionById(securityContext,schemaRegistry.getSchemaMetadataInfo(subject),
+                        schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
                 response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
+        } catch (AuthorizationException e) {
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
         } catch (InvalidSchemaException ex) {
             LOG.error("Given schema is invalid", ex);
             response = invalidSchemaError();
@@ -302,7 +321,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                            String subject,
                                    @ApiParam(value = "Details about the schema", required = true)
                                            String schema,
-                                   @Context UriInfo uriInfo) {
+                                   @Context UriInfo uriInfo,
+                                   @Context SecurityContext securityContext) {
         LOG.info("registerSchema for [{}] is [{}]", subject);
         return handleLeaderAction(uriInfo, () -> {
             Response response;
@@ -314,11 +334,12 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                             .type(AvroSchemaProvider.TYPE)
                             .schemaGroup("Kafka")
                             .build();
-
+                    authorizationAgent.addSchemaInfoWithAuthorization(securityContext, schemaMetadata);
                     schemaRegistry.addSchemaMetadata(schemaMetadata);
                     schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }
 
+                authorizationAgent.addSchemaVersion(securityContext, schemaMetadataInfo, SchemaBranch.MASTER_BRANCH);
                 SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                     new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
 
@@ -326,6 +347,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 id.setId(schemaVersionInfo.getSchemaVersionId());
                 response = WSUtils.respondEntity(id, Response.Status.OK);
 
+            } catch (AuthorizationException e) {
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
                 response = invalidSchemaError();

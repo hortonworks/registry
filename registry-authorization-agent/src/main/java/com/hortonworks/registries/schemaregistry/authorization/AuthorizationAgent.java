@@ -1,14 +1,17 @@
 package com.hortonworks.registries.schemaregistry.authorization;
 
 import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public interface AuthorizationAgent {
 
@@ -138,6 +141,13 @@ public interface AuthorizationAgent {
                             String schemaBranch)
             throws AuthorizationException;
 
+    ///////////////// ConfluentCompatible APIs //////////////////////////////
+    Stream<SchemaMetadataInfo> getSubjects(SecurityContext securityContext, Stream<SchemaMetadataInfo> stream);
+
+    Stream<SchemaVersionInfo> getAllVersions(SecurityContext securityContext, Stream<SchemaVersionInfo> vStream,
+                                             FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc,
+                                             FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches);
+
     @FunctionalInterface
     interface SupplierWithSchemaNotFoundException<T> {
         T get() throws SchemaNotFoundException;
@@ -146,5 +156,10 @@ public interface AuthorizationAgent {
     @FunctionalInterface
     interface FunctionWithSchemaNotFoundException<T, R> {
         R apply(T arg) throws SchemaNotFoundException;
+    }
+
+    @FunctionalInterface
+    interface FunctionWithBranchSchemaNotFoundException<T, R> {
+        R apply(T arg) throws SchemaBranchNotFoundException;
     }
 }
