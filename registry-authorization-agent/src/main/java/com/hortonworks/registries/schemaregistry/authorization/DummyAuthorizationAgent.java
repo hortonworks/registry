@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class DummyAuthorizationAgent implements AuthorizationAgent {
 
@@ -57,12 +58,6 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void getSchemaVersionWithAuthorization
-            (SecurityContext sc,
-             SchemaMetadataInfo schemaMetadataInfo,
-             Collection<SchemaBranch> branches) { }
-
-    @Override
     public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
             (SecurityContext sc,
              SupplierWithSchemaNotFoundException<Collection<AggregatedSchemaMetadataInfo>> func)
@@ -83,11 +78,6 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void uploadSchemaVersion(SecurityContext securityContext,
-                                    SchemaMetadataInfo schemaMetadataInfo,
-                                    String schemaBranch) { }
-
-    @Override
     public void addSchemaVersion(SecurityContext securityContext,
                                  SchemaMetadataInfo schemaMetadataInfo,
                                  String schemaBranch) { }
@@ -98,14 +88,9 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
                                        String schemaBranch) { }
 
     @Override
-    public void getSchemaVersionById(SecurityContext securityContext,
-                                     SchemaMetadataInfo schemaMetadataInfo,
-                                     Collection<SchemaBranch> branches) { }
-
-    @Override
-    public void getSchemaVersionByFingerprint(SecurityContext securityContext,
-                                              SchemaMetadataInfo schemaMetadataInfo,
-                                              Collection<SchemaBranch> branches) { }
+    public void authorizeGetSchemaVersion(SecurityContext securityContext,
+                                          SchemaMetadataInfo schemaMetadataInfo,
+                                          Collection<SchemaBranch> branches) { }
 
     @Override
     public void authorizeVerisonStateOperation(SecurityContext securityContext,
@@ -139,7 +124,7 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void deleteSchemaVersion(SecurityContext securityContext,
                                     SchemaMetadataInfo schemaMetadataInfo,
-                                    String schemaBranch) { }
+                                    Collection<SchemaBranch> branches) { }
 
     @Override
     public Collection<SchemaBranch> getAllBranches(SecurityContext securityContext,
@@ -163,4 +148,14 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     public void deleteSchemaBranch(SecurityContext securityContext,
                                    SchemaMetadataInfo schemaMetadataInfo,
                                    String schemaBranch) { }
+
+    @Override
+    public Stream<SchemaMetadataInfo> getSubjects(SecurityContext securityContext, Stream<SchemaMetadataInfo> stream) {
+        return stream;
+    }
+
+    @Override
+    public Stream<SchemaVersionInfo> getAllVersions(SecurityContext securityContext, Stream<SchemaVersionInfo> vStream, FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc, FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches) {
+        return vStream;
+    }
 }

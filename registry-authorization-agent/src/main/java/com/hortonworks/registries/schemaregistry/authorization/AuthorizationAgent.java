@@ -8,7 +8,6 @@ import org.apache.hadoop.security.authorize.AuthorizationException;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -55,21 +54,11 @@ public interface AuthorizationAgent {
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionInfo>> func)
             throws SchemaNotFoundException, AuthorizationException;
 
-    void getSchemaVersionWithAuthorization
-            (SecurityContext sc,
-             SchemaMetadataInfo schemaMetadataInfo,
-             Collection<SchemaBranch> branches)
-            throws SchemaNotFoundException, AuthorizationException;
-
     void deleteSchemaMetadataWithAuthorization
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo)
             throws AuthorizationException;
 
-    void uploadSchemaVersion(SecurityContext securityContext,
-                             SchemaMetadataInfo schemaMetadataInfo,
-                             String schemaBranch)
-            throws AuthorizationException;
 
     void addSchemaVersion(SecurityContext securityContext,
                           SchemaMetadataInfo schemaMetadataInfo,
@@ -81,15 +70,11 @@ public interface AuthorizationAgent {
                                 String schemaBranch)
         throws AuthorizationException;
 
-    void getSchemaVersionById(SecurityContext securityContext,
-                              SchemaMetadataInfo schemaMetadataInfo,
-                              Collection<SchemaBranch> branches)
+    void authorizeGetSchemaVersion(SecurityContext securityContext,
+                                   SchemaMetadataInfo schemaMetadataInfo,
+                                   Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
-    void getSchemaVersionByFingerprint(SecurityContext securityContext,
-                                       SchemaMetadataInfo schemaMetadataInfo,
-                                       Collection<SchemaBranch> branches)
-            throws AuthorizationException;
 
     void authorizeVerisonStateOperation(SecurityContext securityContext,
                                         SchemaMetadataInfo schemaMetadataInfo,
@@ -117,7 +102,7 @@ public interface AuthorizationAgent {
 
     void deleteSchemaVersion(SecurityContext securityContext,
                              SchemaMetadataInfo schemaMetadataInfo,
-                             String schemaBranch)
+                             Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
     Collection<SchemaBranch> getAllBranches(SecurityContext securityContext,

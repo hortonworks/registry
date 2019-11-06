@@ -82,7 +82,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
-            authorizationAgent.getSchemaVersionById(securityContext,
+            authorizationAgent.authorizeGetSchemaVersion(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
                     schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             SchemaString schema = new SchemaString();
@@ -252,7 +252,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo == null) {
                 response = versionNotFoundError();
             } else {
-                authorizationAgent.getSchemaVersionById(securityContext,
+                authorizationAgent.authorizeGetSchemaVersion(securityContext,
                         schemaMetadataInfo,
                         schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
                 Schema schema = new Schema(schemaVersionInfo.getName(),
@@ -286,7 +286,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
 
             if (schemaVersionInfo != null) {
-                authorizationAgent.getSchemaVersionById(securityContext,schemaRegistry.getSchemaMetadataInfo(subject),
+                authorizationAgent.authorizeGetSchemaVersion(securityContext,schemaRegistry.getSchemaMetadataInfo(subject),
                         schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
                 response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {

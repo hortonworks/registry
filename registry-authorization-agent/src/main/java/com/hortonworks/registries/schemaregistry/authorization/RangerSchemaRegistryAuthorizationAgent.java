@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.Authorizer;
@@ -28,6 +29,17 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
 
     @Override
     public AggregatedSchemaMetadataInfo getAggregatedSchemaInfo(SecurityContext sc, AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) throws AuthorizationException {
+        String sGroup = aggregatedSchemaMetadataInfo.getSchemaMetadata().getSchemaGroup();
+        String sName = aggregatedSchemaMetadataInfo.getSchemaMetadata().getName();
+
+        boolean accessToSchemaMetadata = authorizer.authorizeSchema(sGroup,
+                sName,
+                Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+
+        raiseAuthorizationExceptionIfNeeded(accessToSchemaMetadata);
+
         return null;
     }
 
@@ -147,93 +159,215 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
-    public void uploadSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-
+    public void addSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_CREATE);
     }
 
     @Override
-    public void addSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-
+    public void getLatestSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_READ);
     }
 
     @Override
-    public void getLatestSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void authorizeGetSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_READ);
+    }
 
+
+    @Override
+    public void authorizeVerisonStateOperation(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_UPDATE);
     }
 
     @Override
-    public void getSchemaVersionById(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
-
+    public void checkCompatibilityWithSchema(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_READ);
     }
 
     @Override
-    public void getSchemaVersionByFingerprint(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
+    public void getSerializers(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
+        boolean hasAccessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
 
+        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+        String sGroup = sM.getSchemaGroup();
+        String sName = sM.getName();
+        boolean hasAccesToSchema = authorizer.authorizeSchema(sGroup,
+                sName,
+                Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes && hasAccesToSchema);
     }
 
     @Override
-    public void authorizeVerisonStateOperation(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
-
+    public void uploadFile(SecurityContext sc) throws AuthorizationException {
+        boolean hasAccessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes);
     }
 
     @Override
-    public void checkCompatibilityWithSchema(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-
+    public void downloadFile(SecurityContext sc) throws AuthorizationException {
+        boolean hasAccessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes);
     }
 
     @Override
-    public void getSerializers(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
-
+    public void addSerDes(SecurityContext sc) throws AuthorizationException {
+        boolean hasAccessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_CREATE,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes);
     }
 
     @Override
-    public void uploadFile(SecurityContext securityContext) throws AuthorizationException {
-
+    public void getSerDes(SecurityContext sc) throws AuthorizationException {
+        boolean hasAccessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes);
     }
 
     @Override
-    public void downloadFile(SecurityContext securityContext) throws AuthorizationException {
-
+    public void mapSchemaWithSerDes(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
+        boolean hasAccessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes);
     }
 
     @Override
-    public void addSerDes(SecurityContext securityContext) throws AuthorizationException {
-
+    public void deleteSchemaVersion(SecurityContext sc,
+                                    SchemaMetadataInfo schemaMetadataInfo,
+                                    Collection<SchemaBranch> branches) throws AuthorizationException {
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_READ);
     }
 
     @Override
-    public void getSerDes(SecurityContext securityContext) throws AuthorizationException {
+    public Collection<SchemaBranch> getAllBranches(SecurityContext sc,
+                                                   SchemaMetadataInfo schemaMetadataInfo,
+                                                   SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func)
+            throws SchemaNotFoundException {
+        return func.get().stream().filter(branch -> {
+            SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+            String sGroup = sM.getSchemaGroup();
+            String sName = sM.getName();
 
+            return authorizer.authorizeSchemaBranch(sGroup,
+                    sName,
+                    branch.getName(),
+                    Authorizer.ACCESS_TYPE_READ,
+                    getUserNameFromSC(sc),
+                    getUserGroupsFromSC(sc));
+        }).collect(Collectors.toList());
     }
 
     @Override
-    public void mapSchemaWithSerDes(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
+    public void createSchemaBranch(SecurityContext sc,
+                                   SchemaMetadataInfo schemaMetadataInfo,
+                                   Collection<SchemaBranch> branches,
+                                   String branchTocreate) throws AuthorizationException {
+        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+        String sGroup = sM.getSchemaGroup();
+        String sName = sM.getName();
 
+        boolean permsToCreateBranches = authorizer.authorizeSchemaBranch(sGroup,
+                sName,
+                branchTocreate,
+                Authorizer.ACCESS_TYPE_CREATE,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+
+        boolean permsToReadVersions= authorizer.authorizeSchemaVersion(sGroup,
+                sName,
+                getPrimaryBranch(branches).getName(),
+                Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+
+        raiseAuthorizationExceptionIfNeeded(permsToCreateBranches && permsToReadVersions);
     }
 
     @Override
-    public void deleteSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void mergeSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches)
+            throws AuthorizationException {
+        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+        String sGroup = sM.getSchemaGroup();
+        String sName = sM.getName();
 
+        boolean permsToReadVersions = authorizer.authorizeSchemaVersion(sGroup,
+                sName,
+                getPrimaryBranch(branches).getName(),
+                Authorizer.ACCESS_TYPE_READ,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+
+        boolean permsToCreateVersions = authorizer.authorizeSchemaVersion(sGroup,
+                sName,
+                SchemaBranch.MASTER_BRANCH,
+                Authorizer.ACCESS_TYPE_CREATE,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+
+        raiseAuthorizationExceptionIfNeeded(permsToCreateVersions && permsToReadVersions);
     }
 
     @Override
-    public Collection<SchemaBranch> getAllBranches(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func) throws SchemaNotFoundException {
-        return null;
+    public void deleteSchemaBranch(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch)
+            throws AuthorizationException {
+        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+        String sGroup = sM.getSchemaGroup();
+        String sName = sM.getName();
+
+        boolean permsToDelete = authorizer.authorizeSchemaBranch(sGroup,
+                sName,
+                schemaBranch,
+                Authorizer.ACCESS_TYPE_DELETE,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(permsToDelete);
+    }
+
+    ///////////////////// ConfluenceCompatible APIs /////////////////////
+
+    @Override
+    public Stream<SchemaMetadataInfo> getSubjects(SecurityContext sc, Stream<SchemaMetadataInfo> stream) {
+        return stream.filter(sM ->
+                authorizer.authorizeSchema(sM.getSchemaMetadata().getSchemaGroup(),
+                        sM.getSchemaMetadata().getName(),
+                        Authorizer.ACCESS_TYPE_READ,
+                        getUserNameFromSC(sc),
+                        getUserGroupsFromSC(sc)));
     }
 
     @Override
-    public void createSchemaBranch(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches, String branchTocreate) throws AuthorizationException {
+    public Stream<SchemaVersionInfo> getAllVersions(SecurityContext sc,
+                                                    Stream<SchemaVersionInfo> vStream,
+                                                    FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc,
+                                                    FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches) {
+        return vStream.filter(schemaVersionInfo -> {
+            SchemaMetadata sM;
+            try {
+                sM = getMetadataFunc.apply(schemaVersionInfo.getSchemaMetadataId()).getSchemaMetadata();
+            } catch (SchemaNotFoundException e) {
+               throw new RuntimeException(e);
+            }
+            String sGroup = sM.getSchemaGroup();
+            String sName = sM.getName();
+            String sBranch = getPrimaryBranch(getBranches.apply(schemaVersionInfo.getId())).getName();
 
-    }
-
-    @Override
-    public void mergeSchemaVersion(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> schemaBranches) throws AuthorizationException {
-
-    }
-
-    @Override
-    public void deleteSchemaBranch(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-
+            return authorizer.authorizeSchemaVersion(sGroup,
+                    sName,
+                    sBranch,
+                    Authorizer.ACCESS_TYPE_READ,
+                    getUserNameFromSC(sc),
+                    getUserGroupsFromSC(sc));
+        });
     }
 
     @Override
@@ -259,25 +393,21 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         return func.get();
     }
 
-    @Override
-    public void getSchemaVersionWithAuthorization
-            (SecurityContext sc,
-             SchemaMetadataInfo schemaMetadataInfo,
-             Collection<SchemaBranch> branches)
-            throws AuthorizationException {
-
+    private void authorizeSchemaVersionOpInternal(SecurityContext sc,
+                                                  SchemaMetadataInfo schemaMetadataInfo,
+                                                  String schemaBranch,
+                                                  String accessType) throws AuthorizationException {
         SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
 
-        boolean hasAccessToVersion = branches.stream().anyMatch(schemaBranch ->
-                authorizer.authorizeSchemaVersion(sGroup,
-                        sName,
-                        schemaBranch.getName(),
-                        Authorizer.ACCESS_TYPE_READ,
-                        getUserNameFromSC(sc),
-                        getUserGroupsFromSC(sc)));
-        raiseAuthorizationExceptionIfNeeded(hasAccessToVersion);
+        boolean hasAccess = authorizer.authorizeSchemaVersion(sGroup,
+                sName,
+                schemaBranch,
+                accessType,
+                getUserNameFromSC(sc),
+                getUserGroupsFromSC(sc));
+        raiseAuthorizationExceptionIfNeeded(hasAccess);
     }
 
     private SchemaBranch getPrimaryBranch(Collection<SchemaBranch> branches) {
