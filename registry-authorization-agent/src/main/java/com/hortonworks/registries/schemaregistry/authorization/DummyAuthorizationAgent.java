@@ -60,9 +60,9 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     @Override
     public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
             (SecurityContext sc,
-             SupplierWithSchemaNotFoundException<Collection<AggregatedSchemaMetadataInfo>> func)
+             Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList)
             throws SchemaNotFoundException {
-        return func.get();
+        return aggregatedSchemaMetadataInfoList.get();
     }
 
     @Override

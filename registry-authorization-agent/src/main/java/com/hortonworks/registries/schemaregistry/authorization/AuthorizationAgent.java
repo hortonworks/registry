@@ -16,8 +16,7 @@ public interface AuthorizationAgent {
 
     Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
             (SecurityContext sc,
-             SupplierWithSchemaNotFoundException<Collection<AggregatedSchemaMetadataInfo>> func)
-            throws SchemaNotFoundException;
+             Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList);
 
     AggregatedSchemaMetadataInfo getAggregatedSchemaInfo(SecurityContext sc,
                                                          AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)

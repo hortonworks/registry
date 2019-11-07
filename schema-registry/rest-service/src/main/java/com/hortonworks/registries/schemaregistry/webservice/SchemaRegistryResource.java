@@ -159,8 +159,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
             Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = authorizationAgent
-            .listAggregatedSchemas(securityContext,
-                    () -> schemaRegistry.findAggregatedSchemaMetadata(filters));
+            .listAggregatedSchemas(securityContext, schemaRegistry.findAggregatedSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {

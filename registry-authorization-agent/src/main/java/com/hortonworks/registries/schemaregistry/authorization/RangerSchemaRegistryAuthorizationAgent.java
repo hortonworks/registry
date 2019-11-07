@@ -7,6 +7,7 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -23,8 +24,18 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     private Authorizer authorizer = new RangerSchemaRegistryAuthorizer();
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas(SecurityContext sc, SupplierWithSchemaNotFoundException<Collection<AggregatedSchemaMetadataInfo>> func) throws SchemaNotFoundException {
-        return null;
+    public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
+            (SecurityContext sc,
+             Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
+        return aggregatedSchemaMetadataInfoList
+                .stream().map(aggregatedSchemaMetadataInfo -> {
+                    try {
+                        return getAggregatedSchemaInfo(sc, aggregatedSchemaMetadataInfo);
+                    } catch (AuthorizationException e) {
+                        return null;
+                    }
+                }).filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -32,14 +43,34 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         String sGroup = aggregatedSchemaMetadataInfo.getSchemaMetadata().getSchemaGroup();
         String sName = aggregatedSchemaMetadataInfo.getSchemaMetadata().getName();
 
+        String user = getUserNameFromSC(sc);
+        Set<String> userGroups = getUserGroupsFromSC(sc);
+
         boolean accessToSchemaMetadata = authorizer.authorizeSchema(sGroup,
                 sName,
                 Authorizer.ACCESS_TYPE_READ,
-                getUserNameFromSC(sc),
-                getUserGroupsFromSC(sc));
+                user,
+                userGroups);
 
         raiseAuthorizationExceptionIfNeeded(accessToSchemaMetadata);
+        Collection<AggregatedSchemaBranch> filteredBranches = aggregatedSchemaMetadataInfo
+                .getSchemaBranches()
+                .stream().map(branch -> filterAggregatedBranch(user, userGroups, branch))
+                .filter(Objects::nonNull).collect(Collectors.toList());
 
+        boolean accessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ, user, userGroups);
+        raiseAuthorizationExceptionIfNeeded(accessToSerdes);
+
+        return new AggregatedSchemaMetadataInfo(aggregatedSchemaMetadataInfo.getSchemaMetadata(),
+                aggregatedSchemaMetadataInfo.getId(),
+                aggregatedSchemaMetadataInfo.getTimestamp(),
+                filteredBranches,
+                aggregatedSchemaMetadataInfo.getSerDesInfos());
+    }
+
+    private AggregatedSchemaBranch filterAggregatedBranch(String user,
+                                                           Set<String> userGroups,
+                                                           AggregatedSchemaBranch branch) {
         return null;
     }
 
