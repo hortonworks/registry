@@ -14,46 +14,46 @@ import java.util.stream.Stream;
 
 public interface AuthorizationAgent {
 
-    Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
+    Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas
             (SecurityContext sc,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList);
 
-    AggregatedSchemaMetadataInfo getAggregatedSchemaInfo(SecurityContext sc,
-                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
+    AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(SecurityContext sc,
+                                                                  AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
             throws AuthorizationException;
 
-    Collection<SchemaMetadataInfo> findSchemas(SecurityContext sc,
-                                               Supplier<Collection<SchemaMetadataInfo>> func);
+    Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
+                                                        Supplier<Collection<SchemaMetadataInfo>> func);
 
-    List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(SecurityContext sc,
-                                                             List<AggregatedSchemaMetadataInfo> asmi);
+    List<AggregatedSchemaMetadataInfo> authorizeFindAggregatedSchemas(SecurityContext sc,
+                                                                      List<AggregatedSchemaMetadataInfo> asmi);
 
-    Collection<SchemaVersionKey> findSchemasByFieldsWithAuthorization
+    Collection<SchemaVersionKey> authorizeFindSchemasByFields
             (SecurityContext sc,
              Function<String, SchemaMetadataInfo> getSchemaMetadataFunc,
              FunctionWithSchemaNotFoundException<SchemaVersionKey, SchemaVersionInfo> getVersionInfoFunc,
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionKey>> func)
             throws SchemaNotFoundException;
 
-    void  addSchemaInfoWithAuthorization(SecurityContext sc, SchemaMetadata schemaMetadata)
+    void authorizeAddSchemaInfo(SecurityContext sc, SchemaMetadata schemaMetadata)
             throws AuthorizationException;
 
-    void updateSchemaInfoWithAuthorization(SecurityContext sc, SchemaMetadata schemaMetadata)
+    void authorizeUpdateSchemaInfo(SecurityContext sc, SchemaMetadata schemaMetadata)
             throws AuthorizationException;
 
-    SchemaMetadataInfo getSchemaInfoWithAuthorization
+    SchemaMetadataInfo authorizeGetSchemaInfo
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo)
             throws AuthorizationException;
 
-    Collection<SchemaVersionInfo> getAllSchemaVersionsWithAuthorization
+    Collection<SchemaVersionInfo> authorizeGetAllSchemaVersions
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
              String schemaBranchName,
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionInfo>> func)
             throws SchemaNotFoundException, AuthorizationException;
 
-    void deleteSchemaMetadataWithAuthorization
+    void authorizeDeleteSchemaMetadata
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo)
             throws AuthorizationException;
@@ -64,9 +64,9 @@ public interface AuthorizationAgent {
                           String schemaBranch)
             throws AuthorizationException;
 
-    void getLatestSchemaVersion(SecurityContext securityContext,
-                                SchemaMetadataInfo schemaMetadataInfo,
-                                String schemaBranch)
+    void authorizeGetLatestSchemaVersion(SecurityContext securityContext,
+                                         SchemaMetadataInfo schemaMetadataInfo,
+                                         String schemaBranch)
         throws AuthorizationException;
 
     void authorizeGetSchemaVersion(SecurityContext securityContext,
@@ -75,62 +75,62 @@ public interface AuthorizationAgent {
             throws AuthorizationException;
 
 
-    void authorizeVerisonStateOperation(SecurityContext securityContext,
+    void authorizeVersionStateOperation(SecurityContext securityContext,
                                         SchemaMetadataInfo schemaMetadataInfo,
                                         Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
-    void checkCompatibilityWithSchema(SecurityContext securityContext,
-                                 SchemaMetadataInfo schemaMetadataInfo,
-                                 String schemaBranch)
+    void authorizeCheckCompatibilityWithSchema(SecurityContext securityContext,
+                                               SchemaMetadataInfo schemaMetadataInfo,
+                                               String schemaBranch)
             throws AuthorizationException;
 
-    void getSerializers(SecurityContext securityContext,
-                        SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException;
+    void authorizeGetSerializers(SecurityContext securityContext,
+                                 SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException;
 
-    void uploadFile (SecurityContext securityContext)  throws AuthorizationException;
+    void authorizeUploadFile(SecurityContext securityContext)  throws AuthorizationException;
 
-    void downloadFile (SecurityContext securityContext)  throws AuthorizationException;
+    void authorizeDownloadFile(SecurityContext securityContext)  throws AuthorizationException;
 
-    void addSerDes (SecurityContext securityContext)  throws AuthorizationException;
+    void authorizeAddSerDes(SecurityContext securityContext)  throws AuthorizationException;
 
-    void getSerDes (SecurityContext securityContext)  throws AuthorizationException;
+    void authorizeGetSerDes(SecurityContext securityContext)  throws AuthorizationException;
 
-    void mapSchemaWithSerDes(SecurityContext securityContext,
-                        SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException;
+    void authorizeMapSchemaWithSerDes(SecurityContext securityContext,
+                                      SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException;
 
-    void deleteSchemaVersion(SecurityContext securityContext,
-                             SchemaMetadataInfo schemaMetadataInfo,
-                             Collection<SchemaBranch> branches)
+    void authorizeDeleteSchemaVersion(SecurityContext securityContext,
+                                      SchemaMetadataInfo schemaMetadataInfo,
+                                      Collection<SchemaBranch> branches)
             throws AuthorizationException;
 
-    Collection<SchemaBranch> getAllBranches(SecurityContext securityContext,
-                                            SchemaMetadataInfo schemaMetadataInfo,
-                                            SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func)
+    Collection<SchemaBranch> authorizeGetAllBranches(SecurityContext securityContext,
+                                                     SchemaMetadataInfo schemaMetadataInfo,
+                                                     SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func)
             throws SchemaNotFoundException;
 
-    void createSchemaBranch(SecurityContext securityContext,
-                            SchemaMetadataInfo schemaMetadataInfo,
-                            Collection<SchemaBranch> branches,
-                            String branchTocreate)
+    void authorizeCreateSchemaBranch(SecurityContext securityContext,
+                                     SchemaMetadataInfo schemaMetadataInfo,
+                                     Collection<SchemaBranch> branches,
+                                     String branchTocreate)
             throws AuthorizationException;
 
-    void mergeSchemaVersion(SecurityContext securityContext,
-                            SchemaMetadataInfo schemaMetadataInfo,
-                            Collection<SchemaBranch> schemaBranches)
+    void authorizeMergeSchemaVersion(SecurityContext securityContext,
+                                     SchemaMetadataInfo schemaMetadataInfo,
+                                     Collection<SchemaBranch> schemaBranches)
             throws AuthorizationException;
 
-    void deleteSchemaBranch(SecurityContext securityContext,
-                            SchemaMetadataInfo schemaMetadataInfo,
-                            String schemaBranch)
+    void authorizeDeleteSchemaBranch(SecurityContext securityContext,
+                                     SchemaMetadataInfo schemaMetadataInfo,
+                                     String schemaBranch)
             throws AuthorizationException;
 
     ///////////////// ConfluentCompatible APIs //////////////////////////////
-    Stream<SchemaMetadataInfo> getSubjects(SecurityContext securityContext, Stream<SchemaMetadataInfo> stream);
+    Stream<SchemaMetadataInfo> authorizeGetSubjects(SecurityContext securityContext, Stream<SchemaMetadataInfo> stream);
 
-    Stream<SchemaVersionInfo> getAllVersions(SecurityContext securityContext, Stream<SchemaVersionInfo> vStream,
-                                             FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc,
-                                             FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches);
+    Stream<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext, Stream<SchemaVersionInfo> vStream,
+                                                      FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc,
+                                                      FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches);
 
     @FunctionalInterface
     interface SupplierWithSchemaNotFoundException<T> {

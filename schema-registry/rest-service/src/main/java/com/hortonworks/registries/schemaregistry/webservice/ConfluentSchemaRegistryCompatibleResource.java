@@ -109,7 +109,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     public Response getSubjects(@Context SecurityContext securityContext) {
         Response response;
         try {
-            List<String> registeredSubjects = authorizationAgent.getSubjects(securityContext,
+            List<String> registeredSubjects = authorizationAgent.authorizeGetSubjects(securityContext,
                     schemaRegistry.findSchemaMetadata(Collections.emptyMap())
                                                             .stream())
                                                             .map(x -> x.getSchemaMetadata().getName())
@@ -184,7 +184,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                    @Context SecurityContext securityContext) {
         Response response;
         try {
-            List<Integer> registeredSubjects = authorizationAgent.getAllVersions(securityContext,
+            List<Integer> registeredSubjects = authorizationAgent.authorizeGetAllVersions(securityContext,
                     schemaRegistry.getAllVersions(subject).stream(),
                     schemaRegistry::getSchemaMetadataInfo,
                     schemaRegistry::getSchemaBranchesForVersion)
@@ -334,7 +334,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                             .type(AvroSchemaProvider.TYPE)
                             .schemaGroup("Kafka")
                             .build();
-                    authorizationAgent.addSchemaInfoWithAuthorization(securityContext, schemaMetadata);
+                    authorizationAgent.authorizeAddSchemaInfo(securityContext, schemaMetadata);
                     schemaRegistry.addSchemaMetadata(schemaMetadata);
                     schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }

@@ -13,13 +13,13 @@ import java.util.stream.Stream;
 public class DummyAuthorizationAgent implements AuthorizationAgent {
 
     @Override
-    public Collection<SchemaMetadataInfo> findSchemas(SecurityContext sc,
-                                                      Supplier<Collection<SchemaMetadataInfo>> func) {
+    public Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
+                                                               Supplier<Collection<SchemaMetadataInfo>> func) {
         return func.get();
     }
 
     @Override
-    public Collection<SchemaVersionKey> findSchemasByFieldsWithAuthorization
+    public Collection<SchemaVersionKey> authorizeFindSchemasByFields
             (SecurityContext sc,
              Function<String, SchemaMetadataInfo> getSchemaMetadataFunc,
              FunctionWithSchemaNotFoundException<SchemaVersionKey, SchemaVersionInfo> getVersionInfoFunc,
@@ -30,25 +30,25 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void addSchemaInfoWithAuthorization(SecurityContext sc,
-                                               SchemaMetadata schemaMetadata) { }
+    public void authorizeAddSchemaInfo(SecurityContext sc,
+                                       SchemaMetadata schemaMetadata) { }
 
     @Override
-    public void updateSchemaInfoWithAuthorization(SecurityContext sc,
-                                                  SchemaMetadata schemaMetadata) { }
+    public void authorizeUpdateSchemaInfo(SecurityContext sc,
+                                          SchemaMetadata schemaMetadata) { }
 
     @Override
-    public SchemaMetadataInfo getSchemaInfoWithAuthorization(SecurityContext sc,
-                                                             SchemaMetadataInfo schemaMetadataInfo) {
+    public SchemaMetadataInfo authorizeGetSchemaInfo(SecurityContext sc,
+                                                     SchemaMetadataInfo schemaMetadataInfo) {
         return schemaMetadataInfo;
     }
 
     @Override
-    public void deleteSchemaMetadataWithAuthorization(SecurityContext sc,
-                                                      SchemaMetadataInfo schemaMetadataInfo) { }
+    public void authorizeDeleteSchemaMetadata(SecurityContext sc,
+                                              SchemaMetadataInfo schemaMetadataInfo) { }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllSchemaVersionsWithAuthorization
+    public Collection<SchemaVersionInfo> authorizeGetAllSchemaVersions
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo,
              String schemaBranchName,
@@ -58,7 +58,7 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> listAggregatedSchemas
+    public Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas
             (SecurityContext sc,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList)
             throws SchemaNotFoundException {
@@ -66,14 +66,14 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public AggregatedSchemaMetadataInfo getAggregatedSchemaInfo(SecurityContext sc,
-                                                                AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
+    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(SecurityContext sc,
+                                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
         return aggregatedSchemaMetadataInfo;
     }
 
     @Override
-    public List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(SecurityContext sc,
-                                                                    List<AggregatedSchemaMetadataInfo> asmi) {
+    public List<AggregatedSchemaMetadataInfo> authorizeFindAggregatedSchemas(SecurityContext sc,
+                                                                             List<AggregatedSchemaMetadataInfo> asmi) {
         return asmi;
     }
 
@@ -83,9 +83,9 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
                                  String schemaBranch) { }
 
     @Override
-    public void getLatestSchemaVersion(SecurityContext securityContext,
-                                       SchemaMetadataInfo schemaMetadataInfo,
-                                       String schemaBranch) { }
+    public void authorizeGetLatestSchemaVersion(SecurityContext securityContext,
+                                                SchemaMetadataInfo schemaMetadataInfo,
+                                                String schemaBranch) { }
 
     @Override
     public void authorizeGetSchemaVersion(SecurityContext securityContext,
@@ -93,69 +93,69 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
                                           Collection<SchemaBranch> branches) { }
 
     @Override
-    public void authorizeVerisonStateOperation(SecurityContext securityContext,
+    public void authorizeVersionStateOperation(SecurityContext securityContext,
                                                SchemaMetadataInfo schemaMetadataInfo,
                                                Collection<SchemaBranch> branches) { }
 
     @Override
-    public void checkCompatibilityWithSchema(SecurityContext securityContext,
+    public void authorizeCheckCompatibilityWithSchema(SecurityContext securityContext,
+                                                      SchemaMetadataInfo schemaMetadataInfo,
+                                                      String schemaBranch) { }
+
+    @Override
+    public void authorizeGetSerializers(SecurityContext securityContext,
+                                        SchemaMetadataInfo schemaMetadataInfo) { }
+
+    @Override
+    public void authorizeUploadFile(SecurityContext securityContext) { }
+
+    @Override
+    public void authorizeDownloadFile(SecurityContext securityContext) { }
+
+    @Override
+    public void authorizeAddSerDes(SecurityContext securityContext) { }
+
+    @Override
+    public void authorizeGetSerDes(SecurityContext securityContext) { }
+
+    @Override
+    public void authorizeMapSchemaWithSerDes(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo) { }
+
+    @Override
+    public void authorizeDeleteSchemaVersion(SecurityContext securityContext,
                                              SchemaMetadataInfo schemaMetadataInfo,
-                                             String schemaBranch) { }
+                                             Collection<SchemaBranch> branches) { }
 
     @Override
-    public void getSerializers(SecurityContext securityContext,
-                               SchemaMetadataInfo schemaMetadataInfo) { }
-
-    @Override
-    public void uploadFile(SecurityContext securityContext) { }
-
-    @Override
-    public void downloadFile(SecurityContext securityContext) { }
-
-    @Override
-    public void addSerDes(SecurityContext securityContext) { }
-
-    @Override
-    public void getSerDes(SecurityContext securityContext) { }
-
-    @Override
-    public void mapSchemaWithSerDes(SecurityContext securityContext, SchemaMetadataInfo schemaMetadataInfo) { }
-
-    @Override
-    public void deleteSchemaVersion(SecurityContext securityContext,
-                                    SchemaMetadataInfo schemaMetadataInfo,
-                                    Collection<SchemaBranch> branches) { }
-
-    @Override
-    public Collection<SchemaBranch> getAllBranches(SecurityContext securityContext,
-                                                   SchemaMetadataInfo schemaMetadataInfo,
-                                                   SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func) throws SchemaNotFoundException {
+    public Collection<SchemaBranch> authorizeGetAllBranches(SecurityContext securityContext,
+                                                            SchemaMetadataInfo schemaMetadataInfo,
+                                                            SupplierWithSchemaNotFoundException<Collection<SchemaBranch>> func) throws SchemaNotFoundException {
         return func.get();
     }
 
     @Override
-    public void createSchemaBranch(SecurityContext securityContext,
-                                   SchemaMetadataInfo schemaMetadataInfo,
-                                   Collection<SchemaBranch> branches,
-                                   String branchTocreate) { }
+    public void authorizeCreateSchemaBranch(SecurityContext securityContext,
+                                            SchemaMetadataInfo schemaMetadataInfo,
+                                            Collection<SchemaBranch> branches,
+                                            String branchTocreate) { }
 
     @Override
-    public void mergeSchemaVersion(SecurityContext securityContext,
-                                   SchemaMetadataInfo schemaMetadataInfo,
-                                   Collection<SchemaBranch> schemaBranches) { }
+    public void authorizeMergeSchemaVersion(SecurityContext securityContext,
+                                            SchemaMetadataInfo schemaMetadataInfo,
+                                            Collection<SchemaBranch> schemaBranches) { }
 
     @Override
-    public void deleteSchemaBranch(SecurityContext securityContext,
-                                   SchemaMetadataInfo schemaMetadataInfo,
-                                   String schemaBranch) { }
+    public void authorizeDeleteSchemaBranch(SecurityContext securityContext,
+                                            SchemaMetadataInfo schemaMetadataInfo,
+                                            String schemaBranch) { }
 
     @Override
-    public Stream<SchemaMetadataInfo> getSubjects(SecurityContext securityContext, Stream<SchemaMetadataInfo> stream) {
+    public Stream<SchemaMetadataInfo> authorizeGetSubjects(SecurityContext securityContext, Stream<SchemaMetadataInfo> stream) {
         return stream;
     }
 
     @Override
-    public Stream<SchemaVersionInfo> getAllVersions(SecurityContext securityContext, Stream<SchemaVersionInfo> vStream, FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc, FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches) {
+    public Stream<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext, Stream<SchemaVersionInfo> vStream, FunctionWithSchemaNotFoundException<Long, SchemaMetadataInfo> getMetadataFunc, FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getBranches) {
         return vStream;
     }
 }
