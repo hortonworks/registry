@@ -55,7 +55,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         raiseAuthorizationExceptionIfNeeded(accessToSchemaMetadata);
         Collection<AggregatedSchemaBranch> filteredBranches = aggregatedSchemaMetadataInfo
                 .getSchemaBranches()
-                .stream().map(branch -> filterAggregatedBranch(user, userGroups, branch))
+                .stream().map(branch -> filterAggregatedBranch(sGroup, sName, user, userGroups, branch))
                 .filter(Objects::nonNull).collect(Collectors.toList());
 
         boolean accessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ, user, userGroups);
@@ -68,10 +68,35 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                 aggregatedSchemaMetadataInfo.getSerDesInfos());
     }
 
-    private AggregatedSchemaBranch filterAggregatedBranch(String user,
-                                                           Set<String> userGroups,
-                                                           AggregatedSchemaBranch branch) {
-        return null;
+    private AggregatedSchemaBranch filterAggregatedBranch(String sGroup,
+                                                          String sName,
+                                                          String user,
+                                                          Set<String> userGroups,
+                                                          AggregatedSchemaBranch branch) {
+
+        boolean accessToBranch = authorizer.authorizeSchemaBranch(sGroup,
+                sName,
+                branch.getSchemaBranch().getName(),
+                Authorizer.ACCESS_TYPE_READ,
+                user,
+                userGroups);
+        if (!accessToBranch) {
+            return null;
+        }
+
+        Collection<SchemaVersionInfo> filteredVersions = branch
+                .getSchemaVersionInfos()
+                .stream()
+                .filter(version -> authorizer.authorizeSchemaVersion(sGroup,
+                        sName,
+                        branch.getSchemaBranch().getName(),
+                        Authorizer.ACCESS_TYPE_READ,
+                        user,
+                        userGroups)).collect(Collectors.toList());
+
+        return new AggregatedSchemaBranch(branch.getSchemaBranch(),
+                branch.getRootSchemaVersion(),
+                filteredVersions);
     }
 
     @Override
@@ -91,8 +116,16 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
-    public List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(SecurityContext sc, List<AggregatedSchemaMetadataInfo> asmi) {
-        return null;
+    public List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(SecurityContext sc, List<AggregatedSchemaMetadataInfo> asmil) {
+        return asmil
+                .stream().map(aggregatedSchemaMetadataInfo -> {
+                    try {
+                        return getAggregatedSchemaInfo(sc, aggregatedSchemaMetadataInfo);
+                    } catch (AuthorizationException e) {
+                        return null;
+                    }
+                }).filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Override
