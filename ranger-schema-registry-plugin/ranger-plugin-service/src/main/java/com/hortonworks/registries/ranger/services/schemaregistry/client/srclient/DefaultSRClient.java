@@ -7,19 +7,29 @@ import com.hortonworks.registries.schemaregistry.client.*;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
+import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientProperties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sun.jersey.api.client.Client;
+
+import javax.net.ssl.*;
 import javax.security.auth.login.LoginException;
 import javax.ws.rs.core.MediaType;;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.Socket;
 import java.net.URLEncoder;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,6 +45,7 @@ public class DefaultSRClient implements SRClient {
     private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
     private static final String SCHEMA_REGISTRY_VERSION_PATH = SCHEMA_REGISTRY_PATH + "/version";
     private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
+    private static final String SSL_ALGORITHM = "TLS";
     private static Login login;
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
@@ -64,7 +75,19 @@ public class DefaultSRClient implements SRClient {
     public DefaultSRClient(Map<String, ?> conf) {
         configuration = new SchemaRegistryClient.Configuration(conf);
         ClientConfig config = createClientConfig(conf);
-        client =  Client.create(config);
+        final boolean SSLEnabled = false;
+        if (SSLEnabled) {
+            SSLContext ctx;
+            try {
+                ctx = createSSLContext(conf);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            String commonNameForCertificate = (String)conf.get("commonNameForCertificate");
+            HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(hostnameVerifier, ctx));
+        }
+        client = Client.create(config);
 
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
@@ -81,6 +104,122 @@ public class DefaultSRClient implements SRClient {
             props.put(entry.getKey(), entry.getValue());
         }
         return config;
+    }
+
+    private SSLContext createSSLContext(Map<String, ?> sslConfigurations) throws Exception {
+
+        SSLContext context = SSLContext.getInstance(SSL_ALGORITHM);
+
+        KeyManager[] km = null;
+
+        String keyStorePath = (String)sslConfigurations.get("keyStorePath");
+        String keyStorePassword = (String)sslConfigurations.get("keyStorePassword");
+        Object obj = sslConfigurations.get("serverCertValidation");
+        boolean serverCertValidation = (obj == null)? false : Boolean.getBoolean((String)sslConfigurations.get("serverCertValidation"));
+        String trustStorePath = (String)sslConfigurations.get("trustStorePath");
+        String trustStorePathPassword = (String)sslConfigurations.get("trustStorePathPassword");
+
+        if (keyStorePassword != null) {
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+
+            InputStream in = null;
+
+            in = getFileInputStream(keyStorePath);
+
+            try {
+                ks.load(in, keyStorePassword.toCharArray());
+            } finally {
+                if (in != null) {
+                    in.close();
+                }
+            }
+
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, keyStorePassword.toCharArray());
+            km = kmf.getKeyManagers();
+        }
+
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+        TrustManager[] tm = null;
+
+        if (serverCertValidation) {
+            if (trustStorePath != null) {
+                KeyStore trustStoreKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+                InputStream in;
+
+                in = getFileInputStream(trustStorePath);
+
+                try {
+                    trustStoreKeyStore.load(in, trustStorePathPassword.toCharArray());
+
+                    trustManagerFactory.init(trustStoreKeyStore);
+
+                    tm = trustManagerFactory.getTrustManagers();
+
+                } finally {
+                    if (in != null) {
+                        in.close();
+                    }
+                }
+            }
+        } else {
+            TrustManager ignoreValidationTM = new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    // Ignore Server Certificate Validation
+                }
+
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+
+                public void checkServerTrusted(X509Certificate[] chain,
+                                               String authType)
+                        throws CertificateException {
+                    // Ignore Server Certificate Validation
+                }
+            };
+
+            tm  = new TrustManager[] {ignoreValidationTM};
+        }
+
+        SecureRandom random = new SecureRandom();
+
+        context.init(km, tm, random);
+
+        return context;
+
+    }
+
+    private InputStream getFileInputStream(String path) throws FileNotFoundException {
+
+        InputStream ret;
+
+        File f = new File(path);
+
+        if (f.exists()) {
+            ret = new FileInputStream(f);
+        } else {
+            ret = getClass().getResourceAsStream(path);
+
+            if (ret == null) {
+                if (! path.startsWith("/")) {
+                    ret = getClass().getResourceAsStream("/" + path);
+                }
+            }
+
+            if (ret == null) {
+                ret = ClassLoader.getSystemClassLoader().getResourceAsStream(path);
+                if (ret == null) {
+                    if (! path.startsWith("/")) {
+                        ret = ClassLoader.getSystemResourceAsStream("/" + path);
+                    }
+                }
+            }
+        }
+
+        return ret;
     }
 
     private UrlSelector createUrlSelector() {
