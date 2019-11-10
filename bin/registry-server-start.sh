@@ -48,6 +48,7 @@ if [ ! "x$EXT_CLASSPATH" = "x" ]; then
 fi
 
 CLASSPATH=$CLASSPATH:$base_dir/ranger-plugin/*
+CLASSPATH=$CLASSPATH:$base_dir/ranger-plugin/conf/
 
 if [ ! -z "$HADOOP_CONF_DIR" ]; then
  CLASSPATH=$CLASSPATH:$HADOOP_CONF_DIR;

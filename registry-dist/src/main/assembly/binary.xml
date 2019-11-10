@@ -132,6 +132,20 @@
                 <include>*jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer/conf</directory>
+            <outputDirectory>ranger-plugin/conf</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer/target/authorizer-0.8.0-SNAPSHOT/authorizer-0.8.0-SNAPSHOT</directory>
+            <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
+            <includes>
+                <include>*jar</include>
+            </includes>
+        </fileSet>
         <!--
             RANGER-PLUGIN/AUTHORIZER-SHIM
         -->
