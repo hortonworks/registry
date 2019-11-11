@@ -10,7 +10,6 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
-import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientProperties;
 
 import org.slf4j.Logger;
@@ -26,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.URLEncoder;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -46,6 +44,7 @@ public class DefaultSRClient implements SRClient {
     private static final String SCHEMA_REGISTRY_VERSION_PATH = SCHEMA_REGISTRY_PATH + "/version";
     private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
     private static final String SSL_ALGORITHM = "TLS";
+    private static final String REGEX_PREFIX_STR 	 = "regex:";
     private static Login login;
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
@@ -83,12 +82,20 @@ public class DefaultSRClient implements SRClient {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            String commonNameForCertificate = (String)conf.get("commonNameForCertificate");
+
+            String cnFromConfigObj = (String)conf.get("commonNameForCertificate");
+            boolean isRegEx = cnFromConfigObj!=null && cnFromConfigObj.toLowerCase().startsWith(REGEX_PREFIX_STR);
+            final String cnFromConfig = isRegEx ?
+                    cnFromConfigObj.substring(REGEX_PREFIX_STR.length()).trim()
+                    :
+                    cnFromConfigObj;
             HostnameVerifier hostnameVerifier = (String s, SSLSession sslSession) -> {
+                if(cnFromConfig != null) {
+                    return matchNames(s, cnFromConfig, isRegEx);
+                }
                 return HttpsURLConnection
                         .getDefaultHostnameVerifier()
-                        .verify(commonNameForCertificate != null ?
-                                commonNameForCertificate : s, sslSession);
+                        .verify(s, sslSession);
 
             };
             config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(hostnameVerifier, ctx));
@@ -98,6 +105,48 @@ public class DefaultSRClient implements SRClient {
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
         urlWithTargets = new ConcurrentHashMap<>();
+    }
+
+    private boolean matchNames(String target, String source, boolean wildcardMatch) {
+        boolean matched = false;
+        if(target != null && source != null) {
+            String names[] = (wildcardMatch ? new String[] { source } : source.split(","));
+            for (String n:names) {
+
+                if (wildcardMatch) {
+                    if(LOG.isDebugEnabled()) LOG.debug("Wildcard Matching [" + target + "] with [" + n + "]");
+                    if (wildcardMatch(target,n)) {
+                        if(LOG.isDebugEnabled()) LOG.debug("Matched target:" + target + " with " + n);
+                        matched = true;
+                        break;
+                    }
+                } else {
+                    if(LOG.isDebugEnabled()) LOG.debug("Matching [" + target + "] with [" + n + "]");
+                    if (target.equalsIgnoreCase(n)) {
+                        if(LOG.isDebugEnabled()) LOG.debug("Matched target:" + target + " with " + n);
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+        } else {
+            if(LOG.isDebugEnabled()) LOG.debug("source=[" + source + "],target=[" + target +"], returning false.");
+        }
+        return matched;
+    }
+
+    private boolean wildcardMatch(String target, String source) {
+        boolean matched = false;
+        if(target != null && source != null) {
+            try {
+                matched = target.matches(source);
+            } catch (Throwable e) {
+                LOG.error("Error doing wildcard match..", e);
+            }
+        } else {
+            if(LOG.isDebugEnabled()) LOG.debug("source=[" + source + "],target=[" + target +"], returning false.");
+        }
+        return matched;
     }
 
     private boolean isHttpsEnabled(Map<String, ?> conf) {
@@ -126,14 +175,15 @@ public class DefaultSRClient implements SRClient {
         String keyStorePath = (String)sslConfigurations.get("keyStorePath");
         String keyStorePassword = (String)sslConfigurations.get("keyStorePassword");
         Object obj = sslConfigurations.get("serverCertValidation");
-        boolean serverCertValidation = (obj == null)? false : Boolean.getBoolean((String)sslConfigurations.get("serverCertValidation"));
+        boolean serverCertValidation = (obj == null)? false : (Boolean)obj;
         String trustStorePath = (String)sslConfigurations.get("trustStorePath");
-        String trustStorePathPassword = (String)sslConfigurations.get("trustStorePathPassword");
+        String trustStorePassword = Optional.ofNullable((String)sslConfigurations.get("trustStorePassword")).orElse("");
+        String trustStoreType = (String)sslConfigurations.get("trustStoreType");
 
         if (keyStorePassword != null) {
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
-            InputStream in = null;
+            InputStream in;
 
             in = getFileInputStream(keyStorePath);
 
@@ -156,14 +206,15 @@ public class DefaultSRClient implements SRClient {
 
         if (serverCertValidation) {
             if (trustStorePath != null) {
-                KeyStore trustStoreKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                KeyStore trustStoreKeyStore = KeyStore.getInstance(trustStoreType != null ?
+                        trustStoreType : KeyStore.getDefaultType());
 
                 InputStream in;
 
                 in = getFileInputStream(trustStorePath);
 
                 try {
-                    trustStoreKeyStore.load(in, trustStorePathPassword.toCharArray());
+                    trustStoreKeyStore.load(in, trustStorePassword.toCharArray());
 
                     trustManagerFactory.init(trustStoreKeyStore);
 
@@ -360,7 +411,13 @@ public class DefaultSRClient implements SRClient {
 
     public static void main(String[] args) {
         Map<String, Object> conf = new HashMap<>();
-        conf.put(SCHEMA_REGISTRY_URL.name(), "http://c7401:9090");
+        conf.put(SCHEMA_REGISTRY_URL.name(), "https://192.168.74.101:8443");
+        //conf.put(SCHEMA_REGISTRY_URL.name(), "https://c7401:8443");
+        conf.put("trustStorePath", "/home/vladimir/WorkCloudera/Repo/registry/ssl_trustore");
+        conf.put("trustStorePassword", "test12");
+        conf.put("serverCertValidation", true);
+        conf.put("trustStoreType", "jks");
+        conf.put("commonNameForCertificate", "192.168.74.101,c7401");
         SRClient client = new DefaultSRClient(conf);
         try {
             client.testConnection();
