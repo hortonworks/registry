@@ -75,7 +75,7 @@ public class DefaultSRClient implements SRClient {
     public DefaultSRClient(Map<String, ?> conf) {
         configuration = new SchemaRegistryClient.Configuration(conf);
         ClientConfig config = createClientConfig(conf);
-        final boolean SSLEnabled = false;
+        final boolean SSLEnabled = isHttpsEnabled(conf);
         if (SSLEnabled) {
             SSLContext ctx;
             try {
@@ -98,6 +98,11 @@ public class DefaultSRClient implements SRClient {
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
         urlWithTargets = new ConcurrentHashMap<>();
+    }
+
+    private boolean isHttpsEnabled(Map<String, ?> conf) {
+        String urls = conf.get(SCHEMA_REGISTRY_URL.name()).toString();
+        return urls.trim().startsWith("https://");
     }
 
     private ClientConfig createClientConfig(Map<String, ?> conf) {
