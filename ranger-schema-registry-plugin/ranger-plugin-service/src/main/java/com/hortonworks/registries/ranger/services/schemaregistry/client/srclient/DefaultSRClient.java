@@ -84,7 +84,13 @@ public class DefaultSRClient implements SRClient {
                 throw new RuntimeException(e);
             }
             String commonNameForCertificate = (String)conf.get("commonNameForCertificate");
-            HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+            HostnameVerifier hostnameVerifier = (String s, SSLSession sslSession) -> {
+                return HttpsURLConnection
+                        .getDefaultHostnameVerifier()
+                        .verify(commonNameForCertificate != null ?
+                                commonNameForCertificate : s, sslSession);
+
+            };
             config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(hostnameVerifier, ctx));
         }
         client = Client.create(config);
