@@ -176,7 +176,7 @@ public class DefaultSRClient implements SRClient {
         String keyStorePath = (String)sslConfigurations.get("keyStorePath");
         String keyStorePassword = (String)sslConfigurations.get("keyStorePassword");
         Object obj = sslConfigurations.get("serverCertValidation");
-        boolean serverCertValidation = (obj == null)? false : (Boolean)obj;
+        boolean serverCertValidation = (obj == null) || Boolean.parseBoolean(obj.toString());
         String trustStorePath = (String)sslConfigurations.get("trustStorePath");
         String trustStorePassword = Optional.ofNullable((String)sslConfigurations.get("trustStorePassword")).orElse("");
         String trustStoreType = (String)sslConfigurations.get("trustStoreType");
@@ -412,13 +412,13 @@ public class DefaultSRClient implements SRClient {
 
     public static void main(String[] args) {
         Map<String, Object> conf = new HashMap<>();
-        conf.put(SCHEMA_REGISTRY_URL.name(), "https://192.168.74.101:8443");
+        conf.put(SCHEMA_REGISTRY_URL.name(), "https://c7401:8443");
         //conf.put(SCHEMA_REGISTRY_URL.name(), "https://c7401:8443");
-        conf.put("trustStorePath", "/home/vladimir/WorkCloudera/Repo/registry/ssl_trustore");
-        conf.put("trustStorePassword", "test12");
-        conf.put("serverCertValidation", true);
-        conf.put("trustStoreType", "jks");
-        conf.put("commonNameForCertificate", "192.168.74.101,c7401");
+        //conf.put("trustStorePath", "/home/vladimir/WorkCloudera/Repo/registry/ssl_trustore");
+        //conf.put("trustStorePassword", "test12");
+        conf.put("serverCertValidation", "false");
+        //conf.put("trustStoreType", "jks");
+        //conf.put("commonNameForCertificate", "192.168.74.101,c7401");
         SRClient client = new DefaultSRClient(conf);
         try {
             client.testConnection();
