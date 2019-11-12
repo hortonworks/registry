@@ -98,7 +98,8 @@ public class DefaultSRClient implements SRClient {
                         .verify(s, sslSession);
 
             };
-            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(hostnameVerifier, ctx));
+            //TODO: enable logic for 'commonNameForCertificate' property when the meaning is clear
+            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(HttpsURLConnection.getDefaultHostnameVerifier(), ctx));
         }
         client = Client.create(config);
 
