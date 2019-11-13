@@ -146,6 +146,7 @@ Important settings from the above are
     config.put(KafkaAvroSerializer.STORE_SCHEMA_VERSION_ID_IN_HEADER, "true");
     config.put(KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, "key.schema.version.id"); // optional
     config.put(KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, "value.schema.version.id"); // optional
+    config.put("schema.auto.create", "true"); // optional
 
 **store.schema.version.id.in.header**
 By default, this is set to 'false' to maintain backward compatibility. User needs to enable it to save the schema version
@@ -158,6 +159,10 @@ key.serializer is set to 'KafkaAvroSerializer'.
 **value_schema_version_id_header_name**
 Configurable header name to save the Record Value schema version information. This configuration is applicable only when
 value.serializer is set to 'KafkaAvroSerializer'.
+
+**schema.auto.create**
+By default, this is set to 'true' to maintain backward compatibility. User needs to disable it so the client won't try to
+create schemas if it does not exists.
 
 Run consumer to retrieve schema and deserialze the messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
