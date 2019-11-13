@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.collect.Sets;
+import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import org.junit.Assert;

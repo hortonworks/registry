@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,6 @@ public class CacheBackedStorageManager implements StorageManager {
             if (!storable.equals(cachedStorable)) {
                 LOG.warn("Possible cache inconsistency. Storable from DB '{}', Storable from cache '{}'",
                         storable, cachedStorable);
-                storable = cachedStorable;
             }
             cache.remove(key);
         }
@@ -137,5 +136,9 @@ public class CacheBackedStorageManager implements StorageManager {
     @Override
     public void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException {
         dao.registerStorables(classes);
+    }
+
+    public StorageManager getStorageManager() {
+        return dao;
     }
 }

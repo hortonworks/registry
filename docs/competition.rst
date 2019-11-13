@@ -27,7 +27,7 @@ roadmap.
 |                             | | JSON, extensible...   |                           |
 +-----------------------------+-------------------------+---------------------------+
 | | Pluggable                 | | Yes                   | No, uses Avro parser      |
-| | Serializer/Deserialize    |                         |                           |
+| | Serializer/Deserializer   |                         |                           |
 +-----------------------------+-------------------------+---------------------------+
 | | Storage                   | | Pluggable Storage     | Uses Kafka as storage     |
 |                             | | (Mysql, Postgres)     |                           |

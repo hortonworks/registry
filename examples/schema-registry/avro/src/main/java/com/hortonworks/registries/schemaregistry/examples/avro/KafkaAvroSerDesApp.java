@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +56,11 @@ import static com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtoc
 /**
  * Below class can be used to send messages to a given topic in kafka-producer.props like below.
  *
+ * To run the producer, give the following program arguments:
  * KafkaAvroSerDesApp -sm -d yelp_review_json -s yelp_review.avsc -p kafka-producer.props
+ *
+ * To run the consumer, give the following program arguments:
+ * KafkaAvroSerDesApp -cm -c kafka-consumer.props
  *
  * If invalid messages need to be ignored while sending messages to a topic, you can set "ignoreInvalidMessages" to true
  * in kafka producer properties file.
@@ -106,7 +112,7 @@ public class KafkaAvroSerDesApp {
             String line;
             while (current++ < limit && (line = bufferedReader.readLine()) != null) {
                 // convert json to avro records
-                Object avroMsg = null;
+                Object avroMsg;
                 try {
                     avroMsg = jsonToAvro(line, schema);
                 } catch (Exception ex) {
@@ -140,7 +146,7 @@ public class KafkaAvroSerDesApp {
     }
 
     private Object jsonToAvro(String jsonString, Schema schema) throws Exception {
-        DatumReader<Object> reader = new GenericDatumReader<Object>(schema);
+        DatumReader<Object> reader = new GenericDatumReader<>(schema);
         Object object = reader.read(null, DecoderFactory.get().jsonDecoder(schema, jsonString));
 
         if (schema.getType().equals(Schema.Type.STRING)) {
@@ -158,7 +164,7 @@ public class KafkaAvroSerDesApp {
 
     public void consumeMessages() throws Exception {
         Properties props = new Properties();
-        try (FileInputStream inputStream = new FileInputStream(this.consumerProps);) {
+        try (FileInputStream inputStream = new FileInputStream(this.consumerProps)) {
             props.load(inputStream);
         }
         String topicName = props.getProperty(TOPIC);
@@ -166,36 +172,16 @@ public class KafkaAvroSerDesApp {
         consumer.subscribe(Collections.singletonList(topicName));
 
         while (true) {
-            ConsumerRecords<String, Object> records = consumer.poll(1000);
+            ConsumerRecords<String, Object> records = consumer.poll(Duration.ofMillis(1000));
             LOG.info("records size " + records.count());
             for (ConsumerRecord<String, Object> record : records) {
-                LOG.info("Received message: (" + record.key() + ", " + record.value() + ") at offset " + record.offset());
+                LOG.info("Received message: (" + record.key() + ", " + record.value() + ") at offset " + record.offset()
+                        + " with headers : " + Arrays.toString(record.headers().toArray()));
             }
         }
     }
 
-    /**
-     * Print the command line options help message and exit application.
-     */
-    @SuppressWarnings("static-access")
-    private static void showHelpMessage(String[] args, Options options) {
-        Options helpOptions = new Options();
-        helpOptions.addOption(Option.builder("h").longOpt("help")
-                                      .desc("print this message").build());
-        try {
-            CommandLine helpLine = new DefaultParser().parse(helpOptions, args, true);
-            if (helpLine.hasOption("help") || args.length == 1) {
-                HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("truck-events-kafka-ingest", options);
-                System.exit(0);
-            }
-        } catch (ParseException ex) {
-            LOG.error("Parsing failed.  Reason: " + ex.getMessage());
-            System.exit(1);
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         Option sendMessages = Option.builder("sm").longOpt("send-messages").desc("Send Messages to Kafka").type(Boolean.class).build();
         Option consumeMessages = Option.builder("cm").longOpt("consume-messages").desc("Consume Messages from Kafka").type(Boolean.class).build();
@@ -218,8 +204,6 @@ public class KafkaAvroSerDesApp {
         options.addOption(producerFileOption);
         options.addOption(schemaOption);
         options.addOption(consumerFileOption);
-
-        //showHelpMessage(args, options);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;

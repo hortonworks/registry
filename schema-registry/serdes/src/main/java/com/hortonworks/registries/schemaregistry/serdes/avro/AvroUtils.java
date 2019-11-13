@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 
@@ -63,7 +63,7 @@ public final class AvroUtils {
         } else if (input instanceof Boolean) {
             type = Schema.Type.BOOLEAN;
         } else {
-            throw new RuntimeException("input type: " + input.getClass() + " is not supported");
+            throw new AvroException("input type: " + input.getClass() + " is not supported");
         }
 
         return PRIMITIVE_SCHEMAS.get(type);

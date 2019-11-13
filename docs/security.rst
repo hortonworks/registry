@@ -12,7 +12,7 @@ Hadoop project and slightly modified. The reasons for doing so are to
 avoid having a dependency on hadoop-auth module which brings in some
 other modules, avoid conflicts with other versions of hadoop-auth module
 and having more control over the changes needed in future. Some text for
-this document has been borrowed from SECURITY.md of Apache Storm
+this document has been borrowed from SECURITY.md of Apache Storm.
 
 By default, registry and streamline web-services are running with
 authentication disabled and therefore anyone can access the web-services
@@ -58,6 +58,9 @@ file, as follows:
          kerberos.keytab: "/path/to/keytab"
          kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
          token.validity: 36000
+         enable.trusted.proxy: true
+         proxyuser.knox.hosts: 102.22.22.22
+         proxyuser.haproxy.hosts: 102.22.22.21, 102.22.22.20
 
 The servlet filter uses the principal ``HTTP/{hostname}`` to
 login(hostname must be the host where the web-service runs) . Make sure
@@ -67,6 +70,11 @@ Once configured, the user must do ``kinit`` on client side using the
 principal declared before accessing the web-service via the browser or
 some other client. This principal also needs to be created first during
 Kerberos setup
+
+Trusted Proxy Pattern can be enabled by setting the property 'enable.trusted.proxy' to true. You can
+provide the list of proxyusers and the allowed hosts in the format given below.
+
+proxyuser.``proxy-user``.hosts=<ip_address1, ip_address2>
 
 Here's an example on how to access the web-service after the setup
 above:
@@ -86,6 +94,47 @@ above:
 **Caution**: In AD MIT Kerberos setup, the key size is bigger than the
 default UI jetty server request header size. If using MIT Kerberos with
 jettty server, make sure you set HTTP header buffer bytes to 65536
+
+SPNEGO+BASIC
+------------
+SPNEGO Authentication handler can be extended to support Kerberos credentials based Basic Authentication as long as the incoming HTTP request
+is secure and the HTTP method is POST. If a user provides user credentials in a HTTPS, POST call under Authorization Header, then a Kerberos
+login is attempted. In the authentication failure scenario, the SPNEGO sequence is invoked.
+
+This mechanism can be enabled by adding a property(login.enabled) to the existing Kerberos configuration. Below is an example.
+
+.. code:: yaml
+
+    servletFilters:
+     - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
+       params:
+         type: "kerberos"
+         kerberos.principal: "HTTP/web-service-host.com"
+         kerberos.keytab: "/path/to/keytab"
+         kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
+         token.validity: 36000
+         login.enabled: "true"
+
+
+Here's an example of how a login call would like("Z3VydTI6Z3VydTI=" is base64 encoded username and password):
+
+.. code:: bash
+
+    curl -k -X POST -H "Authorization: Basic Z3VydTI6Z3VydTI=" https://host-172-22-74-66.example.com:8587/api/v1/admin/auth/login
+
+
+SPNEGO authentication sequence is by default attempted, however, it can be skipped by adding another property.
+
+.. code:: yaml
+
+    servletFilters:
+     - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
+       params:
+         type: "kerberos"
+         kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
+         token.validity: 36000
+         login.enabled: "true"
+         spnego.enabled: "false"
 
 SSL
 ---

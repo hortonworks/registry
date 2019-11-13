@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class AvroSnapshotSerializer extends AbstractAvroSnapshotSerializer<byte[
 
             return baos.toByteArray();
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class SchemaVersionLifecycleStateTransition implements Serializable {
         this(sourceStateId, targetStateId, null, null);
     }
 
-    SchemaVersionLifecycleStateTransition(Byte sourceStateId, Byte targetStateId, String name, String description) {
+    public SchemaVersionLifecycleStateTransition(Byte sourceStateId, Byte targetStateId, String name, String description) {
         this.sourceStateId = sourceStateId;
         this.targetStateId = targetStateId;
         this.name = name;

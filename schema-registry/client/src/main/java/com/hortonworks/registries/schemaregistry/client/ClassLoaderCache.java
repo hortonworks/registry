@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ public class ClassLoaderCache {
 
         SchemaRegistryClient.Configuration configuration = schemaRegistryClient.getConfiguration();
         loadingCache = CacheBuilder.newBuilder()
-                .maximumSize(((Number) configuration.getValue(CACHE_SIZE_KEY)).longValue())
-                .expireAfterAccess(((Number) configuration.getValue(CACHE_EXPIRY_INTERVAL_KEY)).longValue(),
-                                   TimeUnit.SECONDS)
-                .build(cacheLoader);
+                                   .maximumSize(((Number) configuration.getValue(CACHE_SIZE_KEY)).longValue())
+                                   .expireAfterAccess(((Number) configuration.getValue(CACHE_EXPIRY_INTERVAL_KEY)).longValue(),
+                                                      TimeUnit.SECONDS)
+                                   .build(cacheLoader);
 
         localJarsDir = new File((String) this.schemaRegistryClient.getConfiguration().getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
         ensureLocalDirsExist();
@@ -87,9 +87,8 @@ public class ClassLoaderCache {
         }
 
         try (FileOutputStream fos = new FileOutputStream(file);
-             FileLock fileLock = fos.getChannel().lock();
              FileInputStream fileInputStream = new FileInputStream(file)) {
-            LOG.debug("Took file lock: [{}] for file: [{}]", fileLock, file);
+            LOG.debug("Loading file: [{}]", file);
 
             if (fileInputStream.read() != -1) {
                 LOG.debug("File [{}] is already written with content and returning the existing file", file);

@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +21,8 @@ import java.io.Serializable;
 
 /**
  * This class represents versioned instance of schema with respective information like schemaMetadataId/version,
- * schemaVersionId.
+ * schemaVersionId. To represent a unique schema either the fields (schemaMetadataId and version) [or] (schemaVersionId)
+ * required.
  *
  * It is not necessary that all fields are always available but the minimum information to find schema version is available.
  */
@@ -113,7 +113,7 @@ public final class SchemaIdVersion implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = 0;
+        int result;
         // if schemaVersionId is not nul, then their hashcodes should be same is sufficient as these objects are equal if
         // their non null schemaVersionId fields are equal.
         if (schemaVersionId != null) {

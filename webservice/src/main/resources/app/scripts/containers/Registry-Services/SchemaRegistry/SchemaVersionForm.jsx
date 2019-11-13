@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ export default class SchemaVersionForm extends Component {
       showError: false,
       changedFields: [],
       showCodemirror: true,
-      schemaTextCompatibility: statusCode.Ok
+      schemaTextCompatibility: statusCode.Ok,
+      disableCanonicalCheck: false
     };
   }
 
@@ -66,6 +67,10 @@ export default class SchemaVersionForm extends Component {
     this.setState({schemaText: json});
   }
 
+  handleToggleCanonicalCheck(e) {
+    this.setState({disableCanonicalCheck: e.target.checked});
+  }
+
   handleOnDrop(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -75,7 +80,9 @@ export default class SchemaVersionForm extends Component {
       var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        if(Utils.isValidJson(reader.result)) {
+        if(this.props.schemaObj.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result)) {
+          this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
+        } else if(this.props.schemaObj.type.toLowerCase() != 'avro') {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else {
           this.setState({schemaTextFile: null, schemaText: '', showCodemirror: true});
@@ -99,11 +106,13 @@ export default class SchemaVersionForm extends Component {
 
   validateData() {
     let {schemaText, description, changedFields} = this.state;
-    if (schemaText.trim() === '' || !Utils.isValidJson(schemaText.trim()) || description.trim() === '') {
+    if (schemaText.trim() === '' || description.trim() === '') {
       if (description.trim() === '' && changedFields.indexOf("description") === -1) {
         changedFields.push('description');
       }
       this.setState({showError: true, changedFields: changedFields});
+      return false;
+    } else if(this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
       return false;
     } else {
       this.setState({showError: false});
@@ -112,15 +121,17 @@ export default class SchemaVersionForm extends Component {
   }
 
   handleSave() {
-    let {schemaText, description} = this.state;
+    let {schemaText, description, disableCanonicalCheck} = this.state;
+    let {schemaObj} = this.props;
     let data = {
       schemaText,
       description
     };
-    return SchemaREST.getCompatibility(this.props.schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
+    return SchemaREST.getCompatibility(schemaObj.schemaName, {body: JSON.stringify(JSON.parse(schemaText))})
       .then((result)=>{
         if(result.compatible){
-          return SchemaREST.postVersion(this.props.schemaObj.schemaName, {body: JSON.stringify(data)});
+          return SchemaREST.postVersion(schemaObj.schemaName, {body: JSON.stringify(data)},
+            schemaObj.branch ? schemaObj.branch.schemaBranch.name : "MASTER", disableCanonicalCheck);
         } else {
           return result;
         }
@@ -138,7 +149,7 @@ export default class SchemaVersionForm extends Component {
           }else{
             this.setState({schemaTextCompatibility: result.errorMessage || result.responseMessage});
           }
-        });
+        }).catch(Utils.showError);
     }
     catch(err){
       console.log(err);
@@ -150,10 +161,10 @@ export default class SchemaVersionForm extends Component {
       lineNumbers: true,
       mode: "application/json",
       styleActiveLine: true,
-      gutters: ["CodeMirror-lint-markers"],
-      lint: true
+      gutters: this.props.schemaObj.type.toLowerCase() == 'avro' ? ["CodeMirror-lint-markers"] : [],
+      lint: this.props.schemaObj.type.toLowerCase() == 'avro'
     };
-    let {schemaText, showError, changedFields, showCodemirror, schemaTextCompatibility} = this.state;
+    let {schemaText, showError, changedFields, showCodemirror, schemaTextCompatibility, disableCanonicalCheck} = this.state;
     return (
       <form>
         <div className="form-group">
@@ -202,7 +213,7 @@ export default class SchemaVersionForm extends Component {
                 <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
               </div>
               :
-              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
                 <div onClick={(e) => {
                   this.setState({showCodemirror: true});
                 }}>
@@ -220,6 +231,11 @@ export default class SchemaVersionForm extends Component {
                 </div>
               </div>
             }
+          </div>
+        </div>
+        <div className="form-group" style={{marginBottom: '-10px'}}>
+          <div className="checkbox" title="If checked, the schema version will be added despite being canonically similar to an existing schema version">
+            <label><input name="disableCanonicalCheck" onChange={this.handleToggleCanonicalCheck.bind(this)} type="checkbox" value={disableCanonicalCheck} checked={disableCanonicalCheck}/> Disable Canonical Check</label>
           </div>
         </div>
       </form>

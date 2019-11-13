@@ -1,4 +1,4 @@
--- Copyright 2016 Hortonworks.;
+-- Copyright 2016-2019 Cloudera, Inc.;
 -- ;
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.;
@@ -23,3 +23,5 @@ CREATE TABLE IF NOT EXISTS schema_version_state (
   PRIMARY KEY (schemaVersionId, stateId, sequence),
   UNIQUE KEY (id)
 );
+
+ALTER TABLE `schema_version_info` ADD `state` TINYINT NOT NULL DEFAULT 5 AFTER `timestamp`;

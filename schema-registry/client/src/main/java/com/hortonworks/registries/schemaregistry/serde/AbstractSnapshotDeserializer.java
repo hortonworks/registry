@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +53,6 @@ import java.util.concurrent.TimeUnit;
  * @param <S> parsed schema representation to be stored in local cache
  */
 public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerDes implements SnapshotDeserializer<I, O, Integer> {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractSnapshotDeserializer.class);
 
     /**
      * Maximum inmemory cache size maintained in deserializer instance.
@@ -85,15 +82,20 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     public AbstractSnapshotDeserializer(ISchemaRegistryClient schemaRegistryClient) {
         super(schemaRegistryClient);
     }
-    
+
+    @Override
     protected void doInit(Map<String, ?> config) {
         schemaCache = CacheBuilder.newBuilder()
                 .maximumSize(getCacheMaxSize(config))
                 .expireAfterAccess(getCacheExpiryInSecs(config), TimeUnit.SECONDS)
                 .build(new CacheLoader<SchemaVersionKey, S>() {
                     @Override
-                    public S load(SchemaVersionKey schemaVersionKey) throws Exception {
-                        return getParsedSchema(schemaVersionKey);
+                    public S load(SchemaVersionKey schemaVersionKey) {
+                        try {
+                            return getParsedSchema(schemaVersionKey);
+                        } catch (SchemaNotFoundException | InvalidSchemaException e) {
+                           throw new RegistryException(e);
+                        }
                     }
                 });
     }
@@ -133,25 +135,21 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     @Override
     public O deserialize(I input,
                          Integer readerSchemaVersion) throws SerDesException {
-        if(!initialized) {
-            throw new IllegalStateException("init should be invoked before invoking deserialize operation");
-        }
-        if(closed) {
-            throw new IllegalStateException("This deserializer is already closed");
-        }
+        ensureInitialized();
 
         // it can be enhanced to have respective protocol handlers for different versions
         byte protocolId = retrieveProtocolId(input);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, input);
-        SchemaVersionInfo schemaVersionInfo = null;
+        SchemaVersionInfo schemaVersionInfo;
+        SchemaMetadata schemaMetadata;
         try {
             schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
-        } catch (SchemaNotFoundException e) {
-            throw new SerDesException(e);
+            schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
+        } catch (Exception e) {
+            throw new RegistryException(e);
         }
-        SchemaMetadata schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
-
         return doDeserialize(input, protocolId, schemaMetadata, schemaVersionInfo.getVersion(), readerSchemaVersion);
+
     }
 
     /**
@@ -194,7 +192,21 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         try {
             return schemaCache.get(schemaVersionKey);
         } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            if (e.getCause() instanceof RegistryException) {
+                throw (RegistryException) e.getCause();
+            } else {
+                throw new RegistryException(e);
+            }
+        }
+    }
+
+    private void ensureInitialized() {
+        if (!initialized) {
+            throw new IllegalStateException("init should be invoked before invoking deserialize operation");
+        }
+
+        if (closed) {
+            throw new IllegalStateException("This deserializer is already closed");
         }
     }
 

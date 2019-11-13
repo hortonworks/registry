@@ -29,6 +29,7 @@ import com.hortonworks.registries.schemaregistry.avro.AvroSchemaResolver;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
 import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
@@ -49,45 +50,44 @@ import java.util.Map;
  * Default deserialization of avro payload is implemented in {@link #buildDeserializedObject(byte, InputStream, SchemaMetadata, Integer, Integer)}
  * and it can be used while implementing {@link #doDeserialize(Object, byte, SchemaMetadata, Integer, Integer)} as given
  * below.
- * </p>
  * <p>
  * <pre>{@code
  * public class MessageContext {
- * final Map<String, Object> headers;
- * final InputStream payloadEntity;
+ *   final Map<String, Object> headers;
+ *   final InputStream payloadEntity;
  *
- * public MessageContext(Map<String, Object> headers, InputStream payloadEntity) {
- * this.headers = headers;
- * this.payloadEntity = payloadEntity;
+ *   public MessageContext(Map<String, Object> headers, InputStream payloadEntity) {
+ *     this.headers = headers;
+ *     this.payloadEntity = payloadEntity;
+ *   }
  * }
- * }
+ *
  *
  * public class MessageContextBasedDeserializer extends AbstractAvroSnapshotDeserializer<MessageContext> {
+ *   {@literal @}Override
+ *   protected Object doDeserialize(MessageContext input,
+ *                                byte protocolId,
+ *                                SchemaMetadata schemaMetadata,
+ *                                Integer writerSchemaVersion,
+ *                                Integer readerSchemaVersion) throws SerDesException {
+ *      return buildDeserializedObject(protocolId,
+ *                                 input.payloadEntity,
+ *                                 schemaMetadata,
+ *                                 writerSchemaVersion,
+ *                                 readerSchemaVersion);
+ *   }
  *
- * {@literal @}Override
- * protected Object doDeserialize(MessageContext input,
- * byte protocolId,
- * SchemaMetadata schemaMetadata,
- * Integer writerSchemaVersion,
- * Integer readerSchemaVersion) throws SerDesException {
- * return buildDeserializedObject(protocolId,
- * input.payloadEntity,
- * schemaMetadata,
- * writerSchemaVersion,
- * readerSchemaVersion);
- * }
+ *   {@literal @}Override
+ *   protected byte retrieveProtocolId(MessageContext input) throws SerDesException {
+ *     return (byte) input.headers.get("protocol.id");
+ *   }
  *
- * {@literal @}Override
- * protected byte retrieveProtocolId(MessageContext input) throws SerDesException {
- * return (byte) input.headers.get("protocol.id");
- * }
- *
- * {@literal @}Override
- * protected SchemaIdVersion retrieveSchemaIdVersion(byte protocolId, MessageContext input) throws SerDesException {
- * Long id = (Long) input.headers.get("schema.metadata.id");
- * Integer version = (Integer) input.headers.get("schema.version");
- * return new SchemaIdVersion(id, version);
- * }
+ *   {@literal @}Override
+ *   protected SchemaIdVersion retrieveSchemaIdVersion(byte protocolId, MessageContext input) throws SerDesException {
+ *     Long id = (Long) input.headers.get("schema.metadata.id");
+ *     Integer version = (Integer) input.headers.get("schema.version");
+ *     return new SchemaIdVersion(id, version);
+ *   }
  * }
  *
  * }</pre>
@@ -155,19 +155,16 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
                                              SchemaMetadata schemaMetadata,
                                              Integer writerSchemaVersion,
                                              Integer readerSchemaVersion) throws SerDesException {
-        Object deserializedObj;
         String schemaName = schemaMetadata.getName();
         SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
         Schema writerSchema = getSchema(writerSchemaVersionKey);
         if (writerSchema == null) {
-            throw new SerDesException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
+            throw new RegistryException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
         }
         Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 
-        deserializedObj = deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema, readerSchema);
-
-        return deserializedObj;
+        return deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema, readerSchema);
     }
 
     protected Object deserializePayloadForProtocol(byte protocolId,

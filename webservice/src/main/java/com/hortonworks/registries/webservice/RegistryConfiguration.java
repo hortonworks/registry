@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,34 @@ public class RegistryConfiguration extends Configuration {
 
     @JsonProperty
     private boolean enableCors;
+
+    private String httpProxyUrl;
+    private String httpProxyUsername;
+    private String httpProxyPassword;
+
+    public String getHttpProxyUrl() {
+        return httpProxyUrl;
+    }
+
+    public void setHttpProxyUrl(String httpProxyUrl) {
+        this.httpProxyUrl = httpProxyUrl;
+    }
+
+    public String getHttpProxyUsername() {
+        return httpProxyUsername;
+    }
+
+    public void setHttpProxyUsername(String httpProxyUsername) {
+        this.httpProxyUsername = httpProxyUsername;
+    }
+
+    public String getHttpProxyPassword() {
+        return httpProxyPassword;
+    }
+
+    public void setHttpProxyPassword(String httpProxyPassword) {
+        this.httpProxyPassword = httpProxyPassword;
+    }
 
     @JsonProperty("swagger")
     private SwaggerBundleConfiguration swaggerBundleConfiguration;

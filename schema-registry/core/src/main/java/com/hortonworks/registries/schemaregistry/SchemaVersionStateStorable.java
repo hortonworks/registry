@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.hortonworks.registries.schemaregistry;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
+import org.apache.commons.io.IOUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -114,6 +117,10 @@ public class SchemaVersionStateStorable extends AbstractStorable {
 
     public void setDetails(byte[] details) {
         this.details = details;
+    }
+
+    public void setDetails(InputStream inputStream) throws IOException {
+        details = IOUtils.toByteArray(inputStream);
     }
 
     @Override

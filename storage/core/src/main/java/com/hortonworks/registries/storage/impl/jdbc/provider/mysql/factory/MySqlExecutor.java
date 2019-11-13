@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,28 +16,25 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory;
 
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Lists;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
+import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertUpdateDuplicate;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectForShareQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectForUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MysqlUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.util.Util;
 import com.hortonworks.registries.storage.search.SearchQuery;
-import com.zaxxer.hikari.HikariConfig;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * SQL query executor for MySQL DB.
@@ -117,6 +113,16 @@ public class MySqlExecutor extends AbstractQueryExecutor {
         return executeQuery(storableKey.getNameSpace(), new MySqlSelectQuery(storableKey, orderByFields));
     }
 
+    @Override
+    public <T extends Storable> Collection<T> selectForShare(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new MySqlSelectForShareQuery(storableKey));
+    }
+
+    @Override
+    public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new MySqlSelectForUpdateQuery(storableKey));
+    }
+
     private void insertOrUpdateWithUniqueId(final Storable storable, final SqlQuery sqlQuery) {
         try {
             Long id = storable.getId();
@@ -128,6 +134,8 @@ public class MySqlExecutor extends AbstractQueryExecutor {
             }
         } catch (UnsupportedOperationException e) {
             executeUpdate(sqlQuery);
+        } catch (Exception e) {
+            throw new StorageException(e);
         }
     }
 

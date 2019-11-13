@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
 import _ from 'lodash';
 import React from 'react';
 import moment from 'moment';
+import FSReactToastr from '../components/FSReactToastr';
+import {toastOpt} from './Constants';
+import CommonNotification from './CommonNotification';
 
 const isValidJson = function(obj) {
   try {
@@ -68,6 +71,32 @@ const ellipses = function(string, tagWidth) {
   return string.length > (tagWidth/10) ? `${string.substr(0, tagWidth/10)}...` : string;
 };
 
+const showError = function(err) {
+  if(err.response){
+    err.response.then((res) => {
+      FSReactToastr.error(
+        <CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt
+      );
+    });
+  }else{
+    console.error(err);
+  }
+};
+
+export function checkStatus(response, method) {
+  if (response.status >= 200 && response.status < 300) {
+    if(method !== 'DELETE'){
+      return response.json();
+    }else{
+      return response;
+    }
+  } else {
+    const error = new Error(response.statusText);
+    error.response = response.json();
+    throw error;
+  }
+};
+
 export class StateMachine {
   constructor(obj = {}){
     this.states = obj.states;
@@ -79,6 +108,9 @@ export class StateMachine {
   }
   getStateById(id){
     return _.find(this.states, {id: id});
+  }
+  getStateByName(name){
+    return _.find(this.states, {name: name});
   }
   getTransitionStateOptions(id){
     var options = _.filter(this.transitions, (t) => {
@@ -93,5 +125,6 @@ export default {
   sortArray,
   splitTimeStamp,
   getDateTimeLabel,
-  ellipses
+  ellipses,
+  showError
 };

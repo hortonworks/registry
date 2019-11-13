@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +16,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+import com.hortonworks.registries.schemaregistry.state.details.AbstractStateDetails;
 
 import java.io.Serializable;
 
@@ -30,6 +30,7 @@ public class SchemaVersion implements Serializable {
     private String description;
     private String schemaText;
     private Byte initialState;
+    private byte [] stateDetails;
 
     @SuppressWarnings("unused")
     private SchemaVersion() {
@@ -42,9 +43,22 @@ public class SchemaVersion implements Serializable {
     }
 
     public SchemaVersion(String schemaText, String description, Byte initialState) {
+        this(schemaText, description, initialState, null);
+    }
+
+    public SchemaVersion(String schemaText, String description, Byte initialState, byte [] stateDetails) {
         this.description = description;
         this.schemaText = schemaText;
         this.initialState = initialState != null ? initialState : SchemaVersionLifecycleStates.ENABLED.getId();
+        this.stateDetails = stateDetails;
+    }
+
+    public void setState(Byte state) {
+        this.initialState = state;
+    }
+
+    public void setStateDetails(byte [] abstractStateDetails) {
+        this.stateDetails = abstractStateDetails;
     }
 
     public String getDescription() {
@@ -59,12 +73,17 @@ public class SchemaVersion implements Serializable {
         return initialState;
     }
 
+    public byte [] getStateDetails() {
+        return stateDetails;
+    }
+
     @Override
     public String toString() {
         return "SchemaVersion{" +
                 "description='" + description + '\'' +
                 ", schemaText='" + schemaText + '\'' +
-                ", initialState=" + initialState +
+                ", initialState='" + initialState + '\'' +
+                ", details=" + stateDetails +
                 '}';
     }
 }

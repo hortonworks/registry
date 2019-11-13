@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,14 +96,21 @@ public class AvroCompositeSchemasTest {
 
     @Test
     public void testUnionSchemas() throws Exception {
+        String givenSchemaLocation = "/avro/composites/unions.avsc";
+        String expectedSchemaLocation = "/avro/composites/expected-unions.avsc";
+
+        doTestSchemaResolution(givenSchemaLocation, expectedSchemaLocation);
+    }
+
+    private void doTestSchemaResolution(String givenSchemaLocation, String expectedSchemaLocation) throws IOException {
         AvroSchemaResolver avroSchemaResolver = new AvroSchemaResolver(null);
-        Schema schema = new Schema.Parser().parse(getResourceText("/avro/composites/unions.avsc"));
+        Schema schema = new Schema.Parser().parse(getResourceText(givenSchemaLocation));
         LOG.info("schema = %s", schema);
 
         Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
         LOG.info("effectiveSchema = %s", effectiveSchema);
         String returnedSchemaText = effectiveSchema.toString();
-        Assert.assertEquals(getResourceText("/avro/composites/expected-unions.avsc").replace(" ", ""),
+        Assert.assertEquals(getResourceText(expectedSchemaLocation).replace(" ", ""),
                             returnedSchemaText.replace(" ", ""));
 
         // double check whether the effective schema is semantically right parsing
@@ -111,4 +118,31 @@ public class AvroCompositeSchemasTest {
         Schema parsedReturnedSchema = parser.parse(returnedSchemaText);
         Assert.assertEquals(effectiveSchema, parsedReturnedSchema);
     }
+
+    @Test
+    public void testSchemasWithDefaults() throws Exception {
+        doTestSchemaResolution("/avro/composites/simple-union.avsc",
+                               "/avro/composites/expected-simple-union.avsc");
+    }
+
+    @Test
+    public void testUnionSchemasPropRetention() throws Exception {
+        AvroSchemaResolver avroSchemaResolver = new AvroSchemaResolver(null);
+        Schema schema = new Schema.Parser().parse(getResourceText("/avro/composites/unions-with-props.avsc"));
+        LOG.info("schema = %s", schema);
+
+        Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
+        LOG.info("effectiveSchema = %s", effectiveSchema);
+        String returnedSchemaText = effectiveSchema.toString();
+        Assert.assertEquals("foo", effectiveSchema.getField("name").getProp("someProp"));
+        Assert.assertEquals("bar", effectiveSchema.getField("address").getProp("otherProp"));
+        Assert.assertEquals("baz", effectiveSchema.getField("address").schema().getField("pincode").getProp("anotherProp"));
+        Assert.assertEquals("quux", effectiveSchema.getField("secondaryAddress").getProp("moreProps"));
+
+        // double check whether the effective schema is semantically right parsing
+        Schema.Parser parser = new Schema.Parser();
+        Schema parsedReturnedSchema = parser.parse(returnedSchemaText);
+        Assert.assertEquals(effectiveSchema, parsedReturnedSchema);
+    }
+
 }

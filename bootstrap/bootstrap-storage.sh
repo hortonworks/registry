@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2017 Hortonworks.
+# Copyright 2017-2019 Cloudera, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,18 +41,23 @@ else
   JAVA="${JAVA_HOME}/bin/java"
 fi
 
-TABLE_INITIALIZER_MAIN_CLASS=com.hortonworks.registries.storage.tool.TablesInitializer
-for file in "${BOOTSTRAP_DIR}"/lib/*.jar;
-do
-    CLASSPATH="$CLASSPATH":"$file"
-done
+TABLE_INITIALIZER_MAIN_CLASS=com.hortonworks.registries.storage.tool.sql.TablesInitializer
 
-function execute {
+buildClasspath() {
+  for file in "${BOOTSTRAP_DIR}"/lib/*.jar;
+  do
+      CLASSPATH="$CLASSPATH":"$file"
+  done
+}
+
+execute() {
+    # Building the classpath for each option so that the driver jars gets loaded when using the "drop-create" option.
+    buildClasspath
     echo "Using Configuration file: ${CONFIG_FILE_PATH}"
     ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -m ${MYSQL_JAR_URL_PATH} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --${1}
 }
 
-function printUsage {
+printUsage() {
     cat <<-EOF
 USAGE: $0 [create|migrate|info|validate|drop|drop-create|repair|check-connection]
    create           : Creates the tables. The target database should be empty

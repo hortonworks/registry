@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
@@ -46,7 +47,7 @@ public class SchemaRegistryClientTest {
             invoke(schemaRegistryClient, "registerSchemaMetadata", schemaMetaData);
             result = 1L;
 
-            invoke(schemaRegistryClient, "doAddSchemaVersion", schemaName, schemaVersion);
+            invoke(schemaRegistryClient, "doAddSchemaVersion", SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion, false);
             result = schemaIdVersion;
             times = 1; // this should be invoked only once as this should have been cached
 

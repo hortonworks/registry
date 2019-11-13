@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.Collection;
@@ -30,7 +31,7 @@ public interface SchemaVersionService {
 
     public void updateSchemaVersionState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaNotFoundException;
 
-    public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException;
+    public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
 
     SchemaMetadataInfo getSchemaMetadata(long schemaVersionId) throws SchemaNotFoundException;
 
@@ -40,5 +41,5 @@ public interface SchemaVersionService {
                                               String toSchemaText,
                                               String existingSchemaText);
 
-    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaName) throws SchemaNotFoundException;
+    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 }

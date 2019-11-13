@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -105,6 +105,28 @@ export class String extends BaseField {
       disabled={disabledField}
       {...this.props.attrs}
       onChange={this.handleChange}/>
+    );
+  }
+}
+
+export class TextArea extends String {
+  getField = () => {
+    let disabledField = this.context.Form.props.readOnly;
+
+    return (<textarea className={
+        this.context.Form.state.Errors[this.props.valuePath]
+        ?
+        "form-control invalidInput"
+        :
+        "form-control"
+      }
+      ref="input"
+      value={this.props.data[this.props.value] || ''}
+      disabled={disabledField}
+      {...this.props.attrs}
+      onChange={this.handleChange}
+      style={{maxWidth: '100%'}}
+      />
     );
   }
 }

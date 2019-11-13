@@ -64,7 +64,7 @@ import java.util.*;
  *  used to sign the HTTP cookie.</li>
  * <li>[#PREFIX#.]token.validity: time -in seconds- that the generated token is
  * valid before a new authentication is triggered, default value is
- * <code>3600</code> seconds. This is also used for the rollover interval for
+ * <code>36000</code> seconds. This is also used for the rollover interval for
  * the "random" SignerSecretProvider.</li>
  * <li>[#PREFIX#.]cookie.domain: domain to use for the HTTP cookie that stores the authentication token.</li>
  * <li>[#PREFIX#.]cookie.path: path to use for the HTTP cookie that stores the authentication token.</li>
@@ -169,6 +169,13 @@ public class AuthenticationFilter implements Filter {
     public static final String SIGNER_SECRET_PROVIDER_ATTRIBUTE =
             "signer.secret.provider.object";
 
+    /**
+     * Constant for the configuration property that indicates the resources to skip this filter for
+     * e.g. "abc.html, icon.png" to skip specific resources
+     * e.g. ".html, .png" to skip all html and png resources
+     */
+    public static final String ALLOWED_RESOURCES = "allowed.resources";
+
     private Properties config;
     private Signer signer;
     private SignerSecretProvider secretProvider;
@@ -177,6 +184,7 @@ public class AuthenticationFilter implements Filter {
     private String cookieDomain;
     private String cookiePath;
     private boolean isInitializedByTomcat;
+    private List<String> allowedResources = new ArrayList<>();
 
     /**
      * <p>Initializes the authentication filter and signer secret provider.</p>
@@ -204,7 +212,11 @@ public class AuthenticationFilter implements Filter {
             authHandlerClassName = PseudoAuthenticationHandler.class.getName();
         } else if (authHandlerName.toLowerCase(Locale.ENGLISH).equals(
                 KerberosAuthenticationHandler.TYPE)) {
-            authHandlerClassName = KerberosAuthenticationHandler.class.getName();
+            if (Boolean.parseBoolean(config.getProperty(KerberosBasicAuthenticationHandler.LOGIN_ENABLED_CONFIG))) {
+                authHandlerClassName = KerberosBasicAuthenticationHandler.class.getName();
+            } else {
+                authHandlerClassName = KerberosAuthenticationHandler.class.getName();
+            }
         } else {
             authHandlerClassName = authHandlerName;
         }
@@ -217,6 +229,9 @@ public class AuthenticationFilter implements Filter {
 
         cookieDomain = config.getProperty(COOKIE_DOMAIN, null);
         cookiePath = config.getProperty(COOKIE_PATH, null);
+        if ((config.getProperty(ALLOWED_RESOURCES) != null) && !config.getProperty(ALLOWED_RESOURCES).isEmpty()) {
+            allowedResources = Arrays.asList(config.getProperty(ALLOWED_RESOURCES).split(","));
+        }
     }
 
     protected void initializeAuthHandler(String authHandlerClassName, FilterConfig filterConfig)
@@ -478,93 +493,99 @@ public class AuthenticationFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
-        boolean unauthorizedResponse = true;
-        int errCode = HttpServletResponse.SC_UNAUTHORIZED;
-        AuthenticationException authenticationEx = null;
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        boolean isHttps = "https".equals(httpRequest.getScheme());
-        try {
-            boolean newToken = false;
-            AuthenticationToken token;
+        if (isResourceAllowed(httpRequest) || !authHandler.shouldAuthenticate(httpRequest)) {
+            LOG.debug("Skipping authentication filter of type {} for {}", authHandler.getType(), httpRequest);
+            doFilter(filterChain, httpRequest, httpResponse);
+        } else {
+            LOG.debug("Performing authentication filter of type {} for {}", authHandler.getType(), httpRequest);
+            boolean unauthorizedResponse = true;
+            int errCode = HttpServletResponse.SC_UNAUTHORIZED;
+            AuthenticationException authenticationEx = null;
+            boolean isHttps = "https".equals(httpRequest.getScheme());
             try {
-                token = getToken(httpRequest);
-            } catch (AuthenticationException ex) {
-                LOG.warn("AuthenticationToken ignored: " + ex.getMessage());
-                // will be sent back in a 401 unless filter authenticates
-                authenticationEx = ex;
-                token = null;
-            }
-            if (authHandler.managementOperation(token, httpRequest, httpResponse)) {
-                if (token == null) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Request [{}] triggering authentication", getRequestURL(httpRequest));
-                    }
-                    token = authHandler.authenticate(httpRequest, httpResponse);
-                    if (token != null && token.getExpires() != 0 &&
-                            token != AuthenticationToken.ANONYMOUS) {
-                        token.setExpires(System.currentTimeMillis() + getValidity() * 1000);
-                    }
-                    newToken = true;
+                boolean newToken = false;
+                AuthenticationToken token;
+                try {
+                    token = getToken(httpRequest);
+                } catch (AuthenticationException ex) {
+                    LOG.warn("AuthenticationToken ignored: " + ex.getMessage());
+                    // will be sent back in a 401 unless filter authenticates
+                    authenticationEx = ex;
+                    token = null;
                 }
-                if (token != null) {
-                    unauthorizedResponse = false;
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Request [{}] user [{}] authenticated", getRequestURL(httpRequest), token.getUserName());
+                if (authHandler.managementOperation(token, httpRequest, httpResponse)) {
+                    if (token == null) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Request [{}] triggering authentication", getRequestURL(httpRequest));
+                        }
+                        token = authHandler.authenticate(httpRequest, httpResponse);
+                        if (token != null && token.getExpires() != 0 &&
+                                token != AuthenticationToken.ANONYMOUS) {
+                            token.setExpires(System.currentTimeMillis() + getValidity() * 1000);
+                        }
+                        newToken = true;
                     }
-                    final AuthenticationToken authToken = token;
-                    httpRequest = new HttpServletRequestWrapper(httpRequest) {
+                    if (token != null) {
+                        unauthorizedResponse = false;
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Request [{}] user [{}] authenticated", getRequestURL(httpRequest), token.getUserName());
+                        }
+                        final AuthenticationToken authToken = token;
+                        httpRequest = new HttpServletRequestWrapper(httpRequest) {
 
-                        @Override
-                        public String getAuthType() {
+                            @Override
+                            public String getAuthType() {
                             return authToken.getType();
                         }
 
-                        @Override
-                        public String getRemoteUser() {
+                            @Override
+                            public String getRemoteUser() {
                             return authToken.getUserName();
                         }
 
-                        @Override
-                        public Principal getUserPrincipal() {
+                            @Override
+                            public Principal getUserPrincipal() {
                             return (authToken != AuthenticationToken.ANONYMOUS) ? authToken : null;
                         }
-                    };
-                    if (newToken && !token.isExpired() && token != AuthenticationToken.ANONYMOUS) {
-                        String signedToken = signer.sign(token.toString());
-                        createAuthCookie(httpResponse, signedToken, getCookieDomain(),
-                                getCookiePath(), token.getExpires(), isHttps);
+                        };
+                        if (newToken && !token.isExpired() && token != AuthenticationToken.ANONYMOUS) {
+                            String signedToken = signer.sign(token.toString());
+                            createAuthCookie(httpResponse, signedToken, getCookieDomain(),
+                                    getCookiePath(), token.getExpires(), isHttps);
+                        }
+                        doFilter(filterChain, httpRequest, httpResponse);
                     }
-                    doFilter(filterChain, httpRequest, httpResponse);
-                }
-            } else {
-                unauthorizedResponse = false;
-            }
-        } catch (AuthenticationException ex) {
-            // exception from the filter itself is fatal
-            errCode = HttpServletResponse.SC_FORBIDDEN;
-            authenticationEx = ex;
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Authentication exception: " + ex.getMessage(), ex);
-            } else {
-                LOG.warn("Authentication exception: " + ex.getMessage());
-            }
-        }
-        if (unauthorizedResponse) {
-            if (!httpResponse.isCommitted()) {
-                createAuthCookie(httpResponse, "", getCookieDomain(),
-                        getCookiePath(), 0, isHttps);
-                // If response code is 401. Then WWW-Authenticate Header should be
-                // present.. reset to 403 if not found..
-                if ((errCode == HttpServletResponse.SC_UNAUTHORIZED)
-                        && (!httpResponse.containsHeader(
-                        KerberosAuthenticator.WWW_AUTHENTICATE))) {
-                    errCode = HttpServletResponse.SC_FORBIDDEN;
-                }
-                if (authenticationEx == null) {
-                    httpResponse.sendError(errCode, "Authentication required");
                 } else {
-                    httpResponse.sendError(errCode, authenticationEx.getMessage());
+                    unauthorizedResponse = false;
+                }
+            } catch (AuthenticationException ex) {
+                // exception from the filter itself is fatal
+                errCode = HttpServletResponse.SC_FORBIDDEN;
+                authenticationEx = ex;
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Authentication exception: " + ex.getMessage(), ex);
+                } else {
+                    LOG.warn("Authentication exception: " + ex.getMessage());
+                }
+            }
+            if (unauthorizedResponse) {
+                if (!httpResponse.isCommitted()) {
+                    createAuthCookie(httpResponse, "", getCookieDomain(),
+                            getCookiePath(), 0, isHttps);
+                    // If response code is 401. Then WWW-Authenticate Header should be
+                    // present.. reset to 403 if not found..
+                    if ((errCode == HttpServletResponse.SC_UNAUTHORIZED)
+                            && (!httpResponse.containsHeader(
+                            KerberosAuthenticator.WWW_AUTHENTICATE))) {
+                        errCode = HttpServletResponse.SC_FORBIDDEN;
+                    }
+                    if (authenticationEx == null) {
+                        httpResponse.sendError(errCode, "Authentication required");
+                    } else {
+                        httpResponse.sendError(errCode, authenticationEx.getMessage());
+                    }
                 }
             }
         }
@@ -618,5 +639,17 @@ public class AuthenticationFilter implements Filter {
 
         sb.append("; HttpOnly");
         resp.addHeader("Set-Cookie", sb.toString());
+    }
+
+    private boolean isResourceAllowed (HttpServletRequest request) {
+        boolean result = false;
+        String url = request.getRequestURL().toString();
+        for (String allowedResource: allowedResources) {
+            if (url.endsWith(allowedResource)) {
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 }

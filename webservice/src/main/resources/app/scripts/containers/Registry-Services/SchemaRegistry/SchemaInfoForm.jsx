@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ export default class SchemaFormContainer extends Component {
   fetchData() {
     SchemaREST.getSchemaProviders().then((results) => {
       this.setState({typeArr: results.entities});
-    });
+    }).catch(Utils.showError);
   }
 
   handleValueChange(e) {
@@ -128,7 +128,9 @@ export default class SchemaFormContainer extends Component {
       var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        if(Utils.isValidJson(reader.result)) {
+        if(this.state.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result)) {
+          this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
+        } else if(this.state.type.toLowerCase() != 'avro') {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else {
           this.setState({schemaTextFile: null, schemaText: '', showCodemirror: true});
@@ -156,7 +158,7 @@ export default class SchemaFormContainer extends Component {
 
   validateData() {
     let {name, type, schemaGroup, description, changedFields, schemaText} = this.state;
-    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '' || schemaText.trim() === '' || !Utils.isValidJson(schemaText.trim())) {
+    if (name.trim() === '' || schemaGroup === '' || type === '' || description.trim() === '' || schemaText.trim() === '') {
       if (name.trim() === '' && changedFields.indexOf("name") === -1) {
         changedFields.push("name");
       };
@@ -171,13 +173,15 @@ export default class SchemaFormContainer extends Component {
       }
       this.setState({showError: true, changedFields: changedFields, expandCodemirror: false});
       return false;
+    } else if (this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
+      return false;
     } else {
       this.setState({showError: false});
       return true;
     }
   }
 
-  handleSave() {
+  handleSave(didVersionFailed) {
     let data = {};
     let {name, type, schemaGroup, description, compatibility, evolve, schemaText} = this.state;
     data = {
@@ -187,18 +191,22 @@ export default class SchemaFormContainer extends Component {
       description,
       evolve
     };
+    let versionData = { schemaText, description };
     if (compatibility !== '') {
       data.compatibility = compatibility;
     }
-    return SchemaREST.postSchema({body: JSON.stringify(data)})
+    if(didVersionFailed){
+      return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
+    } else {
+      return SchemaREST.postSchema({body: JSON.stringify(data)})
         .then((schemaResult)=>{
           if(schemaResult.responseMessage !== undefined){
             FSReactToastr.error(<CommonNotification flag="error" content={schemaResult.responseMessage}/>, '', toastOpt);
           } else {
-            let versionData = { schemaText, description };
             return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
           }
         });
+    }
   }
 
   render() {
@@ -206,8 +214,8 @@ export default class SchemaFormContainer extends Component {
       lineNumbers: true,
       mode: "application/json",
       styleActiveLine: true,
-      gutters: ["CodeMirror-lint-markers"],
-      lint: true
+      gutters: this.state.type.toLowerCase() == 'avro' ? ["CodeMirror-lint-markers"] : [],
+      lint: this.state.type.toLowerCase() == 'avro'
     };
     let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror} = this.state;
     return (
@@ -273,7 +281,7 @@ export default class SchemaFormContainer extends Component {
               <a key="3" className="pull-right" href="javascript:void(0)" onClick={() => { this.setState({expandCodemirror: !expandCodemirror}); }}>
                 {expandCodemirror ? <i className="fa fa-compress"></i> : <i className="fa fa-expand"></i>}
               </a>]
-            : 
+            :
             null
           }
           <div onDrop={this.handleOnDrop.bind(this)} onDragOver={(e) => {
@@ -286,7 +294,7 @@ export default class SchemaFormContainer extends Component {
               ?
               <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
               :
-              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
                 <div onClick={(e) => {
                   this.setState({showCodemirror: true});
                 }}>

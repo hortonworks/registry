@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import 'react-bootstrap-switch/dist/css/bootstrap3/react-bootstrap-switch.min.cs
 import '../styles/css/toastr.min.css';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/addon/lint/lint.css';
+import 'gitgraph.js/build/gitgraph.css';
 import './libs/jsdifflib/diffview.css';
 import '../styles/css/style.css';
 

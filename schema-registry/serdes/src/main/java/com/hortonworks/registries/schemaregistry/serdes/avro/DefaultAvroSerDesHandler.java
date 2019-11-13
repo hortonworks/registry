@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -68,7 +69,9 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
                 encoder.flush();
             }
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
+        } catch (RuntimeException e) {
+            throw new AvroException(e);
         }
     }
 
@@ -91,7 +94,9 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
+        } catch (Exception e) {
+            throw new AvroException(e);
         }
         return deserializedObj;
     }
@@ -113,14 +118,14 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
         if (readerSchema == null) {
             Class readerClass = SpecificData.get().getClass(writerSchema);
             if (readerClass == null) {
-                throw new SerDesException("Could not find class " + writerSchema.getFullName() + " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
+                throw new AvroException("Could not find class " + writerSchema.getFullName() + " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
             }
             try {
                 readerSchema = ((SpecificRecord) readerClass.newInstance()).getSchema();
             } catch (InstantiationException e) {
-                throw new SerDesException(writerSchema.getFullName() + " specified by the " + "writers schema could not be instantiated to find the readers schema.");
+                throw new AvroException(writerSchema.getFullName() + " specified by the " + "writers schema could not be instantiated to find the readers schema.");
             } catch (IllegalAccessException e) {
-                throw new SerDesException(writerSchema.getFullName() + " specified by the " + "writers schema is not allowed to be instantiated to find the readers schema.");
+                throw new AvroException(writerSchema.getFullName() + " specified by the " + "writers schema is not allowed to be instantiated to find the readers schema.");
             }
 
             this.readerSchemaCache.put(writerSchema.getFullName(), readerSchema);

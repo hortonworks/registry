@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,8 +18,8 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroRetryableException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +29,6 @@ import java.io.InputStream;
  * This is the default implementation of {@link AbstractAvroSnapshotDeserializer}.
  */
 public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<InputStream> {
-    private static final Logger LOG = LoggerFactory.getLogger(AvroSnapshotDeserializer.class);
 
     public AvroSnapshotDeserializer() {
     }
@@ -54,11 +52,11 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
         try {
             protocolId = (byte) inputStream.read();
         } catch (IOException e) {
-            throw new SerDesException(e);
+            throw new AvroRetryableException(e);
         }
 
         if (protocolId == -1) {
-            throw new SerDesException("End of stream reached while trying to read protocol id");
+            throw new AvroException("End of stream reached while trying to read protocol id");
         }
 
         checkProtocolHandlerExists(protocolId);
@@ -68,7 +66,7 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
 
     private void checkProtocolHandlerExists(byte protocolId) {
         if (SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId) == null) {
-            throw new SerDesException("Unknown protocol id [" + protocolId + "] received while deserializing the payload");
+            throw new AvroException("Unknown protocol id [" + protocolId + "] received while deserializing the payload");
         }
     }
 
@@ -77,7 +75,6 @@ public class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<I
                                    SchemaMetadata schemaMetadata,
                                    Integer writerSchemaVersion,
                                    Integer readerSchemaVersion) throws SerDesException {
-
         return buildDeserializedObject(protocolId, payloadInputStream, schemaMetadata, writerSchemaVersion, readerSchemaVersion);
     }
     

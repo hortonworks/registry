@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Hortonworks.
+ * Copyright 2017-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider;
 
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
+import com.hortonworks.registries.storage.impl.jdbc.config.HikariConfigFactory;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.factory.OracleExecutor;
@@ -29,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Properties;
 
 public class QueryExecutorFactory {
 
@@ -39,20 +40,20 @@ public class QueryExecutorFactory {
 
     }
 
-    public static QueryExecutor get(String type, Map<String, Object> dbProperties) {
+    public static QueryExecutor get(DatabaseType type, Map<String, Object> dbProperties) {
 
-        HikariCPConnectionBuilder connectionBuilder = getHikariCPConnnectionBuilder(dbProperties);
-        ExecutionConfig executionConfig = getExecutionConfig(dbProperties);
+        HikariCPConnectionBuilder connectionBuilder = getHikariCPConnnectionBuilder(type, dbProperties);
+        ExecutionConfig executionConfig = getExecutionConfig(type, dbProperties);
 
         QueryExecutor queryExecutor = null;
         switch (type) {
-            case "mysql":
+            case MYSQL:
                 queryExecutor = new MySqlExecutor(executionConfig, connectionBuilder);
                 break;
-            case "postgresql":
+            case POSTGRESQL:
                 queryExecutor = new PostgresqlExecutor(executionConfig, connectionBuilder);
                 break;
-            case "oracle":
+            case ORACLE:
                 queryExecutor = new OracleExecutor(executionConfig, connectionBuilder);
                 break;
             default:
@@ -62,7 +63,7 @@ public class QueryExecutorFactory {
         return queryExecutor;
     }
 
-    private static HikariCPConnectionBuilder getHikariCPConnnectionBuilder(Map<String, Object> dbProperties ) {
+    private static HikariCPConnectionBuilder getHikariCPConnnectionBuilder(DatabaseType type, Map<String, Object> dbProperties) {
         Util.validateJDBCProperties(dbProperties, Lists.newArrayList("dataSourceClassName", "dataSource.url"));
 
         String dataSourceClassName = (String) dbProperties.get("dataSourceClassName");
@@ -71,14 +72,12 @@ public class QueryExecutorFactory {
         String jdbcUrl = (String) dbProperties.get("dataSource.url");
         LOG.info("dataSource.url is: [{}] ", jdbcUrl);
 
-        Properties properties = new Properties();
-        properties.putAll(dbProperties);
-        HikariConfig hikariConfig = new HikariConfig(properties);
+        HikariConfig hikariConfig = HikariConfigFactory.get(type, dbProperties);
 
         return new HikariCPConnectionBuilder(hikariConfig);
     }
 
-    private static ExecutionConfig getExecutionConfig(Map<String, Object> dbProperties) {
+    private static ExecutionConfig getExecutionConfig(DatabaseType type, Map<String, Object> dbProperties) {
         int queryTimeOutInSecs = -1;
         if (dbProperties.containsKey("queryTimeoutInSecs")) {
             queryTimeOutInSecs = (Integer) dbProperties.get("queryTimeoutInSecs");
@@ -87,6 +86,6 @@ public class QueryExecutorFactory {
             }
         }
 
-        return new ExecutionConfig(queryTimeOutInSecs);
+        return new ExecutionConfig(queryTimeOutInSecs, type);
     }
 }

@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,8 +38,8 @@ abstract class BaseRegistryResource {
     static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
     static final String OPERATION_GROUP_OTHER = "3. Other";
 
-    
-    
+
+
     BaseRegistryResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
         Preconditions.checkNotNull(schemaRegistry, "SchemaRegistry can not be null");
         Preconditions.checkNotNull(leadershipParticipant, "LeadershipParticipant can not be null");

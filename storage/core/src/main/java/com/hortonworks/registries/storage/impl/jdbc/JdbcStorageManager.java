@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,22 @@ package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.common.DatabaseType;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
-import com.hortonworks.registries.storage.exception.ConcurrentUpdateException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +43,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
-public class JdbcStorageManager implements StorageManager {
+public class JdbcStorageManager implements TransactionManager, StorageManager {
     private static final Logger log = LoggerFactory.getLogger(StorageManager.class);
     public static final String DB_TYPE = "db.type";
 
@@ -82,10 +86,7 @@ public class JdbcStorageManager implements StorageManager {
 
     @Override
     public void update(Storable storable) {
-        if (queryExecutor.update(storable) == 0) {
-            log.warn("Update storable '{}' returned 0 rows, possible concurrent update or invalid primary key");
-            throw new ConcurrentUpdateException("Row could not be updated, possible concurrent update or invalid primary key");
-        }
+        queryExecutor.update(storable);
     }
 
     @Override
@@ -102,6 +103,53 @@ public class JdbcStorageManager implements StorageManager {
         }
         log.debug("Querying key = [{}]\n\t returned [{}]", key, entry);
         return entry;
+    }
+
+    @Override
+    public boolean readLock(StorableKey key, Long time, TimeUnit timeUnit) {
+        log.debug("Obtaining a read lock for entry with storable key [{}]", key);
+
+        Supplier<Collection<Storable>> supplier = () -> queryExecutor.selectForShare(key);
+
+        try {
+            return getLock(supplier, time, timeUnit);
+        } catch (InterruptedException e) {
+            throw new StorageException("Failed to obtain a write lock for storable key : " + key);
+        }
+    }
+
+    @Override
+    public boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit) {
+        log.debug("Obtaining a write lock for entry with storable key [{}]", key);
+
+        Supplier<Collection<Storable>> supplier = () -> queryExecutor.selectForUpdate(key);
+
+        try {
+            return getLock(supplier, time, timeUnit);
+        } catch (InterruptedException e) {
+            throw new StorageException("Failed to obtain a write lock for storable key : " + key);
+        }
+    }
+
+    private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
+        long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
+
+        if(remainingTime < 0) {
+            throw new IllegalArgumentException("Wait time for obtaining the lock can't be negative");
+        }
+
+        long startTime = System.currentTimeMillis();
+        do {
+            Collection<Storable> storables = supplier.get();
+            if (storables != null && !storables.isEmpty()) {
+                return true;
+            } else {
+                Thread.sleep(500);
+            }
+        } while((System.currentTimeMillis() - startTime) < remainingTime);
+
+
+        return false;
     }
 
     @Override
@@ -188,15 +236,14 @@ public class JdbcStorageManager implements StorageManager {
         StorableKey storableKey = null;
 
         try {
-            CaseAgnosticStringSet columnNames = queryExecutor.getColumnNames(namespace);
+            Columns columns = queryExecutor.getColumns(namespace);
             for (QueryParam qp : queryParams) {
-                if (!columnNames.contains(qp.getName())) {
+                Schema.Type type = columns.getType(qp.getName());
+                if (type == null) {
                     log.warn("Query parameter [{}] does not exist for namespace [{}]. Query parameter ignored.", qp.getName(), namespace);
                 } else {
-                    final String val = qp.getValue();
-                    final Schema.Type typeOfVal = Schema.Type.getTypeOfVal(val);
-                    fieldsToVal.put(new Schema.Field(qp.getName(), typeOfVal),
-                            typeOfVal.getJavaType().getConstructor(String.class).newInstance(val)); // instantiates object of the appropriate type
+                    fieldsToVal.put(new Schema.Field(qp.getName(), type),
+                            type.getJavaType().getConstructor(String.class).newInstance(qp.getValue()));
                 }
             }
 
@@ -229,13 +276,7 @@ public class JdbcStorageManager implements StorageManager {
             throw new IllegalArgumentException("db.type should be set on jdbc properties");
         }
 
-        String type = (String) properties.get(DB_TYPE);
-
-        // When we have more providers we can add a layer to have a factory to create respective jdbc storage managers.
-        // For now, keeping it simple as there are only 2.
-        if(!"mysql".equals(type) && !"postgresql".equals(type) && !"oracle".equals(type)) {
-            throw new IllegalArgumentException("Unknown jdbc storage provider type: "+type);
-        }
+        DatabaseType type = DatabaseType.fromValue((String) properties.get(DB_TYPE));
         log.info("jdbc provider type: [{}]", type);
         Map<String, Object> dbProperties = (Map<String, Object>) properties.get("db.properties");
 
@@ -245,4 +286,24 @@ public class JdbcStorageManager implements StorageManager {
         this.queryExecutor.setStorableFactory(storableFactory);
     }
 
+    @Override
+    public void beginTransaction(TransactionIsolation transactionIsolationLevel) {
+        queryExecutor.beginTransaction(transactionIsolationLevel);
+    }
+
+    @Override
+    public void rollbackTransaction() {
+        // The guarantee in interface is accomplished once the instance has an implementation of
+        // QueryExecutor which extends AbstractQueryExecutor,
+        // given that AbstractQueryExecutor.rollbackTransaction() guarantees the behavior.
+
+        // Another implementations of QueryExecutor should provide a way of guaranteeing the
+        // behavior, like call closeConnection() when rollbackTransaction() is failing.
+        queryExecutor.rollbackTransaction();
+    }
+
+    @Override
+    public void commitTransaction() {
+        queryExecutor.commitTransaction();
+    }
 }

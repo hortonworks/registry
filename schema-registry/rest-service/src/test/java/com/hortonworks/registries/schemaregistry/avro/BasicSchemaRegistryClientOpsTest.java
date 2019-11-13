@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestNam
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.junit.After;
 import org.junit.Assert;
@@ -92,7 +93,7 @@ public class BasicSchemaRegistryClientOpsTest {
         doTestSchemaOps(SchemaValidationLevel.ALL);
     }
 
-    private void doTestSchemaOps(SchemaValidationLevel validationLevel) throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+    private void doTestSchemaOps(SchemaValidationLevel validationLevel) throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         String testName = TEST_NAME_RULE.getMethodName();
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(testName + "-schema")
                 .type(AvroSchemaProvider.TYPE)

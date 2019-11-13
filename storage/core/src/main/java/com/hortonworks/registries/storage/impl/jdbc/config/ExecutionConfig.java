@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.config;
 
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 
@@ -26,14 +27,26 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.Prepa
  * This class should be immutable as the configuration should not change after passed in to the configurable objects
  **/
 public class ExecutionConfig {
+
     private final int queryTimeoutSecs;
+    private final DatabaseType databaseType;
 
     // Replace constructors with Builder pattern as more configuration options become available
+    public ExecutionConfig(int queryTimeoutSecs, DatabaseType databaseType) {
+        this.queryTimeoutSecs = queryTimeoutSecs;
+        this.databaseType = databaseType;
+    }
+
     public ExecutionConfig(int queryTimeoutSecs) {
         this.queryTimeoutSecs = queryTimeoutSecs;
+        this.databaseType = null;
     }
 
     public int getQueryTimeoutSecs() {
         return queryTimeoutSecs;
+    }
+
+    public DatabaseType getDatabaseType() {
+        return databaseType;
     }
 }

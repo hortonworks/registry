@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public final class SchemaVersionKey implements Serializable {
      * @param version    version of the schema
      */
     public SchemaVersionKey(String schemaName, Integer version) {
-        Preconditions.checkNotNull(schemaName, "schemaMetadataKey can not be null");
+        Preconditions.checkNotNull(schemaName, "schemaName can not be null");
         Preconditions.checkNotNull(version, "version can not be null");
         this.schemaName = schemaName;
         this.version = version;

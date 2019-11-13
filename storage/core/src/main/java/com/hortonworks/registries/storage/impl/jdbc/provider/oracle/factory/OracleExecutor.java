@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Hortonworks.
+ * Copyright 2017-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertUpdateDuplicate;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectForShareQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectForUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleSequenceIdQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleUpdateQuery;
@@ -34,7 +36,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.statement.Or
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
-import com.hortonworks.registries.storage.impl.jdbc.util.CaseAgnosticStringSet;
+import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.sql.Connection;
@@ -108,24 +110,50 @@ public class OracleExecutor extends AbstractQueryExecutor {
     }
 
     @Override
-    public Long nextId(String namespace) {
-        OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, connectionBuilder, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT);
-        return oracleSequenceIdQuery.getNextID();
+    public <T extends Storable> Collection<T> selectForShare(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new OracleSelectForShareQuery(storableKey));
     }
 
     @Override
-    public CaseAgnosticStringSet getColumnNames(String namespace) throws SQLException {
-        CaseAgnosticStringSet columns = new CaseAgnosticStringSet();
-        try (Connection connection = getConnection()) {
+    public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
+        return executeQuery(storableKey.getNameSpace(), new OracleSelectForUpdateQuery(storableKey));
+    }
+
+    @Override
+    public Long nextId(String namespace) {
+        OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT);
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            Long id = oracleSequenceIdQuery.getNextID(connection);
+            return id;
+        } finally {
+            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                closeConnection(connection);
+            }
+        }
+    }
+
+    @Override
+    public Columns getColumns(String namespace) throws SQLException {
+        Columns columns = new Columns();
+        Connection connection = null;
+        try {
+            connection = getConnection();
             final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
-                columns.add(rsMetadata.getColumnName(i));
+                columns.add(rsMetadata.getColumnName(i),
+                        getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
             }
             return columns;
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
+        } finally {
+            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                closeConnection(connection);
+            }
         }
     }
 }

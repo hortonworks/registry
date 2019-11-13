@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -16,16 +16,7 @@ import fetch from 'isomorphic-fetch';
 import {
   baseUrl
 } from '../utils/Constants';
-
-function checkStatus(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return response.json();
-  } else {
-    const error = new Error(response.statusText);
-    error.response = response.json();
-    throw error;
-  }
-}
+import {checkStatus} from '../utils/Utils';
 
 const SerializerDeserializerREST = {
   getSerDess(schemaName, options) {

@@ -59,9 +59,9 @@ CentOS/RedHat
 
 ::
 
-  cp conf/registry.yaml.mysql.example conf/registry.yaml
+  cp conf/registry-mysql-example.yaml conf/registry.yaml
 
-Edit the folllowing section to add appropriate database and user settings
+Edit the following section to add appropriate database and user settings
 
 ::
 
@@ -139,9 +139,9 @@ OS X
 
 ::
 
-  cp conf/registry.yaml.mysql.example conf/registry.yaml
+  cp conf/registry-mysql-example.yaml conf/registry.yaml
 
-Edit the folllowing section to add appropriate database and user settings
+Edit the following section to add appropriate database and user settings
 
 ::
 
@@ -166,3 +166,28 @@ Edit the folllowing section to add appropriate database and user settings
 6. Start the registry server
 
 ``sudo ./bin/registry start``
+
+
+Running Schema Registry with a load balancer
+---------------------------------------------
+
+ One or more schema registry instances can be put behind a load balancer for reverse proxying, in that case appropriate schema registry url
+must be mentioned in the load balancer's configuration file. For example, in case of Apache mod proxy the VirtualHost tag in the
+configuration file should be edited out with the following
+
+    <VirtualHost *:80>
+    <Proxy balancer://mycluster>
+        BalancerMember http://127.0.0.1:9090 <!-- First schema registry server -->
+        BalancerMember http://127.0.0.2:9090 <!-- Second schema registry server -->
+    </Proxy>
+
+        ProxyPreserveHost On
+
+        ProxyPass / balancer://mycluster/
+        ProxyPassReverse / balancer://mycluster/
+    </VirtualHost>
+
+ In case of serializers and deserializers the parameter "schema.registry.url" can be pointed to the loader balancer's url or it can be a list of
+schema registry severs with "schema.registry.client.url.selector" set to one of "FailoverUrlSelector" , "LoadBalancedFailoverUrlSelector"
+or "RoundRobinUrlSelector". The parameter "schema.registry.client.url.selector" defines the retry strategy in the case the currently picked
+schema registry server from the list of schema registry servers is not reachable.

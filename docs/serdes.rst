@@ -2,8 +2,35 @@
 Serialization/Deserialization protocol
 ======================================
 
-Serializer and Deserializer are used to marshal and unmarshal messages according to a given schema by adding schema version information along with the payload.
-There are different protocols in how schema version is passed along with the payload.
+Serializer and Deserializer are used to marshal and unmarshal messages according to a given schema by adding schema version
+information either in the Message Header [or] along with the payload. There are different protocols and/or formats in
+how schema version are added with the Message. This framework allows to build custom ser/des protocols by users.
+
+Message Formats
+```````````````
+
+In Kafka v0.11.0.0, Record Header support is introduced. With this support, user can optionally save the schema
+information in the header rather than prepending it in the body of the message. (See Message Format 2)
+
+Message Format 1
+""""""""""""""""
+|header:| |body:<version_info><payload>|
+This is the default format to maintain backward compatibility. Prepends the schema version information along with the
+user payload in the body of the Message.
+
+Message Format 2
+""""""""""""""""
+|header:<version_info>| |body:<payload>|
+Adds the schema version information in the Message Header and keeps the user payload as it's in the body of the Message.
+
+.. code-block:: java
+
+    public byte[] serialize(String topic, Headers headers, Object data) {
+        final MessageAndMetadata message = serializer.serialize(data, schemaMetadata);
+        headers.add("value.schema.version.id", message.metadata());
+        return message.payload();
+    }
+
 
 Confluent protocol
 ``````````````````
@@ -11,8 +38,6 @@ Protocol-id: 0
 
 Serialization
 """""""""""""
-Message format: <version-info><payload>
-
 version-info: version identifier as integer type, so it would be of 4 bytes.
 
 payload:
@@ -28,8 +53,6 @@ payload:
 
 Deserialization
 """""""""""""""
-Message format: <version-info><payload>
-
 version-info: version identifier as integer type, so it would be of 4 bytes.
 
 Get the respective avro schema for the given schema version id which will be writer schema.
@@ -59,8 +82,6 @@ Protocol-id: 2
 
 Serialization
 """""""""""""
-Message format: <version-info><payload>
-
 version-info: long value which represents schema version id, viz 8 bytes
 
 payload:
@@ -76,8 +97,6 @@ payload:
 
 Deserialization
 """""""""""""""
-Message format: <version-info><payload>
-
 version-info: long value which represents schema version id, viz 8 bytes
 
 Get the respective avro schema for the given schema version id which will be writer schema.
@@ -105,9 +124,9 @@ Java implementation is located at `serialization/deserialization  <https://githu
 
 Schema version id as int protocol
 `````````````````````````````````
-Protocol-id: 2
+Protocol-id: 3
 
-This protocol's serialization and deserialization of payload process is similar to Schema version id as long protocol except the schema version id is treated as int.
+This protocol's serialization and deserialization of payload process is similar to Schema version id as long protocol except the schema version id is treated as int and it falls back to long when it is more than max integer value.
 
 Java implementation is located at `serialization/deserialization  <https://github.com/hortonworks/registry/blob/master/schema-registry/serdes/src/main/java/com/hortonworks/registries/schemaregistry/serdes/avro/DefaultAvroSerDesHandler.java>`_ and `protocol <https://github.com/hortonworks/registry/blob/master/schema-registry/serdes/src/main/java/com/hortonworks/registries/schemaregistry/serdes/avro/SchemaVersionIdAsIntProtocolHandler.java>`_.
 
@@ -117,8 +136,6 @@ Schema metadata id and version protocol
 Protocol-id: 1
 
 This protocol's serialization and deserialization of payload process is similar to Schema version id as long protocol except the version info contains both schema metadata od and version number.
-
-Message format: <version-info><payload>
 
 version-info: <metadata-id><version>
 

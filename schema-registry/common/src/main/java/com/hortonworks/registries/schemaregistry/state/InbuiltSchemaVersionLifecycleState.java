@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.state;
 
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -30,13 +31,12 @@ public interface InbuiltSchemaVersionLifecycleState extends SchemaVersionLifecyc
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
-    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException {
+    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
     default void disable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
-
     }
 
     default void archive(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {

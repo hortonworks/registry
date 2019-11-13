@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Hortonworks.
+ * Copyright 2017-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,20 +35,24 @@ public class SchemaRegistryTestConfiguration {
         String clientYAMLFileName;
         switch (testProfileType) {
             case DEFAULT:
-                serverYAMLFileName = "schema-registry-test.yaml";
+                serverYAMLFileName = "schema-registry.yaml";
                 clientYAMLFileName = "schema-registry-client.yaml";
                 break;
             case SSL:
-                serverYAMLFileName = "ssl-schema-registry-test.yaml";
+                serverYAMLFileName = "ssl-schema-registry.yaml";
                 clientYAMLFileName = "ssl-schema-registry-client.yaml";
                 break;
             case DEFAULT_HA:
-                serverYAMLFileName = "schema-registry-test-ha.yaml";
+                serverYAMLFileName = "schema-registry-ha.yaml";
                 clientYAMLFileName = null;
                 break;
             case SSL_HA:
-                serverYAMLFileName = "ssl-schema-registry-test-ha.yaml";
+                serverYAMLFileName = "ssl-schema-registry-ha.yaml";
                 clientYAMLFileName = "ssl-schema-registry-client.yaml";
+                break;
+            case ONE_WAY_SSL:
+                serverYAMLFileName = "one-way-ssl-schema-registry.yaml";
+                clientYAMLFileName = "one-way-ssl-schema-registry-client.yaml";
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized SchemaRegistryTestProfileType : " + testProfileType);

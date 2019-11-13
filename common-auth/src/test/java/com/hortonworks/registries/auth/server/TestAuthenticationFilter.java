@@ -150,6 +150,11 @@ public class TestAuthenticationFilter {
             }
             return token;
         }
+
+        @Override
+        public boolean shouldAuthenticate(HttpServletRequest request) {
+            return true;
+        }
     }
 
     @Test
@@ -974,6 +979,7 @@ public class TestAuthenticationFilter {
             Cookie cookie = new Cookie(AuthenticatedURL.AUTH_COOKIE, tokenSigned);
             Mockito.when(request.getCookies()).thenReturn(new Cookie[]{cookie});
             Mockito.when(request.getRequestURI()).thenReturn("/bar");
+            Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
 
             filter.doFilter(request, response, chain);
 

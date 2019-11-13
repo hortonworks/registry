@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Hortonworks.
+ * Copyright 2017-2019 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query;
 
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
-import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.statement.OracleDataTypeContext;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
@@ -25,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -32,24 +32,22 @@ public class OracleSequenceIdQuery {
     private static final Logger log = LoggerFactory.getLogger(OracleSequenceIdQuery.class);
     private static final String nextValueFunction = "nextval";
     private final String namespace;
-    private final ConnectionBuilder connectionBuilder;
     private final OracleDataTypeContext oracleDatabaseStorageContext;
     private final int queryTimeoutSecs;
 
-    public OracleSequenceIdQuery(String namespace, ConnectionBuilder connectionBuilder, int queryTimeoutSecs, OracleDataTypeContext oracleDatabaseStorageContext) {
+    public OracleSequenceIdQuery(String namespace, int queryTimeoutSecs, OracleDataTypeContext oracleDatabaseStorageContext) {
         this.namespace = namespace;
-        this.connectionBuilder = connectionBuilder;
         this.queryTimeoutSecs = queryTimeoutSecs;
         this.oracleDatabaseStorageContext = oracleDatabaseStorageContext;
     }
 
-    public Long getNextID() {
+    public Long getNextID(Connection connection) {
 
         OracleSqlQuery nextValueQuery = new OracleSqlQuery(String.format("SELECT \"%s\".%s from DUAL", namespace.toUpperCase(), nextValueFunction));
         Long nextId = 0l;
 
-        try (Connection connection = connectionBuilder.getConnection()) {
-            ResultSet selectResultSet = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), oracleDatabaseStorageContext, nextValueQuery).getPreparedStatement(nextValueQuery).executeQuery();
+        try (PreparedStatement preparedStatement = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), oracleDatabaseStorageContext, nextValueQuery).getPreparedStatement(nextValueQuery);
+             ResultSet selectResultSet = preparedStatement.executeQuery()) {
             if (selectResultSet.next()) {
                 nextId = selectResultSet.getLong(nextValueFunction);
             } else {

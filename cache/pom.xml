@@ -5,7 +5,7 @@
     <parent>
         <artifactId>registries</artifactId>
         <groupId>com.hortonworks.registries</groupId>
-        <version>0.3.0-SNAPSHOT</version>
+        <version>0.8.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,7 +13,7 @@
 
     <properties>
         <!--currently using lettuce version 3 because version 4 depends on jdk8. Upgrade to version 4 when upgrading to jdk8 -->
-        <redis.lettuce.version>3.4.2.Final</redis.lettuce.version>
+        <redis.lettuce.version>3.5.0.Final</redis.lettuce.version>
     </properties>
     <dependencies>
         <dependency>

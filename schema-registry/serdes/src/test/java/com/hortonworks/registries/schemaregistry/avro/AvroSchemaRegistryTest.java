@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,9 +14,13 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
+import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
@@ -25,10 +28,14 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
+import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
+import org.apache.commons.codec.binary.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,7 +70,7 @@ public class AvroSchemaRegistryTest {
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig);
+        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new HAServerNotificationManager(), new SchemaLockManager(new NOOPTransactionManager()));
         schemaRegistry.init(Collections.<String, Object>emptyMap());
     }
 
@@ -136,11 +143,19 @@ public class AvroSchemaRegistryTest {
 
         //aggregate apis
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadata = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getVersions().size());
+        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getSchemaBranches().iterator().next().getSchemaVersionInfos().size());
         Assert.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
 
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());
         Assert.assertEquals(1, aggregatedSchemaMetadataCollection.size());
+
+        // Serializing and deserializing AggregatedSchemaMetadataInfo should not throw any errors
+
+        String aggregateSchemaMetadataStr = new ObjectMapper().writeValueAsString(aggregatedSchemaMetadataCollection);
+
+        Collection<AggregatedSchemaMetadataInfo> returnedResult =
+                new ObjectMapper().readValue(aggregateSchemaMetadataStr,
+                        new TypeReference<Collection<AggregatedSchemaMetadataInfo>>() {});
     }
 
     @Test
@@ -150,7 +165,7 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test(expected = SchemaNotFoundException.class)
-    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException {
+    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
         schemaRegistry.addSchemaVersion(INVALID_SCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy"));
     }
 
@@ -166,6 +181,27 @@ public class AvroSchemaRegistryTest {
                                    .getVersion();
     }
 
+    @Test(expected = InvalidSchemaException.class)
+    public void testSchemaTextAsNull() throws Exception {
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                                                     new SchemaVersion(null, "Initial version of the schema"))
+                                   .getVersion();
+    }
+
+    @Test(expected = InvalidSchemaException.class)
+    public void testSchemaTextAsEmpty() throws Exception {
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+
+        // registering a new schema
+        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                                                     new SchemaVersion("", "Initial version of the schema"))
+                                   .getVersion();
+    }
 
     @Test(expected = IncompatibleSchemaException.class)
     public void testIncompatibleSchemas() throws Exception {
@@ -183,6 +219,46 @@ public class AvroSchemaRegistryTest {
         Integer v2 = schemaRegistry.addSchemaVersion(schemaMetadata,
                                                      new SchemaVersion(incompatSchema, "second version"))
                                    .getVersion();
+    }
+
+    @Test
+    public void testFindSchemaVersionByFingerprintSingle() throws Exception {
+        final String schemaText = getSchema("/device.avsc");
+        registerSchemaVersion(TEST_NAME_RULE.getMethodName(), schemaText);
+
+        final AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
+        final String fingerprint = Hex.encodeHexString(avroSchemaProvider.getFingerprint(schemaText));
+
+        final SchemaVersionInfo schemaVersionFound = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
+
+        Assert.assertEquals("Didn't find the expected schema version using the schema fingerprint",
+                schemaText, schemaVersionFound.getSchemaText());
+    }
+
+    @Test
+    public void testFindSchemaVersionByFingerprintMultiple() throws Exception {
+        final String schemaText = getSchema("/device.avsc");
+
+
+        registerSchemaVersion("FirstSchema", schemaText);
+        final SchemaIdVersion second = registerSchemaVersion("SecondSchema", schemaText);
+
+        final AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
+        final String fingerprint = Hex.encodeHexString(avroSchemaProvider.getFingerprint(schemaText));
+
+        final SchemaVersionInfo schemaVersionFound = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
+
+        Assert.assertEquals("Didn't find the latest schema version using the schema fingerprint",
+                second.getSchemaVersionId(), schemaVersionFound.getId());
+    }
+
+    private SchemaIdVersion registerSchemaVersion(final String schemaName,
+                                         final String schemaText) throws Exception {
+        final SchemaMetadata schemaMetadata = createSchemaInfo(schemaName,
+                SchemaCompatibility.DEFAULT_COMPATIBILITY);
+
+        return schemaRegistry.addSchemaVersion(schemaMetadata,
+                new SchemaVersion(schemaText, "Initial version of the schema"));
     }
 
     private SchemaMetadata createSchemaInfo(String testName, SchemaCompatibility compatibility) {

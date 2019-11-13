@@ -200,4 +200,9 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
         return token;
     }
 
+    @Override
+    public boolean shouldAuthenticate(HttpServletRequest request) {
+        return true;
+    }
+
 }

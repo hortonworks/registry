@@ -1,6 +1,7 @@
 topic=truck_events_stream
 bootstrap.servers=localhost:9092
 schema.registry.url=http://localhost:9090/api/v1
+security.protocol=PLAINTEXT
 key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
 value.deserializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer
 group.id=truck_group

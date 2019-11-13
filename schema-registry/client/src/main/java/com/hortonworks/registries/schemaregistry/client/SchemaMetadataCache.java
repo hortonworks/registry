@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Maps;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
+import com.hortonworks.registries.schemaregistry.exceptions.RegistryRetryableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -34,21 +41,31 @@ public class SchemaMetadataCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaMetadataCache.class);
 
     private final LoadingCache<Key, SchemaMetadataInfo> loadingCache;
+    private final BiMap<String, Long> schemaNameToIdMap;
 
     public SchemaMetadataCache(Long size, Long expiryInSecs, final SchemaMetadataFetcher schemaMetadataFetcher) {
+        schemaNameToIdMap = Maps.synchronizedBiMap(HashBiMap.create());
         loadingCache = CacheBuilder.newBuilder()
                 .maximumSize(size)
                 .expireAfterAccess(expiryInSecs, TimeUnit.SECONDS)
                 .build(new CacheLoader<Key, SchemaMetadataInfo>() {
                     @Override
                     public SchemaMetadataInfo load(Key key) throws Exception {
+                        SchemaMetadataInfo schemaMetadataInfo;
+                        Key otherKey;
                         if (key.getName() != null) {
-                            return schemaMetadataFetcher.fetch(key.getName());
+                            schemaMetadataInfo = schemaMetadataFetcher.fetch(key.getName());
+                            otherKey = Key.of(schemaMetadataInfo.getId());
+                            schemaNameToIdMap.put(key.getName(), schemaMetadataInfo.getId());
                         } else if (key.getId() != null) {
-                            return schemaMetadataFetcher.fetch(key.getId());
+                            schemaMetadataInfo = schemaMetadataFetcher.fetch(key.getId());
+                            otherKey = Key.of(schemaMetadataInfo.getSchemaMetadata().getName());
+                            schemaNameToIdMap.put(schemaMetadataInfo.getSchemaMetadata().getName(), schemaMetadataInfo.getId());
                         } else {
-                            throw new IllegalArgumentException("Key should have name or id as non null");
+                            throw new RegistryException("Key should have name or id as non null");
                         }
+                        loadingCache.put(otherKey, schemaMetadataInfo);
+                        return schemaMetadataInfo;
                     }
                 });
     }
@@ -60,15 +77,35 @@ public class SchemaMetadataCache {
         } catch (ExecutionException e) {
             LOG.error("Error occurred while retrieving schema metadata for [{}]", key, e);
             Throwable cause = e.getCause();
-            if (!(cause instanceof SchemaNotFoundException)) {
-                throw new RuntimeException(cause.getMessage(), cause);
+            if (cause instanceof IOException) {
+                throw new RegistryRetryableException(cause.getMessage(), cause);
+            } else if (cause instanceof RuntimeException) {
+                if (cause.getCause() instanceof IOException) {
+                    throw new RegistryRetryableException(cause.getMessage(), cause);
+                } else {
+                    throw new RegistryException(cause.getMessage(), cause);
+                }
+            } else if (!(cause instanceof SchemaNotFoundException)) {
+                throw new RegistryException(cause.getMessage(), cause);
             }
             schemaMetadataInfo = null;
         }
 
         return schemaMetadataInfo;
     }
-    
+
+    public void invalidateSchemaMetadata (SchemaMetadataCache.Key key) {
+        LOG.info("Invalidating cache entry for key [{}]", key);
+
+        // If the cache doesn't have entry for the key, then no need to invalidate the cache
+        if(loadingCache.getIfPresent(key) != null)
+            loadingCache.invalidate(key);
+
+        Key otherKey = key.id == null ? Key.of(schemaNameToIdMap.get(key.name)) : Key.of(schemaNameToIdMap.inverse().get(key.id));
+        if(loadingCache.getIfPresent(otherKey) != null)
+            loadingCache.invalidate(otherKey);
+    }
+
     public void put(Key key, SchemaMetadataInfo schemaMetadataInfo) {
         loadingCache.put(key, schemaMetadataInfo);
     }
@@ -88,12 +125,12 @@ public class SchemaMetadataCache {
         private Long id;
 
         private Key(String name) {
-            Preconditions.checkNotNull("name can not be null", name);
+            Preconditions.checkNotNull(name, "name can not be null");
             this.name = name;
         }
 
         private Key(Long id) {
-            Preconditions.checkNotNull("id can not be null", id);
+            Preconditions.checkNotNull(id, "id can not be null");
             this.id = id;
         }
 
