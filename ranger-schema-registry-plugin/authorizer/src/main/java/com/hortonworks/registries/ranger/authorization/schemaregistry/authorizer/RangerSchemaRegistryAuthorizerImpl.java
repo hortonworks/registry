@@ -121,7 +121,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     }
 
     public static void main(String[] args) throws Exception {
-        String user = "vagrant";
+        String user = "vagrant2";
         Set<String> groups = new HashSet<>();
         groups.add("vagrant");
         Class<RangerSchemaRegistryAuthorizerImpl> c = RangerSchemaRegistryAuthorizerImpl.class;
@@ -134,7 +134,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         ///////////////////////////////////////////////////////////////////////////////////////////////////////
         System.out.println("//--- SchemaMetadata read authorization ---");
 
-        sGroup = "Group1";
+        sGroup = "Group12";
         sMetadataName = "test1";
 
         System.out.println("\nUser = " + user);
@@ -150,9 +150,9 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         ///////////////////////////////////////////////////////////////////////////////////////////////////////
         System.out.println("\n////--- SchemaBranch read authorization ---");
 
-        sGroup = "Group1";
-        sMetadataName = "test1";
-        sBranch = "MASTER";
+        sGroup = "Group12";
+        sMetadataName = "test12";
+        sBranch = "MASTER2";
 
         System.out.println("\nUser = " + user);
         System.out.println("UserGroups = " + groups);
@@ -170,7 +170,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
 
         sGroup = "Group1";
         sMetadataName = "test1";
-        sBranch = "MASTER1";
+        sBranch = "MASTER";
         sVersion = "1";
 
         System.out.println("\nUser = " + user);

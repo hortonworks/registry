@@ -19,7 +19,7 @@
 <configuration xmlns:xi="http://www.w3.org/2001/XInclude">
 	<property>
 		<name>ranger.plugin.schema-registry.service.name</name>
-		<value>SR1</value>
+		<value>SR5</value>
 		<description>
 			Name of the Ranger service containing policies for this YARN instance
 		</description>
@@ -35,19 +35,19 @@
 
 	<property>
 		<name>ranger.plugin.schema-registry.policy.rest.url</name>
-		<value>http://c7401:6080</value>
+		<value>https://c7401:6182</value>
 		<description>
 			URL to Ranger Admin
 		</description>
 	</property>
 
-	<!--<property>-->
-		<!--<name>ranger.plugin.schema-registry.policy.rest.ssl.config.file</name>-->
-		<!--<value>/etc/atlas/conf/ranger-policymgr-ssl.xml</value>-->
-		<!--<description>-->
-			<!--Path to the file containing SSL details to contact Ranger Admin-->
-		<!--</description>-->
-	<!--</property>-->
+	<property>
+		<name>ranger.plugin.schema-registry.policy.rest.ssl.config.file</name>
+		<value>/home/vagrant/ranger-policymgr-ssl.xml</value>
+		<description>
+			Path to the file containing SSL details to contact Ranger Admin
+		</description>
+	</property>
 
 	<property>
 		<name>ranger.plugin.schema-registry.policy.pollIntervalMs</name>
