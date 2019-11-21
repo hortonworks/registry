@@ -3,6 +3,7 @@ package com.hortonworks.registries.ranger.services.schemaregistry.client.srclien
 import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.auth.Login;
 import com.hortonworks.registries.auth.NOOPLogin;
+import com.hortonworks.registries.auth.util.JaasConfiguration;
 import com.hortonworks.registries.ranger.services.schemaregistry.client.srclient.util.SecurityUtils;
 import com.hortonworks.registries.schemaregistry.client.*;
 import com.sun.jersey.api.client.WebResource;
@@ -42,25 +43,6 @@ public class DefaultSRClient implements SRClient {
     private static final String SSL_ALGORITHM = "TLS";
     private static Login login;
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
-
-    static {
-        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
-        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
-            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
-            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
-            try {
-                kerberosLogin.login();
-                login = kerberosLogin;
-            } catch (LoginException e) {
-                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
-                login = new NOOPLogin();
-            }
-        } else {
-            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
-            login = new NOOPLogin();
-        }
-    }
-
     private final Client client;
     private final UrlSelector urlSelector;
     private final Map<String, SchemaRegistryTargets> urlWithTargets;
@@ -68,6 +50,7 @@ public class DefaultSRClient implements SRClient {
 
     public DefaultSRClient(Map<String, ?> conf) {
         configuration = new SchemaRegistryClient.Configuration(conf);
+        initializeSecurityContext();
         ClientConfig config = createClientConfig(conf);
         final boolean SSLEnabled = isHttpsEnabled(conf);
         if (SSLEnabled) {
@@ -84,6 +67,39 @@ public class DefaultSRClient implements SRClient {
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
         urlWithTargets = new ConcurrentHashMap<>();
+    }
+
+    protected void initializeSecurityContext() {
+        String saslJaasConfig = configuration.getValue(SchemaRegistryClient.Configuration.SASL_JAAS_CONFIG.name());
+        if (saslJaasConfig != null) {
+            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
+            try {
+                kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
+                kerberosLogin.login();
+                login = kerberosLogin;
+                return;
+            } catch (LoginException e) {
+                LOG.error("Failed to initialize the dynamic JAAS config: " + saslJaasConfig + ". Attempting static JAAS config.");
+            } catch (Exception e) {
+                LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
+            }
+        }
+
+        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
+        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
+            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
+            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
+            try {
+                kerberosLogin.login();
+                login = kerberosLogin;
+            } catch (LoginException e) {
+                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
+                login = new NOOPLogin();
+            }
+        } else {
+            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
+            login = new NOOPLogin();
+        }
     }
 
     private boolean isHttpsEnabled(Map<String, ?> conf) {
