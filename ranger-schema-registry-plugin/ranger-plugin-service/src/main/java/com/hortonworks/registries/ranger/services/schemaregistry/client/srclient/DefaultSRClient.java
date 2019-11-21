@@ -142,7 +142,7 @@ public class DefaultSRClient implements SRClient {
         Object obj = sslConfigurations.get("serverCertValidation");
         boolean serverCertValidation = (obj == null) || Boolean.parseBoolean(obj.toString());
 
-        if (keyStorePassword != null) {
+        if (keyStorePath != null) {
             KeyStore ks = KeyStore.getInstance(keyStoreType != null ?
                     keyStoreType : KeyStore.getDefaultType());
 
