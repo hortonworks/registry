@@ -3,6 +3,7 @@ package com.hortonworks.registries.ranger.services.schemaregistry.client.srclien
 import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.auth.Login;
 import com.hortonworks.registries.auth.NOOPLogin;
+import com.hortonworks.registries.ranger.services.schemaregistry.client.srclient.util.SecurityUtils;
 import com.hortonworks.registries.schemaregistry.client.*;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -22,12 +23,7 @@ import javax.security.auth.login.LoginException;
 import javax.ws.rs.core.MediaType;;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.net.Socket;
 import java.net.URLEncoder;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -77,7 +73,7 @@ public class DefaultSRClient implements SRClient {
         if (SSLEnabled) {
             SSLContext ctx;
             try {
-                ctx = createSSLContext(conf);
+                ctx = SecurityUtils.createSSLContext(conf, SSL_ALGORITHM);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -105,146 +101,6 @@ public class DefaultSRClient implements SRClient {
             props.put(entry.getKey(), entry.getValue());
         }
         return config;
-    }
-
-    private SSLContext createSSLContext(Map<String, ?> sslConfigurations) throws Exception {
-
-        SSLContext context = SSLContext.getInstance(SSL_ALGORITHM);
-
-        KeyManager[] km = null;
-
-        String keyStorePath = (String)sslConfigurations.get("keyStorePath");
-        if (keyStorePath == null || keyStorePath.isEmpty()) {
-            keyStorePath = System.getProperty("javax.net.ssl.keyStore");
-        }
-        String keyStorePassword = (String)sslConfigurations.get("keyStorePassword");
-        if (keyStorePassword == null || keyStorePath.isEmpty()) {
-            keyStorePassword = Optional.ofNullable(System.getProperty("javax.net.ssl.keyStorePassword")).orElse("");
-        }
-        String keyStoreType = (String)sslConfigurations.get("keyStoreType");
-        if (keyStoreType == null || keyStoreType.isEmpty()) {
-            keyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
-        }
-
-        String trustStorePath = (String)sslConfigurations.get("trustStorePath");
-        if (trustStorePath == null || trustStorePath.isEmpty()) {
-            trustStorePath = System.getProperty("javax.net.ssl.trustStore");
-        }
-        String trustStorePassword = (String)sslConfigurations.get("trustStorePassword");
-        if (trustStorePassword == null || trustStorePassword.isEmpty()) {
-            trustStorePassword = Optional.ofNullable(System.getProperty("javax.net.ssl.trustStorePassword")).orElse("");
-        }
-        String trustStoreType = (String)sslConfigurations.get("trustStoreType");
-        if (trustStoreType == null || trustStoreType.isEmpty()) {
-            trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
-        }
-
-        Object obj = sslConfigurations.get("serverCertValidation");
-        boolean serverCertValidation = (obj == null) || Boolean.parseBoolean(obj.toString());
-
-        if (keyStorePath != null) {
-            KeyStore ks = KeyStore.getInstance(keyStoreType != null ?
-                    keyStoreType : KeyStore.getDefaultType());
-
-            InputStream in;
-
-            in = getFileInputStream(keyStorePath);
-
-            try {
-                ks.load(in, keyStorePassword.toCharArray());
-            } finally {
-                if (in != null) {
-                    in.close();
-                }
-            }
-
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, keyStorePassword.toCharArray());
-            km = kmf.getKeyManagers();
-        }
-
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-
-        TrustManager[] tm = null;
-
-        if (serverCertValidation) {
-            if (trustStorePath != null) {
-                KeyStore trustStoreKeyStore = KeyStore.getInstance(trustStoreType != null ?
-                        trustStoreType : KeyStore.getDefaultType());
-
-                InputStream in;
-
-                in = getFileInputStream(trustStorePath);
-
-                try {
-                    trustStoreKeyStore.load(in, trustStorePassword.toCharArray());
-
-                    trustManagerFactory.init(trustStoreKeyStore);
-
-                    tm = trustManagerFactory.getTrustManagers();
-
-                } finally {
-                    if (in != null) {
-                        in.close();
-                    }
-                }
-            }
-        } else {
-            TrustManager ignoreValidationTM = new X509TrustManager() {
-                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                    // Ignore Server Certificate Validation
-                }
-
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-
-                public void checkServerTrusted(X509Certificate[] chain,
-                                               String authType)
-                        throws CertificateException {
-                    // Ignore Server Certificate Validation
-                }
-            };
-
-            tm  = new TrustManager[] {ignoreValidationTM};
-        }
-
-        SecureRandom random = new SecureRandom();
-
-        context.init(km, tm, random);
-
-        return context;
-
-    }
-
-    private InputStream getFileInputStream(String path) throws FileNotFoundException {
-
-        InputStream ret;
-
-        File f = new File(path);
-
-        if (f.exists()) {
-            ret = new FileInputStream(f);
-        } else {
-            ret = getClass().getResourceAsStream(path);
-
-            if (ret == null) {
-                if (! path.startsWith("/")) {
-                    ret = getClass().getResourceAsStream("/" + path);
-                }
-            }
-
-            if (ret == null) {
-                ret = ClassLoader.getSystemClassLoader().getResourceAsStream(path);
-                if (ret == null) {
-                    if (! path.startsWith("/")) {
-                        ret = ClassLoader.getSystemResourceAsStream("/" + path);
-                    }
-                }
-            }
-        }
-
-        return ret;
     }
 
     private UrlSelector createUrlSelector() {
