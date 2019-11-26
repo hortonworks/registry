@@ -1,9 +1,6 @@
 package com.hortonworks.registries.ranger.services.schemaregistry.client.srclient;
 
-import com.hortonworks.registries.auth.KerberosLogin;
 import com.hortonworks.registries.auth.Login;
-import com.hortonworks.registries.auth.NOOPLogin;
-import com.hortonworks.registries.auth.util.JaasConfiguration;
 import com.hortonworks.registries.ranger.services.schemaregistry.client.srclient.util.SecurityUtils;
 import com.hortonworks.registries.schemaregistry.client.*;
 import com.sun.jersey.api.client.WebResource;
@@ -20,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.sun.jersey.api.client.Client;
 
 import javax.net.ssl.*;
-import javax.security.auth.login.LoginException;
 import javax.ws.rs.core.MediaType;;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -39,20 +35,18 @@ public class DefaultSRClient implements SRClient {
     private static final String SCHEMA_REGISTRY_PATH = "/api/v1/schemaregistry";
     private static final String SCHEMAS_PATH = SCHEMA_REGISTRY_PATH + "/schemas/";
     private static final String SCHEMA_REGISTRY_VERSION_PATH = SCHEMA_REGISTRY_PATH + "/version";
-    private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
     private static final String SSL_ALGORITHM = "TLS";
-    private static Login login;
-    private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
     private final Client client;
+    private final Login login;
     private final UrlSelector urlSelector;
     private final Map<String, SchemaRegistryTargets> urlWithTargets;
     private final SchemaRegistryClient.Configuration configuration;
 
     public DefaultSRClient(Map<String, ?> conf) {
         configuration = new SchemaRegistryClient.Configuration(conf);
-        initializeSecurityContext();
+        login = SecurityUtils.initializeSecurityContext(conf);
         ClientConfig config = createClientConfig(conf);
-        final boolean SSLEnabled = isHttpsEnabled(conf);
+        final boolean SSLEnabled = SecurityUtils.isHttpsConnection(conf);
         if (SSLEnabled) {
             SSLContext ctx;
             try {
@@ -67,44 +61,6 @@ public class DefaultSRClient implements SRClient {
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
         urlWithTargets = new ConcurrentHashMap<>();
-    }
-
-    protected void initializeSecurityContext() {
-        String saslJaasConfig = configuration.getValue(SchemaRegistryClient.Configuration.SASL_JAAS_CONFIG.name());
-        if (saslJaasConfig != null) {
-            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
-            try {
-                kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
-                kerberosLogin.login();
-                login = kerberosLogin;
-                return;
-            } catch (LoginException e) {
-                LOG.error("Failed to initialize the dynamic JAAS config: " + saslJaasConfig + ". Attempting static JAAS config.");
-            } catch (Exception e) {
-                LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
-            }
-        }
-
-        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
-        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
-            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
-            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
-            try {
-                kerberosLogin.login();
-                login = kerberosLogin;
-            } catch (LoginException e) {
-                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
-                login = new NOOPLogin();
-            }
-        } else {
-            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
-            login = new NOOPLogin();
-        }
-    }
-
-    private boolean isHttpsEnabled(Map<String, ?> conf) {
-        String urls = conf.get(SCHEMA_REGISTRY_URL.name()).toString();
-        return urls.trim().startsWith("https://");
     }
 
     private ClientConfig createClientConfig(Map<String, ?> conf) {
@@ -246,11 +202,12 @@ public class DefaultSRClient implements SRClient {
 
     public static void main(String[] args) {
         Map<String, Object> conf = new HashMap<>();
-        conf.put(SCHEMA_REGISTRY_URL.name(), "https://c7401:8443");
+        conf.put(SCHEMA_REGISTRY_URL.name(), "https://vomoshkovskyi-1.gce.cloudera.com:7790/");
         //conf.put(SCHEMA_REGISTRY_URL.name(), "https://c7401:8443");
         //conf.put("trustStorePath", "/home/vladimir/WorkCloudera/Repo/registry/ssl_trustore");
         //conf.put("trustStorePassword", "test12");
         conf.put("serverCertValidation", "false");
+        System.setProperty("java.security.auth.login.config", "/home/vladimir/WorkCloudera/Repo/registry/jaas.conf");
         //conf.put("trustStoreType", "jks");
         //conf.put("commonNameForCertificate", "192.168.74.101,c7401");
         SRClient client = new DefaultSRClient(conf);
@@ -259,7 +216,7 @@ public class DefaultSRClient implements SRClient {
             System.out.println("OK");
             client.getSchemaGroups().forEach(System.out::println);
             client.getSchemaNames("Group1").forEach(System.out::println);
-            client.getSchemaBranches("test1").forEach(System.out::println);
+            //client.getSchemaBranches("test1").forEach(System.out::println);
         } catch(Exception e) {
             System.out.println("FAIL");
         }
