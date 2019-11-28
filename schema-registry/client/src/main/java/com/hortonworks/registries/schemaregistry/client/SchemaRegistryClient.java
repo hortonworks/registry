@@ -1253,6 +1253,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                       String.class,
                                       "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
                                       "http://localhost:9090/api/v1",
+                                      ConfigEntry.StringConverter.get(),
                                       ConfigEntry.NonEmptyStringValidator.get());
 
         /**
@@ -1268,6 +1269,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      String.class,
                                      "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
                                      DEFAULT_LOCAL_JARS_PATH,
+                                     ConfigEntry.StringConverter.get(),
                                      ConfigEntry.NonEmptyStringValidator.get());
 
         /**
@@ -1289,6 +1291,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Maximum size of classloader cache",
                                      DEFAULT_CLASSLOADER_CACHE_SIZE,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1300,6 +1303,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Expiry interval(in seconds) of an entry in classloader cache",
                                      DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         public static final long DEFAULT_SCHEMA_CACHE_SIZE = 1024;
@@ -1313,6 +1317,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Maximum size of schema version cache",
                                      DEFAULT_SCHEMA_CACHE_SIZE,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1323,6 +1328,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Expiry interval(in seconds) of an entry in schema version cache",
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1333,6 +1339,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Maximum size of schema metadata cache",
                                      DEFAULT_SCHEMA_CACHE_SIZE,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1343,6 +1350,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Expiry interval(in seconds) of an entry in schema metadata cache",
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1354,6 +1362,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Maximum size of schema text cache",
                                      DEFAULT_SCHEMA_CACHE_SIZE,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1364,6 +1373,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      Integer.class,
                                      "Expiry interval(in seconds) of an entry in schema text cache.",
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                                     ConfigEntry.IntegerConverter.get(),
                                      ConfigEntry.PositiveNumberValidator.get());
 
         /**
@@ -1374,6 +1384,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      String.class,
                                      "Schema Registry URL selector class.",
                                      FailoverUrlSelector.class.getName(),
+                                     ConfigEntry.StringConverter.get(),
                                      ConfigEntry.NonEmptyStringValidator.get());
 
         /**
@@ -1384,6 +1395,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         String.class,
                         "Schema Registry Dynamic JAAS config for SASL connection.",
                         null,
+                        ConfigEntry.StringConverter.get(),
                         ConfigEntry.NonEmptyStringValidator.get());
 
         // connection properties
@@ -1411,16 +1423,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             for (Map.Entry<String, ?> entry : config.entrySet()) {
                 String key = entry.getKey();
                 Object value = entry.getValue();
+                Object finalValue = value;
 
                 ConfigEntry configEntry = options.get(key);
                 if (configEntry != null) {
                     if (value != null) {
-                        configEntry.validator().validate((value));
+                        finalValue = configEntry.converter().convert(value);
+                        configEntry.validator().validate((finalValue));
                     } else {
-                        value = configEntry.defaultValue();
+                        finalValue = configEntry.defaultValue();
                     }
                 }
-                result.put(key, value);
+                result.put(key, finalValue);
             }
 
             return result;

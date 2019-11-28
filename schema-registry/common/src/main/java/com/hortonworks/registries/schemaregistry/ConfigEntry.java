@@ -21,8 +21,8 @@ import java.util.Collections;
  * Details about a configuration entry containing
  * - name, type, description, mandatory, default value and validator.
  * <p>
- * Mandatory configuration entry can be created with {@link ConfigEntry#mandatory(String, Class, String, Object, Validator)}
- * Optional configuration entry can be created with {@link ConfigEntry#optional(String, Class, String, Object, Validator)}
+ * Mandatory configuration entry can be created with {@link ConfigEntry#mandatory(String, Class, String, Object, Converter, Validator)}
+ * Optional configuration entry can be created with {@link ConfigEntry#optional(String, Class, String, Object, Converter, Validator)}
  */
 public final class ConfigEntry<T> implements Serializable {
 
@@ -33,6 +33,7 @@ public final class ConfigEntry<T> implements Serializable {
     private final String description;
     private final boolean mandatory;
     private final T defaultValue;
+    private final Converter<? extends T> converter;
     private final Validator<? extends T> validator;
 
     private ConfigEntry(String name,
@@ -40,12 +41,14 @@ public final class ConfigEntry<T> implements Serializable {
                         String description,
                         boolean mandatory,
                         T defaultValue,
+                        Converter<? extends T> converter,
                         Validator<? extends T> validator) {
         this.name = name;
         this.type = type;
         this.description = description;
         this.mandatory = mandatory;
         this.defaultValue = defaultValue;
+        this.converter = converter;
         this.validator = validator;
     }
 
@@ -53,16 +56,18 @@ public final class ConfigEntry<T> implements Serializable {
                                                Class<? extends T> type,
                                                String description,
                                                T defaultValue,
+                                               Converter<? extends T> converter,
                                                Validator<? extends T> validator) {
-        return new ConfigEntry<T>(name, type, description, true, defaultValue, validator);
+        return new ConfigEntry<T>(name, type, description, true, defaultValue, converter, validator);
     }
 
     public static <T> ConfigEntry<T> optional(String name,
                                               Class<? extends T> type,
                                               String description,
                                               T defaultValue,
+                                              Converter<? extends T> converter,
                                               Validator<? extends T> validator) {
-        return new ConfigEntry<T>(name, type, description, false, defaultValue, validator);
+        return new ConfigEntry<T>(name, type, description, false, defaultValue, converter, validator);
     }
 
     public String name() {
@@ -83,6 +88,10 @@ public final class ConfigEntry<T> implements Serializable {
 
     public Validator<? extends T> validator() {
         return validator;
+    }
+
+    public Converter<? extends T> converter() {
+        return converter;
     }
 
     public boolean isMandatory() {
@@ -127,6 +136,48 @@ public final class ConfigEntry<T> implements Serializable {
                 ", validator=" + validator +
                 '}';
     }
+
+    /**
+     * Converts an Object to a typed value.
+     *
+     * @param <T> type of the resulting value.
+     */
+    public interface Converter<T> {
+        T convert(Object obj);
+    }
+
+    public static class IntegerConverter implements Converter<Integer> {
+
+        private static final Converter<Integer> instance = new IntegerConverter();
+
+        @Override
+        public Integer convert(Object obj) {
+            if (obj instanceof String) {
+                return Integer.valueOf((String)obj);
+            } else {
+                return ((Integer) obj);
+            }
+        }
+
+        public static Converter<Integer> get() {
+            return instance;
+        }
+    }
+
+    public static class StringConverter implements Converter<String> {
+
+        private static final Converter<String> instance = new StringConverter();
+
+        @Override
+        public String convert(Object obj) {
+            return (String)obj;
+        }
+
+        public static Converter<String> get() {
+            return instance;
+        }
+    }
+
 
     /**
      * Validates the given value for a given {@link ConfigEntry}
