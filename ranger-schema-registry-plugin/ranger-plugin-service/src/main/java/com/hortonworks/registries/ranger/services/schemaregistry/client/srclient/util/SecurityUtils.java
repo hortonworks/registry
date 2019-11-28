@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL;
+import static org.apache.ranger.plugin.client.HadoopConfigHolder.*;
 
 public class SecurityUtils {
 
@@ -176,18 +177,19 @@ public class SecurityUtils {
     }
 
     private static String getJaasConfigForClientPrincipal(Map<String, ?> conf) {
-        String keytabFile = (String)conf.get(RangerServiceSchemaRegistry.LOOKUP_KEYTAB);
-        String principal = (String)conf.get(RangerServiceSchemaRegistry.LOOKUP_PRINCIPAL);
+        String keytabFile = (String)conf.get(RANGER_LOOKUP_KEYTAB);
+        String principal = (String)conf.get(RANGER_LOOKUP_PRINCIPAL);
 
         if(keytabFile == null || keytabFile.isEmpty()
                 || principal == null || principal.isEmpty()) {
             return null;
         }
 
-        return "com.sun.security.auth.module.Krb5LoginModule required useTicketCache=false principal="
+        return "com.sun.security.auth.module.Krb5LoginModule required useTicketCache=false principal=\""
                 + principal
-                + "useKeyTab=true keyTab=\""
-                + keytabFile;
+                + "\" useKeyTab=true keyTab=\""
+                + keytabFile
+                + "\";";
     }
 
     public static Login initializeSecurityContext(Map<String, ?> conf) {
@@ -224,12 +226,12 @@ public class SecurityUtils {
     }
 
     private static boolean isKerberosEnabled(Map<String, ?> conf) {
-        String rangerAuthType = (String) conf.get(RangerServiceSchemaRegistry.RANGER_AUTH_TYPE);
+        String rangerAuthType = (String) conf.get(RANGER_AUTH_TYPE);
         String pluginAuthType = (String) conf.get("schema-registry.authentication");
 
         return rangerAuthType != null
-                && rangerAuthType.equals(RangerServiceSchemaRegistry.KERBEROS_TYPE)
-                && pluginAuthType.equalsIgnoreCase(RangerServiceSchemaRegistry.KERBEROS_TYPE);
+                && rangerAuthType.equals(HADOOP_SECURITY_AUTHENTICATION_METHOD)
+                && pluginAuthType.equalsIgnoreCase(HADOOP_SECURITY_AUTHENTICATION_METHOD);
     }
 
 }

@@ -27,6 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL;
+import static org.apache.ranger.plugin.client.HadoopConfigHolder.RANGER_AUTH_TYPE;
+import static org.apache.ranger.plugin.client.HadoopConfigHolder.RANGER_LOOKUP_KEYTAB;
+import static org.apache.ranger.plugin.client.HadoopConfigHolder.RANGER_LOOKUP_PRINCIPAL;
 
 public class DefaultSRClient implements SRClient {
 
@@ -207,9 +210,13 @@ public class DefaultSRClient implements SRClient {
         //conf.put("trustStorePath", "/home/vladimir/WorkCloudera/Repo/registry/ssl_trustore");
         //conf.put("trustStorePassword", "test12");
         conf.put("serverCertValidation", "false");
-        System.setProperty("java.security.auth.login.config", "/home/vladimir/WorkCloudera/Repo/registry/jaas.conf");
+        //System.setProperty("java.security.auth.login.config", "/home/vladimir/WorkCloudera/Repo/registry/jaas.conf");
         //conf.put("trustStoreType", "jks");
         //conf.put("commonNameForCertificate", "192.168.74.101,c7401");
+        conf.put(RANGER_LOOKUP_KEYTAB, "/home/vladimir/Tmp/ranger.keytab");
+        conf.put(RANGER_LOOKUP_PRINCIPAL, "rangerlookup/vomoshkovskyi-1.gce.cloudera.com@GCE.CLOUDERA.COM");
+        conf.put(RANGER_AUTH_TYPE, "kerberos");
+        conf.put("schema-registry.authentication", "kerberos");
         SRClient client = new DefaultSRClient(conf);
         try {
             client.testConnection();

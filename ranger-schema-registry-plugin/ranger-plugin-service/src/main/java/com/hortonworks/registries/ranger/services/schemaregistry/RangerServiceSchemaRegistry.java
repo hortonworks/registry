@@ -15,11 +15,6 @@ public class RangerServiceSchemaRegistry extends RangerBaseService {
 
     private static final Log LOG = LogFactory.getLog(RangerServiceSchemaRegistry.class);
 
-    public static final String LOOKUP_PRINCIPAL = RangerBaseService.LOOKUP_PRINCIPAL;
-    public static final String LOOKUP_KEYTAB = RangerBaseService.LOOKUP_KEYTAB;
-    public static final String RANGER_AUTH_TYPE = RangerBaseService.RANGER_AUTH_TYPE;
-    public static final String KERBEROS_TYPE = RangerBaseService.KERBEROS_TYPE;
-
 
     @Override
     public void init(RangerServiceDef serviceDef, RangerService service) {
