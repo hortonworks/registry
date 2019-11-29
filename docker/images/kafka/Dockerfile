@@ -20,7 +20,7 @@ ENV KAFKA_VERSION=$kafka_version \
     SCALA_VERSION=$scala_version
 
 ARG FILE_NAME=kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
-ADD http://redrockdigimark.com/apachemirror/kafka/${KAFKA_VERSION}/${FILE_NAME} /opt/
+ADD https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/${FILE_NAME} /opt/
 
 RUN tar -xf /opt/${FILE_NAME} -C /opt/ \
     && ln -sf /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka \
