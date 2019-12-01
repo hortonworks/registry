@@ -1,9 +1,12 @@
 package com.hortonworks.registries.schemaregistry.authorization;
 
+import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.schemaregistry.*;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import javax.ws.rs.core.SecurityContext;
+import java.io.IOException;
+import java.security.Principal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -480,19 +483,19 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     private String getUserNameFromSC(SecurityContext sc) {
-        //TODO: Add correct implementation
-        if(sc.getUserPrincipal() != null) {
-            return sc.getUserPrincipal().getName();
-        }
+        Principal p = sc.getUserPrincipal();
+        KerberosName kerberosName = new KerberosName(p.getName());
 
-        return "vagrant";
+        try {
+            return kerberosName.getShortName();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Set<String> getUserGroupsFromSC(SecurityContext sc) {
         Set<String> res = new HashSet<>();
-        //TODO: Add correct implementation
-        res.add("vagrant");
-
+        // UserGroups will be calculated on the Ranger side
         return res;
     }
 

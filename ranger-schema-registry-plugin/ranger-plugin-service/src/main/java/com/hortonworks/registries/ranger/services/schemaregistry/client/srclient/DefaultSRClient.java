@@ -216,7 +216,7 @@ public class DefaultSRClient implements SRClient {
         conf.put(RANGER_LOOKUP_KEYTAB, "/home/vladimir/Tmp/ranger.keytab");
         conf.put(RANGER_LOOKUP_PRINCIPAL, "rangerlookup/vomoshkovskyi-1.gce.cloudera.com@GCE.CLOUDERA.COM");
         conf.put(RANGER_AUTH_TYPE, "kerberos");
-        conf.put("schema-registry.authentication", "kerberos");
+        conf.put("schema-registry.authentication", "Kerberos");
         SRClient client = new DefaultSRClient(conf);
         try {
             client.testConnection();
