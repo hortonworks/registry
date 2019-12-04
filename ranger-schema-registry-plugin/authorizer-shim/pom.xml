@@ -18,6 +18,12 @@
             <artifactId>ranger-plugin-classloader</artifactId>
             <version>${ranger.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.ranger</groupId>
+            <artifactId>ranger-plugins-common</artifactId>
+            <version>${ranger.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
 </project>

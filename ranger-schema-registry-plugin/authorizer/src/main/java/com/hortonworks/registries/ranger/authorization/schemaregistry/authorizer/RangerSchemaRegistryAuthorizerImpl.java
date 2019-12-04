@@ -5,7 +5,6 @@ import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 import org.apache.ranger.plugin.service.RangerBasePlugin;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
