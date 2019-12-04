@@ -14,6 +14,8 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.schemaregistry.errors.ConfigTypeConversionException;
+
 import java.io.Serializable;
 import java.util.Collections;
 
@@ -153,9 +155,15 @@ public final class ConfigEntry<T> implements Serializable {
         @Override
         public Integer convert(Object obj) {
             if (obj instanceof String) {
-                return Integer.valueOf((String)obj);
-            } else {
+                try {
+                    return Integer.valueOf((String)obj);
+                } catch (NumberFormatException e) {
+                    throw new ConfigTypeConversionException(String.format("Value: %s can't be parsed as an Integer", obj), e);
+                }
+            } else if (obj instanceof Integer){
                 return ((Integer) obj);
+            } else {
+                throw new ConfigTypeConversionException(String.format("Value: %s (type: %s) is expected to be convertible to an Integer", obj, obj.getClass().getCanonicalName()));
             }
         }
 
@@ -170,7 +178,12 @@ public final class ConfigEntry<T> implements Serializable {
 
         @Override
         public String convert(Object obj) {
-            return (String)obj;
+
+            if (obj instanceof String) {
+                return (String)obj;
+            } else {
+                return obj.toString();
+            }
         }
 
         public static Converter<String> get() {
