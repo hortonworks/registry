@@ -148,30 +148,32 @@ public class AvroSchemaResolver implements SchemaResolver {
         if (schema.getType() == RECORD) {
             List<Schema.Field> fields = updatedRootSchema.getFields();
             List<Schema.Field> updatedFields = new ArrayList<>(fields.size());
-            boolean hasUnionType = false;
+            boolean hasUnionTypeWithNullDefault = false;
 
             for (Schema.Field field : fields) {
                 Schema fieldSchema = field.schema();
                 // check for union
 
                 boolean currentFieldTypeIsUnion = fieldSchema.getType() == Schema.Type.UNION;
+                Object defaultValue = field.defaultVal();
                 if (currentFieldTypeIsUnion) {
                     // check for the fields with in union
                     // if it is union and first type is null then set default value as null
                     if (fieldSchema.getTypes().get(0).getType() == Schema.Type.NULL) {
-                        hasUnionType = true;
+                        hasUnionTypeWithNullDefault = true;
+                        defaultValue = JsonProperties.NULL_VALUE;
                     }
                 } else {
                     // go through non-union fields, which may be records
                     Schema updatedFieldSchema = handleUnionFieldsWithNull(fieldSchema, visitingTypes);
                     if (fieldSchema != updatedFieldSchema) {
-                        hasUnionType = true;
+                        hasUnionTypeWithNullDefault = true;
                     }
                 }
                 Schema.Field rebuiltField = new Schema.Field(field.name(),
                                                    fieldSchema,
                                                    field.doc(),
-                                                   currentFieldTypeIsUnion ? JsonProperties.NULL_VALUE : field.defaultVal(),
+                                                   defaultValue,
                                                    field.order());
                 for (Map.Entry<String, Object> prop : field.getObjectProps().entrySet()) {
                     rebuiltField.addProp(prop.getKey(), prop.getValue());
@@ -179,7 +181,7 @@ public class AvroSchemaResolver implements SchemaResolver {
                 updatedFields.add(rebuiltField);
             }
 
-            if (hasUnionType) {
+            if (hasUnionTypeWithNullDefault) {
                 updatedRootSchema = Schema.createRecord(schema.getName(), schema.getDoc(), schema.getNamespace(), schema.isError());
                 updatedRootSchema.setFields(updatedFields);
                 for (String alias : schema.getAliases()) {
