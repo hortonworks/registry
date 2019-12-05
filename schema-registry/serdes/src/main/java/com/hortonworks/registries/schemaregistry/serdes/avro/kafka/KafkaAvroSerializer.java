@@ -109,7 +109,10 @@ public class KafkaAvroSerializer implements Serializer<Object> {
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
-        compatibility = (SchemaCompatibility) configs.get(SCHEMA_COMPATIBILITY);
+        compatibility = SchemaCompatibility.valueOf(
+                Utils.getOrDefaultAsString(configs, SCHEMA_COMPATIBILITY, SchemaCompatibility.DEFAULT_COMPATIBILITY.name())
+                        .toUpperCase()
+        );
 
         schemaGroup = Utils.getOrDefaultAsString(configs, SCHEMA_GROUP, DEFAULT_SCHEMA_GROUP);
         schemaNameKeySuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_KEY_SUFFIX_, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
