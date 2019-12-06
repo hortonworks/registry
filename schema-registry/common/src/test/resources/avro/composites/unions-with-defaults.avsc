@@ -1,0 +1,27 @@
+{
+  "name": "unions",
+  "namespace": "com.hortonworks.types",
+  "type": "record",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "primaryAddress",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "secondaryAddress",
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": "None"
+    }
+  ]
+}
