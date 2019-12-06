@@ -123,6 +123,9 @@ public class AvroCompositeSchemasTest {
     public void testSchemasWithDefaults() throws Exception {
         doTestSchemaResolution("/avro/composites/simple-union.avsc",
                                "/avro/composites/expected-simple-union.avsc");
+
+        doTestSchemaResolution("/avro/composites/unions-with-defaults.avsc",
+                "/avro/composites/expected-unions-with-defaults.avsc");
     }
 
     @Test
