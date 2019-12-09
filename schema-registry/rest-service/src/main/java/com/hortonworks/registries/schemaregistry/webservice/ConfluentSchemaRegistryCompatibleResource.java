@@ -64,11 +64,12 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     private final AuthorizationAgent authorizationAgent;
 
-    public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
+    public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
+                                                     AtomicReference<LeadershipParticipant> leadershipParticipant,
+                                                     AuthorizationAgent authorizationAgent) {
         super(schemaRegistry, leadershipParticipant);
 
-        //TODO: Security is hardcoded should be read from config.
-        this.authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(true);
+        this.authorizationAgent = authorizationAgent;
     }
 
     @GET

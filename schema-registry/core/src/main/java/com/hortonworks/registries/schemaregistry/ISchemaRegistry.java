@@ -33,6 +33,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
 
     String SCHEMA_PROVIDERS = "schemaProviders";
 
+    String AUTHORIZATION = "authorization";
+
     /**
      * initializes it with the given properties
      *

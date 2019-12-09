@@ -104,11 +104,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AtomicReference<LeadershipParticipant> leadershipParticipant,
-                                  SchemaRegistryVersion schemaRegistryVersion) {
+                                  SchemaRegistryVersion schemaRegistryVersion,
+                                  AuthorizationAgent authorizationAgent) {
         super(schemaRegistry, leadershipParticipant);
         this.schemaRegistryVersion = schemaRegistryVersion;
-        //TODO: Security is hardcoded should be read from config.
-        this.authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(true);
+
+        this.authorizationAgent = authorizationAgent;
     }
 
     @GET

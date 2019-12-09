@@ -28,6 +28,8 @@ import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
+import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -45,6 +47,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.AUTHORIZATION;
 import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_PROVIDERS;
 
 /**
@@ -83,11 +86,17 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
         LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
+        Map<String, Object> authorizationProps = (Map<String, Object>) config.get(AUTHORIZATION);
+        AuthorizationAgent  authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(authorizationProps);
+
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
                                                                                    leadershipParticipant,
-                                                                                   schemaRegistryVersion);
+                                                                                   schemaRegistryVersion,
+                                                                                   authorizationAgent);
         ConfluentSchemaRegistryCompatibleResource
-            confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry, leadershipParticipant);
+            confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry,
+                leadershipParticipant,
+                authorizationAgent);
 
         return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
     }
