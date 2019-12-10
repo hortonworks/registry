@@ -11,7 +11,6 @@
     <description>Schema Registry Security Plugin</description>
     <packaging>pom</packaging>
     <modules>
-        <module>ranger-plugin-service</module>
         <module>authorizer</module>
         <module>authorizer-shim</module>
     </modules>

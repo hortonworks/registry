@@ -156,26 +156,6 @@
                 <include>*jar</include>
             </includes>
         </fileSet>
-        <!--
-            RANGER-PLUGIN/SERVICE
-        -->
-        <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/ranger-plugin-service/target</directory>
-            <outputDirectory>ranger-plugin/ranger-sr-service</outputDirectory>
-            <includes>
-                <include>*jar</include>
-            </includes>
-        </fileSet>
-        <!--
-            RANGER-PLUGIN/SERVICE/CONF
-        -->
-        <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/ranger-plugin-service/src/main/resources/service-defs</directory>
-            <outputDirectory>ranger-plugin/ranger-sr-service/service-defs</outputDirectory>
-            <includes>
-                <include>*</include>
-            </includes>
-        </fileSet>
     </fileSets>
     <files>
         <file>
