@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class AuthorizationAgentFactory {
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
-        if(props == null && props.size() == 0) {
+        if(props == null || props.size() == 0) {
             return new DummyAuthorizationAgent();
         }
 

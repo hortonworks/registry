@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.Authorizer;
 import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.RangerSchemaRegistryAuthorizer;
@@ -495,7 +496,12 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
 
     private Set<String> getUserGroupsFromSC(SecurityContext sc) {
         Set<String> res = new HashSet<>();
-        // UserGroups will be calculated on the Ranger side
+        String user = getUserNameFromSC(sc);
+
+        List<String> groups = UserGroupInformation.createRemoteUser(user).getGroups();
+
+        res.addAll(groups);
+
         return res;
     }
 
