@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -164,29 +163,13 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     @Override
     public void authorizeAddSchemaInfo(SecurityContext sc, SchemaMetadata schemaMetadata)
             throws AuthorizationException {
-        String sGroup = schemaMetadata.getSchemaGroup();
-        String sName = schemaMetadata.getName();
-
-        boolean hasAccess = authorizer.authorizeSchema(sGroup,
-                sName,
-                Authorizer.ACCESS_TYPE_CREATE,
-                getUserNameFromSC(sc),
-                getUserGroupsFromSC(sc));
-        raiseAuthorizationExceptionIfNeeded(hasAccess);
+        authorizeSchema(sc, schemaMetadata, Authorizer.ACCESS_TYPE_CREATE);
     }
 
     @Override
     public void authorizeUpdateSchemaInfo(SecurityContext sc, SchemaMetadata schemaMetadata)
             throws AuthorizationException {
-        String sGroup = schemaMetadata.getSchemaGroup();
-        String sName = schemaMetadata.getName();
-
-        boolean hasAccess = authorizer.authorizeSchema(sGroup,
-                sName,
-                Authorizer.ACCESS_TYPE_UPDATE,
-                getUserNameFromSC(sc),
-                getUserGroupsFromSC(sc));
-        raiseAuthorizationExceptionIfNeeded(hasAccess);
+        authorizeSchema(sc, schemaMetadata, Authorizer.ACCESS_TYPE_UPDATE);
     }
 
     @Override
@@ -194,16 +177,8 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo)
             throws AuthorizationException {
-        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
-        String sGroup = sM.getSchemaGroup();
-        String sName = sM.getName();
 
-        boolean hasAccessToSchemaMetadata = authorizer.authorizeSchema(sGroup,
-                sName,
-                Authorizer.ACCESS_TYPE_READ,
-                getUserNameFromSC(sc),
-                getUserGroupsFromSC(sc));
-        raiseAuthorizationExceptionIfNeeded(hasAccessToSchemaMetadata);
+        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.ACCESS_TYPE_READ);
 
         return schemaMetadataInfo;
     }
@@ -213,16 +188,22 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo)
             throws  AuthorizationException {
+        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.ACCESS_TYPE_DELETE);
+    }
 
-        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
+    private void authorizeSchema(SecurityContext sc,
+                                 SchemaMetadata sM,
+                                 String accessType)
+            throws  AuthorizationException {
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
 
         boolean hasAccess = authorizer.authorizeSchema(sGroup,
                 sName,
-                Authorizer.ACCESS_TYPE_DELETE,
+                accessType,
                 getUserNameFromSC(sc),
                 getUserGroupsFromSC(sc));
+
         raiseAuthorizationExceptionIfNeeded(hasAccess);
     }
 
@@ -258,15 +239,8 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                 getUserNameFromSC(sc),
                 getUserGroupsFromSC(sc));
 
-        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
-        String sGroup = sM.getSchemaGroup();
-        String sName = sM.getName();
-        boolean hasAccesToSchema = authorizer.authorizeSchema(sGroup,
-                sName,
-                Authorizer.ACCESS_TYPE_READ,
-                getUserNameFromSC(sc),
-                getUserGroupsFromSC(sc));
-        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes && hasAccesToSchema);
+        raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes);
+        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.ACCESS_TYPE_READ);
     }
 
     @Override
