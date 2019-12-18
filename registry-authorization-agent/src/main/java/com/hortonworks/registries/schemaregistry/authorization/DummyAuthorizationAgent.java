@@ -14,8 +14,8 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
 
     @Override
     public Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
-                                                               Supplier<Collection<SchemaMetadataInfo>> func) {
-        return func.get();
+                                                               Collection<SchemaMetadataInfo> schemas) {
+        return schemas;
     }
 
     @Override

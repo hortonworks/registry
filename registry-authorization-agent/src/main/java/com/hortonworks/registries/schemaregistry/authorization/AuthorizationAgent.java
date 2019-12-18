@@ -9,7 +9,6 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public interface AuthorizationAgent {
@@ -23,7 +22,7 @@ public interface AuthorizationAgent {
             throws AuthorizationException;
 
     Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
-                                                        Supplier<Collection<SchemaMetadataInfo>> func);
+                                                        Collection<SchemaMetadataInfo> schemas);
 
     List<AggregatedSchemaMetadataInfo> authorizeFindAggregatedSchemas(SecurityContext sc,
                                                                       List<AggregatedSchemaMetadataInfo> asmi);

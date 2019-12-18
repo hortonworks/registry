@@ -11,7 +11,7 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
 
     private static final Logger LOG  = LoggerFactory.getLogger(RangerSchemaRegistryAuthorizer.class);
 
-    private static final String   RANGER_PLUGIN_TYPE                      = "schema-registry";
+    private static final String   RANGER_PLUGIN_TYPE = "schema-registry";
     private static final String   RANGER_SR_AUTHORIZER_IMPL_CLASSNAME  =
             "com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.RangerSchemaRegistryAuthorizerImpl";
 

@@ -105,8 +105,8 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
 
     @Override
     public Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
-                                                               Supplier<Collection<SchemaMetadataInfo>> func) {
-        return func.get().stream()
+                                                               Collection<SchemaMetadataInfo> schemas) {
+        return schemas.stream()
                 .filter(schemaMetadataInfo -> {
                     SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
                     String sGroup = schemaMetadata.getSchemaGroup();

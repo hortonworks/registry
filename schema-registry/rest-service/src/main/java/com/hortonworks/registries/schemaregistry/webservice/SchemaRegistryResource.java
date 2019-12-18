@@ -217,7 +217,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             }
 
             Collection<SchemaMetadataInfo> schemaMetadatas = authorizationAgent
-                    .authorizeFindSchemas(securityContext, () -> schemaRegistry.findSchemaMetadata(filters));
+                    .authorizeFindSchemas(securityContext, schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (Exception ex) {
@@ -238,7 +238,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
-                    .authorizeFindSchemas(securityContext, () -> findSchemaMetadataInfos(queryParameters));
+                    .authorizeFindSchemas(securityContext, findSchemaMetadataInfos(queryParameters));
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
