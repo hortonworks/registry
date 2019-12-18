@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.lang.reflect.Constructor;
 import java.util.Set;
 
 public class RangerSchemaRegistryAuthorizer implements Authorizer {
@@ -41,10 +42,11 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
 
             @SuppressWarnings("unchecked")
             Class<Authorizer> cls = (Class<Authorizer>) Class.forName(RANGER_SR_AUTHORIZER_IMPL_CLASSNAME, true, rangerPluginClassLoader);
+            Constructor<Authorizer> constr = cls.getConstructor();
 
             activatePluginClassLoader();
 
-            rangerSRAuthorizerImpl = cls.newInstance();
+            rangerSRAuthorizerImpl = constr.newInstance();
         } catch (Exception e) {
             // check what need to be done
             LOG.error("Error Enabling RangerSchemaRegistryAuthorizer", e);

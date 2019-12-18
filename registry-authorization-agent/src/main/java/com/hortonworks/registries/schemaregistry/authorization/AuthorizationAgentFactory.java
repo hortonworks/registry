@@ -1,5 +1,7 @@
 package com.hortonworks.registries.schemaregistry.authorization;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 public class AuthorizationAgentFactory {
@@ -18,11 +20,14 @@ public class AuthorizationAgentFactory {
 
         // In case if in future we plan to add any other custom authorizer
         try {
-            Class<?> cl = Class.forName(cName);
-            AuthorizationAgent res = (AuthorizationAgent) cl.newInstance();
+            Class<AuthorizationAgent> cl = (Class<AuthorizationAgent>) Class.forName(cName);
+            Constructor<AuthorizationAgent> constr = cl.getConstructor();
+            AuthorizationAgent res = constr.newInstance();
 
             return res;
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+        } catch (ClassNotFoundException | InstantiationException
+                | IllegalAccessException | NoSuchMethodException
+                | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
