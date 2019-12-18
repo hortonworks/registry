@@ -59,7 +59,7 @@ execute() {
 
 printUsage() {
     cat <<-EOF
-USAGE: $0 [create|migrate|info|validate|drop|drop-create|repair|check-connection]
+USAGE: $0 [create|migrate|info|validate|drop|drop-create|repair|check-connection] [config file path]
    create           : Creates the tables. The target database should be empty
    migrate          : Migrates the database to the latest version or creates the tables if the database is empty. Use "info" to see the current version and the pending migrations
    info             : Shows the list of migrations applied and the pending migration waiting to be applied on the target database
@@ -68,11 +68,13 @@ USAGE: $0 [create|migrate|info|validate|drop|drop-create|repair|check-connection
    drop-create      : Drops and recreates all the tables in the target database.
    repair           : Repairs the DATABASE_CHANGE_LOG table which is used to track all the migrations on the target database.
                       This involves removing entries for the failed migrations and update the checksum of migrations already applied on the target databsase.
-   check-connection : Checks if a connection can be sucessfully obtained for the target database
+   check-connection : Checks if a connection can be successfully obtained for the target database
+
+   config file path : optional, "${CONFIG_FILE_PATH}" used if omitted
 EOF
 }
 
-if [ $# -gt 1 ]
+if [[ $# -gt 2 ]]
 then
     echo "More than one argument specified, please use only one of the below options"
     printUsage
@@ -80,6 +82,7 @@ then
 fi
 
 opt="$1"
+[[ $# -eq 2 ]] && CONFIG_FILE_PATH="${2}"
 
 case "${opt}" in
 create | drop | migrate | info | validate | repair | check-connection )
