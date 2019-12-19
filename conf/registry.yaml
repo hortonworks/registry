@@ -106,4 +106,10 @@ logging:
   loggers:
     com.hortonworks.registries: INFO
 
+# Config for schema registry kerberos principle
+#authenticationMethod:
+#  type: kerberos
+#  serverPrinciple: "schema-registry/vomoshkovskyi-1.gce.cloudera.com@GCE.CLOUDERA.COM"
+#  serverPrincipleKeytab: "/root/schema-registry.keytab"
+
   
