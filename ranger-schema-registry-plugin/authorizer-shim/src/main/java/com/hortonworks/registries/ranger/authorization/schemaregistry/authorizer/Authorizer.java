@@ -9,14 +9,6 @@ public interface Authorizer {
     String ACCESS_TYPE_UPDATE = "update";
     String ACCESS_TYPE_DELETE = "delete";
 
-    String RESOURCE_FILE = "file";
-    String RESOURCE_SERDE = "serde";
-    String RESOURCE_SCHEMA_GROUP = "schema-group";
-    String RESOURCE_SCHEMA_METADATA = "schema-metadata";
-    String RESOURCE_SCHEMA_BRANCH = "schema-branch";
-    String RESOURCE_SCHEMA_VERSION = "schema-version";
-
-
     boolean authorizeSerDe(String accessType,
                            String uName,
                            Set<String> uGroup);
