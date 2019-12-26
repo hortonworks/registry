@@ -6,14 +6,13 @@ import java.util.Map;
 
 public class AuthorizationAgentFactory {
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
-        if(props == null || props.size() == 0) {
+        if(props == null
+                || props.size() == 0
+                || !props.containsKey("className")) {
             return new DummyAuthorizationAgent();
         }
 
         String cName = (String) props.get("className");
-        if(cName == null) {
-            return new DummyAuthorizationAgent();
-        }
         if(cName.equals("com.hortonworks.registries.schemaregistry.authorization.RangerSchemaRegistryAuthorizationAgent")) {
             return RangerSchemaRegistryAuthorizationAgent.INSTANCE;
         }
