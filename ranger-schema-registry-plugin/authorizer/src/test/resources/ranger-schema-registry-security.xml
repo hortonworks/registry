@@ -19,7 +19,7 @@
 <configuration xmlns:xi="http://www.w3.org/2001/XInclude">
 	<property>
 		<name>ranger.plugin.schema-registry.service.name</name>
-		<value>SR5</value>
+		<value>SR1</value>
 		<description>
 			Name of the Ranger service containing policies for this YARN instance
 		</description>
@@ -27,7 +27,7 @@
 
 	<property>
 		<name>ranger.plugin.schema-registry.policy.source.impl</name>
-		<value>com.hortonworks.registries.schemaregistry.authorization.util.TestRangerAdminClientImpl</value>
+		<value>com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.util.TestRangerAdminClientImpl</value>
 		<description>
 			Class to retrieve policies from the source
 		</description>
@@ -57,13 +57,13 @@
 		</description>
 	</property>
 
-	<property>
-		<name>ranger.plugin.schema-registry.policy.cache.dir</name>
-		<value>/tmp/ranger/schema-registry/policycache</value>
-		<description>
-			Directory where Ranger policies are cached after successful retrieval from the source
-		</description>
-	</property>
+	<!--<property>-->
+		<!--<name>ranger.plugin.schema-registry.policy.cache.dir</name>-->
+		<!--<value>/tmp/ranger/schema-registry/policycache</value>-->
+		<!--<description>-->
+			<!--Directory where Ranger policies are cached after successful retrieval from the source-->
+		<!--</description>-->
+	<!--</property>-->
 
 	<property>
 		<name>ranger.plugin.schema-registry.policy.rest.client.connection.timeoutMs</name>

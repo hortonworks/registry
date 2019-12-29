@@ -1,4 +1,4 @@
-package util;
+package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -1,4 +1,4 @@
-package util;
+package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.util;
 
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;

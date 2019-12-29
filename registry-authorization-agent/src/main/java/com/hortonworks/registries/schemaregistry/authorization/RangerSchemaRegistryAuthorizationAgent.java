@@ -7,11 +7,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,13 +58,19 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                 .filter(Objects::nonNull).collect(Collectors.toList());
 
         boolean accessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ, user, userGroups);
-        raiseAuthorizationExceptionIfNeeded(accessToSerdes);
+
+        Collection<SerDesInfo> serDesInfos;
+        if (accessToSerdes) {
+            serDesInfos = aggregatedSchemaMetadataInfo.getSerDesInfos();
+        } else {
+            serDesInfos = new ArrayList<>();
+        }
 
         return new AggregatedSchemaMetadataInfo(aggregatedSchemaMetadataInfo.getSchemaMetadata(),
                 aggregatedSchemaMetadataInfo.getId(),
                 aggregatedSchemaMetadataInfo.getTimestamp(),
                 filteredBranches,
-                aggregatedSchemaMetadataInfo.getSerDesInfos());
+                serDesInfos);
     }
 
     private AggregatedSchemaBranch filterAggregatedBranch(String sGroup,

@@ -76,13 +76,13 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // Allow policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user5");
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ, "user5", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
         assertTrue(res);
 
         // Allow policy exists that allows creating registry-service
         groups = new HashSet<>();
         groups.add("user6");
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ, "user6", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_CREATE, "user6", groups);
         assertTrue(res);
 
         ////////////////////////////// UPDATE SerDes test cases ////////////////////////////
@@ -120,39 +120,136 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         ////////////////////////////// DELETE SerDes test cases ////////////////////////////
 
         // No policy for user1 that 'allows' creating SerDes
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE, "user1", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_DELETE, "user1", groups);
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' creating SerDes
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE, "user2", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_DELETE, "user2", groups);
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for creating SerDes
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE, "user3", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_DELETE, "user3", groups);
         assertFalse(res);
 
         // Exclude from deny policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user4");
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE, "user4", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_DELETE, "user4", groups);
         assertTrue(res);
 
         // Allow policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user5");
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE, "user5", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
         assertTrue(res);
 
         // Allow policy exists that allows creating registry-service
         groups = new HashSet<>();
         groups.add("user6");
-        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_UPDATE, "user6", groups);
+        res = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_DELETE, "user6", groups);
         assertTrue(res);
 
     }
 
     @Test
     public void authorizeSchemaGroup() {
+        Set<String> groups = new HashSet<>();
+        boolean res = false;
+
+        ///////////////////////////// READ SchemaGroup test cases ////////////////////////////
+
+        // No policy for user1 that 'allows' reading SchemaGroup
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_READ, "user1", groups);
+        assertFalse(res);
+
+        // Deny policy for user2 that 'denies' reading SchemaGroup
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_READ, "user2", groups);
+        assertFalse(res);
+
+        // Deny policy for user3 that 'excludes from allows' for reading SchemaGroup
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_READ, "user3", groups);
+        assertFalse(res);
+
+        // Exclude from deny policy exists that allows reading SchemaGroup
+        groups = new HashSet<>();
+        groups.add("user4");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_READ, "user4", groups);
+        assertTrue(res);
+
+        // Allow policy exists that allows reading SchemaGroup
+        groups = new HashSet<>();
+        groups.add("user5");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_READ, "user5", groups);
+        assertTrue(res);
+
+        // Allow policy exists that allows reading registry-service
+        groups = new HashSet<>();
+        groups.add("user6");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_READ, "user6", groups);
+        assertTrue(res);
+
+        ///////////////////////////// CREATE SchemaGroup test cases ////////////////////////////
+
+        // No policy for user1 that 'allows' creating SchemaGroup
+        res = authorizer.authorizeSchemaGroup("Group2", Authorizer.ACCESS_TYPE_CREATE, "user1", groups);
+        assertFalse(res);
+
+        // Allow policy exists that allows creating SchemaGroup
+        groups = new HashSet<>();
+        groups.add("user5");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
+        assertTrue(res);
+
+        // Allow policy exists that allows creating for registry-service
+        groups = new HashSet<>();
+        groups.add("user6");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_CREATE, "user6", groups);
+        assertTrue(res);
+
+        //Allow policy exists that allows creating  SchemaGroup. The group is specified with regexp
+        groups = new HashSet<>();
+        groups.add("user5");
+        res = authorizer.authorizeSchemaGroup("SGroup999", Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
+        assertTrue(res);
+
+        ///////////////////////////// DELETE SchemaGroup test cases ////////////////////////////
+
+        // No policy for user5 that 'allows' deleting Group2
+        res = authorizer.authorizeSchemaGroup("Group2", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
+        assertFalse(res);
+
+        // Allow policy exists that allows deleting SchemaGroup
+        groups = new HashSet<>();
+        groups.add("user5");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
+        assertTrue(res);
+
+        // Allow policy exists that allows deleting for registry-service
+        groups = new HashSet<>();
+        groups.add("user6");
+        res = authorizer.authorizeSchemaGroup("Group1", Authorizer.ACCESS_TYPE_DELETE, "user6", groups);
+        assertTrue(res);
+
+        ///////////////////////////// UPDATE SchemaGroup test cases ////////////////////////////
+
+        // No policy for user1 that 'allows' updating Group2
+        groups = new HashSet<>();
+        groups.add("user1");
+        res = authorizer.authorizeSchemaGroup("Group2", Authorizer.ACCESS_TYPE_DELETE, "user1", groups);
+        assertFalse(res);
+
+        // Allow policy exists that allows updating SchemaGroup
+        groups = new HashSet<>();
+        groups.add("user5");
+        res = authorizer.authorizeSchemaGroup("SGroup1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
+        assertTrue(res);
+
+        // Allow policy exists that allows updating for registry-service
+        groups = new HashSet<>();
+        groups.add("user8");
+        res = authorizer.authorizeSchemaGroup("Group3", Authorizer.ACCESS_TYPE_DELETE, "user8", groups);
+        assertTrue(res);
+
     }
 
     @Test

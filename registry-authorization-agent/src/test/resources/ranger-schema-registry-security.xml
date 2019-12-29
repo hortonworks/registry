@@ -27,7 +27,7 @@
 
 	<property>
 		<name>ranger.plugin.schema-registry.policy.source.impl</name>
-		<value>com.hortonworks.registries.schemaregistry.authorization.util.TestRangerAdminClientImpl</value>
+		<value>com.hortonworks.registries.schemaregistry.authorization.com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.util.TestRangerAdminClientImpl</value>
 		<description>
 			Class to retrieve policies from the source
 		</description>

@@ -5,7 +5,6 @@ import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 import org.apache.ranger.plugin.service.RangerBasePlugin;
 
-import java.util.HashSet;
 import java.util.Set;
 
 
@@ -24,7 +23,8 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
         resource.setValue(RESOURCE_SERDE, "ANY");
 
-        return authorize(resource, accessType, uName, uGroup);
+        return authorize(resource, accessType, uName, uGroup)
+                || authorizeSRresource(accessType, uName, uGroup);
     }
 
     @Override
@@ -35,7 +35,8 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
         resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
 
-        return authorize(resource, accessType, uName, uGroup);
+        return authorize(resource, accessType, uName, uGroup)
+                || authorizeSRresource(accessType, uName, uGroup);
     }
 
     @Override
@@ -48,7 +49,8 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
         resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
 
-        return authorize(resource, accessType, uName, uGroup);
+        return authorize(resource, accessType, uName, uGroup)
+                || authorizeSRresource(accessType, uName, uGroup);
     }
 
     @Override
@@ -63,7 +65,8 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
         resource.setValue(RESOURCE_SCHEMA_BRANCH, sBranchName);
 
-        return authorize(resource, accessType, uName, uGroup);
+        return authorize(resource, accessType, uName, uGroup)
+                || authorizeSRresource(accessType, uName, uGroup);
     }
 
     @Override
@@ -78,6 +81,14 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
         resource.setValue(RESOURCE_SCHEMA_BRANCH, sBranchName);
         resource.setValue(RESOURCE_SCHEMA_VERSION, "ANY");
+
+        return authorize(resource, accessType, uName, uGroup)
+                || authorizeSRresource(accessType, uName, uGroup);
+    }
+
+    private boolean authorizeSRresource(String accessType, String uName, Set<String> uGroup) {
+        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
+        resource.setValue(RESOURCE_REGISTRY_SERVICE, "ANY");
 
         return authorize(resource, accessType, uName, uGroup);
     }
