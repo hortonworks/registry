@@ -13,8 +13,11 @@ public interface Authorizer {
     String RESOURCE_SERDE = "serde";
     String RESOURCE_SCHEMA_GROUP = "schema-group";
     String RESOURCE_SCHEMA_METADATA = "schema-metadata";
+    String RESOURCE_NONE_SCHEMA_METADATA = "none-sm";
     String RESOURCE_SCHEMA_BRANCH = "schema-branch";
+    String RESOURCE_NONE_SCHEMA_BRANCH = "none-sb";
     String RESOURCE_SCHEMA_VERSION = "schema-version";
+    String RESOURCE_NONE_SCHEMA_VERSION = "none-sv";
 
     boolean authorizeSerDe(String accessType,
                            String uName,

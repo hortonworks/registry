@@ -159,8 +159,539 @@
       "version": 1
     },
     {
+      "service": "SR1",
+      "name": "schema-group, none-sm",
+      "policyType": 0,
+      "policyPriority": 0,
+      "description": "Policy for schema-group, none-sm",
+      "isAuditEnabled": true,
+      "resources": {
+        "schema-group": {
+          "values": [
+            "Group1", "SGro*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        },
+        "none-sm": {
+          "values": [
+            "*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        }
+      },
+      "policyItems":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            },
+            {
+              "type":"delete",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user4", "user2", "user5"
+          ],
+          "groups":[
+            "user4", "user2", "user5"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyPolicyItems":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user2"
+          ],
+          "groups":[
+            "user4"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "allowExceptions":[
+        {
+          "accesses":[
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user7"
+          ],
+          "groups":[
+            "user7"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyExceptions":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"delete",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "spark"
+          ],
+          "groups":[
+            "user4"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "dataMaskPolicyItems": [
+
+      ],
+      "rowFilterPolicyItems": [
+
+      ],
+      "serviceType": "schema-registry",
+      "options": {
+
+      },
+      "validitySchedules": [
+
+      ],
+      "policyLabels": [
+
+      ],
+      "zoneName": "",
+      "isDenyAllElse": false,
+      "id": 120,
+      "guid": "ef75ba85-95a4-4984-a16a-5f5bea6309a3",
+      "isEnabled": true,
+      "version": 1
+    },
+    {
+      "service": "SR1",
+      "name": "all - schema-group, schema-metadata, none-sb",
+      "policyType": 0,
+      "policyPriority": 0,
+      "description": "Policy for all - schema-group, schema-metadata, none-sb",
+      "isAuditEnabled": true,
+      "resources": {
+        "none-sb": {
+          "values": [
+            "*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        },
+        "schema-metadata": {
+          "values": [
+            "Schema1", "Schema3", "__Sch*", "Schema5"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        },
+        "schema-group": {
+          "values": [
+            "Group1", "SGr*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        }
+      },
+      "policyItems":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            },
+            {
+              "type":"delete",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user4", "user2", "user5"
+          ],
+          "groups":[
+            "user4", "user2", "user5"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyPolicyItems":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user2"
+          ],
+          "groups":[
+            "user4"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "allowExceptions":[
+        {
+          "accesses":[
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user7"
+          ],
+          "groups":[
+            "user7"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyExceptions":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"delete",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "spark"
+          ],
+          "groups":[
+            "user4"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "dataMaskPolicyItems": [
+
+      ],
+      "rowFilterPolicyItems": [
+
+      ],
+      "serviceType": "schema-registry",
+      "options": {
+
+      },
+      "validitySchedules": [
+
+      ],
+      "policyLabels": [
+
+      ],
+      "zoneName": "",
+      "isDenyAllElse": false,
+      "id": 121,
+      "guid": "4e8044c5-0d06-4105-9c50-393c68a8b5f4",
+      "isEnabled": true,
+      "version": 1
+    },
+    {
+      "service": "SR1",
+      "name": "all - schema-group, schema-metadata, schema-branch, none-sv",
+      "policyType": 0,
+      "policyPriority": 0,
+      "description": "Policy for all - schema-group, schema-metadata, schema-branch, none-sv",
+      "isAuditEnabled": true,
+      "resources": {
+        "schema-branch": {
+          "values": [
+            "Branch1"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        },
+        "schema-metadata": {
+          "values": [
+            "Schema1"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        },
+        "schema-group": {
+          "values": [
+            "Group1", "SGro*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        },
+        "none-sv": {
+          "values": [
+            "*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        }
+      },
+      "policyItems":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            },
+            {
+              "type":"delete",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user4", "user2", "user5"
+          ],
+          "groups":[
+            "user4", "user2", "user5"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyPolicyItems":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user2"
+          ],
+          "groups":[
+            "user4"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "allowExceptions":[
+        {
+          "accesses":[
+            {
+              "type":"read",
+              "isAllowed":true
+            },
+            {
+              "type":"update",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "user7"
+          ],
+          "groups":[
+            "user7"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyExceptions":[
+        {
+          "accesses":[
+            {
+              "type":"create",
+              "isAllowed":true
+            },
+            {
+              "type":"delete",
+              "isAllowed":true
+            },
+            {
+              "type":"read",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "spark"
+          ],
+          "groups":[
+            "user4"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "dataMaskPolicyItems": [
+
+      ],
+      "rowFilterPolicyItems": [
+
+      ],
+      "serviceType": "schema-registry",
+      "options": {
+
+      },
+      "validitySchedules": [
+
+      ],
+      "policyLabels": [
+
+      ],
+      "zoneName": "",
+      "isDenyAllElse": false,
+      "id": 117,
+      "guid": "7d3a8b19-8684-4a0c-bb60-1d3f4cdac73d",
+      "isEnabled": true,
+      "version": 1
+    },
+    {
       "service":"SR1",
-      "name":"P Schema Group",
+      "name":"P Schema Version",
       "policyType":0,
       "policyPriority":0,
       "description":"",
@@ -176,14 +707,14 @@
         },
         "schema-metadata":{
           "values":[
-            "*"
+            "Schema1", "Schema3"
           ],
           "isExcludes":false,
           "isRecursive":false
         },
         "schema-group":{
           "values":[
-            "Group1", "SGro*"
+            "Group10"
           ],
           "isExcludes":false,
           "isRecursive":false
@@ -410,30 +941,30 @@
     },
     {
       "service":"SR1",
-      "name":"P Schema Group (regexp)",
+      "name":"P Schema Version (SGrop regexp)",
       "policyType":0,
       "policyPriority":0,
       "description":"",
       "resourceSignature":"e10b3423660a092964512be58f6d5b2d7d334a85fb06bf1eecb9890cd6aede77",
       "isAuditEnabled":true,
       "resources":{
-        "schema-branch":{
+        "schema-group":{
           "values":[
-            "*"
+            "SchemaGro*"
           ],
-          "isExcludes":true,
+          "isExcludes":false,
           "isRecursive":false
         },
         "schema-metadata":{
           "values":[
-            "*"
+           "Schema4", "Schema5", "Schema1"
           ],
-          "isExcludes":true,
+          "isExcludes":false,
           "isRecursive":false
         },
-        "schema-group":{
+        "schema-branch":{
           "values":[
-            "SGro*"
+            "*"
           ],
           "isExcludes":false,
           "isRecursive":false
@@ -562,153 +1093,228 @@
         "label":"Ranger Plugin SSL CName"
       }
     ],
-    "resources":[
+    "resources": [
       {
-        "itemId":0,
-        "name":"registry-service",
-        "type":"string",
-        "level":10,
-        "mandatory":true,
-        "lookupSupported":true,
-        "recursiveSupported":false,
-        "excludesSupported":true,
-        "matcher":"org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions":{
-          "wildCard":"true",
-          "ignoreCase":"true"
+        "itemId": 0,
+        "name": "registry-service",
+        "type": "string",
+        "level": 10,
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": true,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
         },
-        "validationRegEx":"^\\*$",
-        "validationMessage":"",
-        "uiHint":"",
-        "label":"Schema Registry Service",
-        "description":"Schema Registry Service",
-        "accessTypeRestrictions":[
+        "validationRegEx": "^\\*$",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "Schema Registry Service",
+        "description": "Schema Registry Service",
+        "accessTypeRestrictions": [
 
         ],
-        "isValidLeaf":true
+        "isValidLeaf": true
       },
       {
-        "itemId":1,
-        "name":"schema-group",
-        "type":"string",
-        "level":10,
-        "mandatory":true,
-        "lookupSupported":true,
-        "recursiveSupported":false,
-        "excludesSupported":true,
-        "matcher":"org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions":{
-          "wildCard":"true",
-          "ignoreCase":"true"
+        "itemId": 1,
+        "name": "schema-group",
+        "type": "string",
+        "level": 10,
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": true,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
         },
-        "validationRegEx":"",
-        "validationMessage":"",
-        "uiHint":"",
-        "label":"Schema Group",
-        "description":"Schema Group",
-        "accessTypeRestrictions":[
+        "validationRegEx": "",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "Schema Group",
+        "description": "Schema Group",
+        "accessTypeRestrictions": [
 
         ],
-        "isValidLeaf":false
+        "isValidLeaf": false
       },
       {
-        "itemId":5,
-        "name":"serde",
-        "type":"string",
-        "level":10,
-        "mandatory":true,
-        "lookupSupported":true,
-        "recursiveSupported":false,
-        "excludesSupported":true,
-        "matcher":"org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions":{
-          "wildCard":"true",
-          "ignoreCase":"true"
+        "itemId": 5,
+        "name": "serde",
+        "type": "string",
+        "level": 10,
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": true,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
         },
-        "validationRegEx":"^\\*$",
-        "validationMessage":"",
-        "uiHint":"",
-        "label":"Serializer/Deserializer",
-        "description":"Serializer/Deserializer",
-        "accessTypeRestrictions":[
+        "validationRegEx": "^\\*$",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "Serializer/Deserializer",
+        "description": "Serializer/Deserializer",
+        "accessTypeRestrictions": [
 
         ],
-        "isValidLeaf":true
+        "isValidLeaf": true
       },
       {
-        "itemId":2,
-        "name":"schema-metadata",
-        "type":"string",
-        "level":20,
-        "parent":"schema-group",
-        "mandatory":true,
-        "lookupSupported":true,
-        "recursiveSupported":false,
-        "excludesSupported":true,
-        "matcher":"org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions":{
-          "wildCard":"true",
-          "ignoreCase":"true"
+        "itemId": 22,
+        "name": "schema-metadata",
+        "type": "string",
+        "level": 20,
+        "parent": "schema-group",
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": true,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
         },
-        "validationRegEx":"",
-        "validationMessage":"",
-        "uiHint":"",
-        "label":"Schema Name",
-        "description":"Schema Name",
-        "accessTypeRestrictions":[
+        "validationRegEx": "",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "Schema Name",
+        "description": "Schema Name",
+        "accessTypeRestrictions": [
 
         ],
-        "isValidLeaf":false
+        "isValidLeaf": false
       },
       {
-        "itemId":3,
-        "name":"schema-branch",
-        "type":"string",
-        "level":30,
-        "parent":"schema-metadata",
-        "mandatory":true,
-        "lookupSupported":true,
-        "recursiveSupported":false,
-        "excludesSupported":true,
-        "matcher":"org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions":{
-          "wildCard":"true",
-          "ignoreCase":"true"
+        "itemId": 21,
+        "name": "none-sm",
+        "type": "string",
+        "level": 20,
+        "parent": "schema-group",
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": false,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
         },
-        "validationRegEx":"",
-        "validationMessage":"",
-        "uiHint":"",
-        "label":"Schema Branch",
-        "description":"Schema Branch",
-        "accessTypeRestrictions":[
+        "validationRegEx": "^\\*$",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "None",
+        "description": "None",
+        "accessTypeRestrictions": [
 
         ],
-        "isValidLeaf":false
+        "isValidLeaf": true
       },
       {
-        "itemId":4,
-        "name":"schema-version",
-        "type":"string",
-        "level":40,
-        "parent":"schema-branch",
-        "mandatory":true,
-        "lookupSupported":true,
-        "recursiveSupported":false,
-        "excludesSupported":true,
-        "matcher":"org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions":{
-          "wildCard":"true",
-          "ignoreCase":"true"
+        "itemId": 31,
+        "name": "none-sb",
+        "type": "string",
+        "level": 30,
+        "parent": "schema-metadata",
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": false,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
         },
-        "validationRegEx":"^\\*$",
-        "validationMessage":"",
-        "uiHint":"",
-        "label":"Schema Version",
-        "description":"Schema Version",
-        "accessTypeRestrictions":[
+        "validationRegEx": "^\\*$",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "None",
+        "description": "None",
+        "accessTypeRestrictions": [
 
         ],
-        "isValidLeaf":true
+        "isValidLeaf": true
+      },
+      {
+        "itemId": 32,
+        "name": "schema-branch",
+        "type": "string",
+        "level": 30,
+        "parent": "schema-metadata",
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": true,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
+        },
+        "validationRegEx": "",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "Schema Branch",
+        "description": "Schema Branch",
+        "accessTypeRestrictions": [
+
+        ],
+        "isValidLeaf": false
+      },
+      {
+        "itemId": 41,
+        "name": "none-sv",
+        "type": "string",
+        "level": 40,
+        "parent": "schema-branch",
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": false,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
+        },
+        "validationRegEx": "^\\*$",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "None",
+        "description": "None",
+        "accessTypeRestrictions": [
+
+        ],
+        "isValidLeaf": true
+      },
+      {
+        "itemId": 42,
+        "name": "schema-version",
+        "type": "string",
+        "level": 40,
+        "parent": "schema-branch",
+        "mandatory": true,
+        "lookupSupported": true,
+        "recursiveSupported": false,
+        "excludesSupported": true,
+        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
+        "matcherOptions": {
+          "wildCard": "true",
+          "ignoreCase": "true"
+        },
+        "validationRegEx": "^\\*$",
+        "validationMessage": "",
+        "uiHint": "",
+        "label": "Schema Version",
+        "description": "Schema Version",
+        "accessTypeRestrictions": [
+
+        ],
+        "isValidLeaf": true
       }
     ],
     "accessTypes":[

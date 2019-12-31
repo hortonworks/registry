@@ -1,5 +1,6 @@
 package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer;
 
+import org.apache.ranger.plugin.policyengine.RangerAccessRequest;
 import org.apache.ranger.plugin.policyengine.RangerAccessRequestImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResult;
@@ -34,6 +35,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
                                         Set<String> uGroup) {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
         resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
+        resource.setValue(RESOURCE_NONE_SCHEMA_METADATA, "ANY");
 
         return authorize(resource, accessType, uName, uGroup)
                 || authorizeSRresource(accessType, uName, uGroup);
@@ -48,6 +50,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
         resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
         resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
+        resource.setValue(RESOURCE_NONE_SCHEMA_BRANCH, "ANY");
 
         return authorize(resource, accessType, uName, uGroup)
                 || authorizeSRresource(accessType, uName, uGroup);
@@ -64,6 +67,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
         resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
         resource.setValue(RESOURCE_SCHEMA_BRANCH, sBranchName);
+        resource.setValue(RESOURCE_NONE_SCHEMA_VERSION, "ANY");
 
         return authorize(resource, accessType, uName, uGroup)
                 || authorizeSRresource(accessType, uName, uGroup);
@@ -98,6 +102,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
                               String uName,
                               Set<String> uGroup) {
         RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource, accessType, uName, uGroup);
+
         RangerAccessResult res = plg.isAccessAllowed(request);
 
         return res != null && res.getIsAllowed();
