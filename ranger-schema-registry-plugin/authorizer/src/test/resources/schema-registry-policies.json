@@ -6,7 +6,7 @@
   "policies":[
     {
       "service": "SR1",
-      "name": "all - serde",
+      "name": "P1 - serde",
       "policyType": 0,
       "policyPriority": 0,
       "description": "Policy for all - serde",
@@ -160,177 +160,7 @@
     },
     {
       "service": "SR1",
-      "name": "schema-group, none-sm",
-      "policyType": 0,
-      "policyPriority": 0,
-      "description": "Policy for schema-group, none-sm",
-      "isAuditEnabled": true,
-      "resources": {
-        "schema-group": {
-          "values": [
-            "Group1", "SGro*"
-          ],
-          "isExcludes": false,
-          "isRecursive": false
-        },
-        "none-sm": {
-          "values": [
-            "*"
-          ],
-          "isExcludes": false,
-          "isRecursive": false
-        }
-      },
-      "policyItems":[
-        {
-          "accesses":[
-            {
-              "type":"create",
-              "isAllowed":true
-            },
-            {
-              "type":"read",
-              "isAllowed":true
-            },
-            {
-              "type":"update",
-              "isAllowed":true
-            },
-            {
-              "type":"delete",
-              "isAllowed":true
-            }
-          ],
-          "users":[
-            "user4", "user2", "user5"
-          ],
-          "groups":[
-            "user4", "user2", "user5"
-          ],
-          "roles":[
-
-          ],
-          "conditions":[
-
-          ],
-          "delegateAdmin":false
-        }
-      ],
-      "denyPolicyItems":[
-        {
-          "accesses":[
-            {
-              "type":"create",
-              "isAllowed":true
-            },
-            {
-              "type":"read",
-              "isAllowed":true
-            },
-            {
-              "type":"update",
-              "isAllowed":true
-            }
-          ],
-          "users":[
-            "user2"
-          ],
-          "groups":[
-            "user4"
-          ],
-          "roles":[
-
-          ],
-          "conditions":[
-
-          ],
-          "delegateAdmin":false
-        }
-      ],
-      "allowExceptions":[
-        {
-          "accesses":[
-            {
-              "type":"read",
-              "isAllowed":true
-            },
-            {
-              "type":"update",
-              "isAllowed":true
-            }
-          ],
-          "users":[
-            "user7"
-          ],
-          "groups":[
-            "user7"
-          ],
-          "roles":[
-
-          ],
-          "conditions":[
-
-          ],
-          "delegateAdmin":false
-        }
-      ],
-      "denyExceptions":[
-        {
-          "accesses":[
-            {
-              "type":"create",
-              "isAllowed":true
-            },
-            {
-              "type":"delete",
-              "isAllowed":true
-            },
-            {
-              "type":"read",
-              "isAllowed":true
-            }
-          ],
-          "users":[
-            "spark"
-          ],
-          "groups":[
-            "user4"
-          ],
-          "roles":[
-
-          ],
-          "conditions":[
-
-          ],
-          "delegateAdmin":false
-        }
-      ],
-      "dataMaskPolicyItems": [
-
-      ],
-      "rowFilterPolicyItems": [
-
-      ],
-      "serviceType": "schema-registry",
-      "options": {
-
-      },
-      "validitySchedules": [
-
-      ],
-      "policyLabels": [
-
-      ],
-      "zoneName": "",
-      "isDenyAllElse": false,
-      "id": 120,
-      "guid": "ef75ba85-95a4-4984-a16a-5f5bea6309a3",
-      "isEnabled": true,
-      "version": 1
-    },
-    {
-      "service": "SR1",
-      "name": "all - schema-group, schema-metadata, none-sb",
+      "name": "P3 - schema-group, schema-metadata, none-sb",
       "policyType": 0,
       "policyPriority": 0,
       "description": "Policy for all - schema-group, schema-metadata, none-sb",
@@ -507,7 +337,7 @@
     },
     {
       "service": "SR1",
-      "name": "all - schema-group, schema-metadata, schema-branch, none-sv",
+      "name": "P4 - schema-group, schema-metadata, schema-branch, none-sv",
       "policyType": 0,
       "policyPriority": 0,
       "description": "Policy for all - schema-group, schema-metadata, schema-branch, none-sv",
@@ -691,7 +521,7 @@
     },
     {
       "service":"SR1",
-      "name":"P Schema Version",
+      "name":"P5 Schema Version",
       "policyType":0,
       "policyPriority":0,
       "description":"",
@@ -879,69 +709,8 @@
       "version":4
     },
     {
-      "service": "SR1",
-      "name": "P registry-service",
-      "policyType": 0,
-      "policyPriority": 0,
-      "description": "Policy for - registry-service",
-      "isAuditEnabled": true,
-      "resources": {
-        "registry-service": {
-          "values": [
-            "*"
-          ],
-          "isExcludes": false,
-          "isRecursive": false
-        }
-      },
-      "policyItems": [
-        {
-          "accesses": [
-            {
-              "type": "create",
-              "isAllowed": true
-            },
-            {
-              "type": "read",
-              "isAllowed": true
-            },
-            {
-              "type": "update",
-              "isAllowed": true
-            },
-            {
-              "type": "delete",
-              "isAllowed": true
-            }
-          ],
-          "users": [
-            "user6"
-          ],
-          "groups": ["user8"],
-          "roles": [],
-          "conditions": [],
-          "delegateAdmin": true
-        }
-      ],
-      "denyPolicyItems": [],
-      "allowExceptions": [],
-      "denyExceptions": [],
-      "dataMaskPolicyItems": [],
-      "rowFilterPolicyItems": [],
-      "serviceType": "schema-registry",
-      "options": {},
-      "validitySchedules": [],
-      "policyLabels": [],
-      "zoneName": "",
-      "isDenyAllElse": false,
-      "id": 85,
-      "guid": "dcf0fa8a-a4fd-4e8a-b3b7-ea1c1d776424",
-      "isEnabled": true,
-      "version": 1
-    },
-    {
       "service":"SR1",
-      "name":"P Schema Version (SGrop regexp)",
+      "name":"P6 Schema Version (SGrop regexp)",
       "policyType":0,
       "policyPriority":0,
       "description":"",
@@ -957,7 +726,7 @@
         },
         "schema-metadata":{
           "values":[
-           "Schema4", "Schema5", "Schema1"
+            "Schema4", "Schema5", "Schema1"
           ],
           "isExcludes":false,
           "isRecursive":false
@@ -1047,7 +816,166 @@
       "createTime":"20191226-09:46:31.919--0800",
       "updateTime":"20191226-09:46:31.921--0800",
       "version":1
+    },
+    {
+      "service":"SR1",
+      "name":"P7 Schema Version asterisks",
+      "policyType":0,
+      "policyPriority":0,
+      "description":"",
+      "resourceSignature":"e10b3423660a092964512be58f6d5b2d7d334a85fb06bf1eecb9890cd6aede77",
+      "isAuditEnabled":true,
+      "resources":{
+        "schema-group":{
+          "values":[
+            "GroupSpecial*"
+          ],
+          "isExcludes":false,
+          "isRecursive":false
+        },
+        "schema-metadata":{
+          "values":[
+            "*"
+          ],
+          "isExcludes":false,
+          "isRecursive":false
+        },
+        "schema-branch":{
+          "values":[
+            "*"
+          ],
+          "isExcludes":false,
+          "isRecursive":false
+        },
+        "schema-version":{
+          "values":[
+            "*"
+          ],
+          "isExcludes":false,
+          "isRecursive":false
+        }
+      },
+      "policyItems":[
+        {
+          "accesses":[
+            {
+              "type":"read",
+              "isAllowed":true
+            }
+          ],
+          "users":[
+            "UserSpecial"
+          ],
+          "groups":[
+            "UserSpecial"
+          ],
+          "roles":[
+
+          ],
+          "conditions":[
+
+          ],
+          "delegateAdmin":false
+        }
+      ],
+      "denyPolicyItems":[
+
+      ],
+      "allowExceptions":[
+
+      ],
+      "denyExceptions":[
+
+      ],
+      "dataMaskPolicyItems":[
+
+      ],
+      "rowFilterPolicyItems":[
+
+      ],
+      "serviceType":"schema-registry",
+      "options":{
+
+      },
+      "validitySchedules":[
+
+      ],
+      "policyLabels":[
+
+      ],
+      "zoneName":"",
+      "isDenyAllElse":false,
+      "id":94,
+      "guid":"56f623a1-4777-47b6-bc88-330617f78103",
+      "isEnabled":true,
+      "createdBy":"Admin",
+      "updatedBy":"Admin",
+      "createTime":"20191226-09:46:31.919--0800",
+      "updateTime":"20191226-09:46:31.921--0800",
+      "version":1
+    },
+    {
+      "service": "SR1",
+      "name": "P8 registry-service",
+      "policyType": 0,
+      "policyPriority": 0,
+      "description": "Policy for - registry-service",
+      "isAuditEnabled": true,
+      "resources": {
+        "registry-service": {
+          "values": [
+            "*"
+          ],
+          "isExcludes": false,
+          "isRecursive": false
+        }
+      },
+      "policyItems": [
+        {
+          "accesses": [
+            {
+              "type": "create",
+              "isAllowed": true
+            },
+            {
+              "type": "read",
+              "isAllowed": true
+            },
+            {
+              "type": "update",
+              "isAllowed": true
+            },
+            {
+              "type": "delete",
+              "isAllowed": true
+            }
+          ],
+          "users": [
+            "user6"
+          ],
+          "groups": ["user8"],
+          "roles": [],
+          "conditions": [],
+          "delegateAdmin": true
+        }
+      ],
+      "denyPolicyItems": [],
+      "allowExceptions": [],
+      "denyExceptions": [],
+      "dataMaskPolicyItems": [],
+      "rowFilterPolicyItems": [],
+      "serviceType": "schema-registry",
+      "options": {},
+      "validitySchedules": [],
+      "policyLabels": [],
+      "zoneName": "",
+      "isDenyAllElse": false,
+      "id": 85,
+      "guid": "dcf0fa8a-a4fd-4e8a-b3b7-ea1c1d776424",
+      "isEnabled": true,
+      "version": 1
     }
+
   ],
   "serviceDef":{
     "name":"schema-registry",
@@ -1190,31 +1118,6 @@
 
         ],
         "isValidLeaf": false
-      },
-      {
-        "itemId": 21,
-        "name": "none-sm",
-        "type": "string",
-        "level": 20,
-        "parent": "schema-group",
-        "mandatory": true,
-        "lookupSupported": true,
-        "recursiveSupported": false,
-        "excludesSupported": false,
-        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions": {
-          "wildCard": "true",
-          "ignoreCase": "true"
-        },
-        "validationRegEx": "^\\*$",
-        "validationMessage": "",
-        "uiHint": "",
-        "label": "None",
-        "description": "None",
-        "accessTypeRestrictions": [
-
-        ],
-        "isValidLeaf": true
       },
       {
         "itemId": 31,

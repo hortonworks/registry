@@ -1,6 +1,7 @@
 package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer;
 
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -152,6 +153,7 @@ public class RangerSchemaRegistryAuthorizerImplTest {
     }
 
     @Test
+    @Ignore // authorizeSchemaGroup is not used. Schema Group is not first class object yet.
     public void authorizeSchemaGroup() {
         Set<String> groups = new HashSet<>();
         boolean res = false;
@@ -249,6 +251,20 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorizeSchemaGroup("Group3", Authorizer.ACCESS_TYPE_DELETE, "user8", groups);
         assertTrue(res);
+
+        //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
+
+        // Read is not allowed and other operations are not allowed
+        groups = new HashSet<>();
+        groups.add("UserSpecial");
+        res = authorizer.authorizeSchemaGroup("GroupSpecial121", Authorizer.ACCESS_TYPE_READ, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaGroup("GroupSpecial121", Authorizer.ACCESS_TYPE_CREATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaGroup("GroupSpecial121", Authorizer.ACCESS_TYPE_UPDATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaGroup("GroupSpecial121", Authorizer.ACCESS_TYPE_DELETE, "UserSpecial", groups);
+        assertFalse(res);
 
     }
 
@@ -350,6 +366,21 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorizeSchema("Group3", "Schema1", Authorizer.ACCESS_TYPE_DELETE, "user8", groups);
         assertTrue(res);
+
+        //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
+
+        // Read is not allowed and other operations are not allowed
+        groups = new HashSet<>();
+        groups.add("UserSpecial");
+        res = authorizer.authorizeSchema("GroupSpecial121", "ANY", Authorizer.ACCESS_TYPE_READ, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchema("GroupSpecial121", "ANY", Authorizer.ACCESS_TYPE_CREATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchema("GroupSpecial121", "ANY", Authorizer.ACCESS_TYPE_UPDATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchema("GroupSpecial121", "ANY", Authorizer.ACCESS_TYPE_DELETE, "UserSpecial", groups);
+        assertFalse(res);
+
     }
 
     @Test
@@ -357,27 +388,27 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         Set<String> groups = new HashSet<>();
         boolean res = false;
 
-        ///////////////////////////// READ Schema test cases ////////////////////////////
+        ///////////////////////////// READ SchemaBranch test cases ////////////////////////////
 
-        // No policy for user1 that 'allows' reading Schema
+        // No policy for user1 that 'allows' reading SchemaBranch
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user1", groups);
         assertFalse(res);
 
-        // Deny policy for user2 that 'denies' reading Schema
+        // Deny policy for user2 that 'denies' reading SchemaBranch
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user2", groups);
         assertFalse(res);
 
-        // Deny policy for user3 that 'excludes from allows' for reading Schema
+        // Deny policy for user3 that 'excludes from allows' for reading SchemaBranch
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user3", groups);
         assertFalse(res);
 
-        // Exclude from deny policy exists that allows reading Schema
+        // Exclude from deny policy exists that allows reading SchemaBranch
         groups = new HashSet<>();
         groups.add("user4");
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user4", groups);
         assertTrue(res);
 
-        // Allow policy exists that allows reading Schema
+        // Allow policy exists that allows reading SchemaBranch
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user5", groups);
@@ -389,13 +420,13 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user6", groups);
         assertTrue(res);
 
-        ///////////////////////////// CREATE Schema test cases ////////////////////////////
+        ///////////////////////////// CREATE SchemaBranch test cases ////////////////////////////
 
-        // No policy for user1 that 'allows' creating Schema
+        // No policy for user1 that 'allows' creating SchemaBranch
         res = authorizer.authorizeSchemaBranch("Group2", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user1", groups);
         assertFalse(res);
 
-        // Allow policy exists that allows creating Schema
+        // Allow policy exists that allows creating SchemaBranch
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
@@ -407,19 +438,19 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user6", groups);
         assertTrue(res);
 
-        //Allow policy exists that allows creating  Schema. The group is specified with regexp
+        //Allow policy exists that allows creating  SchemaBranch. The group is specified with regexp
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaBranch("SGroup999", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
         assertTrue(res);
 
-        ///////////////////////////// DELETE Schema test cases ////////////////////////////
+        ///////////////////////////// DELETE SchemaBranch test cases ////////////////////////////
 
-        // No policy for user5 that 'allows' deleting Schema
+        // No policy for user5 that 'allows' deleting SchemaBranch
         res = authorizer.authorizeSchemaBranch("Group2", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
         assertFalse(res);
 
-        // Allow policy exists that allows deleting Schema
+        // Allow policy exists that allows deleting SchemaBranch
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
@@ -431,15 +462,15 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         res = authorizer.authorizeSchemaBranch("Group1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user6", groups);
         assertTrue(res);
 
-        ///////////////////////////// UPDATE SchemaGroup test cases ////////////////////////////
+        ///////////////////////////// UPDATE SchemaBranch test cases ////////////////////////////
 
-        // No policy for user1 that 'allows' updating Schema
+        // No policy for user1 that 'allows' updating SchemaBranch
         groups = new HashSet<>();
         groups.add("user1");
         res = authorizer.authorizeSchemaBranch("Group2", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user1", groups);
         assertFalse(res);
 
-        // Allow policy exists that allows updating Schema
+        // Allow policy exists that allows updating SchemaBranch
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaBranch("SGroup1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
@@ -450,6 +481,20 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorizeSchemaBranch("Group3", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user8", groups);
         assertTrue(res);
+
+        //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
+
+        // Read is allowed and other operations are not allowed
+        groups = new HashSet<>();
+        groups.add("UserSpecial");
+        res = authorizer.authorizeSchemaBranch("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_READ, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaBranch("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_CREATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaBranch("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_UPDATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaBranch("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_DELETE, "UserSpecial", groups);
+        assertFalse(res);
     }
 
     @Test
@@ -457,27 +502,27 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         Set<String> groups = new HashSet<>();
         boolean res = false;
 
-        ///////////////////////////// READ Schema test cases ////////////////////////////
+        ///////////////////////////// READ SchemaVersion test cases ////////////////////////////
 
-        // No policy for user1 that 'allows' reading Schema
+        // No policy for user1 that 'allows' reading SchemaVersion
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user1", groups);
         assertFalse(res);
 
-        // Deny policy for user2 that 'denies' reading Schema
+        // Deny policy for user2 that 'denies' reading SchemaVersion
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user2", groups);
         assertFalse(res);
 
-        // Deny policy for user3 that 'excludes from allows' for reading Schema
+        // Deny policy for user3 that 'excludes from allows' for reading SchemaVersion
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user3", groups);
         assertFalse(res);
 
-        // Exclude from deny policy exists that allows reading Schema
+        // Exclude from deny policy exists that allows reading SchemaVersion
         groups = new HashSet<>();
         groups.add("user4");
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user4", groups);
         assertTrue(res);
 
-        // Allow policy exists that allows reading Schema
+        // Allow policy exists that allows reading SchemaVersion
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user5", groups);
@@ -489,13 +534,13 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_READ, "user6", groups);
         assertTrue(res);
 
-        ///////////////////////////// CREATE Schema test cases ////////////////////////////
+        ///////////////////////////// CREATE SchemaVersion test cases ////////////////////////////
 
-        // No policy for user1 that 'allows' creating Schema
+        // No policy for user1 that 'allows' creating SchemaVersion
         res = authorizer.authorizeSchemaVersion("Group2", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user1", groups);
         assertFalse(res);
 
-        // Allow policy exists that allows creating Schema
+        // Allow policy exists that allows creating SchemaVersion
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
@@ -507,19 +552,19 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user6", groups);
         assertTrue(res);
 
-        //Allow policy exists that allows creating  Schema. The group is specified with regexp
+        //Allow policy exists that allows creating  SchemaVersion. The group is specified with regexp
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaVersion("SchemaGroup999", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_CREATE, "user5", groups);
         assertTrue(res);
 
-        ///////////////////////////// DELETE Schema test cases ////////////////////////////
+        ///////////////////////////// DELETE SchemaVersion test cases ////////////////////////////
 
         // No policy for user5 that 'allows' deleting Schema
         res = authorizer.authorizeSchemaVersion("Group2", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
         assertFalse(res);
 
-        // Allow policy exists that allows deleting Schema
+        // Allow policy exists that allows deleting SchemaVersion
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaVersion("Group10", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
@@ -533,13 +578,13 @@ public class RangerSchemaRegistryAuthorizerImplTest {
 
         ///////////////////////////// UPDATE SchemaGroup test cases ////////////////////////////
 
-        // No policy for user1 that 'allows' updating Schema
+        // No policy for user1 that 'allows' updating SchemaVersion
         groups = new HashSet<>();
         groups.add("user1");
         res = authorizer.authorizeSchemaVersion("Group2", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user1", groups);
         assertFalse(res);
 
-        // Allow policy exists that allows updating Schema
+        // Allow policy exists that allows updating SchemaVersion
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorizeSchemaVersion("SchemaGroup1", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user5", groups);
@@ -550,5 +595,20 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorizeSchemaVersion("Group3", "Schema1", "Branch1", Authorizer.ACCESS_TYPE_DELETE, "user8", groups);
         assertTrue(res);
+
+        //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
+
+        // Read is allowed and other operations are not allowed
+        groups = new HashSet<>();
+        groups.add("UserSpecial");
+        res = authorizer.authorizeSchemaVersion("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_READ, "UserSpecial", groups);
+        assertTrue(res);
+        res = authorizer.authorizeSchemaVersion("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_CREATE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaVersion("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_DELETE, "UserSpecial", groups);
+        assertFalse(res);
+        res = authorizer.authorizeSchemaVersion("GroupSpecial121", "ANY", "ANY", Authorizer.ACCESS_TYPE_UPDATE, "UserSpecial", groups);
+        assertFalse(res);
+
     }
 }
