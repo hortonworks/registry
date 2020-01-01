@@ -49,12 +49,10 @@ public class RangerSchemaRegistryAuthorizationAgentTest {
 
         // 1
         // Empty because initial list is empty
-        String user = "userAuthorized";
+        String user = "user1";
         SecurityContext sc = new SecurityContextForTesting(user);
         ArrayList<SchemaMetadataInfo> schemas = new ArrayList();
-
         Collection<SchemaMetadataInfo> resEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
-
         assertTrue(resEmpty.isEmpty());
 
         // 2
@@ -64,7 +62,6 @@ public class RangerSchemaRegistryAuthorizationAgentTest {
         user = "userNotAuthorized";
         sc = new SecurityContextForTesting(user);
         schemas = new ArrayList();
-
         SchemaMetadata sm = new SchemaMetadata
                 .Builder("Schema1")
                 .schemaGroup("Group1")
@@ -72,19 +69,16 @@ public class RangerSchemaRegistryAuthorizationAgentTest {
                 .build();
         SchemaMetadataInfo smi = new SchemaMetadataInfo(sm);
         schemas.add(smi);
-
         resEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
-
         assertTrue(resEmpty.isEmpty());
 
         // 3
         // Initial list contains one element, and there is a policy that allows access
         // The result list will contain one elment
 
-        user = "userAuthorized";
+        user = "user4";
         sc = new SecurityContextForTesting(user);
         schemas = new ArrayList();
-
         sm = new SchemaMetadata
                 .Builder("Schema1")
                 .schemaGroup("Group1")
@@ -92,9 +86,22 @@ public class RangerSchemaRegistryAuthorizationAgentTest {
                 .build();
         smi = new SchemaMetadataInfo(sm);
         schemas.add(smi);
-
         Collection<SchemaMetadataInfo> resNonEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
+        assertTrue(resNonEmpty.size() == 1);
 
+        // 4
+        // Initial list contains two elements, and there is a policy that allows access to only
+        // to the first element of the list
+        // The result list will contain one element
+
+        sm = new SchemaMetadata
+                .Builder("Schema1")
+                .schemaGroup("Group7")
+                .type("avro")
+                .build();
+        smi = new SchemaMetadataInfo(sm);
+        schemas.add(smi);
+        resNonEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
         assertTrue(resNonEmpty.size() == 1);
 
     }
