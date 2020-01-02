@@ -58,9 +58,9 @@ public interface AuthorizationAgent {
             throws AuthorizationException;
 
 
-    void addSchemaVersion(SecurityContext securityContext,
-                          SchemaMetadataInfo schemaMetadataInfo,
-                          String schemaBranch)
+    void authorizeAddSchemaVersion(SecurityContext securityContext,
+                                   SchemaMetadataInfo schemaMetadataInfo,
+                                   String schemaBranch)
             throws AuthorizationException;
 
     void authorizeGetLatestSchemaVersion(SecurityContext securityContext,

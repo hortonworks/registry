@@ -569,7 +569,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Response response;
             SchemaVersion schemaVersion = null;
             try {
-                authorizationAgent.addSchemaVersion(securityContext,
+                authorizationAgent.authorizeAddSchemaVersion(securityContext,
                         schemaRegistry.getSchemaMetadataInfo(schemaName),
                         schemaBranchName);
                 schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, "UTF-8"),
@@ -612,7 +612,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
-                authorizationAgent.addSchemaVersion(securityContext,
+                authorizationAgent.authorizeAddSchemaVersion(securityContext,
                         schemaRegistry.getSchemaMetadataInfo(schemaName),
                         schemaBranchName);
                 SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
@@ -1275,7 +1275,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch,
                                         @Context SecurityContext securityContext) {
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
             authorizationAgent.authorizeCreateSchemaBranch(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaBranch.getSchemaMetadataName()),
                     schemaRegistry.getSchemaBranchesForVersion(schemaVersionId),

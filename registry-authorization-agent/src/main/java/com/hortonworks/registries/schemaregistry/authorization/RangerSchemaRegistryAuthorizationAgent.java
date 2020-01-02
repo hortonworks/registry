@@ -210,7 +210,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     }
 
     @Override
-    public void addSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
+    public void authorizeAddSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
         authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_CREATE);
     }
 
@@ -289,7 +289,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     public void authorizeDeleteSchemaVersion(SecurityContext sc,
                                              SchemaMetadataInfo schemaMetadataInfo,
                                              Collection<SchemaBranch> branches) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_READ);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_DELETE);
     }
 
     @Override

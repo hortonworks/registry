@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *      // registering a new schema
  *      String schemaName = schemaMetadata.getName();
  *      String schema1 = IOUtils.toString(LocalRegistryServerTest.class.getResourceAsStream("/schema-1.avsc"), "UTF-8");
- *      Integer v1 = schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(schema1, "Initial version of the schema"));
+ *      Integer v1 = schemaRegistryClient.authorizeAddSchemaVersion(schemaName, new SchemaVersion(schema1, "Initial version of the schema"));
  * } finally {
  *  localSchemaRegistryServer.stop();
  * }

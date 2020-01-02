@@ -77,9 +77,9 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void addSchemaVersion(SecurityContext securityContext,
-                                 SchemaMetadataInfo schemaMetadataInfo,
-                                 String schemaBranch) { }
+    public void authorizeAddSchemaVersion(SecurityContext securityContext,
+                                          SchemaMetadataInfo schemaMetadataInfo,
+                                          String schemaBranch) { }
 
     @Override
     public void authorizeGetLatestSchemaVersion(SecurityContext securityContext,

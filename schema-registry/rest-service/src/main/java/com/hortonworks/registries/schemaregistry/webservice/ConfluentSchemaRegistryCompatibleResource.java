@@ -22,7 +22,6 @@ import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.schemaregistry.*;
 import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgentFactory;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
@@ -340,7 +339,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                     schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }
 
-                authorizationAgent.addSchemaVersion(securityContext, schemaMetadataInfo, SchemaBranch.MASTER_BRANCH);
+                authorizationAgent.authorizeAddSchemaVersion(securityContext, schemaMetadataInfo, SchemaBranch.MASTER_BRANCH);
                 SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                     new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
 
