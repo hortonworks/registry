@@ -188,7 +188,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
@@ -396,7 +397,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (AuthorizationException e) {
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+                LOG.warn("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
@@ -440,7 +442,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
                 }
             } catch (AuthorizationException e) {
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+                LOG.warn("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaName, schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
@@ -486,7 +489,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -513,7 +517,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with schemaId: [{}]", schemaId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -535,7 +540,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.deleteSchema(schemaName);
             return WSUtils.respond(Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.error("No schema metadata found with name: [{}]", schemaName);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -581,7 +587,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                         uriInfo,
                         securityContext);
             } catch (AuthorizationException e) {
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+                LOG.warn("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (IOException ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -618,7 +625,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
                 response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (AuthorizationException e) {
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+                LOG.warn("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
@@ -662,7 +670,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
@@ -701,7 +710,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, e.getMessage());
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -730,7 +740,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                             schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
@@ -760,7 +771,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     schemaRegistry.getSchemaBranchesForVersion(versionId));
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -787,7 +799,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with fingerprint : [{}]", fingerprint);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, fingerprint);
@@ -833,7 +846,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.enableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -869,7 +883,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.disableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -902,7 +917,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.archiveSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -936,7 +952,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -969,7 +986,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.startSchemaVersionReview(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -1004,7 +1022,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -1041,7 +1060,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -1075,7 +1095,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1100,7 +1121,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             String uploadedFileId = schemaRegistry.uploadFile(inputStream);
             response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while uploading file", ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1123,7 +1145,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Response.ok(streamOutput).build();
             return response;
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (FileNotFoundException e) {
             LOG.error("No file found for fileId [{}]", fileId, e);
             response = WSUtils.respondEntity(fileId, Response.Status.NOT_FOUND);
@@ -1163,7 +1186,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Long serializerId = schemaRegistry.addSerDes(serDesInfo);
             response = WSUtils.respondEntity(serializerId, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while adding serializer/deserializer  [{}]", serDesInfo, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1201,7 +1225,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
                 response = WSUtils.respondEntity(true, Response.Status.OK);
             } catch (AuthorizationException e) {
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+                LOG.warn("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (Exception ex) {
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
             }
@@ -1229,7 +1254,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.deleteSchemaVersion(schemaVersionKey);
             return WSUtils.respond(Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
@@ -1282,7 +1308,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
             return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK) ;
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchAlreadyExistsException e) {
             return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  schemaBranch.getName());
         } catch (SchemaNotFoundException e) {
@@ -1310,7 +1337,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
         } catch (IncompatibleSchemaException e) {
@@ -1335,7 +1363,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaRegistry.deleteSchemaBranch(schemaBranchId);
             return WSUtils.respond(Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaBranchId.toString());
         } catch (InvalidSchemaBranchDeletionException e) {

@@ -89,7 +89,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             schema.setSchema(schemaVersionInfo.getSchemaText());
             response = WSUtils.respondEntity(schema, Response.Status.OK);
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema version found with id [{}]", id, ex);
             response = schemaNotFoundError();
@@ -262,7 +263,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 response = WSUtils.respondEntity(schema, Response.Status.OK);
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
@@ -293,7 +295,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
         } catch (AuthorizationException e) {
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+            LOG.warn("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (InvalidSchemaException ex) {
             LOG.error("Given schema is invalid", ex);
             response = invalidSchemaError();
@@ -348,7 +351,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 response = WSUtils.respondEntity(id, Response.Status.OK);
 
             } catch (AuthorizationException e) {
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, null);
+                LOG.warn("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
                 response = invalidSchemaError();
