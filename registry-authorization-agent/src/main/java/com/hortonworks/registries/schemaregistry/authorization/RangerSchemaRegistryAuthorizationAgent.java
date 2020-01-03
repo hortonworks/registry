@@ -16,13 +16,25 @@
 package com.hortonworks.registries.schemaregistry.authorization;
 
 import com.hortonworks.registries.auth.util.KerberosName;
-import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -158,6 +170,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
             (SecurityContext sc,
              Function<String, SchemaMetadataInfo> getSchemaMetadataFunc,
              FunctionWithSchemaNotFoundException <SchemaVersionKey, SchemaVersionInfo> getVersionInfoFunc,
+             FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getVersionBranchesFunc,
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionKey>> func)
             throws SchemaNotFoundException {
 
@@ -171,7 +184,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                     } catch (SchemaNotFoundException e) {
                        throw new RuntimeException(e);
                     }
-                    String sBranch = svi.getMergeInfo().getSchemaBranchName();
+                    String sBranch = getPrimaryBranch(getVersionBranchesFunc.apply(svi.getId())).getName();
                     return authorizer.authorizeSchemaVersion(sGroup,
                             sName,
                             sBranch,

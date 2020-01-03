@@ -15,7 +15,12 @@
  */
 package com.hortonworks.registries.schemaregistry.authorization;
 
-import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.hadoop.security.authorize.AuthorizationException;
@@ -46,6 +51,7 @@ public interface AuthorizationAgent {
             (SecurityContext sc,
              Function<String, SchemaMetadataInfo> getSchemaMetadataFunc,
              FunctionWithSchemaNotFoundException<SchemaVersionKey, SchemaVersionInfo> getVersionInfoFunc,
+             FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getVersionBranchesFunc,
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionKey>> func)
             throws SchemaNotFoundException;
 

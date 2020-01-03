@@ -70,7 +70,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -343,6 +350,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     .authorizeFindSchemasByFields(securityContext,
                             schemaRegistry::getSchemaMetadataInfo,
                             schemaRegistry::getSchemaVersionInfo,
+                            schemaRegistry::getSchemaBranchesForVersion,
                             () -> schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
@@ -1085,10 +1093,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                    @Context SecurityContext securityContext) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadataInfo(schemaName);
-            authorizationAgent.authorizeGetSerializers(securityContext, schemaMetadataInfoStorable);
-            if (schemaMetadataInfoStorable != null) {
-                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfoStorable.getSchemaMetadata().getName());
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
+            authorizationAgent.authorizeGetSerializers(securityContext, schemaMetadataInfo);
+            if (schemaMetadataInfo != null) {
+                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfo.getSchemaMetadata().getName());
                 response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);

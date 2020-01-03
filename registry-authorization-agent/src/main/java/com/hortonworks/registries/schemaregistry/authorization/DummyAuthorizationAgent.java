@@ -15,14 +15,18 @@
  */
 package com.hortonworks.registries.schemaregistry.authorization;
 
-import com.hortonworks.registries.schemaregistry.*;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class DummyAuthorizationAgent implements AuthorizationAgent {
@@ -38,6 +42,7 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
             (SecurityContext sc,
              Function<String, SchemaMetadataInfo> getSchemaMetadataFunc,
              FunctionWithSchemaNotFoundException<SchemaVersionKey, SchemaVersionInfo> getVersionInfoFunc,
+             FunctionWithBranchSchemaNotFoundException<Long, Collection<SchemaBranch>> getVersionBranchesFunc,
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionKey>> func)
             throws SchemaNotFoundException {
 

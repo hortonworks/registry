@@ -14,7 +14,13 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.common.*;
+import com.hortonworks.registries.common.AuthMethodConfiguration;
+import com.hortonworks.registries.common.FileStorageConfiguration;
+import com.hortonworks.registries.common.GenericExceptionMapper;
+import com.hortonworks.registries.common.HAConfiguration;
+import com.hortonworks.registries.common.ModuleConfiguration;
+import com.hortonworks.registries.common.ModuleRegistration;
+import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
