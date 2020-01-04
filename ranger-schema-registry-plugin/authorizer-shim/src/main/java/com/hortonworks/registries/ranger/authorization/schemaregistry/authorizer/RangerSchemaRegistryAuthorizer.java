@@ -75,167 +75,30 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
     }
 
     @Override
-    public boolean authorizeSerDe(String accessType,
-                                  String uName,
-                                  Set<String> uGroup) {
+    public boolean authorize(Resource resource,
+                             AccessType accessType,
+                             String uName,
+                             Set<String> uGroup) {
         if(LOG.isDebugEnabled()) {
             LOG.debug(String.format(
-                    "==> RangerSchemaRegistryAuthorizer.authorizeSerDe(accessType=%s, uName=%s, uGroup=%s)",
+                    "==> RangerSchemaRegistryAuthorizer.authorize(resource='%s' accessType='%s', uName='%s', uGroup='%s')",
+                    resource,
                     accessType,
                     uName,
                     uGroup));
         }
 
-        boolean ret = false;
+        boolean ret;
 
         try {
             activatePluginClassLoader();
-            ret = rangerSRAuthorizerImpl.authorizeSerDe(accessType, uName, uGroup);
+            ret = rangerSRAuthorizerImpl.authorize(resource, accessType, uName, uGroup);
         } finally {
             deactivatePluginClassLoader();
         }
 
         if(LOG.isDebugEnabled()) {
-            LOG.debug("<== RangerSchemaRegistryAuthorizer.authorizeSerDe: " + ret);
-        }
-
-        return ret;
-    }
-
-    @Override
-    public boolean authorizeSchemaGroup(String sGroupName,
-                                        String accessType,
-                                        String uName,
-                                        Set<String> uGroup) {
-        if(LOG.isDebugEnabled()) {
-            LOG.debug(String.format(
-                    "==> RangerSchemaRegistryAuthorizer.authorizeSchemaGroup(sName=%s, accessType=%s, uName=%s, uGroup=%s)",
-                    sGroupName,
-                    accessType,
-                    uName,
-                    uGroup));
-        }
-
-        boolean ret = false;
-
-        try {
-            activatePluginClassLoader();
-            ret = rangerSRAuthorizerImpl.authorizeSchemaGroup(sGroupName, accessType, uName, uGroup);
-        } finally {
-            deactivatePluginClassLoader();
-        }
-
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("<== RangerSchemaRegistryAuthorizer.authorizeSchemaGroup: " + ret);
-        }
-
-        return ret;
-    }
-
-    @Override
-    public boolean authorizeSchema(String sGroupName,
-                                   String sMetadataName,
-                                   String accessType,
-                                   String uName,
-                                   Set<String> uGroup) {
-        if(LOG.isDebugEnabled()) {
-            LOG.debug(String.format(
-                    "==> RangerSchemaRegistryAuthorizer.authorizeSchema"
-                            + "(sName=%s, sMetadataName=%s, accessType=%s, uName=%s, uGroup=%s)",
-                    sGroupName,
-                    sMetadataName,
-                    accessType,
-                    uName,
-                    uGroup));
-        }
-
-        boolean ret = false;
-
-        try {
-            activatePluginClassLoader();
-            ret = rangerSRAuthorizerImpl.authorizeSchema(sGroupName, sMetadataName, accessType, uName, uGroup);
-        } finally {
-            deactivatePluginClassLoader();
-        }
-
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("<== RangerSchemaRegistryAuthorizer.authorizeSchema: " + ret);
-        }
-
-        return ret;
-    }
-
-    @Override
-    public boolean authorizeSchemaBranch(String sGroupName,
-                                         String sMetadataName,
-                                         String sBranchName,
-                                         String accessType,
-                                         String uName,
-                                         Set<String> uGroup) {
-        if(LOG.isDebugEnabled()) {
-            LOG.debug(String.format(
-                    "==> RangerSchemaRegistryAuthorizer.authorizeSchemaBranch"
-                            + "(sName=%s, sMetadataName=%s, sBranchName=%s, accessType=%s, uName=%s, uGroup=%s)",
-                    sGroupName,
-                    sMetadataName,
-                    sBranchName,
-                    accessType,
-                    uName,
-                    uGroup));
-        }
-
-        boolean ret = false;
-
-        try {
-            activatePluginClassLoader();
-            ret = rangerSRAuthorizerImpl.authorizeSchemaBranch(sGroupName, sMetadataName, sBranchName, accessType, uName, uGroup);
-        } finally {
-            deactivatePluginClassLoader();
-        }
-
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("<== RangerSchemaRegistryAuthorizer.authorizeSchemaBranch: " + ret);
-        }
-
-        return ret;
-    }
-
-    @Override
-    public boolean authorizeSchemaVersion(String sGroupName,
-                                          String sMetadataName,
-                                          String sBranchName,
-                                          String accessType,
-                                          String uName,
-                                          Set<String> uGroup) {
-
-        if(LOG.isDebugEnabled()) {
-            LOG.debug(String.format(
-                    "==> RangerSchemaRegistryAuthorizer.authorizeSchemaVersion"
-                       + "(sName=%s, sMetadataName=%s, sBranchName=%s, accessType=%s, uName=%s, uGroup=%s)",
-                    sGroupName,
-                    sMetadataName,
-                    sBranchName,
-                    accessType,
-                    uName,
-                    uGroup));
-        }
-
-        boolean ret = false;
-
-        try {
-            activatePluginClassLoader();
-            ret = rangerSRAuthorizerImpl.authorizeSchemaVersion(sGroupName,
-                    sMetadataName,
-                    sBranchName,
-                    accessType,
-                    uName,
-                    uGroup);
-        } finally {
-            deactivatePluginClassLoader();
-        }
-
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("<== RangerSchemaRegistryAuthorizer.authorizeSchemaVersion: " + ret);
+            LOG.debug("<== RangerSchemaRegistryAuthorizer.authorize: " + ret);
         }
 
         return ret;

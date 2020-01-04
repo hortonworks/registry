@@ -39,7 +39,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.Authorizer;
@@ -73,23 +72,25 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         String user = getUserNameFromSC(sc);
         Set<String> userGroups = getUserGroupsFromSC(sc);
 
-        boolean accessToSchemaMetadata = authorizer.authorizeSchema(sGroup,
-                sName,
-                Authorizer.ACCESS_TYPE_READ,
+        Authorizer.SchemaMetadataResource schemaMetadataResource = new Authorizer.SchemaMetadataResource(sGroup, sName);
+        boolean accessToSchemaMetadata = authorizer.authorize(schemaMetadataResource,
+                Authorizer.AccessType.READ,
                 user,
                 userGroups);
 
         raiseAuthorizationExceptionIfNeeded(accessToSchemaMetadata,
                 user,
-                Authorizer.ACCESS_TYPE_READ,
-                Authorizer.RESOURCE_SCHEMA_METADATA,
-                compoundNameToString(sGroup, sName));
+                Authorizer.AccessType.READ,
+                schemaMetadataResource);
         Collection<AggregatedSchemaBranch> filteredBranches = aggregatedSchemaMetadataInfo
                 .getSchemaBranches()
                 .stream().map(branch -> filterAggregatedBranch(sGroup, sName, user, userGroups, branch))
                 .filter(Objects::nonNull).collect(Collectors.toList());
 
-        boolean accessToSerdes = authorizer.authorizeSerDe(Authorizer.ACCESS_TYPE_READ, user, userGroups);
+        boolean accessToSerdes = authorizer.authorize(new Authorizer.SerdeResource(),
+                Authorizer.AccessType.READ,
+                user,
+                userGroups);
 
         Collection<SerDesInfo> serDesInfos;
         if (accessToSerdes) {
@@ -111,10 +112,10 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                                                           Set<String> userGroups,
                                                           AggregatedSchemaBranch branch) {
 
-        boolean accessToBranch = authorizer.authorizeSchemaBranch(sGroup,
-                sName,
-                branch.getSchemaBranch().getName(),
-                Authorizer.ACCESS_TYPE_READ,
+
+        boolean accessToBranch = authorizer.authorize(
+                new Authorizer.SchemaBranchResource(sGroup, sGroup, branch.getSchemaBranch().getName()),
+                Authorizer.AccessType.READ,
                 user,
                 userGroups);
         if (!accessToBranch) {
@@ -124,10 +125,9 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         Collection<SchemaVersionInfo> filteredVersions = branch
                 .getSchemaVersionInfos()
                 .stream()
-                .filter(version -> authorizer.authorizeSchemaVersion(sGroup,
-                        sName,
-                        branch.getSchemaBranch().getName(),
-                        Authorizer.ACCESS_TYPE_READ,
+                .filter(version -> authorizer.authorize(
+                        new Authorizer.SchemaVersionResource(sGroup, sName, branch.getSchemaBranch().getName()),
+                        Authorizer.AccessType.READ,
                         user,
                         userGroups)).collect(Collectors.toList());
 
@@ -144,9 +144,8 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                     SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
                     String sGroup = schemaMetadata.getSchemaGroup();
                     String sName = schemaMetadata.getName();
-                    return authorizer.authorizeSchema(sGroup,
-                            sName,
-                            Authorizer.ACCESS_TYPE_READ,
+                    return authorizer.authorize(new Authorizer.SchemaMetadataResource(sGroup, sName),
+                            Authorizer.AccessType.READ,
                             getUserNameFromSC(sc),
                             getUserGroupsFromSC(sc));
                 }).collect(Collectors.toList());
@@ -185,10 +184,9 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
                        throw new RuntimeException(e);
                     }
                     String sBranch = getPrimaryBranch(getVersionBranchesFunc.apply(svi.getId())).getName();
-                    return authorizer.authorizeSchemaVersion(sGroup,
-                            sName,
-                            sBranch,
-                            Authorizer.ACCESS_TYPE_READ,
+                    return authorizer.authorize(
+                            new Authorizer.SchemaVersionResource(sGroup, sName, sBranch),
+                            Authorizer.AccessType.READ,
                             getUserNameFromSC(sc),
                             getUserGroupsFromSC(sc));
                 }).collect(Collectors.toList());
@@ -198,13 +196,13 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     @Override
     public void authorizeAddSchemaInfo(SecurityContext sc, SchemaMetadata schemaMetadata)
             throws AuthorizationException {
-        authorizeSchema(sc, schemaMetadata, Authorizer.ACCESS_TYPE_CREATE);
+        authorizeSchema(sc, schemaMetadata, Authorizer.AccessType.CREATE);
     }
 
     @Override
     public void authorizeUpdateSchemaInfo(SecurityContext sc, SchemaMetadata schemaMetadata)
             throws AuthorizationException {
-        authorizeSchema(sc, schemaMetadata, Authorizer.ACCESS_TYPE_UPDATE);
+        authorizeSchema(sc, schemaMetadata, Authorizer.AccessType.UPDATE);
     }
 
     @Override
@@ -213,7 +211,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
              SchemaMetadataInfo schemaMetadataInfo)
             throws AuthorizationException {
 
-        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.ACCESS_TYPE_READ);
+        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.AccessType.READ);
 
         return schemaMetadataInfo;
     }
@@ -223,19 +221,20 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
             (SecurityContext sc,
              SchemaMetadataInfo schemaMetadataInfo)
             throws  AuthorizationException {
-        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.ACCESS_TYPE_DELETE);
+        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.AccessType.DELETE);
     }
 
     private void authorizeSchema(SecurityContext sc,
                                  SchemaMetadata sM,
-                                 String accessType)
+                                 Authorizer.AccessType accessType)
             throws  AuthorizationException {
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
         String user = getUserNameFromSC(sc);
 
-        boolean hasAccess = authorizer.authorizeSchema(sGroup,
-                sName,
+        Authorizer.SchemaMetadataResource schemaMetadataResource = new Authorizer.SchemaMetadataResource(sGroup, sName);
+        boolean hasAccess = authorizer.authorize(
+                schemaMetadataResource,
                 accessType,
                 user,
                 getUserGroupsFromSC(sc));
@@ -243,85 +242,85 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         raiseAuthorizationExceptionIfNeeded(hasAccess,
                 user,
                 accessType,
-                Authorizer.RESOURCE_SCHEMA_METADATA,
-                compoundNameToString(sGroup,sName));
+                schemaMetadataResource);
     }
 
     @Override
     public void authorizeAddSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_CREATE);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.AccessType.CREATE);
     }
 
     @Override
     public void authorizeGetLatestSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_READ);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.AccessType.READ);
     }
 
     @Override
     public void authorizeGetSchemaVersion(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_READ);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.AccessType.READ);
     }
 
 
     @Override
     public void authorizeVersionStateOperation(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, Collection<SchemaBranch> branches) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_UPDATE);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.AccessType.UPDATE);
     }
 
     @Override
     public void authorizeCheckCompatibilityWithSchema(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, String schemaBranch) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.ACCESS_TYPE_READ);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranch, Authorizer.AccessType.READ);
     }
 
     @Override
     public void authorizeGetSerializers(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
-        authorizeSerDes(sc, Authorizer.ACCESS_TYPE_READ);
+        authorizeSerDes(sc, Authorizer.AccessType.READ);
     }
 
     @Override
     public void authorizeUploadFile(SecurityContext sc) throws AuthorizationException {
-        authorizeSerDes(sc, Authorizer.ACCESS_TYPE_UPDATE);
+        authorizeSerDes(sc, Authorizer.AccessType.UPDATE);
     }
 
     @Override
     public void authorizeDownloadFile(SecurityContext sc) throws AuthorizationException {
-        authorizeSerDes(sc, Authorizer.ACCESS_TYPE_READ);
+        authorizeSerDes(sc, Authorizer.AccessType.READ);
     }
 
     @Override
     public void authorizeAddSerDes(SecurityContext sc) throws AuthorizationException {
-        authorizeSerDes(sc, Authorizer.ACCESS_TYPE_CREATE);
+        authorizeSerDes(sc, Authorizer.AccessType.CREATE);
     }
 
     @Override
     public void authorizeGetSerDes(SecurityContext sc) throws AuthorizationException {
-        authorizeSerDes(sc, Authorizer.ACCESS_TYPE_READ);
+        authorizeSerDes(sc, Authorizer.AccessType.READ);
     }
 
-    private void authorizeSerDes(SecurityContext sc, String accessType) throws AuthorizationException  {
+    private void authorizeSerDes(SecurityContext sc, Authorizer.AccessType accessType) throws AuthorizationException  {
         String user = getUserNameFromSC(sc);
-        boolean hasAccessToSerdes = authorizer.authorizeSerDe(accessType,
+        Authorizer.SerdeResource serdeResource = new Authorizer.SerdeResource();
+        boolean hasAccessToSerdes = authorizer.authorize(serdeResource,
+                accessType,
                 user,
                 getUserGroupsFromSC(sc));
 
         raiseAuthorizationExceptionIfNeeded(hasAccessToSerdes,
                 user,
                 accessType,
-                Authorizer.RESOURCE_SERDE,
-                "*");
+                serdeResource);
     }
 
     @Override
     public void authorizeMapSchemaWithSerDes(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException {
-        authorizeSerDes(sc, Authorizer.ACCESS_TYPE_READ);
-        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.ACCESS_TYPE_UPDATE);
+        authorizeSerDes(sc, Authorizer.AccessType.READ);
+        authorizeSchema(sc, schemaMetadataInfo.getSchemaMetadata(), Authorizer.AccessType.UPDATE);
     }
 
     @Override
     public void authorizeDeleteSchemaVersion(SecurityContext sc,
                                              SchemaMetadataInfo schemaMetadataInfo,
                                              Collection<SchemaBranch> branches) throws AuthorizationException {
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.ACCESS_TYPE_DELETE);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, getPrimaryBranch(branches).getName(), Authorizer.AccessType.DELETE);
     }
 
     @Override
@@ -334,10 +333,9 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
             String sGroup = sM.getSchemaGroup();
             String sName = sM.getName();
 
-            return authorizer.authorizeSchemaBranch(sGroup,
-                    sName,
-                    branch.getName(),
-                    Authorizer.ACCESS_TYPE_READ,
+            return authorizer.authorize(
+                    new Authorizer.SchemaBranchResource(sGroup, sName, branch.getName()),
+                    Authorizer.AccessType.READ,
                     getUserNameFromSC(sc),
                     getUserGroupsFromSC(sc));
         }).collect(Collectors.toList());
@@ -353,32 +351,28 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         String sName = sM.getName();
         String user = getUserNameFromSC(sc);
 
-        boolean permsToCreateBranches = authorizer.authorizeSchemaBranch(sGroup,
-                sName,
-                branchTocreate,
-                Authorizer.ACCESS_TYPE_CREATE,
+        Authorizer.SchemaBranchResource schemaBranchResource = new Authorizer.SchemaBranchResource(sGroup, sName, branchTocreate);
+        boolean permsToCreateBranches = authorizer.authorize(schemaBranchResource,
+                Authorizer.AccessType.CREATE,
                 user,
                 getUserGroupsFromSC(sc));
 
         raiseAuthorizationExceptionIfNeeded(permsToCreateBranches,
                 user,
-                Authorizer.ACCESS_TYPE_CREATE,
-                Authorizer.RESOURCE_SCHEMA_BRANCH,
-                compoundNameToString(sGroup, sName, branchTocreate));
+                Authorizer.AccessType.CREATE,
+                schemaBranchResource);
 
         String branch = getPrimaryBranch(branches).getName();
-        boolean permsToReadVersions= authorizer.authorizeSchemaVersion(sGroup,
-                sName,
-                branch,
-                Authorizer.ACCESS_TYPE_READ,
+        Authorizer.SchemaVersionResource schemaVersionResource = new Authorizer.SchemaVersionResource(sGroup, sName, branch);
+        boolean permsToReadVersions= authorizer.authorize(schemaVersionResource,
+                Authorizer.AccessType.READ,
                 user,
                 getUserGroupsFromSC(sc));
 
         raiseAuthorizationExceptionIfNeeded(permsToReadVersions,
                 user,
-                Authorizer.ACCESS_TYPE_READ,
-                Authorizer.RESOURCE_SCHEMA_VERSION,
-                compoundNameToString(sGroup, sName, branch, "*"));
+                Authorizer.AccessType.READ,
+                schemaVersionResource);
     }
 
     @Override
@@ -390,31 +384,28 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         String user = getUserNameFromSC(sc);
 
         String branch = getPrimaryBranch(branches).getName();
-        boolean permsToReadVersions = authorizer.authorizeSchemaVersion(sGroup,
-                sName,
-                branch,
-                Authorizer.ACCESS_TYPE_READ,
+        Authorizer.SchemaVersionResource schemaVersionResource = new Authorizer.SchemaVersionResource(sGroup, sName, branch);
+        boolean permsToReadVersions = authorizer.authorize(schemaVersionResource,
+                Authorizer.AccessType.READ,
                 user,
                 getUserGroupsFromSC(sc));
 
         raiseAuthorizationExceptionIfNeeded(permsToReadVersions,
                 user,
-                Authorizer.ACCESS_TYPE_READ,
-                Authorizer.RESOURCE_SCHEMA_VERSION,
-                compoundNameToString(sGroup, sName, branch, "*"));
+                Authorizer.AccessType.READ,
+                schemaVersionResource);
 
-        boolean permsToCreateVersions = authorizer.authorizeSchemaVersion(sGroup,
-                sName,
-                SchemaBranch.MASTER_BRANCH,
-                Authorizer.ACCESS_TYPE_CREATE,
+        Authorizer.SchemaVersionResource schemaVersionToCreate =
+                new Authorizer.SchemaVersionResource(sGroup, sName, SchemaBranch.MASTER_BRANCH);
+        boolean permsToCreateVersions = authorizer.authorize(schemaVersionToCreate,
+                Authorizer.AccessType.CREATE,
                 user,
                 getUserGroupsFromSC(sc));
 
         raiseAuthorizationExceptionIfNeeded(permsToCreateVersions,
                 user,
-                Authorizer.ACCESS_TYPE_CREATE,
-                Authorizer.RESOURCE_SCHEMA_VERSION,
-                compoundNameToString(sGroup, sName, SchemaBranch.MASTER_BRANCH, "*"));
+                Authorizer.AccessType.CREATE,
+                schemaVersionToCreate);
     }
 
     @Override
@@ -425,18 +416,18 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
         String sName = sM.getName();
 
         String user = getUserNameFromSC(sc);
-        boolean permsToDelete = authorizer.authorizeSchemaBranch(sGroup,
+        Authorizer.SchemaBranchResource schemaBranchResource = new Authorizer.SchemaBranchResource(sGroup,
                 sName,
-                schemaBranch,
-                Authorizer.ACCESS_TYPE_DELETE,
+                schemaBranch);
+        boolean permsToDelete = authorizer.authorize(schemaBranchResource,
+                Authorizer.AccessType.DELETE,
                 user,
                 getUserGroupsFromSC(sc));
 
         raiseAuthorizationExceptionIfNeeded(permsToDelete,
                 user,
-                Authorizer.ACCESS_TYPE_DELETE,
-                Authorizer.RESOURCE_SCHEMA_BRANCH,
-                compoundNameToString(sGroup, sName, schemaBranch));
+                Authorizer.AccessType.DELETE,
+                schemaBranchResource);
     }
 
     ///////////////////// ConfluenceCompatible APIs /////////////////////
@@ -444,9 +435,10 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     @Override
     public Stream<SchemaMetadataInfo> authorizeGetSubjects(SecurityContext sc, Stream<SchemaMetadataInfo> stream) {
         return stream.filter(sM ->
-                authorizer.authorizeSchema(sM.getSchemaMetadata().getSchemaGroup(),
-                        sM.getSchemaMetadata().getName(),
-                        Authorizer.ACCESS_TYPE_READ,
+                authorizer.authorize(
+                        new Authorizer.SchemaMetadataResource(sM.getSchemaMetadata().getSchemaGroup(),
+                                sM.getSchemaMetadata().getName()),
+                        Authorizer.AccessType.READ,
                         getUserNameFromSC(sc),
                         getUserGroupsFromSC(sc)));
     }
@@ -467,10 +459,11 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
             String sName = sM.getName();
             String sBranch = getPrimaryBranch(getBranches.apply(schemaVersionInfo.getId())).getName();
 
-            return authorizer.authorizeSchemaVersion(sGroup,
+            Authorizer.SchemaVersionResource schemaVersionResource = new Authorizer.SchemaVersionResource(sGroup,
                     sName,
-                    sBranch,
-                    Authorizer.ACCESS_TYPE_READ,
+                    sBranch);
+            return authorizer.authorize(schemaVersionResource,
+                    Authorizer.AccessType.READ,
                     getUserNameFromSC(sc),
                     getUserGroupsFromSC(sc));
         });
@@ -484,7 +477,7 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
              SupplierWithSchemaNotFoundException<Collection<SchemaVersionInfo>> func)
     throws SchemaNotFoundException, AuthorizationException {
 
-        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranchName, Authorizer.ACCESS_TYPE_READ);
+        authorizeSchemaVersionOpInternal(sc, schemaMetadataInfo, schemaBranchName, Authorizer.AccessType.READ);
 
         return func.get();
     }
@@ -492,23 +485,23 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
     private void authorizeSchemaVersionOpInternal(SecurityContext sc,
                                                   SchemaMetadataInfo schemaMetadataInfo,
                                                   String schemaBranch,
-                                                  String accessType) throws AuthorizationException {
+                                                  Authorizer.AccessType accessType) throws AuthorizationException {
         SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
         String user = getUserNameFromSC(sc);
 
-        boolean hasAccess = authorizer.authorizeSchemaVersion(sGroup,
+        Authorizer.SchemaVersionResource schemaVersionResource = new Authorizer.SchemaVersionResource(sGroup,
                 sName,
-                schemaBranch,
+                schemaBranch);
+        boolean hasAccess = authorizer.authorize(schemaVersionResource,
                 accessType,
                 user,
                 getUserGroupsFromSC(sc));
         raiseAuthorizationExceptionIfNeeded(hasAccess,
                 user,
                 accessType,
-                Authorizer.RESOURCE_SCHEMA_VERSION,
-                compoundNameToString(sGroup, sName, schemaBranch));
+                schemaVersionResource);
     }
 
     private SchemaBranch getPrimaryBranch(Collection<SchemaBranch> branches) {
@@ -540,21 +533,13 @@ public enum RangerSchemaRegistryAuthorizationAgent implements AuthorizationAgent
 
     private void raiseAuthorizationExceptionIfNeeded(boolean isAuthorized,
                                                      String user,
-                                                     String permission,
-                                                     String entityType,
-                                                     String entity) throws AuthorizationException {
+                                                     Authorizer.AccessType permission,
+                                                     Authorizer.Resource resource) throws AuthorizationException {
         if(!isAuthorized) {
             throw new AuthorizationException(String.format(
-                    "User [%s] does not have [%s] permissions on [%s]: [%s]", user,
-                    permission, entityType.toUpperCase(), entity));
+                    "User [%s] does not have [%s] permissions on %s", user,
+                    permission.getName(), resource));
         }
-    }
-
-    private static String compoundNameToString(String... elements) {
-        if (elements == null) {
-            return "";
-        }
-        return StringUtils.join(elements, "#");
     }
 
 }

@@ -25,6 +25,13 @@ import java.util.Set;
 
 public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
 
+    ///////////// List of Ranger specific resources //////////////////////////
+
+    private static final String RANGER_RESOURCE_REGISTRY_SERVICE = "registry-service";
+    private static final String RANGER_RESOURCE_SCHEMA_GROUP = "schema-group";
+    private static final String RANGER_RESOURCE_NONE_SCHEMA_BRANCH = "none-sb";
+    private static final String RANGER_RESOURCE_NONE_SCHEMA_VERSION = "none-sv";
+
     private final RangerBasePlugin plg;
 
     public RangerSchemaRegistryAuthorizerImpl() {
@@ -32,90 +39,27 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     }
 
     @Override
-    public boolean authorizeSerDe(String accessType,
-                                  String uName,
-                                  Set<String> uGroup) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_SERDE, "ANY");
-
-        return authorize(resource, accessType, uName, uGroup)
-                || authorizeSRresource(accessType, uName, uGroup);
-    }
-
-    @Override
-    public boolean authorizeSchemaGroup(String sGroupName,
-                                        String accessType,
-                                        String uName,
-                                        Set<String> uGroup) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
-        resource.setValue(RESOURCE_NONE_SCHEMA_METADATA, "ANY");
-
-        return authorize(resource, accessType, uName, uGroup)
-                || authorizeSRresource(accessType, uName, uGroup);
-    }
-
-    @Override
-    public boolean authorizeSchema(String sGroupName,
-                                   String sMetadataName,
-                                   String accessType,
-                                   String uName,
-                                   Set<String> uGroup) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
-        resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
-        resource.setValue(RESOURCE_NONE_SCHEMA_BRANCH, "ANY");
-
-        return authorize(resource, accessType, uName, uGroup)
-                || authorizeSRresource(accessType, uName, uGroup);
-    }
-
-    @Override
-    public boolean authorizeSchemaBranch(String sGroupName,
-                                         String sMetadataName,
-                                         String sBranchName,
-                                         String accessType,
-                                         String uName,
-                                         Set<String> uGroup) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
-        resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
-        resource.setValue(RESOURCE_SCHEMA_BRANCH, sBranchName);
-        resource.setValue(RESOURCE_NONE_SCHEMA_VERSION, "ANY");
-
-        return authorize(resource, accessType, uName, uGroup)
-                || authorizeSRresource(accessType, uName, uGroup);
-    }
-
-    @Override
-    public boolean authorizeSchemaVersion(String sGroupName,
-                             String sMetadataName,
-                             String sBranchName,
-                             String accessType,
+    public boolean authorize(Resource registryResource,
+                             AccessType accessType,
                              String uName,
                              Set<String> uGroup) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_SCHEMA_GROUP, sGroupName);
-        resource.setValue(RESOURCE_SCHEMA_METADATA, sMetadataName);
-        resource.setValue(RESOURCE_SCHEMA_BRANCH, sBranchName);
-        resource.setValue(RESOURCE_SCHEMA_VERSION, "ANY");
 
-        return authorize(resource, accessType, uName, uGroup)
+        return authorize(registryResource2RangerResources(registryResource), accessType, uName, uGroup)
                 || authorizeSRresource(accessType, uName, uGroup);
     }
 
-    private boolean authorizeSRresource(String accessType, String uName, Set<String> uGroup) {
+    private boolean authorizeSRresource(AccessType accessType, String uName, Set<String> uGroup) {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RESOURCE_REGISTRY_SERVICE, "ANY");
+        resource.setValue(RANGER_RESOURCE_REGISTRY_SERVICE, "ANY_VALUE");
 
         return authorize(resource, accessType, uName, uGroup);
     }
 
     private boolean authorize(RangerAccessResourceImpl resource,
-                              String accessType,
+                              AccessType accessType,
                               String uName,
                               Set<String> uGroup) {
-        RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource, accessType, uName, uGroup);
+        RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource, accessType.getName(), uName, uGroup);
 
         RangerAccessResult res = plg.isAccessAllowed(request);
 
@@ -148,4 +92,63 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
             return instance;
         }
     }
+
+    private RangerAccessResourceImpl registryResource2RangerResources(Resource resource) {
+        switch (resource.getResourceType()) {
+            case SERDE: return registryResource2RangerResources((SerdeResource) resource);
+            case SCHEMA_METADATA: return registryResource2RangerResources((SchemaMetadataResource) resource);
+            case SCHEMA_BRANCH: return registryResource2RangerResources((SchemaBranchResource) resource);
+            case SCHEMA_VERSION: return registryResource2RangerResources((SchemaVersionResource) resource);
+
+            // In current implemetataion the exception should never be thrown. This is added for future if
+            // the set of resources is extended but implemetation is not provided.
+            default: throw new RuntimeException(
+                    String.format("Cannot convert registry resource to ranger resources. Resource %s is not supported",
+                            resource.getResourceName()));
+        }
+    }
+
+    private RangerAccessResourceImpl registryResource2RangerResources(SerdeResource serdeResource) {
+        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
+        resource.setValue(serdeResource.getResourceName(), "ANY_VALUE");
+
+        return resource;
+    }
+
+    private RangerAccessResourceImpl registryResource2RangerResources(SchemaMetadataResource schemaMetadataResource) {
+        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
+        resource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, schemaMetadataResource.getsGroupName());
+        resource.setValue(schemaMetadataResource.getResourceName(), schemaMetadataResource.getsMetadataName());
+        resource.setValue(RANGER_RESOURCE_NONE_SCHEMA_BRANCH, "ANY_VALUE");
+
+        return resource;
+    }
+
+    private RangerAccessResourceImpl registryResource2RangerResources(SchemaBranchResource schemaBranchResource) {
+        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
+
+        SchemaMetadataResource schemaMetadataResource = schemaBranchResource.getSchemaMetadataResource();
+
+        resource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, schemaMetadataResource.getsGroupName());
+        resource.setValue(schemaMetadataResource.getResourceName(), schemaMetadataResource.getsMetadataName());
+        resource.setValue(schemaBranchResource.getResourceName(), schemaBranchResource.getsBranchName());
+        resource.setValue(RANGER_RESOURCE_NONE_SCHEMA_VERSION, "ANY_VALUE");
+
+        return resource;
+    }
+
+    private RangerAccessResourceImpl registryResource2RangerResources(SchemaVersionResource schemaVersionResource) {
+        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
+
+        SchemaBranchResource schemaBranchResource = schemaVersionResource.getSchemaBranchResource();
+        SchemaMetadataResource schemaMetadataResource = schemaBranchResource.getSchemaMetadataResource();
+
+        resource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, schemaMetadataResource.getsGroupName());
+        resource.setValue(schemaMetadataResource.getResourceName(), schemaMetadataResource.getsMetadataName());
+        resource.setValue(schemaBranchResource.getResourceName(), schemaBranchResource.getsBranchName());
+        resource.setValue(schemaVersionResource.getResourceName(), "ANY_VALUE");
+
+        return resource;
+    }
+
 }

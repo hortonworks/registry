@@ -15,51 +15,146 @@
  */
 package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer;
 
-
 import java.util.Set;
 
 public interface Authorizer {
-    String ACCESS_TYPE_CREATE = "create";
-    String ACCESS_TYPE_READ = "read";
-    String ACCESS_TYPE_UPDATE = "update";
-    String ACCESS_TYPE_DELETE = "delete";
 
-    String RESOURCE_REGISTRY_SERVICE = "registry-service";
-    String RESOURCE_SERDE = "serde";
-    String RESOURCE_SCHEMA_GROUP = "schema-group";
-    String RESOURCE_SCHEMA_METADATA = "schema-metadata";
-    String RESOURCE_NONE_SCHEMA_METADATA = "none-sm";
-    String RESOURCE_SCHEMA_BRANCH = "schema-branch";
-    String RESOURCE_NONE_SCHEMA_BRANCH = "none-sb";
-    String RESOURCE_SCHEMA_VERSION = "schema-version";
-    String RESOURCE_NONE_SCHEMA_VERSION = "none-sv";
+    boolean authorize(Resource resource, AccessType accessType, String uName, Set<String> uGroup);
 
-    boolean authorizeSerDe(String accessType,
-                           String uName,
-                           Set<String> uGroup);
 
-    boolean authorizeSchemaGroup(String sGroupName,
-                                 String accessType,
-                                 String uName,
-                                 Set<String> uGroup);
+    enum AccessType {
+        CREATE("create"),
+        READ("read"),
+        UPDATE("update"),
+        DELETE("delete");
 
-    boolean authorizeSchema(String sGroupName,
-                            String sMetadataName,
-                            String accessType,
-                            String uName,
-                            Set<String> uGroup);
+        private final String name;
 
-    boolean authorizeSchemaBranch(String sGroupName,
-                                  String sMetadataName,
-                                  String sBranchName,
-                                  String accessType,
-                                  String uName,
-                                  Set<String> uGroup);
+        AccessType(String name) { this.name = name; }
 
-    boolean authorizeSchemaVersion(String sGroupName,
-                                   String sMetadataName,
-                                   String sBranchName,
-                                   String accessType,
-                                   String uName,
-                                   Set<String> uGroup);
+        public String getName() { return name; }
+    }
+
+    enum ResourceType {
+        SERDE("serde"),
+        SCHEMA_METADATA("schema-metadata"),
+        SCHEMA_BRANCH("schema-branch"),
+        SCHEMA_VERSION("schema-version");
+
+        private final String resourceName;
+
+        ResourceType(String name) { this.resourceName = name; }
+
+        public String getResourceName() { return resourceName; }
+    }
+
+    abstract class Resource {
+        private ResourceType resourceType;
+
+        public Resource(ResourceType resourceType) {
+            this.resourceType = resourceType;
+        }
+
+        public String getResourceName() {
+            return resourceType.getResourceName();
+        }
+
+        public ResourceType getResourceType() {
+            return resourceType;
+        }
+    }
+
+    class SerdeResource extends Resource {
+        public SerdeResource() {
+            super(ResourceType.SERDE);
+        }
+
+        @Override
+        public String toString() {
+            return "SerDeResource{ serDeName='*' }";
+        }
+    }
+
+    class SchemaMetadataResource extends Resource {
+        private String sGroupName;
+        private String sMetadataName;
+
+        public SchemaMetadataResource(String sGroupName, String sMetadataName) {
+            super(ResourceType.SCHEMA_METADATA);
+            this.sGroupName = sGroupName;
+            this.sMetadataName = sMetadataName;
+        }
+
+        public String getsGroupName() {
+            return sGroupName;
+        }
+
+        public String getsMetadataName() {
+            return sMetadataName;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("SchemaMetadataResource{ schemaGroupName='%s', schemaMetadataName='%s' }",
+                    sGroupName, sMetadataName);
+        }
+    }
+
+    class SchemaBranchResource extends Resource {
+        private SchemaMetadataResource schemaMetadataResource;
+        private String sBranchName;
+
+        public SchemaBranchResource(SchemaMetadataResource schemaMetadataResource, String sBranchName) {
+            super(ResourceType.SCHEMA_BRANCH);
+            this.schemaMetadataResource = schemaMetadataResource;
+            this.sBranchName = sBranchName;
+        }
+
+        public SchemaBranchResource(String sGroupName, String sMetadataName, String sBranchName) {
+            this(new SchemaMetadataResource(sGroupName, sMetadataName), sBranchName);
+        }
+
+        public SchemaMetadataResource getSchemaMetadataResource() {
+            return schemaMetadataResource;
+        }
+
+        public String getsBranchName() {
+            return sBranchName;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("SchemaBranchResource{ schemaGroupName='%s', schemaMetadataName='%s' schemaBranchName='%s' }",
+                    schemaMetadataResource.getsGroupName(),
+                    schemaMetadataResource.getsMetadataName(),
+                    sBranchName);
+        }
+    }
+
+    class SchemaVersionResource extends Resource {
+        private SchemaBranchResource schemaBranchResource;
+
+        public SchemaVersionResource(SchemaBranchResource schemaBranchResource) {
+            super(ResourceType.SCHEMA_VERSION);
+            this.schemaBranchResource = schemaBranchResource;
+        }
+
+        public SchemaVersionResource(String sGroupName, String sMetadataName, String sBranchName) {
+            this(new SchemaBranchResource(sGroupName, sMetadataName, sBranchName));
+        }
+
+        public SchemaBranchResource getSchemaBranchResource() {
+            return schemaBranchResource;
+        }
+
+        @Override
+        public String toString() {
+            SchemaMetadataResource schemaMetadataResource = schemaBranchResource.getSchemaMetadataResource();
+            return String.format("SchemaVersionResource{ schemaGroupName='%s', schemaMetadataName='%s' schemaBranchName='%s' schemaVersionName='*' }",
+                    schemaMetadataResource.getsGroupName(),
+                    schemaMetadataResource.getsMetadataName(),
+                    schemaBranchResource.getsBranchName());
+        }
+    }
+
 }
