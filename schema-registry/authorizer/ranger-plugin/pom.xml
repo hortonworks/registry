@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.hortonworks.registries</groupId>
+    <artifactId>ranger-plugin</artifactId>
+    <version>0.8.1-SNAPSHOT</version>
+    <name>Schema Registry Security Plugin</name>
+    <description>Schema Registry Security Plugin</description>
+    <packaging>pom</packaging>
+    <modules>
+        <module>ranger-authorizer</module>
+        <module>ranger-authorizer-shim</module>
+    </modules>
+
+    <properties>
+        <ranger.version>2.0.0.7.0.3.0-79</ranger.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.version>3.8.0</maven.compiler.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <commons-logging.version>1.1.1</commons-logging.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>hortonworks.public.https</id>
+            <name>Apache Development Snapshot Repository</name>
+            <url>https://repo.hortonworks.com/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>cloudera.public.https</id>
+            <name>Apache Development Snapshot Repository</name>
+            <url>https://repository.cloudera.com/artifactory/libs-release-local/</url>
+        </repository>
+        <repository>
+            <id>apache.public.https</id>
+            <name>Apache Development Snapshot Repository</name>
+            <url>https://repository.apache.org/content/repositories/public</url>
+        </repository>
+    </repositories>
+
+</project>

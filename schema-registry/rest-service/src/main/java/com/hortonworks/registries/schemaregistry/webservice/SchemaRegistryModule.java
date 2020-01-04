@@ -28,8 +28,8 @@ import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgentFactory;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizerAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizerAgentFactory;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -39,12 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.AUTHORIZATION;
@@ -87,16 +85,16 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
         Map<String, Object> authorizationProps = (Map<String, Object>) config.get(AUTHORIZATION);
-        AuthorizationAgent  authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(authorizationProps);
+        AuthorizerAgent authorizerAgent = AuthorizerAgentFactory.getAuthorizationAgent(authorizationProps);
 
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
                                                                                    leadershipParticipant,
                                                                                    schemaRegistryVersion,
-                                                                                   authorizationAgent);
+                authorizerAgent);
         ConfluentSchemaRegistryCompatibleResource
             confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry,
                 leadershipParticipant,
-                authorizationAgent);
+                authorizerAgent);
 
         return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
     }

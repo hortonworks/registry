@@ -28,7 +28,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
-import com.hortonworks.registries.schemaregistry.authorization.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizerAgent;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
@@ -72,14 +72,14 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     private static final String OPERATION_GROUP_CONFLUENT_SR = "4. Confluent Schema Registry compatible API";
 
-    private final AuthorizationAgent authorizationAgent;
+    private final AuthorizerAgent authorizerAgent;
 
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
                                                      AtomicReference<LeadershipParticipant> leadershipParticipant,
-                                                     AuthorizationAgent authorizationAgent) {
+                                                     AuthorizerAgent authorizerAgent) {
         super(schemaRegistry, leadershipParticipant);
 
-        this.authorizationAgent = authorizationAgent;
+        this.authorizerAgent = authorizerAgent;
     }
 
     @GET
@@ -93,7 +93,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
-            authorizationAgent.authorizeGetSchemaVersion(securityContext,
+            authorizerAgent.authorizeGetSchemaVersion(securityContext,
                     schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()),
                     schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
             SchemaString schema = new SchemaString();
@@ -121,7 +121,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     public Response getSubjects(@Context SecurityContext securityContext) {
         Response response;
         try {
-            List<String> registeredSubjects = authorizationAgent.authorizeGetSubjects(securityContext,
+            List<String> registeredSubjects = authorizerAgent.authorizeGetSubjects(securityContext,
                     schemaRegistry.findSchemaMetadata(Collections.emptyMap())
                                                             .stream())
                                                             .map(x -> x.getSchemaMetadata().getName())
@@ -196,7 +196,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                    @Context SecurityContext securityContext) {
         Response response;
         try {
-            List<Integer> registeredSubjects = authorizationAgent.authorizeGetAllVersions(securityContext,
+            List<Integer> registeredSubjects = authorizerAgent.authorizeGetAllVersions(securityContext,
                     schemaRegistry.getAllVersions(subject).stream(),
                     schemaRegistry::getSchemaMetadataInfo,
                     schemaRegistry::getSchemaBranchesForVersion)
@@ -264,7 +264,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo == null) {
                 response = versionNotFoundError();
             } else {
-                authorizationAgent.authorizeGetSchemaVersion(securityContext,
+                authorizerAgent.authorizeGetSchemaVersion(securityContext,
                         schemaMetadataInfo,
                         schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
                 Schema schema = new Schema(schemaVersionInfo.getName(),
@@ -299,7 +299,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
 
             if (schemaVersionInfo != null) {
-                authorizationAgent.authorizeGetSchemaVersion(securityContext,schemaRegistry.getSchemaMetadataInfo(subject),
+                authorizerAgent.authorizeGetSchemaVersion(securityContext,schemaRegistry.getSchemaMetadataInfo(subject),
                         schemaRegistry.getSchemaBranchesForVersion(schemaVersionInfo.getId()));
                 response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {
@@ -348,12 +348,12 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                             .type(AvroSchemaProvider.TYPE)
                             .schemaGroup("Kafka")
                             .build();
-                    authorizationAgent.authorizeAddSchemaInfo(securityContext, schemaMetadata);
+                    authorizerAgent.authorizeAddSchemaInfo(securityContext, schemaMetadata);
                     schemaRegistry.addSchemaMetadata(schemaMetadata);
                     schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
                 }
 
-                authorizationAgent.authorizeAddSchemaVersion(securityContext, schemaMetadataInfo, SchemaBranch.MASTER_BRANCH);
+                authorizerAgent.authorizeAddSchemaVersion(securityContext, schemaMetadataInfo, SchemaBranch.MASTER_BRANCH);
                 SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                     new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
 

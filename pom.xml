@@ -116,8 +116,6 @@
         <module>docker</module>
         <module>model-registry</module>
         <module>common-auth</module>
-        <module>ranger-schema-registry-plugin</module>
-        <module>registry-authorization-agent</module>
     </modules>
 
     <profiles>
