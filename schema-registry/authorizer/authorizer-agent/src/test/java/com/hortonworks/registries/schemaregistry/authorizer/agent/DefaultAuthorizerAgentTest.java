@@ -45,8 +45,7 @@ public class DefaultAuthorizerAgentTest {
     @Before
     public void setUp() {
         Map<String, Object> props = new HashMap<>();
-        props.put("className",
-                "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizerAgent");
+        props.put("className", DefaultAuthorizerAgent.class.getCanonicalName());
         authorizerAgent = AuthorizerAgentFactory.getAuthorizationAgent(props);
     }
 

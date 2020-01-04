@@ -29,7 +29,7 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
 
     private static final String   RANGER_PLUGIN_TYPE = "schema-registry";
     private static final String   RANGER_SR_AUTHORIZER_IMPL_CLASSNAME  =
-            "com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.RangerSchemaRegistryAuthorizerImpl";
+            "com.hortonworks.registries.schemaregistry.authorizer.ranger.RangerSchemaRegistryAuthorizerImpl";
 
     private Authorizer  rangerSRAuthorizerImpl;
     private static RangerPluginClassLoader rangerPluginClassLoader;

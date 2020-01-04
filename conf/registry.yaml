@@ -11,9 +11,9 @@ modules:
       customSchemaStateExecutor:
         className: "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor"
         props:
-      # authorization
+      # authorization properties
       #authorization:
-      #  className: "com.hortonworks.registries.schemaregistry.authorization.RangerSchemaRegistryAuthorizationAgent"
+      #  authorizerAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizerAgent"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000

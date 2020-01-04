@@ -15,6 +15,9 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
@@ -23,12 +26,15 @@ public class AuthorizerAgentFactory {
     public static AuthorizerAgent getAuthorizationAgent(Map<String, Object> props) {
         if(props == null
                 || props.size() == 0
-                || !props.containsKey("className")) {
+                || !props.containsKey("authorizerAgentClassName")
+                || props.get("authorizerAgentClassName")
+                .equals(DummyAuthorizerAgent.class.getCanonicalName())) {
             return new DummyAuthorizerAgent();
         }
 
-        String cName = (String) props.get("className");
-        if(cName.equals("com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizerAgent")) {
+        String cName = (String) props.get("authorizerAgentClassName");
+        if(cName.equals(DefaultAuthorizerAgent.class.getCanonicalName())) {
+            DefaultAuthorizerAgent.INSTANCE.init(getAuthorizer(props));
             return DefaultAuthorizerAgent.INSTANCE;
         }
 
@@ -37,6 +43,31 @@ public class AuthorizerAgentFactory {
             Class<AuthorizerAgent> cl = (Class<AuthorizerAgent>) Class.forName(cName);
             Constructor<AuthorizerAgent> constr = cl.getConstructor();
             AuthorizerAgent res = constr.newInstance();
+            res.init(getAuthorizer(props));
+
+            return res;
+        } catch (ClassNotFoundException | InstantiationException
+                | IllegalAccessException | NoSuchMethodException
+                | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer
+    // is used by default
+    private static Authorizer getAuthorizer(Map<String, Object> props) {
+        if(!props.containsKey("authorizerClassName")
+                || props.get("authorizerClassName")
+                .equals(RangerSchemaRegistryAuthorizer.class.getCanonicalName())){
+
+            return new RangerSchemaRegistryAuthorizer();
+        }
+
+        String authorizerName = (String) props.get("authorizerClassName");
+        try {
+            Class<Authorizer> cl = (Class<Authorizer>) Class.forName(authorizerName);
+            Constructor<Authorizer> constr = cl.getConstructor();
+            Authorizer res = constr.newInstance();
 
             return res;
         } catch (ClassNotFoundException | InstantiationException

@@ -42,12 +42,16 @@ import java.util.stream.Stream;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
 
 public enum DefaultAuthorizerAgent implements AuthorizerAgent {
     INSTANCE;
 
-    private Authorizer authorizer = new RangerSchemaRegistryAuthorizer();
+    private Authorizer authorizer;
+
+    @Override
+    public void init(Authorizer authorizer) {
+        this.authorizer = authorizer;
+    }
 
     @Override
     public Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas

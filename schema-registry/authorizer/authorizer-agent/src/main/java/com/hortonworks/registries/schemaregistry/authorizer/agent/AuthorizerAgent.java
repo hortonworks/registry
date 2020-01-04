@@ -21,6 +21,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.hadoop.security.authorize.AuthorizationException;
@@ -32,6 +33,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public interface AuthorizerAgent {
+
+    void init(Authorizer authorizer);
 
     Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas
             (SecurityContext sc,

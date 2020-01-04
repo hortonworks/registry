@@ -21,6 +21,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import javax.ws.rs.core.SecurityContext;
@@ -30,6 +31,9 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class DummyAuthorizerAgent implements AuthorizerAgent {
+
+    @Override
+    public void init(Authorizer authorizer) { }
 
     @Override
     public Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
