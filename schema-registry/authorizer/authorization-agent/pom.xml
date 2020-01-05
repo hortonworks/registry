@@ -15,6 +15,12 @@
     <dependencies>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
+            <artifactId>schema-registry-core</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-ranger-authorizer-shim</artifactId>
             <version>${project.version}</version>
         </dependency>
