@@ -29,8 +29,12 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     ///////////// List of Ranger specific resources //////////////////////////
 
     private static final String RANGER_RESOURCE_REGISTRY_SERVICE = "registry-service";
+    private static final String RANGER_RESOURCE_SERDE = "serde";
     private static final String RANGER_RESOURCE_SCHEMA_GROUP = "schema-group";
+    private static final String RANGER_RESOURCE_SCHEMA_METADATA = "schema-metadata";
+    private static final String RANGER_RESOURCE_SCHEMA_BRANCH = "schema-branch";
     private static final String RANGER_RESOURCE_NONE_SCHEMA_BRANCH = "none-sb";
+    private static final String RANGER_RESOURCE_SCHEMA_VERSION = "schema-version";
     private static final String RANGER_RESOURCE_NONE_SCHEMA_VERSION = "none-sv";
 
     private final RangerBasePlugin plg;
@@ -45,15 +49,8 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
                              String uName,
                              Set<String> uGroup) {
 
-        return authorize(registryResource2RangerResources(registryResource), accessType, uName, uGroup)
-                || authorizeSRresource(accessType, uName, uGroup);
-    }
-
-    private boolean authorizeSRresource(AccessType accessType, String uName, Set<String> uGroup) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RANGER_RESOURCE_REGISTRY_SERVICE, "ANY_VALUE");
-
-        return authorize(resource, accessType, uName, uGroup);
+        return authorize(registryResource2RangerResource(registryResource), accessType, uName, uGroup)
+                || authorizeRangerSchemaRegistryResource(accessType, uName, uGroup);
     }
 
     private boolean authorize(RangerAccessResourceImpl resource,
@@ -65,6 +62,55 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         RangerAccessResult res = plg.isAccessAllowed(request);
 
         return res != null && res.getIsAllowed();
+    }
+
+    private RangerAccessResourceImpl registryResource2RangerResource(Resource registryResource) {
+        RangerAccessResourceImpl rangerResource = new RangerAccessResourceImpl();
+
+        if(registryResource instanceof SchemaMetadataResource) {
+            SchemaMetadataResource smr = (SchemaMetadataResource) registryResource;
+            rangerResource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, smr.getsGroupName());
+            rangerResource.setValue(RANGER_RESOURCE_SCHEMA_METADATA, smr.getsMetadataName());
+        }
+
+        if(registryResource instanceof SchemaBranchResource) {
+            SchemaBranchResource sbr = (SchemaBranchResource) registryResource;
+            rangerResource.setValue(RANGER_RESOURCE_SCHEMA_BRANCH, sbr.getsBranchName());
+        }
+
+        switch (registryResource.getResourceType()) {
+            case SERDE: {
+                rangerResource.setValue(RANGER_RESOURCE_SERDE, "ANY_VALUE");
+                return rangerResource;
+            }
+            case SCHEMA_VERSION: {
+                rangerResource.setValue(RANGER_RESOURCE_SCHEMA_VERSION, "ANY_VALUE");
+                return rangerResource;
+            }
+            case SCHEMA_BRANCH: {
+                rangerResource.setValue(RANGER_RESOURCE_NONE_SCHEMA_VERSION, "ANY_VALUE");
+                return rangerResource;
+            }
+            case SCHEMA_METADATA: {
+                rangerResource.setValue(RANGER_RESOURCE_NONE_SCHEMA_BRANCH, "ANY_VALUE");
+                return rangerResource;
+            }
+
+            default:
+                // In current implemetataion the exception should never be thrown. This is added for future if
+                // the set of resources is extended but implemetation is not provided.
+                throw new RuntimeException(
+                        String.format("Cannot convert registry resource to ranger resource. ResourceType %s is not supported",
+                                registryResource.getResourceType().name()));
+        }
+
+    }
+
+    private boolean authorizeRangerSchemaRegistryResource(AccessType accessType, String uName, Set<String> uGroup) {
+        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
+        resource.setValue(RANGER_RESOURCE_REGISTRY_SERVICE, "ANY_VALUE");
+
+        return authorize(resource, accessType, uName, uGroup);
     }
 
     private static class SchemaRegistryRangerPlugin extends RangerBasePlugin {
@@ -92,64 +138,6 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
             }
             return instance;
         }
-    }
-
-    private RangerAccessResourceImpl registryResource2RangerResources(Resource resource) {
-        switch (resource.getResourceType()) {
-            case SERDE: return registryResource2RangerResources((SerdeResource) resource);
-            case SCHEMA_METADATA: return registryResource2RangerResources((SchemaMetadataResource) resource);
-            case SCHEMA_BRANCH: return registryResource2RangerResources((SchemaBranchResource) resource);
-            case SCHEMA_VERSION: return registryResource2RangerResources((SchemaVersionResource) resource);
-
-            // In current implemetataion the exception should never be thrown. This is added for future if
-            // the set of resources is extended but implemetation is not provided.
-            default: throw new RuntimeException(
-                    String.format("Cannot convert registry resource to ranger resources. Resource %s is not supported",
-                            resource.getResourceName()));
-        }
-    }
-
-    private RangerAccessResourceImpl registryResource2RangerResources(SerdeResource serdeResource) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(serdeResource.getResourceName(), "ANY_VALUE");
-
-        return resource;
-    }
-
-    private RangerAccessResourceImpl registryResource2RangerResources(SchemaMetadataResource schemaMetadataResource) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-        resource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, schemaMetadataResource.getsGroupName());
-        resource.setValue(schemaMetadataResource.getResourceName(), schemaMetadataResource.getsMetadataName());
-        resource.setValue(RANGER_RESOURCE_NONE_SCHEMA_BRANCH, "ANY_VALUE");
-
-        return resource;
-    }
-
-    private RangerAccessResourceImpl registryResource2RangerResources(SchemaBranchResource schemaBranchResource) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-
-        SchemaMetadataResource schemaMetadataResource = schemaBranchResource.getSchemaMetadataResource();
-
-        resource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, schemaMetadataResource.getsGroupName());
-        resource.setValue(schemaMetadataResource.getResourceName(), schemaMetadataResource.getsMetadataName());
-        resource.setValue(schemaBranchResource.getResourceName(), schemaBranchResource.getsBranchName());
-        resource.setValue(RANGER_RESOURCE_NONE_SCHEMA_VERSION, "ANY_VALUE");
-
-        return resource;
-    }
-
-    private RangerAccessResourceImpl registryResource2RangerResources(SchemaVersionResource schemaVersionResource) {
-        RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-
-        SchemaBranchResource schemaBranchResource = schemaVersionResource.getSchemaBranchResource();
-        SchemaMetadataResource schemaMetadataResource = schemaBranchResource.getSchemaMetadataResource();
-
-        resource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, schemaMetadataResource.getsGroupName());
-        resource.setValue(schemaMetadataResource.getResourceName(), schemaMetadataResource.getsMetadataName());
-        resource.setValue(schemaBranchResource.getResourceName(), schemaBranchResource.getsBranchName());
-        resource.setValue(schemaVersionResource.getResourceName(), "ANY_VALUE");
-
-        return resource;
     }
 
 }

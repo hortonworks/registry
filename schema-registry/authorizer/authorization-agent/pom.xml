@@ -3,37 +3,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>authorizer</artifactId>
+        <artifactId>schema-registry-authorizer</artifactId>
         <groupId>com.hortonworks.registries</groupId>
         <version>0.8.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>authorizer-agent</artifactId>
+    <artifactId>schema-registry-authorization-agent</artifactId>
     <version>0.8.1-SNAPSHOT</version>
-
-    <repositories>
-        <repository>
-            <id>hortonworks.public.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repo.hortonworks.com/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>apache.public.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/public</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>ranger-authorizer-shim</artifactId>
+            <artifactId>schema-registry-ranger-authorizer-shim</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>authorizer-core</artifactId>
+            <artifactId>schema-registry-authorizer-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

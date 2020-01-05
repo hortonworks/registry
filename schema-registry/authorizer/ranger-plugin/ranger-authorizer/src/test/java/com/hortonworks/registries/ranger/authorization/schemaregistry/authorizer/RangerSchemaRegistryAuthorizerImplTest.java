@@ -169,7 +169,7 @@ public class RangerSchemaRegistryAuthorizerImplTest {
     }
 
     @Test
-    public void authorizeSchema() {
+    public void authorizeSchemaMetadata() {
         Set<String> groups = new HashSet<>();
         boolean res = false;
 

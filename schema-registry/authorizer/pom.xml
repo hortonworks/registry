@@ -9,13 +9,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>authorizer</artifactId>
+    <artifactId>schema-registry-authorizer</artifactId>
     <packaging>pom</packaging>
     <modules>
         <module>authorizer-core</module>
-        <module>authorizer-agent</module>
+        <module>authorization-agent</module>
         <module>ranger-plugin</module>
     </modules>
-
 
 </project>

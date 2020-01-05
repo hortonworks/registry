@@ -43,7 +43,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 
-public enum DefaultAuthorizerAgent implements AuthorizerAgent {
+public enum DefaultAuthorizationAgent implements AuthorizationAgent {
     INSTANCE;
 
     private Authorizer authorizer;

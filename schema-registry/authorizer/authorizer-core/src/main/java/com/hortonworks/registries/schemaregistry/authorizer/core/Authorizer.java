@@ -36,16 +36,10 @@ public interface Authorizer {
     }
 
     enum ResourceType {
-        SERDE("serde"),
-        SCHEMA_METADATA("schema-metadata"),
-        SCHEMA_BRANCH("schema-branch"),
-        SCHEMA_VERSION("schema-version");
-
-        private final String resourceName;
-
-        ResourceType(String name) { this.resourceName = name; }
-
-        public String getResourceName() { return resourceName; }
+        SERDE,
+        SCHEMA_METADATA,
+        SCHEMA_BRANCH,
+        SCHEMA_VERSION;
     }
 
     abstract class Resource {
@@ -53,10 +47,6 @@ public interface Authorizer {
 
         public Resource(ResourceType resourceType) {
             this.resourceType = resourceType;
-        }
-
-        public String getResourceName() {
-            return resourceType.getResourceName();
         }
 
         public ResourceType getResourceType() {
@@ -79,10 +69,14 @@ public interface Authorizer {
         private String sGroupName;
         private String sMetadataName;
 
-        public SchemaMetadataResource(String sGroupName, String sMetadataName) {
-            super(ResourceType.SCHEMA_METADATA);
+        protected SchemaMetadataResource(ResourceType resourceType, String sGroupName, String sMetadataName) {
+            super(resourceType);
             this.sGroupName = sGroupName;
             this.sMetadataName = sMetadataName;
+        }
+
+        public SchemaMetadataResource(String sGroupName, String sMetadataName) {
+            this(ResourceType.SCHEMA_METADATA, sGroupName, sMetadataName);
         }
 
         public String getsGroupName() {
@@ -100,22 +94,16 @@ public interface Authorizer {
         }
     }
 
-    class SchemaBranchResource extends Resource {
-        private SchemaMetadataResource schemaMetadataResource;
+    class SchemaBranchResource extends SchemaMetadataResource {
         private String sBranchName;
 
-        public SchemaBranchResource(SchemaMetadataResource schemaMetadataResource, String sBranchName) {
-            super(ResourceType.SCHEMA_BRANCH);
-            this.schemaMetadataResource = schemaMetadataResource;
+        protected SchemaBranchResource(ResourceType resourceType, String sGroupName, String sMetadataName, String sBranchName) {
+            super(resourceType, sGroupName, sMetadataName);
             this.sBranchName = sBranchName;
         }
 
         public SchemaBranchResource(String sGroupName, String sMetadataName, String sBranchName) {
-            this(new SchemaMetadataResource(sGroupName, sMetadataName), sBranchName);
-        }
-
-        public SchemaMetadataResource getSchemaMetadataResource() {
-            return schemaMetadataResource;
+            this(ResourceType.SCHEMA_BRANCH, sGroupName, sMetadataName, sBranchName);
         }
 
         public String getsBranchName() {
@@ -125,35 +113,24 @@ public interface Authorizer {
         @Override
         public String toString() {
             return String.format("SchemaBranchResource{ schemaGroupName='%s', schemaMetadataName='%s' schemaBranchName='%s' }",
-                    schemaMetadataResource.getsGroupName(),
-                    schemaMetadataResource.getsMetadataName(),
+                    getsGroupName(),
+                    getsMetadataName(),
                     sBranchName);
         }
     }
 
-    class SchemaVersionResource extends Resource {
-        private SchemaBranchResource schemaBranchResource;
-
-        public SchemaVersionResource(SchemaBranchResource schemaBranchResource) {
-            super(ResourceType.SCHEMA_VERSION);
-            this.schemaBranchResource = schemaBranchResource;
-        }
+    class SchemaVersionResource extends SchemaBranchResource {
 
         public SchemaVersionResource(String sGroupName, String sMetadataName, String sBranchName) {
-            this(new SchemaBranchResource(sGroupName, sMetadataName, sBranchName));
-        }
-
-        public SchemaBranchResource getSchemaBranchResource() {
-            return schemaBranchResource;
+            super(ResourceType.SCHEMA_VERSION, sGroupName, sMetadataName, sBranchName);
         }
 
         @Override
         public String toString() {
-            SchemaMetadataResource schemaMetadataResource = schemaBranchResource.getSchemaMetadataResource();
             return String.format("SchemaVersionResource{ schemaGroupName='%s', schemaMetadataName='%s' schemaBranchName='%s' schemaVersionName='*' }",
-                    schemaMetadataResource.getsGroupName(),
-                    schemaMetadataResource.getsMetadataName(),
-                    schemaBranchResource.getsBranchName());
+                    getsGroupName(),
+                    getsMetadataName(),
+                    getsBranchName());
         }
     }
 

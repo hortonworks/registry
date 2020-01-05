@@ -76,5 +76,4 @@ public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
         return null;
     }
 
-    
 }

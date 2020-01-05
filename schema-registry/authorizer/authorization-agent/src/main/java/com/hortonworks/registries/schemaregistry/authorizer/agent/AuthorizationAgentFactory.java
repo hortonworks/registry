@@ -22,27 +22,27 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
-public class AuthorizerAgentFactory {
-    public static AuthorizerAgent getAuthorizationAgent(Map<String, Object> props) {
+public class AuthorizationAgentFactory {
+    public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
         if(props == null
                 || props.size() == 0
                 || !props.containsKey("authorizerAgentClassName")
                 || props.get("authorizerAgentClassName")
-                .equals(DummyAuthorizerAgent.class.getCanonicalName())) {
-            return new DummyAuthorizerAgent();
+                .equals(DummyAuthorizationAgent.class.getCanonicalName())) {
+            return new DummyAuthorizationAgent();
         }
 
         String cName = (String) props.get("authorizerAgentClassName");
-        if(cName.equals(DefaultAuthorizerAgent.class.getCanonicalName())) {
-            DefaultAuthorizerAgent.INSTANCE.init(getAuthorizer(props));
-            return DefaultAuthorizerAgent.INSTANCE;
+        if(cName.equals(DefaultAuthorizationAgent.class.getCanonicalName())) {
+            DefaultAuthorizationAgent.INSTANCE.init(getAuthorizer(props));
+            return DefaultAuthorizationAgent.INSTANCE;
         }
 
         // In case if in future we plan to add any other custom AuthorizationAgents
         try {
-            Class<AuthorizerAgent> cl = (Class<AuthorizerAgent>) Class.forName(cName);
-            Constructor<AuthorizerAgent> constr = cl.getConstructor();
-            AuthorizerAgent res = constr.newInstance();
+            Class<AuthorizationAgent> cl = (Class<AuthorizationAgent>) Class.forName(cName);
+            Constructor<AuthorizationAgent> constr = cl.getConstructor();
+            AuthorizationAgent res = constr.newInstance();
             res.init(getAuthorizer(props));
 
             return res;

@@ -28,8 +28,8 @@ import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizerAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizerAgentFactory;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -85,16 +85,16 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
         Map<String, Object> authorizationProps = (Map<String, Object>) config.get(AUTHORIZATION);
-        AuthorizerAgent authorizerAgent = AuthorizerAgentFactory.getAuthorizationAgent(authorizationProps);
+        AuthorizationAgent authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(authorizationProps);
 
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
                                                                                    leadershipParticipant,
                                                                                    schemaRegistryVersion,
-                authorizerAgent);
+                authorizationAgent);
         ConfluentSchemaRegistryCompatibleResource
             confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry,
                 leadershipParticipant,
-                authorizerAgent);
+                authorizationAgent);
 
         return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
     }

@@ -36,17 +36,17 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 @Category(IntegrationTest.class)
-public class DefaultAuthorizerAgentTest {
+public class DefaultAuthorizationAgentTest {
 
 
-    private AuthorizerAgent authorizerAgent;
+    private AuthorizationAgent authorizationAgent;
 
 
     @Before
     public void setUp() {
         Map<String, Object> props = new HashMap<>();
-        props.put("className", DefaultAuthorizerAgent.class.getCanonicalName());
-        authorizerAgent = AuthorizerAgentFactory.getAuthorizationAgent(props);
+        props.put("className", DefaultAuthorizationAgent.class.getCanonicalName());
+        authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(props);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class DefaultAuthorizerAgentTest {
         String user = "user1";
         SecurityContext sc = new SecurityContextForTesting(user);
         ArrayList<SchemaMetadataInfo> schemas = new ArrayList();
-        Collection<SchemaMetadataInfo> resEmpty = authorizerAgent.authorizeFindSchemas(sc, schemas);
+        Collection<SchemaMetadataInfo> resEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
         assertTrue(resEmpty.isEmpty());
 
         // 2
@@ -82,7 +82,7 @@ public class DefaultAuthorizerAgentTest {
                 .build();
         SchemaMetadataInfo smi = new SchemaMetadataInfo(sm);
         schemas.add(smi);
-        resEmpty = authorizerAgent.authorizeFindSchemas(sc, schemas);
+        resEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
         assertTrue(resEmpty.isEmpty());
 
         // 3
@@ -99,7 +99,7 @@ public class DefaultAuthorizerAgentTest {
                 .build();
         smi = new SchemaMetadataInfo(sm);
         schemas.add(smi);
-        Collection<SchemaMetadataInfo> resNonEmpty = authorizerAgent.authorizeFindSchemas(sc, schemas);
+        Collection<SchemaMetadataInfo> resNonEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
         assertTrue(resNonEmpty.size() == 1);
 
         // 4
@@ -114,7 +114,7 @@ public class DefaultAuthorizerAgentTest {
                 .build();
         smi = new SchemaMetadataInfo(sm);
         schemas.add(smi);
-        resNonEmpty = authorizerAgent.authorizeFindSchemas(sc, schemas);
+        resNonEmpty = authorizationAgent.authorizeFindSchemas(sc, schemas);
         assertTrue(resNonEmpty.size() == 1);
 
     }
