@@ -27,7 +27,8 @@ public class AuthorizerFactory {
 
         // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer
         // is used by default
-        if(!props.containsKey("authorizerClassName")
+        if(props == null
+                || !props.containsKey("authorizerClassName")
                 || props.get("authorizerClassName")
                 .equals(RangerSchemaRegistryAuthorizer.class.getCanonicalName())){
 

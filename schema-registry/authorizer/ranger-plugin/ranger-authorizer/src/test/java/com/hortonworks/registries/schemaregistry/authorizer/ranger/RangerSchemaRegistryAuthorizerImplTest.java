@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer;
+package com.hortonworks.registries.schemaregistry.authorizer.ranger;
 
-
-import com.hortonworks.registries.schemaregistry.authorizer.ranger.RangerSchemaRegistryAuthorizerImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;

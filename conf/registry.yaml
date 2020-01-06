@@ -13,7 +13,7 @@ modules:
         props:
       # authorization properties
       #authorization:
-      #  authorizerAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizerAgent"
+      #  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.ranger.authorization.schemaregistry.authorizer.util;
+package com.hortonworks.registries.schemaregistry.authorizer.ranger.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

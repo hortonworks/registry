@@ -24,13 +24,13 @@ public class AuthorizationAgentFactory {
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
         if(props == null
                 || props.size() == 0
-                || !props.containsKey("authorizerAgentClassName")
-                || props.get("authorizerAgentClassName")
+                || !props.containsKey("authorizationAgentClassName")
+                || props.get("authorizationAgentClassName")
                 .equals(DummyAuthorizationAgent.class.getCanonicalName())) {
             return new DummyAuthorizationAgent();
         }
 
-        String cName = (String) props.get("authorizerAgentClassName");
+        String cName = (String) props.get("authorizationAgentClassName");
         if(cName.equals(DefaultAuthorizationAgent.class.getCanonicalName())) {
             DefaultAuthorizationAgent.INSTANCE.init(AuthorizerFactory.getAuthorizer(props));
             return DefaultAuthorizationAgent.INSTANCE;
