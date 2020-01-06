@@ -50,14 +50,6 @@ public class DefaultAuthorizationAgentTest {
     }
 
     @Test
-    public void authorizeListAggregatedSchemas() {
-    }
-
-    @Test
-    public void authorizeGetAggregatedSchemaInfo() {
-    }
-
-    @Test
     public void authorizeFindSchemas() {
 
         // 1
@@ -119,6 +111,19 @@ public class DefaultAuthorizationAgentTest {
 
     }
 
+
+    @Test
+    public void init() {
+    }
+
+    @Test
+    public void authorizeListAggregatedSchemas() {
+    }
+
+    @Test
+    public void authorizeGetAggregatedSchemaInfo() {
+    }
+
     @Test
     public void authorizeFindAggregatedSchemas() {
     }
@@ -128,71 +133,15 @@ public class DefaultAuthorizationAgentTest {
     }
 
     @Test
-    public void authorizeAddSchemaInfo() {
+    public void authorizeSchemaMetadata() {
     }
 
     @Test
-    public void authorizeUpdateSchemaInfo() {
+    public void authorizeSchemaMetadata1() {
     }
 
     @Test
-    public void authorizeGetSchemaInfo() {
-    }
-
-    @Test
-    public void authorizeDeleteSchemaMetadata() {
-    }
-
-    @Test
-    public void addSchemaVersion() {
-    }
-
-    @Test
-    public void authorizeGetLatestSchemaVersion() {
-    }
-
-    @Test
-    public void authorizeGetSchemaVersion() {
-    }
-
-    @Test
-    public void authorizeVersionStateOperation() {
-    }
-
-    @Test
-    public void authorizeCheckCompatibilityWithSchema() {
-    }
-
-    @Test
-    public void authorizeGetSerializers() {
-    }
-
-    @Test
-    public void authorizeUploadFile() {
-    }
-
-    @Test
-    public void authorizeDownloadFile() {
-    }
-
-    @Test
-    public void authorizeAddSerDes() {
-    }
-
-    @Test
-    public void authorizeGetSerDes() {
-    }
-
-    @Test
-    public void authorizeMapSchemaWithSerDes() {
-    }
-
-    @Test
-    public void authorizeDeleteSchemaVersion() {
-    }
-
-    @Test
-    public void authorizeGetAllBranches() {
+    public void authorizeSchemaMetadata2() {
     }
 
     @Test
@@ -200,22 +149,50 @@ public class DefaultAuthorizationAgentTest {
     }
 
     @Test
-    public void authorizeMergeSchemaVersion() {
-    }
-
-    @Test
     public void authorizeDeleteSchemaBranch() {
     }
 
     @Test
-    public void authorizeGetSubjects() {
+    public void authorizeGetAllBranches() {
+    }
+
+    @Test
+    public void authorizeSchemaVersion() {
+    }
+
+    @Test
+    public void authorizeSchemaVersion1() {
+    }
+
+    @Test
+    public void authorizeSchemaVersion2() {
+    }
+
+    @Test
+    public void authorizeSchemaVersion3() {
+    }
+
+    @Test
+    public void authorizeSchemaVersion4() {
+    }
+
+    @Test
+    public void authorizeGetSerializers() {
+    }
+
+    @Test
+    public void authorizeSerDes() {
+    }
+
+    @Test
+    public void authorizeMapSchemaWithSerDes() {
+    }
+
+    @Test
+    public void authorizeMergeSchemaVersion() {
     }
 
     @Test
     public void authorizeGetAllVersions() {
-    }
-
-    @Test
-    public void authorizeGetAllSchemaVersions() {
     }
 }

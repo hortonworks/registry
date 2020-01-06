@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.authorizer;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.test.FakeAuthorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.test.TestAuthorizer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -46,9 +46,9 @@ public class AuthorizerFactoryTest {
         assertTrue(authorizer2 instanceof RangerSchemaRegistryAuthorizer);
 
         Map<String, Object> props3 = new HashMap<>();
-        props3.put("authorizerClassName", FakeAuthorizer.class.getCanonicalName());
+        props3.put("authorizerClassName", TestAuthorizer.class.getCanonicalName());
         Authorizer authorizer3 = AuthorizerFactory.getAuthorizer(props3);
-        assertTrue(authorizer3 instanceof FakeAuthorizer);
+        assertTrue(authorizer3 instanceof TestAuthorizer);
 
     }
 
