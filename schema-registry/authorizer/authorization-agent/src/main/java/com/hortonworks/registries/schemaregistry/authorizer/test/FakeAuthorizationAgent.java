@@ -29,15 +29,14 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 public class FakeAuthorizationAgent implements AuthorizationAgent {
     @Override
-    public void init(Authorizer authorizer) { }
+    public void configure(Map<String, Object> props) { }
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas
+    public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
             (SecurityContext sc, Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
         throw new NotImplementedException();
     }
@@ -52,12 +51,6 @@ public class FakeAuthorizationAgent implements AuthorizationAgent {
     @Override
     public Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
                                                                Collection<SchemaMetadataInfo> schemas) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public List<AggregatedSchemaMetadataInfo> authorizeFindAggregatedSchemas(SecurityContext sc,
-                                                                             List<AggregatedSchemaMetadataInfo> asmi) {
         throw new NotImplementedException();
     }
 
@@ -182,9 +175,10 @@ public class FakeAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public Stream<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
+    public Collection<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
                                                              ISchemaRegistry schemaRegistry,
-                                                             Stream<SchemaVersionInfo> vStream) {
+                                                                 Collection<SchemaVersionInfo> versions) {
         throw new NotImplementedException();
     }
+
 }

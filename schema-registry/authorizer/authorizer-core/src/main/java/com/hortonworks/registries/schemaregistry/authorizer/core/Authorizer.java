@@ -15,9 +15,12 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.core;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface Authorizer {
+
+    void configure(Map<String, Object> props);
 
     boolean authorize(Resource resource, AccessType accessType, String uName, Set<String> uGroup);
 
@@ -61,7 +64,7 @@ public interface Authorizer {
 
         @Override
         public String toString() {
-            return "SerDeResource{ serDeName='*' }";
+            return "SerDe{ serDeName='*' }";
         }
     }
 
@@ -89,7 +92,7 @@ public interface Authorizer {
 
         @Override
         public String toString() {
-            return String.format("SchemaMetadataResource{ schemaGroupName='%s', schemaMetadataName='%s' }",
+            return String.format("SchemaMetadata{ schemaGroupName='%s', schemaMetadataName='%s' }",
                     sGroupName, sMetadataName);
         }
     }
@@ -112,7 +115,7 @@ public interface Authorizer {
 
         @Override
         public String toString() {
-            return String.format("SchemaBranchResource{ schemaGroupName='%s', schemaMetadataName='%s' schemaBranchName='%s' }",
+            return String.format("SchemaBranch{ schemaGroupName='%s', schemaMetadataName='%s', schemaBranchName='%s' }",
                     getsGroupName(),
                     getsMetadataName(),
                     sBranchName);
@@ -127,7 +130,7 @@ public interface Authorizer {
 
         @Override
         public String toString() {
-            return String.format("SchemaVersionResource{ schemaGroupName='%s', schemaMetadataName='%s' schemaBranchName='%s' schemaVersionName='*' }",
+            return String.format("SchemaVersion{ schemaGroupName='%s', schemaMetadataName='%s', schemaBranchName='%s', schemaVersionName='*' }",
                     getsGroupName(),
                     getsMetadataName(),
                     getsBranchName());

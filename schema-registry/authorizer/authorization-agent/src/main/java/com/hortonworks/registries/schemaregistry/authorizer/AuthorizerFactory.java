@@ -25,6 +25,7 @@ import java.util.Map;
 public class AuthorizerFactory {
     public static Authorizer getAuthorizer(Map<String, Object> props) {
 
+        Authorizer authorizer;
         // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer
         // is used by default
         if(props == null
@@ -32,20 +33,22 @@ public class AuthorizerFactory {
                 || props.get("authorizerClassName")
                 .equals(RangerSchemaRegistryAuthorizer.class.getCanonicalName())){
 
-            return new RangerSchemaRegistryAuthorizer();
+            authorizer = new RangerSchemaRegistryAuthorizer();
+            authorizer.configure(props);
+        } else {
+            try {
+                Class<Authorizer> cl = (Class<Authorizer>) Class.forName((String) props.get("authorizerClassName"));
+                Constructor<Authorizer> constr = cl.getConstructor();
+                authorizer = constr.newInstance();
+                authorizer.configure(props);
+            } catch (ClassNotFoundException | InstantiationException
+                    | IllegalAccessException | NoSuchMethodException
+                    | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
         }
+        authorizer.configure(props);
 
-        String authorizerName = (String) props.get("authorizerClassName");
-        try {
-            Class<Authorizer> cl = (Class<Authorizer>) Class.forName(authorizerName);
-            Constructor<Authorizer> constr = cl.getConstructor();
-            Authorizer res = constr.newInstance();
-
-            return res;
-        } catch (ClassNotFoundException | InstantiationException
-                | IllegalAccessException | NoSuchMethodException
-                | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+        return authorizer;
     }
 }

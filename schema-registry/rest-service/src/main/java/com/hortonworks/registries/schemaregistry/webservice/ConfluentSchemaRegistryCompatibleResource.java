@@ -199,7 +199,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         try {
             List<Integer> registeredSubjects = authorizationAgent.authorizeGetAllVersions(securityContext,
                     schemaRegistry,
-                    schemaRegistry.getAllVersions(subject).stream())
+                    schemaRegistry.getAllVersions(subject))
+                    .stream()
                     .map(SchemaVersionInfo::getVersion)
                     .collect(Collectors.toList());
 

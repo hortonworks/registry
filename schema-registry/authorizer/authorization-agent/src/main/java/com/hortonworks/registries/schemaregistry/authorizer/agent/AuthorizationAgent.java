@@ -29,15 +29,14 @@ import org.apache.hadoop.security.authorize.AuthorizationException;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 public interface AuthorizationAgent {
 
-    void init(Authorizer authorizer);
+    void configure(Map<String, Object> props);
 
 
-    Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas
+    Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
             (SecurityContext sc,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList);
 
@@ -49,10 +48,6 @@ public interface AuthorizationAgent {
 
     Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
                                                         Collection<SchemaMetadataInfo> schemas);
-
-
-    List<AggregatedSchemaMetadataInfo> authorizeFindAggregatedSchemas(SecurityContext sc,
-                                                                      List<AggregatedSchemaMetadataInfo> asmi);
 
 
     Collection<SchemaVersionKey> authorizeFindSchemasByFields
@@ -149,8 +144,8 @@ public interface AuthorizationAgent {
 
     ///////////////// ConfluentCompatible APIs //////////////////////////////
 
-    Stream<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
+    Collection<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
                                                       ISchemaRegistry schemaRegistry,
-                                                      Stream<SchemaVersionInfo> vStream);
+                                                      Collection<SchemaVersionInfo> versions);
 
 }

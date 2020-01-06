@@ -26,13 +26,13 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 public class DummyAuthorizationAgent implements AuthorizationAgent {
 
+
     @Override
-    public void init(Authorizer authorizer) { }
+    public void configure(Map<String, Object> props) { }
 
     @Override
     public Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
@@ -64,7 +64,7 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
                                         Authorizer.AccessType accessType) { }
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> authorizeListAggregatedSchemas
+    public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
             (SecurityContext sc,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
 
@@ -77,11 +77,6 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
         return aggregatedSchemaMetadataInfo;
     }
 
-    @Override
-    public List<AggregatedSchemaMetadataInfo> authorizeFindAggregatedSchemas(SecurityContext sc,
-                                                                             List<AggregatedSchemaMetadataInfo> asmi) {
-        return asmi;
-    }
 
     @Override
     public void authorizeGetSerializers(SecurityContext securityContext,
@@ -93,10 +88,10 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
                                             Long schemaBranchId) { }
 
     @Override
-    public Stream<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
+    public Collection<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
                                                              ISchemaRegistry schemaRegistry,
-                                                             Stream<SchemaVersionInfo> vStream){
-        return vStream;
+                                                             Collection<SchemaVersionInfo> versions){
+        return versions;
     }
 
     @Override

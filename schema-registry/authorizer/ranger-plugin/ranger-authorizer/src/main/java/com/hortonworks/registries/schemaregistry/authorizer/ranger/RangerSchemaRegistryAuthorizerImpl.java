@@ -21,6 +21,7 @@ import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 import org.apache.ranger.plugin.service.RangerBasePlugin;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 
+import java.util.Map;
 import java.util.Set;
 
 
@@ -42,6 +43,9 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     public RangerSchemaRegistryAuthorizerImpl() {
         this.plg = SchemaRegistryRangerPlugin.getInstance();
     }
+
+    @Override
+    public void configure(Map<String, Object> props) { }
 
     @Override
     public boolean authorize(Resource registryResource,

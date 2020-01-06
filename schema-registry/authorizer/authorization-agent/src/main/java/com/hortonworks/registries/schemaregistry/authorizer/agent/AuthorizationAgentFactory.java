@@ -31,19 +31,13 @@ public class AuthorizationAgentFactory {
         }
 
         String cName = (String) props.get("authorizationAgentClassName");
-        if(cName.equals(DefaultAuthorizationAgent.class.getCanonicalName())) {
-            DefaultAuthorizationAgent.INSTANCE.init(AuthorizerFactory.getAuthorizer(props));
-            return DefaultAuthorizationAgent.INSTANCE;
-        }
-
-        // In case if in future we plan to add any other custom AuthorizationAgents
         try {
             Class<AuthorizationAgent> cl = (Class<AuthorizationAgent>) Class.forName(cName);
             Constructor<AuthorizationAgent> constr = cl.getConstructor();
-            AuthorizationAgent res = constr.newInstance();
-            res.init(AuthorizerFactory.getAuthorizer(props));
+            AuthorizationAgent agent = constr.newInstance();
+            agent.configure(props);
 
-            return res;
+            return agent;
         } catch (ClassNotFoundException | InstantiationException
                 | IllegalAccessException | NoSuchMethodException
                 | InvocationTargetException e) {

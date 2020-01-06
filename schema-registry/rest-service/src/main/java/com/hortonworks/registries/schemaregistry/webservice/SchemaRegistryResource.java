@@ -167,7 +167,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
             Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = authorizationAgent
-            .authorizeListAggregatedSchemas(securityContext, schemaRegistry.findAggregatedSchemaMetadata(filters));
+            .authorizeGetAggregatedSchemaList(securityContext, schemaRegistry.findAggregatedSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
@@ -326,7 +326,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                          serDesInfos));
             }
 
-            return WSUtils.respondEntities(authorizationAgent.authorizeFindAggregatedSchemas(securityContext, aggregatedSchemaMetadataInfos),
+            return WSUtils.respondEntities(authorizationAgent.authorizeGetAggregatedSchemaList(securityContext, aggregatedSchemaMetadataInfos),
                     Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());

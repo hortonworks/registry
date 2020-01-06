@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import java.lang.reflect.Constructor;
+import java.util.Map;
 import java.util.Set;
 
 public class RangerSchemaRegistryAuthorizer implements Authorizer {
@@ -33,6 +34,8 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
 
     private Authorizer  rangerSRAuthorizerImpl;
     private static RangerPluginClassLoader rangerPluginClassLoader;
+
+    public void configure(Map<String, Object> props) { }
 
     public RangerSchemaRegistryAuthorizer() {
         if(LOG.isDebugEnabled()) {

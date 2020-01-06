@@ -18,20 +18,24 @@ package com.hortonworks.registries.schemaregistry.authorizer.test;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TestAuthorizer implements Authorizer {
 
     private List<Policy> policies = new ArrayList<>();
 
+    public void configure(Map<String, Object> props) { }
+
     @Override
     public boolean authorize(Resource resource, AccessType accessType, String uName, Set<String> uGroup) {
         for(Policy p : policies) {
             if(resourcesEqual(resource, p.resource)
                && p.accessTypes.contains(accessType)
-            && (uName.equals(p.user) ||
+            && (p.users.contains(uName) ||
                     hasCommonGroupNames(p.userGrous,uGroup))) {
                 return true;
             }
@@ -46,21 +50,39 @@ public class TestAuthorizer implements Authorizer {
 
     public static class Policy {
         private Resource resource;
-        private String user;
+        private List<String> users;
         private Set<String> userGrous;
         private Set<AccessType> accessTypes;
 
-        public Policy(Resource resource, String user, Set<String> userGrous, Set<AccessType> accessTypes) {
+        public Policy(Resource resource, String user, AccessType... accessTypes) {
+            this(resource, user, new HashSet<>(), accessTypes);
+        }
+
+        public Policy(Resource resource, String user, Set<String> userGrous, AccessType... accessTypes) {
+            this(resource, new String[]{user}, userGrous, accessTypes);
+        }
+
+        public Policy(Resource resource, String[] users, Set<String> userGrous, AccessType... accessTypes) {
             this.resource = resource;
-            this.user = user;
+            this.users = Arrays.asList(users);
             this.userGrous = userGrous;
-            this.accessTypes = accessTypes;
+            if(accessTypes == null || accessTypes.length == 0) {
+                throw new IllegalArgumentException("accessTypes cannot be empty");
+            }
+            this.accessTypes = new HashSet<>(Arrays. asList(accessTypes));
         }
     }
 
     private static boolean hasCommonGroupNames(Set<String> groupSet1, Set<String> groupSet2) {
         Set<String> intersection = new HashSet<String>(groupSet1);
         intersection.retainAll(groupSet2);
+
+        return !intersection.isEmpty();
+    }
+
+    private static boolean hasCommonUserNames(String[] users1, String[] users2) {
+        Set<String> intersection = new HashSet<String>(Arrays.asList(users1));
+        intersection.retainAll(Arrays.asList(users2));
 
         return !intersection.isEmpty();
     }
