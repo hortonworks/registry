@@ -42,9 +42,9 @@ public class FakeAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo
+    public void authorizeGetAggregatedSchemaInfo
             (SecurityContext sc, 
-             AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)   {
+             AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
         throw new NotImplementedException();
     }
 

@@ -32,7 +32,6 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -69,70 +68,68 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
             (SecurityContext sc,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
 
+        String user = getUserNameFromSC(sc);
+        Set<String> userGroups = getUserGroupsFromSC(sc);
+
         return removeUnauthorizedAndNullEntities(aggregatedSchemaMetadataInfoList,
-                aggregatedSchemaMetadataInfo -> authorizeGetAggregatedSchemaInfo(sc, aggregatedSchemaMetadataInfo));
+                aggregatedSchemaMetadataInfo -> {
+                    authorizeGetAggregatedSchemaInfo(user,
+                            userGroups,
+                            aggregatedSchemaMetadataInfo);
+
+                    return aggregatedSchemaMetadataInfo;
+                });
     }
 
     @Override
-    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(SecurityContext sc,
-                                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
+    public void authorizeGetAggregatedSchemaInfo(SecurityContext sc,
+                                                 AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
             throws AuthorizationException {
 
         String user = getUserNameFromSC(sc);
         Set<String> userGroups = getUserGroupsFromSC(sc);
 
-        return authorizeGetAggregatedSchemaInfo(user, userGroups, aggregatedSchemaMetadataInfo);
+        authorizeGetAggregatedSchemaInfo(user, userGroups, aggregatedSchemaMetadataInfo);
     }
 
-    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(String user,
-                                                                         Set<String> userGroups,
-                                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
+    private void authorizeGetAggregatedSchemaInfo(String user,
+                                                  Set<String> userGroups,
+                                                  AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
             throws AuthorizationException {
-        String sGroup = aggregatedSchemaMetadataInfo.getSchemaMetadata().getSchemaGroup();
-        String sName = aggregatedSchemaMetadataInfo.getSchemaMetadata().getName();
+        SchemaMetadata sm = aggregatedSchemaMetadataInfo.getSchemaMetadata();
 
-        Authorizer.SchemaMetadataResource schemaMetadataResource = new Authorizer.SchemaMetadataResource(sGroup, sName);
-        authorize(schemaMetadataResource, AccessType.READ, user, userGroups);
+        authorizeSchemaMetadata(user, userGroups, sm, AccessType.READ);
 
-        Collection<AggregatedSchemaBranch> filteredBranches =
-                removeUnauthorizedAndNullEntities(aggregatedSchemaMetadataInfo.getSchemaBranches(),
-                        branch -> filterAggregatedBranch(sGroup, sName, user, userGroups, branch));
-
-        Collection<SerDesInfo> serDesInfos = authorizer.authorize(new Authorizer.SerdeResource(),
-                AccessType.READ,
-                user,
-                userGroups) ? aggregatedSchemaMetadataInfo.getSerDesInfos() : new ArrayList<>();
-
-
-        return new AggregatedSchemaMetadataInfo(aggregatedSchemaMetadataInfo.getSchemaMetadata(),
-                aggregatedSchemaMetadataInfo.getId(),
-                aggregatedSchemaMetadataInfo.getTimestamp(),
-                filteredBranches,
-                serDesInfos);
-    }
-
-    private AggregatedSchemaBranch filterAggregatedBranch(String sGroup,
-                                                          String sName,
-                                                          String user,
-                                                          Set<String> userGroups,
-                                                          AggregatedSchemaBranch branch) {
-
-        String bName = branch.getSchemaBranch().getName();
-        Authorizer.Resource bResource = new Authorizer.SchemaBranchResource(sGroup, sGroup, bName);
-        if (!authorizer.authorize(bResource, AccessType.READ, user, userGroups)) {
-            return null;
+        Collection<AggregatedSchemaBranch> branches = aggregatedSchemaMetadataInfo.getSchemaBranches();
+        if (branches != null) {
+            for (AggregatedSchemaBranch branch : branches) {
+                authorizeGetAggregatedBranch(sm, user, userGroups, branch);
+            }
         }
 
-        Authorizer.Resource version = new Authorizer.SchemaVersionResource(sGroup, sName, bName);
-        Collection<SchemaVersionInfo> filteredVersions =
-                authorizer.authorize(version,
-                        AccessType.READ,
-                        user,
-                        userGroups) ? branch.getSchemaVersionInfos() : new ArrayList<>();
+        Collection<SerDesInfo> serDesInfos = aggregatedSchemaMetadataInfo.getSerDesInfos();
+        if(serDesInfos != null && !serDesInfos.isEmpty()) {
+            authorizeSerDes(user, userGroups, AccessType.READ);
+        }
+    }
 
-        return new AggregatedSchemaBranch(branch.getSchemaBranch(),
-                branch.getRootSchemaVersion(),
-                filteredVersions);
+    void authorizeGetAggregatedBranch(SchemaMetadata sm, String user,
+                                      Set<String> userGroups, AggregatedSchemaBranch branch)
+                throws AuthorizationException {
+
+        String sGroup = sm.getSchemaGroup();
+        String sName = sm.getName();
+        String bName = branch.getSchemaBranch().getName();
+
+        authorize(new Authorizer.SchemaBranchResource(sGroup, sName, bName),
+                AccessType.READ,
+                user,
+                userGroups);
+
+        authorize(new Authorizer.SchemaVersionResource(sGroup, sName, bName),
+                AccessType.READ,
+                user,
+                userGroups);
     }
 
     @Override
@@ -366,6 +363,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
         authorizeSerDes(user, uGroups, AccessType.READ);
     }
 
+    @Override
     public void authorizeSerDes(SecurityContext sc, AccessType accessType) throws AuthorizationException  {
 
         String user = getUserNameFromSC(sc);

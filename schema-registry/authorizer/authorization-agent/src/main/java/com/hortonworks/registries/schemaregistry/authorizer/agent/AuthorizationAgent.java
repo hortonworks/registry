@@ -41,8 +41,8 @@ public interface AuthorizationAgent {
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList);
 
 
-    AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(SecurityContext sc,
-                                                                  AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
+    void authorizeGetAggregatedSchemaInfo(SecurityContext sc,
+                                          AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
             throws AuthorizationException;
 
 
@@ -57,9 +57,11 @@ public interface AuthorizationAgent {
             throws SchemaNotFoundException;
 
 
-    void authorizeSchemaMetadata(SecurityContext sc, SchemaMetadata schemaMetadata, Authorizer.AccessType accessType) throws AuthorizationException;
+    void authorizeSchemaMetadata(SecurityContext sc, SchemaMetadata schemaMetadata,
+                                 Authorizer.AccessType accessType) throws AuthorizationException;
 
-    void authorizeSchemaMetadata(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo, Authorizer.AccessType accessType) throws AuthorizationException;
+    void authorizeSchemaMetadata(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo,
+                                 Authorizer.AccessType accessType) throws AuthorizationException;
 
     void authorizeSchemaMetadata(SecurityContext sc, ISchemaRegistry schemaRegistry,
                                  String schemaMetadataName, Authorizer.AccessType accessType)
@@ -145,7 +147,7 @@ public interface AuthorizationAgent {
     ///////////////// ConfluentCompatible APIs //////////////////////////////
 
     Collection<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
-                                                      ISchemaRegistry schemaRegistry,
-                                                      Collection<SchemaVersionInfo> versions);
+                                                          ISchemaRegistry schemaRegistry,
+                                                          Collection<SchemaVersionInfo> versions);
 
 }

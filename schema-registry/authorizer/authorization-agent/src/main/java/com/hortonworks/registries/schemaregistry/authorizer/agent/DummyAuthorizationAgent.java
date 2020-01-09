@@ -72,10 +72,8 @@ public class DummyAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(SecurityContext sc,
-                                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
-        return aggregatedSchemaMetadataInfo;
-    }
+    public void authorizeGetAggregatedSchemaInfo(SecurityContext sc,
+                                                 AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) { }
 
 
     @Override
