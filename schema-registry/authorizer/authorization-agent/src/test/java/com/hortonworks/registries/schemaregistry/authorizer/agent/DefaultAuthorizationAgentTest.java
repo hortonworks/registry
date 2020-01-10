@@ -330,6 +330,8 @@ public class DefaultAuthorizationAgentTest {
         assertTrue(resNonEmpty.contains(smi3));
         assertFalse(resNonEmpty.contains(smi4));
 
+        // NOT_FOUND TEST CASES do not exist
+
     }
 
 
@@ -342,6 +344,8 @@ public class DefaultAuthorizationAgentTest {
             String expectedMsg = "DefaultAuthorizationAgent is already configured";
             assertThat(e.getMessage(), is(expectedMsg));
         }
+
+        // NOT_FOUND TEST CASES do not exist
     }
 
     @Test
@@ -381,6 +385,8 @@ public class DefaultAuthorizationAgentTest {
         res = authorizationAgent
                 .authorizeGetAggregatedSchemaList(sc999, asmiList);
         assertTrue(res.isEmpty());
+
+        // NOT_FOUND TEST CASES do not exist
 
     }
 
@@ -445,6 +451,8 @@ public class DefaultAuthorizationAgentTest {
             assertThat(e.getMessage(), is(expectedMsg));
         }
 
+        // NOT_FOUND TEST CASES do not exist
+
     }
 
     @Test
@@ -476,6 +484,8 @@ public class DefaultAuthorizationAgentTest {
         // Authorized by p11
         res = authorizationAgent.authorizeFindSchemasByFields(sc4, schemaRegistry, versions);
         assertThat(res, is(expected));
+
+        // NOT_FOUND TEST CASES do not exist
     }
 
     //TODO: Add NOT_FOUND test cases
@@ -673,6 +683,15 @@ public class DefaultAuthorizationAgentTest {
                 "Schema3", branches);
         assertThat(res, is(expected));
 
+        // NOT_FOUND test cases
+        try {
+            authorizationAgent.authorizeGetAllBranches(sc6, schemaRegistry,
+                    "SchemaNotFound", branches);
+        } catch (SchemaNotFoundException e) {
+            String expectedMsg = "Schema with name SchemaNotFound not found";
+            assertThat(e.getMessage(), is(expectedMsg));
+        }
+
     }
 
     @Test
@@ -805,6 +824,8 @@ public class DefaultAuthorizationAgentTest {
                     "SerDe{ serDeName='*' }";
             assertThat(e.getMessage(), is(expectedMsg));
         }
+
+        // NOT_FOUD test cases do not exist
     }
 
     @Test
@@ -823,10 +844,13 @@ public class DefaultAuthorizationAgentTest {
             String expectedMsg = "User 'user999' does not have [read] permission on SerDe{ serDeName='*' }";
             assertThat(e.getMessage(), is(expectedMsg));
         }
+
+        // NOT_FOUD test cases do not exist
     }
 
     @Test
-    public void authorizeMapSchemaWithSerDes() throws AuthorizationException {
+    public void authorizeMapSchemaWithSerDes()
+            throws AuthorizationException, SchemaNotFoundException {
         ///////////////// Positive cases ////////////////////////////
         String user3 = "user3";
         SecurityContext sc3 = new SecurityContextForTesting(user3);
@@ -853,6 +877,14 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user4' does not have [update] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
+            assertThat(e.getMessage(), is(expectedMsg));
+        }
+
+        // NOT_FOUND test cases
+        try {
+            authorizationAgent.authorizeMapSchemaWithSerDes(sc4, schemaRegistry, "SchemaNotFound");
+        } catch (SchemaNotFoundException e) {
+            String expectedMsg = "Schema with name SchemaNotFound not found";
             assertThat(e.getMessage(), is(expectedMsg));
         }
     }
@@ -891,6 +923,14 @@ public class DefaultAuthorizationAgentTest {
                     ", schemaBranchName='MASTER', schemaVersionName='*' }";
             assertThat(e.getMessage(), is(expectedMsg));
         }
+
+        // NOT_FOUND test cases
+        try {
+            authorizationAgent.authorizeMergeSchemaVersion(sc33, schemaRegistry, -9999l);
+        } catch (SchemaNotFoundException e) {
+            String expectedMsg = "No Schema version exists with id -9999";
+            assertThat(e.getMessage(), is(expectedMsg));
+        }
     }
 
     @Test
@@ -922,5 +962,7 @@ public class DefaultAuthorizationAgentTest {
         // Authorized by p11
         res = authorizationAgent.authorizeGetAllVersions(sc4, schemaRegistry, versions);
         assertThat(res, is(expected));
+
+        // NOT_FOUND test cases do not exist
     }
 }

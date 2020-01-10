@@ -141,7 +141,7 @@ public interface AuthorizationAgent {
 
     void authorizeMapSchemaWithSerDes(SecurityContext securityContext,
                                       ISchemaRegistry schemaRegistry,
-                                      String schemaMetadataName) throws AuthorizationException;
+                                      String schemaMetadataName) throws AuthorizationException, SchemaNotFoundException;
 
 
     ///////////////// ConfluentCompatible APIs //////////////////////////////

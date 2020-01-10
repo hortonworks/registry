@@ -260,17 +260,21 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public Collection<SchemaBranch> authorizeGetAllBranches(SecurityContext sc,
                                                             ISchemaRegistry schemaRegistry,
                                                             String schemaMetadataName,
-                                                            Collection<SchemaBranch> branches) {
+                                                            Collection<SchemaBranch> branches)
+            throws SchemaNotFoundException {
+
         String user = getUserNameFromSC(sc);
         Set<String> uGroups = getUserGroupsFromSC(sc);
+        SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
+        if(smi == null) {
+            throw new SchemaNotFoundException("Schema with name " + schemaMetadataName + " not found");
+        }
+        SchemaMetadata sm = smi.getSchemaMetadata();
+        String sGroup = sm.getSchemaGroup();
+        String sName = schemaMetadataName;
 
-        return authorizeGetEntities(user, uGroups, branches, branch -> {
-            SchemaMetadata sM = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName).getSchemaMetadata();
-            String sGroup = sM.getSchemaGroup();
-            String sName = sM.getName();
-
-            return new Authorizer.SchemaBranchResource(sGroup, sName, branch.getName());
-        });
+        return authorizeGetEntities(user, uGroups, branches, branch ->
+                new Authorizer.SchemaBranchResource(sGroup, sName, branch.getName()));
     }
 
 
@@ -381,15 +385,20 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void authorizeMapSchemaWithSerDes(SecurityContext sc,
                                              ISchemaRegistry schemaRegistry,
-                                             String schemaMetadataName) throws AuthorizationException {
+                                             String schemaMetadataName)
+            throws AuthorizationException, SchemaNotFoundException {
 
         String user = getUserNameFromSC(sc);
         Set<String> uGroups = getUserGroupsFromSC(sc);
+        SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
+        if(smi == null) {
+            throw new SchemaNotFoundException("Schema with name " + schemaMetadataName + " not found");
+        }
 
         authorizeSerDes(user, uGroups, AccessType.READ);
         authorizeSchemaMetadata(user,
                 uGroups,
-                schemaRegistry.getSchemaMetadataInfo(schemaMetadataName).getSchemaMetadata(),
+                smi.getSchemaMetadata(),
                 AccessType.UPDATE);
     }
 
