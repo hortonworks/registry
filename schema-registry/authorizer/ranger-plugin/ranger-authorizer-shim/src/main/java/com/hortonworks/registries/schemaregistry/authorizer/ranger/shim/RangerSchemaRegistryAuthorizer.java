@@ -52,22 +52,20 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
     @Override
     public boolean authorize(Resource resource,
                              AccessType accessType,
-                             String uName,
-                             Set<String> uGroup) {
+                             UserAndGroups userAndGroups) {
         if(LOG.isDebugEnabled()) {
             LOG.debug(String.format(
                     "==> RangerSchemaRegistryAuthorizer.authorize(resource='%s' accessType='%s', uName='%s', uGroup='%s')",
                     resource,
                     accessType,
-                    uName,
-                    uGroup));
+                    userAndGroups));
         }
 
         boolean ret;
 
         try {
             activatePluginClassLoader();
-            ret = rangerSRAuthorizerImpl.authorize(resource, accessType, uName, uGroup);
+            ret = rangerSRAuthorizerImpl.authorize(resource, accessType, userAndGroups);
         } finally {
             deactivatePluginClassLoader();
         }

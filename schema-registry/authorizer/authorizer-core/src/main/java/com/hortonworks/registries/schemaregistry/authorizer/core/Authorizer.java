@@ -22,7 +22,7 @@ public interface Authorizer {
 
     void configure(Map<String, Object> props);
 
-    boolean authorize(Resource resource, AccessType accessType, String uName, Set<String> uGroup);
+    boolean authorize(Resource resource, AccessType accessType, UserAndGroups userAndGroups);
 
 
     enum AccessType {
@@ -36,6 +36,24 @@ public interface Authorizer {
         AccessType(String name) { this.name = name; }
 
         public String getName() { return name; }
+    }
+
+    class UserAndGroups {
+        private String user;
+        private Set<String> groups;
+
+        public UserAndGroups(String user, Set<String> groups) {
+            this.user = user;
+            this.groups = groups;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public Set<String> getGroups() {
+            return groups;
+        }
     }
 
     enum ResourceType {

@@ -25,6 +25,7 @@ import java.util.Set;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.UserAndGroups;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class RangerSchemaRegistryAuthorizerImplTest {
@@ -39,129 +40,129 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         ///////////////////////////// READ SerDes test cases ////////////////////////////
 
         // No policy for user1 that 'allows' reading SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, "user1", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, new UserAndGroups("user1", groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' reading SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, "user2", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, new UserAndGroups("user2", groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for reading SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, "user3", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, new UserAndGroups("user3", groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows reading SerDes
         groups = new HashSet<>();
         groups.add("user4");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, "user4", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, new UserAndGroups("user4", groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading SerDes
         groups = new HashSet<>();
         groups.add("user5");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, "user5", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, new UserAndGroups("user5", groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading registry-service
         groups = new HashSet<>();
         groups.add("user6");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, "user6", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.READ, new UserAndGroups("user6", groups));
         assertTrue(res);
 
         ////////////////////////////// CREATE SerDes test cases ////////////////////////////
 
         // No policy for user1 that 'allows' creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, "user1", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, new UserAndGroups("user1", groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, "user2", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, new UserAndGroups("user2", groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, "user3", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, new UserAndGroups("user3", groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user4");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, "user4", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, new UserAndGroups("user4", groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user5");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, "user5", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, new UserAndGroups("user5", groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating registry-service
         groups = new HashSet<>();
         groups.add("user6");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, "user6", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.CREATE, new UserAndGroups("user6", groups));
         assertTrue(res);
 
         ////////////////////////////// UPDATE SerDes test cases ////////////////////////////
 
         // No policy for user1 that 'allows' creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, "user1", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, new UserAndGroups("user1", groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, "user2", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, new UserAndGroups("user2", groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, "user3", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, new UserAndGroups("user3", groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user4");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, "user4", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, new UserAndGroups("user4", groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user5");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, "user5", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, new UserAndGroups("user5", groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating registry-service
         groups = new HashSet<>();
         groups.add("user6");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, "user6", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.UPDATE, new UserAndGroups("user6", groups));
         assertTrue(res);
 
         ////////////////////////////// DELETE SerDes test cases ////////////////////////////
 
         // No policy for user1 that 'allows' creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, "user1", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, new UserAndGroups("user1", groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, "user2", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, new UserAndGroups("user2", groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for creating SerDes
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, "user3", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, new UserAndGroups("user3", groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user4");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, "user4", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, new UserAndGroups("user4", groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating SerDes
         groups = new HashSet<>();
         groups.add("user5");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, "user5", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, new UserAndGroups("user5", groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating registry-service
         groups = new HashSet<>();
         groups.add("user6");
-        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, "user6", groups);
+        res = authorizer.authorize(new Authorizer.SerdeResource(), Authorizer.AccessType.DELETE, new UserAndGroups("user6", groups));
         assertTrue(res);
 
     }
@@ -176,22 +177,22 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user1 that 'allows' reading Schema
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema2"),
                 Authorizer.AccessType.READ,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' reading Schema
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.READ,
-                "user2",
-                groups);
+                new UserAndGroups("user2",
+                groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for reading Schema
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.READ,
-                "user3",
-                groups);
+                new UserAndGroups("user3",
+                groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows reading Schema
@@ -199,8 +200,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user4");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.READ,
-                "user4",
-                groups);
+                new UserAndGroups("user4",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading Schema
@@ -208,8 +209,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema3"),
                 Authorizer.AccessType.READ,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading registry-service
@@ -217,8 +218,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.READ,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// CREATE Schema test cases ////////////////////////////
@@ -226,8 +227,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user1 that 'allows' creating Schema
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group2", "Schema1"),
                 Authorizer.AccessType.CREATE,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows creating Schema
@@ -235,8 +236,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.CREATE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating for registry-service
@@ -244,8 +245,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.CREATE,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         //Allow policy exists that allows creating  Schema. The group is specified with regexp
@@ -253,8 +254,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("SGroup999", "__Schema4"),
                 Authorizer.AccessType.CREATE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// DELETE Schema test cases ////////////////////////////
@@ -262,15 +263,15 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user5 that 'allows' deleting Schema
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group2", "Schema1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows deleting Schema
         groups = new HashSet<>();
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
-                Authorizer.AccessType.DELETE, "user5", groups);
+                Authorizer.AccessType.DELETE, new UserAndGroups("user5", groups));
         assertTrue(res);
 
         // Allow policy exists that allows deleting for registry-service
@@ -278,8 +279,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group1", "Schema1"),
                 Authorizer.AccessType.DELETE,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// UPDATE SchemaGroup test cases ////////////////////////////
@@ -288,7 +289,7 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups = new HashSet<>();
         groups.add("user1");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group2", "Schema1"),
-                Authorizer.AccessType.DELETE, "user1", groups);
+                Authorizer.AccessType.DELETE, new UserAndGroups("user1", groups));
         assertFalse(res);
 
         // Allow policy exists that allows updating Schema
@@ -296,8 +297,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("SGroup1", "Schema5"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows updating for registry-service
@@ -305,34 +306,34 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("Group3", "Schema1"),
                 Authorizer.AccessType.DELETE,
-                "user8",
-                groups);
+                new UserAndGroups("user8",
+                groups));
         assertTrue(res);
 
         //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
 
         // Read is not allowed and other operations are not allowed
         groups = new HashSet<>();
-        groups.add("UserSpecial");
+        groups.add("userSpecial");
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("GroupSpecial121", "ANY"),
                 Authorizer.AccessType.READ,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("GroupSpecial121", "ANY"),
                 Authorizer.AccessType.CREATE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("GroupSpecial121", "ANY"),
                 Authorizer.AccessType.UPDATE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaMetadataResource("GroupSpecial121", "ANY"),
                 Authorizer.AccessType.DELETE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
 
     }
@@ -347,22 +348,22 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user1 that 'allows' reading SchemaBranch
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' reading SchemaBranch
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user2",
-                groups);
+                new UserAndGroups("user2",
+                groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for reading SchemaBranch
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user3",
-                groups);
+                new UserAndGroups("user3",
+                groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows reading SchemaBranch
@@ -370,8 +371,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user4");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user4",
-                groups);
+                new UserAndGroups("user4",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading SchemaBranch
@@ -379,8 +380,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading registry-service
@@ -388,8 +389,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// CREATE SchemaBranch test cases ////////////////////////////
@@ -397,8 +398,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user1 that 'allows' creating SchemaBranch
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group2", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows creating SchemaBranch
@@ -406,8 +407,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating for registry-service
@@ -415,8 +416,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         //Allow policy exists that allows creating  SchemaBranch. The group is specified with regexp
@@ -424,8 +425,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("SGroup999", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// DELETE SchemaBranch test cases ////////////////////////////
@@ -433,8 +434,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user5 that 'allows' deleting SchemaBranch
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group2", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows deleting SchemaBranch
@@ -442,8 +443,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows deleting for registry-service
@@ -451,8 +452,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group1", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// UPDATE SchemaBranch test cases ////////////////////////////
@@ -462,8 +463,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user1");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group2", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows updating SchemaBranch
@@ -471,8 +472,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("SGroup1", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows updating for registry-service
@@ -480,34 +481,34 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("Group3", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user8",
-                groups);
+                new UserAndGroups("user8",
+                groups));
         assertTrue(res);
 
         //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
 
         // Read is allowed and other operations are not allowed
         groups = new HashSet<>();
-        groups.add("UserSpecial");
+        groups.add("userSpecial");
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.READ,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.CREATE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.UPDATE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaBranchResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.DELETE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
     }
 
@@ -521,22 +522,22 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user1 that 'allows' reading SchemaVersion
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Deny policy for user2 that 'denies' reading SchemaVersion
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user2",
-                groups);
+                new UserAndGroups("user2",
+                groups));
         assertFalse(res);
 
         // Deny policy for user3 that 'excludes from allows' for reading SchemaVersion
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user3",
-                groups);
+                new UserAndGroups("user3",
+                groups));
         assertFalse(res);
 
         // Exclude from deny policy exists that allows reading SchemaVersion
@@ -544,8 +545,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user4");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user4",
-                groups);
+                new UserAndGroups("user4",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading SchemaVersion
@@ -553,8 +554,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows reading registry-service
@@ -562,8 +563,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.READ,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// CREATE SchemaVersion test cases ////////////////////////////
@@ -571,8 +572,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user1 that 'allows' creating SchemaVersion
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group2", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows creating SchemaVersion
@@ -580,8 +581,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows creating for registry-service
@@ -589,8 +590,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         //Allow policy exists that allows creating  SchemaVersion. The group is specified with regexp
@@ -598,8 +599,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("SchemaGroup999", "Schema1", "Branch1"),
                 Authorizer.AccessType.CREATE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// DELETE SchemaVersion test cases ////////////////////////////
@@ -607,8 +608,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         // No policy for user5 that 'allows' deleting Schema
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group2", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows deleting SchemaVersion
@@ -616,8 +617,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows deleting for registry-service
@@ -625,8 +626,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user6");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group10", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user6",
-                groups);
+                new UserAndGroups("user6",
+                groups));
         assertTrue(res);
 
         ///////////////////////////// UPDATE SchemaGroup test cases ////////////////////////////
@@ -636,8 +637,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user1");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group2", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user1",
-                groups);
+                new UserAndGroups("user1",
+                groups));
         assertFalse(res);
 
         // Allow policy exists that allows updating SchemaVersion
@@ -645,8 +646,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user5");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("SchemaGroup1", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user5",
-                groups);
+                new UserAndGroups("user5",
+                groups));
         assertTrue(res);
 
         // Allow policy exists that allows updating for registry-service
@@ -654,34 +655,34 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         groups.add("user8");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("Group3", "Schema1", "Branch1"),
                 Authorizer.AccessType.DELETE,
-                "user8",
-                groups);
+                new UserAndGroups("user8",
+                groups));
         assertTrue(res);
 
         //////////////////////////////////////////////// Some special test cases ///////////////////////////////////////
 
         // Read is allowed and other operations are not allowed
         groups = new HashSet<>();
-        groups.add("UserSpecial");
+        groups.add("userSpecial");
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.READ,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertTrue(res);
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.CREATE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.DELETE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
         res = authorizer.authorize(new Authorizer.SchemaVersionResource("GroupSpecial121", "ANY", "ANY"),
                 Authorizer.AccessType.UPDATE,
-                "UserSpecial",
-                groups);
+                new UserAndGroups("userSpecial",
+                groups));
         assertFalse(res);
 
     }

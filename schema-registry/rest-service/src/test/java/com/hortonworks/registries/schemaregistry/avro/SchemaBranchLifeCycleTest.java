@@ -305,7 +305,7 @@ public class SchemaBranchLifeCycleTest {
         schemaRegistryClient.deleteSchemaVersion(masterSchemaIdVersion1.getSchemaVersionId());
     }
 
-     // Utils
+     // AuthorizationUtils
 
     private SchemaBranch addSchemaBranch(String schemaBranchName, SchemaMetadata schemaMetadata, Long versionId) throws SchemaNotFoundException, SchemaBranchAlreadyExistsException {
         SchemaBranch branch = new SchemaBranch(schemaBranchName, schemaMetadata.getName());

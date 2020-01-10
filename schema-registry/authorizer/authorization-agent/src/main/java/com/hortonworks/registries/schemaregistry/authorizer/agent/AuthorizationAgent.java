@@ -37,117 +37,124 @@ public interface AuthorizationAgent {
 
 
     Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
-            (SecurityContext sc,
-             Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList);
+            (Authorizer.UserAndGroups userAndGroups,
+             Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) throws SchemaNotFoundException;
 
 
-    void authorizeGetAggregatedSchemaInfo(SecurityContext sc,
+    void authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
                                           AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
             throws AuthorizationException;
 
 
-    Collection<SchemaMetadataInfo> authorizeFindSchemas(SecurityContext sc,
-                                                        Collection<SchemaMetadataInfo> schemas);
+    Collection<SchemaMetadataInfo> authorizeFindSchemas(Authorizer.UserAndGroups userAndGroups,
+                                                        Collection<SchemaMetadataInfo> schemas) throws SchemaNotFoundException;
 
 
     Collection<SchemaVersionKey> authorizeFindSchemasByFields
-            (SecurityContext sc,
+            (Authorizer.UserAndGroups userAndGroups,
              ISchemaRegistry schemaRegistry,
              Collection<SchemaVersionKey> versions)
             throws SchemaNotFoundException;
 
 
-    void authorizeSchemaMetadata(SecurityContext sc, SchemaMetadata schemaMetadata,
+    void authorizeDeleteSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
+                                       ISchemaRegistry schemaRegistry,
+                                       String schemaMetadataName)
+            throws AuthorizationException, SchemaNotFoundException;
+
+
+    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups, SchemaMetadata schemaMetadata,
                                  Authorizer.AccessType accessType) throws AuthorizationException;
 
-    void authorizeSchemaMetadata(SecurityContext sc, SchemaMetadataInfo schemaMetadataInfo,
-                                 Authorizer.AccessType accessType) throws AuthorizationException;
+    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups, SchemaMetadataInfo schemaMetadataInfo,
+                                 Authorizer.AccessType accessType)
+            throws AuthorizationException, SchemaNotFoundException;
 
-    void authorizeSchemaMetadata(SecurityContext sc, ISchemaRegistry schemaRegistry,
+    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups, ISchemaRegistry schemaRegistry,
                                  String schemaMetadataName, Authorizer.AccessType accessType)
-            throws AuthorizationException;
+            throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeCreateSchemaBranch(SecurityContext securityContext,
+    void authorizeCreateSchemaBranch(Authorizer.UserAndGroups userAndGroups,
                                      ISchemaRegistry schemaRegistry,
                                      String schemaMetadataName,
                                      Long versionId,
                                      String branchTocreate)
-            throws AuthorizationException;
+            throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeDeleteSchemaBranch(SecurityContext securityContext,
+    void authorizeDeleteSchemaBranch(Authorizer.UserAndGroups userAndGroups,
                                      ISchemaRegistry schemaRegistry,
                                      Long schemaBranchId)
             throws AuthorizationException;
 
 
-    Collection<SchemaBranch> authorizeGetAllBranches(SecurityContext securityContext,
+    Collection<SchemaBranch> authorizeGetAllBranches(Authorizer.UserAndGroups userAndGroups,
                                                      ISchemaRegistry schemaRegistry,
                                                      String schemaMetadataName,
                                                      Collection<SchemaBranch> branches)
             throws SchemaNotFoundException;
 
 
-    void authorizeSchemaVersion(SecurityContext securityContext,
+    void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 String schemaMetadataName,
                                 String schemaBranch,
                                 Authorizer.AccessType accessType)
-            throws AuthorizationException;
+            throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeSchemaVersion(SecurityContext securityContext,
+    void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 SchemaVersionKey versionKey,
                                 Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeSchemaVersion(SecurityContext securityContext,
+    void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 SchemaVersionInfo versionInfo,
                                 Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeSchemaVersion(SecurityContext securityContext,
+    void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 SchemaIdVersion versionId,
                                 Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeSchemaVersion(SecurityContext securityContext,
+    void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 Long versionId,
                                 Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeMergeSchemaVersion(SecurityContext securityContext,
+    void authorizeMergeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                      ISchemaRegistry schemaRegistry,
                                      Long versionId)
             throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeSerDes(SecurityContext sc,
+    void authorizeSerDes(Authorizer.UserAndGroups userAndGroups,
                          Authorizer.AccessType accessType) throws AuthorizationException;
 
 
-    void authorizeGetSerializers(SecurityContext securityContext,
+    void authorizeGetSerializers(Authorizer.UserAndGroups userAndGroups,
                                  SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException;
 
 
-    void authorizeMapSchemaWithSerDes(SecurityContext securityContext,
+    void authorizeMapSchemaWithSerDes(Authorizer.UserAndGroups userAndGroups,
                                       ISchemaRegistry schemaRegistry,
                                       String schemaMetadataName) throws AuthorizationException, SchemaNotFoundException;
 
 
     ///////////////// ConfluentCompatible APIs //////////////////////////////
 
-    Collection<SchemaVersionInfo> authorizeGetAllVersions(SecurityContext securityContext,
+    Collection<SchemaVersionInfo> authorizeGetAllVersions(Authorizer.UserAndGroups userAndGroups,
                                                           ISchemaRegistry schemaRegistry,
-                                                          Collection<SchemaVersionInfo> versions);
+                                                          Collection<SchemaVersionInfo> versions) throws SchemaNotFoundException;
 
 }

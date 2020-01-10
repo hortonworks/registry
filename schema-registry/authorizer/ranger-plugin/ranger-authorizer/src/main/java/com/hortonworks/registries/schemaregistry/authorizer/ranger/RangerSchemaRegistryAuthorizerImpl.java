@@ -50,18 +50,18 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     @Override
     public boolean authorize(Resource registryResource,
                              AccessType accessType,
-                             String uName,
-                             Set<String> uGroup) {
+                             UserAndGroups userAndGroups) {
 
-        return authorize(registryResource2RangerResource(registryResource), accessType, uName, uGroup)
-                || authorizeRangerSchemaRegistryResource(accessType, uName, uGroup);
+        return authorize(registryResource2RangerResource(registryResource), accessType, userAndGroups)
+                || authorizeRangerSchemaRegistryResource(accessType, userAndGroups);
     }
 
     private boolean authorize(RangerAccessResourceImpl resource,
                               AccessType accessType,
-                              String uName,
-                              Set<String> uGroup) {
-        RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource, accessType.getName(), uName, uGroup);
+                              UserAndGroups userAndGroups) {
+        RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource, accessType.getName(),
+                userAndGroups.getUser(),
+                userAndGroups.getGroups());
 
         RangerAccessResult res = plg.isAccessAllowed(request);
 
@@ -110,11 +110,11 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
 
     }
 
-    private boolean authorizeRangerSchemaRegistryResource(AccessType accessType, String uName, Set<String> uGroup) {
+    private boolean authorizeRangerSchemaRegistryResource(AccessType accessType, UserAndGroups userAndGroups) {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
         resource.setValue(RANGER_RESOURCE_REGISTRY_SERVICE, "ANY_VALUE");
 
-        return authorize(resource, accessType, uName, uGroup);
+        return authorize(resource, accessType, userAndGroups);
     }
 
     private static class SchemaRegistryRangerPlugin extends RangerBasePlugin {
