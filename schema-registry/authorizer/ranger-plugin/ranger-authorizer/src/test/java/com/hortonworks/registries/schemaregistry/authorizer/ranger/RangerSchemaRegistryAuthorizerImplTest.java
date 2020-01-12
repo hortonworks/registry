@@ -15,10 +15,12 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.ranger;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +32,14 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.User
 @RunWith(BlockJUnit4ClassRunner.class)
 public class RangerSchemaRegistryAuthorizerImplTest {
 
-    private Authorizer authorizer = new RangerSchemaRegistryAuthorizerImpl();
+    private static Authorizer authorizer = new RangerSchemaRegistryAuthorizerImpl();
+
+    @BeforeClass
+    public static void setUp() {
+        // For now configuration is empty.
+        HashMap<String, Object> props = new HashMap<>();
+        authorizer.configure(props);
+    }
 
     @Test
     public void authorizeSerDe() {
@@ -663,8 +672,8 @@ public class RangerSchemaRegistryAuthorizerImplTest {
 
         // Read is allowed and other operations are not allowed
         groups = new HashSet<>();
-        groups.add("userSpecial");
-        res = authorizer.authorize(new Authorizer.SchemaVersionResource("GroupSpecial121", "ANY", "ANY"),
+        groups.add("UserSpecial");
+        res = authorizer.authorize(new Authorizer.SchemaVersionResource("GroupSpecial", "ANY", "ANY"),
                 Authorizer.AccessType.READ,
                 new UserAndGroups("userSpecial",
                 groups));

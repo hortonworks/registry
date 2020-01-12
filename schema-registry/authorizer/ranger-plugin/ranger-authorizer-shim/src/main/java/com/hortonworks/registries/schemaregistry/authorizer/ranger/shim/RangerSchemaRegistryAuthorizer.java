@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import java.lang.reflect.Constructor;
 import java.util.Map;
-import java.util.Set;
 
 public class RangerSchemaRegistryAuthorizer implements Authorizer {
 
@@ -58,7 +57,8 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
                     "==> RangerSchemaRegistryAuthorizer.authorize(resource='%s' accessType='%s', uName='%s', uGroup='%s')",
                     resource,
                     accessType,
-                    userAndGroups));
+                    userAndGroups.getUser(),
+                    userAndGroups.getGroups()));
         }
 
         boolean ret;
