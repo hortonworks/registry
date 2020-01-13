@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.authorizer;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.test.TestAuthorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;

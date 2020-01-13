@@ -126,21 +126,21 @@
             RANGER-PLUGIN/AUTHORIZER
         -->
         <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer/target</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/target</directory>
             <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
             <includes>
                 <include>*jar</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer/conf</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/conf</directory>
             <outputDirectory>ranger-plugin/conf</outputDirectory>
             <includes>
                 <include>*</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer/target/authorizer-0.8.0-SNAPSHOT/authorizer-0.8.0-SNAPSHOT</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/target/authorizer-0.8.1-SNAPSHOT/authorizer-0.8.1-SNAPSHOT</directory>
             <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
             <includes>
                 <include>*jar</include>
@@ -150,13 +150,14 @@
             RANGER-PLUGIN/AUTHORIZER-SHIM
         -->
         <fileSet>
-            <directory>${project.basedir}./ranger-schema-registry-plugin/authorizer-shim/target</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer-shim/target</directory>
             <outputDirectory>ranger-plugin</outputDirectory>
             <includes>
                 <include>*jar</include>
             </includes>
         </fileSet>
     </fileSets>
+
     <files>
         <file>
             <source>${project.basedir}./README.md</source>

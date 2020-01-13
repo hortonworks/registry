@@ -34,7 +34,7 @@ import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SchemaTextStore;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SecurityContextForTesting;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.test.TestAuthorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;

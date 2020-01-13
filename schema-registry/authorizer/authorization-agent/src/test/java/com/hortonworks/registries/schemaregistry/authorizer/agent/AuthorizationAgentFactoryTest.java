@@ -15,7 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
-import com.hortonworks.registries.schemaregistry.authorizer.test.FakeAuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.util.FakeAuthorizationAgent;
 import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;

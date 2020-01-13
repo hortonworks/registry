@@ -26,24 +26,28 @@ import static org.junit.Assert.assertThat;
 public class AuthorizerTest {
 
     @Test
-    public void toStringOfResourceClasses() {
+    public void authorizerResourcesTests() {
         Authorizer.Resource resource = new Authorizer.SerdeResource();
         String res = "SerDe{ serDeName='*' }";
         assertThat(resource.toString(), is(res));
+        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SERDE));
 
         resource = new Authorizer.SchemaMetadataResource("Group", "Schema");
         res = "SchemaMetadata{ schemaGroupName='Group', schemaMetadataName='Schema' }";
         assertThat(resource.toString(), is(res));
+        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SCHEMA_METADATA));
 
         resource = new Authorizer.SchemaBranchResource("Group", "Schema", "Branch");
         res = "SchemaBranch{ schemaGroupName='Group', schemaMetadataName='Schema'" +
                 ", schemaBranchName='Branch' }";
         assertThat(resource.toString(), is(res));
+        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SCHEMA_BRANCH));
 
         resource = new Authorizer.SchemaVersionResource("Group", "Schema", "Branch");
         res = "SchemaVersion{ schemaGroupName='Group', schemaMetadataName='Schema'" +
                 ", schemaBranchName='Branch', schemaVersionName='*' }";
         assertThat(resource.toString(), is(res));
+        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SCHEMA_VERSION));
     }
 
 }
