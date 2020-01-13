@@ -68,7 +68,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         return res != null && res.getIsAllowed();
     }
 
-    private RangerAccessResourceImpl registryResource2RangerResource(Resource registryResource) {
+    RangerAccessResourceImpl registryResource2RangerResource(Resource registryResource) {
         RangerAccessResourceImpl rangerResource = new RangerAccessResourceImpl();
 
         if(registryResource instanceof SchemaMetadataResource) {
@@ -110,7 +110,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
 
     }
 
-    private boolean authorizeRangerSchemaRegistryResource(AccessType accessType, UserAndGroups userAndGroups) {
+    boolean authorizeRangerSchemaRegistryResource(AccessType accessType, UserAndGroups userAndGroups) {
         RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
         resource.setValue(RANGER_RESOURCE_REGISTRY_SERVICE, "ANY_VALUE");
 
