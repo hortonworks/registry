@@ -30,6 +30,9 @@ public class AuthorizationUtils {
     public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 
         Principal p = sc.getUserPrincipal();
+        if(p == null) {
+            return null;
+        }
         KerberosName kerberosName = new KerberosName(p.getName());
 
         try {
