@@ -113,6 +113,25 @@ CREATE TABLE IF NOT EXISTS schema_serdes_mapping (
 ```
 
 # API examples
+## Creating the API client
+Bellow code snippet is an example of creating an API client. Configuraiton sample can be found here: `schema-registry/client/src/main/resources/default-schema-registry-client.yaml`
+```java
+HashMap<String, Serializable> config = new HashMap<>();
+config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), "https://my-hostname.com/cdp-proxy-api/schema-registrregistry/schemas");
+config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 1024L);
+config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 3600L);
+config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000L);
+config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(), 300L);
+HashMap<String, String> sslMap = new HashMap<>();
+sslMap.put("protocol", "SSL");
+sslMap.put("trustStoreType", "JKS");
+sslMap.put("trustStorePath", "/path/to/truststore/file");
+sslMap.put("trustStorePassword", "truststorepassword");
+config.put("schema.registry.client.ssl", sslMap);
+config.put(SchemaRegistryClient.Configuration.BASIC_AUTH_USERNAME, "knoxproxyusername");
+config.put(SchemaRegistryClient.Configuration.BASIC_AUTH_PASSWORD, "knoxproxypassword");
+SchemaRegistryClient schemaRegistryClient =  new SchemaRegistryClient(config);
+```
 ## Using schema related APIs
 
 Below set of code snippets explain how SchemaRegistryClient can be used for
