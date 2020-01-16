@@ -60,10 +60,12 @@ import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -219,7 +221,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
         client = clientBuilder.build();
         client.register(MultiPartFeature.class);
-
+        String userName = configuration.getValue(Configuration.BASIC_AUTH_USERNAME.name());
+        String password = configuration.getValue(Configuration.BASIC_AUTH_PASSWORD.name());
+        if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)){
+            HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(userName, password);
+            client.register(feature);
+        }
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
         urlWithTargets = new ConcurrentHashMap<>();
@@ -1408,6 +1415,26 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          * Default read timeout on connections created while connecting to schema registry.
          */
         public static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
+
+        /**
+         * Username for basic authentication.
+         */
+        public static final ConfigEntry<String> BASIC_AUTH_USERNAME =
+                ConfigEntry.optional("schema.registry.auth.username",
+                        String.class,
+                        "Username for basic authentication",
+                        null,
+                        ConfigEntry.NonEmptyStringValidator.get());
+
+        /**
+         * Password for basic authentication.
+         */
+        public static final ConfigEntry<String> BASIC_AUTH_PASSWORD =
+                ConfigEntry.optional("schema.registry.auth.password",
+                        String.class,
+                        "Password for basic authentication",
+                        null,
+                        ConfigEntry.NonEmptyStringValidator.get());
 
         private final Map<String, ?> config;
         private final Map<String, ConfigEntry<?>> options;

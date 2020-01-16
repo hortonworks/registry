@@ -25,3 +25,6 @@ schema.registry.client.url.selector : "com.hortonworks.registries.schemaregistry
 #  trustStoreProvider:
 #  trustManagerFactoryProvider:
 #  trustManagerFactoryAlgorithm:
+
+#schema.registry.auth.username:
+#schema.registry.auth.password:
