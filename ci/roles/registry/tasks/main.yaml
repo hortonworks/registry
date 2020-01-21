@@ -1,0 +1,30 @@
+
+- name: helm repo add
+  command: >
+    helm repo add DIM https://github.infra.cloudera.com/pages/DIM/helm-charts/ --tiller-namespace={{ tiller_namespace }}
+  args:
+    chdir: "{{ srcdir }}"
+
+- name: helm repo update
+  command: >
+    helm repo update --tiller-namespace={{ tiller_namespace }}
+  args:
+    chdir: "{{ srcdir }}"
+
+- name: helm install registry
+  command: >
+    helm install DIM/schema-registry
+        --debug
+        --name schema-registry
+        --set security.type={{ security }}
+        --set namespace={{ namespace }}
+        --set database={{ database }}
+        --set image.tag={{ patchset }}
+        --set image.repository={{ repository }}schema-registry
+        --set-file security.caCertPath=ci/ssl/ca-cert
+        --set-file security.caKeyPath=ci/ssl/ca-key
+        --tiller-namespace={{ tiller_namespace }}
+        --debug
+        --wait
+  args:
+    chdir: "{{ srcdir }}"

@@ -1,0 +1,56 @@
+- nodeset:
+    name: nodeset-registry-st
+    nodes:
+      - name: debian9-openjdk8
+        label: debian9-openjdk8
+      - name: k8s-namespace
+        label: kubernetes-namespace
+
+- nodeset:
+    name: nodeset-registry-ut
+    nodes:
+      - name: debian9-openjdk8
+        label: debian9-openjdk8
+
+- job:
+    name: job-registry-ut
+    run: ci/unittest.yaml
+    nodeset: nodeset-registry-ut
+
+- job:
+    name: job-registry-build-images
+    run: ci/build-images.yaml
+    nodeset: nodeset-registry-st
+
+- job:
+    name: job-registry-mysql-nonsecure
+    run: ci/gate.yaml
+    nodeset: nodeset-registry-st
+    vars:
+      security: "none"
+      database: "mysql"
+    dependencies:
+      - name: job-registry-build-images
+        soft: true
+
+- job:
+    name: job-registry-postgres-secure
+    run: ci/gate.yaml
+    nodeset: nodeset-registry-st
+    vars:
+      security: "kerberos"
+      database: "postgresql"
+    dependencies:
+      - name: job-registry-build-images
+        soft: true
+
+
+- project:
+    check-gerrit-sjc:
+      jobs:
+        - job-registry-ut
+    gate-gerrit-sjc:
+      jobs:
+        - job-registry-build-images
+        - job-registry-mysql-nonsecure
+        - job-registry-postgres-secure

@@ -1,0 +1,10 @@
+- hosts: all
+  vars:
+    srcdir: "{{ zuul.project.src_dir }}"
+    namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
+    mit_kerberos: '/usr/bin/'
+
+  tasks:
+    - include_role:
+        name: system-test
+

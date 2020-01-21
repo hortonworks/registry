@@ -1,0 +1,31 @@
+- hosts: all
+  vars:
+    srcdir: "{{ zuul.project.src_dir }}"
+    namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
+    docker_host: "tcp://dockerd.zuul:2375"
+    patchset: "{{ zuul.patchset }}"
+    repository: "docker-registry.infra.cloudera.com/kubernator-ci/"
+
+  environment:
+    DOCKER_HOST: "{{ docker_host }}"
+
+  tasks:
+    - name: build schema registry
+      command: >
+        mvn -batch-mode -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn package -DskipTests
+      args:
+        chdir: "{{ srcdir }}"
+
+    - name: docker build schema-registry
+      shell: |
+        docker build -t schema-registry:{{ patchset }} -f ci/docker/schema-registry/Dockerfile .
+      args:
+        chdir: "{{ srcdir }}"
+
+    - name: docker tag push schema-registry
+      shell: |
+        docker tag schema-registry:{{ patchset }} {{ repository }}schema-registry:{{ patchset }}
+        docker push {{ repository }}schema-registry:{{ patchset }}
+      args:
+        chdir: "{{ srcdir }}"
+      when: zuul is defined

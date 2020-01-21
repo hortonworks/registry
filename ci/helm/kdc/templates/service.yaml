@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kdc.fullname" . }}
+  labels:
+{{ include "kdc.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - protocol: TCP
+      port: 88
+      targetPort: 88
+      name: server
+    - protocol: TCP
+      port: 464
+      targetPort: 464
+      name: kpasswd
+    - protocol: TCP
+      port: 749
+      targetPort: 749
+      name: kadmin
+  selector:
+    app.kubernetes.io/name: {{ include "kdc.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

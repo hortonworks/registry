@@ -1,0 +1,12 @@
+- hosts: all
+  vars:
+    srcdir: "{{ zuul.project.src_dir }}"
+  tasks:
+    - name: Run 'unit test'
+      command: >
+        mvn 
+        -batch-mode
+        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+        -T 4.0C package
+      args:
+        chdir: "{{ srcdir }}"
