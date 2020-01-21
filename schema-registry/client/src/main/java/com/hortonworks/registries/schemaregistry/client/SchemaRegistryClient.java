@@ -221,8 +221,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
         client = clientBuilder.build();
         client.register(MultiPartFeature.class);
-        String userName = configuration.getValue(Configuration.BASIC_AUTH_USERNAME.name());
-        String password = configuration.getValue(Configuration.BASIC_AUTH_PASSWORD.name());
+        String userName = configuration.getValue(Configuration.AUTH_USERNAME.name());
+        String password = configuration.getValue(Configuration.AUTH_PASSWORD.name());
         if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)){
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(userName, password);
             client.register(feature);
@@ -1419,21 +1419,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         /**
          * Username for basic authentication.
          */
-        public static final ConfigEntry<String> BASIC_AUTH_USERNAME =
+        public static final ConfigEntry<String> AUTH_USERNAME =
                 ConfigEntry.optional("schema.registry.auth.username",
                         String.class,
                         "Username for basic authentication",
                         null,
+                        ConfigEntry.StringConverter.get(),
                         ConfigEntry.NonEmptyStringValidator.get());
 
         /**
          * Password for basic authentication.
          */
-        public static final ConfigEntry<String> BASIC_AUTH_PASSWORD =
+        public static final ConfigEntry<String> AUTH_PASSWORD =
                 ConfigEntry.optional("schema.registry.auth.password",
                         String.class,
                         "Password for basic authentication",
                         null,
+                        ConfigEntry.StringConverter.get(),
                         ConfigEntry.NonEmptyStringValidator.get());
 
         private final Map<String, ?> config;
