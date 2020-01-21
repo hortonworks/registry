@@ -129,9 +129,25 @@ Kafka Producer Integration with SchemaRegistry
      config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
      config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
 
+
+.. code:: java
+
+     config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+     config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
+     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+     config.put(SchemaRegistryClient.Configuration.AUTH_USERNAME, "user1");
+     config.put(SchemaRegistryClient.Configuration.AUTH_PASSWORD, "password");
+
 Important settings from the above are
 **schema.registry.url**:
   This should be set to where the registry server is running ex: http://localhost:9090/api/v1
+
+**schema.registry.auth.username**:
+  If the schema registry service is behind a proxy that supports Basic Authentication, the user name part of the credentials can be provided here.
+
+**schema.registry.auth.password**:
+  If the schema registry service is behind a proxy that supports Basic Authentication, the password part of the credentials can be provided here.
 
 **key.serializer**:
   *StringSerializer* is used in the above example.
@@ -191,10 +207,25 @@ Kafka Consumer Integration with SchemaRegistry
      config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
      config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
 
+.. code:: java
+
+     config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+     config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), props.get(SCHEMA_REGISTRY_URL));
+     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+     config.put(SchemaRegistryClient.Configuration.AUTH_USERNAME, "user1");
+     config.put(SchemaRegistryClient.Configuration.AUTH_PASSWORD, "password");
+
 Important settings from the above are
 
 **schema.registry.url**:
   This should be set to where the registry server is running ex: http://localhost:9090/api/v1
+
+**schema.registry.auth.username**:
+  If the schema registry service is behind a proxy that supports Basic Authentication, the user name part of the credentials can be provided here.
+
+**schema.registry.auth.password**:
+  If the schema registry service is behind a proxy that supports Basic Authentication, the password part of the credentials can be provided here.
 
 **key.deserializer**:
   *StringDeserializer* is used in the above example.

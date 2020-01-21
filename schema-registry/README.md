@@ -128,8 +128,8 @@ sslMap.put("trustStoreType", "JKS");
 sslMap.put("trustStorePath", "/path/to/truststore/file");
 sslMap.put("trustStorePassword", "truststorepassword");
 config.put("schema.registry.client.ssl", sslMap);
-config.put(SchemaRegistryClient.Configuration.BASIC_AUTH_USERNAME, "knoxproxyusername");
-config.put(SchemaRegistryClient.Configuration.BASIC_AUTH_PASSWORD, "knoxproxypassword");
+config.put(SchemaRegistryClient.Configuration.AUTH_USERNAME, "knoxproxyusername");
+config.put(SchemaRegistryClient.Configuration.AUTH_PASSWORD, "knoxproxypassword");
 SchemaRegistryClient schemaRegistryClient =  new SchemaRegistryClient(config);
 ```
 ## Using schema related APIs
