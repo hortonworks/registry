@@ -181,7 +181,7 @@ export default class SchemaFormContainer extends Component {
     }
   }
 
-  handleSave(didVersionFailed) {
+  handleSave() {
     let data = {};
     let {name, type, schemaGroup, description, compatibility, evolve, schemaText} = this.state;
     data = {
@@ -195,18 +195,14 @@ export default class SchemaFormContainer extends Component {
     if (compatibility !== '') {
       data.compatibility = compatibility;
     }
-    if(didVersionFailed){
-      return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
-    } else {
-      return SchemaREST.postSchema({body: JSON.stringify(data)})
-        .then((schemaResult)=>{
-          if(schemaResult.responseMessage !== undefined){
-            FSReactToastr.error(<CommonNotification flag="error" content={schemaResult.responseMessage}/>, '', toastOpt);
-          } else {
-            return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
-          }
-        });
-    }
+    return SchemaREST.postSchema({body: JSON.stringify(data)})
+      .then((schemaResult)=>{
+        if(schemaResult.responseMessage !== undefined){
+          FSReactToastr.error(<CommonNotification flag="error" content={schemaResult.responseMessage}/>, '', toastOpt);
+        } else {
+          return SchemaREST.postVersion(name, {body: JSON.stringify(versionData)});
+        }
+      });
   }
 
   render() {

@@ -209,6 +209,19 @@ const SchemaREST = {
       .then((res) => {
         return checkStatus(res, 'DELETE');
       });
+  },
+  deleteSchemaMetadata(name, options){
+    options = options || {};
+    options.method = options.method || 'DELETE';
+    options.headers = options.headers || {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    options.credentials = 'same-origin';
+    return fetch(baseUrl + `schemaregistry/schemas/${name}`, options)
+      .then((res) => {
+        return checkStatus(res, 'DELETE');
+      });
   }
 };
 

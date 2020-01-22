@@ -237,12 +237,15 @@ export default class SchemaRegistryContainer extends Component {
   }
   handleSave() {
     if (this.refs.addSchema.validateData()) {
-      this.refs.addSchema.handleSave(this.versionFailed).then((schemas) => {
+      this.refs.addSchema.handleSave().then((schemas) => {
         if (schemas.responseMessage !== undefined) {
-          this.versionFailed = true;
-          FSReactToastr.error(<CommonNotification flag="error" content={schemas.responseMessage}/>, '', toastOpt);
+          let name = this.refs.addSchema.state.name;
+          let content = 'An exception was thrown while adding the schema version'+schemas.responseMessage.slice(schemas.responseMessage.indexOf('message') + 'message'.length);
+          SchemaREST.deleteSchemaMetadata(name)
+          .then(()=>{
+            FSReactToastr.error(<CommonNotification flag="error" content={content} />, '', toastOpt);
+          });
         } else {
-          this.versionFailed = false;
           this.refs.schemaModal.hide();
           this.fetchData();
           let msg = "Schema added successfully";
