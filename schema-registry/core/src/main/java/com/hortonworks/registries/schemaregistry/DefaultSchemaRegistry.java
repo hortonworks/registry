@@ -308,7 +308,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             }
         }
         // Remove all serdes mappings for this schema name
-        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataId);
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
+        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataInfo.getId());
         if (schemaSerDesMappings != null) {
             for (SchemaSerDesMapping schemaSerDesMapping: schemaSerDesMappings) {
                 storageManager.remove(schemaSerDesMapping.getStorableKey());
