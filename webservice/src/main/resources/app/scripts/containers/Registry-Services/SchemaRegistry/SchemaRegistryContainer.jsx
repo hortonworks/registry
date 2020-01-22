@@ -240,7 +240,15 @@ export default class SchemaRegistryContainer extends Component {
       this.refs.addSchema.handleSave(this.versionFailed).then((schemas) => {
         if (schemas.responseMessage !== undefined) {
           this.versionFailed = true;
-          FSReactToastr.error(<CommonNotification flag="error" content={schemas.responseMessage}/>, '', toastOpt);
+          if(this.state.id) {
+            FSReactToastr.error(<CommonNotification flag="error" content={schemas.responseMessage}/>, '', toastOpt);
+          } else {
+            let name = this.refs.addSchema.state.name;
+            SchemaREST.deleteSchemaMetadata(name)
+            .then(()=>{
+              FSReactToastr.error(<CommonNotification flag="error" content='Failed to add schema.'/>, '', toastOpt);
+            });
+          }
         } else {
           this.versionFailed = false;
           this.refs.schemaModal.hide();
