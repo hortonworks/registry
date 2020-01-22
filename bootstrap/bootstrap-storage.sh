@@ -76,7 +76,7 @@ EOF
 
 if [[ $# -gt 2 ]]
 then
-    echo "More than one argument specified, please use only one of the below options"
+    echo "More than two argument specified, please use only one of the below options"
     printUsage
     exit 1
 fi
