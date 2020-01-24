@@ -181,6 +181,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SSL_CONFIGURATION_KEY = "schema.registry.client.ssl";
     private static final String HOSTNAME_VERIFIER_CLASS_KEY = "hostnameVerifierClass";
 
+    private static final RetryManager RETRY_MANAGER = new RetryManager();
+
     /**
      * Creates {@link SchemaRegistryClient} instance with the given yaml config.
      *
@@ -1210,6 +1212,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
+
         String response = null;
         try {
             response = login.doAction(new PrivilegedAction<String>() {
