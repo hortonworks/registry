@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.hortonworks.registries</groupId>
         <artifactId>registries</artifactId>
-        <version>0.7.0</version>
+        <version>0.8.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -98,6 +98,17 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- dependency that was available in the JDK before Java 9.
+               This is included by default so that the builds that are compiled on JDK8 can run on JRE11 -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
         </dependency>
     </dependencies>
 

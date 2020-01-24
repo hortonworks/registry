@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +22,6 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
-import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +180,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
                     appendable.append("{\"name\":\"").append(field.name()).append("\"").append(",\"type\":");
 
                     // handle default value
-                    JsonNode defaultValue = field.defaultValue();
+                    Object defaultValue = field.defaultVal();
                     if (defaultValue != null) {
                         appendable.append(defaultValue.toString());
                     }

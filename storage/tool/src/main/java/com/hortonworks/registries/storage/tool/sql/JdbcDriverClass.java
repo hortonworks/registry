@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Hortonworks.
+ * Copyright 2017-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
+import com.hortonworks.registries.storage.common.DatabaseType;
+
 public enum JdbcDriverClass {
 
     MYSQL("com.mysql.jdbc.Driver"),
-    POSTGRES("org.postgresql.Driver"),
+    POSTGRESQL("org.postgresql.Driver"),
     ORACLE("oracle.jdbc.driver.OracleDriver");
 
     private final String value;

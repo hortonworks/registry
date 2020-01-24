@@ -66,6 +66,34 @@ To run the producer in Secure cluster:
 6. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.5.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
 
 
+To run the producer in Secure cluster using dynamic JAAS configuration:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Issue ACLs on the topic you are trying to ingest
+
+2. create kafka topic
+   bin/kafka-acls.sh --authorizer kafka.security.auth.SimpleAclAuthorizer --authorizer-properties zookeeper.connect=pm-eng1-cluster2.field.hortonworks.com:2181 --add
+       --allow-principal User:principal_name --allow-host "*" --operation All --topic truck_events_stream
+
+   2.1 make sure you replace "principal_name" with the username you are trying to ingest
+
+3.  edit data/kafka-producer.props , add security.protocol=SASL_PLAINTEXT and sasl.jaas.config parameter
+
+.. code-block:: ruby
+
+  topic=truck_events_stream
+  bootstrap.servers=kafka_host1:6667,kafka_host2:6667
+  schema.registry.url=http://regisry_host:9090/api/v1
+  security.protocol=SASL_PLAINTEXT
+  key.serializer=org.apache.kafka.common.serialization.StringSerializer
+  value.serializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer
+  sasl.jaas.config=com.sun.security.auth.module.Krb5LoginModule required useTicketCache=true renewTicket=true serviceName="kafka";
+
+4. kinit -kt your.keytab principal@EXAMPLE.COM. Make sure you gave ACLs to the principal refer to [2]
+
+5. java -jar avro-examples-0.5.0-SNAPSHOT.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
+
+
 
 Running Kafka Consumer with AvroDeserializer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -118,3 +146,25 @@ To run the consumer in Secure cluster:
 3. kinit -kt your.keytab principal@EXAMPLE.COM. Make sure you gave ACLs to the pricncipal refer to [2]
 
 4. java -Djava.security.auth.login.config=/etc/kafka/conf/kafka_client_jaas.conf -jar avro-examples-0.5.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm
+
+
+To run the consumer in Secure cluster using dynamic JAAS configuration:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Edit data/kafka-consumer.props
+
+.. code-block:: ruby
+
+ topic=truck_events_stream
+ bootstrap.servers=pm-eng1-cluster4.field.hortonworks.com:6667
+ schema.registry.url=http://pm-eng1-cluster4.field.hortonworks.com:7788/api/v1
+ security.protocol=SASL_PLAINTEXT
+ key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+ value.deserializer=com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer
+ group.id=truck_group
+ auto.offset.reset=earliest
+ sasl.jaas.config=com.sun.security.auth.module.Krb5LoginModule required useTicketCache=true renewTicket=true serviceName="kafka";
+
+2. kinit -kt your.keytab principal@EXAMPLE.COM. Make sure you gave ACLs to the pricncipal refer to [2]
+
+3. java -jar avro-examples-0.5.0-SNAPSHOT.jar -c data/kafka-consumer.props -cm

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package com.hortonworks.registries.storage.tool.sql;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -72,7 +72,7 @@ public class TablesInitializer {
                 Option.builder()
                         .hasArg(false)
                         .longOpt(SchemaMigrationOption.CREATE.toString())
-                        .desc("Run sql migrations from scatch")
+                        .desc("Run sql migrations from scratch")
                         .build()
         );
 
@@ -132,7 +132,7 @@ public class TablesInitializer {
                     .build()
         );
 
-        CommandLineParser parser = new BasicParser();
+        CommandLineParser parser = new DefaultParser();
         CommandLine commandLine = parser.parse(options, args);
 
         if (!commandLine.hasOption(OPTION_CONFIG_FILE_PATH) || !commandLine.hasOption(OPTION_SCRIPT_ROOT_PATH)) {
@@ -176,6 +176,7 @@ public class TablesInitializer {
         }
 
         String bootstrapDirPath = null;
+        ClassLoader classLoader;
         try {
             bootstrapDirPath = System.getProperty("bootstrap.dir");
             Proxy proxy = Proxy.NO_PROXY;
@@ -189,7 +190,7 @@ public class TablesInitializer {
                     Authenticator.setDefault(getBasicAuthenticator(url.getHost(), url.getPort(), httpProxyUsername, httpProxyPassword));
                 }
             }
-            MySqlDriverHelper.downloadMySQLJarIfNeeded(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
+            classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
         } catch (Exception e) {
             System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
             System.exit(1);
@@ -200,7 +201,8 @@ public class TablesInitializer {
         if(disableValidateOnMigrate) {
             System.out.println("Disabling validation on schema migrate");
         }
-        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(SchemaFlywayFactory.get(storageProperties, scriptRootPath, !disableValidateOnMigrate));
+        SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(
+                SchemaFlywayFactory.get(classLoader, storageProperties, scriptRootPath, !disableValidateOnMigrate));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));

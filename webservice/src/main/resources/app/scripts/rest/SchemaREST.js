@@ -1,5 +1,5 @@
 /**
-  * Copyright 2017 Hortonworks.
+  * Copyright 2017-2019 Cloudera, Inc.
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ const SchemaREST = {
         return response.json();
       });
   },
-  postVersion(name, options, branchName) {
+  postVersion(name, options, branchName, disableCanonicalCheck) {
     options = options || {};
     options.method = options.method || 'POST';
     options.headers = options.headers || {
@@ -118,7 +118,11 @@ const SchemaREST = {
     options.credentials = 'same-origin';
     name = encodeURIComponent(name);
     branchName = branchName || 'MASTER';
-    return fetch(baseUrl + 'schemaregistry/schemas/' + name + '/versions?branch='+branchName, options)
+    let url = baseUrl + 'schemaregistry/schemas/' + name + '/versions?branch='+branchName;
+    if(disableCanonicalCheck !== undefined) {
+      url += '&disableCanonicalCheck=' + disableCanonicalCheck;
+    }
+    return fetch(url, options)
       .then((response) => {
         return response.json();
       });
@@ -178,7 +182,7 @@ const SchemaREST = {
     return fetch(baseUrl + `schemaregistry/schemas/versionsById/${verId}/branch`, options)
       .then(checkStatus);
   },
-  mergeBranch(verId, options){
+  mergeBranch(verId, disableCanonicalCheck, options){
     options = options || {};
     options.method = options.method || 'POST';
     options.headers = options.headers || {
@@ -186,7 +190,11 @@ const SchemaREST = {
       'Accept': 'application/json'
     };
     options.credentials = 'same-origin';
-    return fetch(baseUrl + `schemaregistry/schemas/${verId}/merge`, options)
+    let url = baseUrl + `schemaregistry/schemas/${verId}/merge`;
+    if(disableCanonicalCheck !== undefined) {
+      url += '?disableCanonicalCheck=' + disableCanonicalCheck;
+    }
+    return fetch(url, options)
       .then(checkStatus);
   },
   deleteBranch(branchId, options){
