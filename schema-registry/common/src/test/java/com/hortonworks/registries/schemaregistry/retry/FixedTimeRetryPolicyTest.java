@@ -59,6 +59,7 @@ public class FixedTimeRetryPolicyTest {
             stopTime.set(System.currentTimeMillis());
             if (stopTime.get() - startTime.get() < 1000) {
                 iteration.incrementAndGet();
+                System.out.println("Time elapsed : " + (stopTime.get() - startTime.get()));
                 throw new RetriableException("");
             } else {
                 return null;

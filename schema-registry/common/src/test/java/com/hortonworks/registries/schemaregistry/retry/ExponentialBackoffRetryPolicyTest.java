@@ -16,27 +16,79 @@
 
 package com.hortonworks.registries.schemaregistry.retry;
 
+import com.hortonworks.registries.schemaregistry.retry.exception.RetriableException;
+import com.hortonworks.registries.schemaregistry.retry.exception.RetryManagerException;
 import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffRetryPolicy;
-import com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeRetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ExponentialBackoffRetryPolicyTest {
 
     private RetryManager retryManager = new RetryManager();
 
     @Test
-    public void
+    public void testForMaxIteration() {
+        AtomicInteger iteration = new AtomicInteger(0);
 
-    private RetryContext.Builder<Void> getRetryContextBuilder(long baseSleepMs, float multiplier, int iteration, long maxSleepMs) {
+        retryManager.execute(getRetryContextBuilder(100, 3, 100000).build(() -> {
+            iteration.incrementAndGet();
+            if (iteration.get() < 2) {
+                throw new RetriableException("");
+            } else {
+                return null;
+            }
+        }));
+
+        Assert.assertEquals(2, iteration.get());
+    }
+
+    @Test
+    public void testForMaxTime() {
+        AtomicLong startTime = new AtomicLong(System.currentTimeMillis());
+        AtomicLong stopTime = new AtomicLong(0);
+
+        AtomicInteger iteration = new AtomicInteger(0);
+
+        retryManager.execute(getRetryContextBuilder(100, 10000, 60000).build(() -> {
+            stopTime.set(System.currentTimeMillis());
+            if (stopTime.get() - startTime.get() < 2000) {
+                iteration.incrementAndGet();
+                System.out.println("Time elapsed : " + (stopTime.get() - startTime.get()));
+                throw new RetriableException("");
+            } else {
+                return null;
+            }
+        }));
+
+        Assert.assertTrue((stopTime.get() - startTime.get() < 2000) && iteration.get() > 1);
+    }
+
+    @Test(expected = RetryManagerException.class)
+    public void testExceptionMaxIteration() {
+        retryManager.execute(getRetryContextBuilder(100, 1, 60_000).build(() -> {
+            throw new RetriableException("");
+        }));
+    }
+
+    @Test(expected = RetryManagerException.class)
+    public void testExceptionForMaxSleep() {
+        retryManager.execute(getRetryContextBuilder(100, 1000, 300).build(() -> {
+            throw new RetriableException("");
+        }));
+    }
+
+    private RetryContext.Builder<Void> getRetryContextBuilder(long baseSleepMs, int iteration, long maxSleepMs) {
         Map<String, Object> props = new HashMap<>();
-        props.put(ExponentialBackoffRetryPolicy.MAX_RETRIES, maxSleepMs);
+        props.put(ExponentialBackoffRetryPolicy.MAX_SLEEP_TIME_MS, maxSleepMs);
         props.put(ExponentialBackoffRetryPolicy.BASE_SLEEP_TIME_MS, baseSleepMs);
+        props.put(ExponentialBackoffRetryPolicy.MULTIPLIER, 2F);
         props.put(ExponentialBackoffRetryPolicy.MAX_RETRIES, iteration);
-        props.put(ExponentialBackoffRetryPolicy.MULTIPLIER, multiplier);
 
         RetryPolicy retryPolicy = new ExponentialBackoffRetryPolicy();
         retryPolicy.init(props);
@@ -44,5 +96,4 @@ public class ExponentialBackoffRetryPolicyTest {
         RetryContext.Builder<Void> builder = new RetryContext.Builder<Void>();
         return builder.policy(retryPolicy);
     }
-
 }
