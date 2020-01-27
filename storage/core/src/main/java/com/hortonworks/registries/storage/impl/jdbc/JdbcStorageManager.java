@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
@@ -275,13 +276,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
             throw new IllegalArgumentException("db.type should be set on jdbc properties");
         }
 
-        String type = (String) properties.get(DB_TYPE);
-
-        // When we have more providers we can add a layer to have a factory to create respective jdbc storage managers.
-        // For now, keeping it simple as there are only 2.
-        if(!"mysql".equals(type) && !"postgresql".equals(type) && !"oracle".equals(type)) {
-            throw new IllegalArgumentException("Unknown jdbc storage provider type: "+type);
-        }
+        DatabaseType type = DatabaseType.fromValue((String) properties.get(DB_TYPE));
         log.info("jdbc provider type: [{}]", type);
         Map<String, Object> dbProperties = (Map<String, Object>) properties.get("db.properties");
 

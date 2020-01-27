@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -63,7 +62,34 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException when no schema metadata registered with the given schema name.
      * @throws InvalidSchemaException  when the given {@code schemaText} is not valid.
      */
-    SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException;
+     default SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
+         return getSchemaVersionInfo(schemaName, schemaText, false);
+     }
+
+    /**
+     * If there is a version of the schema with the given schemaText for schema name then it returns respective {@link SchemaVersionInfo},
+     * else it returns null.
+     *
+     * @param schemaName name of the schema
+     * @param schemaText text of the schema
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     *
+     * @return SchemaVersionInfo instance about the registered version of schema which is same as the given {@code schemaText}
+     *
+     * @throws SchemaNotFoundException when no schema metadata registered with the given schema name.
+     * @throws InvalidSchemaException  when the given {@code schemaText} is not valid.
+     */
+    SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText, boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException;
+
+    /**
+     * If there is a version of the schema with the given fingerprint then it returns the respective {@link SchemaVersionInfo},
+     * else it throws a {@link SchemaNotFoundException}.
+     *
+     * @param fingerprint MD5 hash of the schemaText
+     * @return the {@link SchemaVersionInfo} of the schema version with the given fingerprint.
+     * @throws SchemaNotFoundException when no schema version registered with the given fingerprint.
+     */
+    SchemaVersionInfo findSchemaVersionByFingerprint(String fingerprint) throws SchemaNotFoundException;
 
     /**
      * @param props properties
@@ -113,9 +139,21 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws IncompatibleSchemaException
      */
     default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
-        throw new UnsupportedOperationException();
+        return mergeSchemaVersion(schemaVersionId, schemaVersionMergeStrategy, false);
     }
 
+    /**
+     *  Merges a given schema version to 'MASTER' branch with a merge strategy
+     * @param schemaVersionId             id of the schema version to be merged
+     * @param schemaVersionMergeStrategy  merge strategy to be used for merging to 'MASTER'
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     *
+     * @return
+     *
+     * @throws SchemaNotFoundException
+     * @throws IncompatibleSchemaException
+     */
+    SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy, boolean disableCanonicalCheck) throws IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
      * @param schemaName name identifying a schema

@@ -1,12 +1,12 @@
 /**
- * Copyright 2017 Hortonworks.
- *
+ * Copyright 2017-2019 Cloudera, Inc.
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
-
- *   http://www.apache.org/licenses/LICENSE-2.0
-
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,14 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import java.security.PrivilegedAction;
 import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This class is responsible for logging in to Kerberos and refreshing credentials for
@@ -62,6 +66,11 @@ public class KerberosLogin extends AbstractLogin {
     private long minTimeBeforeRelogin = 1 * 60 * 1000;
     private String kinitCmd = "/usr/bin/kinit";
 
+    private ReentrantReadWriteLock tgtRenewalLock;
+    private long tgtRenewalTimeoutMS;
+
+    private static final long DEFAULT_TGT_RENEWAL_TIMEOUT_MS = 3 * 60 * 1000;
+
     /**
      * Method to configure this instance with specific properties
      * @param loginContextName
@@ -86,6 +95,40 @@ public class KerberosLogin extends AbstractLogin {
     }
 
     /**
+     * Method to configure this instance with specific properties
+     * @param loginContextName
+     *               name of section in JAAS file that will be used to login.
+     *               Passed as first param to javax.security.auth.login.LoginContext().
+     * @param configs configure Login with the given key-value pairs.
+     */
+    @Override
+    public void configure(Map<String, ?> configs, final String loginContextName, Configuration jaasConfig) {
+        super.configure(configs, loginContextName, jaasConfig);
+        if (configs.get(TICKET_RENEW_WINDOW_FACTOR) != null) {
+            this.ticketRenewWindowFactor = Double.parseDouble((String) configs.get(TICKET_RENEW_WINDOW_FACTOR));
+        }
+        if (configs.get(TICKET_RENEW_JITTER) != null) {
+            this.ticketRenewJitter = Double.parseDouble((String) configs.get(TICKET_RENEW_JITTER));
+        }
+        if (configs.get(MIN_TIME_BEFORE_RELOGIN) != null) {
+            this.minTimeBeforeRelogin = Long.parseLong((String) configs.get(MIN_TIME_BEFORE_RELOGIN));
+        }
+        if (configs.get(KINIT_CMD) != null) {
+            this.kinitCmd = (String) configs.get(KINIT_CMD);
+        }
+    }
+
+    public KerberosLogin() {
+        this.tgtRenewalLock = new ReentrantReadWriteLock(true);
+        this.tgtRenewalTimeoutMS = DEFAULT_TGT_RENEWAL_TIMEOUT_MS;
+    }
+
+    public KerberosLogin(long tgtRenewalTimeoutMS) {
+        this.tgtRenewalLock = new ReentrantReadWriteLock(true);
+        this.tgtRenewalTimeoutMS = tgtRenewalTimeoutMS;
+    }
+
+    /**
      * Method called once initially to login. It also starts the thread used
      * to periodically re-login to the Kerberos Authentication Server.
      * @return
@@ -102,7 +145,8 @@ public class KerberosLogin extends AbstractLogin {
             return loginContext;
         }
         log.info("It is a Kerberos ticket");
-        AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
+        AppConfigurationEntry[] entries = (jaasConfiguration != null) ? jaasConfiguration.getAppConfigurationEntry(loginContextName) :
+                Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
         if (entries.length == 0) {
             isUsingTicketCache = false;
             principal = null;
@@ -147,7 +191,7 @@ public class KerberosLogin extends AbstractLogin {
         }
     }
 
-    private void spawnReloginThread () {
+    private void spawnReloginThread() {
         // Refresh the Ticket Granting Ticket (TGT) periodically. How often to refresh is determined by the
         // TGT's existing expiry date and the configured minTimeBeforeRelogin. For testing and development,
         // you can decrease the interval of expiration of tickets (for example, to 3 minutes) by running:
@@ -246,23 +290,54 @@ public class KerberosLogin extends AbstractLogin {
         return null;
     }
 
+    public <T> T doAction(PrivilegedAction<T> action) throws LoginException {
+        Lock readLock = tgtRenewalLock.readLock();
+        try {
+            if (readLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                T result;
+                try {
+                    result = super.doAction(action);
+                } finally {
+                    readLock.unlock();
+                }
+                return result;
+            } else {
+                throw new LoginException("Timed out while the client was waiting for Kerberos TGT renewal");
+            }
+        } catch (InterruptedException e) {
+            throw new LoginException("Error while the client was waiting for Kerberos TGT renewal : " + e.getLocalizedMessage());
+        }
+    }
+
     /**
      * Re-login a principal. This method assumes that {@link #login()} has happened already.
+     *
      * @throws javax.security.auth.login.LoginException on a failure
      */
     private void reLogin() throws LoginException {
-        log.info("Initiating logout for {}", principal);
-        //clear up the kerberos state. But the tokens are not cleared! As per
-        //the Java kerberos login module code, only the kerberos credentials
-        //are cleared
-        loginContext.logout();
-        //login and also update the subject field of the original LoginContext to
-        //have the new credentials (pass it to the LoginContext constructor)
-        loginContext = new LoginContext(loginContextName, loginContext.getSubject());
-        log.info("Initiating re-login for {}", principal);
-        loginContext.login();
-        log.info("Successfully logged in from auto relogin thread");
+        Lock writeLock = tgtRenewalLock.writeLock();
+        try {
+            if (writeLock.tryLock(tgtRenewalTimeoutMS, TimeUnit.MILLISECONDS)) {
+                try {
+                    log.info("Initiating logout for {}", principal);
+                    //clear up the kerberos state. But the tokens are not cleared! As per
+                    //the Java kerberos login module code, only the kerberos credentials
+                    //are cleared
+                    loginContext.logout();
+                    //login and also update the subject field of the original LoginContext to
+                    //have the new credentials (pass it to the LoginContext constructor)
+                    loginContext = new LoginContext(loginContextName, loginContext.getSubject());
+                    log.info("Initiating re-login for {}", principal);
+                    loginContext.login();
+                    log.info("Successfully logged in from auto relogin thread");
+                } finally {
+                    writeLock.unlock();
+                }
+            } else {
+                throw new LoginException("Timed out while waiting to acquire a lock for renewing Kerberos TGT");
+            }
+        } catch (InterruptedException e) {
+            throw new LoginException("Error while acquiring lock for renewing Kerberos TGT : " + e.getMessage());
+        }
     }
-
-
 }

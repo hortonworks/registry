@@ -20,6 +20,10 @@
       "type": "string"
     },
     {
+      "name": "text",
+      "type": "string"
+    },
+    {
       "name": "business_id",
       "type": "string"
     },

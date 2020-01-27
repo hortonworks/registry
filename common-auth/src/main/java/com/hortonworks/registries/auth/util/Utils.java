@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Hortonworks.
+ * Copyright 2017-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,5 +75,22 @@ public class Utils {
             }
         }
         return isBrowser;
+    }
+
+    /**
+     * Checks if the given CharSequence has any blank space.
+     */
+    public static boolean isBlank(CharSequence cs) {
+        if (cs == null || cs.length() == 0) {
+            return true;
+        }
+
+        int strLen = cs.length();
+        for(int i = 0; i < strLen; ++i) {
+            if (!Character.isWhitespace(cs.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }

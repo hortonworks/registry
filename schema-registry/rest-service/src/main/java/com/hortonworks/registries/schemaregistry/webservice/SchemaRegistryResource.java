@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -525,6 +524,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @FormDataParam("file") final InputStream inputStream,
                                         @ApiParam(value = "Description about the schema version to be uploaded", required = true)
                                         @FormDataParam("description") final String description,
+                                        @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                         @Context UriInfo uriInfo) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
@@ -532,7 +532,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             try {
                 schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, "UTF-8"),
                                                   description);
-                response = addSchemaVersion(schemaBranchName, schemaName, schemaVersion, uriInfo);
+                response = addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck, uriInfo);
             } catch (IOException ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -556,13 +556,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                       String schemaName,
                                      @ApiParam(value = "Details about the schema", required = true)
                                       SchemaVersion schemaVersion,
-
+                                     @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                      @Context UriInfo uriInfo) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
-                SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion);
+                SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
                 response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
@@ -689,6 +689,25 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
 
         return response;
+    }
+
+    @GET
+    @Path("/schemas/versionsByFingerprint/{fingerprint}")
+    @ApiOperation(value = "Get a version of the schema with the given fingerprint",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaVersionByFingerprint(@ApiParam(value = "fingerprint of the schema text", required = true) @PathParam("fingerprint") String fingerprint) {
+        try {
+            final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
+            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        } catch (SchemaNotFoundException e) {
+            LOG.info("No schema version is found with fingerprint : [{}]", fingerprint);
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, fingerprint);
+        } catch (Exception ex) {
+            LOG.error("Encountered error while getting schema version with fingerprint [{}]", fingerprint, ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
     }
 
     @GET
@@ -1104,9 +1123,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionMergeResult.class,
             tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
-    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
+    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId,
+                                       @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck) {
         try {
-            SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId);
+            SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());

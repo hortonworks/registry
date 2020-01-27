@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -97,7 +96,9 @@ public class AvroSchemaRegistryClientTest {
 
     @CustomParameterizedRunner.Parameters
     public static Iterable<SchemaRegistryTestProfileType> profiles() {
-        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT,
+                             SchemaRegistryTestProfileType.SSL,
+                             SchemaRegistryTestProfileType.ONE_WAY_SSL);
     }
 
     @CustomParameterizedRunner.BeforeParam

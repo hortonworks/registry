@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
-import org.codehaus.jackson.node.NullNode;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -171,7 +171,7 @@ public class AvroSchemaResolver implements SchemaResolver {
                 Schema.Field rebuiltField = new Schema.Field(field.name(),
                                                    fieldSchema,
                                                    field.doc(),
-                                                   currentFieldTypeIsUnion ? NullNode.getInstance() : field.defaultValue(),
+                                                   currentFieldTypeIsUnion ? JsonProperties.NULL_VALUE : field.defaultVal(),
                                                    field.order());
                 for (Map.Entry<String, Object> prop : field.getObjectProps().entrySet()) {
                     rebuiltField.addProp(prop.getKey(), prop.getValue());
@@ -185,44 +185,13 @@ public class AvroSchemaResolver implements SchemaResolver {
                 for (String alias : schema.getAliases()) {
                     updatedRootSchema.addAlias(alias);
                 }
-                for (Map.Entry<String, org.codehaus.jackson.JsonNode> nodeEntry : schema.getJsonProps().entrySet()) {
-                    updatedRootSchema.addProp(nodeEntry.getKey(), nodeEntry.getValue());
+                for (Map.Entry<String, Object> prop : schema.getObjectProps().entrySet()) {
+                    updatedRootSchema.addProp(prop.getKey(), prop.getValue());
                 }
             }
         }
 
         return updatedRootSchema;
-    }
-
-    private Schema updateUnionFields(Schema schema) {
-        Schema updatedSchema = schema;
-        List<Schema.Field> fields = schema.getFields();
-        boolean hasUnionType = false;
-        List<Schema.Field> updatedFields = new ArrayList<>(fields.size());
-        for (Schema.Field field : fields) {
-            Schema fieldSchema = field.schema();
-            Schema.Field updatedField = field;
-            // if it is union and first type is null then set default value as null
-            if (fieldSchema.getType() == Schema.Type.UNION &&
-                    fieldSchema.getTypes().get(0).getType() == Schema.Type.NULL) {
-                updatedField = new Schema.Field(field.name(), fieldSchema, field.doc(), NullNode.getInstance(), field.order());
-                hasUnionType = true;
-            }
-            updatedFields.add(updatedField);
-        }
-
-        if (hasUnionType) {
-            updatedSchema = Schema.createRecord(schema.getName(), schema.getDoc(), schema.getNamespace(), schema.isError());
-            updatedSchema.setFields(updatedFields);
-            for (String alias : schema.getAliases()) {
-                updatedSchema.addAlias(alias);
-            }
-            for (Map.Entry<String, org.codehaus.jackson.JsonNode> nodeEntry : schema.getJsonProps().entrySet()) {
-                updatedSchema.addProp(nodeEntry.getKey(), nodeEntry.getValue());
-            }
-        }
-
-        return updatedSchema;
     }
 
     private Map<String, Schema> traverseIncludedSchemaTypes(String schemaText,

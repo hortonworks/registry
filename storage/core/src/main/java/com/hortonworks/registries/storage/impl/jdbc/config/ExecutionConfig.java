@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
+ * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.config;
 
-import com.hortonworks.registries.storage.impl.jdbc.DatabaseType;
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 

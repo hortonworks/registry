@@ -64,7 +64,7 @@ import java.util.*;
  *  used to sign the HTTP cookie.</li>
  * <li>[#PREFIX#.]token.validity: time -in seconds- that the generated token is
  * valid before a new authentication is triggered, default value is
- * <code>3600</code> seconds. This is also used for the rollover interval for
+ * <code>36000</code> seconds. This is also used for the rollover interval for
  * the "random" SignerSecretProvider.</li>
  * <li>[#PREFIX#.]cookie.domain: domain to use for the HTTP cookie that stores the authentication token.</li>
  * <li>[#PREFIX#.]cookie.path: path to use for the HTTP cookie that stores the authentication token.</li>
@@ -212,7 +212,11 @@ public class AuthenticationFilter implements Filter {
             authHandlerClassName = PseudoAuthenticationHandler.class.getName();
         } else if (authHandlerName.toLowerCase(Locale.ENGLISH).equals(
                 KerberosAuthenticationHandler.TYPE)) {
-            authHandlerClassName = KerberosAuthenticationHandler.class.getName();
+            if (Boolean.parseBoolean(config.getProperty(KerberosBasicAuthenticationHandler.LOGIN_ENABLED_CONFIG))) {
+                authHandlerClassName = KerberosBasicAuthenticationHandler.class.getName();
+            } else {
+                authHandlerClassName = KerberosAuthenticationHandler.class.getName();
+            }
         } else {
             authHandlerClassName = authHandlerName;
         }

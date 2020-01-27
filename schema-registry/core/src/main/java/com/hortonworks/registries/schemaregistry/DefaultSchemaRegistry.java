@@ -1,6 +1,5 @@
 /**
- * Copyright 2016 Hortonworks.
- * <p>
+ * Copyright 2016-2019 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -122,7 +121,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                                                           props,
                                                                           schemaMetadataFetcher,
                                                                           schemaBranchCache,
-                haServerNotificationManager);
+                                                                          haServerNotificationManager);
 
         Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig,
                                                                                    schemaVersionLifecycleManager.getSchemaVersionRetriever());
@@ -319,6 +318,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable();
         schemaMetadataStorable.setName(schemaName);
         storageManager.remove(schemaMetadataStorable.getStorableKey());
+
+        SchemaLockStorable schemaLockStorable = new SchemaLockStorable(SchemaMetadataStorable.NAME_SPACE, schemaName);
+        storageManager.remove(schemaLockStorable.getStorableKey());
     }
 
     @Override
@@ -483,34 +485,42 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return queryParams;
     }
 
+    @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata,
-                                            SchemaVersion schemaVersion)
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaMetadata.getName());
-        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x));
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), disableCanonicalCheck);
     }
 
+    @Override
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             SchemaMetadata schemaMetadata,
-                                            SchemaVersion schemaVersion)
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaMetadata.getName());
-        return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x));
+        return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), disableCanonicalCheck);
     }
 
+    @Override
     public SchemaIdVersion addSchemaVersion(String schemaName,
-                                            SchemaVersion schemaVersion)
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaName);
-        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion);
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion, disableCanonicalCheck);
     }
 
+    @Override
     public SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             String schemaName,
-                                            SchemaVersion schemaVersion)
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaName);
-        return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaName, schemaVersion);
+        return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
     }
 
     private void lockSchemaMetadata(String schemaName) {
@@ -534,8 +544,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public SchemaVersionInfo getSchemaVersionInfo(String schemaName,
-                                                  String schemaText) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
-        return schemaVersionLifecycleManager.getSchemaVersionInfo(schemaName, schemaText);
+                                                  String schemaText,
+                                                  boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
+        return schemaVersionLifecycleManager.getSchemaVersionInfo(schemaName, schemaText, disableCanonicalCheck);
     }
 
     @Override
@@ -546,6 +557,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
         return schemaVersionLifecycleManager.getSchemaVersionInfo(schemaVersionKey);
+    }
+
+    @Override
+    public SchemaVersionInfo findSchemaVersionByFingerprint(String fingerprint) throws SchemaNotFoundException {
+        return schemaVersionLifecycleManager.findSchemaVersionInfoByFingerprint(fingerprint);
     }
 
     @Override
@@ -581,11 +597,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
         schemaVersionLifecycleManager.executeState(schemaVersionId, targetStateId, transitionDetails);
-    }
-
-    @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
-        return schemaVersionLifecycleManager.mergeSchemaVersion(schemaVersionId, schemaVersionMergeStrategy);
     }
 
     @Override
@@ -656,8 +667,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
-        return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY));
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
+                                                       boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
+        return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY), disableCanonicalCheck);
     }
 
     public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
@@ -805,7 +817,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-        if(stateIds == null || stateIds.isEmpty())
+        if (stateIds == null || stateIds.isEmpty())
             return getAllVersions(schemaBranchName, schemaName);
         else
             return schemaVersionLifecycleManager.getAllVersions(schemaBranchName, schemaName, stateIds);
@@ -912,6 +924,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                              .map(y -> ((SchemaMetadataStorable) y).toSchemaMetadataInfo())
                              .collect(Collectors.toList());
 
+    }
+
+    @Override
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
+                                                       SchemaVersionMergeStrategy schemaVersionMergeStrategy,
+                                                       boolean disableCanonicalCheck) throws IncompatibleSchemaException, SchemaNotFoundException {
+        return schemaVersionLifecycleManager.mergeSchemaVersion(schemaVersionId, schemaVersionMergeStrategy, disableCanonicalCheck);
     }
 
     public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
