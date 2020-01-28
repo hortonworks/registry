@@ -18,19 +18,43 @@ package com.hortonworks.registries.schemaregistry.retry;
 
 import com.hortonworks.registries.schemaregistry.retry.exception.RetriableException;
 import com.hortonworks.registries.schemaregistry.retry.exception.RetryManagerException;
+import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffRetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeRetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
+import com.hortonworks.registries.util.CustomParameterizedRunner;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FixedTimeRetryPolicyTest {
+@RunWith(CustomParameterizedRunner.class)
+public class RetryManagerTest {
+
+    enum RetryPolicyType {
+        FIXED,
+        EXPONENTIAL_BACKOFF;
+    }
 
     private RetryManager retryManager = new RetryManager();
+    private static RetryPolicyType retryPolicyType;
+
+    @CustomParameterizedRunner.Parameters
+    public static Iterable<RetryPolicyType> profiles() {
+        return Arrays.asList(RetryPolicyType.FIXED, RetryPolicyType.EXPONENTIAL_BACKOFF);
+    }
+
+    @CustomParameterizedRunner.BeforeParam
+    public static void beforeParam(RetryPolicyType retryPolicyTypeFromParameter) throws Exception {
+        retryPolicyType = retryPolicyTypeFromParameter;
+    }
+
+    public RetryManagerTest(RetryPolicyType retryPolicyType) {
+    }
 
     @Test
     public void testForMaxIteration() {
@@ -57,9 +81,8 @@ public class FixedTimeRetryPolicyTest {
 
         retryManager.execute(getRetryContextBuilder(100, 10000, 2000).build(() -> {
             stopTime.set(System.currentTimeMillis());
-            if (stopTime.get() - startTime.get() < 1000) {
+            if ((stopTime.get() - startTime.get()) < 1000) {
                 iteration.incrementAndGet();
-                System.out.println("Time elapsed : " + (stopTime.get() - startTime.get()));
                 throw new RetriableException("");
             } else {
                 return null;
@@ -84,12 +107,26 @@ public class FixedTimeRetryPolicyTest {
     }
 
     private RetryContext.Builder<Void> getRetryContextBuilder(long baseSleepMs, int iteration, long maxSleepMs) {
+        RetryPolicy retryPolicy;
         Map<String, Object> props = new HashMap<>();
-        props.put(FixedTimeRetryPolicy.MAX_SLEEP_TIME_MS, maxSleepMs);
-        props.put(FixedTimeRetryPolicy.SLEEP_TIME_MS, baseSleepMs);
-        props.put(FixedTimeRetryPolicy.MAX_RETRIES, iteration);
+        switch (retryPolicyType) {
+            case FIXED:
+                props.put(RetryPolicy.MAX_SLEEP_TIME_MS, maxSleepMs);
+                props.put(RetryPolicy.SLEEP_TIME_MS, baseSleepMs);
+                props.put(RetryPolicy.MAX_RETRIES, iteration);
+                retryPolicy = new FixedTimeRetryPolicy();
+                break;
+            case EXPONENTIAL_BACKOFF:
+                props.put(RetryPolicy.MAX_SLEEP_TIME_MS, maxSleepMs);
+                props.put(RetryPolicy.SLEEP_TIME_MS, baseSleepMs);
+                props.put(ExponentialBackoffRetryPolicy.EXPONENT, 2F);
+                props.put(RetryPolicy.MAX_RETRIES, iteration);
+                retryPolicy = new ExponentialBackoffRetryPolicy();
+                break;
+            default:
+                throw new RuntimeException("Invalid retry policy type : " + retryPolicyType);
+        }
 
-        RetryPolicy retryPolicy = new FixedTimeRetryPolicy();
         retryPolicy.init(props);
 
         RetryContext.Builder<Void> builder = new RetryContext.Builder<Void>();

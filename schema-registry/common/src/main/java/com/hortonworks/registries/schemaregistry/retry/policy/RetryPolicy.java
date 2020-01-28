@@ -22,9 +22,43 @@ import java.util.Map;
 
 public abstract class RetryPolicy {
 
+    protected Long sleepTimeMs;
+    protected Integer maxRetries;
+    protected Long maxSleepTimeMs;
+
+    public static final String SLEEP_TIME_MS = "sleepTimeMs";
+    public static final String MAX_RETRIES = "maxRetries";
+    public static final String MAX_SLEEP_TIME_MS = "maxSleepTimeMs";
+
+    protected RetryPolicy() {
+
+    }
+
+    protected RetryPolicy(Long sleepTimeMs, Integer maxRetries, Long maxSleepTimeMs) {
+        this.sleepTimeMs = sleepTimeMs;
+        this.maxRetries = maxRetries;
+        this.maxSleepTimeMs = maxSleepTimeMs;
+    }
+
     public abstract void init(Map<String, Object> properties);
 
-    public abstract boolean mayBeSleep(int iteration, long timeElapsed);
+    public boolean mayBeSleep(int iteration, long timeElapsed) {
+        if (iteration > maxRetries) {
+            return false;
+        }
+
+        long sleepTime = sleepTime(iteration, timeElapsed);
+
+        if (sleepTime + timeElapsed > this.maxSleepTimeMs) {
+            return false;
+        }
+
+        sleep(sleepTime);
+
+        return true;
+    }
+
+    abstract long sleepTime(int iteration, long timeElapsed);
 
     protected void sleep(long sleepTimeMs) {
         try {

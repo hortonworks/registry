@@ -16,56 +16,41 @@
 
 package com.hortonworks.registries.schemaregistry.retry.policy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Map;
-import java.util.Random;
 
 public class ExponentialBackoffRetryPolicy extends RetryPolicy {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ExponentialBackoffRetryPolicy.class);
+    public static final String EXPONENT = "exponent";
 
-    public static final String BASE_SLEEP_TIME_MS = "baseSleepTimeMs";
-    public static final String MULTIPLIER = "multiplier";
-    public static final String MAX_RETRIES = "maxRetries";
-    public static final String MAX_SLEEP_TIME_MS = "maxSleepTimeMs";
-
-    private static final long DEFAULT_BASE_SLEEP_TIME_MS = 1000L;
-    private static final float DEFAULT_MULTIPLIER = 2;
+    private static final long DEFAULT_SLEEP_TIME_MS = 1000L;
+    private static final float DEFAULT_EXPONENT = 2;
     private static final int DEFAULT_MAX_RETRIES = 10;
     private static final long DEFAULT_MAX_SLEEP_TIME_MS = 90_000L;
 
-    private Long baseSleepTimeMs;
-    private Float multiplier;
-    private Integer maxRetries;
-    private Long maxSleepTimeMs;
+    private Float exponent;
 
     public ExponentialBackoffRetryPolicy() {
 
     }
 
-    @Override
-    public void init(Map<String, Object> properties) {
-        this.baseSleepTimeMs = (Long) properties.getOrDefault(BASE_SLEEP_TIME_MS, DEFAULT_BASE_SLEEP_TIME_MS);
-        this.maxRetries = (Integer) properties.getOrDefault(MAX_RETRIES, DEFAULT_MAX_RETRIES);
-        this.maxSleepTimeMs = (Long) properties.getOrDefault(MAX_SLEEP_TIME_MS, DEFAULT_MAX_SLEEP_TIME_MS);
-        this.multiplier = (Float) properties.getOrDefault(MULTIPLIER, DEFAULT_MULTIPLIER);
+    public ExponentialBackoffRetryPolicy(Long sleepTimeMs, Float exponent, Integer maxRetries, Long maxSleepTimeMs) {
+        super(sleepTimeMs, maxRetries, maxSleepTimeMs);
+        this.exponent = exponent;
     }
 
     @Override
-    public boolean mayBeSleep(int iteration, long timeElapsed) {
-        if (iteration > maxRetries) {
-            return false;
-        }
+    public void init(Map<String, Object> properties) {
+        this.sleepTimeMs = (Long) properties.getOrDefault(SLEEP_TIME_MS, DEFAULT_SLEEP_TIME_MS);
+        this.maxRetries = (Integer) properties.getOrDefault(MAX_RETRIES, DEFAULT_MAX_RETRIES);
+        this.maxSleepTimeMs = (Long) properties.getOrDefault(MAX_SLEEP_TIME_MS, DEFAULT_MAX_SLEEP_TIME_MS);
+        this.exponent = (Float) properties.getOrDefault(EXPONENT, DEFAULT_EXPONENT);
+    }
 
-        long sleepMs = (long) (this.baseSleepTimeMs * Math.pow(multiplier, iteration));
-        if (sleepMs + timeElapsed > this.maxSleepTimeMs) {
-            return false;
-        }
-
-        sleep(sleepMs);
-
-        return true;
+    @Override
+    @VisibleForTesting
+    long sleepTime(int iteration, long timeElapsed) {
+        return (long) (this.sleepTimeMs * Math.pow(exponent, iteration));
     }
 }

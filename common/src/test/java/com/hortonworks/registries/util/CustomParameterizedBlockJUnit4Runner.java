@@ -219,7 +219,7 @@
  *   This class should be removed once the pull request is available in the future release.
  */
 
-package com.hortonworks.registries.schemaregistry.avro.util;
+package com.hortonworks.registries.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;

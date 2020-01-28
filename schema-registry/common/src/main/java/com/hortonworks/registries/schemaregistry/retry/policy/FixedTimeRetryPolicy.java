@@ -16,26 +16,23 @@
 
 package com.hortonworks.registries.schemaregistry.retry.policy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Map;
 
 public class FixedTimeRetryPolicy extends RetryPolicy {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ExponentialBackoffRetryPolicy.class);
-
-    public static final String SLEEP_TIME_MS = "sleepTimeMs";
-    public static final String MAX_RETRIES = "maxRetries";
-    public static final String MAX_SLEEP_TIME_MS = "maxSleepTimeMs";
-
     private static final long DEFAULT_SLEEP_TIME_MS = 5000L;
     private static final int DEFAULT_MAX_RETRIES = 10;
     private static final long DEFAULT_MAX_SLEEP_TIME_MS = 90_000L;
 
-    private Long sleepTimeMs;
-    private Integer maxRetries;
-    private Long maxSleepTimeMs;
+    public FixedTimeRetryPolicy() {
+
+    }
+
+    public FixedTimeRetryPolicy(Long sleepTimeMs, Integer maxRetries, Long maxSleepTimeMs) {
+        super(sleepTimeMs, maxRetries, maxSleepTimeMs);
+    }
 
     @Override
     public void init(Map<String, Object> properties) {
@@ -45,17 +42,8 @@ public class FixedTimeRetryPolicy extends RetryPolicy {
     }
 
     @Override
-    public boolean mayBeSleep(int iteration, long timeElapsed) {
-        if (iteration > maxRetries) {
-            return false;
-        }
-
-        if (sleepTimeMs + timeElapsed > this.maxSleepTimeMs) {
-            return false;
-        }
-
-        sleep(sleepTimeMs);
-
-        return true;
+    @VisibleForTesting
+    long sleepTime(int iteration, long timeElapsed) {
+        return sleepTimeMs;
     }
 }
