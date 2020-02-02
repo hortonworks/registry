@@ -51,6 +51,11 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExist
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryRetryableException;
+import com.hortonworks.registries.schemaregistry.retry.RetryContextWithReturnType;
+import com.hortonworks.registries.schemaregistry.retry.RetryManager;
+import com.hortonworks.registries.schemaregistry.retry.exception.RetriableException;
+import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffRetryPolicy;
+import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -80,6 +85,7 @@ import javax.net.ssl.SSLContext;
 import javax.security.auth.login.LoginException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -181,11 +187,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SSL_CONFIGURATION_KEY = "schema.registry.client.ssl";
     private static final String HOSTNAME_VERIFIER_CLASS_KEY = "hostnameVerifierClass";
 
+    private static final String CLIENT_RETRY_STRATEGY_KEY = "schema.registry.client.retry.strategy";
+    private static final String RETRY_STRATEGY_CLASS_NAME_KEY = "className";
+    private static final String RETRY_STRATEGY_CONFIG_KEY = "config";
+
+    private static final RetryManager RETRY_MANAGER = new RetryManager();
+    private static final String DEFAULT_RETRY_STRATEGY_CLASS = ExponentialBackoffRetryPolicy.class.getCanonicalName();
+    private static RetryPolicy retryPolicy;
+
     /**
      * Creates {@link SchemaRegistryClient} instance with the given yaml config.
      *
      * @param confFile config file which contains the configuration entries.
-     *
      * @throws IOException when any IOException occurs while reading the given confFile
      */
     public SchemaRegistryClient(File confFile) throws IOException {
@@ -203,8 +216,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         initializeSecurityContext();
         ClientConfig config = createClientConfig(conf);
         ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
-                                                   .withConfig(config)
-                                                   .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+                .withConfig(config)
+                .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         if (conf.containsKey(SSL_CONFIGURATION_KEY)) {
             Map<String, String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
             clientBuilder.sslContext(createSSLContext(sslConfigurations));
@@ -223,13 +236,26 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         client.register(MultiPartFeature.class);
         String userName = configuration.getValue(Configuration.AUTH_USERNAME.name());
         String password = configuration.getValue(Configuration.AUTH_PASSWORD.name());
-        if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)){
+        if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)) {
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(userName, password);
             client.register(feature);
         }
         // get list of urls and create given or default UrlSelector.
         urlSelector = createUrlSelector();
         urlWithTargets = new ConcurrentHashMap<>();
+
+        String retryPolicyClass = DEFAULT_RETRY_STRATEGY_CLASS;
+        Map<String, Object> retryPolicyProps = new HashMap<>();
+
+        if (conf.containsKey(CLIENT_RETRY_STRATEGY_KEY)) {
+            Map<String, Object> retryStrategyConfigurations = (Map<String, Object>) conf.get(CLIENT_RETRY_STRATEGY_KEY);
+            retryPolicyClass = (String) retryStrategyConfigurations.getOrDefault(RETRY_STRATEGY_CLASS_NAME_KEY, DEFAULT_RETRY_STRATEGY_CLASS);
+            if (conf.containsKey(RETRY_STRATEGY_CONFIG_KEY)) {
+                retryPolicyProps = (Map<String, Object>) conf.get(RETRY_STRATEGY_CONFIG_KEY);
+            }
+        }
+
+        initializeRetryPolicy(retryPolicyClass, retryPolicyProps);
 
         classLoaderCache = new ClassLoaderCache(this);
 
@@ -251,18 +277,34 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
         schemaMetadataCache = new SchemaMetadataCache(((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE
-                                                                                               .name())).longValue(),
-                                                      ((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                               .name())).longValue(),
-                                                      schemaMetadataFetcher);
+                .name())).longValue(),
+                ((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS
+                        .name())).longValue(),
+                schemaMetadataFetcher);
 
         schemaTextCache = CacheBuilder.newBuilder()
-                                      .maximumSize(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE
-                                                                                            .name())).longValue())
-                                      .expireAfterAccess(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                                  .name())).longValue(),
-                                                         TimeUnit.SECONDS)
-                                      .build();
+                .maximumSize(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE
+                        .name())).longValue())
+                .expireAfterAccess(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS
+                                .name())).longValue(),
+                        TimeUnit.SECONDS)
+                .build();
+    }
+
+    private void initializeRetryPolicy(String retryPolicyClass, Map<String, Object> retryPolicyProps) {
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        Class<? extends RetryPolicy> clazz = null;
+        try {
+            clazz = (Class<? extends RetryPolicy>) Class.forName(retryPolicyClass, true, classLoader);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to initialize Retry Policy Class : " + retryPolicyClass, e);
+        }
+        try {
+            retryPolicy = clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to create an instance of Retry Policy Class : " + retryPolicyClass, e);
+        }
+        retryPolicy.init(retryPolicyProps);
     }
 
     protected void initializeSecurityContext() {
@@ -302,11 +344,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         SslConfigurator sslConfigurator = SslConfigurator.newInstance();
         if (sslConfigurations.containsKey(SSL_KEY_STORE_PATH)) {
             sslConfigurator.keyStoreType(sslConfigurations.get("keyStoreType"))
-                           .keyStoreFile(sslConfigurations.get(SSL_KEY_STORE_PATH))
-                           .keyStorePassword(sslConfigurations.get("keyStorePassword"))
-                           .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
-                           .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
-                           .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"));
+                    .keyStoreFile(sslConfigurations.get(SSL_KEY_STORE_PATH))
+                    .keyStorePassword(sslConfigurations.get("keyStorePassword"))
+                    .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
+                    .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
+                    .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"));
             if (sslConfigurations.containsKey(SSL_KEY_PASSWORD)) {
                 sslConfigurator.keyPassword(sslConfigurations.get(SSL_KEY_PASSWORD));
             }
@@ -314,11 +356,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
 
         sslConfigurator.trustStoreType(sslConfigurations.get("trustStoreType"))
-                       .trustStoreFile(sslConfigurations.get("trustStorePath"))
-                       .trustStorePassword(sslConfigurations.get("trustStorePassword"))
-                       .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
-                       .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
-                       .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"));
+                .trustStoreFile(sslConfigurations.get("trustStorePath"))
+                .trustStorePassword(sslConfigurations.get("trustStorePassword"))
+                .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
+                .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
+                .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"));
 
         sslConfigurator.securityProtocol(sslConfigurations.get("protocol"));
 
@@ -367,8 +409,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         } else {
             try {
                 urlSelector = (UrlSelector) Class.forName(urlSelectorClass)
-                                                 .getConstructor(String.class)
-                                                 .newInstance(rootCatalogURL);
+                        .getConstructor(String.class)
+                        .newInstance(rootCatalogURL);
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException
                     | InvocationTargetException e) {
                 throw new RuntimeException(e);
@@ -429,7 +471,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata) {
         SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(SchemaMetadataCache.Key.of(schemaMetadata
-                                                                                                                    .getName()));
+                .getName()));
         if (schemaMetadataInfo == null) {
             return doRegisterSchemaMetadata(schemaMetadata, currentSchemaRegistryTargets().schemasTarget);
         }
@@ -450,10 +492,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private Long doRegisterSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
         try {
             return postEntity(schemasTarget, schemaMetadata, Long.class);
-        } catch(BadRequestException ex) {
+        } catch (BadRequestException ex) {
             Response response = ex.getResponse();
             CatalogResponse catalogResponse = SchemaRegistryClient.readCatalogResponse(response.readEntity(String.class));
-            if(catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ENTITY_CONFLICT.getCode()) {
+            if (catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ENTITY_CONFLICT.getCode()) {
                 return getSchemaMetadataInfo(schemaMetadata.getName()).getId();
             } else {
                 throw ex;
@@ -476,24 +518,25 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
         schemaMetadataCache.invalidateSchemaMetadata(SchemaMetadataCache.Key.of(schemaName));
         if (schemaVersionInfos != null) {
-            for (SchemaVersionInfo schemaVersionInfo: schemaVersionInfos) {
+            for (SchemaVersionInfo schemaVersionInfo : schemaVersionInfos) {
                 SchemaIdVersion schemaIdVersion = new SchemaIdVersion(schemaVersionInfo.getId());
                 schemaVersionInfoCache.invalidateSchema(SchemaVersionInfoCache.Key.of(schemaIdVersion));
             }
         }
 
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s", schemaName));
-        Response response = null;
-        try {
-            response = login.doAction(new PrivilegedAction<Response>() {
-                @Override
-                public Response run() {
-                    return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
-                }
-            });
-        } catch (LoginException e) {
-            throw new RegistryRetryableException(e);
-        }
+        Response response = RETRY_MANAGER.execute(new RetryContextWithReturnType.Builder<Response>().policy(retryPolicy).build(() -> {
+            WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s", schemaName));
+            try {
+                return  login.doAction(new PrivilegedAction<Response>() {
+                    @Override
+                    public Response run() {
+                        return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                    }
+                });
+            } catch (LoginException | ProcessingException e) {
+                throw new RetriableException(e);
+            }
+        }));
 
         int status = response.getStatus();
         if (status == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -550,7 +593,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         StreamDataBodyPart streamDataBodyPart = new StreamDataBodyPart("file", schemaVersionInputStream);
 
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions/upload").queryParam("branch",schemaBranchName);
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions/upload").queryParam("branch", schemaBranchName);
         MultiPart multipartEntity =
                 new FormDataMultiPart()
                         .field("description", description, MediaType.APPLICATION_JSON_TYPE)
@@ -690,7 +733,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Integer version = readEntity(msg, Integer.class);
 
         SchemaVersionInfo schemaVersionInfo = doGetSchemaVersionInfo(new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata()
-                                                                                                            .getName(), version));
+                .getName(), version));
 
         return new SchemaIdVersion(schemaMetadataInfo.getId(), version, schemaVersionInfo.getId());
     }
@@ -736,13 +779,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         if (schemaIdVersion.getSchemaVersionId() != null) {
             LOG.info("Getting schema version from target registry for [{}]", schemaIdVersion.getSchemaVersionId());
             return getEntity(currentSchemaRegistryTargets()
-                                     .schemaVersionsByIdTarget
-                                     .path(schemaIdVersion.getSchemaVersionId().toString()),
-                             SchemaVersionInfo.class);
+                            .schemaVersionsByIdTarget
+                            .path(schemaIdVersion.getSchemaVersionId().toString()),
+                    SchemaVersionInfo.class);
         } else if (schemaIdVersion.getSchemaMetadataId() != null) {
             SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaIdVersion.getSchemaMetadataId());
             SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata()
-                                                                                       .getName(), schemaIdVersion.getVersion());
+                    .getName(), schemaIdVersion.getVersion());
             LOG.info("Getting schema version from target registry for key [{}]", schemaVersionKey);
             return doGetSchemaVersionInfo(schemaVersionKey);
         }
@@ -761,7 +804,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions/latest").queryParam("branch", schemaBranchName);;
+        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions/latest").queryParam("branch", schemaBranchName);
+        ;
         return getEntity(webTarget, SchemaVersionInfo.class);
     }
 
@@ -850,7 +894,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
         return getEntity(currentSchemaRegistryTargets().schemaVersionsStatesMachineTarget,
-                         SchemaVersionLifecycleStateMachineInfo.class);
+                SchemaVersionLifecycleStateMachineInfo.class);
     }
 
     @Override
@@ -1044,7 +1088,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 @Override
                 public String run() {
                     return currentSchemaRegistryTargets().filesTarget.request()
-                                                                     .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
+                            .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
                 }
             });
         } catch (LoginException e) {
@@ -1059,8 +1103,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 @Override
                 public InputStream run() {
                     return currentSchemaRegistryTargets().filesTarget.path("download/" + encode(fileId))
-                                                                     .request()
-                                                                     .get(InputStream.class);
+                            .request()
+                            .get(InputStream.class);
                 }
             });
         } catch (LoginException e) {
@@ -1166,12 +1210,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
             if (classes.isEmpty()) {
                 throw new RuntimeException("Given Serialize/Deserializer " + className + " class does not implement any " +
-                                                   "one of the registered interfaces: " + interfaceClasses);
+                        "one of the registered interfaces: " + interfaceClasses);
             }
 
             Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                                   classes.toArray(new Class[classes.size()]),
-                                   new ClassLoaderAwareInvocationHandler(classLoader, t));
+                    classes.toArray(new Class[classes.size()]),
+                    new ClassLoaderAwareInvocationHandler(classLoader, t));
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new SerDesException(e);
         }
@@ -1257,11 +1301,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          */
         public static final ConfigEntry<String> SCHEMA_REGISTRY_URL =
                 ConfigEntry.mandatory("schema.registry.url",
-                                      String.class,
-                                      "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
-                                      "http://localhost:9090/api/v1",
-                                      ConfigEntry.StringConverter.get(),
-                                      ConfigEntry.NonEmptyStringValidator.get());
+                        String.class,
+                        "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
+                        "http://localhost:9090/api/v1",
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
 
         /**
          * Default path for downloaded jars to be stored.
@@ -1273,11 +1317,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          */
         public static final ConfigEntry<String> LOCAL_JAR_PATH =
                 ConfigEntry.optional("schema.registry.client.local.jars.path",
-                                     String.class,
-                                     "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
-                                     DEFAULT_LOCAL_JARS_PATH,
-                                     ConfigEntry.StringConverter.get(),
-                                     ConfigEntry.NonEmptyStringValidator.get());
+                        String.class,
+                        "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
+                        DEFAULT_LOCAL_JARS_PATH,
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
 
         /**
          * Default value for classloader cache size.
@@ -1295,11 +1339,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          */
         public static final ConfigEntry<Number> CLASSLOADER_CACHE_SIZE =
                 ConfigEntry.optional("schema.registry.client.class.loader.cache.size",
-                                     Integer.class,
-                                     "Maximum size of classloader cache",
-                                     DEFAULT_CLASSLOADER_CACHE_SIZE,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Maximum size of classloader cache",
+                        DEFAULT_CLASSLOADER_CACHE_SIZE,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS}
@@ -1307,11 +1351,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          */
         public static final ConfigEntry<Number> CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS =
                 ConfigEntry.optional("schema.registry.client.class.loader.cache.expiry.interval.secs",
-                                     Integer.class,
-                                     "Expiry interval(in seconds) of an entry in classloader cache",
-                                     DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Expiry interval(in seconds) of an entry in classloader cache",
+                        DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         public static final long DEFAULT_SCHEMA_CACHE_SIZE = 1024;
         public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60L;
@@ -1321,44 +1365,44 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          */
         public static final ConfigEntry<Number> SCHEMA_VERSION_CACHE_SIZE =
                 ConfigEntry.optional("schema.registry.client.schema.version.cache.size",
-                                     Integer.class,
-                                     "Maximum size of schema version cache",
-                                     DEFAULT_SCHEMA_CACHE_SIZE,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Maximum size of schema version cache",
+                        DEFAULT_SCHEMA_CACHE_SIZE,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
         public static final ConfigEntry<Number> SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS =
                 ConfigEntry.optional("schema.registry.client.schema.version.cache.expiry.interval.secs",
-                                     Integer.class,
-                                     "Expiry interval(in seconds) of an entry in schema version cache",
-                                     DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Expiry interval(in seconds) of an entry in schema version cache",
+                        DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Maximum size of schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}
          */
         public static final ConfigEntry<Number> SCHEMA_METADATA_CACHE_SIZE =
                 ConfigEntry.optional("schema.registry.client.schema.metadata.cache.size",
-                                     Integer.class,
-                                     "Maximum size of schema metadata cache",
-                                     DEFAULT_SCHEMA_CACHE_SIZE,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Maximum size of schema metadata cache",
+                        DEFAULT_SCHEMA_CACHE_SIZE,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
         public static final ConfigEntry<Number> SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS =
                 ConfigEntry.optional("schema.registry.client.schema.metadata.cache.expiry.interval.secs",
-                                     Integer.class,
-                                     "Expiry interval(in seconds) of an entry in schema metadata cache",
-                                     DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Expiry interval(in seconds) of an entry in schema metadata cache",
+                        DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Maximum size of schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}.
@@ -1366,39 +1410,39 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          */
         public static final ConfigEntry<Number> SCHEMA_TEXT_CACHE_SIZE =
                 ConfigEntry.optional("schema.registry.client.schema.text.cache.size",
-                                     Integer.class,
-                                     "Maximum size of schema text cache",
-                                     DEFAULT_SCHEMA_CACHE_SIZE,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Maximum size of schema text cache",
+                        DEFAULT_SCHEMA_CACHE_SIZE,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          * Expiry interval(in seconds) of an entry in schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
         public static final ConfigEntry<Number> SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS =
                 ConfigEntry.optional("schema.registry.client.schema.text.cache.expiry.interval.secs",
-                                     Integer.class,
-                                     "Expiry interval(in seconds) of an entry in schema text cache.",
-                                     DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
-                                     ConfigEntry.IntegerConverter.get(),
-                                     ConfigEntry.PositiveNumberValidator.get());
+                        Integer.class,
+                        "Expiry interval(in seconds) of an entry in schema text cache.",
+                        DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
+                        ConfigEntry.IntegerConverter.get(),
+                        ConfigEntry.PositiveNumberValidator.get());
 
         /**
          *
          */
         public static final ConfigEntry<String> URL_SELECTOR_CLASS =
                 ConfigEntry.optional("schema.registry.client.url.selector",
-                                     String.class,
-                                     "Schema Registry URL selector class.",
-                                     FailoverUrlSelector.class.getName(),
-                                     ConfigEntry.StringConverter.get(),
-                                     ConfigEntry.NonEmptyStringValidator.get());
+                        String.class,
+                        "Schema Registry URL selector class.",
+                        FailoverUrlSelector.class.getName(),
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
 
         /**
          *
          */
         public static final ConfigEntry<String> SASL_JAAS_CONFIG =
-                ConfigEntry.optional( "sasl.jaas.config",
+                ConfigEntry.optional("sasl.jaas.config",
                         String.class,
                         "Schema Registry Dynamic JAAS config for SASL connection.",
                         null,
@@ -1489,7 +1533,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         public <T> T getValue(String propertyKey) {
             return (T) (config.containsKey(propertyKey) ? config.get(propertyKey)
-                                                        : options.get(propertyKey).defaultValue());
+                    : options.get(propertyKey).defaultValue());
         }
 
         public Map<String, Object> getConfig() {

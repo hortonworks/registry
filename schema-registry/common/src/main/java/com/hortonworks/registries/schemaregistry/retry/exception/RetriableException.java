@@ -21,4 +21,8 @@ public class RetriableException extends RuntimeException {
     public RetriableException(String message) {
         super(message);
     }
+
+    public RetriableException(Exception e) {
+        super(e);
+    }
 }

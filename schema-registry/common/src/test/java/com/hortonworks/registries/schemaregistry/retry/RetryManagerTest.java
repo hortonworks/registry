@@ -106,7 +106,7 @@ public class RetryManagerTest {
         }));
     }
 
-    private RetryContext.Builder<Void> getRetryContextBuilder(long baseSleepMs, int iteration, long maxSleepMs) {
+    private RetryContextWithReturnType.Builder<Void> getRetryContextBuilder(long baseSleepMs, int iteration, long maxSleepMs) {
         RetryPolicy retryPolicy;
         Map<String, Object> props = new HashMap<>();
         switch (retryPolicyType) {
@@ -129,7 +129,7 @@ public class RetryManagerTest {
 
         retryPolicy.init(props);
 
-        RetryContext.Builder<Void> builder = new RetryContext.Builder<Void>();
+        RetryContextWithReturnType.Builder<Void> builder = new RetryContextWithReturnType.Builder<Void>();
         return builder.policy(retryPolicy);
     }
 }
