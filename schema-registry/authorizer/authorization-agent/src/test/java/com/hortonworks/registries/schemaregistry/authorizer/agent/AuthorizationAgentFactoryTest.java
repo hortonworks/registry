@@ -15,7 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
-import com.hortonworks.registries.schemaregistry.authorizer.agent.util.FakeAuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizationAgent;
 import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,16 +29,16 @@ public class AuthorizationAgentFactoryTest {
 
         Map<String, Object> props = null;
         AuthorizationAgent authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(props);
-        assertTrue(authorizationAgent instanceof DummyAuthorizationAgent);
+        assertTrue(authorizationAgent instanceof NOOPAuthorizationAgent);
 
         Map<String, Object> props1 = new HashMap<>();
         AuthorizationAgent authorizationAgent1 = AuthorizationAgentFactory.getAuthorizationAgent(props1);
-        assertTrue(authorizationAgent1 instanceof DummyAuthorizationAgent);
+        assertTrue(authorizationAgent1 instanceof NOOPAuthorizationAgent);
 
         Map<String, Object> props2 = new HashMap<>();
-        props2.put("authorizationAgentClassName", DummyAuthorizationAgent.class.getCanonicalName());
+        props2.put("authorizationAgentClassName", NOOPAuthorizationAgent.class.getCanonicalName());
         AuthorizationAgent authorizationAgent2 = AuthorizationAgentFactory.getAuthorizationAgent(props2);
-        assertTrue(authorizationAgent2 instanceof DummyAuthorizationAgent);
+        assertTrue(authorizationAgent2 instanceof NOOPAuthorizationAgent);
 
         Map<String, Object> props3 = new HashMap<>();
         props3.put("authorizationAgentClassName", DefaultAuthorizationAgent.class.getCanonicalName());
@@ -46,9 +46,9 @@ public class AuthorizationAgentFactoryTest {
         assertTrue(authorizationAgent3 instanceof DefaultAuthorizationAgent);
 
         Map<String, Object> props4 = new HashMap<>();
-        props4.put("authorizationAgentClassName", FakeAuthorizationAgent.class.getCanonicalName());
+        props4.put("authorizationAgentClassName", TestAuthorizationAgent.class.getCanonicalName());
         AuthorizationAgent authorizationAgent4 = AuthorizationAgentFactory.getAuthorizationAgent(props4);
-        assertTrue(authorizationAgent4 instanceof FakeAuthorizationAgent);
+        assertTrue(authorizationAgent4 instanceof TestAuthorizationAgent);
 
     }
 }

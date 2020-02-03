@@ -15,7 +15,6 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
-import com.hortonworks.registries.schemaregistry.authorizer.AuthorizerFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
@@ -26,8 +25,8 @@ public class AuthorizationAgentFactory {
                 || props.size() == 0
                 || !props.containsKey("authorizationAgentClassName")
                 || props.get("authorizationAgentClassName")
-                .equals(DummyAuthorizationAgent.class.getCanonicalName())) {
-            return new DummyAuthorizationAgent();
+                .equals(NOOPAuthorizationAgent.class.getCanonicalName())) {
+            return new NOOPAuthorizationAgent();
         }
 
         String cName = (String) props.get("authorizationAgentClassName");

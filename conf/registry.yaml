@@ -109,7 +109,7 @@ logging:
 # Config for schema registry kerberos principle
 #authenticationMethod:
 #  type: kerberos
-#  serverPrinciple: "schema-registry/vomoshkovskyi-1.gce.cloudera.com@GCE.CLOUDERA.COM"
-#  serverPrincipleKeytab: "/root/schema-registry.keytab"
+#  serverPrinciple: "schema-registry/hostname@GCE.CLOUDERA.COM"
+#  serverPrincipleKeytab: "/tmp/schema-registry.keytab"
 
   

@@ -22,6 +22,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
+/**
+ * This is a factory class that is used to create instance of  {@link Authorizer}.
+ * The default authorizer is {@link RangerSchemaRegistryAuthorizer}. User defined authorizers
+ * are supported.
+ */
 public class AuthorizerFactory {
     public static Authorizer getAuthorizer(Map<String, Object> props) {
 
@@ -34,13 +39,11 @@ public class AuthorizerFactory {
                 .equals(RangerSchemaRegistryAuthorizer.class.getCanonicalName())){
 
             authorizer = new RangerSchemaRegistryAuthorizer();
-            authorizer.configure(props);
         } else {
             try {
                 Class<Authorizer> cl = (Class<Authorizer>) Class.forName((String) props.get("authorizerClassName"));
                 Constructor<Authorizer> constr = cl.getConstructor();
                 authorizer = constr.newInstance();
-                authorizer.configure(props);
             } catch (ClassNotFoundException | InstantiationException
                     | IllegalAccessException | NoSuchMethodException
                     | InvocationTargetException e) {

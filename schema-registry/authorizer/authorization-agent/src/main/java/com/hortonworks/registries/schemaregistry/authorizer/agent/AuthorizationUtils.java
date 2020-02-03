@@ -22,11 +22,16 @@ import org.apache.hadoop.security.UserGroupInformation;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class AuthorizationUtils {
+
+    private static Map<String, Authorizer.UserAndGroups> userGroupsStore = new HashMap<>();
+
     public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 
         Principal p = sc.getUserPrincipal();
@@ -37,11 +42,19 @@ public class AuthorizationUtils {
 
         try {
             String user = kerberosName.getShortName();
-            Set<String> groups = new HashSet<>();
-            List<String> tmp = UserGroupInformation.createRemoteUser(user).getGroups();
-            groups.addAll(tmp);
+            Authorizer.UserAndGroups res = userGroupsStore.get(user);
+            if(res != null) {
+                return res;
+            }
+            List<String> groupsList = UserGroupInformation.createRemoteUser(user).getGroups();
+            Set<String> groupsSet = new HashSet<>();
+            groupsSet.addAll(groupsList);
 
-            return new Authorizer.UserAndGroups(user,groups);
+            res = new Authorizer.UserAndGroups(user, groupsSet);
+
+            userGroupsStore.put(user, res);
+
+            return res;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -140,7 +140,7 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/target/authorizer-0.8.1-SNAPSHOT/authorizer-0.8.1-SNAPSHOT</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/target/authorizer-${project.version}/authorizer-${project.version}</directory>
             <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
             <includes>
                 <include>*jar</include>

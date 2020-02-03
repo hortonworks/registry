@@ -27,7 +27,6 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 
-import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 import java.util.Map;
 
@@ -36,9 +35,9 @@ public interface AuthorizationAgent {
     void configure(Map<String, Object> props);
 
 
-    Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
-            (Authorizer.UserAndGroups userAndGroups,
-             Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) throws SchemaNotFoundException;
+    Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList(Authorizer.UserAndGroups userAndGroups,
+                                                                              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList)
+            throws SchemaNotFoundException;
 
 
     void authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
@@ -47,13 +46,13 @@ public interface AuthorizationAgent {
 
 
     Collection<SchemaMetadataInfo> authorizeFindSchemas(Authorizer.UserAndGroups userAndGroups,
-                                                        Collection<SchemaMetadataInfo> schemas) throws SchemaNotFoundException;
+                                                        Collection<SchemaMetadataInfo> schemas)
+            throws SchemaNotFoundException;
 
 
-    Collection<SchemaVersionKey> authorizeFindSchemasByFields
-            (Authorizer.UserAndGroups userAndGroups,
-             ISchemaRegistry schemaRegistry,
-             Collection<SchemaVersionKey> versions)
+    Collection<SchemaVersionKey> authorizeFindSchemasByFields(Authorizer.UserAndGroups userAndGroups,
+                                                              ISchemaRegistry schemaRegistry,
+                                                              Collection<SchemaVersionKey> versions)
             throws SchemaNotFoundException;
 
 
@@ -63,15 +62,20 @@ public interface AuthorizationAgent {
             throws AuthorizationException, SchemaNotFoundException;
 
 
-    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups, SchemaMetadata schemaMetadata,
-                                 Authorizer.AccessType accessType) throws AuthorizationException;
+    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
+                                 SchemaMetadata schemaMetadata,
+                                 Authorizer.AccessType accessType)
+            throws AuthorizationException;
 
-    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups, SchemaMetadataInfo schemaMetadataInfo,
+    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
+                                 SchemaMetadataInfo schemaMetadataInfo,
                                  Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
 
-    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups, ISchemaRegistry schemaRegistry,
-                                 String schemaMetadataName, Authorizer.AccessType accessType)
+    void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
+                                 ISchemaRegistry schemaRegistry,
+                                 String schemaMetadataName,
+                                 Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
 
 
@@ -139,22 +143,26 @@ public interface AuthorizationAgent {
 
 
     void authorizeSerDes(Authorizer.UserAndGroups userAndGroups,
-                         Authorizer.AccessType accessType) throws AuthorizationException;
+                         Authorizer.AccessType accessType)
+            throws AuthorizationException;
 
 
     void authorizeGetSerializers(Authorizer.UserAndGroups userAndGroups,
-                                 SchemaMetadataInfo schemaMetadataInfo) throws AuthorizationException;
+                                 SchemaMetadataInfo schemaMetadataInfo)
+            throws AuthorizationException;
 
 
     void authorizeMapSchemaWithSerDes(Authorizer.UserAndGroups userAndGroups,
                                       ISchemaRegistry schemaRegistry,
-                                      String schemaMetadataName) throws AuthorizationException, SchemaNotFoundException;
+                                      String schemaMetadataName)
+            throws AuthorizationException, SchemaNotFoundException;
 
 
     ///////////////// ConfluentCompatible APIs //////////////////////////////
 
     Collection<SchemaVersionInfo> authorizeGetAllVersions(Authorizer.UserAndGroups userAndGroups,
                                                           ISchemaRegistry schemaRegistry,
-                                                          Collection<SchemaVersionInfo> versions) throws SchemaNotFoundException;
+                                                          Collection<SchemaVersionInfo> versions)
+            throws SchemaNotFoundException;
 
 }

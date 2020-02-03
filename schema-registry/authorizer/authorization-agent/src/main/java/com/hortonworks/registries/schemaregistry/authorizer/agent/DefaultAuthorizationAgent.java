@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -30,6 +31,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 
 import org.apache.hadoop.security.authorize.AuthorizationException;
@@ -492,8 +494,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     }
 
     private String getPrimaryBranch(Collection<SchemaBranch> branches) {
-        return branches.stream().min((b1, b2) -> b1.getId() < b2.getId() ? -1 :
-                b1.getId() > b2.getId() ? 1 : 0).get().getName();
+        return branches.stream().min(Comparator.comparing(SchemaBranch::getId)).get().getName();
     }
 
     private void raiseAuthorizationExceptionIfNeeded(boolean isAuthorized,
@@ -508,6 +509,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     }
 
     /// This method is needed only for the unit tests
+    @VisibleForTesting
     Authorizer getAuthorizer() {
         return authorizer;
     }
