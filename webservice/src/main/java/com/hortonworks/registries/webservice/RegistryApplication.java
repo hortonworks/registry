@@ -101,7 +101,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 haServerNotificationManager.setHomeNodeURL(serverURL);
 
                 try {
-                    transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+                    transactionManager.beginTransaction(TransactionIsolation.READ_COMMITTED);
                     HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
                     if (hostConfigStorable == null) {
                         storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,

@@ -46,7 +46,7 @@ public class RefreshHAServerListTask extends TimerTask {
     @Override
     public void run() {
         try {
-            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+            transactionManager.beginTransaction(TransactionIsolation.READ_COMMITTED);
             Collection<HostConfigStorable> hostConfigStorables = storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE);
             List<HostConfigStorable> hostConfigWithoutStaleEntries = hostConfigStorables.stream().filter(hostConfigStorable -> {
                 if( (System.currentTimeMillis() - hostConfigStorable.getTimestamp()) > 600000) {
