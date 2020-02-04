@@ -17,28 +17,28 @@
 package com.hortonworks.registries.schemaregistry.retry;
 
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
-import com.hortonworks.registries.schemaregistry.retry.request.RequestWithReturnType;
+import com.hortonworks.registries.schemaregistry.retry.request.Request;
 
 import java.util.Objects;
 
-public class RetryContextWithReturnType<T> {
+public class RetryContext<T> {
 
     private RetryPolicy policy;
 
-    private RequestWithReturnType<T> request;
+    private Request<T> request;
 
     public static class Builder<T> {
 
-        private RetryContextWithReturnType<T> retryContextWithReturnType = new RetryContextWithReturnType<T>();
+        private RetryContext<T> retryContext = new RetryContext<T>();
 
         public Builder<T> policy(RetryPolicy policy) {
-            retryContextWithReturnType.policy = policy;
+            retryContext.policy = policy;
             return this;
         }
 
-        public RetryContextWithReturnType<T> build(RequestWithReturnType<T> request) {
-            retryContextWithReturnType.request = request;
-            return retryContextWithReturnType;
+        public RetryContext<T> build(Request<T> request) {
+            retryContext.request = request;
+            return retryContext;
         }
     }
 
@@ -46,7 +46,7 @@ public class RetryContextWithReturnType<T> {
         return policy;
     }
 
-    public RequestWithReturnType<T> request() {
+    public Request<T> request() {
         return request;
     }
 
@@ -58,7 +58,7 @@ public class RetryContextWithReturnType<T> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RetryContextWithReturnType<?> that = (RetryContextWithReturnType<?>) o;
+        RetryContext<?> that = (RetryContext<?>) o;
         return Objects.equals(policy, that.policy) &&
                 Objects.equals(request, that.request);
     }
@@ -70,7 +70,7 @@ public class RetryContextWithReturnType<T> {
 
     @Override
     public String toString() {
-        return "RetryContextWithReturnType{" +
+        return "RetryContext{" +
                 "policy=" + policy +
                 ", request=" + request +
                 '}';

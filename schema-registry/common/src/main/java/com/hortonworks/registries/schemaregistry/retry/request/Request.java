@@ -17,6 +17,6 @@
 package com.hortonworks.registries.schemaregistry.retry.request;
 
 @FunctionalInterface
-public interface RequestWithReturnType<T> {
+public interface Request<T> {
     T run();
 }
