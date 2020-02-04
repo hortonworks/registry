@@ -30,6 +30,11 @@ import org.apache.hadoop.security.authorize.AuthorizationException;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * This is the main authorization interface that is implemented by {@link NOOPAuthorizationAgent}
+ * and {@link DefaultAuthorizationAgent} to provide authorization logic that doesn't depend on authorizaer type.
+ * The user can define its own authorization semantic by implementing {@link AuthorizationAgent} interface.
+ */
 public interface AuthorizationAgent {
 
     void configure(Map<String, Object> props);

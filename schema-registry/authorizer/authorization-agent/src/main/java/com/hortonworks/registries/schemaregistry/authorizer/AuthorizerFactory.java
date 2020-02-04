@@ -26,6 +26,7 @@ import java.util.Map;
  * This is a factory class that is used to create instance of  {@link Authorizer}.
  * The default authorizer is {@link RangerSchemaRegistryAuthorizer}. User defined authorizers
  * are supported.
+ * The exact type of authorizer is configured by 'authorizerClassName' property.
  */
 public class AuthorizerFactory {
     public static Authorizer getAuthorizer(Map<String, Object> props) {

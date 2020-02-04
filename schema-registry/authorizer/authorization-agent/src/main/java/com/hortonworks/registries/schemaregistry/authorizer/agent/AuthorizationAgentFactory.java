@@ -19,6 +19,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
+/**
+ * This is a factory class that is used to create an instance of  {@link AuthorizationAgent}.
+ * The default authorizationAgent is {@link NOOPAuthorizationAgent}. So, authorization is off
+ * by default.
+ * User defined authorization agents are supported.
+ * The exact type of authorization agent is configured by 'authorizationAgentClassName' property.
+ */
 public class AuthorizationAgentFactory {
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
         if(props == null
