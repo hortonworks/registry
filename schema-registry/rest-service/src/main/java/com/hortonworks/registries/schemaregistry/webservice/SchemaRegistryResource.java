@@ -946,6 +946,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @POST
+    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("/files")
     @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
