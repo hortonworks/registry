@@ -42,15 +42,26 @@ public class ExponentialBackoffRetryPolicy extends RetryPolicy {
 
     @Override
     public void init(Map<String, Object> properties) {
-        this.sleepTimeMs = (Long) properties.getOrDefault(SLEEP_TIME_MS, DEFAULT_SLEEP_TIME_MS);
-        this.maxRetries = (Integer) properties.getOrDefault(MAX_RETRIES, DEFAULT_MAX_RETRIES);
-        this.maxSleepTimeMs = (Long) properties.getOrDefault(MAX_SLEEP_TIME_MS, DEFAULT_MAX_SLEEP_TIME_MS);
-        this.exponent = (Float) properties.getOrDefault(EXPONENT, DEFAULT_EXPONENT);
+
+        this.sleepTimeMs = Long.valueOf(properties.getOrDefault(SLEEP_TIME_MS, DEFAULT_SLEEP_TIME_MS).toString());
+        this.maxRetries = Integer.valueOf(properties.getOrDefault(MAX_RETRIES, DEFAULT_MAX_RETRIES).toString());
+        this.maxSleepTimeMs = Long.valueOf(properties.getOrDefault(MAX_SLEEP_TIME_MS, DEFAULT_MAX_SLEEP_TIME_MS).toString());
+        this.exponent = Float.valueOf(properties.getOrDefault(EXPONENT, DEFAULT_EXPONENT).toString());
     }
 
     @Override
     @VisibleForTesting
     long sleepTime(int iteration, long timeElapsed) {
         return (long) (this.sleepTimeMs * Math.pow(exponent, iteration));
+    }
+
+    @Override
+    public String toString() {
+        return "ExponentialBackoffRetryPolicy{" +
+                "exponent=" + exponent +
+                ", sleepTimeMs=" + sleepTimeMs +
+                ", maxRetries=" + maxRetries +
+                ", maxSleepTimeMs=" + maxSleepTimeMs +
+                '}';
     }
 }

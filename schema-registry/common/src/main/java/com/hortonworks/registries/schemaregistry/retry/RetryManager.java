@@ -16,46 +16,23 @@
 
 package com.hortonworks.registries.schemaregistry.retry;
 
-import com.hortonworks.registries.schemaregistry.retry.exception.RetriableException;
-import com.hortonworks.registries.schemaregistry.retry.exception.RetryManagerException;
+import com.hortonworks.registries.schemaregistry.retry.exception.RetryableException;
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.request.Request;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RetryManager {
 
-    private ExecutorService executorService;
-
-    public RetryManager() {
-
-    }
-
-    public RetryManager(ExecutorService executorService) {
-        this.executorService = executorService;
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(RetryManager.class);
 
     public <T> T execute(RetryContext<T> retryContext) {
 
-        if (executorService != null) {
-            try {
-                Future<?> ret = executorService.submit(() -> {
-                    executable(retryContext);
-                });
-                return (T) ret.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RetryManagerException(e);
-            }
-        } else {
-            return executable(retryContext);
-        }
-    }
-
-    private <T> T executable(RetryContext<T> retryContext) {
         Request<T> request = retryContext.request();
         RetryPolicy policy = retryContext.policy();
+        RetryableException retryableException = null;
+
+        System.out.println("Policy : "+policy);
 
         int iteration = 0;
         long startTime = System.currentTimeMillis();
@@ -64,13 +41,17 @@ public class RetryManager {
             try {
                 return request.run();
             } catch (Exception e) {
-                if (!(e instanceof RetriableException)) {
+                if (!(e instanceof RetryableException)) {
                     throw e;
+                } else {
+                    retryableException = (RetryableException) e;
                 }
             }
         } while (policy.mayBeSleep(++iteration, System.currentTimeMillis() - startTime));
 
-        throw new RetryManagerException("Reached the limit of retries for the request after iteration : " +
+        LOG.debug("Reached the limit of retries for the request after iteration : " +
                 iteration + " and elapsed time : " + (System.currentTimeMillis() - startTime));
+
+        throw retryableException.getUnderlyingException();
     }
 }

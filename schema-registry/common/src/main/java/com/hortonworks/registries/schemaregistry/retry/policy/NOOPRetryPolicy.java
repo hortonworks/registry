@@ -33,4 +33,13 @@ public class NOOPRetryPolicy extends RetryPolicy {
     long sleepTime(int iteration, long timeElapsed) {
         return 0;
     }
+
+    @Override
+    public String toString() {
+        return "NOOPRetryPolicy{" +
+                "sleepTimeMs=" + sleepTimeMs +
+                ", maxRetries=" + maxRetries +
+                ", maxSleepTimeMs=" + maxSleepTimeMs +
+                '}';
+    }
 }

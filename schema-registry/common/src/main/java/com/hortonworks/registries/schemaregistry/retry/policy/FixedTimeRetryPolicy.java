@@ -36,14 +36,23 @@ public class FixedTimeRetryPolicy extends RetryPolicy {
 
     @Override
     public void init(Map<String, Object> properties) {
-        this.sleepTimeMs = (Long) properties.getOrDefault(SLEEP_TIME_MS, DEFAULT_SLEEP_TIME_MS);
-        this.maxRetries = (Integer) properties.getOrDefault(MAX_RETRIES, DEFAULT_MAX_RETRIES);
-        this.maxSleepTimeMs = (Long) properties.getOrDefault(MAX_SLEEP_TIME_MS, DEFAULT_MAX_SLEEP_TIME_MS);
+        this.sleepTimeMs = Long.valueOf(properties.getOrDefault(SLEEP_TIME_MS, DEFAULT_SLEEP_TIME_MS).toString());
+        this.maxRetries = Integer.valueOf(properties.getOrDefault(MAX_RETRIES, DEFAULT_MAX_RETRIES).toString());
+        this.maxSleepTimeMs = Long.valueOf(properties.getOrDefault(MAX_SLEEP_TIME_MS, DEFAULT_MAX_SLEEP_TIME_MS).toString());
     }
 
     @Override
     @VisibleForTesting
     long sleepTime(int iteration, long timeElapsed) {
         return sleepTimeMs;
+    }
+
+    @Override
+    public String toString() {
+        return "FixedTimeRetryPolicy{" +
+                "sleepTimeMs=" + sleepTimeMs +
+                ", maxRetries=" + maxRetries +
+                ", maxSleepTimeMs=" + maxSleepTimeMs +
+                '}';
     }
 }

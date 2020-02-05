@@ -16,13 +16,15 @@
 
 package com.hortonworks.registries.schemaregistry.retry.exception;
 
-public class RetryManagerException extends RuntimeException {
+public class RetryableException extends RuntimeException {
 
-    public RetryManagerException(String message) {
-        super(message);
+    private RuntimeException underlyingException;
+
+    public RetryableException(RuntimeException e) {
+        underlyingException = e;
     }
 
-    public RetryManagerException(Exception e) {
-        super(e);
+    public RuntimeException getUnderlyingException() {
+        return underlyingException;
     }
 }

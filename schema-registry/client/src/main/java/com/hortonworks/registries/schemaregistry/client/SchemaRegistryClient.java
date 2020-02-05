@@ -53,11 +53,9 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryRetryableException;
 import com.hortonworks.registries.schemaregistry.retry.RetryContext;
 import com.hortonworks.registries.schemaregistry.retry.RetryManager;
-import com.hortonworks.registries.schemaregistry.retry.exception.RetriableException;
-import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffRetryPolicy;
+import com.hortonworks.registries.schemaregistry.retry.exception.RetryableException;
 import com.hortonworks.registries.schemaregistry.retry.policy.NOOPRetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
-import com.hortonworks.registries.schemaregistry.retry.request.Request;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -252,8 +250,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         if (conf.containsKey(CLIENT_RETRY_STRATEGY_KEY)) {
             Map<String, Object> retryStrategyConfigurations = (Map<String, Object>) conf.get(CLIENT_RETRY_STRATEGY_KEY);
             retryPolicyClass = (String) retryStrategyConfigurations.getOrDefault(RETRY_STRATEGY_CLASS_NAME_KEY, DEFAULT_RETRY_STRATEGY_CLASS);
-            if (conf.containsKey(RETRY_STRATEGY_CONFIG_KEY)) {
-                retryPolicyProps = (Map<String, Object>) conf.get(RETRY_STRATEGY_CONFIG_KEY);
+            if (retryStrategyConfigurations.containsKey(RETRY_STRATEGY_CONFIG_KEY)) {
+                retryPolicyProps = (Map<String, Object>) retryStrategyConfigurations.get(RETRY_STRATEGY_CONFIG_KEY);
             }
         }
 
@@ -538,7 +536,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -617,7 +615,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -687,7 +685,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -727,7 +725,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -890,7 +888,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -935,7 +933,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -968,7 +966,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -998,7 +996,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1037,7 +1035,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1100,7 +1098,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1147,7 +1145,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                             });
                         } catch (LoginException | ProcessingException e) {
                             urlSelector.urlWithError(currentSchemaRegistryTargets().rootTarget.getUri().toString(), e);
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1169,7 +1167,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                             });
                         } catch (LoginException | ProcessingException e) {
                             urlSelector.urlWithError(currentSchemaRegistryTargets().rootTarget.getUri().toString(), e);
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1298,7 +1296,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1333,7 +1331,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1362,7 +1360,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                 }
                             });
                         } catch (LoginException | ProcessingException e) {
-                            throw new RetriableException(e);
+                            throw new RetryableException(new RegistryRetryableException(e));
                         }
                     });
                 }));
@@ -1372,19 +1370,19 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private <T> T runWithFailoverContext(RetryBody<T> retryBody) {
         WebTarget initialWebTarget = null;
-        RetriableException retriableException = null;
+        RetryableException retryableException = null;
         while (true) {
             SchemaRegistryClient.SchemaRegistryTargets targets = currentSchemaRegistryTargets();
             if (initialWebTarget == null) {
                 initialWebTarget = targets.rootTarget;
             } else if (initialWebTarget.equals(targets.rootTarget)) {
-                throw retriableException;
+                throw retryableException;
             }
             try {
                 return retryBody.run(targets);
-            } catch (RetriableException e) {
+            } catch (RetryableException e) {
                 urlSelector.urlWithError(currentSchemaRegistryTargets().rootTarget.getUri().toString(), e);
-                retriableException = e;
+                retryableException = e;
             }
         }
     }
@@ -1675,6 +1673,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private interface RetryBody<T> {
-        T run(SchemaRegistryTargets targets) throws RetriableException;
+        T run(SchemaRegistryTargets targets) throws RetryableException;
     }
 }
