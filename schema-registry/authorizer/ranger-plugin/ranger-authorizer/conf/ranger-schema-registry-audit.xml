@@ -53,7 +53,7 @@
 
 	<property>
 		<name>xasecure.audit.destination.hdfs.dir</name>
-		<value>hdfs://c7401:8020/ranger/audit</value>
+		<value>hdfs://hostname:8020/ranger/audit</value>
 	</property>	
 	
 	<property>

@@ -48,9 +48,6 @@ import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
 
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.SecurityContext;
@@ -68,8 +65,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(BlockJUnit4ClassRunner.class)
-@Category(IntegrationTest.class)
 public class DefaultAuthorizationAgentTest {
 
 
@@ -100,7 +95,6 @@ public class DefaultAuthorizationAgentTest {
                 new SchemaLockManager(new NOOPTransactionManager()));
         schemaRegistry.init(Collections.<String, Object>emptyMap());
 
-
         ///////////////////////////////// SchemaRegistry initialization ////////////////
 
         SchemaMetadata sm3 = new SchemaMetadata
@@ -108,7 +102,7 @@ public class DefaultAuthorizationAgentTest {
                 .schemaGroup("Group3")
                 .type("avro")
                 .build();
-        schemaRegistry.registerSchemaMetadata(sm3);
+        schemaRegistry.addSchemaMetadata(sm3);
 
         SchemaVersion sv3 = new SchemaVersion(SchemaTextStore.SCHEMA_TEXT_3, "dummy");
         siv3 = schemaRegistry.addSchemaVersion("Schema3", sv3);
@@ -124,7 +118,7 @@ public class DefaultAuthorizationAgentTest {
                 .schemaGroup("Group4")
                 .type("avro")
                 .build();
-        schemaRegistry.registerSchemaMetadata(sm4);
+        schemaRegistry.addSchemaMetadata(sm4);
 
         SchemaVersion sv4 = new SchemaVersion(SchemaTextStore.SCHEMA_TEXT_4, "dummy");
         siv4 = schemaRegistry.addSchemaVersion("Schema4", sv4);
@@ -690,7 +684,7 @@ public class DefaultAuthorizationAgentTest {
         authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc3),
                 schemaRegistry,
                 schemaName3,
-                new Long(siv31.getSchemaVersionId()), "Branch4");
+                siv31.getSchemaVersionId(), "Branch4");
 
         ///////////////////////////// Negative cases /////////////////////////////////
 

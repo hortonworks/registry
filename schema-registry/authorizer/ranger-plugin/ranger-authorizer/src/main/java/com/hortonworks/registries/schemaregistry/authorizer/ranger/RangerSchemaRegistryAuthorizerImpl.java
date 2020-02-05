@@ -22,8 +22,6 @@ import org.apache.ranger.plugin.service.RangerBasePlugin;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 
 import java.util.Map;
-import java.util.Set;
-
 
 public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
 

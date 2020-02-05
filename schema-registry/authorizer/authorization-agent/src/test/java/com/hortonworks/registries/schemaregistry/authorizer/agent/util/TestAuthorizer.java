@@ -67,13 +67,6 @@ public class TestAuthorizer implements Authorizer {
         }
     }
 
-    private static boolean hasCommonGroupNames(Set<String> groupSet1, Set<String> groupSet2) {
-        Set<String> intersection = new HashSet<String>(groupSet1);
-        intersection.retainAll(groupSet2);
-
-        return !intersection.isEmpty();
-    }
-
     private static boolean resourcesEqual(Resource a, Resource b) {
         if (a == null || b == null || a.getResourceType() != b.getResourceType()) {
             return false;
