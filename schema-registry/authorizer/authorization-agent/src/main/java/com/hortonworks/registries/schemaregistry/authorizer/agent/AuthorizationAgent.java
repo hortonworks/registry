@@ -45,9 +45,9 @@ public interface AuthorizationAgent {
             throws SchemaNotFoundException;
 
 
-    void authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
-                                          AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
-            throws AuthorizationException;
+    AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
+                                                                  AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
+            throws AuthorizationException, SchemaNotFoundException;
 
 
     Collection<SchemaMetadataInfo> authorizeFindSchemas(Authorizer.UserAndGroups userAndGroups,

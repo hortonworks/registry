@@ -65,38 +65,42 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
             throws SchemaNotFoundException {
 
         return removeUnauthorizedAndNullEntities(aggregatedSchemaMetadataInfoList,
-                aggregatedSchemaMetadataInfo -> {
-                    authorizeGetAggregatedSchemaInfo(userAndGroups,
-                            aggregatedSchemaMetadataInfo);
+                aggregatedSchemaMetadataInfo -> authorizeGetAggregatedSchemaInfo(userAndGroups,
+                        aggregatedSchemaMetadataInfo));
 
-                    return aggregatedSchemaMetadataInfo;
-                });
     }
 
 
     @Override
-    public void authorizeGetAggregatedSchemaInfo(UserAndGroups userAndGroups,
-                                                  AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
-            throws AuthorizationException {
+    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(UserAndGroups userAndGroups,
+                                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
+            throws AuthorizationException, SchemaNotFoundException {
         SchemaMetadata sm = aggregatedSchemaMetadataInfo.getSchemaMetadata();
 
         authorizeSchemaMetadata(userAndGroups, sm, AccessType.READ);
 
-        Collection<AggregatedSchemaBranch> branches = aggregatedSchemaMetadataInfo.getSchemaBranches();
-        if (branches != null) {
-            for (AggregatedSchemaBranch branch : branches) {
-                authorizeGetAggregatedBranch(sm, userAndGroups, branch);
-            }
-        }
+        Collection<AggregatedSchemaBranch> filteredBranches =
+                removeUnauthorizedAndNullEntities(aggregatedSchemaMetadataInfo.getSchemaBranches(),
+                        aggregatedBranch -> authorizeGetAggregatedBranch(sm, userAndGroups, aggregatedBranch));
 
         Collection<SerDesInfo> serDesInfos = aggregatedSchemaMetadataInfo.getSerDesInfos();
-        if(serDesInfos != null && !serDesInfos.isEmpty()) {
-            authorizeSerDes(userAndGroups, AccessType.READ);
+
+        if(serDesInfos != null &&
+                !serDesInfos.isEmpty() &&
+                !authorizer.authorize(new Authorizer.SerdeResource(), AccessType.READ, userAndGroups)) {
+            serDesInfos = new ArrayList<>();
         }
+
+        return new AggregatedSchemaMetadataInfo(sm,
+                aggregatedSchemaMetadataInfo.getId(),
+                aggregatedSchemaMetadataInfo.getTimestamp(),
+                filteredBranches,
+                serDesInfos);
     }
 
-    void authorizeGetAggregatedBranch(SchemaMetadata sm, UserAndGroups userAndGroups,
-                                      AggregatedSchemaBranch branch)
+    AggregatedSchemaBranch authorizeGetAggregatedBranch(SchemaMetadata sm,
+                                                        UserAndGroups userAndGroups,
+                                                        AggregatedSchemaBranch branch)
                 throws AuthorizationException {
 
         String sGroup = sm.getSchemaGroup();
@@ -110,6 +114,8 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
         authorize(new Authorizer.SchemaVersionResource(sGroup, sName, bName),
                 AccessType.READ,
                 userAndGroups);
+
+        return branch;
     }
 
     @Override
@@ -469,6 +475,9 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     private <T> Collection<T> removeUnauthorizedAndNullEntities(Collection<T> elems,
                                                                 EntityFilterFunction<T> filterFunc)
             throws SchemaNotFoundException {
+        if(elems == null) {
+            return null;
+        }
         ArrayList<T> res = new ArrayList<>();
         for(T elem : elems) {
             try {

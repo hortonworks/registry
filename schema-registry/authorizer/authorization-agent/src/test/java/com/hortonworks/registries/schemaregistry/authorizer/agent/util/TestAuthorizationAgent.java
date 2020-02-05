@@ -43,7 +43,7 @@ public class TestAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void authorizeGetAggregatedSchemaInfo
+    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo
             (Authorizer.UserAndGroups userAndGroups, 
              AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
         throw new NotImplementedException();

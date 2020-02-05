@@ -76,8 +76,10 @@ public class NOOPAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
-                                                 AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) { }
+    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
+                                                                         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
+        return aggregatedSchemaMetadataInfo;
+    }
 
 
     @Override

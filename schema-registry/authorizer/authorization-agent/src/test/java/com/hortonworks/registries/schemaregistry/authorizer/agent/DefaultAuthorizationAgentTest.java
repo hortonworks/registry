@@ -15,8 +15,6 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
-
-import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;

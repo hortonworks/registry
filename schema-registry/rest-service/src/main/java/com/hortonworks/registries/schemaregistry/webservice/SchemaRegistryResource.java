@@ -191,7 +191,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeGetAggregatedSchemaInfo(AuthorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo);
+                schemaMetadataInfo = authorizationAgent
+                        .authorizeGetAggregatedSchemaInfo(AuthorizationUtils.getUserAndGroups(securityContext),
+                                schemaMetadataInfo);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
