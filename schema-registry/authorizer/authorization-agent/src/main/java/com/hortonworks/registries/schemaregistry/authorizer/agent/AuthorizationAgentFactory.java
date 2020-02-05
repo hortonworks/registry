@@ -28,17 +28,16 @@ import java.util.Map;
  */
 public class AuthorizationAgentFactory {
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
-        if(props == null
-                || props.size() == 0
-                || !props.containsKey("authorizationAgentClassName")
-                || props.get("authorizationAgentClassName")
-                .equals(NOOPAuthorizationAgent.class.getCanonicalName())) {
-            return new NOOPAuthorizationAgent();
+
+        String authorizationAgentClassName;
+        if(props == null || !props.containsKey("authorizationAgentClassName")) {
+            authorizationAgentClassName = NOOPAuthorizationAgent.class.getCanonicalName();
+        } else {
+            authorizationAgentClassName = (String) props.get("authorizationAgentClassName");
         }
 
-        String cName = (String) props.get("authorizationAgentClassName");
         try {
-            Class<AuthorizationAgent> cl = (Class<AuthorizationAgent>) Class.forName(cName);
+            Class<AuthorizationAgent> cl = (Class<AuthorizationAgent>) Class.forName(authorizationAgentClassName);
             Constructor<AuthorizationAgent> constr = cl.getConstructor();
             AuthorizationAgent agent = constr.newInstance();
             agent.configure(props);

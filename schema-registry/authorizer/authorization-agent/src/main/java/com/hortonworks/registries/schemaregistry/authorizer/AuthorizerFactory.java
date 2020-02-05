@@ -31,28 +31,26 @@ import java.util.Map;
 public class AuthorizerFactory {
     public static Authorizer getAuthorizer(Map<String, Object> props) {
 
-        Authorizer authorizer;
+        String authorizerClassName;
         // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer
         // is used by default
-        if(props == null
-                || !props.containsKey("authorizerClassName")
-                || props.get("authorizerClassName")
-                .equals(RangerSchemaRegistryAuthorizer.class.getCanonicalName())){
-
-            authorizer = new RangerSchemaRegistryAuthorizer();
+        if(props == null || !props.containsKey("authorizerClassName")){
+            authorizerClassName = RangerSchemaRegistryAuthorizer.class.getCanonicalName();
         } else {
-            try {
-                Class<Authorizer> cl = (Class<Authorizer>) Class.forName((String) props.get("authorizerClassName"));
-                Constructor<Authorizer> constr = cl.getConstructor();
-                authorizer = constr.newInstance();
-            } catch (ClassNotFoundException | InstantiationException
-                    | IllegalAccessException | NoSuchMethodException
-                    | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
+            authorizerClassName = (String) props.get("authorizerClassName");
         }
-        authorizer.configure(props);
 
-        return authorizer;
+        try {
+            Class<Authorizer> cl = (Class<Authorizer>) Class.forName(authorizerClassName);
+            Constructor<Authorizer> constr = cl.getConstructor();
+            Authorizer authorizer = constr.newInstance();
+            authorizer.configure(props);
+
+            return authorizer;
+        } catch (ClassNotFoundException | InstantiationException
+                | IllegalAccessException | NoSuchMethodException
+                | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
