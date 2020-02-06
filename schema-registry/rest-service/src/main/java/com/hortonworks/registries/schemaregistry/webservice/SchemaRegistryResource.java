@@ -960,7 +960,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         Response response;
         try {
             authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                    versionId, Authorizer.AccessType.UPDATE);
+                    versionId, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
