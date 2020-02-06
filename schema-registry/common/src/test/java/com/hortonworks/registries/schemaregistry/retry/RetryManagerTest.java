@@ -16,7 +16,6 @@
 
 package com.hortonworks.registries.schemaregistry.retry;
 
-import com.hortonworks.registries.schemaregistry.retry.exception.RetryableException;
 import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffRetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeRetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
@@ -62,7 +61,7 @@ public class RetryManagerTest {
         retryManager.execute(getRetryContextBuilder(100, 3, 100000).build(() -> {
             iteration.incrementAndGet();
             if (iteration.get() < 2) {
-                throw new RetryableException(new RuntimeException());
+                throw new RuntimeException();
             } else {
                 return null;
             }
@@ -82,7 +81,7 @@ public class RetryManagerTest {
             stopTime.set(System.currentTimeMillis());
             if ((stopTime.get() - startTime.get()) < 1000) {
                 iteration.incrementAndGet();
-                throw new RetryableException(new RuntimeException());
+                throw new RuntimeException();
             } else {
                 return null;
             }
@@ -94,14 +93,14 @@ public class RetryManagerTest {
     @Test(expected = RuntimeException.class)
     public void testExceptionMaxIteration() {
         retryManager.execute(getRetryContextBuilder(100, 1, 60_000).build(() -> {
-            throw new RetryableException(new RuntimeException());
+            throw new RuntimeException();
         }));
     }
 
     @Test(expected = RuntimeException.class)
     public void testExceptionForMaxSleep() {
         retryManager.execute(getRetryContextBuilder(100, 1000, 300).build(() -> {
-            throw new RetryableException(new RuntimeException());
+            throw new RuntimeException();
         }));
     }
 

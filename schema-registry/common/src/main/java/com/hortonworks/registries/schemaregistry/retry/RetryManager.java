@@ -16,7 +16,6 @@
 
 package com.hortonworks.registries.schemaregistry.retry;
 
-import com.hortonworks.registries.schemaregistry.retry.exception.RetryableException;
 import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
 import com.hortonworks.registries.schemaregistry.retry.request.Request;
 import org.slf4j.Logger;
@@ -30,9 +29,10 @@ public class RetryManager {
 
         Request<T> request = retryContext.request();
         RetryPolicy policy = retryContext.policy();
-        RetryableException retryableException = null;
+        Class<? extends RuntimeException> exceptionClass = retryContext.retryOnException();
+        RuntimeException exception = null;
 
-        System.out.println("Policy : "+policy);
+        System.out.println("Policy : " + policy);
 
         int iteration = 0;
         long startTime = System.currentTimeMillis();
@@ -41,10 +41,10 @@ public class RetryManager {
             try {
                 return request.run();
             } catch (Exception e) {
-                if (!(e instanceof RetryableException)) {
+                if (!(e.getClass().equals(exceptionClass))) {
                     throw e;
                 } else {
-                    retryableException = (RetryableException) e;
+                    exception = (RuntimeException) e;
                 }
             }
         } while (policy.mayBeSleep(++iteration, System.currentTimeMillis() - startTime));
@@ -52,6 +52,6 @@ public class RetryManager {
         LOG.debug("Reached the limit of retries for the request after iteration : " +
                 iteration + " and elapsed time : " + (System.currentTimeMillis() - startTime));
 
-        throw retryableException.getUnderlyingException();
+        throw exception;
     }
 }
