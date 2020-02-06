@@ -425,7 +425,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             @Override
             public SchemaMetadataInfo fetch(String name) throws SchemaNotFoundException {
                 try {
-                    return getEntity(currentSchemaRegistryTargets().schemasTarget.path(name), SchemaMetadataInfo.class);
+                    return RETRY_MANAGER.execute(new RetryContext.Builder<SchemaMetadataInfo>().policy(retryPolicy)
+                            .retryOnException(RegistryRetryableException.class)
+                            .build(() -> {
+                                return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                    return getEntity(targets.schemasTarget.path(name), SchemaMetadataInfo.class);
+                                });
+                            }));
                 } catch (NotFoundException e) {
                     throw new SchemaNotFoundException(e);
                 }
@@ -434,7 +440,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             @Override
             public SchemaMetadataInfo fetch(Long id) throws SchemaNotFoundException {
                 try {
-                    return getEntity(currentSchemaRegistryTargets().schemasByIdTarget.path(id.toString()), SchemaMetadataInfo.class);
+                    return RETRY_MANAGER.execute(new RetryContext.Builder<SchemaMetadataInfo>().policy(retryPolicy)
+                            .retryOnException(RegistryRetryableException.class)
+                            .build(() -> {
+                                return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                    return getEntity(targets.schemasByIdTarget.path(id.toString()), SchemaMetadataInfo.class);
+                                });
+                            }));
                 } catch (NotFoundException e) {
                     throw new SchemaNotFoundException(e);
                 }
@@ -459,7 +471,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaProviderInfo> getSupportedSchemaProviders() {
-        return getEntities(currentSchemaRegistryTargets().schemaProvidersTarget, SchemaProviderInfo.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<Collection<SchemaProviderInfo>>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        return getEntities(targets.schemaProvidersTarget, SchemaProviderInfo.class);
+                    });
+                }));
     }
 
     @Override
@@ -472,7 +490,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         SchemaMetadataInfo schemaMetadataInfo = schemaMetadataCache.getIfPresent(SchemaMetadataCache.Key.of(schemaMetadata
                 .getName()));
         if (schemaMetadataInfo == null) {
-            return doRegisterSchemaMetadata(schemaMetadata, currentSchemaRegistryTargets().schemasTarget);
+            return RETRY_MANAGER.execute(new RetryContext.Builder<Long>().policy(retryPolicy)
+                    .retryOnException(RegistryRetryableException.class)
+                    .build(() -> {
+                                return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                    return doRegisterSchemaMetadata(schemaMetadata, targets.schemasTarget);
+                                });
+                            }));
         }
 
         return schemaMetadataInfo.getId();
@@ -480,7 +504,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaMetadataInfo updateSchemaMetadata(String schemaName, SchemaMetadata schemaMetadata) {
-        SchemaMetadataInfo schemaMetadataInfo = postEntity(currentSchemaRegistryTargets().schemasTarget.path(schemaName), schemaMetadata, SchemaMetadataInfo.class);
+        SchemaMetadataInfo schemaMetadataInfo = RETRY_MANAGER.execute(new RetryContext.Builder<SchemaMetadataInfo>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        return postEntity(targets.schemasTarget.path(schemaName), schemaMetadata, SchemaMetadataInfo.class);
+                    });
+                }));
         if (schemaMetadataInfo != null) {
             schemaMetadataCache.put(SchemaMetadataCache.Key.of(schemaName), schemaMetadataInfo);
         }
@@ -524,23 +554,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
 
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        WebTarget target = targets.schemasTarget.path(String.format("%s", schemaName));
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                WebTarget target = targets.schemasTarget.path(String.format("%s", schemaName));
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         int status = response.getStatus();
         if (status == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -598,30 +627,29 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         StreamDataBodyPart streamDataBodyPart = new StreamDataBodyPart("file", schemaVersionInputStream);
 
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
 
-                        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions/upload").queryParam("branch", schemaBranchName);
-                        MultiPart multipartEntity =
-                                new FormDataMultiPart()
-                                        .field("description", description, MediaType.APPLICATION_JSON_TYPE)
-                                        .bodyPart(streamDataBodyPart);
+                                WebTarget target = targets.schemasTarget.path(schemaName).path("/versions/upload").queryParam("branch", schemaBranchName);
+                                MultiPart multipartEntity =
+                                        new FormDataMultiPart()
+                                                .field("description", description, MediaType.APPLICATION_JSON_TYPE)
+                                                .bodyPart(streamDataBodyPart);
 
-                        Entity<MultiPart> multiPartEntity = Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA);
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request().post(multiPartEntity, Response.class);
+                                Entity<MultiPart> multiPartEntity = Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA);
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request().post(multiPartEntity, Response.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
     }
@@ -675,25 +703,24 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         schemaVersionInfoCache.invalidateSchema(new SchemaVersionInfoCache.Key(schemaVersionKey));
 
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
 
-                        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey
-                                .getSchemaName(), schemaVersionKey.getVersion()));
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                                WebTarget target = targets.schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey
+                                        .getSchemaName(), schemaVersionKey.getVersion()));
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         handleDeleteSchemaResponse(response);
     }
@@ -717,25 +744,25 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
         }
 
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions").queryParam("branch", schemaBranchName)
-                .queryParam("disableCanonicalCheck", disableCanonicalCheck);
+
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                try {
+                                    WebTarget target = targets.schemasTarget.path(schemaName).path("/versions").queryParam("branch", schemaBranchName)
+                                            .queryParam("disableCanonicalCheck", disableCanonicalCheck);
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
         return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
     }
 
@@ -803,10 +830,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
         if (schemaIdVersion.getSchemaVersionId() != null) {
             LOG.info("Getting schema version from target registry for [{}]", schemaIdVersion.getSchemaVersionId());
-            return getEntity(currentSchemaRegistryTargets()
-                            .schemaVersionsByIdTarget
-                            .path(schemaIdVersion.getSchemaVersionId().toString()),
-                    SchemaVersionInfo.class);
+            return RETRY_MANAGER.execute(new RetryContext.Builder<SchemaVersionInfo>().policy(retryPolicy)
+                    .retryOnException(RegistryRetryableException.class)
+                    .build(() -> {
+                        return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                            return getEntity(targets
+                                            .schemaVersionsByIdTarget
+                                            .path(schemaIdVersion.getSchemaVersionId().toString()),
+                                    SchemaVersionInfo.class);
+                        });
+                    }));
         } else if (schemaIdVersion.getSchemaMetadataId() != null) {
             SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaIdVersion.getSchemaMetadataId());
             SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata()
@@ -821,16 +854,28 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaVersionKey schemaVersionKey) {
         LOG.info("Getting schema version from target registry for [{}]", schemaVersionKey);
         String schemaName = schemaVersionKey.getSchemaName();
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey
-                .getVersion()));
+        return RETRY_MANAGER.execute(new RetryContext.Builder<SchemaVersionInfo>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        WebTarget webTarget = targets.schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey
+                                .getVersion()));
 
-        return getEntity(webTarget, SchemaVersionInfo.class);
+                        return getEntity(webTarget, SchemaVersionInfo.class);
+                    });
+                }));
     }
 
     @Override
     public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions/latest").queryParam("branch", schemaBranchName);
-        return getEntity(webTarget, SchemaVersionInfo.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<SchemaVersionInfo>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/versions/latest").queryParam("branch", schemaBranchName);
+                        return getEntity(webTarget, SchemaVersionInfo.class);
+                    });
+                }));
     }
 
     @Override
@@ -882,24 +927,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge").queryParam("disableCanonicalCheck", disableCanonicalCheck);
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request().post(null);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                try {
+                                    WebTarget target = targets.schemasTarget.path(schemaVersionId + "/merge").queryParam("disableCanonicalCheck", disableCanonicalCheck);
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request().post(null);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         int status = response.getStatus();
         if (status == Response.Status.OK.getStatusCode()) {
@@ -923,30 +967,35 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo() {
-        return getEntity(currentSchemaRegistryTargets().schemaVersionsStatesMachineTarget,
-                SchemaVersionLifecycleStateMachineInfo.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<SchemaVersionLifecycleStateMachineInfo>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        return getEntity(targets.schemaVersionsStatesMachineTarget,
+                                SchemaVersionLifecycleStateMachineInfo.class);
+                    });
+                }));
     }
 
     @Override
     public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path("versionsById/" + schemaVersionId + "/branch");
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaBranch), Response.class);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                WebTarget target = targets.schemasTarget.path("versionsById/" + schemaVersionId + "/branch");
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaBranch), Response.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         int status = response.getStatus();
         if (status == Response.Status.OK.getStatusCode()) {
@@ -964,24 +1013,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException {
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/branches");
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request().get();
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                WebTarget target = targets.schemasTarget.path(encode(schemaName) + "/branches");
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request().get();
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         int status = response.getStatus();
         if (status == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -995,24 +1043,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path("branch/" + schemaBranchId);
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return target.request().delete();
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                WebTarget target = targets.schemasTarget.path("branch/" + schemaBranchId);
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return target.request().delete();
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         int status = response.getStatus();
         if (status == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -1027,32 +1074,37 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName).queryParam("states", stateIds.toArray());
-        return getEntities(webTarget, SchemaVersionInfo.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<Collection<SchemaVersionInfo>>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName).queryParam("states", stateIds.toArray());
+                        return getEntities(webTarget, SchemaVersionInfo.class);
+                    });
+                }));
     }
 
     private boolean transitionSchemaVersionState(Long schemaVersionId,
                                                  String operationOrTargetState,
                                                  byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
 
-        WebTarget webTarget = currentSchemaRegistryTargets().schemaVersionsTarget.path(schemaVersionId + "/state/" + operationOrTargetState);
         Response response = RETRY_MANAGER.execute(new RetryContext.Builder<Response>().policy(retryPolicy)
-                                                                                      .retryOnException(RegistryRetryableException.class)
-                                                                                      .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<Response>() {
-                                @Override
-                                public Response run() {
-                                    return webTarget.request().post(Entity.text(transitionDetails));
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                WebTarget webTarget = targets.schemaVersionsTarget.path(schemaVersionId + "/state/" + operationOrTargetState);
+                                try {
+                                    return login.doAction(new PrivilegedAction<Response>() {
+                                        @Override
+                                        public Response run() {
+                                            return webTarget.request().post(Entity.text(transitionDetails));
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
 
         boolean result = handleSchemaLifeCycleResponse(response);
 
@@ -1085,8 +1137,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName);
-        return getEntities(webTarget, SchemaVersionInfo.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<Collection<SchemaVersionInfo>>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName);
+                        return getEntities(webTarget, SchemaVersionInfo.class);
+                    });
+                }));
     }
 
     @Override
@@ -1097,24 +1155,23 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName,
                                                   String toSchemaText) throws SchemaNotFoundException {
-        WebTarget webTarget = currentSchemaRegistryTargets().schemasTarget.path(encode(schemaName) + "/compatibility").queryParam("branch", schemaBranchName);
         String response = RETRY_MANAGER.execute(new RetryContext.Builder<String>().policy(retryPolicy)
-                                                                                  .retryOnException(RegistryRetryableException.class)
-                                                                                  .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<String>() {
-                                @Override
-                                public String run() {
-                                    return webTarget.request().post(Entity.text(toSchemaText), String.class);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                try {
+                                    WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/compatibility").queryParam("branch", schemaBranchName);
+                                    return login.doAction(new PrivilegedAction<String>() {
+                                        @Override
+                                        public String run() {
+                                            return webTarget.request().post(Entity.text(toSchemaText), String.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
         return readEntity(response, CompatibilityResult.class);
     }
 
@@ -1130,12 +1187,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) {
-        WebTarget target = currentSchemaRegistryTargets().searchFieldsTarget;
-        for (Map.Entry<String, String> entry : schemaFieldQuery.toQueryMap().entrySet()) {
-            target = target.queryParam(entry.getKey(), entry.getValue());
-        }
-
-        return getEntities(target, SchemaVersionKey.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<Collection<SchemaVersionKey>>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        WebTarget target = targets.searchFieldsTarget;
+                        for (Map.Entry<String, String> entry : schemaFieldQuery.toQueryMap().entrySet()) {
+                            target = target.queryParam(entry.getKey(), entry.getValue());
+                        }
+                        return getEntities(target, SchemaVersionKey.class);
+                    });
+                }));
     }
 
     @Override
@@ -1144,60 +1206,69 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         BodyPart filePart = new StreamDataBodyPart("file", inputStream, "file");
         multiPart.bodyPart(filePart);
         return RETRY_MANAGER.execute(new RetryContext.Builder<String>().policy(retryPolicy)
-                                                                       .retryOnException(RegistryRetryableException.class)
-                                                                       .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<String>() {
-                                @Override
-                                public String run() {
-                                    return currentSchemaRegistryTargets().filesTarget.request()
-                                            .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                try {
+                                    return login.doAction(new PrivilegedAction<String>() {
+                                        @Override
+                                        public String run() {
+                                            return targets.filesTarget.request()
+                                                    .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            urlSelector.urlWithError(currentSchemaRegistryTargets().rootTarget.getUri().toString(), e);
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
     }
 
     @Override
     public InputStream downloadFile(String fileId) {
         return RETRY_MANAGER.execute(new RetryContext.Builder<InputStream>().policy(retryPolicy)
-                                                                            .retryOnException(RegistryRetryableException.class)
-                                                                            .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<InputStream>() {
-                                @Override
-                                public InputStream run() {
-                                    return currentSchemaRegistryTargets().filesTarget.path("download/" + encode(fileId))
-                                            .request()
-                                            .get(InputStream.class);
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                            return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                                try {
+                                    return login.doAction(new PrivilegedAction<InputStream>() {
+                                        @Override
+                                        public InputStream run() {
+                                            return targets.filesTarget.path("download/" + encode(fileId))
+                                                    .request()
+                                                    .get(InputStream.class);
+                                        }
+                                    });
+                                } catch (LoginException | ProcessingException e) {
+                                    urlSelector.urlWithError(targets.rootTarget.getUri().toString(), e);
+                                    throw new RegistryRetryableException(e);
                                 }
                             });
-                        } catch (LoginException | ProcessingException e) {
-                            urlSelector.urlWithError(currentSchemaRegistryTargets().rootTarget.getUri().toString(), e);
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+                        }));
     }
 
     @Override
     public Long addSerDes(SerDesPair serDesPair) {
-        return postEntity(currentSchemaRegistryTargets().serializersTarget, serDesPair, Long.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<Long>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        return postEntity(targets.serializersTarget, serDesPair, Long.class);
+                    });
+                }));
     }
 
     @Override
     public void mapSchemaWithSerDes(String schemaName, Long serDesId) {
         String path = String.format("%s/mapping/%s", encode(schemaName), serDesId.toString());
 
-        Boolean success = postEntity(currentSchemaRegistryTargets().schemasTarget.path(path), null, Boolean.class);
+        Boolean success = RETRY_MANAGER.execute(new RetryContext.Builder<Boolean>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        return postEntity(targets.schemasTarget.path(path), null, Boolean.class);
+                    });
+                }));
         LOG.info("Received response while mapping schema [{}] with serialzer/deserializer [{}] : [{}]", schemaName, serDesId, success);
     }
 
@@ -1235,8 +1306,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public Collection<SerDesInfo> getSerDes(String schemaName) {
-        String path = encode(schemaName) + "/serdes/";
-        return getEntities(currentSchemaRegistryTargets().schemasTarget.path(path), SerDesInfo.class);
+        return RETRY_MANAGER.execute(new RetryContext.Builder<Collection<SerDesInfo>>().policy(retryPolicy)
+                .retryOnException(RegistryRetryableException.class)
+                .build(() -> {
+                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
+                        String path = encode(schemaName) + "/serdes/";
+                        return getEntities(targets.schemasTarget.path(path), SerDesInfo.class);
+                    });
+                }));
     }
 
     public <T> T createSerializerInstance(SerDesInfo serDesInfo) {
@@ -1300,24 +1377,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
-        String response = RETRY_MANAGER.execute(new RetryContext.Builder<String>().policy(retryPolicy)
-                                                                                  .retryOnException(RegistryRetryableException.class)
-                                                                                  .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<String>() {
-                                @Override
-                                public String run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
-                                }
-                            });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
-
+        String response = null;
+        try {
+            response = login.doAction(new PrivilegedAction<String>() {
+                @Override
+                public String run() {
+                    return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+                }
+            });
+        } catch (LoginException | ProcessingException e) {
+            throw new RegistryRetryableException(e);
+        }
         return parseResponseAsEntities(response, clazz);
     }
 
@@ -1337,24 +1407,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
-        String response = RETRY_MANAGER.execute(new RetryContext.Builder<String>().policy(retryPolicy)
-                                                                                  .retryOnException(RegistryRetryableException.class)
-                                                                                  .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<String>() {
-                                @Override
-                                public String run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
-                                }
-                            });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
-
+        String response = null;
+        try {
+            response = login.doAction(new PrivilegedAction<String>() {
+                @Override
+                public String run() {
+                    return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
+                }
+            });
+        } catch (LoginException | ProcessingException e) {
+            throw new RegistryRetryableException(e);
+        }
         return readEntity(response, responseType);
     }
 
@@ -1368,23 +1431,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private <T> T getEntity(WebTarget target, Class<T> clazz) {
-        String response = RETRY_MANAGER.execute(new RetryContext.Builder<String>().policy(retryPolicy)
-                                                                                  .retryOnException(RegistryRetryableException.class)
-                                                                                  .build(
-                () -> {
-                    return runWithFailoverContext((SchemaRegistryTargets targets) -> {
-                        try {
-                            return login.doAction(new PrivilegedAction<String>() {
-                                @Override
-                                public String run() {
-                                    return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
-                                }
-                            });
-                        } catch (LoginException | ProcessingException e) {
-                            throw new RegistryRetryableException(e);
-                        }
-                    });
-                }));
+        String response = null;
+        try {
+            response = login.doAction(new PrivilegedAction<String>() {
+                @Override
+                public String run() {
+                    return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+                }
+            });
+        } catch (LoginException | ProcessingException e) {
+            throw new RegistryRetryableException(e);
+        }
 
         return readEntity(response, clazz);
     }
@@ -1400,9 +1457,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 throw retryableException;
             }
             try {
+                LOG.info("Calling the body : " + targets.rootTarget);
                 return retryBody.run(targets);
             } catch (RegistryRetryableException e) {
-                urlSelector.urlWithError(currentSchemaRegistryTargets().rootTarget.getUri().toString(), e);
+                urlSelector.urlWithError(targets.rootTarget.getUri().toString(), e);
                 retryableException = e;
             }
         }
