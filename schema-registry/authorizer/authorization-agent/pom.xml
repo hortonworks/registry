@@ -17,7 +17,6 @@
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-core</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
@@ -31,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-client</artifactId>
+            <artifactId>common-auth</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

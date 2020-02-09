@@ -37,8 +37,20 @@ import java.util.Map;
  */
 public interface AuthorizationAgent {
 
+    /**
+     * Schema Registry config property name that is used to specify AuthorizerAgent class name.
+     */
+    String AUTHORIZATION_AGENT_CONFIG = "authorizationAgentClassName";
+
+    /**
+     * This method is used to perform initial configuration of {@link AuthorizationAgent}
+     *
+     * @param props - properties from the 'authorization' section of Schema Registry config file.
+     */
     void configure(Map<String, Object> props);
 
+
+    //////// The below methods are the main methods of AuthorizationAgent. They define the athorization logic ////////
 
     Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList(Authorizer.UserAndGroups userAndGroups,
                                                                               Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList)
@@ -72,10 +84,12 @@ public interface AuthorizationAgent {
                                  Authorizer.AccessType accessType)
             throws AuthorizationException;
 
+
     void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
                                  SchemaMetadataInfo schemaMetadataInfo,
                                  Authorizer.AccessType accessType)
             throws AuthorizationException, SchemaNotFoundException;
+
 
     void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
                                  ISchemaRegistry schemaRegistry,
@@ -162,8 +176,6 @@ public interface AuthorizationAgent {
                                       String schemaMetadataName)
             throws AuthorizationException, SchemaNotFoundException;
 
-
-    ///////////////// ConfluentCompatible APIs //////////////////////////////
 
     Collection<SchemaVersionInfo> authorizeGetAllVersions(Authorizer.UserAndGroups userAndGroups,
                                                           ISchemaRegistry schemaRegistry,

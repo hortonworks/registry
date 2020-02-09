@@ -18,13 +18,42 @@ package com.hortonworks.registries.schemaregistry.authorizer.core;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This is an interface that is implemented by RangerSchemaRegistryAuthorizer
+ * to provide autorization by means of Apache Ranger.
+ * The user can define its own authorizer by implementing the authorize and configure methods.
+ * The exact interface type that will be instatiated is specified by AUTHORIZER_CONFIG property.
+ */
 public interface Authorizer {
 
+    /**
+     * Schema Registry config property name that is used to specify Authorizer class name.
+     */
+    String AUTHORIZER_CONFIG = "authorizerClassName";
+
+    /**
+     * This method is used to perform initial configuration of authorizer.
+     *
+     * @param props - properties from the 'authorization' section of Schema Registry config file.
+     */
     void configure(Map<String, Object> props);
 
+    /**
+     * The main method that performs the authorization
+     *
+     * @param resource - an object to check access to
+     * @param accessType - required access type
+     * @param userAndGroups - user and user groups that are use for permission check
+     * @return 'true' if access is allowed and 'false' otherwise
+     */
     boolean authorize(Resource resource, AccessType accessType, UserAndGroups userAndGroups);
 
 
+    ///// The below classes are used to define independent object model for authorization /////
+
+    /**
+     * The 'AccessType' enum specifies supported access types by current authorization model
+     */
     enum AccessType {
         CREATE("create"),
         READ("read"),
@@ -38,6 +67,9 @@ public interface Authorizer {
         public String getName() { return name; }
     }
 
+    /**
+     * The class that is used to store user and user groups information in convenient form.
+     */
     class UserAndGroups {
         private String user;
         private Set<String> groups;
@@ -54,8 +86,16 @@ public interface Authorizer {
         public Set<String> getGroups() {
             return groups;
         }
+
+        @Override
+        public String toString() {
+            return String.format("UserAndGroups{ user='%s', groups='%s' }", user, groups);
+        }
     }
 
+    /**
+     * The 'ResourceType' enum specifies supported types of resources by current authorization model
+     */
     enum ResourceType {
         SERDE,
         SCHEMA_METADATA,
@@ -63,6 +103,9 @@ public interface Authorizer {
         SCHEMA_VERSION;
     }
 
+    /**
+     * Class that is used to represent abstarct resource entity
+     */
     abstract class Resource {
         private ResourceType resourceType;
 
@@ -75,6 +118,9 @@ public interface Authorizer {
         }
     }
 
+    /**
+     * Class that is used to represent Serializer/Deserializer resources
+     */
     class SerdeResource extends Resource {
         public SerdeResource() {
             super(ResourceType.SERDE);
@@ -86,6 +132,9 @@ public interface Authorizer {
         }
     }
 
+    /**
+     * Class that is used to represent schema metadata resource
+     */
     class SchemaMetadataResource extends Resource {
         private String sGroupName;
         private String sMetadataName;
@@ -115,6 +164,9 @@ public interface Authorizer {
         }
     }
 
+    /**
+     * Class that is used to represent schema branch resource
+     */
     class SchemaBranchResource extends SchemaMetadataResource {
         private String sBranchName;
 
@@ -140,6 +192,9 @@ public interface Authorizer {
         }
     }
 
+    /**
+     * Class that is used to represent schema version resource
+     */
     class SchemaVersionResource extends SchemaBranchResource {
 
         public SchemaVersionResource(String sGroupName, String sMetadataName, String sBranchName) {

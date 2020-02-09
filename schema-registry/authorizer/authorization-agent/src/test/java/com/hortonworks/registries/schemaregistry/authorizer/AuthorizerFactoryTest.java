@@ -41,12 +41,12 @@ public class AuthorizerFactoryTest {
         assertTrue(authorizer1 instanceof RangerSchemaRegistryAuthorizer);
 
         Map<String, Object> props2 = new HashMap<>();
-        props2.put("authorizerClassName", RangerSchemaRegistryAuthorizer.class.getCanonicalName());
+        props2.put(Authorizer.AUTHORIZER_CONFIG, RangerSchemaRegistryAuthorizer.class.getCanonicalName());
         Authorizer authorizer2 = AuthorizerFactory.getAuthorizer(props2);
         assertTrue(authorizer2 instanceof RangerSchemaRegistryAuthorizer);
 
         Map<String, Object> props3 = new HashMap<>();
-        props3.put("authorizerClassName", TestAuthorizer.class.getCanonicalName());
+        props3.put(Authorizer.AUTHORIZER_CONFIG, TestAuthorizer.class.getCanonicalName());
         Authorizer authorizer3 = AuthorizerFactory.getAuthorizer(props3);
         assertTrue(authorizer3 instanceof TestAuthorizer);
 

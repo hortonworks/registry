@@ -29,15 +29,16 @@ import java.util.Map;
  * The exact type of authorizer is configured by 'authorizerClassName' property.
  */
 public class AuthorizerFactory {
+
     public static Authorizer getAuthorizer(Map<String, Object> props) {
 
         String authorizerClassName;
         // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer
         // is used by default
-        if(props == null || !props.containsKey("authorizerClassName")){
+        if(props == null || !props.containsKey(Authorizer.AUTHORIZER_CONFIG)){
             authorizerClassName = RangerSchemaRegistryAuthorizer.class.getCanonicalName();
         } else {
-            authorizerClassName = (String) props.get("authorizerClassName");
+            authorizerClassName = (String) props.get(Authorizer.AUTHORIZER_CONFIG);
         }
 
         try {

@@ -22,15 +22,15 @@ import org.apache.hadoop.security.UserGroupInformation;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthorizationUtils {
 
-    private static Map<String, Authorizer.UserAndGroups> userGroupsStore = new HashMap<>();
+    private static Map<String, Authorizer.UserAndGroups> userGroupsStore = new ConcurrentHashMap<>();
 
     public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 

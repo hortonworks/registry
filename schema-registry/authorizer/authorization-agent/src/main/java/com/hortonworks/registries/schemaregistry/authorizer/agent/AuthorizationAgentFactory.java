@@ -27,13 +27,14 @@ import java.util.Map;
  * The exact type of authorization agent is configured by 'authorizationAgentClassName' property.
  */
 public class AuthorizationAgentFactory {
+
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
 
         String authorizationAgentClassName;
-        if(props == null || !props.containsKey("authorizationAgentClassName")) {
+        if(props == null || !props.containsKey(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG)) {
             authorizationAgentClassName = NOOPAuthorizationAgent.class.getCanonicalName();
         } else {
-            authorizationAgentClassName = (String) props.get("authorizationAgentClassName");
+            authorizationAgentClassName = (String) props.get(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG);
         }
 
         try {

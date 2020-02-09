@@ -98,7 +98,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                 serDesInfos);
     }
 
-    AggregatedSchemaBranch authorizeGetAggregatedBranch(SchemaMetadata sm,
+    private AggregatedSchemaBranch authorizeGetAggregatedBranch(SchemaMetadata sm,
                                                         UserAndGroups userAndGroups,
                                                         AggregatedSchemaBranch branch)
                 throws AuthorizationException {
@@ -167,7 +167,8 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
         Collection<SchemaBranch> branches = schemaRegistry.getSchemaBranches(schemaMetadataName);
         if(branches != null) {
             for(SchemaBranch branch : branches) {
-                authorizeDeleteSchemaBranch(userAndGroups, schemaRegistry, branch.getId());
+                SchemaBranch sb = schemaRegistry.getSchemaBranch(branch.getId());
+                authorizeDeleteSchemaBranch(userAndGroups, sb, smi);
             }
         }
     }
@@ -252,10 +253,20 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
             throws AuthorizationException {
 
         SchemaBranch sb = schemaRegistry.getSchemaBranch(schemaBranchId);
-        SchemaMetadata sM = schemaRegistry.getSchemaMetadataInfo(sb.getSchemaMetadataName()).getSchemaMetadata();
+        SchemaMetadataInfo sMi = schemaRegistry.getSchemaMetadataInfo(sb.getSchemaMetadataName());
+
+        authorizeDeleteSchemaBranch(userAndGroups, sb, sMi);
+    }
+
+    private void authorizeDeleteSchemaBranch(UserAndGroups userAndGroups,
+                                             SchemaBranch schemaBranch,
+                                             SchemaMetadataInfo schemaMetadataInfo)
+            throws AuthorizationException {
+
+        SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
-        String schemaBranchName = sb.getName();
+        String schemaBranchName = schemaBranch.getName();
 
         Authorizer.SchemaBranchResource schemaBranchResource = new Authorizer.SchemaBranchResource(sGroup,
                 sName,
@@ -426,8 +437,6 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
         authorize(schemaVersionToCreate, AccessType.CREATE, userAndGroups);
     }
 
-    ///////////////////// ConfluenceCompatible APIs /////////////////////
-
     @Override
     public Collection<SchemaVersionInfo> authorizeGetAllVersions(UserAndGroups userAndGroups,
                                                                  ISchemaRegistry schemaRegistry,
@@ -446,8 +455,6 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
         });
 
     }
-
-    ////////////////////////////////////////////////////////////////////////
 
     public static class AlreadyConfiguredException extends RuntimeException {
         public AlreadyConfiguredException(String message) {
