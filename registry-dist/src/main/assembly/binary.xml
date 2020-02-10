@@ -30,13 +30,13 @@
             <unpack>false</unpack>
             <excludes>
                 <exclude>
-                    com.hortonworks.registries:ranger-schema-registry-plugin
+                    com.hortonworks.registries:schema-registry-ranger-plugin
                 </exclude>
                 <exclude>
-                    com.hortonworks.registries:authorizer
+                    com.hortonworks.registries:schema-registry-ranger-authorizer
                 </exclude>
                 <exclude>
-                    com.hortonworks.registries:authorizer-shim
+                    com.hortonworks.registries:schema-registry-ranger-authorizer-shim
                 </exclude>
                 <exclude>
                     com.sun.jersey:jersey-servlet

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.hortonworks.registries.schemaregistry.authorizer.agent;
+package com.hortonworks.registries.schemaregistry.authorizer.core.util;
 
 import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;

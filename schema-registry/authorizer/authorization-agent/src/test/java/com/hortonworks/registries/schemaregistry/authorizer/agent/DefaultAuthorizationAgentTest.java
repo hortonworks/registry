@@ -31,6 +31,7 @@ import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SchemaTextStore;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SecurityContextForTesting;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
@@ -510,9 +511,8 @@ public class DefaultAuthorizationAgentTest {
             SecurityContext sc101 = new SecurityContextForTesting("user101");
             authorizationAgent.authorizeGetAggregatedSchemaInfo(AuthorizationUtils.getUserAndGroups(sc101), asmi);
         } catch (AuthorizationException e) {
-            String expectedMsg = "User 'user101' does not have [read] permission on " +
-                    "SchemaVersion{ schemaGroupName='Group3', schemaMetadataName='Schema3', " +
-                    "schemaBranchName='Branch3', schemaVersionName='*' }";
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user101",
+                    "read", "Group3", "Schema3", "Branch3");
             assertThat(e.getMessage(), is(expectedMsg));
         }
 
@@ -710,9 +710,8 @@ public class DefaultAuthorizationAgentTest {
                     new Long(siv31.getSchemaVersionId()), "Branch4");
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = "User 'user4' does not have [read] permission on " +
-                    "SchemaVersion{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch3'," +
-                    " schemaVersionName='*' }";
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
+                    "read", "Group3", "Schema3", "Branch3");
             assertThat(e.getMessage(), is(expectedMsg));
         }
 
@@ -721,7 +720,8 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc3),
                     schemaRegistry,
                     "Schema3",
-                    new Long(-9999), "Branch3");
+                    -9999L,
+                    "Branch3");
         } catch(SchemaNotFoundException e) {
             String expectedMsg = "Schema version with id : -9999 not found";
             assertThat(e.getMessage(), is(expectedMsg));
@@ -764,8 +764,8 @@ public class DefaultAuthorizationAgentTest {
                     new Long(branch3.getId()));
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = "User 'user88' does not have [delete] permission on " +
-                    "SchemaVersion{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch3', schemaVersionName='*' }";
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user88",
+                    "delete", "Group3", "Schema3", "Branch3");
             assertThat(e.getMessage(), is(expectedMsg));
         }
 
@@ -859,7 +859,7 @@ public class DefaultAuthorizationAgentTest {
                     Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = errorMsgForAuthorizeSchemaVersion("user4",
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
                     "create", "Group3", "Schema3", "MASTER");
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -868,7 +868,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.UPDATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = errorMsgForAuthorizeSchemaVersion("user3",
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
                     "update", "Group3", "Schema3", "MASTER");
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -877,7 +877,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc4), schemaRegistry, svi3, Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = errorMsgForAuthorizeSchemaVersion("user4",
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
                     "create", "Group3", "Schema3", "MASTER");
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -886,7 +886,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, siv31, Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = errorMsgForAuthorizeSchemaVersion("user3",
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
                     "create", "Group3", "Schema3", "Branch3");
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -896,7 +896,7 @@ public class DefaultAuthorizationAgentTest {
                     siv31.getSchemaVersionId(), Authorizer.AccessType.UPDATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
-            String expectedMsg = errorMsgForAuthorizeSchemaVersion("user3",
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
                     "update", "Group3", "Schema3", "Branch3");
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -954,11 +954,11 @@ public class DefaultAuthorizationAgentTest {
 
     }
 
-    private String errorMsgForAuthorizeSchemaVersion(String user,
-                                                     String perm,
-                                                     String groupName,
-                                                     String schemaName,
-                                                     String branchName) {
+    private String errorMsgForUnathorizedSchemaVersion(String user,
+                                                       String perm,
+                                                       String groupName,
+                                                       String schemaName,
+                                                       String branchName) {
         return String.format("User '%s' does not have [%s] permission on SchemaVersion{ schemaGroupName='%s', "
                         + "schemaMetadataName='%s', schemaBranchName='%s', schemaVersionName='*' }",
                 user, perm, groupName, schemaName, branchName);
@@ -1090,9 +1090,8 @@ public class DefaultAuthorizationAgentTest {
         try {
             authorizationAgent.authorizeMergeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc999), schemaRegistry, siv31.getSchemaVersionId());
         } catch (AuthorizationException e) {
-            String expectedMsg = "User 'user999' does not have [read] permission on " +
-                    "SchemaVersion{ schemaGroupName='Group3', schemaMetadataName='Schema3'" +
-                    ", schemaBranchName='Branch3', schemaVersionName='*' }";
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user999",
+                    "read", "Group3", "Schema3", "Branch3");
             assertThat(e.getMessage(), is(expectedMsg));
         }
 
@@ -1102,9 +1101,8 @@ public class DefaultAuthorizationAgentTest {
             // Read is allowed by p7
             authorizationAgent.authorizeMergeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc33), schemaRegistry, siv31.getSchemaVersionId());
         } catch (AuthorizationException e) {
-            String expectedMsg = "User 'user33' does not have [create] permission on " +
-                    "SchemaVersion{ schemaGroupName='Group3', schemaMetadataName='Schema3'" +
-                    ", schemaBranchName='MASTER', schemaVersionName='*' }";
+            String expectedMsg = errorMsgForUnathorizedSchemaVersion("user33",
+                    "create", "Group3", "Schema3", "MASTER");
             assertThat(e.getMessage(), is(expectedMsg));
         }
 
