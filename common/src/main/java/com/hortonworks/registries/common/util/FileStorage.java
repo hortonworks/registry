@@ -31,7 +31,7 @@ public interface FileStorage {
      *
      * @param config the config specific to implementation
      */
-    void init(Map<String, String> config);
+    void init(Map<String, String> config) throws IOException;
 
     /**
      * Uploads the content from given {@code InputStream} to the configured storage with the given {@code name } as identifier which can

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.hortonworks.registries.util;
+package com.hortonworks.registries.common.util;
 
-import com.hortonworks.registries.common.util.HdfsFileStorage;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,6 +28,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class HdfsFileStorageTest {
     private static final String HDFS_DIR = "/tmp/test-hdfs";
@@ -64,7 +64,7 @@ public class HdfsFileStorageTest {
 
         InputStream inputStream = fileStorage.download(jarFileName);
         List<String> actual = IOUtils.readLines(inputStream);
-        Assert.assertEquals(lines, actual);
+        assertEquals(lines, actual);
     }
 
     @Test
@@ -87,7 +87,22 @@ public class HdfsFileStorageTest {
 
         InputStream inputStream = fileStorage.download(jarFileName);
         List<String> actual = IOUtils.readLines(inputStream);
-        Assert.assertEquals(lines, actual);
+        assertEquals(lines, actual);
+    }
+
+    @Test
+    public void testAdjustDirectory() {
+        String[][] testData = new String[][] {
+                {"abfs://data@mysan.dfs.core.windows.net/env/cluster", "/registry", "/env/cluster/registry"},
+                {"abfs://data@mysan.dfs.core.windows.net/env/cluster/", "/registry", "/env/cluster/registry"},
+                {"abfs://data@mysan.dfs.core.windows.net/env/cluster/", "registry", "/env/cluster/registry"},
+                {"hdfs://localhost:8080", "/registry", "/registry"} };
+        for (String[] row: testData) {
+            String fsUrl = row[0];
+            String directory = row[1];
+            String expected = row[2];
+            assertEquals(fsUrl + " + " + directory, expected, HdfsFileStorage.adjustDirectory(fsUrl, directory));
+        }
     }
 
 }
