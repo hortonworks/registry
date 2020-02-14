@@ -16,40 +16,38 @@
 
 package com.hortonworks.registries.schemaregistry.retry.policy;
 
-import com.hortonworks.registries.schemaregistry.retry.exception.RetryPolicyException;
-
 import java.util.Map;
 
-public abstract class RetryPolicy {
+public abstract class BackoffPolicy {
 
     protected Long sleepTimeMs;
-    protected Integer maxRetries;
-    protected Long maxSleepTimeMs;
+    protected Integer maxAttempts;
+    protected Long timeoutMs;
 
     public static final String SLEEP_TIME_MS = "sleepTimeMs";
-    public static final String MAX_RETRIES = "maxRetries";
-    public static final String MAX_SLEEP_TIME_MS = "maxSleepTimeMs";
+    public static final String MAX_ATTEMPTS = "maxAttempts";
+    public static final String TIMEOUT_MS = "timeoutMs";
 
-    protected RetryPolicy() {
+    protected BackoffPolicy() {
 
     }
 
-    protected RetryPolicy(Long sleepTimeMs, Integer maxRetries, Long maxSleepTimeMs) {
+    protected BackoffPolicy(Long sleepTimeMs, Integer maxAttempts, Long timeoutMs) {
         this.sleepTimeMs = sleepTimeMs;
-        this.maxRetries = maxRetries;
-        this.maxSleepTimeMs = maxSleepTimeMs;
+        this.maxAttempts = maxAttempts;
+        this.timeoutMs = timeoutMs;
     }
 
     public abstract void init(Map<String, Object> properties);
 
-    public boolean mayBeSleep(int iteration, long timeElapsed) {
-        if (iteration > maxRetries) {
+    public boolean mayBeSleep(int attemptNumber, long timeElapsed) {
+        if (attemptNumber >= maxAttempts) {
             return false;
         }
 
-        long sleepTime = sleepTime(iteration, timeElapsed);
+        long sleepTime = sleepTime(attemptNumber, timeElapsed);
 
-        if (sleepTime + timeElapsed > this.maxSleepTimeMs) {
+        if (sleepTime + timeElapsed > this.timeoutMs) {
             return false;
         }
 
@@ -64,7 +62,8 @@ public abstract class RetryPolicy {
         try {
             Thread.sleep(sleepTimeMs);
         } catch (InterruptedException e) {
-            throw new RetryPolicyException(e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
     }
 

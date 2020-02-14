@@ -16,9 +16,9 @@
 
 package com.hortonworks.registries.schemaregistry.retry;
 
-import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffRetryPolicy;
-import com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeRetryPolicy;
-import com.hortonworks.registries.schemaregistry.retry.policy.RetryPolicy;
+import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy;
+import com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeBackoffPolicy;
+import com.hortonworks.registries.schemaregistry.retry.policy.BackoffPolicy;
 import com.hortonworks.registries.util.CustomParameterizedRunner;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,14 +31,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(CustomParameterizedRunner.class)
-public class RetryManagerTest {
+public class RetryExecutorTest {
 
     enum RetryPolicyType {
         FIXED,
         EXPONENTIAL_BACKOFF;
     }
 
-    private RetryManager retryManager = new RetryManager();
     private static RetryPolicyType retryPolicyType;
 
     @CustomParameterizedRunner.Parameters
@@ -51,14 +50,14 @@ public class RetryManagerTest {
         retryPolicyType = retryPolicyTypeFromParameter;
     }
 
-    public RetryManagerTest(RetryPolicyType retryPolicyType) {
+    public RetryExecutorTest(RetryPolicyType retryPolicyType) {
     }
 
     @Test
     public void testForMaxIteration() {
         AtomicInteger iteration = new AtomicInteger(0);
 
-        retryManager.execute(getRetryContextBuilder(100, 3, 100000).build(() -> {
+        createRetryExecutor(100, 3, 100000).execute((() -> {
             iteration.incrementAndGet();
             if (iteration.get() < 2) {
                 throw new RuntimeException();
@@ -77,7 +76,7 @@ public class RetryManagerTest {
 
         AtomicInteger iteration = new AtomicInteger(0);
 
-        retryManager.execute(getRetryContextBuilder(100, 10000, 2000).build(() -> {
+        createRetryExecutor(100, 10000, 2000).execute(() -> {
             stopTime.set(System.currentTimeMillis());
             if ((stopTime.get() - startTime.get()) < 1000) {
                 iteration.incrementAndGet();
@@ -85,49 +84,48 @@ public class RetryManagerTest {
             } else {
                 return null;
             }
-        }));
+        });
 
         Assert.assertTrue((stopTime.get() - startTime.get() < 2000) && iteration.get() > 1);
     }
 
     @Test(expected = RuntimeException.class)
     public void testExceptionMaxIteration() {
-        retryManager.execute(getRetryContextBuilder(100, 1, 60_000).build(() -> {
+        createRetryExecutor(100, 1, 60_000).execute(() -> {
             throw new RuntimeException();
-        }));
+        });
     }
 
     @Test(expected = RuntimeException.class)
     public void testExceptionForMaxSleep() {
-        retryManager.execute(getRetryContextBuilder(100, 1000, 300).build(() -> {
+        createRetryExecutor(100, 1000, 300).execute(() -> {
             throw new RuntimeException();
-        }));
+        });
     }
 
-    private RetryContext.Builder<Void> getRetryContextBuilder(long baseSleepMs, int iteration, long maxSleepMs) {
-        RetryPolicy retryPolicy;
+    private RetryExecutor createRetryExecutor(long sleepMs, int iteration, long maxSleepMs) {
+        BackoffPolicy backoffPolicy;
         Map<String, Object> props = new HashMap<>();
         switch (retryPolicyType) {
             case FIXED:
-                props.put(RetryPolicy.MAX_SLEEP_TIME_MS, maxSleepMs);
-                props.put(RetryPolicy.SLEEP_TIME_MS, baseSleepMs);
-                props.put(RetryPolicy.MAX_RETRIES, iteration);
-                retryPolicy = new FixedTimeRetryPolicy();
+                props.put(BackoffPolicy.TIMEOUT_MS, maxSleepMs);
+                props.put(BackoffPolicy.SLEEP_TIME_MS, sleepMs);
+                props.put(BackoffPolicy.MAX_ATTEMPTS, iteration);
+                backoffPolicy = new FixedTimeBackoffPolicy();
                 break;
             case EXPONENTIAL_BACKOFF:
-                props.put(RetryPolicy.MAX_SLEEP_TIME_MS, maxSleepMs);
-                props.put(RetryPolicy.SLEEP_TIME_MS, baseSleepMs);
-                props.put(ExponentialBackoffRetryPolicy.EXPONENT, 2F);
-                props.put(RetryPolicy.MAX_RETRIES, iteration);
-                retryPolicy = new ExponentialBackoffRetryPolicy();
+                props.put(BackoffPolicy.TIMEOUT_MS, maxSleepMs);
+                props.put(BackoffPolicy.SLEEP_TIME_MS, sleepMs);
+                props.put(BackoffPolicy.MAX_ATTEMPTS, iteration);
+                backoffPolicy = new ExponentialBackoffPolicy();
                 break;
             default:
                 throw new RuntimeException("Invalid retry policy type : " + retryPolicyType);
         }
 
-        retryPolicy.init(props);
+        backoffPolicy.init(props);
 
-        RetryContext.Builder<Void> builder = new RetryContext.Builder<Void>();
-        return builder.policy(retryPolicy);
+        RetryExecutor.Builder builder = new RetryExecutor.Builder();
+        return builder.backoffPolicy(backoffPolicy).build();
     }
 }

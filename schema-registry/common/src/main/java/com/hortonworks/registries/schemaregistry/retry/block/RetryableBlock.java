@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package com.hortonworks.registries.schemaregistry.retry.exception;
+package com.hortonworks.registries.schemaregistry.retry.block;
 
-public class RetryPolicyException extends RuntimeException {
+/**
+ *  This class encapsulates the block of code that needs to be executed with RetryExecutor
+ *  with retries
+ *
+ * @param <T> Return type of the request
+ */
 
-    public RetryPolicyException(Exception e) {
-        super(e);
-    }
+@FunctionalInterface
+public interface RetryableBlock<T> {
+    T run();
 }
