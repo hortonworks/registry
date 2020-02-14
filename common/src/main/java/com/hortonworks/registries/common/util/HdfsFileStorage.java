@@ -17,6 +17,8 @@ package com.hortonworks.registries.common.util;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -33,6 +35,7 @@ import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -48,34 +51,25 @@ public class HdfsFileStorage implements FileStorage {
     public static final String CONFIG_DIRECTORY = "directory";
     public static final String CONFIG_KERBEROS_PRINCIPAL = "hdfs.kerberos.principal";
     public static final String CONFIG_KERBEROS_KEYTAB = "hdfs.kerberos.keytab";
+    public static final Set<String> OWN_CONFIGS = ImmutableSet.of(CONFIG_FSURL, CONFIG_DIRECTORY, CONFIG_KERBEROS_PRINCIPAL, CONFIG_KERBEROS_KEYTAB);
 
-    private String directory = DEFAULT_DIR;
-    private FileSystem hdfsFileSystem;
-    private UserGroupInformation userGroupInformation;
+    private String directory;
+    private Configuration hdfsConfig;
+    private URI fsUri;
+    private boolean kerberos = false;
 
     @Override
     public void init(Map<String, String> config) throws IOException {
-        String fsUrl = null;
-        String kerberosPrincipal = null;
-        String keytabLocation = null;
-        Configuration hdfsConfig = new Configuration();
-        for(Map.Entry<String, String> entry: config.entrySet()) {
-            switch (entry.getKey()) {
-                case CONFIG_FSURL:
-                    fsUrl = entry.getValue();
-                    break;
-                case CONFIG_DIRECTORY:
-                    directory = entry.getValue();
-                    break;
-                case CONFIG_KERBEROS_PRINCIPAL:
-                    kerberosPrincipal = entry.getValue();
-                    break;
-                case CONFIG_KERBEROS_KEYTAB:
-                    keytabLocation = entry.getValue();
-                    break;
-                default:
-                    hdfsConfig.set(entry.getKey(), entry.getValue());
-            }
+        String fsUrl = config.get(CONFIG_FSURL);
+        String kerberosPrincipal = config.get(CONFIG_KERBEROS_PRINCIPAL);
+        String keytabLocation = config.get(CONFIG_KERBEROS_KEYTAB);
+        directory = config.getOrDefault(CONFIG_DIRECTORY, DEFAULT_DIR);
+
+        hdfsConfig = new Configuration();
+
+        for(Map.Entry<String, String> entry:
+                Sets.filter(config.entrySet(), e -> !OWN_CONFIGS.contains(e.getKey()))) {
+            hdfsConfig.set(entry.getKey(), entry.getValue());
         }
 
         // make sure fsUrl is set
@@ -88,16 +82,11 @@ public class HdfsFileStorage implements FileStorage {
         if (kerberosPrincipal != null) {
             LOG.info("Logging in as kerberos principal {}", kerberosPrincipal);
             UserGroupInformation.loginUserFromKeytab(kerberosPrincipal, keytabLocation);
-            userGroupInformation = UserGroupInformation.getLoginUser();
+            kerberos = true;
         }
 
         directory = adjustDirectory(fsUrl, directory);
-
-        try {
-            hdfsFileSystem = FileSystem.get(URI.create(fsUrl), hdfsConfig);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        fsUri = URI.create(fsUrl);
 
         LOG.info("Initialized with fsUrl={}, directory={}, kerberos principal={}", fsUrl, directory, kerberosPrincipal);
     }
@@ -124,7 +113,7 @@ public class HdfsFileStorage implements FileStorage {
     }
 
     private boolean isKerberos() {
-        return userGroupInformation != null;
+        return kerberos;
     }
 
     @Override
@@ -150,15 +139,20 @@ public class HdfsFileStorage implements FileStorage {
 
     @Override
     public boolean exists(String name) {
-        return isKerberos() ?
-                userGroupInformation.doAs((PrivilegedAction<Boolean>) () -> existsInternal(name)):
-                existsInternal(name);
+        try {
+            return isKerberos() ?
+                    UserGroupInformation.getLoginUser().doAs((PrivilegedAction<Boolean>) () -> existsInternal(name)):
+                    existsInternal(name);
+        }
+        catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     private String uploadInternal(InputStream inputStream, String name) throws IOException {
         Path jarPath = new Path(directory, name);
-
-        try(FSDataOutputStream outputStream = hdfsFileSystem.create(jarPath, false)) {
+        FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
+        try(FSDataOutputStream outputStream = fs.create(jarPath, false)) {
             ByteStreams.copy(inputStream, outputStream);
         }
 
@@ -167,17 +161,20 @@ public class HdfsFileStorage implements FileStorage {
 
     private InputStream downloadInternal(String name) throws IOException {
         Path filePath = new Path(directory, name);
-        return hdfsFileSystem.open(filePath);
+        FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
+        return fs.open(filePath);
     }
 
     private boolean deleteInternal(String name) throws IOException {
-        return hdfsFileSystem.delete(new Path(directory, name), true);
+        FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
+        return fs.delete(new Path(directory, name), true);
     }
 
     private boolean existsInternal(String name) {
         Path path = new Path(directory, name);
         try {
-            return hdfsFileSystem.exists(path);
+            FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
+            return fs.exists(path);
         } catch (Exception ex) {
             LOG.error("Exception occurred while calling exists(" + path + ")", ex);
         }
@@ -187,7 +184,9 @@ public class HdfsFileStorage implements FileStorage {
 
     private  <T> T doAsAndConvertException(PrivilegedExceptionAction<T> action) throws IOException {
         try {
-            return userGroupInformation.doAs(action);
+            UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+            LOG.info("doAs, logged in user: {}", ugi);
+            return ugi.doAs(action);
         }
         catch (IOException ioe) {
             throw ioe;
