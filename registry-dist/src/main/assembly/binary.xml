@@ -57,6 +57,13 @@
                 <include>storage-tool*jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./registry-dist/target/dependency</directory>
+            <outputDirectory>/bootstrap/lib</outputDirectory>
+            <includes>
+                <include>mysql-connector-java*jar</include>
+            </includes>
+        </fileSet>
 
         <fileSet>
             <directory>${project.basedir}./storage/core/target/dependency</directory>
