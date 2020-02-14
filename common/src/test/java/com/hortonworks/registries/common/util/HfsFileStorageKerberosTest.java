@@ -132,6 +132,9 @@ public class HfsFileStorageKerberosTest {
     }
 
     private void verifyFileSystemCalls() throws IOException {
+        verifyStatic(FileSystem.class, times(4));
+        FileSystem.get(any(URI.class), any(Configuration.class));
+
         Path path = new Path(ADJUSTED_DIRECTORY, JAR_FILE);
         List<String> expected = Lists.newArrayList(
                 "create " + path,
