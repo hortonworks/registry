@@ -74,7 +74,7 @@
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-authorizer-core</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
