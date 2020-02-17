@@ -70,6 +70,7 @@ public interface FileStorage {
      * @param name identifier of the file to be checked that was first
      *             passed during {@link #upload(InputStream, String)}
      * @return true if the file exists
+     * @throws IOException if any IO error occurs
      */
-    boolean exists(String name);
+    boolean exists(String name) throws IOException;
 }

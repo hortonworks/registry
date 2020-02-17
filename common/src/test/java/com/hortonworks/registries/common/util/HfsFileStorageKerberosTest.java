@@ -21,17 +21,17 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
@@ -56,6 +56,9 @@ public class HfsFileStorageKerberosTest {
     private MockFileSystem fileSystem;
     private UserGroupInformation userGroupInformation;
     private HdfsFileStorage testSubject;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private static final String FS_URL = "mock://mybucket/mydatalake/myenv";
     private static final String DIRECTORY = "/registry";
@@ -85,6 +88,34 @@ public class HfsFileStorageKerberosTest {
         });
     }
 
+    @Test
+    public void testInconistentConfig1() throws Exception {
+        // then
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("hdfs.kerberos.keytab is needed when hdfs.kerberos.principal (== " + LOGIN_PRINCIPAL + ") is specified.");
+
+        // given
+        Map<String, String> config = baseConfig();
+        config.put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
+
+        // when
+        testSubject.init(config);
+    }
+
+    @Test
+    public void testInconistentConfig2() throws Exception {
+        // then
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("hdfs.kerberos.principal is needed when hdfs.kerberos.keytab (== " + LOGIN_KEYTAB + ") is specified.");
+
+        // given
+        Map<String, String> config = baseConfig();
+        config.put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
+
+        // when
+        testSubject.init(config);
+    }    
+    
     @Test
     public void testWithKerberos() throws Exception {
         // given
@@ -119,8 +150,8 @@ public class HfsFileStorageKerberosTest {
         verifyStatic(UserGroupInformation.class, times(1));
         UserGroupInformation.loginUserFromKeytab(LOGIN_PRINCIPAL, LOGIN_KEYTAB);
 
-        verify(userGroupInformation, times(1)).doAs(any(PrivilegedAction.class));
-        verify(userGroupInformation, times(3)).doAs(any(PrivilegedExceptionAction.class));
+        verify(userGroupInformation, never()).doAs(any(PrivilegedAction.class));
+        verify(userGroupInformation, times(4)).doAs(any(PrivilegedExceptionAction.class));
     }
 
     private void verifySimpleExecution() throws Exception {
