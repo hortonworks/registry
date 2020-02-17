@@ -29,6 +29,14 @@
             <outputDirectory>libs</outputDirectory>
             <unpack>false</unpack>
         </dependencySet>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>bootstrap/lib</outputDirectory>
+            <unpack>false</unpack>
+            <includes>
+                <include>mysql:mysql-connector-java</include>
+            </includes>
+        </dependencySet>
     </dependencySets>
 
     <fileSets>
@@ -55,13 +63,6 @@
             <outputDirectory>/bootstrap/lib</outputDirectory>
             <includes>
                 <include>storage-tool*jar</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}./registry-dist/target/dependency</directory>
-            <outputDirectory>/bootstrap/lib</outputDirectory>
-            <includes>
-                <include>mysql-connector-java*jar</include>
             </includes>
         </fileSet>
 
