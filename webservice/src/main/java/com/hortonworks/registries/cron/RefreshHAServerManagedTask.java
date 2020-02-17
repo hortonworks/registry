@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.cron;
 
+import com.hortonworks.registries.common.RegistryHAConfiguration;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
@@ -27,26 +28,28 @@ import java.util.Timer;
 
 public class RefreshHAServerManagedTask implements Managed {
 
-    private StorageManager storageManager;
-    private TransactionManager transactionManager;
-    private HAServerNotificationManager haServerNotificationManager;
-    private RefreshHAServerListTask refreshHAServerListTask;
-    private Timer timer = new Timer();
-    protected Long HOST_LIST_SYNC_INTERVAL_IN_MILLISEC = 15000l;
     private static final Logger LOG = LoggerFactory.getLogger(RefreshHAServerManagedTask.class);
 
-    public RefreshHAServerManagedTask(StorageManager storageManager, TransactionManager transactionManager, HAServerNotificationManager haServerNotificationManager) {
-        this.storageManager = storageManager;
-        this.transactionManager = transactionManager;
-        this.haServerNotificationManager = haServerNotificationManager;
-        this.refreshHAServerListTask = new RefreshHAServerListTask(storageManager, transactionManager, haServerNotificationManager);
+    private RegistryHAConfiguration registryHAConfiguration;
+    private RefreshHAServerListTask refreshHAServerListTask;
+    private Timer timer = new Timer();
+
+    public RefreshHAServerManagedTask(StorageManager storageManager,
+                                      TransactionManager transactionManager,
+                                      RegistryHAConfiguration registryHAConfiguration,
+                                      HAServerNotificationManager haServerNotificationManager) {
+        this.registryHAConfiguration = registryHAConfiguration;
+        this.refreshHAServerListTask = new RefreshHAServerListTask(storageManager,
+                                                                   transactionManager,
+                                                                   registryHAConfiguration,
+                                                                   haServerNotificationManager);
     }
 
 
     @Override
     public void start() {
         LOG.debug("Kick start timer task to send heartbeat to the database and sync up the latest nodes in HA mode");
-        timer.scheduleAtFixedRate(refreshHAServerListTask, 0, HOST_LIST_SYNC_INTERVAL_IN_MILLISEC);
+        timer.scheduleAtFixedRate(refreshHAServerListTask, 0, registryHAConfiguration.getPeerListRefreshIntervalMs());
     }
 
     @Override

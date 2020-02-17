@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.cron;
 
+import com.hortonworks.registries.common.RegistryHAConfiguration;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HostConfigStorable;
@@ -34,22 +35,27 @@ public class RefreshHAServerListTask extends TimerTask {
 
     private StorageManager storageManager;
     private TransactionManager transactionManager;
+    private RegistryHAConfiguration registryHAConfiguration;
     private HAServerNotificationManager haServerNotificationManager;
     private static final Logger LOG = LoggerFactory.getLogger(RefreshHAServerListTask.class);
 
-    public RefreshHAServerListTask(StorageManager storageManager, TransactionManager transactionManager, HAServerNotificationManager haServerNotificationManager) {
+    public RefreshHAServerListTask(StorageManager storageManager,
+                                   TransactionManager transactionManager,
+                                   RegistryHAConfiguration registryHAConfiguration,
+                                   HAServerNotificationManager haServerNotificationManager) {
         this.storageManager = storageManager;
         this.transactionManager = transactionManager;
+        this.registryHAConfiguration = registryHAConfiguration;
         this.haServerNotificationManager = haServerNotificationManager;
     }
 
     @Override
     public void run() {
         try {
-            transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+            transactionManager.beginTransaction(TransactionIsolation.READ_COMMITTED);
             Collection<HostConfigStorable> hostConfigStorables = storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE);
             List<HostConfigStorable> hostConfigWithoutStaleEntries = hostConfigStorables.stream().filter(hostConfigStorable -> {
-                if( (System.currentTimeMillis() - hostConfigStorable.getTimestamp()) > 600000) {
+                if( (System.currentTimeMillis() - hostConfigStorable.getTimestamp()) > registryHAConfiguration.getPeerEntryExpiryTimeMs()) {
                     LOG.debug("Removing : {} from list of available servers", hostConfigStorable.getHostUrl());
                     storageManager.remove(hostConfigStorable.getStorableKey());
                     return false;

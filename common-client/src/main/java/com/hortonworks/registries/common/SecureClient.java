@@ -33,11 +33,10 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import java.security.PrivilegedAction;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SecureClient {
+public class SecureClient implements AutoCloseable {
 
     private Client client;
     private Login login;
@@ -47,16 +46,8 @@ public class SecureClient {
         this.login = login;
     }
 
-    public Client getClient() {
-        return client;
-    }
-
-    public Login getLogin() {
-        return login;
-    }
-
     public Client register(Class<?> componentClass) {
-       return client.register(componentClass);
+        return client.register(componentClass);
     }
 
     public Client register(Object component) {
@@ -77,14 +68,22 @@ public class SecureClient {
 
     public static class Builder {
 
-        private static final Logger LOG = LoggerFactory.getLogger(SecureClient.class);
+        private static final Logger LOG = LoggerFactory.getLogger(Builder.class);
 
-        private ClientBuilder clientBuilder;
+        // ---------------------------------------------
+        //   Jersey client connection properties
+        // ---------------------------------------------
 
         private static final int DEFAULT_CONNECTION_TIMEOUT = 30 * 1000;
         private static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
 
+        // -----------------------------------------
+        //   SSL configuration properties
+        // -----------------------------------------
 
+        private static final String SSL_PROTOCOL = "protocol";
+
+        // SSL key store properties
         private static final String SSL_KEY_PASSWORD = "keyPassword";
         private static final String SSL_KEY_STORE_PATH = "keyStorePath";
         private static final String SSL_KEY_STORE_TYPE = "keyStoreType";
@@ -93,6 +92,7 @@ public class SecureClient {
         private static final String SSL_KEY_MANAGER_FACTORY_ALGORITHM = "keyManagerFactoryAlgorithm";
         private static final String SSL_KEY_MANAGER_FACTORY_PROVIDER = "keyManagerFactoryProvider";
 
+        // SSL trust store properties
         private static final String SSL_TRUST_STORE_TYPE = "trustStoreType";
         private static final String SSL_TRUST_STORE_PATH = "trustStorePath";
         private static final String SSL_TRUST_STORE_PASSWORD = "trustStorePassword";
@@ -102,56 +102,73 @@ public class SecureClient {
 
         private static final String HOSTNAME_VERIFIER_CLASS_KEY = "hostnameVerifierClass";
 
-        private static final String SSL_PROTOCOL = "protocol";
+        private String jaasConfig = null;
+        private String loginContextName = null;
+        private long saslReloginSynchronizationTimeoutMs = 180000L;
 
-        private Client client;
-        private Login login;
+        private Map<String, String> sslConfig = null;
+        private Map<String, ?> clientConfig = null;
 
-        public Builder() {
-            clientBuilder = JerseyClientBuilder.newBuilder();
+        public Builder jaasConfig(String jaasConfig) {
+            this.jaasConfig = jaasConfig;
+            return this;
         }
 
-        public Builder authentication(String saslJaasConfig, String loginContextName, long kerberosSynchronizationTimeoutMs) {
-            if (saslJaasConfig != null) {
-                KerberosLogin kerberosLogin = new KerberosLogin(kerberosSynchronizationTimeoutMs);
-                try {
-                    kerberosLogin.configure(new HashMap<>(), loginContextName, new JaasConfiguration(loginContextName, saslJaasConfig));
-                    kerberosLogin.login();
-                    login = kerberosLogin;
-                } catch (LoginException e) {
-                    LOG.error("Failed to initialize the dynamic JAAS config: " + saslJaasConfig + ". Attempting static JAAS config.");
-                } catch (Exception e) {
-                    LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
+        public Builder loginContextName(String loginContextName) {
+            this.loginContextName = loginContextName;
+            return this;
+        }
+
+        public Builder saslReloginSynchronizationTimeoutMs(long saslReloginSynchronizationTimeoutMs) {
+            this.saslReloginSynchronizationTimeoutMs = saslReloginSynchronizationTimeoutMs;
+            return this;
+        }
+
+        public Builder sslConfig(Map<String, String> sslConfig) {
+            this.sslConfig = sslConfig;
+            return this;
+        }
+
+        public Builder clientConfig(Map<String, ?> clientConfig) {
+            if (clientConfig != null) {
+                this.clientConfig = clientConfig;
+            }
+            return this;
+        }
+
+        public SecureClient build() {
+            return new SecureClient(createClient(), createAuthenticationContext());
+        }
+
+        private Client createClient() {
+            ClientConfig config = new ClientConfig();
+            config.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
+            config.property(ClientProperties.READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
+            config.property(ClientProperties.FOLLOW_REDIRECTS, true);
+            if (clientConfig != null) {
+                for (Map.Entry<String, ?> entry : clientConfig.entrySet()) {
+                    config.property(entry.getKey(), entry.getValue());
                 }
             }
 
-            String jaasConfigFile = System.getProperty("java.security.auth.login.config");
-            if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
-                KerberosLogin kerberosLogin = new KerberosLogin(kerberosSynchronizationTimeoutMs);
-                kerberosLogin.configure(new HashMap<>(), loginContextName);
-                try {
-                    kerberosLogin.login();
-                    login = kerberosLogin;
-                } catch (LoginException e) {
-                    LOG.error("Could not login using jaas config  section " + loginContextName);
-                    login = new NOOPLogin();
-                }
+            ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
+                    .withConfig(config)
+                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+
+            return imbueSSLContext(clientBuilder).build();
+        }
+
+        private ClientBuilder imbueSSLContext(ClientBuilder clientBuilder) {
+            if (sslConfig == null || sslConfig.isEmpty()) {
+                return clientBuilder;
             } else {
-                LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
-                login = new NOOPLogin();
+                clientBuilder.sslContext(createSSLContext(sslConfig));
+                if (sslConfig.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
+                    String hostNameVerifierClassName = sslConfig.get(HOSTNAME_VERIFIER_CLASS_KEY);
+                    clientBuilder.hostnameVerifier(createHostnameVerifier(hostNameVerifierClassName));
+                }
+                return clientBuilder;
             }
-
-            return this;
-        }
-
-        public Builder ssl(Map<String, String> sslConfig) {
-            clientBuilder.sslContext(createSSLContext(sslConfig));
-            if (sslConfig.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
-                String hostNameVerifierClassName = sslConfig.get(HOSTNAME_VERIFIER_CLASS_KEY);
-                clientBuilder.hostnameVerifier(createHostnameVerifier(hostNameVerifierClassName));
-            }
-
-            return this;
         }
 
         private SSLContext createSSLContext(Map<String, String> sslConfigurations) {
@@ -188,22 +205,35 @@ public class SecureClient {
             }
         }
 
-        public SecureClient build(Map<String, ?> conf) {
-            ClientConfig config = new ClientConfig();
-            config.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
-            config.property(ClientProperties.READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
-            config.property(ClientProperties.FOLLOW_REDIRECTS, true);
-            for (Map.Entry<String, ?> entry : conf.entrySet()) {
-                config.property(entry.getKey(), entry.getValue());
+        private Login createAuthenticationContext() {
+            if (jaasConfig != null && loginContextName != null) {
+                KerberosLogin kerberosLogin = new KerberosLogin(saslReloginSynchronizationTimeoutMs);
+                try {
+                    kerberosLogin.configure(new HashMap<>(), loginContextName, new JaasConfiguration(loginContextName, jaasConfig));
+                    kerberosLogin.login();
+                    return kerberosLogin;
+                } catch (LoginException e) {
+                    LOG.error("Failed to initialize the dynamic JAAS config: " + jaasConfig + ". Attempting static JAAS config.");
+                } catch (Exception e) {
+                    LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
+                }
             }
 
-            client = clientBuilder.withConfig(config).property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE).build();
-
-            return new SecureClient(client, login);
-        }
-
-        public SecureClient build() {
-            return build(Collections.EMPTY_MAP);
+            String jaasConfigFile = System.getProperty("java.security.auth.login.config");
+            if (loginContextName != null && jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
+                KerberosLogin kerberosLogin = new KerberosLogin(saslReloginSynchronizationTimeoutMs);
+                kerberosLogin.configure(new HashMap<>(), loginContextName);
+                try {
+                    kerberosLogin.login();
+                    return kerberosLogin;
+                } catch (LoginException e) {
+                    LOG.error("Could not login using jaas config  section " + loginContextName);
+                    return new NOOPLogin();
+                }
+            } else {
+                LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
+                return new NOOPLogin();
+            }
         }
     }
 }

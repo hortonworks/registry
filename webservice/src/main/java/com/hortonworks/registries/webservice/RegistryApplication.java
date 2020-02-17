@@ -14,8 +14,7 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.common.GenericExceptionMapper;
-import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.common.*;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
@@ -26,10 +25,6 @@ import com.hortonworks.registries.storage.transaction.TransactionEventListener;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import io.dropwizard.assets.AssetsBundle;
-import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.HAConfiguration;
-import com.hortonworks.registries.common.ModuleConfiguration;
-import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ha.LeadershipAware;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.ha.LocalLeader;
@@ -43,6 +38,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -52,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -66,12 +63,14 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
     protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
     protected StorageManager storageManager;
-    protected HAServerNotificationManager haServerNotificationManager = new HAServerNotificationManager();
+    protected HAServerNotificationManager haServerNotificationManager;
     protected TransactionManager transactionManager;
     protected RefreshHAServerManagedTask refreshHAServerManagedTask;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
+
+        doServiceAuthentication(registryConfiguration.getServiceAuthenticationConfiguration());
 
         // handle HA if it is configured
         registerHA(registryConfiguration.getHaConfig(), environment);
@@ -86,21 +85,39 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
-        registerAndNotifyOtherServers(environment);
+        registerAndNotifyOtherServers(environment, registryConfiguration.getRegistryHAConfiguration());
 
     }
 
-    private void registerAndNotifyOtherServers(Environment environment) {
+    private void doServiceAuthentication(ServiceAuthenticationConfiguration serviceAuthenticationConfiguration) throws IOException {
+        if (serviceAuthenticationConfiguration != null) {
+            String serverPrincipal = (String) serviceAuthenticationConfiguration.getProperties().get("principle");
+            String keyTab = (String) serviceAuthenticationConfiguration.getProperties().get("principleKeytab");
+
+            LOG.debug("Service authentication triggered with principle = " + serverPrincipal
+                    + ", keyTab = " + keyTab);
+
+            UserGroupInformation.loginUserFromKeytab(serverPrincipal, keyTab);
+
+            LOG.debug("Service authentication is successful");
+        } else {
+            LOG.debug("Service authentication is not configured.");
+        }
+    }
+
+    private void registerAndNotifyOtherServers(Environment environment, RegistryHAConfiguration registryHAConfiguration) {
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
             @Override
             public void serverStarted(Server server) {
 
                 String serverURL = server.getURI().toString();
 
+                haServerNotificationManager = new HAServerNotificationManager(registryHAConfiguration);
+
                 haServerNotificationManager.setHomeNodeURL(serverURL);
 
                 try {
-                    transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+                    transactionManager.beginTransaction(TransactionIsolation.READ_COMMITTED);
                     HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
                     if (hostConfigStorable == null) {
                         storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
@@ -115,7 +132,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
                 haServerNotificationManager.notifyDebut();
 
-                refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager,transactionManager, haServerNotificationManager);
+                refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager, transactionManager, haServerNotificationManager);
                 environment.lifecycle().manage(refreshHAServerManagedTask);
                 refreshHAServerManagedTask.start();
             }
@@ -211,13 +228,13 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 transactionManagerAware.setTransactionManager(transactionManager);
             }
 
-            if(moduleRegistration instanceof LeadershipAware) {
+            if (moduleRegistration instanceof LeadershipAware) {
                 LOG.info("Module [{}] is registered for LeadershipParticipant registration.", moduleName);
                 LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
                 leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
             }
 
-            if(moduleRegistration instanceof HAServersAware) {
+            if (moduleRegistration instanceof HAServersAware) {
                 LOG.info("Module [{}] is registered for HAServersAware registration.");
                 HAServersAware leadershipAware = (HAServersAware) moduleRegistration;
                 leadershipAware.setHAServerConfigManager(haServerNotificationManager);
@@ -230,7 +247,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         for (Object resource : resourcesToRegister) {
             environment.jersey().register(resource);
         }
-        
+
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(new TransactionEventListener(transactionManager, TransactionIsolation.READ_COMMITTED));
 
@@ -254,7 +271,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         if (fileStorageConfiguration.getClassName() != null)
             try {
                 fileStorage = (FileStorage) Class.forName(fileStorageConfiguration.getClassName(), true,
-                                                          Thread.currentThread().getContextClassLoader()).newInstance();
+                        Thread.currentThread().getContextClassLoader()).newInstance();
                 fileStorage.init(fileStorageConfiguration.getProperties());
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -277,7 +294,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private void addServletFilters(RegistryConfiguration registryConfiguration, Environment environment) {
         List<ServletFilterConfiguration> servletFilterConfigurations = registryConfiguration.getServletFilters();
         if (servletFilterConfigurations != null && !servletFilterConfigurations.isEmpty()) {
-            for (ServletFilterConfiguration servletFilterConfig: servletFilterConfigurations) {
+            for (ServletFilterConfiguration servletFilterConfig : servletFilterConfigurations) {
                 try {
                     String className = servletFilterConfig.getClassName();
                     Map<String, String> params = servletFilterConfig.getParams();
@@ -285,7 +302,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                     LOG.info("Registering servlet filter [{}]", servletFilterConfig);
                     Class<? extends Filter> filterClass = (Class<? extends Filter>) Class.forName(className);
                     FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(className + typeSuffix, filterClass);
-                    if(params != null) {
+                    if (params != null) {
                         dynamic.setInitParameters(params);
                     }
                     dynamic.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");

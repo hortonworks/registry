@@ -1,12 +1,12 @@
 /**
  * Copyright 2018-2019 Cloudera, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,15 +16,18 @@
 
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.common.RegistryHAConfiguration;
+import com.hortonworks.registries.common.SecureClient;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.PriorityQueue;
@@ -37,6 +40,15 @@ public class HAServerNotificationManager {
     private String serverUrl;
     private static final Logger LOG = LoggerFactory.getLogger(HAServerNotificationManager.class);
     public static Integer MAX_RETRY = 3;
+    private SecureClient client;
+    private RegistryHAConfiguration registryHAConfiguration;
+
+    public HAServerNotificationManager(RegistryHAConfiguration registryHAConfiguration) {
+        this.registryHAConfiguration = registryHAConfiguration;
+        client = new SecureClient.Builder()
+                                 .sslConfig(registryHAConfiguration.getSslConfig())
+                                 .build();
+    }
 
     public void refreshServerInfo(Collection<HostConfigStorable> hostConfigStorableList) {
         if (hostConfigStorableList != null) {
@@ -54,15 +66,15 @@ public class HAServerNotificationManager {
     }
 
     public void notifyCacheInvalidation(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString) {
-        notify(String.format("api/v1/schemaregistry/cache/%s/invalidate",schemaRegistryCacheType.name()), keyAsString);
+        notify(String.format("api/v1/schemaregistry/cache/%s/invalidate", schemaRegistryCacheType.name()), keyAsString);
     }
 
     private void notify(String urlPath, Object postBody) {
         // If Schema Registry was not started in HA mode then serverURL would be null, in case don't bother making POST calls
-        if(serverUrl != null) {
-            PriorityQueue < Pair<Integer, String> > queue = new PriorityQueue<>();
+        if (serverUrl != null) {
+            PriorityQueue<Pair<Integer, String>> queue = new PriorityQueue<>();
             synchronized (UPDATE_ITERATE_LOCK) {
-                hostIps.stream().forEach(hostIp -> {
+                hostIps.forEach(hostIp -> {
                     queue.add(Pair.of(1, hostIp));
                 });
             }
@@ -70,18 +82,21 @@ public class HAServerNotificationManager {
             while (!queue.isEmpty()) {
                 Pair<Integer, String> priorityWithHostIp = queue.remove();
 
-                WebTarget target = ClientBuilder.newClient().target(String.format("%s%s", priorityWithHostIp.getRight(), urlPath));
+                WebTarget target = client.target(String.format("%s%s", priorityWithHostIp.getRight(), urlPath));
                 Response response = null;
 
                 try {
-                   response = target.request().post(Entity.json(postBody));
+                    response = UserGroupInformation.getLoginUser().doAs((PrivilegedAction<Response>) () -> {
+                        return target.request().post(Entity.json(postBody));
+                    });
                 } catch (Exception e) {
                     LOG.warn("Failed to notify the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
                 }
 
-                if ( (response == null || response.getStatus() != Response.Status.OK.getStatusCode()) && priorityWithHostIp.getLeft() < MAX_RETRY) {
+
+                if ((response == null || response.getStatus() != Response.Status.OK.getStatusCode()) && priorityWithHostIp.getLeft() < MAX_RETRY) {
                     queue.add(Pair.of(priorityWithHostIp.getLeft() + 1, priorityWithHostIp.getRight()));
-                } else if (priorityWithHostIp.getLeft() < MAX_RETRY ) {
+                } else if (priorityWithHostIp.getLeft() < MAX_RETRY) {
                     LOG.info("Notified the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
                 } else if (priorityWithHostIp.getLeft() >= MAX_RETRY) {
                     LOG.warn("Failed to notify the peer server '{}' about the current host debut, giving up after {} attempts.",
@@ -91,7 +106,7 @@ public class HAServerNotificationManager {
                 try {
                     Thread.sleep(priorityWithHostIp.getLeft() * 100);
                 } catch (InterruptedException e) {
-                    LOG.warn("Failed to notify the peer server '{}'",priorityWithHostIp.getRight(), e);
+                    LOG.warn("Failed to notify the peer server '{}'", priorityWithHostIp.getRight(), e);
                 }
             }
 

@@ -17,10 +17,7 @@
 package com.hortonworks.registries.webservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.HAConfiguration;
-import com.hortonworks.registries.common.ModuleConfiguration;
-import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.common.*;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
@@ -48,6 +45,12 @@ public class RegistryConfiguration extends Configuration {
 
     @JsonProperty
     private boolean enableCors;
+
+    @JsonProperty
+    private RegistryHAConfiguration registryHAConfiguration;
+
+    @JsonProperty
+    private ServiceAuthenticationConfiguration serviceAuthenticationConfiguration;
 
     private String httpProxyUrl;
     private String httpProxyUsername;
@@ -132,5 +135,13 @@ public class RegistryConfiguration extends Configuration {
 
     public void setServletFilters(List<ServletFilterConfiguration> servletFilters) {
         this.servletFilters = servletFilters;
+    }
+
+    public ServiceAuthenticationConfiguration getServiceAuthenticationConfiguration() {
+        return serviceAuthenticationConfiguration;
+    }
+
+    public RegistryHAConfiguration getRegistryHAConfiguration() {
+        return registryHAConfiguration;
     }
 }
