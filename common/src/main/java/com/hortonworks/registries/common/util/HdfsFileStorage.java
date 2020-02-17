@@ -32,10 +32,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 
 /**
@@ -56,7 +56,7 @@ public class HdfsFileStorage implements FileStorage {
     private String directory;
     private Configuration hdfsConfig;
     private URI fsUri;
-    private boolean kerberos = false;
+    private boolean kerberosEnabled = false;
 
     @Override
     public void init(Map<String, String> config) throws IOException {
@@ -75,14 +75,18 @@ public class HdfsFileStorage implements FileStorage {
         // make sure fsUrl is set
         Preconditions.checkArgument(fsUrl != null, "fsUrl must be specified for HdfsFileStorage.");
 
-        Preconditions.checkArgument((keytabLocation == null) == (kerberosPrincipal == null),
-                "Both %s (== %s) and %s (== %s) must be specified to use kerberos.",
-                CONFIG_KERBEROS_PRINCIPAL, kerberosPrincipal, CONFIG_KERBEROS_KEYTAB, keytabLocation);
+        Preconditions.checkArgument(keytabLocation != null || kerberosPrincipal == null,
+            "%s is needed when %s (== %s) is specified.",
+            CONFIG_KERBEROS_KEYTAB, CONFIG_KERBEROS_PRINCIPAL, kerberosPrincipal);
+
+        Preconditions.checkArgument(kerberosPrincipal != null || keytabLocation == null,
+            "%s is needed when %s (== %s) is specified.",
+            CONFIG_KERBEROS_PRINCIPAL, CONFIG_KERBEROS_KEYTAB, keytabLocation);
 
         if (kerberosPrincipal != null) {
             LOG.info("Logging in as kerberos principal {}", kerberosPrincipal);
             UserGroupInformation.loginUserFromKeytab(kerberosPrincipal, keytabLocation);
-            kerberos = true;
+            kerberosEnabled = true;
         }
 
         directory = adjustDirectory(fsUrl, directory);
@@ -112,47 +116,33 @@ public class HdfsFileStorage implements FileStorage {
         }
     }
 
-    private boolean isKerberos() {
-        return kerberos;
+    private boolean isKerberosEnabled() {
+        return kerberosEnabled;
     }
 
     @Override
     public String upload(InputStream inputStream, String name) throws IOException {
-        return isKerberos() ?
-                doAsAndConvertException(() -> uploadInternal(inputStream, name)):
-                uploadInternal(inputStream, name);
+        return execute(() -> uploadInternal(inputStream, name));
     }
 
     @Override
     public InputStream download(String name) throws IOException {
-        return isKerberos() ?
-                doAsAndConvertException(() -> downloadInternal(name)):
-                downloadInternal(name);
+        return execute(() -> downloadInternal(name));
     }
 
     @Override
     public boolean delete(String name) throws IOException {
-        return isKerberos() ?
-                doAsAndConvertException(() -> deleteInternal(name)):
-                deleteInternal(name);
+        return execute(() -> deleteInternal(name));
     }
 
     @Override
-    public boolean exists(String name) {
-        try {
-            return isKerberos() ?
-                    UserGroupInformation.getLoginUser().doAs((PrivilegedAction<Boolean>) () -> existsInternal(name)):
-                    existsInternal(name);
-        }
-        catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
+    public boolean exists(String name) throws IOException {
+        return execute(() -> existsInternal(name));
     }
 
     private String uploadInternal(InputStream inputStream, String name) throws IOException {
         Path jarPath = new Path(directory, name);
-        FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
-        try(FSDataOutputStream outputStream = fs.create(jarPath, false)) {
+        try(FSDataOutputStream outputStream = getFileSystem().create(jarPath, false)) {
             ByteStreams.copy(inputStream, outputStream);
         }
 
@@ -161,38 +151,39 @@ public class HdfsFileStorage implements FileStorage {
 
     private InputStream downloadInternal(String name) throws IOException {
         Path filePath = new Path(directory, name);
-        FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
-        return fs.open(filePath);
+        return getFileSystem().open(filePath);
     }
 
     private boolean deleteInternal(String name) throws IOException {
-        FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
-        return fs.delete(new Path(directory, name), true);
+        return getFileSystem().delete(new Path(directory, name), true);
     }
 
-    private boolean existsInternal(String name) {
+    private boolean existsInternal(String name) throws IOException {
         Path path = new Path(directory, name);
-        try {
-            FileSystem fs = FileSystem.get(fsUri, hdfsConfig);
-            return fs.exists(path);
-        } catch (Exception ex) {
-            LOG.error("Exception occurred while calling exists(" + path + ")", ex);
-        }
-        return false;
+        return getFileSystem().exists(path);
     }
 
+    private FileSystem getFileSystem() throws IOException {
+        return FileSystem.get(fsUri, hdfsConfig);
+    }
 
-    private  <T> T doAsAndConvertException(PrivilegedExceptionAction<T> action) throws IOException {
+    private  <T> T execute(PrivilegedExceptionAction<T> action) throws IOException {
         try {
-            UserGroupInformation ugi = UserGroupInformation.getLoginUser();
-            LOG.info("doAs, logged in user: {}", ugi);
-            return ugi.doAs(action);
+            if (isKerberosEnabled()) {
+                UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+                LOG.info("doAs, logged in user: {}", ugi);
+                return ugi.doAs(action);
+            }
+            else {
+                return action.run();
+            }
         }
-        catch (IOException ioe) {
-            throw ioe;
+        catch (IOException ex) {
+            throw ex;
         }
-        catch (InterruptedException ex) {
-            throw new UncheckedIOException(new IOException(ex));
+        catch (Exception ex) {
+            throw new IOException(ex);
         }
     }
+
 }
