@@ -30,12 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 
 /**
