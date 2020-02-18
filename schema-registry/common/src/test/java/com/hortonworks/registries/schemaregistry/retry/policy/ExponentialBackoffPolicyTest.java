@@ -24,11 +24,10 @@ public class ExponentialBackoffPolicyTest {
     @Test
     public void testSleepInterval() {
         long sleepMs = 100L;
-        float exponent = 2;
-        ExponentialBackoffPolicy exponentialBackoffRetryPolicy = new ExponentialBackoffPolicy(sleepMs, exponent, 10, 10000L);
+        ExponentialBackoffPolicy exponentialBackoffRetryPolicy = new ExponentialBackoffPolicy(sleepMs, 10, 10000L);
+        long[] sleepInterval = {100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200, 102400};
         for (int i = 1; i <= 10; i++) {
-            long sleep = (long) (sleepMs * Math.pow(exponent, (i - 1)));
-            Assert.assertEquals(sleep, exponentialBackoffRetryPolicy.sleepTime(i, 1000));
+            Assert.assertEquals(sleepInterval[i - 1], exponentialBackoffRetryPolicy.sleepTime(i, 1000));
         }
     }
 }

@@ -46,7 +46,7 @@ public class ExponentialBackoffPolicy extends BackoffPolicy {
 
     }
 
-    public ExponentialBackoffPolicy(Long sleepTimeMs, Float exponent, Integer maxAttempts, Long maxSleepTimeMs) {
+    public ExponentialBackoffPolicy(Long sleepTimeMs, Integer maxAttempts, Long maxSleepTimeMs) {
         super(sleepTimeMs, maxAttempts, maxSleepTimeMs);
     }
 
