@@ -149,7 +149,10 @@ export default class SchemaVersionForm extends Component {
           }else{
             this.setState({schemaTextCompatibility: result.errorMessage || result.responseMessage});
           }
-        }).catch(Utils.showError);
+        }).catch((err)=>{
+          this.setState({schemaTextCompatibility: 'Schema is invalid'});
+          Utils.showError(err);
+        });
     }
     catch(err){
       console.log(err);
