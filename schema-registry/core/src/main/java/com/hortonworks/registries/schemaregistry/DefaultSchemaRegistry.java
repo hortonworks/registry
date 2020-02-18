@@ -664,7 +664,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public void registerNodeDebut(String nodeUrl) {
-        haServerNotificationManager.addNodeUrl(nodeUrl);
+        haServerNotificationManager.addPeerServerURL(nodeUrl);
     }
 
     @Override

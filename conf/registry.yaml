@@ -66,7 +66,9 @@ serviceAuthenticationConfiguration:
      principleKeytab: ""
 
 registryHAConfiguration:
+  # How often to poll for the entire list of servers running in HA mode
   peer.list.refresh.interval.ms: 15000
+  # How long to wait for the health checks from the server before ejecting a server from HA pool
   peer.entry.expiry.time.ms: 600000
   sslConfig:
     protocol: SSL
@@ -84,7 +86,6 @@ registryHAConfiguration:
     #  trustStoreProvider:
     #  trustManagerFactoryProvider:
     #  trustManagerFactoryAlgorithm:
-
 
 # Filesystem based jar storage
 fileStorageConfiguration:

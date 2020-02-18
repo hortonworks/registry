@@ -35,28 +35,27 @@ import java.util.Set;
 
 public class HAServerNotificationManager {
 
-    Set<String> hostIps = new HashSet<>();
-    private final String UPDATE_ITERATE_LOCK = "UPDATE_ITERATE_LOCK";
-    private String serverUrl;
     private static final Logger LOG = LoggerFactory.getLogger(HAServerNotificationManager.class);
+
+    private String serverUrl;
+    private Set<String> peerServerURLs = new HashSet<>();
     public static Integer MAX_RETRY = 3;
     private SecureClient client;
-    private RegistryHAConfiguration registryHAConfiguration;
 
     public HAServerNotificationManager(RegistryHAConfiguration registryHAConfiguration) {
-        this.registryHAConfiguration = registryHAConfiguration;
         client = new SecureClient.Builder()
-                                 .sslConfig(registryHAConfiguration.getSslConfig())
+                                 .sslConfig(registryHAConfiguration == null ? null : registryHAConfiguration.getSslConfig())
                                  .build();
     }
 
-    public void refreshServerInfo(Collection<HostConfigStorable> hostConfigStorableList) {
+    public void updatePeerServerURLs(Collection<HostConfigStorable> hostConfigStorableList) {
         if (hostConfigStorableList != null) {
-            synchronized (UPDATE_ITERATE_LOCK) {
-                hostIps.clear();
-                hostConfigStorableList.stream().filter(hostConfigStorable -> !hostConfigStorable.getHostUrl().equals(serverUrl)).forEach(hostConfig -> {
-                    hostIps.add(hostConfig.getHostUrl());
-                });
+            synchronized (HAServerNotificationManager.class) {
+                peerServerURLs.clear();
+                hostConfigStorableList.stream().filter(hostConfigStorable -> !hostConfigStorable.getHostUrl().equals(serverUrl))
+                                               .forEach(hostConfig -> {
+                                                   peerServerURLs.add(hostConfig.getHostUrl());
+                                                });
             }
         }
     }
@@ -73,16 +72,16 @@ public class HAServerNotificationManager {
         // If Schema Registry was not started in HA mode then serverURL would be null, in case don't bother making POST calls
         if (serverUrl != null) {
             PriorityQueue<Pair<Integer, String>> queue = new PriorityQueue<>();
-            synchronized (UPDATE_ITERATE_LOCK) {
-                hostIps.forEach(hostIp -> {
-                    queue.add(Pair.of(1, hostIp));
+            synchronized (HAServerNotificationManager.class) {
+                peerServerURLs.forEach(serverURL -> {
+                    queue.add(Pair.of(1, serverURL));
                 });
             }
 
             while (!queue.isEmpty()) {
-                Pair<Integer, String> priorityWithHostIp = queue.remove();
+                Pair<Integer, String> priorityWithServerURL = queue.remove();
 
-                WebTarget target = client.target(String.format("%s%s", priorityWithHostIp.getRight(), urlPath));
+                WebTarget target = client.target(String.format("%s%s", priorityWithServerURL.getRight(), urlPath));
                 Response response = null;
 
                 try {
@@ -90,40 +89,39 @@ public class HAServerNotificationManager {
                         return target.request().post(Entity.json(postBody));
                     });
                 } catch (Exception e) {
-                    LOG.warn("Failed to notify the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
+                    LOG.warn("Failed to notify the peer server '{}' about the current host debut.", priorityWithServerURL.getRight());
                 }
 
-
-                if ((response == null || response.getStatus() != Response.Status.OK.getStatusCode()) && priorityWithHostIp.getLeft() < MAX_RETRY) {
-                    queue.add(Pair.of(priorityWithHostIp.getLeft() + 1, priorityWithHostIp.getRight()));
-                } else if (priorityWithHostIp.getLeft() < MAX_RETRY) {
-                    LOG.info("Notified the peer server '{}' about the current host debut.", priorityWithHostIp.getRight());
-                } else if (priorityWithHostIp.getLeft() >= MAX_RETRY) {
+                if ((response == null || response.getStatus() != Response.Status.OK.getStatusCode()) && priorityWithServerURL.getLeft() < MAX_RETRY) {
+                    queue.add(Pair.of(priorityWithServerURL.getLeft() + 1, priorityWithServerURL.getRight()));
+                } else if (priorityWithServerURL.getLeft() < MAX_RETRY) {
+                    LOG.info("Notified the peer server '{}' about the current host debut.", priorityWithServerURL.getRight());
+                } else if (priorityWithServerURL.getLeft() >= MAX_RETRY) {
                     LOG.warn("Failed to notify the peer server '{}' about the current host debut, giving up after {} attempts.",
-                            priorityWithHostIp.getRight(), MAX_RETRY);
+                            priorityWithServerURL.getRight(), MAX_RETRY);
                 }
 
                 try {
-                    Thread.sleep(priorityWithHostIp.getLeft() * 100);
+                    Thread.sleep(priorityWithServerURL.getLeft() * 100);
                 } catch (InterruptedException e) {
-                    LOG.warn("Failed to notify the peer server '{}'", priorityWithHostIp.getRight(), e);
+                    LOG.warn("Failed to notify the peer server '{}'", priorityWithServerURL.getRight(), e);
                 }
             }
 
         }
     }
 
-    public void addNodeUrl(String nodeUrl) {
-        synchronized (UPDATE_ITERATE_LOCK) {
-            hostIps.add(nodeUrl);
+    public void addPeerServerURL(String nodeUrl) {
+        synchronized (HAServerNotificationManager.class) {
+            peerServerURLs.add(nodeUrl);
         }
     }
 
-    public void setHomeNodeURL(String homeNodeURL) {
+    public void setServerURL(String homeNodeURL) {
         this.serverUrl = homeNodeURL;
     }
 
-    public String getHomeNodeURL() {
+    public String getServerURL() {
         return this.serverUrl;
     }
 }

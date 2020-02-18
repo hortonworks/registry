@@ -32,6 +32,8 @@ public class RefreshHAServerManagedTask implements Managed {
 
     private RegistryHAConfiguration registryHAConfiguration;
     private RefreshHAServerListTask refreshHAServerListTask;
+    private static final long DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS = 15000L;
+    private long peerListRefreshIntervalMs;
     private Timer timer = new Timer();
 
     public RefreshHAServerManagedTask(StorageManager storageManager,
@@ -39,6 +41,8 @@ public class RefreshHAServerManagedTask implements Managed {
                                       RegistryHAConfiguration registryHAConfiguration,
                                       HAServerNotificationManager haServerNotificationManager) {
         this.registryHAConfiguration = registryHAConfiguration;
+        this.peerListRefreshIntervalMs = registryHAConfiguration == null ? DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS :
+                                                                           registryHAConfiguration.getPeerListRefreshIntervalMs();
         this.refreshHAServerListTask = new RefreshHAServerListTask(storageManager,
                                                                    transactionManager,
                                                                    registryHAConfiguration,
@@ -48,13 +52,14 @@ public class RefreshHAServerManagedTask implements Managed {
 
     @Override
     public void start() {
-        LOG.debug("Kick start timer task to send heartbeat to the database and sync up the latest nodes in HA mode");
-        timer.scheduleAtFixedRate(refreshHAServerListTask, 0, registryHAConfiguration.getPeerListRefreshIntervalMs());
+        LOG.debug("Kick start the timer task to send heartbeats and sync up all the SR servers running in HA mode");
+        timer.scheduleAtFixedRate(refreshHAServerListTask, 0, registryHAConfiguration == null ? DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS:
+                                                                                                      peerListRefreshIntervalMs);
     }
 
     @Override
     public void stop() throws Exception {
-        LOG.debug("Shutdown timer task for sending heartbeat to the database");
+        LOG.debug("Shutdown the timer task for sending heartbeats");
         timer.cancel();
     }
 

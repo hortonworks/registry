@@ -16,6 +16,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.common.RegistryHAConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
@@ -70,7 +71,7 @@ public class AvroSchemaRegistryTest {
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new HAServerNotificationManager(), new SchemaLockManager(new NOOPTransactionManager()));
+        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new HAServerNotificationManager(new RegistryHAConfiguration()), new SchemaLockManager(new NOOPTransactionManager()));
         schemaRegistry.init(Collections.<String, Object>emptyMap());
     }
 
