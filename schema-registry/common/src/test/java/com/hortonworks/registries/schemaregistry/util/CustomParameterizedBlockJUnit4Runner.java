@@ -219,23 +219,19 @@
  *   This class should be removed once the pull request is available in the future release.
  */
 
-package com.hortonworks.registries.schemaregistry.avro.util;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
+package com.hortonworks.registries.schemaregistry.util;
 
 import org.junit.runner.RunWith;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.model.FrameworkField;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.MultipleFailureException;
-import org.junit.runners.model.Statement;
+import org.junit.runners.model.*;
 import org.junit.runners.parameterized.TestWithParameters;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link BlockJUnit4ClassRunner} with parameters support. Parameters can be
