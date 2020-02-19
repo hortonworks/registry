@@ -17,13 +17,13 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
 import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
-import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRunner;
-import com.hortonworks.registries.schemaregistry.avro.util.SchemaRegistryTestName;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.serdes.Device;
 import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
+import com.hortonworks.registries.util.CustomParameterizedRunner;
+import com.hortonworks.registries.util.SchemaRegistryTestName;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
