@@ -220,7 +220,7 @@
  *   This class should be removed once the pull request is available in the future release.
  */
 
-package com.hortonworks.registries.schemaregistry.avro.util;
+package com.hortonworks.registries.util;
 
 import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;
