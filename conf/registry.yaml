@@ -44,48 +44,41 @@ servletFilters:
      forwardPaths: "/api/v1/confluent,/subjects/*,/schemas/ids/*"
      redirectPaths: "/ui/,/"
 
-## HA configuration
-## When no configuration is set, then all the nodes in schema registry cluster are eligible to write to the backend storage.
-#haConfig:
-#  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
-#  config:
-#    # This url is a list of ZK servers separated by ,
-#    connect.url: "localhost:2181"
-#    # root node prefix in ZK for this instance
-#    root: "/registry"
-#    session.timeout.ms: 30000
-#    connection.timeout.ms: 20000
-#    retry.limit: 5
-#    retry.base.sleep.time.ms: 1000
-#    retry.max.sleep.time.ms: 5000
-
 serviceAuthenticationConfiguration:
   type: kerberos
   properties:
      principle: ""
-     principleKeytab: ""
+     keytab: ""
 
-registryHAConfiguration:
-  # How often to poll for the entire list of servers running in HA mode
-  peer.list.refresh.interval.ms: 15000
+haConfiguration:
+  heartbeat.interval.ms: 15000
   # How long to wait for the health checks from the server before ejecting a server from HA pool
-  peer.entry.expiry.time.ms: 600000
+  peer.list.expiry.time.ms: 120000
+  # How many threads to spin up for cache invalidation
+  cache.invalidation.thread.count: 20
+  # In case the peer is not reachable retries are done, what is the policy for back off
+  cache.invalidation.retry.policy:
+    className: "com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy"
+    config:
+      sleepTimeMs: 100
+      maxAttempts: 1000
+      timeoutMs: 120000
   sslConfig:
-    protocol: SSL
-      hostnameVerifierClass: com.hortonworks.registries.schemaregistry.avro.util.AcceptAllHostnameVerifier
-      keyStoreType: JKS
-      keyStorePath: ./src/test/resources/jks/client.jks
-      keyStorePassword: clientpwd
-      #  keyPassword:
-      #  keyStoreProvider:
-      #  keyManagerFactoryProvider:
-      #  keyManagerFactoryAlgorithm:
-      trustStoreType: JKS
-      trustStorePath: ./src/test/resources/jks/client.jks
-      trustStorePassword: clientpwd
-    #  trustStoreProvider:
-    #  trustManagerFactoryProvider:
-    #  trustManagerFactoryAlgorithm:
+#    protocol: SSL
+#    hostnameVerifierClass: "com.hortonworks.registries.schemaregistry.avro.util.AcceptAllHostnameVerifier"
+#    keyStoreType: JKS
+#    keyStorePath: ./jks/client.jks
+#    keyStorePassword: clientpwd
+#    keyPassword:
+#    keyStoreProvider:
+#    keyManagerFactoryProvider:
+#    keyManagerFactoryAlgorithm:
+#    trustStoreType: JKS
+#    trustStorePath: ./jks/client.jks
+#    trustStorePassword: clientpwd
+#    trustStoreProvider:
+#    trustManagerFactoryProvider:
+#    trustManagerFactoryAlgorithm:
 
 # Filesystem based jar storage
 fileStorageConfiguration:
@@ -103,8 +96,8 @@ storageProviderConfiguration:
    db.properties:
      dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
      dataSource.url: "jdbc:mysql://localhost/schema_registry"
-     dataSource.user: "registry_user"
-     dataSource.password: "registry_password"
+     dataSource.user: "root"
+     dataSource.password: ""
 
 #swagger configuration
 swagger:

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,44 +15,55 @@
  */
 package com.hortonworks.registries.common;
 
-import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 
-/**
- * Configuration for HighAvailability.
- * {@code className} represents {@link LeadershipParticipant} implementation class
- * {@code config} respective configuration for the above class.
- *
- * If no HAConfiguration is not configured on schema registry cluster nodes then it is considered that each node in the
- * cluster is eligible for writes.
- *
- */
 public class HAConfiguration {
-    private String className;
-    private Map<String, Object> config;
 
-    public String getClassName() {
-        return className;
+    @JsonProperty("heartbeat.interval.ms")
+    private long heartbeatIntervalMs;
+
+    @JsonProperty("peer.list.expiry.time.ms")
+    private long peerListExpiryTimeMs;
+
+    @JsonProperty("cache.invalidation.retry.policy")
+    private Map<String, ?> cacheInvalidationRetryPolicy;
+
+    @JsonProperty("cache.invalidation.thread.count")
+    private int cacheInvalidationThreadCount;
+
+    @JsonProperty("sslConfig")
+    private Map<String, String> sslConfig;
+
+    public long getHeartbeatIntervalMs() {
+        return heartbeatIntervalMs;
     }
 
-    public void setClassName(String className) {
-        this.className = className;
+    public long getPeerListExpiryTimeMs() {
+        return peerListExpiryTimeMs;
     }
 
-    public Map<String, Object> getConfig() {
-        return config;
+    public Map<String, ?> getCacheInvalidationRetryPolicy() {
+        return cacheInvalidationRetryPolicy;
     }
 
-    public void setConfig(Map<String, Object> config) {
-        this.config = config;
+    public int getCacheInvalidationThreadCount() {
+        return cacheInvalidationThreadCount;
+    }
+
+    public Map<String, String> getSslConfig() {
+        return sslConfig;
     }
 
     @Override
     public String toString() {
         return "HAConfiguration{" +
-                "className='" + className + '\'' +
-                ", config=" + config +
+                "heartbeatIntervalMs=" + heartbeatIntervalMs +
+                ", peerListExpiryTimeMs=" + peerListExpiryTimeMs +
+                ", cacheInvalidationRetryPolicy=" + cacheInvalidationRetryPolicy +
+                ", cacheInvalidationThreadCount=" + cacheInvalidationThreadCount +
+                ", sslConfig=" + sslConfig +
                 '}';
     }
 }

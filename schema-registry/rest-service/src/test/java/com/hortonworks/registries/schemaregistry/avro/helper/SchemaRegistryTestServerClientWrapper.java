@@ -55,10 +55,6 @@ public class SchemaRegistryTestServerClientWrapper {
         }
     }
 
-    public boolean hasLeadership() {
-        return this.localSchemaRegistryServer.hasLeadership();
-    }
-
     public int getLocalPort() {
         return this.localSchemaRegistryServer.getLocalPort();
     }

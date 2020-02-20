@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.cron;
 
-import com.hortonworks.registries.common.RegistryHAConfiguration;
+import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
@@ -30,37 +30,39 @@ public class RefreshHAServerManagedTask implements Managed {
 
     private static final Logger LOG = LoggerFactory.getLogger(RefreshHAServerManagedTask.class);
 
-    private RegistryHAConfiguration registryHAConfiguration;
-    private RefreshHAServerListTask refreshHAServerListTask;
     private static final long DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS = 15000L;
-    private long peerListRefreshIntervalMs;
+
+    private HAConfiguration haConfiguration;
+    private RefreshHAServerListTask refreshHAServerListTask;
+    private long heartbeatIntervalMs;
+    private final HAServerNotificationManager haServerNotificationManager;
     private Timer timer = new Timer();
 
     public RefreshHAServerManagedTask(StorageManager storageManager,
                                       TransactionManager transactionManager,
-                                      RegistryHAConfiguration registryHAConfiguration,
+                                      HAConfiguration haConfiguration,
                                       HAServerNotificationManager haServerNotificationManager) {
-        this.registryHAConfiguration = registryHAConfiguration;
-        this.peerListRefreshIntervalMs = registryHAConfiguration == null ? DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS :
-                                                                           registryHAConfiguration.getPeerListRefreshIntervalMs();
+        this.haConfiguration = haConfiguration;
+        this.heartbeatIntervalMs = haConfiguration == null ? DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS :
+                                                             haConfiguration.getHeartbeatIntervalMs();
+        LOG.debug("Configured heart beat interval for HA as {} ms", heartbeatIntervalMs);
+        this.haServerNotificationManager = haServerNotificationManager;
         this.refreshHAServerListTask = new RefreshHAServerListTask(storageManager,
                                                                    transactionManager,
-                                                                   registryHAConfiguration,
+                                                                   haConfiguration,
                                                                    haServerNotificationManager);
     }
 
 
     @Override
     public void start() {
-        LOG.debug("Kick start the timer task to send heartbeats and sync up all the SR servers running in HA mode");
-        timer.scheduleAtFixedRate(refreshHAServerListTask, 0, registryHAConfiguration == null ? DEFAULT_PEER_LIST_REFRESH_INTERVAL_MS:
-                                                                                                      peerListRefreshIntervalMs);
+        timer.scheduleAtFixedRate(refreshHAServerListTask, 0, heartbeatIntervalMs);
     }
 
     @Override
     public void stop() throws Exception {
-        LOG.debug("Shutdown the timer task for sending heartbeats");
         timer.cancel();
+        haServerNotificationManager.close();
     }
 
 }

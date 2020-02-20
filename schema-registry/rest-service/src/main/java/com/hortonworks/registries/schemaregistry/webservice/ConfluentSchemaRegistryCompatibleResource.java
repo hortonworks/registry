@@ -68,8 +68,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     private static final String OPERATION_GROUP_CONFLUENT_SR = "4. Confluent Schema Registry compatible API";
 
-    public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry, AtomicReference<LeadershipParticipant> leadershipParticipant) {
-        super(schemaRegistry, leadershipParticipant);
+    public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry) {
+        super(schemaRegistry);
     }
 
     @GET
@@ -304,7 +304,6 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                            String schema,
                                    @Context UriInfo uriInfo) {
         LOG.info("registerSchema for [{}] is [{}]", subject);
-        return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 LOG.info("registerSchema for [{}] is [{}]", subject);
@@ -341,7 +340,6 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             }
 
             return response;
-        });
     }
 
     public static Response serverError() {

@@ -90,13 +90,6 @@ public class LocalSchemaRegistryServer {
         return registryApplication.localServer.getURI().toString();
     }
 
-    /**
-     * Returns true if this server is the leader in registry cluster.
-     */
-    public boolean hasLeadership() {
-        return registryApplication.hasLeadership();
-    }
-
     private static final class LocalRegistryApplication extends RegistryApplication {
         private static final Logger LOG = LoggerFactory.getLogger(LocalRegistryApplication.class);
 
@@ -132,7 +125,6 @@ public class LocalSchemaRegistryServer {
         void stop() throws Exception {
             if (localServer != null) {
                 localServer.stop();
-                leadershipParticipantRef.get().close();
                 localServer = null;
                 LOG.info("Local schema registry instance is stopped.");
             } else {
@@ -146,10 +138,6 @@ public class LocalSchemaRegistryServer {
 
         int getAdminPort() {
             return ((ServerConnector) localServer.getConnectors()[1]).getLocalPort();
-        }
-
-        boolean hasLeadership() {
-            return leadershipParticipantRef.get().isLeader();
         }
 
     }

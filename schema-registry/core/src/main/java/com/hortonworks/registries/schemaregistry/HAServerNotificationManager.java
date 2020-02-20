@@ -16,36 +16,48 @@
 
 package com.hortonworks.registries.schemaregistry;
 
-import com.hortonworks.registries.common.RegistryHAConfiguration;
+import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.SecureClient;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
-import org.apache.commons.lang3.tuple.Pair;
+import com.hortonworks.registries.schemaregistry.retry.RetryExecutor;
+import com.hortonworks.registries.schemaregistry.retry.policy.BackoffPolicy;
+import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.security.PrivilegedAction;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-public class HAServerNotificationManager {
+public class HAServerNotificationManager implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(HAServerNotificationManager.class);
 
+    private static final String RETRY_POLICY_CONFIG_KEY = "config";
+    private static final String RETRY_POLICY_CLASS_KEY = "className";
+
+    private static final String DEFAULT_BACKOFF_POLICY = ExponentialBackoffPolicy.class.getCanonicalName();
+    private static final int DEFAULT_CACHE_INVALIDATION_THREAD_COUNT = 20;
+    private static final long DEFAULT_SCHEDULER_SHUTDOWN_TIMEOUT_MS = 60000;
+
     private String serverUrl;
     private Set<String> peerServerURLs = new HashSet<>();
-    public static Integer MAX_RETRY = 3;
+    private final ExecutorService executorService;
+    private final RetryExecutor retryExecutor;
     private SecureClient client;
 
-    public HAServerNotificationManager(RegistryHAConfiguration registryHAConfiguration) {
-        client = new SecureClient.Builder()
-                                 .sslConfig(registryHAConfiguration == null ? null : registryHAConfiguration.getSslConfig())
-                                 .build();
+    public HAServerNotificationManager(HAConfiguration haConfiguration) {
+        client = createClient(haConfiguration);
+        retryExecutor = createRetryExecutor(haConfiguration);
+        executorService = createExecutorService(haConfiguration);
     }
 
     public void updatePeerServerURLs(Collection<HostConfigStorable> hostConfigStorableList) {
@@ -54,7 +66,7 @@ public class HAServerNotificationManager {
                 peerServerURLs.clear();
                 hostConfigStorableList.stream().filter(hostConfigStorable -> !hostConfigStorable.getHostUrl().equals(serverUrl))
                                                .forEach(hostConfig -> {
-                                                   peerServerURLs.add(hostConfig.getHostUrl());
+                                                        peerServerURLs.add(hostConfig.getHostUrl());
                                                 });
             }
         }
@@ -69,45 +81,39 @@ public class HAServerNotificationManager {
     }
 
     private void notify(String urlPath, Object postBody) {
-        // If Schema Registry was not started in HA mode then serverURL would be null, in case don't bother making POST calls
-        if (serverUrl != null) {
-            PriorityQueue<Pair<Integer, String>> queue = new PriorityQueue<>();
+        if (!peerServerURLs.isEmpty()) {
+            Set<String> peerServerURLCopy;
             synchronized (HAServerNotificationManager.class) {
-                peerServerURLs.forEach(serverURL -> {
-                    queue.add(Pair.of(1, serverURL));
+                peerServerURLCopy = new HashSet<>(peerServerURLs);
+            }
+
+            peerServerURLCopy.forEach(peerURL -> {
+                executorService.submit(() -> {
+                    try {
+                        Response response = retryExecutor.execute(() -> {
+                            WebTarget target = client.target(String.format("%s%s", peerURL, urlPath));
+
+                            LOG.debug("Invoking '{}' for cache invalidation", target.getUri().toString());
+                            try {
+                                return UserGroupInformation.getLoginUser().doAs((PrivilegedAction<Response>) () -> {
+                                    return target.request().post(Entity.json(postBody));
+                                });
+                            } catch (ProcessingException | IOException e) {
+                                LOG.warn("Failed to reach the peer server '{}' for cache synchronization. Retrying ...", peerURL);
+                                throw new RetryableCacheInvalidationException(e);
+                            }
+                        });
+
+                        if ((response == null || response.getStatus() != Response.Status.OK.getStatusCode())) {
+                            LOG.warn("Invalid response while reaching out to the peer server '{}' for cache synchronization : {}"
+                                    , peerURL, response);
+                        }
+
+                    } catch (RetryableCacheInvalidationException e) {
+                        LOG.warn("Giving up reaching out to the peer server '{}' for cache synchronization\n {}", peerURL, e.getMessage());
+                    }
                 });
-            }
-
-            while (!queue.isEmpty()) {
-                Pair<Integer, String> priorityWithServerURL = queue.remove();
-
-                WebTarget target = client.target(String.format("%s%s", priorityWithServerURL.getRight(), urlPath));
-                Response response = null;
-
-                try {
-                    response = UserGroupInformation.getLoginUser().doAs((PrivilegedAction<Response>) () -> {
-                        return target.request().post(Entity.json(postBody));
-                    });
-                } catch (Exception e) {
-                    LOG.warn("Failed to notify the peer server '{}' about the current host debut.", priorityWithServerURL.getRight());
-                }
-
-                if ((response == null || response.getStatus() != Response.Status.OK.getStatusCode()) && priorityWithServerURL.getLeft() < MAX_RETRY) {
-                    queue.add(Pair.of(priorityWithServerURL.getLeft() + 1, priorityWithServerURL.getRight()));
-                } else if (priorityWithServerURL.getLeft() < MAX_RETRY) {
-                    LOG.info("Notified the peer server '{}' about the current host debut.", priorityWithServerURL.getRight());
-                } else if (priorityWithServerURL.getLeft() >= MAX_RETRY) {
-                    LOG.warn("Failed to notify the peer server '{}' about the current host debut, giving up after {} attempts.",
-                            priorityWithServerURL.getRight(), MAX_RETRY);
-                }
-
-                try {
-                    Thread.sleep(priorityWithServerURL.getLeft() * 100);
-                } catch (InterruptedException e) {
-                    LOG.warn("Failed to notify the peer server '{}'", priorityWithServerURL.getRight(), e);
-                }
-            }
-
+            });
         }
     }
 
@@ -123,5 +129,79 @@ public class HAServerNotificationManager {
 
     public String getServerURL() {
         return this.serverUrl;
+    }
+
+    private SecureClient createClient(HAConfiguration haConfiguration) {
+        return new SecureClient.Builder().sslConfig(haConfiguration == null ? null : haConfiguration.getSslConfig())
+                                         .build();
+    }
+
+    private RetryExecutor createRetryExecutor(HAConfiguration haConfiguration) {
+        String retryPolicyClass = DEFAULT_BACKOFF_POLICY;
+        Map<String, Object> retryPolicyProps = new HashMap<>();
+
+        if (haConfiguration !=null) {
+            Map<String, ?> peerCacheInvalidationRetryPolicy = haConfiguration.getCacheInvalidationRetryPolicy();
+            if (peerCacheInvalidationRetryPolicy != null) {
+                if (peerCacheInvalidationRetryPolicy.containsKey(RETRY_POLICY_CLASS_KEY)) {
+                    retryPolicyClass = (String) peerCacheInvalidationRetryPolicy.get(RETRY_POLICY_CLASS_KEY);
+                }
+                if (peerCacheInvalidationRetryPolicy.containsKey(RETRY_POLICY_CONFIG_KEY)) {
+                    retryPolicyProps = (Map<String, Object>) peerCacheInvalidationRetryPolicy.get(RETRY_POLICY_CONFIG_KEY);
+                }
+            }
+        }
+
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        BackoffPolicy backoffPolicy;
+        Class<? extends BackoffPolicy> clazz = null;
+
+        try {
+            clazz = (Class<? extends BackoffPolicy>) Class.forName(retryPolicyClass, true, classLoader);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Unable to initiate the retry policy class : " + retryPolicyClass, e);
+        }
+        try {
+            backoffPolicy = clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to create an instance of retry policy class : " + retryPolicyClass, e);
+        }
+
+        backoffPolicy.init(retryPolicyProps);
+
+        LOG.debug("For HA cache invalidation using the retry policy : {}", backoffPolicy);
+
+        return new RetryExecutor.Builder().backoffPolicy(backoffPolicy)
+                                          .retryOnException(RetryableCacheInvalidationException.class)
+                                          .build();
+    }
+
+    private ExecutorService createExecutorService(HAConfiguration haConfiguration) {
+        int executorServiceThreadCount =  DEFAULT_CACHE_INVALIDATION_THREAD_COUNT ;
+        if (haConfiguration!=null && haConfiguration.getCacheInvalidationThreadCount() > 0) {
+            executorServiceThreadCount = haConfiguration.getCacheInvalidationThreadCount();
+        }
+        LOG.debug("Building a thread pool of {} threads for HA cache invalidation", executorServiceThreadCount);
+
+        return Executors.newFixedThreadPool(executorServiceThreadCount);
+    }
+
+    @Override
+    public void close() throws Exception {
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(DEFAULT_SCHEDULER_SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } finally {
+            if (!executorService.isShutdown()) {
+                executorService.shutdownNow();
+            }
+            LOG.debug("Shutdown thread pool for HA cache invalidation");
+        }
+    }
+
+    private static class RetryableCacheInvalidationException extends RuntimeException {
+        public RetryableCacheInvalidationException(Exception e) {
+            super(e);
+        }
     }
 }

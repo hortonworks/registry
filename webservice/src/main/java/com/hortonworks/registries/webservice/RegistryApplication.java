@@ -17,7 +17,7 @@ package com.hortonworks.registries.webservice;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
-import com.hortonworks.registries.common.RegistryHAConfiguration;
+import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
@@ -29,12 +29,8 @@ import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ModuleRegistration;
-import com.hortonworks.registries.common.ha.LeadershipAware;
-import com.hortonworks.registries.common.ha.LeadershipParticipant;
-import com.hortonworks.registries.common.ha.LocalLeader;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -61,14 +57,13 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  */
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
-    protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
+
     protected StorageManager storageManager;
     protected HAServerNotificationManager haServerNotificationManager;
     protected TransactionManager transactionManager;
@@ -79,10 +74,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         doServiceAuthentication(registryConfiguration.getServiceAuthenticationConfiguration());
 
-        initializeHANotificationManager(registryConfiguration.getRegistryHAConfiguration());
-
-        // handle HA if it is configured
-        registerHA(registryConfiguration.getHaConfig(), environment);
+        initializeHANotificationManager(registryConfiguration.getHAConfiguration());
 
         registerResources(environment, registryConfiguration);
 
@@ -94,12 +86,12 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
-        registerAndNotifyOtherServers(environment, registryConfiguration.getRegistryHAConfiguration());
+        registerAndNotifyOtherServers(environment, registryConfiguration.getHAConfiguration());
 
     }
 
-    private void initializeHANotificationManager(RegistryHAConfiguration registryHAConfiguration) {
-        haServerNotificationManager = new HAServerNotificationManager(registryHAConfiguration);
+    private void initializeHANotificationManager(HAConfiguration haConfiguration) {
+        haServerNotificationManager = new HAServerNotificationManager(haConfiguration);
     }
 
     private void doServiceAuthentication(ServiceAuthenticationConfiguration serviceAuthenticationConfiguration) throws IOException {
@@ -107,7 +99,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             switch (serviceAuthenticationConfiguration.getType()) {
                 case KERBEROS:
                     String serverPrincipal = (String) serviceAuthenticationConfiguration.getProperties().get("principle");
-                    String keyTab = (String) serviceAuthenticationConfiguration.getProperties().get("principleKeytab");
+                    String keyTab = (String) serviceAuthenticationConfiguration.getProperties().get("keytab");
 
                     LOG.debug("Service authentication triggered with principle = " + serverPrincipal + ", keyTab = " + keyTab);
 
@@ -124,7 +116,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     }
 
     private void registerAndNotifyOtherServers(Environment environment,
-                                               RegistryHAConfiguration registryHAConfiguration) {
+                                               HAConfiguration HAConfiguration) {
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
             @Override
             public void serverStarted(Server server) {
@@ -137,7 +129,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                     transactionManager.beginTransaction(TransactionIsolation.READ_COMMITTED);
                     HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
                     if (hostConfigStorable == null) {
-                        storageManager.addOrUpdate(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
+                        storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
                                 System.currentTimeMillis()));
                     }
                     haServerNotificationManager.updatePeerServerURLs(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
@@ -151,50 +143,13 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
                 refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager,
                                                                             transactionManager,
-                                                                            registryHAConfiguration,
+                                                                            HAConfiguration,
                                                                             haServerNotificationManager);
                 environment.lifecycle().manage(refreshHAServerManagedTask);
                 refreshHAServerManagedTask.start();
             }
         });
 
-    }
-
-    private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
-        if(haConfiguration != null) {
-            environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
-                @Override
-                public void serverStarted(Server server) {
-
-                    String serverUrl = server.getURI().toString();
-
-                    LOG.info("Received callback as server is started with server URL:[{}]", server);
-                    LOG.info("HA configuration: [{}]", haConfiguration);
-                    String className = haConfiguration.getClassName();
-
-                    LeadershipParticipant leadershipParticipant = null;
-                    try {
-                        leadershipParticipant = (LeadershipParticipant) Class.forName(className).newInstance();
-                    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                    leadershipParticipant.init(haConfiguration.getConfig(), serverUrl);
-
-                    leadershipParticipantRef.set(leadershipParticipant);
-                    LOG.info("Registering for leadership with participant [{}]", leadershipParticipant);
-                    try {
-                        leadershipParticipantRef.get().participateForLeadership();
-                    } catch (Exception e) {
-                        LOG.error("Error occurred while participating for leadership with serverUrl [{}]", serverUrl, e);
-                        throw new RuntimeException(e);
-                    }
-                    LOG.info("Registered for leadership with participant [{}]", leadershipParticipant);
-                }
-            });
-        } else {
-            leadershipParticipantRef.set(LocalLeader.getInstance());
-            LOG.info("No HA configuration exists, using [{}]", leadershipParticipantRef);
-        }
     }
 
     @Override
@@ -248,13 +203,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 transactionManagerAware.setTransactionManager(transactionManager);
             }
 
-            if (moduleRegistration instanceof LeadershipAware) {
-                LOG.info("Module [{}] is registered for LeadershipParticipant registration.", moduleName);
-                LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
-                leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
-            }
-
-            if (moduleRegistration instanceof HAServersAware) {
+            if(moduleRegistration instanceof HAServersAware) {
                 LOG.info("Module [{}] is registered for HAServersAware registration.");
                 HAServersAware leadershipAware = (HAServersAware) moduleRegistration;
                 leadershipAware.setHAServerConfigManager(haServerNotificationManager);

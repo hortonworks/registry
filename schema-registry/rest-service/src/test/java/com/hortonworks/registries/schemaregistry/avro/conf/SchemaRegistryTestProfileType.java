@@ -19,7 +19,5 @@ package com.hortonworks.registries.schemaregistry.avro.conf;
 public enum SchemaRegistryTestProfileType {
     DEFAULT,
     SSL,
-    DEFAULT_HA,
-    SSL_HA,
     ONE_WAY_SSL;
 }

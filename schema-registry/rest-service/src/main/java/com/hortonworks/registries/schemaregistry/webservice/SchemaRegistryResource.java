@@ -105,9 +105,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final SchemaRegistryVersion schemaRegistryVersion;
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
-                                  AtomicReference<LeadershipParticipant> leadershipParticipant,
                                   SchemaRegistryVersion schemaRegistryVersion) {
-        super(schemaRegistry, leadershipParticipant);
+        super(schemaRegistry);
         this.schemaRegistryVersion = schemaRegistryVersion;
     }
 
@@ -365,7 +364,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                           SchemaMetadata schemaMetadata,
                                   @Context UriInfo uriInfo,
                                   @Context HttpHeaders httpHeaders) {
-        return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 schemaMetadata.trim();
@@ -394,7 +392,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             }
 
             return response;
-        });
     }
 
     @POST
@@ -407,7 +404,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                      @ApiParam(value = "Schema to be added to the registry", required = true)
                                          SchemaMetadata schemaMetadata,
                                      @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
@@ -424,7 +420,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
             }
             return response;
-        });
     }
 
     private void checkValidNames(String name) {
@@ -526,7 +521,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @FormDataParam("description") final String description,
                                         @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                         @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> {
             Response response;
             SchemaVersion schemaVersion = null;
             try {
@@ -539,7 +533,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             }
 
             return response;
-        });
     }
 
     @POST
@@ -558,7 +551,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                       SchemaVersion schemaVersion,
                                      @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                      @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
@@ -581,7 +573,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             }
 
             return response;
-        });
     }
 
     @GET
@@ -995,7 +986,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) SerDesPair serDesPair,
                               @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> _addSerDesInfo(serDesPair));
+        return _addSerDesInfo(serDesPair);
     }
 
     @GET
@@ -1040,7 +1031,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response mapSchemaWithSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                         @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId,
                                         @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
@@ -1050,7 +1040,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             }
 
             return response;
-        });
     }
 
     @DELETE

@@ -20,12 +20,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
-import com.hortonworks.registries.auth.KerberosLogin;
-import com.hortonworks.registries.auth.Login;
-import com.hortonworks.registries.auth.NOOPLogin;
-import com.hortonworks.registries.auth.util.JaasConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
+import com.hortonworks.registries.common.SecureClient;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -64,10 +61,8 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -78,14 +73,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.security.auth.login.LoginException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -166,13 +157,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
-    private static final String SSL_KEY_PASSWORD = "keyPassword";
-    private static final String SSL_KEY_STORE_PATH = "keyStorePath";
-
     private static final SchemaRegistryVersion CLIENT_VERSION = SchemaRegistryServiceInfo.get().version();
 
-    private Login login;
-    private final Client client;
+    private SecureClient client;
     private final UrlSelector urlSelector;
     private final Map<String, SchemaRegistryTargets> urlWithTargets;
 
@@ -183,7 +170,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final Cache<SchemaDigestEntry, SchemaIdVersion> schemaTextCache;
 
     private static final String SSL_CONFIGURATION_KEY = "schema.registry.client.ssl";
-    private static final String HOSTNAME_VERIFIER_CLASS_KEY = "hostnameVerifierClass";
 
     private static final String CLIENT_RETRY_POLICY_KEY = "schema.registry.client.retry.policy";
     private static final String RETRY_POLICY_CLASS_NAME_KEY = "className";
@@ -210,26 +196,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         configuration = new Configuration(conf);
-        initializeSecurityContext();
-        ClientConfig config = createClientConfig(conf);
-        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
-                                                   .withConfig(config)
-                                                   .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
-        if (conf.containsKey(SSL_CONFIGURATION_KEY)) {
-            Map<String, String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
-            clientBuilder.sslContext(createSSLContext(sslConfigurations));
-            if (sslConfigurations.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
-                HostnameVerifier hostNameVerifier = null;
-                String hostNameVerifierClassName = sslConfigurations.get(HOSTNAME_VERIFIER_CLASS_KEY);
-                try {
-                    hostNameVerifier = (HostnameVerifier) Class.forName(hostNameVerifierClassName).newInstance();
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to instantiate hostNameVerifierClass : " + hostNameVerifierClassName, e);
-                }
-                clientBuilder.hostnameVerifier(hostNameVerifier);
-            }
-        }
-        client = clientBuilder.build();
+
+        String saslJaasConfig = configuration.getValue(Configuration.SASL_JAAS_CONFIG.name());
+        Map<String, String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
+
+        client = new SecureClient.Builder().jaasConfig(saslJaasConfig)
+                                           .loginContextName(REGISTY_CLIENT_JAAS_SECTION)
+                                           .saslReloginSynchronizationTimeoutMs(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS)
+                                           .sslConfig(sslConfigurations)
+                                           .clientConfig(conf)
+                                           .build();
+
         client.register(MultiPartFeature.class);
         String userName = configuration.getValue(Configuration.AUTH_USERNAME.name());
         String password = configuration.getValue(Configuration.AUTH_PASSWORD.name());
@@ -307,66 +284,6 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         backoffPolicy.init(retryPolicyProps);
 
         return backoffPolicy;
-    }
-
-    protected void initializeSecurityContext() {
-        String saslJaasConfig = configuration.getValue(Configuration.SASL_JAAS_CONFIG.name());
-        if (saslJaasConfig != null) {
-            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
-            try {
-                kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
-                kerberosLogin.login();
-                login = kerberosLogin;
-                return;
-            } catch (LoginException e) {
-                LOG.error("Failed to initialize the dynamic JAAS config: " + saslJaasConfig + ". Attempting static JAAS config.");
-            } catch (Exception e) {
-                LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
-            }
-        }
-
-        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
-        if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
-            KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
-            kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
-            try {
-                kerberosLogin.login();
-                login = kerberosLogin;
-            } catch (LoginException e) {
-                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
-                login = new NOOPLogin();
-            }
-        } else {
-            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
-            login = new NOOPLogin();
-        }
-    }
-
-    protected SSLContext createSSLContext(Map<String, String> sslConfigurations) {
-        SslConfigurator sslConfigurator = SslConfigurator.newInstance();
-        if (sslConfigurations.containsKey(SSL_KEY_STORE_PATH)) {
-            sslConfigurator.keyStoreType(sslConfigurations.get("keyStoreType"))
-                           .keyStoreFile(sslConfigurations.get(SSL_KEY_STORE_PATH))
-                           .keyStorePassword(sslConfigurations.get("keyStorePassword"))
-                           .keyStoreProvider(sslConfigurations.get("keyStoreProvider"))
-                           .keyManagerFactoryAlgorithm(sslConfigurations.get("keyManagerFactoryAlgorithm"))
-                           .keyManagerFactoryProvider(sslConfigurations.get("keyManagerFactoryProvider"));
-            if (sslConfigurations.containsKey(SSL_KEY_PASSWORD)) {
-                sslConfigurator.keyPassword(sslConfigurations.get(SSL_KEY_PASSWORD));
-            }
-        }
-
-
-        sslConfigurator.trustStoreType(sslConfigurations.get("trustStoreType"))
-                       .trustStoreFile(sslConfigurations.get("trustStorePath"))
-                       .trustStorePassword(sslConfigurations.get("trustStorePassword"))
-                       .trustStoreProvider(sslConfigurations.get("trustStoreProvider"))
-                       .trustManagerFactoryAlgorithm(sslConfigurations.get("trustManagerFactoryAlgorithm"))
-                       .trustManagerFactoryProvider(sslConfigurations.get("trustManagerFactoryProvider"));
-
-        sslConfigurator.securityProtocol(sslConfigurations.get("protocol"));
-
-        return sslConfigurator.createSSLContext();
     }
 
     private SchemaRegistryTargets currentSchemaRegistryTargets() {
@@ -539,7 +456,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget target = targets.schemasTarget.path(String.format("%s", schemaName));
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
@@ -614,7 +531,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
             Entity<MultiPart> multiPartEntity = Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA);
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request().post(multiPartEntity, Response.class);
@@ -680,7 +597,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             WebTarget target = targets.schemasTarget.path(String.format("%s/versions/%s", schemaVersionKey
                     .getSchemaName(), schemaVersionKey.getVersion()));
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
@@ -718,7 +635,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             try {
                 WebTarget target = targets.schemasTarget.path(schemaName).path("/versions").queryParam("branch", schemaBranchName)
                         .queryParam("disableCanonicalCheck", disableCanonicalCheck);
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
@@ -883,7 +800,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             try {
                 WebTarget target = targets.schemasTarget.path(schemaVersionId + "/merge").queryParam("disableCanonicalCheck", disableCanonicalCheck);
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request().post(null);
@@ -927,7 +844,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget target = targets.schemasTarget.path("versionsById/" + schemaVersionId + "/branch");
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaBranch), Response.class);
@@ -957,7 +874,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget target = targets.schemasTarget.path(encode(schemaName) + "/branches");
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request().get();
@@ -983,7 +900,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget target = targets.schemasTarget.path("branch/" + schemaBranchId);
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return target.request().delete();
@@ -1020,7 +937,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget webTarget = targets.schemaVersionsTarget.path(schemaVersionId + "/state/" + operationOrTargetState);
             try {
-                return login.doAction(new PrivilegedAction<Response>() {
+                return client.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
                         return webTarget.request().post(Entity.text(transitionDetails));
@@ -1079,7 +996,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         String response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             try {
                 WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/compatibility").queryParam("branch", schemaBranchName);
-                return login.doAction(new PrivilegedAction<String>() {
+                return client.doAction(new PrivilegedAction<String>() {
                     @Override
                     public String run() {
                         return webTarget.request().post(Entity.text(toSchemaText), String.class);
@@ -1120,7 +1037,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         multiPart.bodyPart(filePart);
         return runRetryableBlock((SchemaRegistryTargets targets) -> {
             try {
-                return login.doAction(new PrivilegedAction<String>() {
+                return client.doAction(new PrivilegedAction<String>() {
                     @Override
                     public String run() {
                         return targets.filesTarget.request()
@@ -1137,7 +1054,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public InputStream downloadFile(String fileId) {
         return runRetryableBlock((SchemaRegistryTargets targets) -> {
             try {
-                return login.doAction(new PrivilegedAction<InputStream>() {
+                return client.doAction(new PrivilegedAction<InputStream>() {
                     @Override
                     public InputStream run() {
                         return targets.filesTarget.path("download/" + encode(fileId))
@@ -1272,7 +1189,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private <T> List<T> getEntities(WebTarget target, Class<T> clazz) {
         String response = null;
         try {
-            response = login.doAction(new PrivilegedAction<String>() {
+            response = client.doAction(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
                     return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
@@ -1302,7 +1219,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private <T> T postEntity(WebTarget target, Object json, Class<T> responseType) {
         String response = null;
         try {
-            response = login.doAction(new PrivilegedAction<String>() {
+            response = client.doAction(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
                     return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
@@ -1326,7 +1243,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private <T> T getEntity(WebTarget target, Class<T> clazz) {
         String response = null;
         try {
-            response = login.doAction(new PrivilegedAction<String>() {
+            response = client.doAction(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
                     return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);

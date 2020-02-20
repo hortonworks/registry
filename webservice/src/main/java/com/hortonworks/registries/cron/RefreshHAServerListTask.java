@@ -1,12 +1,12 @@
 /**
  * Copyright 2018-2019 Cloudera, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 
 package com.hortonworks.registries.cron;
 
-import com.hortonworks.registries.common.RegistryHAConfiguration;
+import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HostConfigStorable;
@@ -35,20 +35,21 @@ public class RefreshHAServerListTask extends TimerTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(RefreshHAServerListTask.class);
 
+    private static final long DEFAULT_PEER_LIST_EXPIRY_TIME_MS = 300000L;
+
     private StorageManager storageManager;
     private TransactionManager transactionManager;
     private HAServerNotificationManager haServerNotificationManager;
-
-    private static final long DEFAULT_PEER_ENTRY_EXPIRY_TIME_MS = 600000L;
     private long peerEntryExpiryTimeMs;
 
     public RefreshHAServerListTask(StorageManager storageManager,
                                    TransactionManager transactionManager,
-                                   RegistryHAConfiguration registryHAConfiguration,
+                                   HAConfiguration HAConfiguration,
                                    HAServerNotificationManager haServerNotificationManager) {
         this.storageManager = storageManager;
         this.transactionManager = transactionManager;
-        this.peerEntryExpiryTimeMs = registryHAConfiguration == null ? DEFAULT_PEER_ENTRY_EXPIRY_TIME_MS : registryHAConfiguration.getPeerEntryExpiryTimeMs();
+        this.peerEntryExpiryTimeMs = HAConfiguration == null ? DEFAULT_PEER_LIST_EXPIRY_TIME_MS : HAConfiguration.getPeerListExpiryTimeMs();
+        LOG.debug("Configured peer entry expiry time for HA as {} ms", peerEntryExpiryTimeMs);
         this.haServerNotificationManager = haServerNotificationManager;
     }
 

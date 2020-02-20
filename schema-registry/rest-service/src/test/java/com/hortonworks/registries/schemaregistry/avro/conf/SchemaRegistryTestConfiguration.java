@@ -42,14 +42,6 @@ public class SchemaRegistryTestConfiguration {
                 serverYAMLFileName = "ssl-schema-registry.yaml";
                 clientYAMLFileName = "ssl-schema-registry-client.yaml";
                 break;
-            case DEFAULT_HA:
-                serverYAMLFileName = "schema-registry-ha.yaml";
-                clientYAMLFileName = null;
-                break;
-            case SSL_HA:
-                serverYAMLFileName = "ssl-schema-registry-ha.yaml";
-                clientYAMLFileName = "ssl-schema-registry-client.yaml";
-                break;
             case ONE_WAY_SSL:
                 serverYAMLFileName = "one-way-ssl-schema-registry.yaml";
                 clientYAMLFileName = "one-way-ssl-schema-registry-client.yaml";

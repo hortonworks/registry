@@ -50,7 +50,7 @@ import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_P
 /**
  *
  */
-public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, LeadershipAware, HAServersAware, TransactionManagerAware {
+public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, HAServersAware, TransactionManagerAware {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
 
     private Map<String, Object> config;
@@ -58,7 +58,6 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
     private StorageManager storageManager;
     private TransactionManager transactionManager;
     private HAServerNotificationManager haServerNotificationManager;
-    private AtomicReference<LeadershipParticipant> leadershipParticipant;
 
     @Override
     public void setStorageManager(StorageManager storageManager) {
@@ -84,10 +83,9 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
-                                                                                   leadershipParticipant,
                                                                                    schemaRegistryVersion);
         ConfluentSchemaRegistryCompatibleResource
-            confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry, leadershipParticipant);
+            confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry);
 
         return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
     }
@@ -116,12 +114,6 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
                 }
             }
         });
-    }
-
-    @Override
-    public void setLeadershipParticipant(AtomicReference<LeadershipParticipant> leadershipParticipant) {
-        Preconditions.checkState(this.leadershipParticipant == null, "leadershipParticipant " + leadershipParticipant + " is already set!!");
-        this.leadershipParticipant = leadershipParticipant;
     }
 
     @Override
