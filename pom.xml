@@ -380,7 +380,7 @@
         <commons.version>2.5</commons.version>
         <slf4j.version>1.7.25</slf4j.version>
         <guava.version>24.1.1-jre</guava.version>
-        <hadoop.version>3.1.1</hadoop.version>
+        <hadoop.version>3.1.1.7.1.1.0-SNAPSHOT</hadoop.version>
         <kafka.version>2.1.0</kafka.version>
         <kafkaArtifact>kafka_2.11</kafkaArtifact>
         <curator.version>4.0.1</curator.version>
@@ -398,8 +398,10 @@
         <phoenix.version>4.4.0-HBase-1.1</phoenix.version>
         <mariadb-java-client.version>1.5.5</mariadb-java-client.version>
         <calcite.version>1.4.0-incubating</calcite.version>
+        <commons-codec.version>1.11</commons-codec.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-lang.version>2.6</commons-lang.version>
+        <commons-logging.version>1.2</commons-logging.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-surefire.version>2.18.1</maven-surefire.version>
@@ -411,10 +413,11 @@
         <flyway.version>5.1.4</flyway.version>
         <hikari.version>2.2.5</hikari.version>
         <h2database.version>1.4.188</h2database.version>
-        <mockito-version>1.8.5</mockito-version>
+        <mockito.version>2.28.2</mockito.version>
+        <powermock.version>2.0.5</powermock.version>
         <codehaus.plexus.version>3.1.0</codehaus.plexus.version>
-
-        <!-- JAXB-api v2.3.1 comes with CDDL 1.1 licence only so the older version 2.2.12 is used -->
+        <eclipse.jetty.version>9.4.11.v20180605</eclipse.jetty.version>
+        <httpclient.version>4.5.2</httpclient.version>
         <jaxb-api.version>2.2.12</jaxb-api.version>
         <jaxb-runtime.version>2.3.1</jaxb-runtime.version>
     </properties>
@@ -507,6 +510,10 @@
                         <artifactId>log4j</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>com.sun.jersey</groupId>
                         <artifactId>jersey-core</artifactId>
                     </exclusion>
@@ -514,11 +521,17 @@
                         <groupId>com.sun.jersey</groupId>
                         <artifactId>jersey-json</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
             </dependency>
 
             <dependency>
@@ -531,20 +544,16 @@
                         <artifactId>log4j</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>com.sun.jersey</groupId>
                         <artifactId>jersey-core</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>com.sun.jersey</groupId>
@@ -576,6 +585,87 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-aws</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-azure</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-azure-datalake</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-cloud-storage</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- To match the version used by Dropwizard instead of that of hadoop-azure -->
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <version>${eclipse.jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util-ajax</artifactId>
+                <version>${eclipse.jetty.version}</version>
+            </dependency>
+            <!-- To match the version used by hadoop-azure -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+
+
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
@@ -718,10 +808,28 @@
                 <version>${jmockit.version}</version>
                 <scope>test</scope>
             </dependency>
-            <dependency>
+           <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito2</artifactId>
+                <version>${powermock.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -739,13 +847,13 @@
             <url>http://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
+            <id>clojars</id>
             <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-            <id>clojars</id>
             <url>https://repository.apache.org/content/repositories/snapshots/</url>
         </repository>
         <repository>
@@ -756,7 +864,7 @@
                 <enabled>true</enabled>
             </releases>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>

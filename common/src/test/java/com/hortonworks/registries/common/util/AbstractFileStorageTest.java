@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.hortonworks.registries.util;
+package com.hortonworks.registries.common.util;
 
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.util.FileStorage;
