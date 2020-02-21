@@ -31,7 +31,7 @@ public interface FileStorage {
      *
      * @param config the config specific to implementation
      */
-    void init(Map<String, String> config);
+    void init(Map<String, String> config) throws IOException;
 
     /**
      * Uploads the content from given {@code InputStream} to the configured storage with the given {@code name } as identifier which can
@@ -70,6 +70,7 @@ public interface FileStorage {
      * @param name identifier of the file to be checked that was first
      *             passed during {@link #upload(InputStream, String)}
      * @return true if the file exists
+     * @throws IOException if any IO error occurs
      */
-    boolean exists(String name);
+    boolean exists(String name) throws IOException;
 }
