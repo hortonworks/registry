@@ -91,18 +91,9 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-azure-datalake</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-cloud-bindings</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-shell</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-i18n</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-cloud-storage</artifactId>
         </dependency>
 
         <dependency>
