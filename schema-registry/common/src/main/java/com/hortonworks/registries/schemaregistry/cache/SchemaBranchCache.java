@@ -50,6 +50,7 @@ public class SchemaBranchCache implements AbstractCache {
                 .build(new CacheLoader<Key, SchemaBranch>() {
                     @Override
                     public SchemaBranch load(Key key) throws Exception {
+                        LOG.debug("Fetching entry with key [{}] from target service", key);
                         SchemaBranch schemaBranch;
                         Key otherKey;
                         if (key.getSchemaBranchKey() != null) {
@@ -97,7 +98,9 @@ public class SchemaBranchCache implements AbstractCache {
     }
 
 
-    public void invalidateSchemaBranch(SchemaBranchCache.Key key) {
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+
+   /* public void invalidateSchemaBranch(SchemaBranchCache.Key key) {
         LOG.info("Invalidating cache entry for key [{}]", key);
 
         // If the cache doesn't have entry for the key, then no need to invalidate the cache
@@ -114,7 +117,7 @@ public class SchemaBranchCache implements AbstractCache {
         LOG.info("Invalidating all the cache entries");
 
         loadingCache.invalidateAll();
-    }
+    }*/
 
     @Override
     public SchemaRegistryCacheType getCacheType() {

@@ -62,7 +62,7 @@ public class SchemaVersionInfoCache implements AbstractCache {
                            .build(new CacheLoader<Key, SchemaVersionInfo>() {
                                        @Override
                                        public SchemaVersionInfo load(Key key) throws Exception {
-                                           LOG.info("Loading entry for cache with key [{}] from target service", key);
+                                           LOG.debug("Fetching entry with key [{}] from target service", key);
                                            SchemaVersionInfo schemaVersionInfo;
                                            if (key.schemaVersionKey != null) {
                                                schemaVersionInfo = schemaRetriever.retrieveSchemaVersion(key.schemaVersionKey);
@@ -131,11 +131,11 @@ public class SchemaVersionInfoCache implements AbstractCache {
         }
     }
 
-    public void invalidateAll() {
-        LOG.info("Invalidating all the cache entries");
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
 
+    /* public void invalidateAll() {
         loadingCache.invalidateAll();
-    }
+    }*/
 
     @Override
     public SchemaRegistryCacheType getCacheType() {

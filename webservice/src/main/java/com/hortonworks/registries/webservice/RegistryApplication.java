@@ -86,7 +86,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
-        registerAndNotifyOtherServers(environment);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        // registerAndNotifyOtherServers(environment);
 
     }
 
