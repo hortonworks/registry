@@ -86,11 +86,14 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
-        registerAndNotifyOtherServers(environment);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        // registerAndNotifyOtherServers(environment);
 
     }
 
-    private void registerAndNotifyOtherServers(Environment environment) {
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+
+    /* private void registerAndNotifyOtherServers(Environment environment) {
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
             @Override
             public void serverStarted(Server server) {
@@ -121,7 +124,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             }
         });
 
-    }
+    } */
 
     private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
         if(haConfiguration != null) {

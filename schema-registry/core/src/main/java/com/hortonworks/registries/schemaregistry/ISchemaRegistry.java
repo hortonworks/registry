@@ -171,12 +171,14 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @param schemaRegistryCacheType cache type
      * @param keyAsString serialized version of the key of the cache
      */
-    void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString);
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+    // void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString);
 
     /**
      *  A node which comes online in HA mode will notify all the existing node about its presence in the cluster, existing node will update their in memory cache of the complete list of nodes in HA mode.
      * @param nodeUrl URL of the node making a debut in a HA environment
      */
-    void registerNodeDebut(String nodeUrl);
+     // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+     // void registerNodeDebut(String nodeUrl);
 
 }

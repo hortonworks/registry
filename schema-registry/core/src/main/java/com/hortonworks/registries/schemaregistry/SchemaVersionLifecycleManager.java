@@ -98,7 +98,8 @@ public class SchemaVersionLifecycleManager {
 
         schemaVersionInfoCache = new SchemaVersionInfoCache(
                 schemaVersionRetriever,
-                options.getMaxSchemaCacheSize(),
+                // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+                0,
                 options.getSchemaExpiryInSecs() * 1000L);
 
         customSchemaStateExecutor = createSchemaReviewExecutor(props, builder);
@@ -640,7 +641,8 @@ public class SchemaVersionLifecycleManager {
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = new SchemaVersionInfoCache.Key(schemaVersionKey);
         SchemaVersionInfo schemaVersionInfo = schemaVersionInfoCache.getSchema(schemaVersionCacheKey);
-        invalidateSchemaInAllHAServer(schemaVersionCacheKey);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        //invalidateSchemaInAllHAServer(schemaVersionCacheKey);
         storageManager.remove(createSchemaVersionStorableKey(schemaVersionInfo.getId()));
         deleteSchemaVersionBranchMapping(schemaVersionInfo.getId());
     }
@@ -868,7 +870,8 @@ public class SchemaVersionLifecycleManager {
 
         // invalidate schema version from cache
         SchemaVersionInfoCache.Key schemaVersionCacheKey = SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId));
-        invalidateSchemaInAllHAServer(schemaVersionCacheKey);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        // invalidateSchemaInAllHAServer(schemaVersionCacheKey);
     }
 
     public void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
@@ -883,7 +886,8 @@ public class SchemaVersionLifecycleManager {
 
     private void doDeleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
         SchemaVersionInfoCache.Key schemaVersionCacheKey = SchemaVersionInfoCache.Key.of(new SchemaIdVersion(schemaVersionId));
-        invalidateSchemaInAllHAServer(schemaVersionCacheKey);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        // invalidateSchemaInAllHAServer(schemaVersionCacheKey);
         storageManager.remove(createSchemaVersionStorableKey(schemaVersionId));
         deleteSchemaVersionBranchMapping(schemaVersionId);
     }
@@ -1099,27 +1103,30 @@ public class SchemaVersionLifecycleManager {
         return sortedVersionInfo.iterator().next();
     }
 
-    public void invalidateAllSchemaVersionCache() {
-        schemaVersionInfoCache.invalidateAll();
-    }
+     // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
 
-    public void invalidateSchemaVersionCache(SchemaVersionInfoCache.Key key) {
-        schemaVersionInfoCache.invalidateSchema(key);
-    }
-
-    public void invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key key) {
-        schemaVersionInfoCache.invalidateSchema(key);
-
-        String keyAsString;
-
-        try {
-            keyAsString = ObjectMapperUtils.serializeToString(key);
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
+      /*  public void invalidateAllSchemaVersionCache() {
+             schemaVersionInfoCache.invalidateAll();
         }
 
-        haServerNotificationManager.notifyCacheInvalidation(schemaVersionInfoCache.getCacheType(),keyAsString);
+       public void invalidateSchemaVersionCache(SchemaVersionInfoCache.Key key) {
+            schemaVersionInfoCache.invalidateSchema(key);
+       }
 
-    }
+
+       public void invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key key) {
+           schemaVersionInfoCache.invalidateSchema(key);
+
+           String keyAsString;
+
+           try {
+             keyAsString = ObjectMapperUtils.serializeToString(key);
+           } catch (Exception e) {
+             throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
+           }
+
+           haServerNotificationManager.notifyCacheInvalidation(schemaVersionInfoCache.getCacheType(),keyAsString);
+
+      } */
 
 }

@@ -112,7 +112,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaLockStorable.class));
 
         Options options = new Options(props);
-        schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        schemaBranchCache = new SchemaBranchCache(0,
                                                   options.getSchemaExpiryInSecs(),
                                                   createSchemaBranchFetcher());
 
@@ -295,7 +296,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // Remove all the schema version state entities for this schema name, invalidate relevant caches and notify all HA servers
         if (schemaVersionInfos != null) {
             for (SchemaVersionInfo schemaVersionInfo: schemaVersionInfos) {
-                invalidateCachesAndNotifyAllHAServers(schemaVersionInfo);
+                // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+                // invalidateCachesAndNotifyAllHAServers(schemaVersionInfo);
                 schemaMetadataId = schemaVersionInfo.getSchemaMetadataId();
                 List<QueryParam> queryParams = new ArrayList<>();
                 queryParams.add(new QueryParam(SchemaVersionStateStorable.SCHEMA_VERSION_ID, schemaVersionInfo.getId().toString()));
@@ -631,8 +633,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return aggregatedSchemaBranches;
     }
 
-    @Override
-    public void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString) {
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+
+    /* @Override
+     public void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString) {
         switch (schemaRegistryCacheType) {
             case SCHEMA_BRANCH_CACHE:
                 SchemaBranchCache.Key schemaBranchKey;
@@ -659,12 +663,14 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             default:
                 throw new RuntimeException(String.format("Invalid cache type : '%s'",schemaRegistryCacheType.name()));
         }
-    }
+    }*/
 
-    @Override
-    public void registerNodeDebut(String nodeUrl) {
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+
+    /* @Override
+     public void registerNodeDebut(String nodeUrl) {
         haServerNotificationManager.addNodeUrl(nodeUrl);
-    }
+    }*/
 
     @Override
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
@@ -743,7 +749,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             throw new InvalidSchemaBranchDeletionException(String.format("Can't delete '%s' branch", SchemaBranch.MASTER_BRANCH));
 
         SchemaBranchCache.Key keyOfSchemaBranchToDelete = SchemaBranchCache.Key.of(schemaBranchId);
-        schemaBranchCache.invalidateSchemaBranch(keyOfSchemaBranchToDelete);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        // schemaBranchCache.invalidateSchemaBranch(keyOfSchemaBranchToDelete);
 
         List<QueryParam> schemaVersionMappingStorableQueryParams = new ArrayList<>();
         schemaVersionMappingStorableQueryParams.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_BRANCH_ID, schemaBranch.getId().toString()));
@@ -812,7 +819,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         storageManager.remove(new SchemaBranchStorable(schemaBranchId).getStorableKey());
 
-        invalidateSchemaBranchInAllHAServers(keyOfSchemaBranchToDelete);
+        // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+        // invalidateSchemaBranchInAllHAServers(keyOfSchemaBranchToDelete);
     }
 
     @Override
@@ -1005,7 +1013,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
     }
 
-    private void invalidateSchemaBranchInAllHAServers(SchemaBranchCache.Key key) {
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+
+    /* private void invalidateSchemaBranchInAllHAServers(SchemaBranchCache.Key key) {
         schemaBranchCache.invalidateSchemaBranch(key);
 
         String keyAsString;
@@ -1017,10 +1027,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         haServerNotificationManager.notifyCacheInvalidation(schemaBranchCache.getCacheType(),keyAsString);
-    }
+    }*/
 
     // Clear the relevant caches for this schema version and notify HA servers
-    private void invalidateCachesAndNotifyAllHAServers(SchemaVersionInfo schemaVersionInfo) {
+    // TODO : Have to refactor HA mechanism, as a temporary solution disable caching on server side
+
+    /* private void invalidateCachesAndNotifyAllHAServers(SchemaVersionInfo schemaVersionInfo) {
         Collection<SchemaBranch> schemaBranches = schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId());
         if (schemaBranches != null) {
             for (SchemaBranch schemaBranch: schemaBranches) {
@@ -1029,5 +1041,5 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaVersionInfo.getName(), schemaVersionInfo.getVersion());
         schemaVersionLifecycleManager.invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key.of(schemaVersionKey));
-    }
+    }*/
 }
