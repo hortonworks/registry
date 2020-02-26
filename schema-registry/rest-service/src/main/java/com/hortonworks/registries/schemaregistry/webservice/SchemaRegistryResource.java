@@ -18,6 +18,9 @@ import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
@@ -54,6 +57,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -73,6 +77,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.FileNotFoundException;
@@ -103,12 +108,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     // reserved as schema related paths use these strings
     private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
     private final SchemaRegistryVersion schemaRegistryVersion;
+    private final AuthorizationAgent authorizationAgent;
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AtomicReference<LeadershipParticipant> leadershipParticipant,
-                                  SchemaRegistryVersion schemaRegistryVersion) {
+                                  SchemaRegistryVersion schemaRegistryVersion,
+                                  AuthorizationAgent authorizationAgent) {
         super(schemaRegistry, leadershipParticipant);
         this.schemaRegistryVersion = schemaRegistryVersion;
+
+        this.authorizationAgent = authorizationAgent;
     }
 
     @GET
@@ -149,7 +158,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response listAggregatedSchemas(@Context UriInfo uriInfo) {
+    public Response listAggregatedSchemas(@Context UriInfo uriInfo,
+                                          @Context SecurityContext securityContext) {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             Map<String, String> filters = new HashMap<>();
@@ -157,7 +167,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 List<String> value = entry.getValue();
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
-            Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = schemaRegistry.findAggregatedSchemaMetadata(filters);
+            Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = authorizationAgent
+            .authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findAggregatedSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
@@ -174,15 +185,22 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                            @Context SecurityContext securityContext) {
         Response response;
         try {
             AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
+                schemaMetadataInfo = authorizationAgent
+                        .authorizeGetAggregatedSchemaInfo(AuthorizationUtils.getUserAndGroups(securityContext),
+                                schemaMetadataInfo);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
@@ -199,7 +217,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response listSchemas(@Context UriInfo uriInfo) {
+    public Response listSchemas(@Context UriInfo uriInfo,
+                                @Context SecurityContext securityContext) {
         try {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             Map<String, String> filters = new HashMap<>();
@@ -208,7 +227,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
             }
 
-            Collection<SchemaMetadataInfo> schemaMetadatas = schemaRegistry.findSchemaMetadata(filters);
+            Collection<SchemaMetadataInfo> schemaMetadatas = authorizationAgent
+                    .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (Exception ex) {
@@ -224,10 +244,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemas(@Context UriInfo uriInfo) {
+    public Response findSchemas(@Context UriInfo uriInfo,
+                                @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
+                    .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
         } catch (Exception ex) {
             LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
@@ -288,7 +310,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@Context UriInfo uriInfo) {
+    public Response findAggregatedSchemas(@Context UriInfo uriInfo,
+                                          @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(uriInfo.getQueryParameters());
@@ -306,7 +329,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                          serDesInfos));
             }
 
-            return WSUtils.respondEntities(aggregatedSchemaMetadataInfos, Response.Status.OK);
+            return WSUtils.respondEntities(authorizationAgent.authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext), aggregatedSchemaMetadataInfos),
+                    Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
@@ -322,10 +346,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemasByFields(@Context UriInfo uriInfo) {
+    public Response findSchemasByFields(@Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         try {
-            Collection<SchemaVersionKey> schemaVersionKeys = schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters));
+            Collection<SchemaVersionKey> schemaVersionKeys = authorizationAgent
+                    .authorizeFindSchemasByFields(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                            schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
         } catch (Exception ex) {
@@ -364,7 +391,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
                                           SchemaMetadata schemaMetadata,
                                   @Context UriInfo uriInfo,
-                                  @Context HttpHeaders httpHeaders) {
+                                  @Context HttpHeaders httpHeaders,
+                                  @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
@@ -374,8 +402,14 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 checkValidNames(schemaMetadata.getName());
 
                 boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
+                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                        schemaMetadata,
+                        Authorizer.AccessType.CREATE);
                 Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
+            } catch (AuthorizationException e) {
+                LOG.debug("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
@@ -406,16 +440,24 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
                                      @ApiParam(value = "Schema to be added to the registry", required = true)
                                          SchemaMetadata schemaMetadata,
-                                     @Context UriInfo uriInfo) {
+                                     @Context UriInfo uriInfo,
+                                     @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
+                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                        schemaRegistry,
+                        schemaName,
+                        Authorizer.AccessType.UPDATE);
                 SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
                 if (schemaMetadataInfo != null) {
                     response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
                 } else {
                     response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
                 }
+            } catch (AuthorizationException e) {
+                LOG.debug("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (IllegalArgumentException ex) {
                 LOG.error("Expected parameter is invalid", schemaName, schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
@@ -449,15 +491,21 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                  @Context SecurityContext securityContext) {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
+                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                        schemaMetadataInfo, Authorizer.AccessType.READ);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -472,15 +520,20 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId) {
+    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId,
+                                  @Context SecurityContext securityContext) {
         Response response;
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaId);
             if (schemaMetadataInfo != null) {
+                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo, Authorizer.AccessType.READ);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
             }
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving SchemaInfo with schemaId: [{}]", schemaId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -494,10 +547,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Delete a schema metadata and all related data", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
     public Response deleteSchemaMetadata(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                        @Context UriInfo uriInfo) {
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         try {
+            authorizationAgent.authorizeDeleteSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry,
+                    schemaName);
             schemaRegistry.deleteSchema(schemaName);
             return WSUtils.respond(Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.error("No schema metadata found with name: [{}]", schemaName);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -525,14 +585,28 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @ApiParam(value = "Description about the schema version to be uploaded", required = true)
                                         @FormDataParam("description") final String description,
                                         @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
-                                        @Context UriInfo uriInfo) {
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             SchemaVersion schemaVersion = null;
             try {
+                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                        schemaName, schemaBranchName, Authorizer.AccessType.CREATE);
                 schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, "UTF-8"),
                                                   description);
-                response = addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck, uriInfo);
+                response = addSchemaVersion(schemaBranchName,
+                        schemaName,
+                        schemaVersion,
+                        disableCanonicalCheck,
+                        uriInfo,
+                        securityContext);
+            } catch (SchemaNotFoundException e) {
+                LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            } catch (AuthorizationException e) {
+                LOG.debug("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (IOException ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -557,13 +631,21 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                      @ApiParam(value = "Details about the schema", required = true)
                                       SchemaVersion schemaVersion,
                                      @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
-                                     @Context UriInfo uriInfo) {
+                                     @Context UriInfo uriInfo,
+                                     @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
+                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.CREATE);
                 SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
                 response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
+            } catch (AuthorizationException e) {
+                LOG.debug("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (InvalidSchemaException ex) {
                 LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
@@ -591,17 +673,26 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName) {
+                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                           @Context SecurityContext securityContext) {
 
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
             if (schemaVersionInfo != null) {
+                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext),
+                        schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.READ);
                 response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
         } catch (Exception ex) {
@@ -621,12 +712,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                          @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                         @QueryParam("states") List<Byte> stateIds) {
+                                         @QueryParam("states") List<Byte> stateIds,
+                                         @Context SecurityContext securityContext) {
 
         Response response;
         try {
             Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
             if (schemaVersionInfos != null) {
+                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext),
+                        schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.READ);
                 response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
@@ -634,6 +731,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             }
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -649,13 +749,20 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
-                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber) {
+                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                     @Context SecurityContext securityContext) {
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
 
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaVersionInfo, Authorizer.AccessType.READ);
+
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
@@ -673,13 +780,19 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getSchemaVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+    public Response getSchemaVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                         @Context SecurityContext securityContext) {
         SchemaIdVersion schemaIdVersion = new SchemaIdVersion(versionId);
 
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaIdVersion, Authorizer.AccessType.READ);
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -697,10 +810,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response getSchemaVersionByFingerprint(@ApiParam(value = "fingerprint of the schema text", required = true) @PathParam("fingerprint") String fingerprint) {
+    public Response getSchemaVersionByFingerprint(@ApiParam(value = "fingerprint of the schema text", required = true) @PathParam("fingerprint") String fingerprint,
+                                                  @Context SecurityContext securityContext) {
         try {
             final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaVersionInfo, Authorizer.AccessType.READ);
+
             return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with fingerprint : [{}]", fingerprint);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, fingerprint);
@@ -734,12 +854,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response enableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+    public Response enableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                 @Context SecurityContext securityContext) {
 
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.enableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -763,12 +889,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response disableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+    public Response disableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                  @Context SecurityContext securityContext) {
 
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.disableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -789,12 +921,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response archiveSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+    public Response archiveSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                  @Context SecurityContext securityContext) {
 
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.archiveSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -816,12 +954,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response deleteSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+    public Response deleteSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                 @Context SecurityContext securityContext) {
 
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    versionId, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -842,12 +986,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response startReviewSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId) {
+    public Response startReviewSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                      @Context SecurityContext securityContext) {
 
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.startSchemaVersionReview(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -870,12 +1020,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response executeState(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
                                  @ApiParam(value = "", required = true) @PathParam("stateId") Byte stateId,
-                                 byte [] transitionDetails) {
+                                 byte [] transitionDetails,
+                                 @Context SecurityContext securityContext) {
 
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
@@ -902,11 +1058,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response checkCompatibilityWithSchema(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
                                                  @ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                                 @ApiParam(value = "schema text", required = true) String schemaText) {
+                                                 @ApiParam(value = "schema text", required = true) String schemaText,
+                                                 @Context SecurityContext securityContext) {
         Response response;
         try {
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName,
+                    schemaBranchName, Authorizer.AccessType.READ);
             CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -926,17 +1088,22 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SerDesInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SERDE)
     @Timed
     @UnitOfWork
-    public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName) {
+    public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                   @Context SecurityContext securityContext) {
         Response response;
         try {
-            SchemaMetadataInfo schemaMetadataInfoStorable = schemaRegistry.getSchemaMetadataInfo(schemaName);
-            if (schemaMetadataInfoStorable != null) {
-                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfoStorable.getSchemaMetadata().getName());
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
+            if (schemaMetadataInfo != null) {
+                authorizationAgent.authorizeGetSerializers(AuthorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo);
+                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfo.getSchemaMetadata().getName());
                 response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
                 LOG.info("No schemas found with schemakey: [{}]", schemaName);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
             }
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaName, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -952,12 +1119,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response uploadFile(@FormDataParam("file") final InputStream inputStream,
-                               @FormDataParam("file") final FormDataContentDisposition contentDispositionHeader) {
+                               @FormDataParam("file") final FormDataContentDisposition contentDispositionHeader,
+                               @Context SecurityContext securityContext) {
         Response response;
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
+            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.UPDATE);
             String uploadedFileId = schemaRegistry.uploadFile(inputStream);
             response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while uploading file", ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -971,12 +1143,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/files/download/{fileId}")
     @ApiOperation(value = "Downloads the respective for the given fileId if it exists", response = StreamingOutput.class, tags = OPERATION_GROUP_OTHER)
     @Timed
-    public Response downloadFile(@ApiParam(value = "Identifier of the file to be downloaded", required = true) @PathParam("fileId") String fileId) {
+    public Response downloadFile(@ApiParam(value = "Identifier of the file to be downloaded", required = true) @PathParam("fileId") String fileId,
+                                 @Context SecurityContext securityContext) {
         Response response;
         try {
+            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
             StreamingOutput streamOutput = WSUtils.wrapWithStreamingOutput(schemaRegistry.downloadFile(fileId));
             response = Response.ok(streamOutput).build();
             return response;
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (FileNotFoundException e) {
             LOG.error("No file found for fileId [{}]", fileId, e);
             response = WSUtils.respondEntity(fileId, Response.Status.NOT_FOUND);
@@ -994,8 +1171,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) SerDesPair serDesPair,
-                              @Context UriInfo uriInfo) {
-        return handleLeaderAction(uriInfo, () -> _addSerDesInfo(serDesPair));
+                              @Context UriInfo uriInfo,
+                              @Context SecurityContext securityContext) {
+        return handleLeaderAction(uriInfo, () -> _addSerDesInfo(serDesPair, securityContext));
     }
 
     @GET
@@ -1003,15 +1181,20 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Get a Serializer for the given serializer id", response = SerDesInfo.class, tags = OPERATION_GROUP_SERDE)
     @Timed
     @UnitOfWork
-    public Response getSerDes(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId) {
-        return _getSerDesInfo(serializerId);
+    public Response getSerDes(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId,
+                              @Context SecurityContext securityContext) {
+        return _getSerDesInfo(serializerId, securityContext);
     }
 
-    private Response _addSerDesInfo(SerDesPair serDesInfo) {
+    private Response _addSerDesInfo(SerDesPair serDesInfo, SecurityContext securityContext) {
         Response response;
         try {
+            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.CREATE);
             Long serializerId = schemaRegistry.addSerDes(serDesInfo);
             response = WSUtils.respondEntity(serializerId, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while adding serializer/deserializer  [{}]", serDesInfo, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1020,9 +1203,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         return response;
     }
 
-    private Response _getSerDesInfo(Long serializerId) {
+    private Response _getSerDesInfo(Long serializerId, SecurityContext securityContext) {
         Response response;
         try {
+            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
             SerDesInfo serializerInfo = schemaRegistry.getSerDes(serializerId);
             response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
         } catch (Exception ex) {
@@ -1039,12 +1223,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response mapSchemaWithSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                         @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId,
-                                        @Context UriInfo uriInfo) {
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {
+                authorizationAgent.authorizeMapSchemaWithSerDes(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName);
                 schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
                 response = WSUtils.respondEntity(true, Response.Status.OK);
+            } catch (AuthorizationException e) {
+                LOG.debug("Access denied. ", e);
+                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
             } catch (Exception ex) {
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
             }
@@ -1059,12 +1248,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response deleteSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
                                         @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
-                                        @Context UriInfo uriInfo) {
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) {
         SchemaVersionKey schemaVersionKey = null;
         try {
             schemaVersionKey = new SchemaVersionKey(schemaName, versionNumber);
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaVersionKey, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(schemaVersionKey);
             return WSUtils.respond(Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             LOG.error("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
@@ -1085,9 +1280,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response getAllBranches(@ApiParam(value = "Details about schema name",required = true) @PathParam("name") String schemaName,
-                                   @Context UriInfo uriInfo) {
+                                   @Context UriInfo uriInfo,
+                                   @Context SecurityContext securityContext) {
         try {
-            Collection<SchemaBranch> schemaBranches = schemaRegistry.getSchemaBranches(schemaName);
+            Collection<SchemaBranch> schemaBranches = authorizationAgent.authorizeGetAllBranches(AuthorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry, schemaName, schemaRegistry.getSchemaBranches(schemaName));
             return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
         }  catch(SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -1104,10 +1301,19 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
     public Response createSchemaBranch( @ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId,
-                                        @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch) {
+                                        @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch,
+                                        @Context SecurityContext securityContext) {
         try {
+            authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry,
+                    schemaBranch.getSchemaMetadataName(),
+                    schemaVersionId,
+                    schemaBranch.getName());
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
             return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK) ;
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchAlreadyExistsException e) {
             return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  schemaBranch.getName());
         } catch (SchemaNotFoundException e) {
@@ -1125,10 +1331,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
     public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId,
-                                       @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck) {
+                                       @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
+                                       @Context SecurityContext securityContext) {
         try {
+            authorizationAgent.authorizeMergeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaVersionId);
             SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
         } catch (IncompatibleSchemaException e) {
@@ -1143,10 +1354,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/schemas/branch/{branchId}")
     @ApiOperation(value = "Delete a branch give its name", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
-    public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branchId") Long schemaBranchId) {
+    public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branchId") Long schemaBranchId,
+                                       @Context SecurityContext securityContext) {
         try {
+            authorizationAgent.authorizeDeleteSchemaBranch(AuthorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry, schemaBranchId);
             schemaRegistry.deleteSchemaBranch(schemaBranchId);
             return WSUtils.respond(Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaBranchId.toString());
         } catch (InvalidSchemaBranchDeletionException e) {

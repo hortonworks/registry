@@ -33,6 +33,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
 
     String SCHEMA_PROVIDERS = "schemaProviders";
 
+    String AUTHORIZATION = "authorization";
+
     /**
      * initializes it with the given properties
      *
@@ -163,6 +165,24 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
     Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+
+    /**
+     * @param schemaBranchId id of the branch
+     *
+     * @return schema branch with with the given {@code schemaBranchId}
+     *
+     * @throws SchemaBranchNotFoundException if there is no schema branch registered with the given {@code schemaBranchId}
+     */
+    SchemaBranch getSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException;
+
+    /**
+     * @param vertionId id of the schema version
+     *
+     * @return Collection schema branches that contain the given {@code vertionId}
+     *
+     * @throws SchemaBranchNotFoundException if there is no schema version registered with the given {@code vertionId}
+     */
+    Collection<SchemaBranch> getSchemaBranchesForVersion(Long vertionId) throws SchemaBranchNotFoundException;
 
 
     /**

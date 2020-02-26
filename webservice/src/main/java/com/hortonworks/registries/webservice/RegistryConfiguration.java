@@ -17,6 +17,7 @@
 package com.hortonworks.registries.webservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hortonworks.registries.common.AuthMethodConfiguration;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
@@ -52,6 +53,9 @@ public class RegistryConfiguration extends Configuration {
     private String httpProxyUrl;
     private String httpProxyUsername;
     private String httpProxyPassword;
+
+    @JsonProperty
+    private AuthMethodConfiguration authenticationMethod;
 
     public String getHttpProxyUrl() {
         return httpProxyUrl;
@@ -133,4 +137,13 @@ public class RegistryConfiguration extends Configuration {
     public void setServletFilters(List<ServletFilterConfiguration> servletFilters) {
         this.servletFilters = servletFilters;
     }
+
+    public AuthMethodConfiguration getAuthenticationMethod() {
+        return authenticationMethod;
+    }
+
+    public void setAuthenticationMethod(AuthMethodConfiguration authenticationMethod) {
+        this.authenticationMethod = authenticationMethod;
+    }
+
 }

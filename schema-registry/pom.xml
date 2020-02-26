@@ -17,6 +17,7 @@
         <module>core</module>
         <module>serdes</module>
         <module>rest-service</module>
+        <module>authorizer</module>
     </modules>
 
 </project>

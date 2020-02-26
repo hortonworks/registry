@@ -14,7 +14,12 @@
  **/
 package com.hortonworks.registries.webservice;
 
+import com.hortonworks.registries.common.AuthMethodConfiguration;
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.GenericExceptionMapper;
+import com.hortonworks.registries.common.HAConfiguration;
+import com.hortonworks.registries.common.ModuleConfiguration;
+import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
@@ -26,10 +31,6 @@ import com.hortonworks.registries.storage.transaction.TransactionEventListener;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import io.dropwizard.assets.AssetsBundle;
-import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.HAConfiguration;
-import com.hortonworks.registries.common.ModuleConfiguration;
-import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ha.LeadershipAware;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.ha.LocalLeader;
@@ -43,6 +44,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -72,7 +75,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
-
+        initializeUGI(registryConfiguration);
         // handle HA if it is configured
         registerHA(registryConfiguration.getHaConfig(), environment);
 
@@ -88,6 +91,33 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         registerAndNotifyOtherServers(environment);
 
+    }
+
+    private void initializeUGI(RegistryConfiguration conf) throws IOException {
+        LOG.debug("Initialization of User Group ininformation...");
+        if (UserGroupInformation.isSecurityEnabled()) {
+            LOG.debug("UGI.isSecurityEnabled() = true.");
+
+            AuthMethodConfiguration authMethodConf = conf.getAuthenticationMethod();
+            if(authMethodConf != null) {
+                String serverPrincipal = authMethodConf.getServerPrinciple();
+                String keyTab = authMethodConf.getServerPrincipleKeytab();
+
+                LOG.debug("UGI is trying to login with principle = " + serverPrincipal
+                        + ", keyTab = " + keyTab);
+
+                //Authenticate using keytab
+                UserGroupInformation.loginUserFromKeytab(serverPrincipal, keyTab);
+
+                LOG.debug("UGI is login successfully with principle = " + serverPrincipal
+                        + ", keyTab = " + keyTab);
+            } else {
+                LOG.warn("UGI.isSecurityEnabled() = true, but authenticationMethod section of SR config file is empty. "
+                        + " Default UGI configuration will be used.");
+            }
+        } else {
+            LOG.debug("UGI.isSecurityEnabled() = false. Simple authentication method will be used.");
+        }
     }
 
     private void registerAndNotifyOtherServers(Environment environment) {

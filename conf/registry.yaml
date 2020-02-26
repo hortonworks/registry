@@ -11,6 +11,9 @@ modules:
       customSchemaStateExecutor:
         className: "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor"
         props:
+      # authorization properties
+      #authorization:
+      #  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
       # schema cache properties
       # inmemory schema versions cache size
       schemaCacheSize: 10000
@@ -102,5 +105,11 @@ logging:
   level: INFO
   loggers:
     com.hortonworks.registries: INFO
+
+# Config for schema registry kerberos principle
+#authenticationMethod:
+#  type: kerberos
+#  serverPrinciple: "schema-registry/hostname@GCE.CLOUDERA.COM"
+#  serverPrincipleKeytab: "/tmp/schema-registry.keytab"
 
   
