@@ -80,7 +80,7 @@ export default class SchemaVersionForm extends Component {
       var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        if(this.props.schemaObj.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result)) {
+        if(this.props.schemaObj.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result).flag) {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else if(this.props.schemaObj.type.toLowerCase() != 'avro') {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
@@ -112,7 +112,8 @@ export default class SchemaVersionForm extends Component {
       }
       this.setState({showError: true, changedFields: changedFields});
       return false;
-    } else if(this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
+    } else if(this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim()).flag) {/*Add validation logic to Utils method for schema type other than "Avro" */
+      this.setState({schemaTextCompatibility: 'Parse error - ' + Utils.isValidJson(schemaText.trim()).message});
       return false;
     } else {
       this.setState({showError: false});
@@ -155,7 +156,7 @@ export default class SchemaVersionForm extends Component {
         });
     }
     catch(err){
-      console.log(err);
+      this.setState({schemaTextCompatibility: 'Parse error - '+ Utils.isValidJson(schemaText.trim()).message});
     }
   }
 
@@ -216,7 +217,7 @@ export default class SchemaVersionForm extends Component {
                 <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
               </div>
               :
-              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText).flag ? ' invalidInput' : '')}>
                 <div onClick={(e) => {
                   this.setState({showCodemirror: true});
                 }}>
