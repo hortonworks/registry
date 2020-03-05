@@ -121,7 +121,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
             super(serviceType, appId);
         }
 
-        private static SchemaRegistryRangerPlugin getInstance() {
+        public static SchemaRegistryRangerPlugin getInstance() {
             if (instance == null) {
                 synchronized (SchemaRegistryRangerPlugin.class) {
                     if (instance == null) {
