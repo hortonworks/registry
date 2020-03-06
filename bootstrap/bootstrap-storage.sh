@@ -74,7 +74,7 @@ USAGE: $0 [create|migrate|info|validate|drop|drop-create|repair|check-connection
 EOF
 }
 
-if [[ $# -gt 2 ]]
+if [ $# -gt 2 ]
 then
     echo "More than two argument specified, please use only one of the below options"
     printUsage
@@ -82,7 +82,7 @@ then
 fi
 
 opt="$1"
-[[ $# -eq 2 ]] && CONFIG_FILE_PATH="${2}"
+[ $# -eq 2 ] && CONFIG_FILE_PATH="${2}"
 
 case "${opt}" in
 create | drop | migrate | info | validate | repair | check-connection )
