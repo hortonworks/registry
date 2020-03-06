@@ -829,6 +829,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return schemaVersionLifecycleManager.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
     }
 
+    @Override
+    public SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+        return schemaVersionLifecycleManager.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
+    }
+
 
     public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchema) throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaVersionLifecycleManager.checkCompatibility(schemaBranchName, schemaName, toSchema);

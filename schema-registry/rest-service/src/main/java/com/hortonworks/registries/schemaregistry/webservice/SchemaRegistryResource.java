@@ -678,7 +678,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
             if (schemaVersionInfo != null) {
                 authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext),
                         schemaRegistry,
