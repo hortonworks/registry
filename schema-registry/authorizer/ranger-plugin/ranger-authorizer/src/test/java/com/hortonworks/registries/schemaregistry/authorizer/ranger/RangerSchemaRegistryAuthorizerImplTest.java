@@ -29,7 +29,6 @@ import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.UserAndGroups;
@@ -715,24 +714,22 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         Authorizer.Resource schema =
                 new Authorizer.SchemaMetadataResource("Group", "Schema");
         rangerAccessResource = rangerSchemaRegistryAuthorizer.registryResource2RangerResource(schema);
-        assertThat(rangerAccessResource.getKeys().size(), is(3));
+        assertThat(rangerAccessResource.getKeys().size(), is(2));
         assertTrue(rangerAccessResource.exists("schema-group"));
         assertThat(rangerAccessResource.getValue("schema-group"), is("Group"));
         assertTrue(rangerAccessResource.exists("schema-metadata"));
         assertThat(rangerAccessResource.getValue("schema-metadata"), is("Schema"));
-        assertTrue(rangerAccessResource.exists("none-sb"));
 
         Authorizer.Resource branch =
                 new Authorizer.SchemaBranchResource("Group", "Schema", "Branch");
         rangerAccessResource = rangerSchemaRegistryAuthorizer.registryResource2RangerResource(branch);
-        assertThat(rangerAccessResource.getKeys().size(), is(4));
+        assertThat(rangerAccessResource.getKeys().size(), is(3));
         assertTrue(rangerAccessResource.exists("schema-group"));
         assertThat(rangerAccessResource.getValue("schema-group"), is("Group"));
         assertTrue(rangerAccessResource.exists("schema-metadata"));
         assertThat(rangerAccessResource.getValue("schema-metadata"), is("Schema"));
         assertTrue(rangerAccessResource.exists("schema-branch"));
         assertThat(rangerAccessResource.getValue("schema-branch"), is("Branch"));
-        assertTrue(rangerAccessResource.exists("none-sv"));
 
         Authorizer.Resource version =
                 new Authorizer.SchemaVersionResource("Group", "Schema", "Branch");
