@@ -160,19 +160,12 @@
     },
     {
       "service": "SR1",
-      "name": "P3 - schema-group, schema-metadata, none-sb",
+      "name": "P3 - schema-group, schema-metadata",
       "policyType": 0,
       "policyPriority": 0,
-      "description": "Policy for all - schema-group, schema-metadata, none-sb",
+      "description": "Policy for all - schema-group, schema-metadata",
       "isAuditEnabled": true,
       "resources": {
-        "none-sb": {
-          "values": [
-            "*"
-          ],
-          "isExcludes": false,
-          "isRecursive": false
-        },
         "schema-metadata": {
           "values": [
             "Schema1", "Schema3", "__Sch*", "Schema5"
@@ -337,10 +330,10 @@
     },
     {
       "service": "SR1",
-      "name": "P4 - schema-group, schema-metadata, schema-branch, none-sv",
+      "name": "P4 - schema-group, schema-metadata, schema-branch",
       "policyType": 0,
       "policyPriority": 0,
-      "description": "Policy for all - schema-group, schema-metadata, schema-branch, none-sv",
+      "description": "Policy for all - schema-group, schema-metadata, schema-branch",
       "isAuditEnabled": true,
       "resources": {
         "schema-branch": {
@@ -360,13 +353,6 @@
         "schema-group": {
           "values": [
             "Group1", "SGro*"
-          ],
-          "isExcludes": false,
-          "isRecursive": false
-        },
-        "none-sv": {
-          "values": [
-            "*"
           ],
           "isExcludes": false,
           "isRecursive": false
@@ -1120,31 +1106,6 @@
         "isValidLeaf": false
       },
       {
-        "itemId": 31,
-        "name": "none-sb",
-        "type": "string",
-        "level": 30,
-        "parent": "schema-metadata",
-        "mandatory": true,
-        "lookupSupported": true,
-        "recursiveSupported": false,
-        "excludesSupported": false,
-        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions": {
-          "wildCard": "true",
-          "ignoreCase": "true"
-        },
-        "validationRegEx": "^\\*$",
-        "validationMessage": "",
-        "uiHint": "",
-        "label": "None",
-        "description": "None",
-        "accessTypeRestrictions": [
-
-        ],
-        "isValidLeaf": true
-      },
-      {
         "itemId": 32,
         "name": "schema-branch",
         "type": "string",
@@ -1168,31 +1129,6 @@
 
         ],
         "isValidLeaf": false
-      },
-      {
-        "itemId": 41,
-        "name": "none-sv",
-        "type": "string",
-        "level": 40,
-        "parent": "schema-branch",
-        "mandatory": true,
-        "lookupSupported": true,
-        "recursiveSupported": false,
-        "excludesSupported": false,
-        "matcher": "org.apache.ranger.plugin.resourcematcher.RangerDefaultResourceMatcher",
-        "matcherOptions": {
-          "wildCard": "true",
-          "ignoreCase": "true"
-        },
-        "validationRegEx": "^\\*$",
-        "validationMessage": "",
-        "uiHint": "",
-        "label": "None",
-        "description": "None",
-        "accessTypeRestrictions": [
-
-        ],
-        "isValidLeaf": true
       },
       {
         "itemId": 42,

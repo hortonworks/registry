@@ -32,9 +32,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     private static final String RANGER_RESOURCE_SCHEMA_GROUP = "schema-group";
     private static final String RANGER_RESOURCE_SCHEMA_METADATA = "schema-metadata";
     private static final String RANGER_RESOURCE_SCHEMA_BRANCH = "schema-branch";
-    private static final String RANGER_RESOURCE_NONE_SCHEMA_BRANCH = "none-sb";
     private static final String RANGER_RESOURCE_SCHEMA_VERSION = "schema-version";
-    private static final String RANGER_RESOURCE_NONE_SCHEMA_VERSION = "none-sv";
 
     private final RangerBasePlugin plg;
 
@@ -89,12 +87,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
                 rangerResource.setValue(RANGER_RESOURCE_SCHEMA_VERSION, "ANY_VALUE");
                 return rangerResource;
             }
-            case SCHEMA_BRANCH: {
-                rangerResource.setValue(RANGER_RESOURCE_NONE_SCHEMA_VERSION, "ANY_VALUE");
-                return rangerResource;
-            }
-            case SCHEMA_METADATA: {
-                rangerResource.setValue(RANGER_RESOURCE_NONE_SCHEMA_BRANCH, "ANY_VALUE");
+            case SCHEMA_METADATA: case SCHEMA_BRANCH: {
                 return rangerResource;
             }
 
