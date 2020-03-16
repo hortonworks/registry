@@ -50,8 +50,8 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
 
     public void loadAll(final Collection<? extends K> keys, CacheLoaderCallback<K,V> callback) {
         try {
-            ListenableFuture myCall = executorService.submit(new DataStoreCallable(keys));
-            Futures.addCallback(myCall, new CacheLoaderAsyncFutureCallback(keys, callback));
+            ListenableFuture<Map<K, V>> myCall = executorService.submit(new DataStoreCallable(keys));
+            Futures.addCallback(myCall, new CacheLoaderAsyncFutureCallback(keys, callback), executorService);
 
         } catch (Exception e) {
             handleException(keys, callback, e, LOG);
