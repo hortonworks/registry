@@ -17,11 +17,8 @@
 package com.hortonworks.registries.webservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hortonworks.registries.common.AuthMethodConfiguration;
-import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.HAConfiguration;
-import com.hortonworks.registries.common.ModuleConfiguration;
-import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.common.*;
+import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
@@ -55,7 +52,7 @@ public class RegistryConfiguration extends Configuration {
     private String httpProxyPassword;
 
     @JsonProperty
-    private AuthMethodConfiguration authenticationMethod;
+    private ServiceAuthenticationConfiguration serviceAuthenticationConfiguration;
 
     public String getHttpProxyUrl() {
         return httpProxyUrl;
@@ -138,12 +135,12 @@ public class RegistryConfiguration extends Configuration {
         this.servletFilters = servletFilters;
     }
 
-    public AuthMethodConfiguration getAuthenticationMethod() {
-        return authenticationMethod;
+    public ServiceAuthenticationConfiguration getServiceAuthenticationConfiguration() {
+        return serviceAuthenticationConfiguration;
     }
 
-    public void setAuthenticationMethod(AuthMethodConfiguration authenticationMethod) {
-        this.authenticationMethod = authenticationMethod;
+    public void setServiceAuthenticationConfiguration(ServiceAuthenticationConfiguration serviceAuthenticationConfiguration) {
+        this.serviceAuthenticationConfiguration = serviceAuthenticationConfiguration;
     }
 
 }

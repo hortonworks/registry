@@ -14,7 +14,7 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.common.AuthMethodConfiguration;
+import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.HAConfiguration;
@@ -94,23 +94,24 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     }
 
     private void initializeUGI(RegistryConfiguration conf) throws IOException {
-        LOG.debug("Initialization of User Group ininformation...");
+        LOG.debug("Initialization of User Group information...");
         if (UserGroupInformation.isSecurityEnabled()) {
             LOG.debug("UGI.isSecurityEnabled() = true.");
 
-            AuthMethodConfiguration authMethodConf = conf.getAuthenticationMethod();
+            ServiceAuthenticationConfiguration authMethodConf = conf.getServiceAuthenticationConfiguration();
             if(authMethodConf != null) {
-                String serverPrincipal = authMethodConf.getServerPrinciple();
-                String keyTab = authMethodConf.getServerPrincipleKeytab();
+                Map<String,String> serviceAuthenticationProperties = authMethodConf.getProperties();
+                String principal = serviceAuthenticationProperties.get("principal");
+                String keytab = serviceAuthenticationProperties.get("keytab");
 
-                LOG.debug("UGI is trying to login with principle = " + serverPrincipal
-                        + ", keyTab = " + keyTab);
+                LOG.debug("UGI is trying to login with principle = " + principal
+                        + ", keyTab = " + keytab);
 
                 //Authenticate using keytab
-                UserGroupInformation.loginUserFromKeytab(serverPrincipal, keyTab);
+                UserGroupInformation.loginUserFromKeytab(principal, keytab);
 
-                LOG.debug("UGI is login successfully with principle = " + serverPrincipal
-                        + ", keyTab = " + keyTab);
+                LOG.debug("UGI is login successfully with principle = " + principal
+                        + ", keyTab = " + keytab);
             } else {
                 LOG.warn("UGI.isSecurityEnabled() = true, but authenticationMethod section of SR config file is empty. "
                         + " Default UGI configuration will be used.");
