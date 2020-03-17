@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.hortonworks.registries.util;
-
-import com.hortonworks.registries.common.util.FileStorage;
-import com.hortonworks.registries.common.util.LocalFileSystemStorage;
+package com.hortonworks.registries.common.util;
 
 public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
     @Override
