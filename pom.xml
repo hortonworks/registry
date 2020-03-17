@@ -384,7 +384,7 @@
         <kafka.version>2.1.0</kafka.version>
         <kafkaArtifact>kafka_2.11</kafkaArtifact>
         <curator.version>4.2.0</curator.version>
-        <curator-test.version>2.12.0</curator-test.version>
+        <curator-test.version>4.2.0</curator-test.version>
         <avro.version>1.9.1</avro.version>
         <dropwizard.version>1.2.8</dropwizard.version>
         <jersey.version>2.22.1</jersey.version>
@@ -573,6 +573,18 @@
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.curator</groupId>
+                        <artifactId>curator-client</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.curator</groupId>
+                        <artifactId>curator-recipes</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.curator</groupId>
+                        <artifactId>curator-framework</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
