@@ -33,6 +33,7 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.util.CustomParameterizedRunner;
 import com.hortonworks.registries.util.SchemaRegistryTestName;
 import org.junit.After;
@@ -93,7 +94,7 @@ public class BasicSchemaRegistryClientOpsTest {
         doTestSchemaOps(SchemaValidationLevel.ALL);
     }
 
-    private void doTestSchemaOps(SchemaValidationLevel validationLevel) throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    private void doTestSchemaOps(SchemaValidationLevel validationLevel) throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException, SchemaLifecycleException {
         String testName = TEST_NAME_RULE.getMethodName();
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(testName + "-schema")
                 .type(AvroSchemaProvider.TYPE)
@@ -154,6 +155,11 @@ public class BasicSchemaRegistryClientOpsTest {
 
         Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata()
                                                                                .getValidationLevel());
+
+        schemaRegistryClient.disableSchemaVersion(v2.getSchemaVersionId());
+        SchemaVersionInfo latestSchemaVersion = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+
+        Assert.assertEquals(v1.getSchemaVersionId(), latestSchemaVersion.getId());
     }
 
 

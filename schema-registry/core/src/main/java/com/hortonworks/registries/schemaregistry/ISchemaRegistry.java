@@ -68,6 +68,17 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
          return getSchemaVersionInfo(schemaName, schemaText, false);
      }
 
+
+    /**
+     * @param schemaBranchName name of the schema branch
+     * @param schemaName name identifying a schema
+     *
+     * @return latest enabled version of the schema for the given schemaName
+     *
+     * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
+     */
+    SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+
     /**
      * If there is a version of the schema with the given schemaText for schema name then it returns respective {@link SchemaVersionInfo},
      * else it returns null.
