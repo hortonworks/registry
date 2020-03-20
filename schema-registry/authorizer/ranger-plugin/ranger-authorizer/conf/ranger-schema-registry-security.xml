@@ -43,7 +43,7 @@
 
 	<property>
 		<name>ranger.plugin.schema-registry.policy.rest.ssl.config.file</name>
-		<value>/tmp/schema-registry/ranger-plugin/ranger-policymgr-ssl.xml</value>
+		<value>/tmp/schema-registry/ranger-plugin/ranger-schema-registry-policymgr-ssl.xml</value>
 		<description>
 			Path to the file containing SSL details to contact Ranger Admin
 		</description>

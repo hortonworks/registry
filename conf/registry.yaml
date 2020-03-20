@@ -107,9 +107,10 @@ logging:
     com.hortonworks.registries: INFO
 
 # Config for schema registry kerberos principle
-#authenticationMethod:
+#serviceAuthenticationConfiguration:
 #  type: kerberos
-#  serverPrinciple: "schema-registry/hostname@GCE.CLOUDERA.COM"
-#  serverPrincipleKeytab: "/tmp/schema-registry.keytab"
+#  properties:
+#    principal: "schema-registry/hostname@GCE.CLOUDERA.COM"
+#    keytab: "/tmp/schema-registry.keytab"
 
   

@@ -14,7 +14,7 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.common.AuthMethodConfiguration;
+import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.HAConfiguration;
@@ -44,6 +44,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -94,29 +95,33 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     }
 
     private void initializeUGI(RegistryConfiguration conf) throws IOException {
-        LOG.debug("Initialization of User Group ininformation...");
-        if (UserGroupInformation.isSecurityEnabled()) {
-            LOG.debug("UGI.isSecurityEnabled() = true.");
+        if (conf.getServiceAuthenticationConfiguration() != null) {
+            String authenticationType = conf.getServiceAuthenticationConfiguration().getType();
+            if (authenticationType != null && authenticationType.equals("kerberos")) {
+                Map<String, String> serviceAuthenticationProperties = conf.getServiceAuthenticationConfiguration().getProperties();
+                if (serviceAuthenticationProperties != null) {
+                    String principal = serviceAuthenticationProperties.get("principal");
+                    String keytab = serviceAuthenticationProperties.get("keytab");
 
-            AuthMethodConfiguration authMethodConf = conf.getAuthenticationMethod();
-            if(authMethodConf != null) {
-                String serverPrincipal = authMethodConf.getServerPrinciple();
-                String keyTab = authMethodConf.getServerPrincipleKeytab();
-
-                LOG.debug("UGI is trying to login with principle = " + serverPrincipal
-                        + ", keyTab = " + keyTab);
-
-                //Authenticate using keytab
-                UserGroupInformation.loginUserFromKeytab(serverPrincipal, keyTab);
-
-                LOG.debug("UGI is login successfully with principle = " + serverPrincipal
-                        + ", keyTab = " + keyTab);
+                    if (StringUtils.isNotEmpty(principal) && StringUtils.isNotEmpty(keytab)) {
+                        LOG.debug("Login with principal = '" + principal + "' and keyTab = '" + keytab + "'");
+                        try {
+                            UserGroupInformation.loginUserFromKeytab(principal, keytab);
+                            LOG.debug("Successfully logged in");
+                        } catch (Exception e) {
+                            LOG.error("Failed to log in", e);
+                        }
+                    } else {
+                        LOG.error("Invalid service authentication configuration for 'kerberos' principal = '" + principal + "' and keytab = '" + keytab + "'");
+                    }
+                } else {
+                    LOG.error("No service authentication properties were configured for 'kerberos'");
+                }
             } else {
-                LOG.warn("UGI.isSecurityEnabled() = true, but authenticationMethod section of SR config file is empty. "
-                        + " Default UGI configuration will be used.");
+                LOG.error("Invalid service authentication type : " + authenticationType);
             }
         } else {
-            LOG.debug("UGI.isSecurityEnabled() = false. Simple authentication method will be used.");
+            LOG.debug("No service authentication is configured");
         }
     }
 
@@ -145,7 +150,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
                 haServerNotificationManager.notifyDebut();
 
-                refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager,transactionManager, haServerNotificationManager);
+                refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager, transactionManager, haServerNotificationManager);
                 environment.lifecycle().manage(refreshHAServerManagedTask);
                 refreshHAServerManagedTask.start();
             }
@@ -154,7 +159,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     }
 
     private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
-        if(haConfiguration != null) {
+        if (haConfiguration != null) {
             environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
                 @Override
                 public void serverStarted(Server server) {
@@ -241,13 +246,13 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 transactionManagerAware.setTransactionManager(transactionManager);
             }
 
-            if(moduleRegistration instanceof LeadershipAware) {
+            if (moduleRegistration instanceof LeadershipAware) {
                 LOG.info("Module [{}] is registered for LeadershipParticipant registration.", moduleName);
                 LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
                 leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
             }
 
-            if(moduleRegistration instanceof HAServersAware) {
+            if (moduleRegistration instanceof HAServersAware) {
                 LOG.info("Module [{}] is registered for HAServersAware registration.");
                 HAServersAware leadershipAware = (HAServersAware) moduleRegistration;
                 leadershipAware.setHAServerConfigManager(haServerNotificationManager);
@@ -260,7 +265,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         for (Object resource : resourcesToRegister) {
             environment.jersey().register(resource);
         }
-        
+
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(new TransactionEventListener(transactionManager, TransactionIsolation.READ_COMMITTED));
 
@@ -284,7 +289,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         if (fileStorageConfiguration.getClassName() != null)
             try {
                 fileStorage = (FileStorage) Class.forName(fileStorageConfiguration.getClassName(), true,
-                                                          Thread.currentThread().getContextClassLoader()).newInstance();
+                        Thread.currentThread().getContextClassLoader()).newInstance();
                 fileStorage.init(fileStorageConfiguration.getProperties());
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -307,7 +312,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private void addServletFilters(RegistryConfiguration registryConfiguration, Environment environment) {
         List<ServletFilterConfiguration> servletFilterConfigurations = registryConfiguration.getServletFilters();
         if (servletFilterConfigurations != null && !servletFilterConfigurations.isEmpty()) {
-            for (ServletFilterConfiguration servletFilterConfig: servletFilterConfigurations) {
+            for (ServletFilterConfiguration servletFilterConfig : servletFilterConfigurations) {
                 try {
                     String className = servletFilterConfig.getClassName();
                     Map<String, String> params = servletFilterConfig.getParams();
@@ -315,7 +320,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                     LOG.info("Registering servlet filter [{}]", servletFilterConfig);
                     Class<? extends Filter> filterClass = (Class<? extends Filter>) Class.forName(className);
                     FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(className + typeSuffix, filterClass);
-                    if(params != null) {
+                    if (params != null) {
                         dynamic.setInitParameters(params);
                     }
                     dynamic.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");

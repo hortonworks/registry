@@ -14,10 +14,13 @@
  **/
 package com.hortonworks.registries.common;
 
-public class AuthMethodConfiguration {
+import java.util.Map;
+
+public class ServiceAuthenticationConfiguration {
+
     private String type;
-    private String serverPrinciple;
-    private String serverPrincipleKeytab;
+
+    private Map<String, String> properties;
 
     public String getType() {
         return type;
@@ -27,28 +30,15 @@ public class AuthMethodConfiguration {
         this.type = type;
     }
 
-    public String getServerPrinciple() {
-        return serverPrinciple;
-    }
-
-    public void setServerPrinciple(String serverPrinciple) {
-        this.serverPrinciple = serverPrinciple;
-    }
-
-    public String getServerPrincipleKeytab() {
-        return serverPrincipleKeytab;
-    }
-
-    public void setServerPrincipleKeytab(String serverPrincipleKeytab) {
-        this.serverPrincipleKeytab = serverPrincipleKeytab;
+    public Map<String, String> getProperties() {
+        return properties;
     }
 
     @Override
     public String toString() {
-        return "AuthMethodConfiguration{" +
+        return "ServiceAuthenticationConfiguration{" +
                 "type='" + type + '\'' +
-                ", serverPrinciple='" + serverPrinciple + '\'' +
-                ", serverPrincipleKeytab='" + serverPrincipleKeytab + '\'' +
+                ", properties='" + properties + '\'' +
                 '}';
     }
 }
