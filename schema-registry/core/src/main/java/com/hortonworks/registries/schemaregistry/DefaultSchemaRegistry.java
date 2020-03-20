@@ -991,6 +991,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public static class Options {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
+        public static final String ENABLE_CACHING = "enableCaching";
+        public static final String CACHE = "cache";
         public static final String SCHEMA_CACHE_SIZE = "schemaCacheSize";
         public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schemaCacheExpiryInterval";
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
@@ -999,16 +1001,26 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         private final Map<String, ?> config;
 
         public Options(Map<String, ?> config) {
-            this.config = config;
+            this.config = (Map<String, ?>) getValue(config, CACHE, new HashMap<>());
         }
 
-        private Object getPropertyValue(String propertyKey, Object defaultValue) {
-            Object value = config.get(propertyKey);
+        private Object getValue(Map<String, ?> properties, String propertyKey, Object defaultValue) {
+            Object value = properties.get(propertyKey);
             return value != null ? value : defaultValue;
         }
 
+        private Object getPropertyValue(String propertyKey, Object defaultValue) {
+            Map<String, ?> properties = (Map<String, ?>) getValue(config, "properties", new HashMap<>());
+            return getValue(properties, propertyKey, defaultValue);
+        }
+
+        public Boolean isCacheEnabled() {
+            return (Boolean) getValue(config, ENABLE_CACHING, Boolean.FALSE);
+        }
+
         public int getMaxSchemaCacheSize() {
-            return Integer.valueOf(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString());
+            return isCacheEnabled() == true ?
+                      Integer.parseInt(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString()) : 0;
         }
 
         public long getSchemaExpiryInSecs() {

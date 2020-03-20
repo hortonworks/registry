@@ -37,6 +37,7 @@ public class HAServerNotificationManager {
     private String serverUrl;
     private static final Logger LOG = LoggerFactory.getLogger(HAServerNotificationManager.class);
     public static Integer MAX_RETRY = 3;
+    public boolean isCacheEnabled = false;
 
     public void refreshServerInfo(Collection<HostConfigStorable> hostConfigStorableList) {
         if (hostConfigStorableList != null) {
@@ -49,12 +50,20 @@ public class HAServerNotificationManager {
         }
     }
 
+    public void setIsCacheEnabled(boolean isCacheEnabled) {
+        this.isCacheEnabled = isCacheEnabled;
+    }
+
     public void notifyDebut() {
-        notify("api/v1/schemaregistry/notifications/node/debut", serverUrl);
+        if (isCacheEnabled) {
+            notify("api/v1/schemaregistry/notifications/node/debut", serverUrl);
+        }
     }
 
     public void notifyCacheInvalidation(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString) {
-        notify(String.format("api/v1/schemaregistry/cache/%s/invalidate",schemaRegistryCacheType.name()), keyAsString);
+        if (isCacheEnabled) {
+            notify(String.format("api/v1/schemaregistry/cache/%s/invalidate", schemaRegistryCacheType.name()), keyAsString);
+        }
     }
 
     private void notify(String urlPath, Object postBody) {
