@@ -109,7 +109,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                             UserGroupInformation.loginUserFromKeytab(principal, keytab);
                             LOG.debug("Successfully logged in");
                         } catch (Exception e) {
-                            LOG.error("Failed to log in");
+                            LOG.error("Failed to log in", e);
                         }
                     } else {
                         LOG.error("Invalid service authentication configuration for 'kerberos' principal = '" + principal + "' and keytab = '" + keytab + "'");
