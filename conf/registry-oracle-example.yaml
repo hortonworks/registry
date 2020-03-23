@@ -9,13 +9,13 @@ modules:
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
       # schema cache properties
       cache:
-        enableCaching : false
+        enableCaching : true
 #       Define caching properties below
-#       properties:
+        properties:
 #          # inmemory schema versions cache size
-#          schemaCacheSize: 10000
+          schemaCacheSize: 10000
 #          # inmemory schema version cache entry expiry interval after access
-#          schemaCacheExpiryInterval: 3600
+          schemaCacheExpiryInterval: 3600
 
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"

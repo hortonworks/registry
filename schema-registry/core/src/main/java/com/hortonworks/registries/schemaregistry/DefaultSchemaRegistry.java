@@ -1015,7 +1015,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         public Boolean isCacheEnabled() {
-            return (Boolean) getValue(config, ENABLE_CACHING, Boolean.FALSE);
+            return (Boolean) getValue(config, ENABLE_CACHING, Boolean.TRUE);
         }
 
         public int getMaxSchemaCacheSize() {
