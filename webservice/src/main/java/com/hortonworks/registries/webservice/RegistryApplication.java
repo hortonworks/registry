@@ -14,13 +14,13 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
@@ -90,7 +90,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
-        registerAndNotifyOtherServers(environment);
+        registerAndNotifyOtherServers(registryConfiguration, environment);
 
     }
 
@@ -125,34 +125,49 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
     }
 
-    private void registerAndNotifyOtherServers(Environment environment) {
+    private void registerAndNotifyOtherServers(RegistryConfiguration configuration, Environment environment) {
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
             @Override
             public void serverStarted(Server server) {
 
-                String serverURL = server.getURI().toString();
+                DefaultSchemaRegistry.Options options = null;
 
-                haServerNotificationManager.setHomeNodeURL(serverURL);
-
-                try {
-                    transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
-                    HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
-                    if (hostConfigStorable == null) {
-                        storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
-                                System.currentTimeMillis()));
+                for (ModuleConfiguration moduleConfiguration : configuration.getModules()) {
+                    if (moduleConfiguration.getClassName().equals("com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule")) {
+                       options = new DefaultSchemaRegistry.Options(moduleConfiguration.getConfig());
+                       haServerNotificationManager.setIsCacheEnabled(options.isCacheEnabled());
                     }
-                    haServerNotificationManager.refreshServerInfo(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
-                    transactionManager.commitTransaction();
-                } catch (Exception e) {
-                    transactionManager.rollbackTransaction();
-                    throw e;
                 }
 
-                haServerNotificationManager.notifyDebut();
+                if (options.isCacheEnabled()) {
+                    LOG.debug("Enabled server side caching");
 
-                refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager, transactionManager, haServerNotificationManager);
-                environment.lifecycle().manage(refreshHAServerManagedTask);
-                refreshHAServerManagedTask.start();
+                    String serverURL = server.getURI().toString();
+
+                    haServerNotificationManager.setHomeNodeURL(serverURL);
+
+                    try {
+                        transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
+                        HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
+                        if (hostConfigStorable == null) {
+                            storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
+                                    System.currentTimeMillis()));
+                        }
+                        haServerNotificationManager.refreshServerInfo(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
+                        transactionManager.commitTransaction();
+                    } catch (Exception e) {
+                        transactionManager.rollbackTransaction();
+                        throw e;
+                    }
+
+                    haServerNotificationManager.notifyDebut();
+
+                    refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager, transactionManager, haServerNotificationManager);
+                    environment.lifecycle().manage(refreshHAServerManagedTask);
+                    refreshHAServerManagedTask.start();
+                } else {
+                    LOG.debug("Disabled server side caching");
+                }
             }
         });
 

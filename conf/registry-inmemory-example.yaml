@@ -8,10 +8,14 @@ modules:
           defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
       # schema cache properties
-      # inmemory schema versions cache size
-      schemaCacheSize: 10000
-      # inmemory schema version cache entry expiry interval after access
-      schemaCacheExpiryInterval: 3600
+      cache:
+        enableCaching : true
+#       Define caching properties below
+        properties:
+#          # inmemory schema versions cache size
+          schemaCacheSize: 10000
+#          # inmemory schema version cache entry expiry interval after access
+          schemaCacheExpiryInterval: 3600
 
 
 servletFilters:
