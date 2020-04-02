@@ -418,7 +418,6 @@
         <mockito.version>2.28.2</mockito.version>
         <powermock.version>2.0.5</powermock.version>
         <codehaus.plexus.version>3.1.0</codehaus.plexus.version>
-        <eclipse.jetty.version>9.4.11.v20180605</eclipse.jetty.version>
         <httpclient.version>4.5.3</httpclient.version>
         <jaxb-api.version>2.2.12</jaxb-api.version>
         <jaxb-runtime.version>2.3.1</jaxb-runtime.version>
