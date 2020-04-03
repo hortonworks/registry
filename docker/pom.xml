@@ -49,16 +49,16 @@ limitations under the License.
                             <imageName>schema-registry</imageName>
                             <dockerDirectory>${project.basedir}/images/registry</dockerDirectory>
                             <imageTags>
-                                <imageTag>${parent.version}</imageTag>
+                                <imageTag>${project.parent.version}</imageTag>
                             </imageTags>
                             <buildArgs>
-                                <REGISTRY_VERSION>${parent.version}</REGISTRY_VERSION>
+                                <REGISTRY_VERSION>${project.parent.version}</REGISTRY_VERSION>
                             </buildArgs>
                             <resources>
                                 <resource>
                                     <targetPath>/</targetPath>
                                     <directory>${project.basedir}/../registry-dist/target</directory>
-                                    <include>hortonworks-registry-${parent.version}.tar.gz</include>
+                                    <include>hortonworks-registry-${project.parent.version}.tar.gz</include>
                                 </resource>
                             </resources>
                         </configuration>

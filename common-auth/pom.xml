@@ -129,6 +129,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>
+                    <!-- default jar goal gets executed even without specifying it explicitly
                     <execution>
                         <id>prepare-jar</id>
                         <phase>prepare-package</phase>
@@ -136,6 +137,7 @@
                             <goal>jar</goal>
                         </goals>
                     </execution>
+                    -->
                     <execution>
                         <id>prepare-test-jar</id>
                         <phase>prepare-package</phase>

@@ -28,7 +28,7 @@ import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
 import com.hortonworks.registries.storage.search.WhereClauseCombiner;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
