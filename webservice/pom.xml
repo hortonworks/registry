@@ -12,7 +12,7 @@
     <artifactId>registry-webservice</artifactId>
 
     <properties>
-        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
+        <dropwizard.metrics.version>4.0.5</dropwizard.metrics.version>
         <dropwizard.swagger.version>1.2.4-1</dropwizard.swagger.version>
     </properties>
 
