@@ -188,22 +188,21 @@ public class HttpHeaderAuthenticationHandler implements AuthenticationHandler {
         return true;
     }
 
-    private Optional<String> getUserName(HttpServletRequest request) {
-        if (readwriteHeader.isPresent() &&
-                readwriteHeader.map(request::getHeader)
-                        .map(readwriteValues::contains)
-                        .orElse(false)) {
-            return Optional.of(READ_WRITE);
-        }
+    private Optional<String> authUser(HttpServletRequest request) {
+        return Optional.ofNullable(
+                authUser(request, READ_WRITE, readwriteHeader, readwriteValues).orElseGet(() ->
+                        authUser(request, READ_ONLY, readonlyHeader, readonlyValues).orElseGet(() -> null)));
+    }
 
-        if (readonlyHeader.isPresent() &&
-                readonlyHeader.map(request::getHeader)
-                        .map(readonlyValues::contains)
-                        .orElse(false)) {
-            return Optional.of(READ_ONLY);
-        }
-
-        return Optional.empty();
+    private Optional<String> authUser(HttpServletRequest request, String user, Optional<String> header, Set<String> headerValues) {
+        return header.flatMap((String h) ->
+                Optional.ofNullable(request.getHeader(h))
+                        .filter(headerValues::contains)
+                        .map((String v) -> {
+                            logger.info("Authenticating request {} as {} user for {}:{}", request.getRequestURI(), user, h, v);
+                            return v;
+                        })
+                        .map(u -> user));
     }
 
     /**
@@ -225,9 +224,10 @@ public class HttpHeaderAuthenticationHandler implements AuthenticationHandler {
      * @throws IOException thrown if an IO error occurred.
      */
     @Override
-    public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("Authenticating request {}", request.getRequestURI());
-        Optional<String> username = getUserName(request);
+    public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws
+            IOException {
+        Optional<String> username = authUser(request);
+        logger.info("Authorizing request {} as {}", request.getRequestURI(), username.orElse("<anonymous>"));
         Optional<AuthenticationToken> token = username.map(u -> new AuthenticationToken(u, u, getType()));
 
         if (!token.isPresent() && !getAcceptAnonymous()) {
