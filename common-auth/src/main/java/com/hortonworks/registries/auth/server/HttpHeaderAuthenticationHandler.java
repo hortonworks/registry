@@ -71,8 +71,8 @@ public class HttpHeaderAuthenticationHandler implements AuthenticationHandler {
     public static final String READ_ONLY = "readonly";
     public static final String READ_WRITE = "readwrite";
     public static final String HEADER_NAME = "header.name";
-    public static final String HEADER_VALUE = "header.value";
-    public static final Object RESOURCES = "resources";
+    public static final String HEADER_VALUES = "header.values";
+    public static final String RESOURCES = "resources";
 
     /**
      * HTTP authentication realm
@@ -80,9 +80,9 @@ public class HttpHeaderAuthenticationHandler implements AuthenticationHandler {
     public static final String HTTP_AUTH = "Http Header Authentication";
 
     private Optional<String> readonlyHeader = Optional.empty();
-    private Optional<String> readonlyValue = Optional.empty();
+    private Set<String> readonlyValues = Collections.EMPTY_SET;
     private Optional<String> readwriteHeader = Optional.empty();
-    private Optional<String> readwriteValue = Optional.empty();
+    private Set<String> readwriteValues = Collections.EMPTY_SET;
 
     private Collection<Pattern> readonlyResources = Collections.emptyList();
     private Collection<Pattern> readwriteResources = Collections.emptyList();
@@ -117,19 +117,25 @@ public class HttpHeaderAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void init(Properties config) throws ServletException {
         readonlyHeader = getOptionalProperty(config, READ_ONLY, HEADER_NAME);
-        readonlyValue = getOptionalProperty(config, READ_ONLY, HEADER_VALUE);
+        readonlyValues = getPropertyValues(config, READ_ONLY, HEADER_VALUES);
         readwriteHeader = getOptionalProperty(config, READ_WRITE, HEADER_NAME);
-        readwriteValue = getOptionalProperty(config, READ_WRITE, HEADER_VALUE);
-        readonlyResources = getPatternList(config, READ_ONLY, RESOURCES);
-        readwriteResources = getPatternList(config, READ_WRITE, RESOURCES);
+        readwriteValues = getPropertyValues(config, READ_WRITE, HEADER_VALUES);
+        readonlyResources = getPropertyPatternList(config, READ_ONLY, RESOURCES);
+        readwriteResources = getPropertyPatternList(config, READ_WRITE, RESOURCES);
     }
 
-    private Collection<Pattern> getPatternList(Properties config, String object, Object property) {
+    private Set<String> getPropertyValues(Properties config, String object, String property) {
         return Optional.ofNullable(config.getProperty(object + "." + property))
-           .map(v -> Arrays.asList(v.split(",")))
-           .map(v -> v.stream().map(String::trim).map(Pattern::compile))
-           .map(s -> s.collect(Collectors.toList()))
-           .orElse(Collections.emptyList());
+                .map(v -> (Set<String>) new HashSet(Arrays.asList(v.split(","))))
+                .orElse(Collections.EMPTY_SET);
+    }
+
+    private Collection<Pattern> getPropertyPatternList(Properties config, String object, String property) {
+        return getPropertyValues(config, object, property)
+                .stream()
+                .map(String::trim)
+                .map(Pattern::compile)
+                .collect(Collectors.toList());
     }
 
     private Optional<String> getOptionalProperty(Properties config, String object, String property) {
@@ -184,11 +190,16 @@ public class HttpHeaderAuthenticationHandler implements AuthenticationHandler {
 
     private Optional<String> getUserName(HttpServletRequest request) {
         if (readwriteHeader.isPresent() &&
-                readwriteHeader.map(request::getHeader).equals(readwriteValue)) {
+                readwriteHeader.map(request::getHeader)
+                        .map(readwriteValues::contains)
+                        .orElse(false)) {
             return Optional.of(READ_WRITE);
         }
 
-        if (readonlyHeader.isPresent() && readonlyHeader.map(request::getHeader).equals(readonlyValue)) {
+        if (readonlyHeader.isPresent() &&
+                readonlyHeader.map(request::getHeader)
+                        .map(readonlyValues::contains)
+                        .orElse(false)) {
             return Optional.of(READ_ONLY);
         }
 

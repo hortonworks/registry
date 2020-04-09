@@ -35,7 +35,8 @@ public class TestHttpHeaderAuthenticationHandler {
     private static final String AUTHORIZED_RESOURCE_PATH = "/resource";
     private static final String UNAUTHORIZED_RESOURCE_PATH = "/private/resource";
     private static final String AUTH_HEADER = "User";
-    private static final String AUTH_VALUE = "foo";
+    private static final String AUTH_FOO_USER = "foo";
+    private static final String AUTH_BAR_USER = "bar";
 
     HttpHeaderAuthenticationHandler handler;
     Properties props;
@@ -67,22 +68,34 @@ public class TestHttpHeaderAuthenticationHandler {
     }
 
     @Test
-    public void testRestrictAccessToReadOnlyRole() throws Exception {
-        testRestrictAccessToRole(READ_ONLY);
+    public void testRestrictAccessToSingleReadOnlyUserRole() throws Exception {
+        testRestrictAccessToRole(READ_ONLY, AUTH_FOO_USER, AUTH_FOO_USER);
     }
 
     @Test
-    public void testRestrictAccessToReadWriteRole() throws Exception {
-        testRestrictAccessToRole(READ_WRITE);
+    public void testRestrictAccessToMultipleReadOnlyUserRole() throws Exception {
+        testRestrictAccessToRole(READ_ONLY, AUTH_FOO_USER, AUTH_FOO_USER + "," + AUTH_BAR_USER);
+        testRestrictAccessToRole(READ_ONLY, AUTH_BAR_USER, AUTH_FOO_USER + "," + AUTH_BAR_USER);
     }
 
-    private void testRestrictAccessToRole(String userRole) throws Exception {
+    @Test
+    public void testRestrictAccessToSingleReadWriteRole() throws Exception {
+        testRestrictAccessToRole(READ_WRITE, AUTH_FOO_USER, AUTH_FOO_USER);
+    }
+
+    @Test
+    public void testRestrictAccessToMultipleReadWriteRole() throws Exception {
+        testRestrictAccessToRole(READ_WRITE, AUTH_FOO_USER, AUTH_FOO_USER + "," + AUTH_BAR_USER);
+        testRestrictAccessToRole(READ_WRITE, AUTH_BAR_USER, AUTH_FOO_USER + "," + AUTH_BAR_USER);
+    }
+
+    private void testRestrictAccessToRole(String userRole, String userName, String allowedUserRoles) throws Exception {
         props.setProperty(userRole + "." + HEADER_NAME, AUTH_HEADER);
-        props.setProperty(userRole + "." + HEADER_VALUE, AUTH_VALUE);
+        props.setProperty(userRole + "." + HEADER_VALUES, allowedUserRoles);
         props.setProperty(userRole + "." + RESOURCES, "GET " + AUTHORIZED_RESOURCE_PATH);
         handler.init(props);
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(AUTH_VALUE);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(userName);
         when(request.getMethod()).thenReturn("GET");
         when(request.getPathInfo()).thenReturn(AUTHORIZED_RESOURCE_PATH);
 
@@ -104,11 +117,11 @@ public class TestHttpHeaderAuthenticationHandler {
 
     private void testDenyAccessToRoleForUnauthorizedHttpMethod(String userRole) throws Exception {
         props.setProperty(userRole + "." + HEADER_NAME, AUTH_HEADER);
-        props.setProperty(userRole + "." + HEADER_VALUE, AUTH_VALUE);
+        props.setProperty(userRole + "." + HEADER_VALUES, AUTH_FOO_USER);
         props.setProperty(userRole + "." + RESOURCES, "GET " + AUTHORIZED_RESOURCE_PATH);
         handler.init(props);
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(AUTH_VALUE);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(AUTH_FOO_USER);
         when(request.getMethod()).thenReturn("PUT");
         when(request.getPathInfo()).thenReturn(AUTHORIZED_RESOURCE_PATH);
 
@@ -130,11 +143,11 @@ public class TestHttpHeaderAuthenticationHandler {
 
     private void testDenyAccessToRoleForUnauthorizedResource(String userRole) throws Exception {
         props.setProperty(userRole + "." + HEADER_NAME, AUTH_HEADER);
-        props.setProperty(userRole + "." + HEADER_VALUE, AUTH_VALUE);
+        props.setProperty(userRole + "." + HEADER_VALUES, AUTH_FOO_USER);
         props.setProperty(userRole + "." + RESOURCES, "GET " + AUTHORIZED_RESOURCE_PATH);
         handler.init(props);
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(AUTH_VALUE);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(AUTH_FOO_USER);
         when(request.getMethod()).thenReturn("GET");
         when(request.getPathInfo()).thenReturn(UNAUTHORIZED_RESOURCE_PATH);
 
@@ -147,7 +160,7 @@ public class TestHttpHeaderAuthenticationHandler {
     @Test
     public void testRequestAuthenticationWhenConfiguredReadOnlyUser() throws Exception {
         props.setProperty(READ_ONLY + "." + HEADER_NAME, AUTH_HEADER);
-        props.setProperty(READ_ONLY + "." + HEADER_VALUE, AUTH_VALUE);
+        props.setProperty(READ_ONLY + "." + HEADER_VALUES, AUTH_FOO_USER);
         props.setProperty(READ_ONLY + "." + RESOURCES, "GET " + AUTHORIZED_RESOURCE_PATH);
         handler.init(props);
 
