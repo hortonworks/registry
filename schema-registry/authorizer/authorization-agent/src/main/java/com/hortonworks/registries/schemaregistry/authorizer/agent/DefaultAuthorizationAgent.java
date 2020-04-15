@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.authorizer.AuthorizerFactory;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 
-import org.apache.hadoop.security.authorize.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.AccessType;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.UserAndGroups;
