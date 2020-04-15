@@ -24,8 +24,8 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import org.apache.hadoop.security.authorize.AuthorizationException;
 
 import java.util.Collection;
 import java.util.Map;
