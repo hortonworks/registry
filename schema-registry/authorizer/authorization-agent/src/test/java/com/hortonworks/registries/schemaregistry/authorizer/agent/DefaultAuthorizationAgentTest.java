@@ -34,7 +34,6 @@ import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SecurityC
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -45,6 +44,7 @@ import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
+import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
