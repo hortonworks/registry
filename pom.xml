@@ -411,7 +411,7 @@
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <mysql-connector-java.version>5.1.42</mysql-connector-java.version>
-        <spring.version>5.0.7.RELEASE</spring.version>
+        <spring.version>5.0.16.RELEASE</spring.version>
         <postgresql.version>42.2.12</postgresql.version>
         <flyway.version>5.1.4</flyway.version>
         <hikari.version>2.2.5</hikari.version>
