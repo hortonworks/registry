@@ -381,7 +381,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <guava.version>28.1-jre</guava.version>
         <hadoop.version>3.1.1</hadoop.version>
-        <kafka.version>2.1.0</kafka.version>
+        <kafka.version>2.4.1</kafka.version>
         <kafkaArtifact>kafka_2.11</kafkaArtifact>
         <curator.version>4.2.0</curator.version>
         <curator-test.version>4.2.0</curator-test.version>
@@ -410,8 +410,9 @@
         <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
+        <mysql-connector-java.version>5.1.42</mysql-connector-java.version>
         <spring.version>5.0.16.RELEASE</spring.version>
-        <postgresql.version>9.4.1212</postgresql.version>
+        <postgresql.version>42.2.12</postgresql.version>
         <flyway.version>5.1.4</flyway.version>
         <hikari.version>2.2.5</hikari.version>
         <h2database.version>1.4.188</h2database.version>
