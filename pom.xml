@@ -396,6 +396,7 @@
         <jsonschemavalidator.version>2.2.6</jsonschemavalidator.version>
         <kryo.version>2.21</kryo.version>
         <logback.version>1.2.3</logback.version>
+        <log4j.version>1.2.17-cloudera1</log4j.version>
         <phoenix.version>4.4.0-HBase-1.1</phoenix.version>
         <mariadb-java-client.version>1.5.5</mariadb-java-client.version>
         <calcite.version>1.4.0-incubating</calcite.version>
