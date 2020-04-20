@@ -413,6 +413,7 @@
         <spring.version>5.0.7.RELEASE</spring.version>
         <postgresql.version>9.4.1212</postgresql.version>
         <flyway.version>5.1.4</flyway.version>
+        <nimbus-jose-jwt.version>7.9</nimbus-jose-jwt.version>
         <hikari.version>2.2.5</hikari.version>
         <h2database.version>1.4.188</h2database.version>
         <mockito.version>2.28.2</mockito.version>
