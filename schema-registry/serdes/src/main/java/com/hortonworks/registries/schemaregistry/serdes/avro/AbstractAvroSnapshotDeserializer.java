@@ -98,10 +98,13 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
     private static final Logger LOG = LoggerFactory.getLogger(AbstractAvroSnapshotDeserializer.class);
 
     public static final String SPECIFIC_AVRO_READER = "specific.avro.reader";
+    public static final String FAST_AVRO_READER = "fast.avro.datum.reader";
 
     private AvroSchemaResolver avroSchemaResolver;
 
     protected boolean useSpecificAvroReader = false;
+
+    protected DatumReaderProvider datumReaderProvider;
 
     public AbstractAvroSnapshotDeserializer() {
         super();
@@ -117,6 +120,11 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
         avroSchemaResolver = new AvroSchemaResolver(schemaVersionRetriever);
         useSpecificAvroReader = (boolean) getValue(config, SPECIFIC_AVRO_READER, false);
+        if ((boolean) getValue(config, FAST_AVRO_READER, false)) {
+            datumReaderProvider = new FastDatumReaderProvider(useSpecificAvroReader);
+        } else {
+            datumReaderProvider = new DefaultDatumReaderProvider(useSpecificAvroReader);
+        }
     }
 
     private SchemaVersionRetriever createSchemaVersionRetriever() {
@@ -172,11 +180,10 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
                                                    Schema writerSchema,
                                                    Schema readerSchema) throws SerDesException  {
         Map<String, Object> props = new HashMap<>();
-        props.put(SPECIFIC_AVRO_READER, useSpecificAvroReader);
         props.put(WRITER_SCHEMA, writerSchema);
         props.put(READER_SCHEMA, readerSchema);
         SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId);
 
-        return serDesProtocolHandler.handlePayloadDeserialization(payloadInputStream, props);
+        return serDesProtocolHandler.handlePayloadDeserialization(payloadInputStream, props, datumReaderProvider);
     }
 }

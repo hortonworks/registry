@@ -42,6 +42,12 @@
             <version>${avro.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.rtbhouse</groupId>
+            <artifactId>avro-fastserde</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
         <!-- test dependencies -->
         <dependency>
             <groupId>junit</groupId>

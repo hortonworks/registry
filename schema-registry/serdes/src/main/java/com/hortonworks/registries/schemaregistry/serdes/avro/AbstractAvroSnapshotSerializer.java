@@ -86,15 +86,17 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
      * Property name for protocol version to be set with {@link #init(Map)}.
      */
     public static final String SERDES_PROTOCOL_VERSION = "serdes.protocol.version";
+    public static final String FAST_AVRO_WRITER = "fast.avro.datum.writer";
 
     protected SerDesProtocolHandler serDesProtocolHandler;
+
+    protected DatumWriterProvider datumWriterProvider;
 
     @Override
     @SuppressWarnings("unchecked")
     public void doInit(Map<String, ?> config) {
 
-        Number number = (Number) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION,
-                                                                             SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
+        Number number = (Number) getValue(config, SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
         validateSerdesProtocolVersion(number);
 
         Byte protocolVersion = number.byteValue();
@@ -103,8 +105,20 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         if (serDesProtocolHandler == null) {
             throw new AvroException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
         }
-
+        if ((boolean) getValue(config, FAST_AVRO_WRITER, false)) {
+            datumWriterProvider = new FastDatumWriterProvider();
+        } else {
+            datumWriterProvider = new DefaultDatumWriterProvider();
+        }
         this.serDesProtocolHandler = serDesProtocolHandler;
+    }
+
+    protected Object getValue(Map<String, ?> config, String key, Object defaultValue) {
+        Object value = config.get(key);
+        if (value == null) {
+            value = defaultValue;
+        }
+        return value;
     }
 
     private void validateSerdesProtocolVersion(Number number) {
@@ -130,7 +144,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     }
 
     protected void serializePayload(OutputStream os, Object input) throws SerDesException {
-        serDesProtocolHandler.handlePayloadSerialization(os, input);
+        serDesProtocolHandler.handlePayloadSerialization(os, input, datumWriterProvider);
     }
     
     protected Byte getProtocolId() {
