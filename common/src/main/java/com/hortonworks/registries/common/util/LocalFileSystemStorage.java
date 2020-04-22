@@ -16,6 +16,8 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.io.ByteStreams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +34,9 @@ import java.util.Map;
  * Implementation of JarStorage interface backed by local file system
  */
 public class LocalFileSystemStorage implements FileStorage {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LocalFileSystemStorage.class);
+
     // the configuration keys
     public static final String CONFIG_DIRECTORY = "directory";
 
@@ -87,10 +92,17 @@ public class LocalFileSystemStorage implements FileStorage {
 
     @Override
     public boolean delete(String name) throws IOException {
-        ensureDirExists();
+        try {
+            ensureDirExists();
 
-        Path path = FileSystems.getDefault().getPath(directory, name);
-        return Files.deleteIfExists(path);
+            Path path = FileSystems.getDefault().getPath(directory, name);
+            return Files.deleteIfExists(path);
+        } catch (IOException iex) {
+            throw iex;
+        } catch (Exception ex) {
+            LOG.error("Could not delete " + directory + "/" + name, ex);
+            return false;
+        }
     }
 
     @Override
