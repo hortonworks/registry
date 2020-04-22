@@ -15,9 +15,39 @@
  **/
 package com.hortonworks.registries.common.util;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+
 public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
+
+    private final String UPLOAD_DIR;
+
+    public LocalFileSystemStorageTest() {
+        try {
+            UPLOAD_DIR = Files.createTempDirectory("upload").toFile().getAbsolutePath();
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not create temporary directory for uploading files. ", ex);
+        }
+    }
+
+    @After
+    public void tearDown() {
+        FileUtils.deleteQuietly(new File(UPLOAD_DIR));
+        FileUtils.deleteQuietly(new File(FileStorage.DEFAULT_DIR));
+    }
+
     @Override
     public FileStorage getFileStorage() {
-        return new LocalFileSystemStorage();
+        Map<String, String> config = new HashMap<>();
+        config.put(LocalFileSystemStorage.CONFIG_DIRECTORY, UPLOAD_DIR);
+
+        LocalFileSystemStorage localFileSystemStorage = new LocalFileSystemStorage();
+        localFileSystemStorage.init(config);
+        return localFileSystemStorage;
     }
 }
