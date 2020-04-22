@@ -29,7 +29,6 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.hortonworks.avro</groupId>
@@ -61,7 +60,6 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-streams</artifactId>
-            <version>${kafka.version}</version>
         </dependency>
 
         <!-- test dependencies -->
