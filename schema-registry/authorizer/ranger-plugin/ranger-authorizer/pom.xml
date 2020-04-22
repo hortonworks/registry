@@ -15,7 +15,6 @@
         <dependency>
             <groupId>org.apache.ranger</groupId>
             <artifactId>ranger-plugins-common</artifactId>
-            <version>${ranger.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
@@ -46,7 +45,6 @@
         <dependency>
             <groupId>org.apache.ranger</groupId>
             <artifactId>ranger-plugins-audit</artifactId>
-            <version>${ranger.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
