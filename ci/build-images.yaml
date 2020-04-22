@@ -3,7 +3,7 @@
     srcdir: "{{ zuul.project.src_dir }}"
     namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
     docker_host: "tcp://dockerd.zuul:2375"
-    patchset: "{{ zuul.patchset }}"
+    patchset: "{{ zuul.change }}-{{ zuul.patchset }}"
     repository: "docker-registry.infra.cloudera.com/kubernator-ci/"
 
   environment:
