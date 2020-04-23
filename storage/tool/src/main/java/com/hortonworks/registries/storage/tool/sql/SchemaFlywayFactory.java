@@ -36,43 +36,39 @@ public class SchemaFlywayFactory {
     private static final boolean cleanOnValidationError = false;
 
 
-    static Flyway get(ClassLoader classLoader,
-                      StorageProviderConfiguration conf,
+    static Flyway get(StorageProviderConfiguration conf,
                       String scriptRootPath,
                       boolean validateOnMigrate) {
         switch (conf.getDbType()) {
             case MYSQL:
-                return mysqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+                return mysqlFlyway(conf, scriptRootPath, validateOnMigrate);
             case POSTGRESQL:
-                return postgresqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+                return postgresqlFlyway(conf, scriptRootPath, validateOnMigrate);
             case ORACLE:
-                return oracleFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+                return oracleFlyway(conf, scriptRootPath, validateOnMigrate);
             default:
                 throw new IllegalArgumentException("Unknown database : " + conf.getDbType());
         }
     }
 
-    private static Flyway mysqlFlyway(ClassLoader classLoader,
-                                      StorageProviderConfiguration conf,
+    private static Flyway mysqlFlyway(StorageProviderConfiguration conf,
                                       String scriptRootPath,
                                       boolean validateOnMigrate) {
-        Flyway flyway = basicFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+        Flyway flyway = basicFlyway(conf, scriptRootPath, validateOnMigrate);
         flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword());
         return flyway;
     }
 
-    private static Flyway postgresqlFlyway(ClassLoader classLoader,
-                                           StorageProviderConfiguration conf,
+    private static Flyway postgresqlFlyway(StorageProviderConfiguration conf,
                                            String scriptRootPath,
                                            boolean validateOnMigrate) {
-        return mysqlFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+        return mysqlFlyway(conf, scriptRootPath, validateOnMigrate);
     }
 
-    private static Flyway oracleFlyway(ClassLoader classLoader,
-                                       StorageProviderConfiguration conf,
+    private static Flyway oracleFlyway(StorageProviderConfiguration conf,
                                        String scriptRootPath,
                                        boolean validateOnMigrate) {
-        Flyway flyway = basicFlyway(classLoader, conf, scriptRootPath, validateOnMigrate);
+        Flyway flyway = basicFlyway(conf, scriptRootPath, validateOnMigrate);
         Map<String, Object> connectionProperties = conf.getConnectionProperties();
 
         if (connectionProperties != null && !connectionProperties.isEmpty()) {
@@ -88,11 +84,10 @@ public class SchemaFlywayFactory {
         return flyway;
     }
 
-    private static Flyway basicFlyway(ClassLoader classLoader,
-                                      StorageProviderConfiguration conf,
+    private static Flyway basicFlyway(StorageProviderConfiguration conf,
                                       String scriptRootPath,
                                       boolean validateOnMigrate) {
-        Flyway flyway = new Flyway(classLoader);
+        Flyway flyway = new Flyway();
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
         flyway.setEncoding(encoding);

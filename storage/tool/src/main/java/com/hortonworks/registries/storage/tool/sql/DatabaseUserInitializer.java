@@ -26,7 +26,6 @@ import org.apache.commons.cli.*;
 import java.io.*;
 import java.net.*;
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -35,7 +34,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 public class DatabaseUserInitializer {
-    private static final String OPTION_MYSQL_JAR_URL_PATH = "mysql-jar-url";
+
     private static final String OPTION_CONFIG_FILE_PATH = "config";
     private static final String OPTION_ADMIN_JDBC_URL = "admin-jdbc-url";
     private static final String OPTION_ADMIN_DB_USER = "admin-username";
@@ -43,10 +42,6 @@ public class DatabaseUserInitializer {
     private static final String OPTION_TARGET_USER = "target-username";
     private static final String OPTION_TARGET_PASSWORD = "target-password";
     private static final String OPTION_TARGET_DATABASE = "target-database";
-
-    private static final String HTTP_PROXY_URL = "httpProxyUrl";
-    private static final String HTTP_PROXY_USERNAME = "httpProxyUsername";
-    private static final String HTTP_PROXY_PASSWORD = "httpProxyPassword";
 
     public static void main(String[] args) throws Exception {
         Options options = new Options();
@@ -56,14 +51,6 @@ public class DatabaseUserInitializer {
                         .numberOfArgs(1)
                         .longOpt(OPTION_CONFIG_FILE_PATH)
                         .desc("Config file path")
-                        .build()
-        );
-
-        options.addOption(
-                Option.builder("m")
-                        .numberOfArgs(1)
-                        .longOpt(OPTION_MYSQL_JAR_URL_PATH)
-                        .desc("Mysql client jar url to download")
                         .build()
         );
 
@@ -119,7 +106,7 @@ public class DatabaseUserInitializer {
         CommandLine commandLine = parser.parse(options, args);
 
         String[] neededOptions = {
-                OPTION_CONFIG_FILE_PATH, OPTION_MYSQL_JAR_URL_PATH,
+                OPTION_CONFIG_FILE_PATH,
                 OPTION_ADMIN_JDBC_URL, OPTION_ADMIN_DB_USER, OPTION_ADMIN_PASSWORD,
                 OPTION_TARGET_USER, OPTION_TARGET_PASSWORD, OPTION_TARGET_DATABASE
         };
@@ -131,7 +118,6 @@ public class DatabaseUserInitializer {
         }
 
         String confFilePath = commandLine.getOptionValue(OPTION_CONFIG_FILE_PATH);
-        String mysqlJarUrl = commandLine.getOptionValue(OPTION_MYSQL_JAR_URL_PATH);
 
         Optional<AdminOptions> adminOptionsOptional = AdminOptions.from(commandLine);
         if (!adminOptionsOptional.isPresent()) {
@@ -158,33 +144,7 @@ public class DatabaseUserInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        String bootstrapDirPath = null;
-        ClassLoader classLoader;
-        try {
-            bootstrapDirPath = System.getProperty("bootstrap.dir");
-            Proxy proxy = Proxy.NO_PROXY;
-            String httpProxyUrl = (String) conf.get(HTTP_PROXY_URL);
-            String httpProxyUsername = (String) conf.get(HTTP_PROXY_USERNAME);
-            String httpProxyPassword = (String) conf.get(HTTP_PROXY_PASSWORD);
-            if ((httpProxyUrl != null) && !httpProxyUrl.isEmpty()) {
-                URL url = new URL(httpProxyUrl);
-                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(url.getHost(), url.getPort()));
-                if ((httpProxyUsername != null) && !httpProxyUsername.isEmpty()) {
-                    Authenticator.setDefault(getBasicAuthenticator(url.getHost(), url.getPort(), httpProxyUsername, httpProxyPassword));
-                }
-            }
-
-            StorageProviderConfiguration storageProperties = StorageProviderConfiguration.get(adminOptions.getDatabaseType(),
-                    adminOptions.getJdbcUrl(), adminOptions.getUsername(), adminOptions.getPassword());
-
-            classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
-        } catch (Exception e) {
-            System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
-            System.exit(1);
-            throw new IllegalStateException("Shouldn't reach here");
-        }
-
-        try (Connection conn = getConnectionViaAdmin(adminOptions, classLoader)) {
+        try (Connection conn = getConnectionViaAdmin(adminOptions)) {
             DatabaseCreator databaseCreator = DatabaseCreatorFactory.newInstance(adminOptions.getDatabaseType(), conn);
             UserCreator userCreator = UserCreatorFactory.newInstance(adminOptions.getDatabaseType(), conn);
 
@@ -252,29 +212,15 @@ public class DatabaseUserInitializer {
         return DatabaseType.fromValue(jdbcParts[1]);
     }
 
-    private static Connection getConnectionViaAdmin(AdminOptions adminOptions,
-                                                    ClassLoader classLoader) throws Exception {
+    private static Connection getConnectionViaAdmin(AdminOptions adminOptions) throws Exception {
         // Connect using the JDBC URL and user/pass from conf
         final Properties info = new Properties();
         info.put("user", adminOptions.getUsername());
         info.put("password", adminOptions.getPassword());
         final String className = JdbcDriverClass.fromDatabaseType(adminOptions.getDatabaseType()).getValue();
 
-        // load required JDBC driver
-        if (classLoader != null) {
-            // DriverManager doesn't support passing a classloader when creating a new db connection.
-            // Some of the options explored are to set the classloader in the currentThread context.
-            // But, the DriverManager only uses the caller's classloader instead of currentThread contextClassLoader.
-            // https://community.oracle.com/thread/4011800
-            // So, the below approach is taken to create the connection directly from the driver.
-            // This case executes only when the script downloads the MySQL jar and loads it in the classpath.
-            final Driver driver = (Driver) Class.forName(className, true, classLoader)
-                    .getDeclaredConstructor().newInstance();
-            return driver.connect(adminOptions.jdbcUrl, info);
-        } else {
-            Class.forName(className);
-            return DriverManager.getConnection(adminOptions.getJdbcUrl(), info);
-        }
+        Class.forName(className);
+        return DriverManager.getConnection(adminOptions.getJdbcUrl(), info);
     }
 
     private static void usage(Options options) {
