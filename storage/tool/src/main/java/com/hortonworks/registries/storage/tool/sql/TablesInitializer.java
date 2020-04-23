@@ -34,12 +34,7 @@ import java.util.Map;
 public class TablesInitializer {
     private static final String OPTION_SCRIPT_ROOT_PATH = "script-root";
     private static final String OPTION_CONFIG_FILE_PATH = "config";
-    private static final String OPTION_MYSQL_JAR_URL_PATH = "mysql-jar-url";
     private static final String DISABLE_VALIDATE_ON_MIGRATE = "disable-validate-on-migrate";
-    private static final String HTTP_PROXY_URL = "httpProxyUrl";
-    private static final String HTTP_PROXY_USERNAME = "httpProxyUsername";
-    private static final String HTTP_PROXY_PASSWORD = "httpProxyPassword";
-
 
     public static void main(String[] args) throws Exception {
         Options options = new Options();
@@ -57,14 +52,6 @@ public class TablesInitializer {
                         .numberOfArgs(1)
                         .longOpt(OPTION_CONFIG_FILE_PATH)
                         .desc("Config file path")
-                        .build()
-        );
-
-        options.addOption(
-                Option.builder("m")
-                        .numberOfArgs(1)
-                        .longOpt(OPTION_MYSQL_JAR_URL_PATH)
-                        .desc("Mysql client jar url to download")
                         .build()
         );
 
@@ -160,7 +147,6 @@ public class TablesInitializer {
 
         String confFilePath = commandLine.getOptionValue(OPTION_CONFIG_FILE_PATH);
         String scriptRootPath = commandLine.getOptionValue(OPTION_SCRIPT_ROOT_PATH);
-        String mysqlJarUrl = commandLine.getOptionValue(OPTION_MYSQL_JAR_URL_PATH);
 
         StorageProviderConfiguration storageProperties;
         Map<String, Object> conf;
@@ -175,34 +161,12 @@ public class TablesInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-        String bootstrapDirPath = null;
-        ClassLoader classLoader;
-        try {
-            bootstrapDirPath = System.getProperty("bootstrap.dir");
-            Proxy proxy = Proxy.NO_PROXY;
-            String httpProxyUrl = (String) conf.get(HTTP_PROXY_URL);
-            String httpProxyUsername = (String) conf.get(HTTP_PROXY_USERNAME);
-            String httpProxyPassword = (String) conf.get(HTTP_PROXY_PASSWORD);
-            if ((httpProxyUrl != null) && !httpProxyUrl.isEmpty()) {
-                URL url = new URL(httpProxyUrl);
-                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(url.getHost(), url.getPort()));
-                if ((httpProxyUsername != null) && !httpProxyUsername.isEmpty()) {
-                    Authenticator.setDefault(getBasicAuthenticator(url.getHost(), url.getPort(), httpProxyUsername, httpProxyPassword));
-                }
-            }
-            classLoader = MySqlDriverHelper.maybeLoadMySQLJar(storageProperties, bootstrapDirPath, mysqlJarUrl, proxy);
-        } catch (Exception e) {
-            System.err.println("Error occurred while downloading MySQL jar. bootstrap dir: " + bootstrapDirPath);
-            System.exit(1);
-            throw new IllegalStateException("Shouldn't reach here");
-        }
-
         boolean disableValidateOnMigrate = commandLine.hasOption(DISABLE_VALIDATE_ON_MIGRATE);
         if(disableValidateOnMigrate) {
             System.out.println("Disabling validation on schema migrate");
         }
         SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(
-                SchemaFlywayFactory.get(classLoader, storageProperties, scriptRootPath, !disableValidateOnMigrate));
+                SchemaFlywayFactory.get(storageProperties, scriptRootPath, !disableValidateOnMigrate));
         try {
             schemaMigrationHelper.execute(schemaMigrationOptionSpecified);
             System.out.println(String.format("\"%s\" option successful", schemaMigrationOptionSpecified.toString()));
