@@ -37,6 +37,7 @@
             --name kdc
             --set image.tag=k8s-v4
             --set image.repository=docker-registry.infra.cloudera.com/kubernator-ci/kdc
+            --set service.type=ClusterIP
             --tiller-namespace={{ tiller_namespace }}
             --wait
       args:
