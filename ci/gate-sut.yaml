@@ -1,0 +1,51 @@
+- hosts: all
+  vars:
+    srcdir: "{{ zuul.project.src_dir }}"
+    namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
+    docker_host: "tcp://dockerd.zuul:2375"
+    patchset: "{{ zuul.change }}-{{ zuul.patchset }}"
+    tiller_namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
+    repository: "docker-registry.infra.cloudera.com/kubernator-ci/"
+
+  environment:
+    DOCKER_HOST: "{{ docker_host }}"
+
+  tasks:
+    - name: Install kubernetes
+      include_role:
+        name: kubernetes
+      vars:
+        kubernetes_resource: k8s-namespace
+      when: zuul is defined
+
+    - name: Install helm
+      include_role:
+        name: helm
+      vars:
+        tiller_namespace: '{{ namespace }}'
+      when: zuul is defined
+
+    - name: certificates {{ namespace }}
+      command: >
+        ./certificates.sh "registry.{{ namespace }}.svc.cluster.local"
+      args:
+        chdir: "{{ srcdir }}/ci"
+
+    - name: helm install kdc
+      command: >
+        helm install ci/helm/kdc
+            --name kdc
+            --set image.tag=k8s-v4
+            --set image.repository=docker-registry.infra.cloudera.com/kubernator-ci/kdc
+            --set service.type=ClusterIP
+            --tiller-namespace={{ tiller_namespace }}
+            --wait
+      args:
+        chdir: "{{ srcdir }}"
+      when: security == "kerberos"
+
+    - include_role:
+        name: "{{ database }}"
+
+    - include_role:
+        name: registry
