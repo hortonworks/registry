@@ -31,6 +31,7 @@ done
 
 BOOTSTRAP_DIR=`dirname ${PRG}`
 CONFIG_FILE_PATH=${BOOTSTRAP_DIR}/../conf/registry.yaml
+MYSQL_JAR_URL_PATH=https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.40.zip
 
 # Which java to use
 if [ -z "${JAVA_HOME}" ]; then
@@ -62,5 +63,5 @@ fi
 [[ $# -gt 6 ]] && CONFIG_FILE_PATH="${7}"
 
 echo "Using Configuration file: ${CONFIG_FILE_PATH}"
-${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR -cp ${CLASSPATH} ${INITIALIZER_MAIN_CLASS} -c ${CONFIG_FILE_PATH} \
+${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR -cp ${CLASSPATH} ${INITIALIZER_MAIN_CLASS} -m ${MYSQL_JAR_URL_PATH} -c ${CONFIG_FILE_PATH} \
   --admin-jdbc-url ${1} --admin-username ${2} --admin-password ${3} --target-username ${4} --target-password ${5} --target-database ${6}

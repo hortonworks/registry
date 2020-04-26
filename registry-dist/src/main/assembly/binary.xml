@@ -46,6 +46,14 @@
                 </exclude>
             </excludes>
         </dependencySet>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>bootstrap/lib</outputDirectory>
+            <unpack>false</unpack>
+            <includes>
+                <include>mysql:mysql-connector-java</include>
+            </includes>
+        </dependencySet>
     </dependencySets>
 
     <fileSets>
