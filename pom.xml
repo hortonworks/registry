@@ -417,6 +417,7 @@
         <jacoco.version>0.8.5</jacoco.version>
         <spotbugs.version>4.0.0</spotbugs.version>
         <spring.version>5.0.16.RELEASE</spring.version>
+        <spring-security-kerberos-core.version>1.0.1.RELEASE</spring-security-kerberos-core.version>
         <postgresql.version>42.2.12</postgresql.version>
         <flyway.version>5.1.4</flyway.version>
         <nimbus-jose-jwt.version>7.9</nimbus-jose-jwt.version>
@@ -990,6 +991,32 @@
                 <artifactId>spring-context</artifactId>
                 <version>${spring.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-expression</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security.kerberos</groupId>
+                <artifactId>spring-security-kerberos-core</artifactId>
+                <version>${spring-security-kerberos-core.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
