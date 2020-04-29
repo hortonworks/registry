@@ -114,6 +114,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
@@ -183,6 +184,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final Cache<SchemaDigestEntry, SchemaIdVersion> schemaTextCache;
 
     private static final String SSL_CONFIGURATION_KEY = "schema.registry.client.ssl";
+    private static final String SSL_PROTOCOL_KEY = "schema.registry.client.ssl.protocol";
     private static final String HOSTNAME_VERIFIER_CLASS_KEY = "hostnameVerifierClass";
 
     private static final String CLIENT_RETRY_POLICY_KEY = "schema.registry.client.retry.policy";
@@ -215,8 +217,17 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
                                                    .withConfig(config)
                                                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
-        if (conf.containsKey(SSL_CONFIGURATION_KEY)) {
+
+        if (conf.containsKey(SSL_CONFIGURATION_KEY) || conf.containsKey(SSL_PROTOCOL_KEY)) {
             Map<String, String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
+
+            if (sslConfigurations == null) {
+                sslConfigurations = conf.entrySet().stream()
+                    .filter(entry -> entry.getKey().startsWith(SSL_CONFIGURATION_KEY + "."))
+                    .collect(Collectors.toMap(entry -> entry.getKey().substring(SSL_CONFIGURATION_KEY.length() + 1),
+                        entry -> (String) entry.getValue()));
+            }
+
             clientBuilder.sslContext(createSSLContext(sslConfigurations));
             if (sslConfigurations.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
                 HostnameVerifier hostNameVerifier = null;
