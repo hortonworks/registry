@@ -6,6 +6,7 @@
     patchset: "{{ zuul.patchset }}"
     tiller_namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
     repository: "docker-registry.infra.cloudera.com/kubernator-ci/"
+    service_type: ClusterIP
 
   environment:
     DOCKER_HOST: "{{ docker_host }}"
@@ -37,7 +38,7 @@
             --name kdc
             --set image.tag=k8s-v4
             --set image.repository=docker-registry.infra.cloudera.com/kubernator-ci/kdc
-            --set service.type=ClusterIP
+            --set service.type={{ service_type }}
             --tiller-namespace={{ tiller_namespace }}
             --wait
       args:
