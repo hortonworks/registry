@@ -623,8 +623,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
         }
 
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions").queryParam("branch", schemaBranchName)
-                .queryParam("disableCanonicalCheck", disableCanonicalCheck);
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaName).path("/versions").queryParam("branch", schemaBranchName);
         Response response = null;
         try {
             response = login.doAction(new PrivilegedAction<Response>() {
@@ -781,8 +780,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
-        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge").queryParam("disableCanonicalCheck", disableCanonicalCheck);
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
+        WebTarget target = currentSchemaRegistryTargets().schemasTarget.path(schemaVersionId + "/merge");
         Response response = null;
         try {
             response = login.doAction(new PrivilegedAction<Response>() {
