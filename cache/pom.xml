@@ -14,7 +14,7 @@
     <properties>
         <!--currently using lettuce version 3 because version 4 depends on jdk8. Upgrade to version 4 when upgrading to jdk8 -->
         <redis.lettuce.version>3.5.0.Final</redis.lettuce.version>
-        <io.netty.version>4.0.56.Final</io.netty.version>
+        <io.netty.version>4.1.46.Final</io.netty.version>
     </properties>
     <dependencies>
         <dependency>
