@@ -92,18 +92,24 @@ Edit the following section to add appropriate database and user settings
 OS X
 ----
 
-1. Download latest Schema Registry binaries from here
+1. Download latest Schema Registry source code from
    https://github.com/hortonworks/registry/releases
+   
+2. Compile source code
+   ::
 
-2. edit $REGISTRY\_HOME/conf/registry-env.sh, add the following
+           cd to source code directory
+           mvn clean package
+
+3. edit $REGISTRY\_HOME/conf/registry-env.sh, add the following
 
    ::
 
            export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 
-3. Setup Database
+4. Setup Database
 
-   .. rubric:: 3.1 Mysql
+   .. rubric:: 4.1 Mysql
       :name: mysql-1
 
    .. rubric:: Install Mysql
@@ -135,7 +141,7 @@ OS X
        GRANT ALL PRIVILEGES ON schema_registry.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
        commit;
 
-4. Configure registry.yaml
+5. Configure registry.yaml
 
 ::
 
@@ -156,14 +162,14 @@ Edit the following section to add appropriate database and user settings
         dataSource.user:"registry_user"
         dataSource.password: "registry_password"
 
-5. Run bootstrap scripts
+6. Run bootstrap scripts
 
 ::
 
   $REGISTRY_HOME/bootstrap/boostrap-storage.sh
 
 
-6. Start the registry server
+7. Start the registry server
 
 ``sudo ./bin/registry start``
 
