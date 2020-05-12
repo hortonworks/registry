@@ -22,6 +22,7 @@ import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
+import com.hortonworks.registries.webservice.healthchecks.DummyHealthCheck;
 import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
 import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.HAServersAware;
@@ -83,6 +84,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         registerResources(environment, registryConfiguration);
 
         environment.jersey().register(GenericExceptionMapper.class);
+        environment.healthChecks().register("dummy", new DummyHealthCheck());
 
         if (registryConfiguration.isEnableCors()) {
             enableCORS(environment);
