@@ -57,7 +57,8 @@ export default class SchemaFormContainer extends Component {
       description: '',
       showError: false,
       changedFields: [],
-      showCodemirror: false
+      showCodemirror: false,
+      schemaParseError: false
     };
     this.fetchData();
   }
@@ -128,7 +129,7 @@ export default class SchemaFormContainer extends Component {
       var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        if(this.state.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result)) {
+        if(this.state.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result).flag) {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else if(this.state.type.toLowerCase() != 'avro') {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
@@ -173,7 +174,8 @@ export default class SchemaFormContainer extends Component {
       }
       this.setState({showError: true, changedFields: changedFields, expandCodemirror: false});
       return false;
-    } else if (this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
+    } else if (this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim()).flag) {/*Add validation logic to Utils method for schema type other than "Avro" */
+      this.setState({schemaParseError: true});
       return false;
     } else {
       this.setState({showError: false});
@@ -213,7 +215,7 @@ export default class SchemaFormContainer extends Component {
       gutters: this.state.type.toLowerCase() == 'avro' ? ["CodeMirror-lint-markers"] : [],
       lint: this.state.type.toLowerCase() == 'avro'
     };
-    let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror} = this.state;
+    let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror, schemaParseError} = this.state;
     return (
       <form>
       <div className="row">
@@ -288,9 +290,18 @@ export default class SchemaFormContainer extends Component {
           >
             {showCodemirror
               ?
+              <div>
+              {schemaParseError &&
+              <div className="validation-alert danger">
+                <span className="danger">Parse error - {Utils.isValidJson(this.state.schemaText).message}</span>
+                <span className="alert-close"><i className="fa fa-times"
+                  onClick={() => this.setState({schemaParseError: false})}></i></span>
+              </div>
+              }
               <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
+              </div>
               :
-              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText).flag ? ' invalidInput' : '')}>
                 <div onClick={(e) => {
                   this.setState({showCodemirror: true});
                 }}>

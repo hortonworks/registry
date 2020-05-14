@@ -1396,7 +1396,7 @@ span.checkbox-warning {
   margin-left: 3px;
 }
 
-.compatibility-alert{
+.compatibility-alert, .validation-alert{
   position: absolute;
   top: 0;
   z-index: 999;
@@ -1421,6 +1421,13 @@ span.checkbox-warning {
   margin-left: 5px;
   cursor: pointer;
   color: grey;
+}
+.validation-alert.danger {
+  top: 25px;
+  width: 93%;
+  border-color: #ebccd1;
+  background-color: rgba(242, 222, 222, 0.74);
+  color: #a94442;
 }
 .schema-validating{
   position: absolute;

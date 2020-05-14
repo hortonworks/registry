@@ -24,7 +24,10 @@ const isValidJson = function(obj) {
     const valid = JSON.parse(obj);
     return true;
   } catch (e) {
-    return false;
+    return {
+      flag: false,
+      message: e.message
+    };
   }
 };
 
