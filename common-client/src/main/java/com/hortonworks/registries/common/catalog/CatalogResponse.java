@@ -17,6 +17,8 @@
 package com.hortonworks.registries.common.catalog;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -28,6 +30,8 @@ import java.util.Collection;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CatalogResponse {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CatalogResponse.class);
 
     /**
      * ResponseMessage args if any should always be string to keep it simple.
@@ -124,6 +128,9 @@ public class CatalogResponse {
             response.responseMessage = ResponseMessage.format(responseMessage, args);
             response.entity = entity;
             response.entities = entities;
+            if (response.responseCode > 1100) {
+                LOG.error("Returning error response: {} - {}", response.responseCode, response.responseMessage);
+            }
             return response;
         }
     }
