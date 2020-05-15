@@ -207,7 +207,7 @@ const SchemaREST = {
     options.credentials = 'same-origin';
     return fetch(baseUrl + `schemaregistry/schemas/branch/${branchId}`, options)
       .then((res) => {
-        return checkStatus(res, 'DELETE');
+        return checkStatus(res, false);
       });
   },
   deleteSchemaMetadata(name, options){
@@ -220,7 +220,7 @@ const SchemaREST = {
     options.credentials = 'same-origin';
     return fetch(baseUrl + `schemaregistry/schemas/${name}`, options)
       .then((res) => {
-        return checkStatus(res, 'DELETE');
+        return checkStatus(res, false);
       });
   }
 };
