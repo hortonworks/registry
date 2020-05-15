@@ -83,9 +83,9 @@ const showError = function(err) {
   }
 };
 
-export function checkStatus(response, method) {
+export function checkStatus(response, convertToJson = true) {
   if (response.status >= 200 && response.status < 300) {
-    if(method !== 'DELETE'){
+    if(convertToJson){
       return response.json();
     }else{
       return response;

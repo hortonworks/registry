@@ -16,6 +16,7 @@ import fetch from 'isomorphic-fetch';
 import {
   baseUrl
 } from '../utils/Constants';
+import {checkStatus} from '../utils/Utils';
 
 const FileREST = {
   getFile(id, options) {
@@ -24,7 +25,7 @@ const FileREST = {
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/files/download/' + id, options)
       .then((response) => {
-        return response.json();
+        return checkStatus(response);
       });
   },
   postFile(options) {
@@ -33,7 +34,7 @@ const FileREST = {
     options.credentials = 'same-origin';
     return fetch(baseUrl + 'schemaregistry/files', options)
       .then((response) => {
-        return response.text();
+        return checkStatus(response, false).text();
       });
   }
 };
