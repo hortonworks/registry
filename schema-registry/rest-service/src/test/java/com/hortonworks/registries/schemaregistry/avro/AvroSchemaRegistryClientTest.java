@@ -14,6 +14,37 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING;
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE;
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Response;
+
+import org.apache.avro.util.Utf8;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
@@ -30,6 +61,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
+import com.hortonworks.registries.schemaregistry.avro.helper.JarFileFactory;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
@@ -47,40 +79,6 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import com.hortonworks.registries.util.CustomParameterizedRunner;
 import com.hortonworks.registries.util.SchemaRegistryTestName;
-import org.apache.avro.util.Utf8;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING;
-import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE;
-import static com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 @RunWith(CustomParameterizedRunner.class)
 @Category(IntegrationTest.class)
@@ -338,7 +336,7 @@ public class AvroSchemaRegistryClientTest {
 
     @Test
     public void testSerializerOps() throws Exception {
-        String fileId = uploadFile();
+        String fileId = uploadValidFile();
         SchemaMetadata schemaMetadata = createSchemaMetadata(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BOTH);
 
         SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schemaMetadata, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/device.avsc"), "Initial version of the schema"));
@@ -365,15 +363,8 @@ public class AvroSchemaRegistryClientTest {
         );
     }
 
-    private String uploadFile() throws IOException {
-        // upload a dummy file.
-        File tmpJarFile = Files.createTempFile("foo", ".jar").toFile();
-        tmpJarFile.deleteOnExit();
-        try (FileOutputStream fileOutputStream = new FileOutputStream(tmpJarFile)) {
-            IOUtils.write(("Some random stuff: " + UUID.randomUUID()).getBytes(), fileOutputStream);
-        }
-
-        InputStream inputStream = new FileInputStream(tmpJarFile);
+    private String uploadValidFile() throws IOException {
+        InputStream inputStream = new FileInputStream(JarFileFactory.createValidJar());
         return SCHEMA_REGISTRY_CLIENT.uploadFile(inputStream);
     }
 
