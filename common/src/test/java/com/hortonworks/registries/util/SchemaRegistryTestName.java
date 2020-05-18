@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.schemaregistry.avro.util;
+package com.hortonworks.registries.util;
 
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;

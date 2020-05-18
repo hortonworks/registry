@@ -26,7 +26,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
-import com.hortonworks.registries.schemaregistry.avro.util.CustomParameterizedRunner;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
@@ -36,6 +35,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundExce
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+import com.hortonworks.registries.util.CustomParameterizedRunner;
 import org.apache.commons.collections.SetUtils;
 import org.junit.After;
 import org.junit.Assert;
