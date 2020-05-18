@@ -51,6 +51,8 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
+import com.hortonworks.registries.schemaregistry.webservice.validator.JarInputStreamValidator;
+import com.hortonworks.registries.schemaregistry.webservice.validator.exception.InvalidJarFileException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
@@ -109,15 +111,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private static final String[] reservedNames = {"aggregate", "versions", "compatibility"};
     private final SchemaRegistryVersion schemaRegistryVersion;
     private final AuthorizationAgent authorizationAgent;
+    private final JarInputStreamValidator jarInputStreamValidator;
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AtomicReference<LeadershipParticipant> leadershipParticipant,
                                   SchemaRegistryVersion schemaRegistryVersion,
-                                  AuthorizationAgent authorizationAgent) {
+                                  AuthorizationAgent authorizationAgent,
+                                  JarInputStreamValidator jarInputStreamValidator) {
         super(schemaRegistry, leadershipParticipant);
         this.schemaRegistryVersion = schemaRegistryVersion;
 
         this.authorizationAgent = authorizationAgent;
+        this.jarInputStreamValidator = jarInputStreamValidator;
     }
 
     @GET
@@ -1113,7 +1118,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @POST
-    @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("/files")
     @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
@@ -1125,11 +1129,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
             authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.UPDATE);
-            String uploadedFileId = schemaRegistry.uploadFile(inputStream);
+            InputStream validatedStream = jarInputStreamValidator.validate(inputStream);
+            String uploadedFileId = schemaRegistry.uploadFile(validatedStream);
             response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
+        } catch (InvalidJarFileException e ) {
+            LOG.debug("Invalid JAR file. ", e);
+            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+            response = WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while uploading file", ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());

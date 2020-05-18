@@ -31,6 +31,7 @@ import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
+import com.hortonworks.registries.schemaregistry.webservice.validator.JarInputStreamValidator;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
 import com.hortonworks.registries.storage.TransactionManager;
@@ -90,7 +91,8 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
                                                                                    leadershipParticipant,
                                                                                    schemaRegistryVersion,
-                authorizationAgent);
+                                                                                   authorizationAgent,
+                                                                                   new JarInputStreamValidator());
         ConfluentSchemaRegistryCompatibleResource
             confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry,
                 leadershipParticipant,
