@@ -21,9 +21,12 @@ import CommonNotification from './CommonNotification';
 
 const isValidJson = function(obj) {
   try {
-    const valid = JSON.parse(obj);
+    JSON.parse(obj);
     return true;
   } catch (e) {
+    if (e instanceof SyntaxError) {
+      showError(e);
+    }
     return false;
   }
 };
@@ -78,7 +81,11 @@ const showError = function(err) {
         <CommonNotification flag="error" content={res.responseMessage}/>, '', toastOpt
       );
     });
-  }else{
+  } else if (err.message) {
+    FSReactToastr.error(
+      <CommonNotification flag="error" content={err.message} />, '', toastOpt
+    );
+  } else {
     console.error(err);
   }
 };
