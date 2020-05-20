@@ -15,6 +15,7 @@
 - job:
     name: job-registry-ut
     run: ci/unittest.yaml
+    post-run: ci/collect-logs.yaml
     nodeset: nodeset-registry-ut
 
 - job:

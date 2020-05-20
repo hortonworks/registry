@@ -1,0 +1,15 @@
+- hosts: all
+  vars:
+    srcdir: "{{ zuul.project.src_dir }}"
+
+  tasks:
+    - name: Run 'site generation'
+      shell: python ci/collect_test_results.py > ci/test-results/results.html
+      args:
+        chdir: "{{ srcdir }}"
+
+    - name: Copy site
+      copy:
+        src: "{{ zuul_workspace_root }}/{{ srcdir }}/ci/test-results"
+        dest: "{{ zuul_output_dir }}/logs/"
+        remote_src: yes

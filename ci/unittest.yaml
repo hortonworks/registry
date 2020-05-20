@@ -7,6 +7,8 @@
         mvn 
         -batch-mode
         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-        -T 4.0C package
+        -T 4.0C
+        --fail-at-end
+        verify
       args:
         chdir: "{{ srcdir }}"
