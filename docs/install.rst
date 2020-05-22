@@ -55,7 +55,14 @@ CentOS/RedHat
        GRANT ALL PRIVILEGES ON schema_registry.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
        commit;
 
-5. Configure registry.yaml
+5. Add database client library to the classpath of schema registry and bootstrap script
+
+::
+
+ ``cp mysql-connector-java-*.jar libs``
+ ``cp mysql-connector-java-*.jar bootstrap/lib``
+
+6. Configure registry.yaml
 
 ::
 
@@ -77,14 +84,14 @@ Edit the following section to add appropriate database and user settings
         dataSource.password: "registry_password"
 
 
-6. Run bootstrap scripts
+7. Run bootstrap scripts
 
 ::
 
   $REGISTRY_HOME/bootstrap/boostrap-storage.sh
 
 
-7. Start the registry server
+8. Start the registry server
 
 ``sudo ./bin/registry start``
 
@@ -135,7 +142,14 @@ OS X
        GRANT ALL PRIVILEGES ON schema_registry.* TO 'registry_user'@'localhost' WITH GRANT OPTION;
        commit;
 
-4. Configure registry.yaml
+4. Add database client library to the classpath of schema registry and bootstrap script
+
+::
+
+ ``cp mysql-connector-java-*.jar libs``
+ ``cp mysql-connector-java-*.jar bootstrap/lib``
+
+5. Configure registry.yaml
 
 ::
 
@@ -156,24 +170,26 @@ Edit the following section to add appropriate database and user settings
         dataSource.user:"registry_user"
         dataSource.password: "registry_password"
 
-5. Run bootstrap scripts
+6. Run bootstrap scripts
 
 ::
 
   $REGISTRY_HOME/bootstrap/boostrap-storage.sh
 
 
-6. Start the registry server
+7. Start the registry server
 
 ``sudo ./bin/registry start``
 
 
 Running Schema Registry with a load balancer
----------------------------------------------
+--------------------------------------------
 
- One or more schema registry instances can be put behind a load balancer for reverse proxying, in that case appropriate schema registry url
-must be mentioned in the load balancer's configuration file. For example, in case of Apache mod proxy the VirtualHost tag in the
-configuration file should be edited out with the following
+  One or more schema registry instances can be put behind a load balancer for reverse proxying, in that case appropriate schema registry url
+  must be mentioned in the load balancer's configuration file. For example, in case of Apache mod proxy the VirtualHost tag in the
+  configuration file should be edited out with the following
+
+::
 
     <VirtualHost *:80>
     <Proxy balancer://mycluster>
@@ -187,7 +203,7 @@ configuration file should be edited out with the following
         ProxyPassReverse / balancer://mycluster/
     </VirtualHost>
 
- In case of serializers and deserializers the parameter "schema.registry.url" can be pointed to the loader balancer's url or it can be a list of
-schema registry severs with "schema.registry.client.url.selector" set to one of "FailoverUrlSelector" , "LoadBalancedFailoverUrlSelector"
-or "RoundRobinUrlSelector". The parameter "schema.registry.client.url.selector" defines the retry strategy in the case the currently picked
-schema registry server from the list of schema registry servers is not reachable.
+  In case of serializers and deserializers the parameter "schema.registry.url" can be pointed to the loader balancer's url or it can be a list of
+  schema registry severs with "schema.registry.client.url.selector" set to one of "FailoverUrlSelector" , "LoadBalancedFailoverUrlSelector"
+  or "RoundRobinUrlSelector". The parameter "schema.registry.client.url.selector" defines the retry strategy in the case the currently picked
+  schema registry server from the list of schema registry servers is not reachable.
