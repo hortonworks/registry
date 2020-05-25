@@ -28,7 +28,7 @@ export default class SerializerDeserializerForm extends Component {
       <String label="Description" value="description" valuePath="description" validation={['required']}/>
       <String label="Serializer ClassName" value="serializerClassName" valuePath="serializerClassName" validation={['required']}/>
       <String label="Deserializer ClassName" value="deserializerClassName" valuePath="deserializerClassName" validation={['required']}/>
-      <File label="File" value="file" valuePath="file" validation={['required', 'jarFile']}/>
+      <File label="File" value="file" valuePath="file" validation={['required']}/>
     </Form>;
   }
 }
