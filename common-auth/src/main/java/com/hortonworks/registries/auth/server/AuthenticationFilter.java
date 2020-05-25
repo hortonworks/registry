@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -581,6 +582,14 @@ public class AuthenticationFilter implements Filter {
                             KerberosAuthenticator.WWW_AUTHENTICATE))) {
                         errCode = HttpServletResponse.SC_FORBIDDEN;
                     }
+                    // Consume request before sending auth response to become proxy friendly.
+                    // -1 content lenght may indicate that the whole content is not yet set sent over the wire. We need
+                    // to drain it becase some proxies will try continue sending it after we responded with the auth
+                    // header and closed the connection. This would result in a proxy error.
+                    if (request.getContentLength() < 0) {
+                        LOG.debug("Draining request input stream before sending back auth headers to avoid proxy issues.");
+                        drainInputStream(request.getInputStream());
+                    }
                     if (authenticationEx == null) {
                         httpResponse.sendError(errCode, "Authentication required");
                     } else {
@@ -588,6 +597,16 @@ public class AuthenticationFilter implements Filter {
                     }
                 }
             }
+        }
+    }
+
+    private void drainInputStream(InputStream is) {
+        try {
+            byte[] buf = new byte[2048];
+            while (is.read(buf) > -1);
+        }
+        catch (IOException ioe) {
+            LOG.warn("Exception during draining input stream", ioe);
         }
     }
 

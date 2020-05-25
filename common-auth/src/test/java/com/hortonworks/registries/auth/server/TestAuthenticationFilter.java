@@ -13,29 +13,6 @@
  */
 package com.hortonworks.registries.auth.server;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.net.HttpCookie;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
-import java.util.Vector;
-
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.hortonworks.registries.auth.client.AuthenticatedURL;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.util.Signer;
@@ -47,7 +24,31 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
+import java.net.HttpCookie;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.Vector;
+
 import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class TestAuthenticationFilter {
@@ -531,6 +532,10 @@ public class TestAuthenticationFilter {
             HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
             Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
             Mockito.when(request.getRequestURI()).thenReturn("/bar");
+            // Simulate unknown content length to trigger draining the request input stream
+            Mockito.when(request.getContentLength()).thenReturn(-1);
+            ServletInputStream requestInputStream = new TestServletInputStream("Hello World!");
+            Mockito.when(request.getInputStream()).thenReturn(requestInputStream);
 
             HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
@@ -551,6 +556,9 @@ public class TestAuthenticationFilter {
 
             Mockito.verify(response).sendError(
                     HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
+            // Since the input stream is backed by a byte array it is safe to assume that the stream is empty when
+            // avaliable() return 0
+            assertEquals("Request input stream hasn't been drained.", 0, requestInputStream.available());
         } finally {
             filter.destroy();
         }
@@ -991,4 +999,21 @@ public class TestAuthenticationFilter {
         }
     }
 
+    class TestServletInputStream extends ServletInputStream {
+        private InputStream backingInputStram;
+
+        TestServletInputStream(String requestBody) {
+            backingInputStram = new ByteArrayInputStream(requestBody.getBytes());
+        }
+
+        @Override
+        public int read() throws IOException {
+            return backingInputStram.read();
+        }
+
+        @Override
+        public int available() throws IOException {
+            return backingInputStram.available();
+        }
+    }
 }
