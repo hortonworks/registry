@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
  */
 @Path("/api/v1/confluent")
 @Api(value = "/api/v1/confluent", description = "Endpoint for Confluent Schema Registry API compatible service")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({MediaType.APPLICATION_JSON, "application/vnd.schemaregistry.v1+json"})
 public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(ConfluentSchemaRegistryCompatibleResource.class);
 
