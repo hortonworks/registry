@@ -281,22 +281,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         return doGetSchemaVersionInfo(key);
                     }
                 },
-                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).intValue(),
-                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue() * 1000L
+                Integer.valueOf(configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name()).toString()),
+                Long.valueOf(configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name()).toString()) * 1000L
         );
 
         SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
-        schemaMetadataCache = new SchemaMetadataCache(((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE
-                                                                                               .name())).longValue(),
-                                                      ((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                               .name())).longValue(),
+        schemaMetadataCache = new SchemaMetadataCache(Long.valueOf(configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE
+                                                                                               .name()).toString()),
+                                                      Long.valueOf(configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS
+                                                                                               .name()).toString()),
                                                       schemaMetadataFetcher);
 
         schemaTextCache = CacheBuilder.newBuilder()
-                                      .maximumSize(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE
-                                                                                            .name())).longValue())
-                                      .expireAfterAccess(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                                  .name())).longValue(),
+                                      .maximumSize(Long.valueOf(configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE
+                                                                                            .name()).toString()))
+                                      .expireAfterAccess(Long.valueOf(configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS
+                                                                                                  .name()).toString()),
                                                          TimeUnit.SECONDS)
                                       .build();
     }
