@@ -41,8 +41,8 @@
           $("#container").on('click', 'testsuite > name', function () {
               $(this).parent().find('testcases').toggle();
           });
-          $("#container").on('click', 'testcase.error, testcase.failure', function () {
-              $(this).find('result').toggle();
+          $("#container").on('click', 'testcase.error info, testcase.failure info', function () {
+              $(this).next('result').toggle();
           });
           $("#container").on('click', '.module-title', function () {
               $(this).next('testsuites').toggle();
@@ -53,7 +53,7 @@
       });
   </script>
   <style type="text/css">
-    .module-title, testcase.error, testcase.failure, testsuite > name {
+    .module-title, testcase.error info, testcase.failure info, testsuite > name {
       cursor: pointer;
     }
 
