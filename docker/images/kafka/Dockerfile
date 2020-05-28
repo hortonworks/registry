@@ -14,7 +14,7 @@
 FROM minimal-ubuntu:0.1
 
 ARG kafka_version=1.0.0
-ARG scala_version=2.12
+ARG scala_version=2.13
 
 ENV KAFKA_VERSION=$kafka_version \
     SCALA_VERSION=$scala_version
