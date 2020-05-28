@@ -211,6 +211,11 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>com.hortonworks.registries</groupId>
         <artifactId>registry-common</artifactId>
         <version>${project.version}</version>

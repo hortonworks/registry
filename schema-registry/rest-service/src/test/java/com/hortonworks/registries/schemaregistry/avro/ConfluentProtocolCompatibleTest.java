@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2020 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,6 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
-import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.common.io.Resources;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
@@ -31,119 +25,153 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
+
 /**
- *  Avro 1.9 removed APIs that exposes Jackson classes in its library. Unfortunately Confluent serdes still uses an older version
- *  of Avro so below test cases are broken against the latest Confluent serdes. Below test cases will be ignored for now
- *  and it will be enabled once Confluent serdes have updated their Avro dependency
+ *  Test the Confluent API.
  */
-@Ignore
 public class ConfluentProtocolCompatibleTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfluentProtocolCompatibleTest.class);
     public static final String GENERIC_TEST_RECORD_SCHEMA =
         "{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}";
 
-    @Test
-    public void testConfluentProduceRegistryConsume() throws Exception {
+    private LocalSchemaRegistryServer localSchemaRegistryServer;
+
+    @Before
+    public void setUp() throws Exception {
         String configPath = new File(Resources.getResource("schema-registry.yaml").toURI()).getAbsolutePath();
-        LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
-        try {
-            localSchemaRegistryServer.start();
+        localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
+        localSchemaRegistryServer.start();
+    }
 
-            final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
-            final String registryUrl = String.format("http://localhost:%d/api/v1", localSchemaRegistryServer.getLocalPort());
-            
-            Map<String, Object> confluentConfig = new HashMap<>();
-            confluentConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, confluentUrl);
-
-            Map<String, Object> registryConfig = new HashMap<>();
-            registryConfig.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl);
-
-            Schema schema = new Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
-
-            GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
-
-
-            io.confluent.kafka.serializers.KafkaAvroSerializer kafkaAvroSerializer = new io.confluent.kafka.serializers.KafkaAvroSerializer();
-            kafkaAvroSerializer.configure(confluentConfig, false);
-            byte[] bytes = kafkaAvroSerializer.serialize("topic", record);
-
-            io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = new io.confluent.kafka.serializers.KafkaAvroDeserializer();
-            confluentKafkaAvroDeserializer.configure(confluentConfig, false);
-
-            GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
-            LOG.info(confluentResult.toString());
-            
-            KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer();
-            kafkaAvroDeserializer.configure(registryConfig, false);
-
-            GenericRecord registryResult = (GenericRecord) kafkaAvroDeserializer.deserialize("topic", bytes);
-
-            LOG.info(registryResult.toString());
-
-            Assert.assertEquals(record, registryResult);
-            Assert.assertEquals(record, confluentResult);
-
-            Assert.assertEquals(registryResult, confluentResult);
-
-        } finally {
+    @After
+    public void tearDown() throws Exception {
+        if (localSchemaRegistryServer != null) {
             localSchemaRegistryServer.stop();
+            localSchemaRegistryServer = null;
         }
     }
 
     @Test
-    public void testRegistryProduceConfluentConsume() throws Exception {
-        String configPath = new File(Resources.getResource("schema-registry.yaml").toURI()).getAbsolutePath();
-        LocalSchemaRegistryServer localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
+    public void testConfluentProduceRegistryConsume() {
+        final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
+        final String registryUrl = String.format("http://localhost:%d/api/v1", localSchemaRegistryServer.getLocalPort());
+
+        Map<String, Object> confluentConfig = new HashMap<>();
+        confluentConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, confluentUrl);
+
+        Map<String, Object> registryConfig = new HashMap<>();
+        registryConfig.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl);
+
+        Schema schema = new Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
+
+        GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
+
+
+        io.confluent.kafka.serializers.KafkaAvroSerializer kafkaAvroSerializer = new io.confluent.kafka.serializers.KafkaAvroSerializer();
+        kafkaAvroSerializer.configure(confluentConfig, false);
+        byte[] bytes = kafkaAvroSerializer.serialize("topic", record);
+
+        io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = new io.confluent.kafka.serializers.KafkaAvroDeserializer();
+        confluentKafkaAvroDeserializer.configure(confluentConfig, false);
+
+        GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
+        LOG.info(confluentResult.toString());
+
+        KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer();
+        kafkaAvroDeserializer.configure(registryConfig, false);
+
+        GenericRecord registryResult = (GenericRecord) kafkaAvroDeserializer.deserialize("topic", bytes);
+
+        LOG.info(registryResult.toString());
+
+        Assert.assertEquals(record, registryResult);
+        Assert.assertEquals(record, confluentResult);
+
+        Assert.assertEquals(registryResult, confluentResult);
+    }
+
+    @Test
+    public void testRegistryProduceConfluentConsume() {
+        final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
+        final String registryUrl = String.format("http://localhost:%d/api/v1", localSchemaRegistryServer.getLocalPort());
+
+        Map<String, Object> confluentConfig = new HashMap<>();
+        confluentConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, confluentUrl);
+
+        Map<String, Object> registryConfig = new HashMap<>();
+        registryConfig.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl);
+        registryConfig.put(SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.CONFLUENT_VERSION_PROTOCOL);
+
+        Schema schema = new Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
+        GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
+
+
+        KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer();
+        kafkaAvroSerializer.configure(registryConfig, false);
+        byte[] bytes = kafkaAvroSerializer.serialize("topic", record);
+
+        KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer();
+        kafkaAvroDeserializer.configure(registryConfig, false);
+
+        GenericRecord registryResult = (GenericRecord) kafkaAvroDeserializer.deserialize("topic", bytes);
+        LOG.info(registryResult.toString());
+
+
+        io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = new io.confluent.kafka.serializers.KafkaAvroDeserializer();
+        confluentKafkaAvroDeserializer.configure(confluentConfig, false);
+
+        GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
+        LOG.info(confluentResult.toString());
+
+        Assert.assertEquals(record, registryResult);
+        Assert.assertEquals(record, confluentResult);
+
+        Assert.assertEquals(registryResult, confluentResult);
+    }
+
+    @Test
+    public void testProprietaryContentType() throws Exception {
+        final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent/subjects", localSchemaRegistryServer.getLocalPort());
+
+        checkContentType(confluentUrl, "application/json", HttpURLConnection.HTTP_OK);
+        checkContentType(confluentUrl, "application/vnd.schemaregistry.v1+json", HttpURLConnection.HTTP_OK);
+        checkContentType(confluentUrl, "application/vnd.schemaregistry.v1+json; q=0.9, application/json; q=0.5", HttpURLConnection.HTTP_OK);
+        checkContentType(confluentUrl, "text/plain", HttpURLConnection.HTTP_INTERNAL_ERROR);
+        checkContentType(confluentUrl, "image/jpeg", HttpURLConnection.HTTP_INTERNAL_ERROR);
+    }
+
+    /** Send a GET request to the server with the given Accept: header. */
+    private void checkContentType(String url, String acceptContent, int expectedStatus) throws IOException {
+        CloseableHttpClient httpClient = null;
         try {
-            localSchemaRegistryServer.start();
-
-            final String confluentUrl = String.format("http://localhost:%d/api/v1/confluent", localSchemaRegistryServer.getLocalPort());
-            final String registryUrl = String.format("http://localhost:%d/api/v1", localSchemaRegistryServer.getLocalPort());
-
-            Map<String, Object> confluentConfig = new HashMap<>();
-            confluentConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, confluentUrl);
-
-            Map<String, Object> registryConfig = new HashMap<>();
-            registryConfig.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), registryUrl);
-            registryConfig.put(SERDES_PROTOCOL_VERSION, SerDesProtocolHandlerRegistry.CONFLUENT_VERSION_PROTOCOL);
-            
-            Schema schema = new Schema.Parser().parse(GENERIC_TEST_RECORD_SCHEMA);
-            GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
-
-
-            KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer();
-            kafkaAvroSerializer.configure(registryConfig, false);
-            byte[] bytes = kafkaAvroSerializer.serialize("topic", record);
-
-            KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer();
-            kafkaAvroDeserializer.configure(registryConfig, false);
-
-            GenericRecord registryResult = (GenericRecord) kafkaAvroDeserializer.deserialize("topic", bytes);
-            LOG.info(registryResult.toString());
-
-
-            io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = new io.confluent.kafka.serializers.KafkaAvroDeserializer();
-            confluentKafkaAvroDeserializer.configure(confluentConfig, false);
-
-            GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
-            LOG.info(confluentResult.toString());
-
-            Assert.assertEquals(record, registryResult);
-            Assert.assertEquals(record, confluentResult);
-
-            Assert.assertEquals(registryResult, confluentResult);
-
-
+            httpClient = HttpClientBuilder.create().build();
+            HttpGet getRequest = new HttpGet(url);
+            getRequest.addHeader("accept", acceptContent);
+            HttpResponse response = httpClient.execute(getRequest);
+            Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
         } finally {
-            localSchemaRegistryServer.stop();
+            if (httpClient != null) httpClient.close();
         }
     }
+
     
 }
