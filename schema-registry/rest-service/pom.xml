@@ -5,13 +5,25 @@
     <parent>
         <artifactId>schema-registry</artifactId>
         <groupId>com.hortonworks.registries</groupId>
-        <version>0.9.0-SNAPSHOT</version>
+        <version>0.9.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>schema-registry-webservice</artifactId>
 
     <dependencies>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-reflect</artifactId>
+        <version>${scala.version}</version>
+        <scope>provided</scope>
+      </dependency>
       <dependency>
         <groupId>com.hortonworks.registries</groupId>
         <artifactId>registry-common</artifactId>
@@ -41,6 +53,18 @@
             <artifactId>org.apache.zookeeper</artifactId>
             <groupId>zookeeper</groupId>
           </exclusion>
+          <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-servlet</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-json</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-server</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -52,6 +76,44 @@
         <groupId>com.hortonworks.registries</groupId>
         <artifactId>registry-webservice</artifactId>
         <version>${project.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.hortonworks.registries</groupId>
+        <artifactId>schema-registry-authorizer</artifactId>
+        <version>${project.version}</version>
+        <exclusions>
+          <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.javassist</groupId>
+              <artifactId>javassist</artifactId>
+          </exclusion>
+          <exclusion>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-webapp</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>javax.servlet.jsp</groupId>
+                <artifactId>jsp-api</artifactId>
+            </exclusion>
+            <!-- ranger-shaded must not be on the classpath, it's in the separate ranger-plugin dir -->
+            <exclusion>
+                <groupId>com.hortonworks.registries</groupId>
+                <artifactId>ranger-shaded</artifactId>
+            </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.hortonworks.registries</groupId>
@@ -62,6 +124,20 @@
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
           </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-core</artifactId>
+        <exclusions>
+            <exclusion>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.fasterxml.jackson.jaxrs</groupId>
+                <artifactId>jackson-jaxrs-json-provider</artifactId>
+            </exclusion>
         </exclusions>
       </dependency>
 
@@ -114,6 +190,10 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -137,10 +217,18 @@
         <scope>test</scope>
         <classifier>test</classifier>
         <exclusions>
-          <exclusion>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-          </exclusion>
+            <exclusion>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-reflect</artifactId>
+            </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -164,6 +252,18 @@
           <exclusion>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -202,6 +302,14 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -222,11 +330,6 @@
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
-        <dependency>
-            <groupId>com.hortonworks.registries</groupId>
-            <artifactId>schema-registry-authorization-agent</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
     <build>
       <plugins>
@@ -240,6 +343,19 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${maven-source-plugin.version}</version>
+            <executions>
+                <execution>
+                    <id>attach-sources</id>
+                    <goals>
+                        <goal>jar-no-fork</goal>
+                    </goals>
+                </execution>
+            </executions>
         </plugin>
 
         <!-- Test plugins -->
