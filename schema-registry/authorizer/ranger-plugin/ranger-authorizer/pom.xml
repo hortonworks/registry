@@ -127,6 +127,7 @@
                                 <descriptor>${project.basedir}/src/main/assembly/binary.xml</descriptor>
                             </descriptors>
                             <appendAssemblyId>false</appendAssemblyId>
+                            <tarLongFileMode>posix</tarLongFileMode>
                         </configuration>
                     </execution>
                 </executions>
