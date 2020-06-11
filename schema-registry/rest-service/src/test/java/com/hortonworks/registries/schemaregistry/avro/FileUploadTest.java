@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.ws.rs.BadRequestException;
+import com.hortonworks.registries.shaded.javax.ws.rs.BadRequestException;
 
 import org.junit.BeforeClass;
 import org.junit.Rule;

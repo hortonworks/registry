@@ -33,7 +33,7 @@ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import lombok.Getter;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hw.qe.exceptions.AuthenticationHandlerException;
 import org.hw.qe.requests.BaseResponse;
 import org.hw.qe.requests.Get;
@@ -102,7 +102,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
       schemaversion = PojoUtils.getPojo(get.execute().getContent(), SchemaVersionInfo.class);
     } catch (URISyntaxException | AuthenticationHandlerException | IOException e) {
       LOG.error("Post failed while {} : {}", RegistryURL.INDIVIDUAL_VERSION.purpose,
-          ExceptionUtils.getFullStackTrace(e));
+          ExceptionUtils.getStackTrace(e));
     }
     return schemaversion;
   }
@@ -168,7 +168,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
       schema = PojoUtils.getPojo(get.execute().getContent(), SchemaMetadataInfo.class);
     } catch (URISyntaxException | AuthenticationHandlerException | IOException e) {
       LOG.error("Post failed while {} : {}", RegistryURL.INDIVIDUAL_SCHEMA.purpose,
-          ExceptionUtils.getFullStackTrace(e));
+          ExceptionUtils.getStackTrace(e));
     }
     return schema;
   }
@@ -181,7 +181,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
       schema = PojoUtils.getPojo(get.execute().getContent(), SchemaMetadataInfo.class);
     } catch (URISyntaxException | AuthenticationHandlerException | IOException e) {
       LOG.error("Post failed while {} : {}", RegistryURL.INDIVIDUAL_SCHEMA.purpose,
-          ExceptionUtils.getFullStackTrace(e));
+          ExceptionUtils.getStackTrace(e));
     }
     return schema;
   }
@@ -217,7 +217,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
         LOG.error("Compatibility test failed: " + compatibilityResponse);
       }
     } catch (URISyntaxException | AuthenticationHandlerException | IOException e) {
-      LOG.error("Post failed " + ExceptionUtils.getFullStackTrace(e));
+      LOG.error("Post failed " + ExceptionUtils.getStackTrace(e));
     }
     return addSchemaVersion(schemaName, schemaVersion);
   }
@@ -262,7 +262,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
           String.format(RegistryURL.SCHEMA_VERSIONS.getUrl(), schemaName), schemaVersion);
       baseResponse = post.execute();
     } catch (URISyntaxException | AuthenticationHandlerException | IOException e) {
-      LOG.error("Post failed " + ExceptionUtils.getFullStackTrace(e));
+      LOG.error("Post failed " + ExceptionUtils.getStackTrace(e));
     }
     SchemaIdVersion schemaIdVersion = null;
     try {
@@ -539,7 +539,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
    */
   private static void logErrorMessage(String requestType, RegistryURL url, Exception e) {
     LOG.error("{} request to {} failed with {}",
-        requestType, url.getPurpose(), ExceptionUtils.getFullStackTrace(e));
+        requestType, url.getPurpose(), ExceptionUtils.getStackTrace(e));
   }
 
   @Override

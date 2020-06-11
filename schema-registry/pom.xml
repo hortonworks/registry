@@ -5,7 +5,7 @@
     <parent>
         <artifactId>registries</artifactId>
         <groupId>com.hortonworks.registries</groupId>
-        <version>0.9.0.7.2.1.0-SNAPSHOT</version>
+        <version>0.9.1.7.2.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -18,6 +18,8 @@
         <module>serdes</module>
         <module>rest-service</module>
         <module>authorizer</module>
+        <module>jersey-shaded</module>
+        <module>ranger-shaded</module>
     </modules>
 
 </project>

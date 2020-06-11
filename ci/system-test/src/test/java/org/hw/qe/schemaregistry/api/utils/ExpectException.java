@@ -8,7 +8,7 @@
  */
 package org.hw.qe.schemaregistry.api.utils;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.testng.Assert;
 
 /**
@@ -51,7 +51,7 @@ public interface ExpectException {
       Assert.fail("Expected exception of type " + expectedException + " when " + thrownWhen + "." + raisedBugInfo);
     } catch (Exception e) {
       Assert.assertEquals(e.getClass(), expectedException, "Exception type mismatch." + " when " + thrownWhen +
-              "Got : " + ExceptionUtils.getFullStackTrace(e) + "\n" + raisedBugInfo);
+              "Got : " + ExceptionUtils.getStackTrace(e) + "\n" + raisedBugInfo);
       Assert.assertTrue(e.getMessage().contains(expectedErrorMessage), "Expected error message to be clearer. " +
               "Expected to have :\"" +
               expectedErrorMessage + "\"" +

@@ -17,7 +17,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hw.qe.schemaregistry.api.SchemaRegistryClientFactory;
 import org.hw.qe.schemaregistry.api.utils.SchemaRegistryHelper;
@@ -72,7 +72,7 @@ public class CompatibilityTestCase {
       } catch (InvalidSchemaException | SchemaNotFoundException | IncompatibleSchemaException e) {
         exception = e;
       }
-      throw new RuntimeException("Exception thrown :" + ExceptionUtils.getFullStackTrace(exception));
+      throw new RuntimeException("Exception thrown :" + ExceptionUtils.getStackTrace(exception));
     };
   }
 

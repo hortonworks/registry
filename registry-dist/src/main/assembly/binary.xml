@@ -29,21 +29,9 @@
             <outputDirectory>libs</outputDirectory>
             <unpack>false</unpack>
             <excludes>
-                <exclude>
-                    com.hortonworks.registries:schema-registry-ranger-plugin
-                </exclude>
-                <exclude>
-                    com.hortonworks.registries:schema-registry-ranger-authorizer
-                </exclude>
-                <exclude>
-                    com.hortonworks.registries:schema-registry-ranger-authorizer-shim
-                </exclude>
-                <exclude>
-                    com.sun.jersey:jersey-servlet
-                </exclude>
-                <exclude>
-                    com.sun.jersey
-                </exclude>
+                <exclude>com.sun.jersey:jersey-servlet</exclude>
+                <exclude>com.sun.jersey</exclude>
+                <exclude>com.hortonworks.registries:ranger-shaded</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>
@@ -114,38 +102,44 @@
                 <include>*</include>
             </includes>
         </fileSet>
+        
         <!--
             RANGER-PLUGIN/AUTHORIZER
         -->
         <fileSet>
-            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/target</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/target</directory>
             <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
             <includes>
-                <include>*jar</include>
+                <include>*ranger*jar</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/conf</directory>
+            <directory>${project.basedir}./schema-registry/ranger-shaded/target</directory>
+            <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
+            <includes>
+                <include>*ranger*jar</include>
+            </includes>
+            <excludes>
+                <exclude>*original*jar</exclude>
+                <exclude>*sources*jar</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./schema-registry/authorizer/conf</directory>
             <outputDirectory>ranger-plugin/conf</outputDirectory>
             <includes>
                 <include>*</include>
             </includes>
         </fileSet>
-        <fileSet>
-            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer/target/schema-registry-ranger-authorizer-${project.version}/schema-registry-ranger-authorizer-${project.version}</directory>
-            <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
-            <includes>
-                <include>*jar</include>
-            </includes>
-        </fileSet>
+
         <!--
             RANGER-PLUGIN/AUTHORIZER-SHIM
         -->
         <fileSet>
-            <directory>${project.basedir}./schema-registry/authorizer/ranger-plugin/ranger-authorizer-shim/target</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/target</directory>
             <outputDirectory>ranger-plugin</outputDirectory>
             <includes>
-                <include>*jar</include>
+                <include>*shim*jar</include>
             </includes>
         </fileSet>
     </fileSets>

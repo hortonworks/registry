@@ -3,7 +3,7 @@
 
     <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
-    <version>0.9.0.7.2.1.0-SNAPSHOT</version>
+    <version>0.9.1.7.2.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Registry</name>
     <description>
@@ -208,6 +208,14 @@
             <modules>
                 <module>registry-dist</module>
             </modules>
+            <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                </plugin>
+            </plugins>
+            </build>
         </profile>
         <profile>
             <id>ossrh</id>
@@ -371,11 +379,12 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scala.version>2.12.10</scala.version>
         <junit.version>4.12</junit.version>
         <jackson.version>2.10.1</jackson.version>
         <jackson-mapper.version>1.9.13-cloudera.1</jackson-mapper.version>
         <commons-cli.version>1.3.1</commons-cli.version>
-        <commons.version>2.5</commons.version>
+        <commons.version>2.6</commons.version>
         <slf4j.version>1.7.25</slf4j.version>
         <guava.version>28.1-jre</guava.version>
         <hadoop.version>3.1.1.7.2.1.0-SNAPSHOT</hadoop.version>
@@ -388,6 +397,7 @@
         <dropwizard.version>1.3.22</dropwizard.version>
         <jersey.version>2.25.1</jersey.version>
         <jersey-media-multipart.version>2.25.1</jersey-media-multipart.version>
+        <jsr311-api.version>1.1.1</jsr311-api.version>
         <eclipse.jetty.version>9.4.18.v20190429</eclipse.jetty.version>
         <jmockit.version>1.19</jmockit.version>
         <groovy.version>2.4.5</groovy.version>
@@ -401,13 +411,12 @@
         <calcite.version>1.4.0-incubating</calcite.version>
         <commons-codec.version>1.11</commons-codec.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
-        <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.2</commons-logging.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-surefire.version>2.18.1</maven-surefire.version>
-        <maven-shade-plugin.version>2.4.1</maven-shade-plugin.version>
+        <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <mysql-connector-java.version>5.1.42</mysql-connector-java.version>
@@ -426,6 +435,8 @@
         <httpclient.version>4.5.7</httpclient.version>
         <jaxb-api.version>2.2.12</jaxb-api.version>
         <jaxb-runtime.version>2.3.1</jaxb-runtime.version>
+        <hibernate-validator.version>5.4.2.Final</hibernate-validator.version>
+        <joda.version>2.10.1</joda.version>
     </properties>
 
     <distributionManagement>
@@ -755,6 +766,16 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate-validator.version}</version>
+            </dependency>
 
             <!-- To match the version used by Dropwizard instead of that of hadoop-azure -->
             <dependency>
@@ -1028,6 +1049,14 @@
                         <groupId>org.codehaus.plexus</groupId>
                         <artifactId>plexus-utils</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-component-annotations</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-sec-dispatcher</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -1037,14 +1066,19 @@
                 <version>${codehaus.plexus.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.sonatype.plexus</groupId>
+                <artifactId>plexus-sec-dispatcher</artifactId>
+                <version>1.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-component-annotations</artifactId>
+                <version>1.5.5</version>
+            </dependency>
+            <dependency>
               <groupId>com.zaxxer</groupId>
               <artifactId>HikariCP-java6</artifactId>
               <version>${hikari.version}</version>
-            </dependency>
-            <dependency>
-              <groupId>commons-lang</groupId>
-              <artifactId>commons-lang</artifactId>
-              <version>${commons-lang.version}</version>
             </dependency>
 
             <!-- dependency that was available in the JDK before Java 9.
@@ -1160,35 +1194,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>${maven-shade-plugin.version}</version>
-                    <configuration>
-                        <createDependencyReducedPom>true</createDependencyReducedPom>
-                        <filters>
-                            <filter>
-                                <artifact>*:*</artifact>
-                                <excludes>
-                                    <exclude>META-INF/*.SF</exclude>
-                                    <exclude>META-INF/*.DSA</exclude>
-                                    <exclude>META-INF/*.RSA</exclude>
-                                </excludes>
-                            </filter>
-                        </filters>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>shade</goal>
-                            </goals>
-                            <configuration>
-                                <transformers>
-                                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                        <mainClass>com.hortonworks.registries.webservice.RegistryApplication</mainClass>
-                                    </transformer>
-                                </transformers>
-                            </configuration>
-                        </execution>
-                    </executions>
                 </plugin>
                 <!-- Enforces compilation using JDK 1.8. By default Maven uses JDK 1.5 -->
                 <plugin>
@@ -1203,6 +1208,25 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.4.1</version>
+                    <executions>
+                        <execution>
+                            <id>enforce</id>
+                            <configuration>
+                                <rules>
+                                    <DependencyConvergence/>
+                                </rules>
+                            </configuration>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <phase>validate</phase>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <!-- Test plugins -->

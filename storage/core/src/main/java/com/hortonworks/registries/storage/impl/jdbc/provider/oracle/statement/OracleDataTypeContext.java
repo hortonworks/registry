@@ -18,7 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.oracle.statement;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.DefaultStorageDataTypeContext;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

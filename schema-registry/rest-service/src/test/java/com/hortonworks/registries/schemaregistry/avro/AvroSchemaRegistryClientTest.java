@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING;
 import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static com.hortonworks.registries.shaded.javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -35,8 +35,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
+import com.hortonworks.registries.shaded.javax.ws.rs.BadRequestException;
+import com.hortonworks.registries.shaded.javax.ws.rs.core.Response;
 
 import org.apache.avro.util.Utf8;
 import org.junit.Assert;
