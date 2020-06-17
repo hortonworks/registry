@@ -25,18 +25,20 @@ Aether :: API 1.7 : Apache License 2.0
 Aether :: Implementation 1.6 : Apache License 2.0
 Aether :: SPI 1.6 : Apache License 2.0
 Aether :: Utilities 1.7 : Apache License 2.0
+alibaba/nacos 1.3.0-beta : Apache License 2.0
 Animal Sniffer Annotations 1.18 : MIT License
 Annotations for Metrics 4.0.5 : Apache License 2.0
 AOP Alliance (Java/J2EE AOP standard) 1.0 : Public Domain
 Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b14 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
+Apache Atlas Web Application 2.0.0.7.1.1.0-565 : Apache License 2.0
 Apache Avro 1.9.1 : Apache License 2.0
 Apache Commons BeanUtils 1.9.4 : Apache License 2.0
 Apache Commons CLI 1.3.1 : Apache License 2.0
 Apache Commons Codec 1.11 : Apache License 2.0
-Apache Commons Codec 1.14 : Apache License 2.0
 Apache Commons Collections 3.2.2 : Apache License 2.0
 Apache Commons Compress 1.18 : Apache License 2.0
+Apache Commons Configuration 1.10 : Apache License 2.0
 Apache Commons Configuration 2.1.1 : Apache License 2.0
 Apache Commons Lang 2.6 : Apache License 2.0
 Apache Commons Lang 3.8.1 : Apache License 2.0
@@ -47,52 +49,56 @@ Apache Commons Text 1.2 : Apache License 2.0
 Apache Directory API ASN.1 API 1.0.0-M19 : Apache License 2.0
 Apache Directory LDAP API Utilities 1.0.0-M20 : Apache License 2.0
 Apache Directory Studio 2.0.0-M15 : Apache License 2.0
-Apache Felix Web Management Console 4.4.0 : Apache License 2.0
-Apache Hadoop Annotations 3.1.1 : Apache License 2.0
-Apache Hadoop Annotations 3.1.1.3.1.0.122-1 : Apache License 2.0
-Apache Hadoop Auth 3.1.1.3.1.0.168-1 : Apache License 2.0
-Apache Hadoop Auth 3.1.1.3.1.5.3-5 : Apache License 2.0
-Apache Hadoop Client 3.1.1.3.1.0.38-2 : Apache License 2.0
-Apache Hadoop HDFS Client 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Felix Web Management Console 4.5.2 : Apache License 2.0
+Apache Hadoop Amazon Web Services support 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Annotations 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Auth 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Auth 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Azure Data Lake support 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Azure Data Lake support 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Azure support 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Client 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Cloud Storage 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop HDFS Client 3.1.1.7.1.1.0-565 : Apache License 2.0
 Apache HttpClient 4.5.7 : Apache License 2.0
 Apache HttpComponents Core 4.4.10 : Apache License 2.0
 Apache HttpComponents Core 4.4.11 : Apache License 2.0
 Apache HttpMime 4.5.6 : Apache License 2.0
-Apache Kafka 2.3.0.7.0.3.0-79 : Apache License 2.0
+Apache Jackrabbit 1.8.13 : Apache License 2.0
 Apache Kafka 2.4.1 : Apache License 2.0
-Apache log4j 1.2.17 : Apache License 2.0
+Apache log4j 1.2.17-cloudera1 : Apache License 2.0
 Apache Maven 3.0 : Apache License 2.0
-Apache Parquet Jackson 1.9.0-cdh6.2.0 : Apache License 2.0
 Apache Solr Solrj 7.7.1 : Apache License 2.0
 Apache Yetus - Audience Annotations 0.5.0 : Apache License 2.0
-Apache ZooKeeper 3.5.5.7.0.3.0-79 : Apache License 2.0
-Apache ZooKeeper - Jute 3.5.5 : Apache License 2.0
+Apache ZooKeeper 3.5.5.7.1.1.0-565 : Apache License 2.0
+Apache ZooKeeper 3.5.8 : Apache License 2.0
 Apache ZooKeeper - Jute 3.5.5.7.0.3.0-79 : Apache License 2.0
 ApacheDS Protocol Kerberos Codec 2.0.0-M15 : Apache License 2.0
 argparse4j 0.8.1 : MIT License
 ASM 5.0.4 : BSD 3-clause "New" or "Revised" License
 ASM based accessors helper used by json-smart 1.2 : Apache License 2.0
 Audit Component 2.0.0.7.0.3.0-79 : Apache License 2.0
+avro-examples 0.8.1.7.1.1.0-565 : Apache License 2.0
+AWS SDK for Java - Bundle 1.11.524 : Apache License 2.0
+AWS SDK for Java - Bundle 1.11.590 : Apache License 2.0
+azure-data-lake-store-java 2.3.6 : MIT License
 beanvalidation-api 1.1.0.Final : Apache License 2.0
 btf 1.2 : Apache License 2.0
-cache 0.8.1.3.5.0.1-6 : Apache License 2.0
-cache 0.8.1.3.5.1.0-17 : Apache License 2.0
+cache 0.8.1.7.1.1.0-565 : Apache License 2.0
 Checker Qual 2.8.1 : MIT License
 classworlds 2.2.3 : Apache License 2.0
 com.machinepublishers:jbrowserdriver 1.1.1 : Apache License 2.0
 com.papertrail:profiler 1.0.2 : Apache License 2.0
-Common library for Plugins 2.0.0 : Apache License 2.0
-Common library for Plugins 2.0.0.7.0.3.0-79 : Apache License 2.0
+Common library for Plugins 2.0.0.7.1.1.0-565 : Apache License 2.0
 common-auth 0.8.1.3.5.0.1-6 : Apache License 2.0
+common-auth 0.8.1.3.5.1.2-3 : Apache License 2.0
 Commons IO 2.5 : Apache License 2.0
 Commons IO 2.6 : Apache License 2.0
-Credential Support 1.2.0.3.1.5.0-152 : Apache License 2.0
 Credential Support 2.0.0.7.0.3.0-79 : Apache License 2.0
 Curator Client 4.2.0 : Apache License 2.0
 Curator Framework 4.2.0 : Apache License 2.0
 Curator Recipes 4.2.0 : Apache License 2.0
-Daikon main shared library 1.14.0 : Apache License 2.0
-Data Mapper for Jackson 1.9.13-cloudera.1 : Apache License 2.0
+Daikon main shared library 3.0.0 : Apache License 2.0
 dropwizard 1.3.22 : Apache License 2.0
 Dropwizard Asset Bundle 1.3.17 : Apache License 2.0
 Dropwizard Configuration Support 1.3.22 : Apache License 2.0
@@ -110,7 +116,7 @@ Dropwizard Utility Classes 1.3.22 : Apache License 2.0
 Dropwizard Validation Support 1.3.22 : Apache License 2.0
 Dropwizard Views 1.3.17 : Apache License 2.0
 dropwizard-auth 1.3.17 : Apache License 2.0
-EclipseLink 2.5.2-RC1 : Eclipse Distribution License - v 1.0
+EclipseLink 2.5.2 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 1.0)
 EclipseLink ANTLR 2.6.6-RC1 : Eclipse Distribution License - v 1.0
 EclipseLink ASM 3.3.1.v201206041142 : Eclipse Distribution License - v 1.0
 EclipseLink Core 2.5.2 : Eclipse Distribution License - v 1.0
@@ -130,7 +136,13 @@ FindBugs jsr305 3.0.2 : Apache License 2.0
 flyway-core 5.1.4 : Apache License 2.0
 flyway-maven-plugin 5.1.1 : Apache License 2.0
 FreeMarker 2.3.28 : Apache License 2.0
+gateway-cloud-bindings 1.3.0.7.1.1.0-565 : Apache License 2.0
+gateway-i18n 1.3.0.7.0.3.0-79 : Apache License 2.0
+gateway-shell 1.3.0.7.1.1.0-565 : Apache License 2.0
+gateway-util-common 1.3.0.7.1.1.0-565 : Apache License 2.0
+gcs-connector.jar 1.9.10.7.0.3.0-79 : Apache License 2.0
 gethostname4j 0.0.2 : MIT License
+Google Java Format 1.8 : Apache License 2.0
 google-gson 2.2.4 : Apache License 2.0
 Guava InternalFutureFailureAccess and InternalFutures 1.0.1 : Apache License 2.0
 Guava ListenableFuture only 9999.0-empty-to-avoid-conflict-with-guava : Apache License 2.0
@@ -138,10 +150,9 @@ Guava: Google Core Libraries for Java 28.1-jre : Apache License 2.0
 Guice - Bean injection 1.3.2 : Apache License 2.0
 Guice - Plexus shim 1.3.4.2 : Apache License 2.0
 hadoop-common 2.10.0 : Apache License 2.0
-hadoop-common 3.1.1.7.0.3.0-79 : Apache License 2.0
-hadoop-common 3.2.1-talend : Apache License 2.0
-hadoop-yarn-client 3.1.1.3.1.2.5-4 : Apache License 2.0
+hadoop-common 3.1.1.7.1.1.0-565 : Apache License 2.0
 hadoop-yarn-client 3.1.1.7.0.3.0-79 : Apache License 2.0
+hadoop-yarn-client 3.1.1.7.1.1.0-565 : Apache License 2.0
 Hibernate Validator 5.4.2.Final : Apache License 2.0
 HikariCP 2.2.5 : Apache License 2.0
 HikariCP-java6 2.2.5 : Apache License 2.0
@@ -154,6 +165,7 @@ io.swagger:swagger-annotations 1.6.0 : Apache License 2.0
 istack common utility code runtime 3.0.7 : Common Development and Distribution License 1.1
 J2ObjC Annotations 1.3 : Apache License 2.0
 Jackson Integration for Metrics 4.0.5 : Apache License 2.0
+Jackson JSON processor 1.9.13-cloudera.1 : Apache License 2.0
 Jackson module: Paranamer 2.10.0 : Apache License 2.0
 jackson-annotations jackson-annotations-2.10.1 : Apache License 2.0
 jackson-core 1.9.13-cloudera.1 : Apache License 2.0
@@ -221,12 +233,14 @@ jersey-media-json-jackson 2.25.1 : (Common Development and Distribution License 
 jersey-media-multipart 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 jersey-repackaged-guava 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 jersey-server 1.19.3 : Common Development and Distribution License 1.1
+jersey-servlet 1.19 : Common Development and Distribution License 1.1
 jersey-servlet 1.19.3 : Common Development and Distribution License 1.1
 Jetty :: Servlet Handling 9.4.18.v20190429 : Apache License 2.0
 Jetty :: Utility Servlets and Filters 9.4.18.v20190429 : Apache License 2.0
 Jetty Toolchain 1.0.3 : Apache License 2.0
 Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server jetty-9.4.18.v20190429 : Apache License 2.0
 Joda Time 2.3 : Apache License 2.0
+Joda Time 2.8.1 : Apache License 2.0
 JOpt Simple 4.6 : MIT License
 JOpt Simple 5.0.4 : MIT License
 JRuby 9.1.1.0 : Eclipse Public License 1.0
@@ -265,10 +279,13 @@ Kerby-kerb Server 1.1.1 : Apache License 2.0
 Kerby-kerb Util 1.1.1 : Apache License 2.0
 libphonenumber 6.2 : Apache License 2.0
 libplexus-utils 3.1.0 : Apache License 2.0
+linkerd/linkerd 1.7.3 : Apache License 2.0
+localstack-utils 0.1.22 : Apache License 2.0
 Log4j Implemented Over SLF4J 1.7.25 : Apache License 2.0
 Logback 1.2.3 : Eclipse Public License 1.0
 Logback Access Module 1.2.3 : Eclipse Public License 1.0
 Logback Classic Module 1.2.3 : Eclipse Public License 1.0
+Logspace Agent Controller 0.3.1 : Eclipse Public License 1.0
 LZ4 and xxHash 1.6.0 : Apache License 2.0
 Maven Aether Provider 3.0 : Apache License 2.0
 Maven Artifact 3.0 : Apache License 2.0
@@ -283,8 +300,10 @@ Metrics Integration for Jetty 9.1 and higher 4.0.5 : Apache License 2.0
 Metrics Integration for Logback 4.0.5 : Apache License 2.0
 Metrics Integration with JMX 4.0.5 : Apache License 2.0
 Metrics Utility Servlets 4.0.5 : Apache License 2.0
+Microsoft Azure SDK for Key Vault 1.0.0 : MIT License
+Microsoft Windows Azure Storage Client SDK 7.0.0 : Apache License 2.0
 MIME streaming extension 1.9.6 : Common Development and Distribution License 1.1
-Mozilla Rhino 1.7R4 : Mozilla Public License 2.0
+Mozilla Rhino 1.7r4 : Mozilla Public License 2.0
 msg-simple 1.1 : Apache License 2.0
 Netty Project 4.0.56.Final : Apache License 2.0
 Netty Project netty-4.1.47.Final : Apache License 2.0
@@ -299,35 +318,43 @@ OSGi resource locator bundle - used by various API providers that rely on META-I
 p6spy 3.8.7 : Apache License 2.0
 ParaNamer Core 2.8 : BSD 3-clause "New" or "Revised" License
 plexus-sec-dispatcher 1.3.1 : Apache License 2.0
+Policeman's Forbidden API Checker 2.7 : Apache License 2.0
 PostgreSQL JDBC Driver (pgjdbc) 42.2.12 : BSD 2-clause "Simplified" License
 Protocol Buffer Java API 2.5.0 : BSD 3-clause "New" or "Revised" License
-ranger-plugin-classloader 1.2.0.3.1.4.0-315 : Apache License 2.0
+Ranger Remote Authorization Hook - ABFS driver 2.0.0.7.1.1.0-565 : Apache License 2.0
+Ranger Remote Authorization Integration 2.0.0.7.1.1.0-565 : Apache License 2.0
+ranger-plugin-classloader 1.2.0.3.1.4.13-1 : Apache License 2.0
+ranger-plugin-classloader 2.0.0.7.1.1.0-565 : Apache License 2.0
 re2j 1.2 : BSD 3-clause "New" or "Revised" License
 reflections 0.9.11 : Do What The F*ck You Want To Public License
-registry-common 0.8.1 : Apache License 2.0
-registry-common 0.8.1.3.5.0.1-6 : Apache License 2.0
-registry-common-client 0.8.1 : Apache License 2.0
-registry-webservice 0.8.1 : Apache License 2.0
+registry-common 0.8.1.7.1.1.0-565 : Apache License 2.0
+registry-common-client 0.8.1.3.5.1.0-17 : Apache License 2.0
+registry-common-client 0.8.1.7.1.1.0-565 : Apache License 2.0
+registry-webservice 0.8.1.7.1.1.0-565 : Apache License 2.0
 Rhino Unofficial Distribution For Wro4j 1.7R5-20130223 : Mozilla Public License 2.0
-RocksDB JNI 5.18.3 : Apache License 2.0
 RxJava 1.1.6 : Apache License 2.0
 Scala 2.11.12 : BSD 3-clause Clear License
 scala-collection-compat 2.1.2 : Apache License 2.0
 scala-java8-compat 0.9.0 : BSD 3-clause "New" or "Revised" License
 scalalogging 3.9.2 : Apache License 2.0
-schema-registry-client 0.8.1.3.5.0.1-6 : Apache License 2.0
-schema-registry-common 0.8.0.2.0.0.0-135 : Apache License 2.0
-schema-registry-serdes 0.8.1 : Apache License 2.0
-schema-registry-webservice 0.8.1.3.5.0.1-6 : Apache License 2.0
+schema-registry-authorization-agent 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-authorizer-core 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-client 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-common 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-core 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-ranger-authorizer 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-ranger-authorizer-shim 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-serdes 0.8.1.3.5.1.0-17 : Apache License 2.0
+schema-registry-serdes 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-webservice 0.8.1.7.1.1.0-565 : Apache License 2.0
 SDO API 2.1.1 : Eclipse Distribution License - v 1.0
-serdes-examples 0.8.1.3.5.0.1-6 : Apache License 2.0
 serdes-examples 0.8.1.3.5.1.0-17 : Apache License 2.0
 ServiceLocator Default Implementation 2.5.0-b32 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-shared-tag-library 1.7.25 : MIT License
 Sisu - Guice 2.1.7 : Apache License 2.0
 Sisu - Inject (JSR330 bean support) 1.4.1 : Apache License 2.0
 Sisu - Inject (Plexus bean support) 1.4.2 : Apache License 2.0
 SLF4J API Module 1.7.25 : MIT License
+SLF4J Simple Binding 1.7.25 : MIT License
 SnakeYAML 1.24 : Apache License 2.0
 snappy-java 1.1.4 : Apache License 2.0
 snappy-java 1.1.7.3 : Apache License 2.0
@@ -339,10 +366,11 @@ spring-aopalliance 1.0 : Apache License 2.0
 stax-ex 1.8 : Common Development and Distribution License 1.1
 Stax2 API 3.1.4 : BSD 3-clause "New" or "Revised" License
 storage-common 0.8.1.3.5.1.0-17 : Apache License 2.0
-storage-core 0.8.1.3.5.0.1-6 : Apache License 2.0
-storage-tool 0.8.1.3.5.1.0-17 : Apache License 2.0
+storage-core 0.8.1.3.5.1.0-17 : Apache License 2.0
+storage-tool 0.8.1.7.1.1.0-565 : Apache License 2.0
+SureFire API 3.0.0-M4 : Apache License 2.0
 Swagger API v1.6.0 : Apache License 2.0
-swagger-codegen 2.4.13 : Apache License 2.0
+swagger-codegen v2.4.14 : Apache License 2.0
 swagger-jaxrs 1.6.0 : Apache License 2.0
 swagger-jersey2-jaxrs (Jersey 2.x support) 1.6.0 : Apache License 2.0
 swagger-models 1.6.0 : Apache License 2.0
@@ -352,6 +380,11 @@ Token provider 1.1.1 : Apache License 2.0
 TXW2 Runtime 2.3.1 : Common Development and Distribution License 1.1
 Type arithmetic library for Java5 1.3 : Common Development and Distribution License 1.0
 uri-template 0.9 : Apache License 2.0
+WildFly 17.0.1.Final : Apache License 2.0
+wildfly-openssl 1.0.7.Final : Apache License 2.0
+wildfly-openssl-java 1.0.8.Final : Apache License 2.0
+wildfly-openssl-windows-i386 1.0.7.Final : Apache License 2.0
+wildfly-openssl-windows-x86_64 1.0.7.Final : Apache License 2.0
 Woodstox 4.4.1 : Apache License 2.0
 Woodstox 5.0.3 : Apache License 2.0
 zstd-jni 1.4.3-1 : BSD 2-clause "Simplified" License
@@ -359,7 +392,7 @@ zstd-jni 1.4.3-1 : BSD 2-clause "Simplified" License
 Licenses: 
 
 Apache License 2.0
-(Aether :: API 1.7, Aether :: Implementation 1.6, Aether :: SPI 1.6, Aether :: Utilities 1.7, Annotations for Metrics 4.0.5, Apache Avro 1.9.1, Apache Commons BeanUtils 1.9.4, Apache Commons CLI 1.3.1, Apache Commons Codec 1.11, Apache Commons Codec 1.14, Apache Commons Collections 3.2.2, Apache Commons Compress 1.18, Apache Commons Configuration 2.1.1, Apache Commons Lang 2.6, Apache Commons Lang 3.8.1, Apache Commons Logging 1.2, Apache Commons Math 3.1.1, Apache Commons Net 3.6, Apache Commons Text 1.2, Apache Directory API ASN.1 API 1.0.0-M19, Apache Directory LDAP API Utilities 1.0.0-M20, Apache Directory Studio 2.0.0-M15, Apache Felix Web Management Console 4.4.0, Apache Hadoop Annotations 3.1.1, Apache Hadoop Annotations 3.1.1.3.1.0.122-1, Apache Hadoop Auth 3.1.1.3.1.0.168-1, Apache Hadoop Auth 3.1.1.3.1.5.3-5, Apache Hadoop Client 3.1.1.3.1.0.38-2, Apache Hadoop HDFS Client 3.1.1.7.0.3.0-79, Apache HttpClient 4.5.7, Apache HttpComponents Core 4.4.10, Apache HttpComponents Core 4.4.11, Apache HttpMime 4.5.6, Apache Kafka 2.3.0.7.0.3.0-79, Apache Kafka 2.4.1, Apache log4j 1.2.17, Apache Maven 3.0, Apache Parquet Jackson 1.9.0-cdh6.2.0, Apache Solr Solrj 7.7.1, Apache Yetus - Audience Annotations 0.5.0, Apache ZooKeeper 3.5.5.7.0.3.0-79, Apache ZooKeeper - Jute 3.5.5, Apache ZooKeeper - Jute 3.5.5.7.0.3.0-79, ApacheDS Protocol Kerberos Codec 2.0.0-M15, ASM based accessors helper used by json-smart 1.2, Audit Component 2.0.0.7.0.3.0-79, beanvalidation-api 1.1.0.Final, btf 1.2, cache 0.8.1.3.5.0.1-6, cache 0.8.1.3.5.1.0-17, classworlds 2.2.3, com.machinepublishers:jbrowserdriver 1.1.1, com.papertrail:profiler 1.0.2, Common library for Plugins 2.0.0, Common library for Plugins 2.0.0.7.0.3.0-79, common-auth 0.8.1.3.5.0.1-6, Commons IO 2.5, Commons IO 2.6, Credential Support 1.2.0.3.1.5.0-152, Credential Support 2.0.0.7.0.3.0-79, Curator Client 4.2.0, Curator Framework 4.2.0, Curator Recipes 4.2.0, Daikon main shared library 1.14.0, Data Mapper for Jackson 1.9.13-cloudera.1, dropwizard 1.3.22, Dropwizard Asset Bundle 1.3.17, Dropwizard Configuration Support 1.3.22, Dropwizard Freemarker Views 1.3.17, Dropwizard Jackson Support 1.3.22, Dropwizard Jersey Support 1.3.22, Dropwizard Jetty Support 1.3.22, Dropwizard Lifecycle Support 1.3.22, Dropwizard Logging Support 1.3.22, Dropwizard Metrics Support 1.3.22, Dropwizard Request Logging Support 1.3.22, Dropwizard Servlet Support 1.3.22, Dropwizard Swagger support 1.3.17-1, Dropwizard Utility Classes 1.3.22, Dropwizard Validation Support 1.3.22, Dropwizard Views 1.3.17, dropwizard-auth 1.3.17, error-prone annotations 2.3.2, external-objenesis 1.0.4, Fast Infoset 1.2.15, FindBugs jsr305 3.0.0, FindBugs jsr305 3.0.2, flyway-core 5.1.4, flyway-maven-plugin 5.1.1, FreeMarker 2.3.28, google-gson 2.2.4, Guava InternalFutureFailureAccess and InternalFutures 1.0.1, Guava ListenableFuture only 9999.0-empty-to-avoid-conflict-with-guava, Guava: Google Core Libraries for Java 28.1-jre, Guice - Bean injection 1.3.2, Guice - Plexus shim 1.3.4.2, hadoop-common 2.10.0, hadoop-common 3.1.1.7.0.3.0-79, hadoop-common 3.2.1-talend, hadoop-yarn-client 3.1.1.3.1.2.5-4, hadoop-yarn-client 3.1.1.7.0.3.0-79, Hibernate Validator 5.4.2.Final, HikariCP 2.2.5, HikariCP-java6 2.2.5, htrace-core 4.1.0-incubating, io.swagger:swagger-annotations 1.6.0, J2ObjC Annotations 1.3, Jackson Integration for Metrics 4.0.5, Jackson module: Paranamer 2.10.0, jackson-annotations jackson-annotations-2.10.1, jackson-core 1.9.13-cloudera.1, jackson-core 1.9.13-cloudera.2, jackson-core 2.10.1, jackson-coreutils 1.8, jackson-databind 2.10.1, jackson-dataformat-csv 2.10.0, jackson-dataformat-csv 2.10.2, jackson-dataformat-yaml 2.10.1, jackson-datatype-guava 2.9.10, Jackson-datatype-jdk8 2.10.0, Jackson-datatype-jdk8 2.9.10, jackson-datatype-joda jackson-datatype-joda-2.9.10, Jackson-Datatype-JSR310 2.9.10, Jackson-JAXRS-base 2.10.1, jackson-jaxrs-json-provider 2.10.1, Jackson-module-Afterburner 2.9.10, jackson-module-jaxb-annotations 2.10.1, Jackson-module-parameter-names 2.9.10, jackson-module-scala jackson-module-scala-2.10.0, Java Native Access (JNA) 5.2.0, Java redis client 3.5.0.Final, java-classmate 1.3.1, Javassist 3.18.1-GA, Javax Inject from the JSR-330 Expert Group 1, JAX-RS provider for JSON content type 1.9.13, JBoss Logging 3 3.3.0.Final, JCIP Annotations under Apache License 1.0-1, Jetty :: Servlet Handling 9.4.18.v20190429, Jetty :: Utility Servlets and Filters 9.4.18.v20190429, Jetty Toolchain 1.0.3, Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server jetty-9.4.18.v20190429, Joda Time 2.3, JSON Schema Validator 2.2.6, json-schema-core 1.2.5, json-smart-v1 2.3, JVM Integration for Metrics 4.0.5, Kerb Simple Kdc 1.1.1, Kerby ASN1 Project 1.1.1, Kerby Config 1.1.1, Kerby PKIX Project 1.1.1, Kerby Util 1.1.1, Kerby XDR Project 1.1.1, Kerby-kerb Admin 1.1.1, Kerby-kerb Client 1.1.1, Kerby-kerb Common 1.1.1, Kerby-kerb core 1.1.1, Kerby-kerb Crypto 1.1.1, Kerby-kerb Identity 1.1.1, Kerby-kerb Server 1.1.1, Kerby-kerb Util 1.1.1, libphonenumber 6.2, libplexus-utils 3.1.0, Log4j Implemented Over SLF4J 1.7.25, LZ4 and xxHash 1.6.0, Maven Aether Provider 3.0, Maven Artifact 3.0, Maven Model Builder 3.0, Maven Plugin API 3.0-beta-2, Maven Settings Builder 3.0-beta-3, Metrics Core 4.0.5, Metrics Core Library 2.2.0, Metrics Health Checks 4.0.5, Metrics Integration for Jersey 2.x 4.0.5, Metrics Integration for Jetty 9.1 and higher 4.0.5, Metrics Integration for Logback 4.0.5, Metrics Integration with JMX 4.0.5, Metrics Utility Servlets 4.0.5, msg-simple 1.1, Netty Project 4.0.56.Final, Netty Project netty-4.1.47.Final, Netty/Codec/Redis 4.1.43.Final, Netty/Codec/SMTP 4.1.46.Final, Nimbus-JOSE-JWT 7.9, Noggit JSON Parser 0.8, OkHttp 2.7.5, OkIO 1.6.0, org.lucee:commons-io 2.5.0, p6spy 3.8.7, plexus-sec-dispatcher 1.3.1, ranger-plugin-classloader 1.2.0.3.1.4.0-315, registry-common 0.8.1, registry-common 0.8.1.3.5.0.1-6, registry-common-client 0.8.1, registry-webservice 0.8.1, RocksDB JNI 5.18.3, RxJava 1.1.6, scala-collection-compat 2.1.2, scalalogging 3.9.2, schema-registry-client 0.8.1.3.5.0.1-6, schema-registry-common 0.8.0.2.0.0.0-135, schema-registry-serdes 0.8.1, schema-registry-webservice 0.8.1.3.5.0.1-6, serdes-examples 0.8.1.3.5.0.1-6, serdes-examples 0.8.1.3.5.1.0-17, Sisu - Guice 2.1.7, Sisu - Inject (JSR330 bean support) 1.4.1, Sisu - Inject (Plexus bean support) 1.4.2, SnakeYAML 1.24, snappy-java 1.1.4, snappy-java 1.1.7.3, Spring Commons Logging Bridge 5.0.16.RELEASE, Spring Framework 5.0.16.RELEASE, Spring Security 3.2.7, Spring Security Kerberos Core 1.0.1.RELEASE, spring-aopalliance 1.0, storage-common 0.8.1.3.5.1.0-17, storage-core 0.8.1.3.5.0.1-6, storage-tool 0.8.1.3.5.1.0-17, Swagger API v1.6.0, swagger-codegen 2.4.13, swagger-jaxrs 1.6.0, swagger-jersey2-jaxrs (Jersey 2.x support) 1.6.0, swagger-models 1.6.0, swagger-ui 3.24.3, Token provider 1.1.1, uri-template 0.9, Woodstox 4.4.1, Woodstox 5.0.3)
+(Aether :: API 1.7, Aether :: Implementation 1.6, Aether :: SPI 1.6, Aether :: Utilities 1.7, alibaba/nacos 1.3.0-beta, Annotations for Metrics 4.0.5, Apache Atlas Web Application 2.0.0.7.1.1.0-565, Apache Avro 1.9.1, Apache Commons BeanUtils 1.9.4, Apache Commons CLI 1.3.1, Apache Commons Codec 1.11, Apache Commons Collections 3.2.2, Apache Commons Compress 1.18, Apache Commons Configuration 1.10, Apache Commons Configuration 2.1.1, Apache Commons Lang 2.6, Apache Commons Lang 3.8.1, Apache Commons Logging 1.2, Apache Commons Math 3.1.1, Apache Commons Net 3.6, Apache Commons Text 1.2, Apache Directory API ASN.1 API 1.0.0-M19, Apache Directory LDAP API Utilities 1.0.0-M20, Apache Directory Studio 2.0.0-M15, Apache Felix Web Management Console 4.5.2, Apache Hadoop Amazon Web Services support 3.1.1.7.1.1.0-565, Apache Hadoop Annotations 3.1.1.7.0.3.0-79, Apache Hadoop Auth 3.1.1.7.0.3.0-79, Apache Hadoop Auth 3.1.1.7.1.1.0-565, Apache Hadoop Azure Data Lake support 3.1.1.7.0.3.0-79, Apache Hadoop Azure Data Lake support 3.1.1.7.1.1.0-565, Apache Hadoop Azure support 3.1.1.7.1.1.0-565, Apache Hadoop Client 3.1.1.7.0.3.0-79, Apache Hadoop Cloud Storage 3.1.1.7.1.1.0-565, Apache Hadoop HDFS Client 3.1.1.7.1.1.0-565, Apache HttpClient 4.5.7, Apache HttpComponents Core 4.4.10, Apache HttpComponents Core 4.4.11, Apache HttpMime 4.5.6, Apache Jackrabbit 1.8.13, Apache Kafka 2.4.1, Apache log4j 1.2.17-cloudera1, Apache Maven 3.0, Apache Solr Solrj 7.7.1, Apache Yetus - Audience Annotations 0.5.0, Apache ZooKeeper 3.5.5.7.1.1.0-565, Apache ZooKeeper 3.5.8, Apache ZooKeeper - Jute 3.5.5.7.0.3.0-79, ApacheDS Protocol Kerberos Codec 2.0.0-M15, ASM based accessors helper used by json-smart 1.2, Audit Component 2.0.0.7.0.3.0-79, avro-examples 0.8.1.7.1.1.0-565, AWS SDK for Java - Bundle 1.11.524, AWS SDK for Java - Bundle 1.11.590, beanvalidation-api 1.1.0.Final, btf 1.2, cache 0.8.1.7.1.1.0-565, classworlds 2.2.3, com.machinepublishers:jbrowserdriver 1.1.1, com.papertrail:profiler 1.0.2, Common library for Plugins 2.0.0.7.1.1.0-565, common-auth 0.8.1.3.5.0.1-6, common-auth 0.8.1.3.5.1.2-3, Commons IO 2.5, Commons IO 2.6, Credential Support 2.0.0.7.0.3.0-79, Curator Client 4.2.0, Curator Framework 4.2.0, Curator Recipes 4.2.0, Daikon main shared library 3.0.0, dropwizard 1.3.22, Dropwizard Asset Bundle 1.3.17, Dropwizard Configuration Support 1.3.22, Dropwizard Freemarker Views 1.3.17, Dropwizard Jackson Support 1.3.22, Dropwizard Jersey Support 1.3.22, Dropwizard Jetty Support 1.3.22, Dropwizard Lifecycle Support 1.3.22, Dropwizard Logging Support 1.3.22, Dropwizard Metrics Support 1.3.22, Dropwizard Request Logging Support 1.3.22, Dropwizard Servlet Support 1.3.22, Dropwizard Swagger support 1.3.17-1, Dropwizard Utility Classes 1.3.22, Dropwizard Validation Support 1.3.22, Dropwizard Views 1.3.17, dropwizard-auth 1.3.17, error-prone annotations 2.3.2, external-objenesis 1.0.4, Fast Infoset 1.2.15, FindBugs jsr305 3.0.0, FindBugs jsr305 3.0.2, flyway-core 5.1.4, flyway-maven-plugin 5.1.1, FreeMarker 2.3.28, gateway-cloud-bindings 1.3.0.7.1.1.0-565, gateway-i18n 1.3.0.7.0.3.0-79, gateway-shell 1.3.0.7.1.1.0-565, gateway-util-common 1.3.0.7.1.1.0-565, gcs-connector.jar 1.9.10.7.0.3.0-79, Google Java Format 1.8, google-gson 2.2.4, Guava InternalFutureFailureAccess and InternalFutures 1.0.1, Guava ListenableFuture only 9999.0-empty-to-avoid-conflict-with-guava, Guava: Google Core Libraries for Java 28.1-jre, Guice - Bean injection 1.3.2, Guice - Plexus shim 1.3.4.2, hadoop-common 2.10.0, hadoop-common 3.1.1.7.1.1.0-565, hadoop-yarn-client 3.1.1.7.0.3.0-79, hadoop-yarn-client 3.1.1.7.1.1.0-565, Hibernate Validator 5.4.2.Final, HikariCP 2.2.5, HikariCP-java6 2.2.5, htrace-core 4.1.0-incubating, io.swagger:swagger-annotations 1.6.0, J2ObjC Annotations 1.3, Jackson Integration for Metrics 4.0.5, Jackson JSON processor 1.9.13-cloudera.1, Jackson module: Paranamer 2.10.0, jackson-annotations jackson-annotations-2.10.1, jackson-core 1.9.13-cloudera.1, jackson-core 1.9.13-cloudera.2, jackson-core 2.10.1, jackson-coreutils 1.8, jackson-databind 2.10.1, jackson-dataformat-csv 2.10.0, jackson-dataformat-csv 2.10.2, jackson-dataformat-yaml 2.10.1, jackson-datatype-guava 2.9.10, Jackson-datatype-jdk8 2.10.0, Jackson-datatype-jdk8 2.9.10, jackson-datatype-joda jackson-datatype-joda-2.9.10, Jackson-Datatype-JSR310 2.9.10, Jackson-JAXRS-base 2.10.1, jackson-jaxrs-json-provider 2.10.1, Jackson-module-Afterburner 2.9.10, jackson-module-jaxb-annotations 2.10.1, Jackson-module-parameter-names 2.9.10, jackson-module-scala jackson-module-scala-2.10.0, Java Native Access (JNA) 5.2.0, Java redis client 3.5.0.Final, java-classmate 1.3.1, Javassist 3.18.1-GA, Javax Inject from the JSR-330 Expert Group 1, JAX-RS provider for JSON content type 1.9.13, JBoss Logging 3 3.3.0.Final, JCIP Annotations under Apache License 1.0-1, Jetty :: Servlet Handling 9.4.18.v20190429, Jetty :: Utility Servlets and Filters 9.4.18.v20190429, Jetty Toolchain 1.0.3, Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server jetty-9.4.18.v20190429, Joda Time 2.3, Joda Time 2.8.1, JSON Schema Validator 2.2.6, json-schema-core 1.2.5, json-smart-v1 2.3, JVM Integration for Metrics 4.0.5, Kerb Simple Kdc 1.1.1, Kerby ASN1 Project 1.1.1, Kerby Config 1.1.1, Kerby PKIX Project 1.1.1, Kerby Util 1.1.1, Kerby XDR Project 1.1.1, Kerby-kerb Admin 1.1.1, Kerby-kerb Client 1.1.1, Kerby-kerb Common 1.1.1, Kerby-kerb core 1.1.1, Kerby-kerb Crypto 1.1.1, Kerby-kerb Identity 1.1.1, Kerby-kerb Server 1.1.1, Kerby-kerb Util 1.1.1, libphonenumber 6.2, libplexus-utils 3.1.0, linkerd/linkerd 1.7.3, localstack-utils 0.1.22, Log4j Implemented Over SLF4J 1.7.25, LZ4 and xxHash 1.6.0, Maven Aether Provider 3.0, Maven Artifact 3.0, Maven Model Builder 3.0, Maven Plugin API 3.0-beta-2, Maven Settings Builder 3.0-beta-3, Metrics Core 4.0.5, Metrics Core Library 2.2.0, Metrics Health Checks 4.0.5, Metrics Integration for Jersey 2.x 4.0.5, Metrics Integration for Jetty 9.1 and higher 4.0.5, Metrics Integration for Logback 4.0.5, Metrics Integration with JMX 4.0.5, Metrics Utility Servlets 4.0.5, Microsoft Windows Azure Storage Client SDK 7.0.0, msg-simple 1.1, Netty Project 4.0.56.Final, Netty Project netty-4.1.47.Final, Netty/Codec/Redis 4.1.43.Final, Netty/Codec/SMTP 4.1.46.Final, Nimbus-JOSE-JWT 7.9, Noggit JSON Parser 0.8, OkHttp 2.7.5, OkIO 1.6.0, org.lucee:commons-io 2.5.0, p6spy 3.8.7, plexus-sec-dispatcher 1.3.1, Policeman's Forbidden API Checker 2.7, Ranger Remote Authorization Hook - ABFS driver 2.0.0.7.1.1.0-565, Ranger Remote Authorization Integration 2.0.0.7.1.1.0-565, ranger-plugin-classloader 1.2.0.3.1.4.13-1, ranger-plugin-classloader 2.0.0.7.1.1.0-565, registry-common 0.8.1.7.1.1.0-565, registry-common-client 0.8.1.3.5.1.0-17, registry-common-client 0.8.1.7.1.1.0-565, registry-webservice 0.8.1.7.1.1.0-565, RxJava 1.1.6, scala-collection-compat 2.1.2, scalalogging 3.9.2, schema-registry-authorization-agent 0.8.1.7.1.1.0-565, schema-registry-authorizer-core 0.8.1.7.1.1.0-565, schema-registry-client 0.8.1.7.1.1.0-565, schema-registry-common 0.8.1.7.1.1.0-565, schema-registry-core 0.8.1.7.1.1.0-565, schema-registry-ranger-authorizer 0.8.1.7.1.1.0-565, schema-registry-ranger-authorizer-shim 0.8.1.7.1.1.0-565, schema-registry-serdes 0.8.1.3.5.1.0-17, schema-registry-serdes 0.8.1.7.1.1.0-565, schema-registry-webservice 0.8.1.7.1.1.0-565, serdes-examples 0.8.1.3.5.1.0-17, Sisu - Guice 2.1.7, Sisu - Inject (JSR330 bean support) 1.4.1, Sisu - Inject (Plexus bean support) 1.4.2, SnakeYAML 1.24, snappy-java 1.1.4, snappy-java 1.1.7.3, Spring Commons Logging Bridge 5.0.16.RELEASE, Spring Framework 5.0.16.RELEASE, Spring Security 3.2.7, Spring Security Kerberos Core 1.0.1.RELEASE, spring-aopalliance 1.0, storage-common 0.8.1.3.5.1.0-17, storage-core 0.8.1.3.5.1.0-17, storage-tool 0.8.1.7.1.1.0-565, SureFire API 3.0.0-M4, Swagger API v1.6.0, swagger-codegen v2.4.14, swagger-jaxrs 1.6.0, swagger-jersey2-jaxrs (Jersey 2.x support) 1.6.0, swagger-models 1.6.0, swagger-ui 3.24.3, Token provider 1.1.1, uri-template 0.9, WildFly 17.0.1.Final, wildfly-openssl 1.0.7.Final, wildfly-openssl-java 1.0.8.Final, wildfly-openssl-windows-i386 1.0.7.Final, wildfly-openssl-windows-x86_64 1.0.7.Final, Woodstox 4.4.1, Woodstox 5.0.3)
 
 Apache License
 Version 2.0, January 2004
@@ -1114,7 +1147,7 @@ COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
 ---
 
 Common Development and Distribution License 1.1
-(Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05, Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b14, Expression Language 3.0 3.0.0, Expression Language API 3.0-b08, HK2 API module 2.5.0-b30, HK2 Implementation Utilities 2.5.0-b31, HK2 Implementation Utilities 2.5.0-b32, Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b02, istack common utility code runtime 3.0.7, Java Architecture for XML Binding 2.2.12, Java Servlet API 3.1.0, JavaBeans Activation Framework API jar 1.2.0, javax.annotation API 1.2, javax.ws.rs-api 2.0.1, JAXB CORE 2.3.0-b170127.1453, JAXB Runtime 2.3.1, JAXB XML Binding Code Generator Package 2.4.0-b180725.0644, Jersey 1.18.6, Jersey 1.19.3, Jersey 2.25.1, jersey-atom 1.18.6, jersey-bundle 1.19.3, jersey-container-servlet 2.25.1, jersey-container-servlet-core 2.25.1, jersey-core-server 2.25.1, jersey-ext-bean-validation 2.25.1, jersey-ext-entity-filtering 2.25, jersey-ext-entity-filtering 2.25.1, jersey-ext-metainf-services 2.25.1, jersey-fastinfoset 1.9-ea07, jersey-grizzly 1.18.6, jersey-json 1.18.6, jersey-media-jaxb 2.25.1, jersey-media-json-jackson 2.25.1, jersey-media-multipart 2.25.1, jersey-repackaged-guava 2.25.1, jersey-server 1.19.3, jersey-servlet 1.19.3, MIME streaming extension 1.9.6, OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.1, ServiceLocator Default Implementation 2.5.0-b32, stax-ex 1.8, TXW2 Runtime 2.3.1)
+(Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05, Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b14, Expression Language 3.0 3.0.0, Expression Language API 3.0-b08, HK2 API module 2.5.0-b30, HK2 Implementation Utilities 2.5.0-b31, HK2 Implementation Utilities 2.5.0-b32, Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b02, istack common utility code runtime 3.0.7, Java Architecture for XML Binding 2.2.12, Java Servlet API 3.1.0, JavaBeans Activation Framework API jar 1.2.0, javax.annotation API 1.2, javax.ws.rs-api 2.0.1, JAXB CORE 2.3.0-b170127.1453, JAXB Runtime 2.3.1, JAXB XML Binding Code Generator Package 2.4.0-b180725.0644, Jersey 1.18.6, Jersey 1.19.3, Jersey 2.25.1, jersey-atom 1.18.6, jersey-bundle 1.19.3, jersey-container-servlet 2.25.1, jersey-container-servlet-core 2.25.1, jersey-core-server 2.25.1, jersey-ext-bean-validation 2.25.1, jersey-ext-entity-filtering 2.25, jersey-ext-entity-filtering 2.25.1, jersey-ext-metainf-services 2.25.1, jersey-fastinfoset 1.9-ea07, jersey-grizzly 1.18.6, jersey-json 1.18.6, jersey-media-jaxb 2.25.1, jersey-media-json-jackson 2.25.1, jersey-media-multipart 2.25.1, jersey-repackaged-guava 2.25.1, jersey-server 1.19.3, jersey-servlet 1.19, jersey-servlet 1.19.3, MIME streaming extension 1.9.6, OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.1, ServiceLocator Default Implementation 2.5.0-b32, stax-ex 1.8, TXW2 Runtime 2.3.1)
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1
 ==============================================================
@@ -1492,7 +1525,7 @@ TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 ---
 
 Eclipse Distribution License - v 1.0
-(${oraclebndl.name} 2.6.0-M3, EclipseLink 2.5.2-RC1, EclipseLink ANTLR 2.6.6-RC1, EclipseLink ASM 3.3.1.v201206041142, EclipseLink Core 2.5.2, EclipseLink DBWS 2.5.2, EclipseLink Hermes JPQL Parser 2.5.2, EclipseLink JPA 2.5.2, EclipseLink Moxy 2.5.3-RC1, EclipseLink SDO 2.5.2-RC1, jakarta.xml.bind-api 2.3.2, Javax Persistence API 2.0 2.0.5, Javax Persistence API 2.0 2.1.0-RC2, SDO API 2.1.1)
+(${oraclebndl.name} 2.6.0-M3, EclipseLink 2.5.2, EclipseLink ANTLR 2.6.6-RC1, EclipseLink ASM 3.3.1.v201206041142, EclipseLink Core 2.5.2, EclipseLink DBWS 2.5.2, EclipseLink Hermes JPQL Parser 2.5.2, EclipseLink JPA 2.5.2, EclipseLink Moxy 2.5.3-RC1, EclipseLink SDO 2.5.2-RC1, jakarta.xml.bind-api 2.3.2, Javax Persistence API 2.0 2.0.5, Javax Persistence API 2.0 2.1.0-RC2, SDO API 2.1.1)
 
 Eclipse Distribution License - v 1.0
 ====================================
@@ -1529,7 +1562,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 
 Eclipse Public License 1.0
-(JRuby 9.1.1.0, Logback 1.2.3, Logback Access Module 1.2.3, Logback Classic Module 1.2.3)
+(EclipseLink 2.5.2, JRuby 9.1.1.0, Logback 1.2.3, Logback Access Module 1.2.3, Logback Classic Module 1.2.3, Logspace Agent Controller 0.3.1)
 
 Eclipse Public License - v 1.0
 ==============================
@@ -1860,7 +1893,35 @@ Permission is hereby granted, free of charge, to any person
 ---
 
 MIT License
-(Animal Sniffer Annotations 1.18, Checker Qual 2.8.1, gethostname4j 0.0.2, JUL to SLF4J bridge 1.7.26, shared-tag-library 1.7.25, SLF4J API Module 1.7.25, Telegram Bots 3.6)
+(azure-data-lake-store-java 2.3.6)
+
+Copyright (c) Microsoft Corporation
+All rights reserved.
+
+The MIT License (MIT)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE
+
+---
+
+MIT License
+(Animal Sniffer Annotations 1.18, Checker Qual 2.8.1, gethostname4j 0.0.2, JUL to SLF4J bridge 1.7.26, Microsoft Azure SDK for Key Vault 1.0.0, SLF4J API Module 1.7.25, SLF4J Simple Binding 1.7.25, Telegram Bots 3.6)
 
 The MIT License
 ===============
@@ -2314,7 +2375,7 @@ EXHIBIT A -Mozilla Public License.
 ---
 
 Mozilla Public License 2.0
-(Mozilla Rhino 1.7R4, Rhino Unofficial Distribution For Wro4j 1.7R5-20130223)
+(Mozilla Rhino 1.7r4, Rhino Unofficial Distribution For Wro4j 1.7R5-20130223)
 
 Mozilla Public License
 Version 2.0
@@ -3090,5 +3151,5 @@ proprietary programs. If your program is a subroutine library, you may consider
 it more useful to permit linking proprietary applications with the library. If
 this is what you want to do, use the GNU Library General Public License instead
 of this License.
----------------
-schemaregistry : CDH-7.1.1.0
+
+[7.1.2]
