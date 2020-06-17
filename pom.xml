@@ -415,7 +415,7 @@
         <spotbugs.version>4.0.0</spotbugs.version>
         <spring.version>5.0.16.RELEASE</spring.version>
         <spring-security-kerberos-core.version>1.0.1.RELEASE</spring-security-kerberos-core.version>
-        <postgresql.version>42.2.12</postgresql.version>
+        <postgresql.version>42.2.13</postgresql.version>
         <flyway.version>5.1.4</flyway.version>
         <nimbus-jose-jwt.version>7.9</nimbus-jose-jwt.version>
         <hikari.version>2.2.5</hikari.version>
