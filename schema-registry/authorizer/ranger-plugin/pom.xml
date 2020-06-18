@@ -1,12 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>schema-registry-authorizer</artifactId>
         <groupId>com.hortonworks.registries</groupId>
-        <version>0.8.1-SNAPSHOT</version>
+        <version>0.8.1.7.1.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>schema-registry-ranger-plugin</artifactId>
@@ -17,8 +13,8 @@
     </modules>
 
     <properties>
-        <ranger.version>2.0.0.7.0.3.0-79</ranger.version>
-        <hadoop.version>3.1.1</hadoop.version>
+        <ranger.version>2.0.0.7.1.1.0-SNAPSHOT</ranger.version>
+        <hadoop.version>3.1.1.7.1.1.0-SNAPSHOT</hadoop.version>
     </properties>
 
     <repositories>
@@ -30,4 +26,3 @@
     </repositories>
 
 </project>
-
