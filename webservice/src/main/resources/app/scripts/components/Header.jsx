@@ -42,7 +42,7 @@ export default class Header extends Component {
       <Navbar inverse fluid={true}>
         <Navbar.Header>
           <Navbar.Brand>
-            <a href="javascript:void(0);">
+            <a href="#!">
               <img src="../ui/styles/img/logo.png" className="logo-image"/>
               <div className="logo-text"><strong>SCHEMA</strong>REGISTRY</div>
             </a>

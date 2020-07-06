@@ -38,7 +38,7 @@ class CommonNotification extends Component {
     const {flag, content} = this.props;
     const initial = content.substr(0, notifyTextLimit);
     const moreText = content.substr(notifyTextLimit);
-    const readMoreTag = <a href="javascript:void(0)" onClick={this.showMore}>{text}</a>;
+    const readMoreTag = <a href="#!" onClick={this.showMore}>{text}</a>;
     return (
       <div>
         {initial}

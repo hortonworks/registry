@@ -272,9 +272,9 @@ export default class SchemaFormContainer extends Component {
             Schema Text <span className="text-danger">*</span>
           </label>
           {showCodemirror
-            ? [<a key="1" className="pull-right clear-link" href="javascript:void(0)" onClick={() => { this.setState({schemaText: '', showCodemirror: false, expandCodemirror: false}); }}> CLEAR </a>,
+            ? [<a key="1" className="pull-right clear-link" href="#!" onClick={() => { this.setState({schemaText: '', showCodemirror: false, expandCodemirror: false});}}> CLEAR </a>,
               <span key="2" className="pull-right" style={{margin: '-1px 5px 0'}}>|</span>,
-              <a key="3" className="pull-right" href="javascript:void(0)" onClick={() => { this.setState({expandCodemirror: !expandCodemirror}); }}>
+              <a key="3" className="pull-right" href="#!" onClick={() => { this.setState({expandCodemirror: !expandCodemirror});}}>
                 {expandCodemirror ? <i className="fa fa-compress"></i> : <i className="fa fa-expand"></i>}
               </a>]
             :
