@@ -55,11 +55,11 @@ export default class ChangeState extends Component{
           )}
         </select>
         &nbsp;
-        <a href="javascript:void(0)" className="btn-stateSelect" onClick={this.changeState.bind(this)}>
+        <a href="#!" className="btn-stateSelect" onClick={this.changeState.bind(this)}>
           <i className="fa fa-check" aria-hidden="true"></i>
         </a>
         &nbsp;
-        <a href="javascript:void(0)" className="btn-stateSelect" onClick={() => this.setState({edit: false})}>
+        <a href="#!" className="btn-stateSelect" onClick={() => this.setState({edit: false})}>
           <i className="fa fa-times" aria-hidden="true"></i>
         </a>
       </div>;
@@ -68,7 +68,7 @@ export default class ChangeState extends Component{
           <span className="text-muted">{currentState}</span>
           &nbsp;
           {transitions.length &&  showEditBtn?
-          <a href="javascript:void(0)" onClick={this.onEdit.bind(this)}><i className="fa fa-pencil" aria-hidden="true"></i></a>
+          <a href="#!" onClick={this.onEdit.bind(this)}><i className="fa fa-pencil" aria-hidden="true"></i></a>
           : ''
           }
         </div>;

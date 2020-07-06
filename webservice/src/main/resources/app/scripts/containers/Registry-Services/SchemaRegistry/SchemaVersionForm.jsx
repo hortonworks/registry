@@ -181,9 +181,9 @@ export default class SchemaVersionForm extends Component {
         <div className="form-group version-codemirror-container">
           <label>Schema Text <span className="text-danger">*</span></label>
           {showCodemirror
-            ? [<a key="1" className="pull-right clear-link" href="javascript:void(0)" onClick={() => { this.setState({schemaText: '', showCodemirror: false, schemaTextCompatibility: statusCode.Ok}); }}> CLEAR </a>,
+            ? [<a key="1" className="pull-right clear-link" href="#!" onClick={() => { this.setState({schemaText: '', showCodemirror: false, schemaTextCompatibility: statusCode.Ok});}}> CLEAR </a>,
               <span key="2" className="pull-right" style={{margin: '-1px 5px 0'}}>|</span>,
-              <a key="3" className="pull-right validate-link" href="javascript:void(0)" onClick={this.validateSchemaCompatibility}>
+              <a key="3" className="pull-right validate-link" href="#!" onClick={this.validateSchemaCompatibility}>
                 VALIDATE
               </a>]
             :
