@@ -474,12 +474,12 @@ export default class SchemaDetail extends Component{
                 {
                 sortedVersions.map((v, i)=>{
                   const forkMergeComp = [<OverlayTrigger placement="top" overlay={<Tooltip id="fork">Fork</Tooltip>}>
-                    <a href="javascript:void(0)" onClick={this.onFork.bind(this, v)} style={{marginLeft: '5px'}}>
+                    <a href="#!" onClick={this.onFork.bind(this, v)} style={{marginLeft: '5px'}}>
                       <i className="fa fa-code-fork" aria-hidden="true"></i>
                     </a></OverlayTrigger>,
                     currentBranchName !== 'MASTER' ?
                       <OverlayTrigger placement="top" overlay={<Tooltip id="merge">Merge</Tooltip>}>
-                      <a href="javascript:void(0)" onClick={this.onMerge.bind(this, v)} style={{marginLeft: '5px'}}>
+                      <a href="#!" onClick={this.onMerge.bind(this, v)} style={{marginLeft: '5px'}}>
                         <i className="fa fa-code-fork fa-rotate-180" aria-hidden="true"></i>
                       </a></OverlayTrigger>
                       : ''];
