@@ -83,11 +83,16 @@
                                     <shadedPattern>${shading.prefix}.org.glassfish</shadedPattern>
                                     <includes>
                                         <include>org.glassfish.jersey.**</include>
+                                        <include>org.glassfish.hk2.**</include>
                                     </includes>
-                                    <!-- we don't need to relocate the dependency injection library -->
-                                    <excludes>
-                                        <exclude>org.glassfish.hk2.**</exclude>
-                                    </excludes>
+                                </relocation>
+                                <!-- dependency injection framework -->
+                                <relocation>
+                                    <pattern>org.jvnet.hk2</pattern>
+                                    <shadedPattern>${shading.prefix}.org.jvnet.hk2</shadedPattern>
+                                    <includes>
+                                        <include>org.jvnet.hk2.**</include>
+                                    </includes>
                                 </relocation>
                                 <!-- Jackson is used by Jersey -->
                                 <relocation>
