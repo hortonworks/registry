@@ -3,13 +3,26 @@
     srcdir: "{{ zuul.project.src_dir }}"
 
   tasks:
-    - name: Run 'site generation'
+    - name: Collect checkstyle results
+      shell: python ci/collect_checkstyle_results.py > ci/test-results/checkstyle-results.html
+      args:
+        chdir: "{{ srcdir }}"
+
+    - name: Collect test execution results
       shell: python ci/collect_test_results.py > ci/test-results/results.html
       args:
         chdir: "{{ srcdir }}"
 
-    - name: Copy site
+    - name: Copy test-results
       copy:
         src: "{{ zuul_workspace_root }}/{{ srcdir }}/ci/test-results"
         dest: "{{ zuul_output_dir }}/logs/"
         remote_src: yes
+
+    - name: Return Test results report
+      zuul_return:
+        data:
+          zuul:
+            artifacts:
+              - name: Test results
+                url: "{{ inventory_hostname }}{{ zuul_output_dir }}/logs/test-results"

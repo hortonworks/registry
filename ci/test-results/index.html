@@ -10,6 +10,22 @@
           crossorigin="anonymous"></script>
   <script type="text/javascript">
       $(function () {
+          $.get('checkstyle-results.html', function (data) {
+              $data = $(data);
+              if ($data.find('module').length == 0) {
+                  return false;
+              }
+              $data.find('module').addClass('block');
+              $data.find('module > name').addClass('title module-title');
+              $data.find('file').addClass('box');
+              $data.find('file > name').addClass('subtitle').after('<headers class="columns is-marginless">' +
+                  '<src class="column has-text-left">source</src>' +
+                  '<message class="column has-text-left">message</message>' +
+                  '</headers>');
+              $data.find('error').addClass('columns is-marginless');
+              $data.find('src,message').addClass('column has-text-left');
+              $("#checkstyle_container").html($data);
+          });
           $.get('results.html', function (data) {
               $data = $(data);
               $data.find('module').addClass('block');
@@ -48,7 +64,7 @@
               $(this).next('testsuites').toggle();
           });
           $("#toggle_successful").click(function () {
-              $("module:not(:has(testcase.error, testcase.failure)),testsuite:not(:has(testcase.error, testcase.failure))").toggle();
+              $("#container module:not(:has(testcase.error, testcase.failure)),#container testsuite:not(:has(testcase.error, testcase.failure))").toggle();
           });
       });
   </script>
@@ -61,7 +77,7 @@
       display: none;
     }
 
-    module, .module-title, testsuites, testcases, testcase, result, testsuite > name {
+    module, .module-title, testsuites, testcases, testcase, result, testsuite > name  {
       display: block;
     }
 
@@ -74,12 +90,20 @@
 <header class="hero is-primary is-bold">
   <div class="hero-body">
     <div class="container">
-      <h1 class="title">Test results</h1>
+      <h1 class="title">Test and checkstyle results</h1>
     </div>
   </div>
 </header>
 <section class="section">
   <div class="container content">
+    <h1 class="title">Checkstyle</h1>
+    <hr class="hr"/>
+    <div id="checkstyle_container">no issues</div>
+  </div>
+</section>
+<section class="section">
+  <div class="container content">
+    <h1 class="title">Tests</h1>
     <button id="toggle_successful" class="button is-primary">Toggle successful executions</button>
     <hr class="hr"/>
     <div id="container"></div>
