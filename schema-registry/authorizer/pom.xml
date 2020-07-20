@@ -66,7 +66,7 @@
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>ranger-shaded</artifactId>
-            <version>${project.version}</version>
+            <version>${schema-registry-shaded.version}</version>
             <exclusions>
                 <!-- these are included in the shaded jar, we don't need to import them once again -->
                 <exclusion>
@@ -78,26 +78,12 @@
                     <artifactId>jersey-core</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.apache.ranger</groupId>
-                    <artifactId>ranger-plugins-common</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.ranger</groupId>
-                    <artifactId>ranger-plugins-audit</artifactId>
-                </exclusion>
-                <!-- we are not excluding ranger-classloader because in needs to be on the classpath in order for the plugin to work -->
-                <exclusion>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.ranger</groupId>
-            <artifactId>ranger-plugin-classloader</artifactId>
-            <version>${ranger.version}</version>
-        </dependency>
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -298,6 +284,21 @@
                             <excludes>
                                 <exclude>**/com/hortonworks/registries/schemaregistry/authorizer/ranger/**</exclude>
                             </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/deps</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

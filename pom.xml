@@ -380,6 +380,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.12.10</scala.version>
+        <schema-registry-shaded.version>0.9.1.7.2.2.0-SNAPSHOT</schema-registry-shaded.version>
         <junit.version>4.12</junit.version>
         <jackson.version>2.10.1</jackson.version>
         <jackson-mapper.version>1.9.13-cloudera.1</jackson-mapper.version>
@@ -390,7 +391,6 @@
         <hadoop.version>3.1.1.7.2.2.0-SNAPSHOT</hadoop.version>
         <kafka.version>2.5.0.7.2.2.0-SNAPSHOT</kafka.version>
         <kafkaArtifact>kafka_2.12</kafkaArtifact>
-        <ranger.version>2.0.0.7.2.2.0-SNAPSHOT</ranger.version>
         <curator.version>4.3.0.7.2.2.0-SNAPSHOT</curator.version>
         <curator-test.version>4.3.0.7.2.2.0-SNAPSHOT</curator-test.version>
         <avro.version>1.9.1</avro.version>
@@ -452,65 +452,6 @@
     </distributionManagement>
     <dependencyManagement>
         <dependencies>
-            <!-- ranger  -->
-            <dependency>
-                <groupId>org.apache.ranger</groupId>
-                <artifactId>ranger-plugin-classloader</artifactId>
-                <version>${ranger.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.ranger</groupId>
-                <artifactId>ranger-plugins-common</artifactId>
-                <version>${ranger.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-common</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.curator</groupId>
-                        <artifactId>curator-client</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.curator</groupId>
-                        <artifactId>curator-recipes</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.curator</groupId>
-                        <artifactId>curator-framework</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.ranger</groupId>
-                <artifactId>ranger-plugins-audit</artifactId>
-                <version>${ranger.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-common</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
