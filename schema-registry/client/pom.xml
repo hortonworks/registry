@@ -20,7 +20,7 @@
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>jersey-shaded</artifactId>
-            <version>${jersey.version}-${project.parent.version}</version>
+            <version>${schema-registry-shaded.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

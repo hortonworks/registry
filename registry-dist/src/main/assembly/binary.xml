@@ -28,11 +28,6 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>libs</outputDirectory>
             <unpack>false</unpack>
-            <excludes>
-                <exclude>com.sun.jersey:jersey-servlet</exclude>
-                <exclude>com.sun.jersey</exclude>
-                <exclude>com.hortonworks.registries:ranger-shaded</exclude>
-            </excludes>
         </dependencySet>
     </dependencySets>
 
@@ -114,10 +109,10 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}./schema-registry/ranger-shaded/target</directory>
+            <directory>${project.basedir}./schema-registry/authorizer/target/deps</directory>
             <outputDirectory>ranger-plugin/ranger-schema-registry-plugin-impl</outputDirectory>
             <includes>
-                <include>*ranger*jar</include>
+                <include>*ranger-shaded*jar</include>
             </includes>
             <excludes>
                 <exclude>*original*jar</exclude>
@@ -129,6 +124,13 @@
             <outputDirectory>ranger-plugin/conf</outputDirectory>
             <includes>
                 <include>*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}./schema-registry/authorizer/target/deps</directory>
+            <outputDirectory>/libs</outputDirectory>
+            <includes>
+                <include>*ranger-plugin-classloader*jar</include>
             </includes>
         </fileSet>
 

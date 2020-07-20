@@ -1,8 +1,0 @@
-Copyright 2016-2020 The Apache Software Foundation
-
-This project includes software developed at
-The Apache Software Foundation (http://www.apache.org/).
-
-This project bundles the following dependencies under the Apache Software License 2.0 (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-- org.glassfish.jersey.core:jersey-client:jar:2.25.1
