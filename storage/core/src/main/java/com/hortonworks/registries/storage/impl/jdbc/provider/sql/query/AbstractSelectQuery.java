@@ -31,6 +31,7 @@ import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,9 +91,9 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
         String sql = "SELECT * FROM " + fieldEncloser() + tableName + fieldEncloser();
 
         WhereClause whereClause = searchQuery.getWhereClause();
-        Map<Schema.Field, Object> fieldsToValues = new HashMap<>();
+        Map<Schema.Field, Object> fieldsToValues = new LinkedHashMap<Schema.Field, Object>() {};
         if (whereClause != null) {
-            sql += " WHERE ";
+            sql += " WHERE";
             StringBuilder clauseString = new StringBuilder();
             for (PredicateCombinerPair predicateCombinerPair : whereClause.getPredicateCombinerPairs()) {
                 WhereClauseCombiner.Operation combinerOperation = predicateCombinerPair.getCombinerOperation();
@@ -109,7 +110,7 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
                             opStr = " ) ";
                             break;
                         default:
-                            opStr = combinerOperation.toString();
+                            opStr = " " + combinerOperation.toString();
                     }
                     clauseString.append(opStr);
                 }
