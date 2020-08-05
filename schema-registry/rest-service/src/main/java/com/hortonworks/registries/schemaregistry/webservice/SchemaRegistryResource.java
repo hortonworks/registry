@@ -15,12 +15,14 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
@@ -93,6 +95,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
 import static com.hortonworks.registries.schemaregistry.SchemaBranch.MASTER_BRANCH;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * Schema Registry resource that provides schema registry REST service.
@@ -263,13 +266,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         // query for those complex queries.
         if (queryParameters.containsKey(SchemaMetadataStorable.NAME)
                 || queryParameters.containsKey(SchemaMetadataStorable.DESCRIPTION)) {
-            String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
-            String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
-            WhereClause whereClause = WhereClause.begin()
-                                                 .contains(SchemaMetadataStorable.NAME, name)
-                                                 .or()
-                                                 .contains(SchemaMetadataStorable.DESCRIPTION, description)
-                                                 .combine();
+
+            WhereClause whereClause = getWhereClause(queryParameters);
             //todo refactor orderby field in DefaultSchemaRegistry#search APIs merge with these APIs
             String orderByFieldStr = queryParameters.getFirst(ORDER_BY_FIELDS_PARAM_NAME);
             schemaMetadataInfos = schemaRegistry.searchSchemas(whereClause, getOrderByFields(orderByFieldStr));
@@ -277,6 +275,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaMetadataInfos = Collections.emptyList();
         }
         return schemaMetadataInfos;
+    }
+    
+    @VisibleForTesting
+    WhereClause getWhereClause(MultivaluedMap<String, String> queryParameters) {
+        String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
+        WhereClauseCombiner whereClauseCombiner = WhereClause.begin()
+                .contains(SchemaMetadataStorable.NAME, name);
+        String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
+        if (isNotBlank(description)){
+            whereClauseCombiner = whereClauseCombiner.or().contains(SchemaMetadataStorable.DESCRIPTION, description);
+        }
+        return whereClauseCombiner.combine();
     }
 
     private List<OrderBy> getOrderByFields(String value) {
