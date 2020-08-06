@@ -17,12 +17,16 @@ package com.hortonworks.registries.schemaregistry.serde;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
+import org.apache.commons.lang3.BooleanUtils;
+
+import java.util.Map;
 
 /**
  * This class implements {@link SnapshotSerializer} and internally creates schema registry client to connect to the
@@ -36,11 +40,24 @@ import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
  */
 public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes implements SnapshotSerializer<I, O, SchemaMetadata> {
 
+    private static final String AUTO_CREATE_SCHEMA = "schema.auto.create";
+
+    private boolean autoCreateSchema = true;
+
     public AbstractSnapshotSerializer() {
     }
 
     public AbstractSnapshotSerializer(ISchemaRegistryClient schemaRegistryClient) {
         super(schemaRegistryClient);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void doInit(Map<String, ?> config) {
+        super.doInit(config);
+
+        this.autoCreateSchema = BooleanUtils.toBoolean(((Map<String, Object>) config)
+                .getOrDefault(AUTO_CREATE_SCHEMA, "true").toString());
     }
 
     @Override
@@ -51,8 +68,15 @@ public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes im
         String schema = getSchemaText(input);
 
         // register that schema and get the version
+        SchemaIdVersion schemaIdVersion;
         try {
-            SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+            if(autoCreateSchema){
+                schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata,
+                        new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+            } else {
+                SchemaVersionInfo info = schemaRegistryClient.getLatestSchemaVersionInfo(schemaMetadata.getName());
+                schemaIdVersion = new SchemaIdVersion(info.getSchemaMetadataId(), info.getVersion());
+            }
             // write the version and given object to the output
             return doSerialize(input, schemaIdVersion);
         } catch (SchemaNotFoundException | IncompatibleSchemaException | InvalidSchemaException | SchemaBranchNotFoundException e) {
