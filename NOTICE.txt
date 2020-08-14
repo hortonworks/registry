@@ -1,6 +1,5 @@
-Schemaregistry 0.8.1 0.9.0
+schemaregistry
 Copyright 2020 Cloudera Inc.  All Rights Reserved.
-
 
 OVERVIEW
 Items appearing in the following notices are provided for the notification and guidance of the recipient in accordance with the listed license.  The listing may include various dependencies applicable only to development, testing, and evaluation, which may not be included in the distribution and may have been deprecated in favor of alternatives.  Accordingly, this listing should not be construed as an admission that the listed component appears in the distribution nor in the manner indicated.  Similarly, fulfilling a license’s compliance requirements for a particular form of distribution is not an admission that the software is in fact distributed in that form.  Distributions and packaging vary and not all third party components are relied upon in the same manner or degree.  In addition, some compliance documentation, such as embedded notices files in source code, may be found within the distribution itself rather than below.  “Third Party Software” and “Separately Licensed Code” as defined in the applicable Cloudera or Hortonworks agreement, respectively, have the same meaning for the purposes of this notice.
@@ -22,7 +21,7 @@ Further, to the extent Cloudera delivers a containerized installation of an oper
 
 Components: 
 
-${oraclebndl.name} 2.6.0-M3 : Eclipse Distribution License - v 1.0
+${oraclebndl.name} 2.7.5-RC3 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
 Aether :: API 1.7 : Apache License 2.0
 Aether :: Implementation 1.6 : Apache License 2.0
 Aether :: SPI 1.6 : Apache License 2.0
@@ -31,16 +30,14 @@ alibaba/nacos 1.3.0 : Apache License 2.0
 Animal Sniffer Annotations 1.18 : MIT License
 Annotations for Metrics 4.0.5 : Apache License 2.0
 AOP Alliance (Java/J2EE AOP standard) 1.0 : Public Domain
+Aopalliance Version 1.0 Repackaged As A Module 2.2.0-b26 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b14 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-Apache Atlas Web Application 2.0.0.7.1.1.0-565 : Apache License 2.0
 Apache Avro 1.9.1 : Apache License 2.0
 Apache Commons BeanUtils 1.9.4 : Apache License 2.0
 Apache Commons CLI 1.3.1 : Apache License 2.0
 Apache Commons Codec 1.11 : Apache License 2.0
-Apache Commons Codec 1.14 : Apache License 2.0
 Apache Commons Collections 3.2.2 : Apache License 2.0
-Apache Commons Compress 1.18 : Apache License 2.0
+Apache Commons Compress 1.19 : Apache License 2.0
 Apache Commons Configuration 1.10 : Apache License 2.0
 Apache Commons Configuration 2.1.1 : Apache License 2.0
 Apache Commons Lang 2.6 : Apache License 2.0
@@ -54,42 +51,41 @@ Apache Directory LDAP API Utilities 1.0.0-M20 : Apache License 2.0
 Apache Directory Studio 2.0.0-M15 : Apache License 2.0
 Apache Felix Configuration Admin Service 1.2.8 : Apache License 2.0
 Apache Felix Http Api 2.3.0 : Apache License 2.0
-Apache Felix Web Management Console 4.5.2 : Apache License 2.0
 Apache Hadoop Amazon Web Services support 3.1.1.7.1.1.0-565 : Apache License 2.0
-Apache Hadoop Annotations 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Annotations 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Auth 3.1.1.7.0.3.0-79 : Apache License 2.0
 Apache Hadoop Auth 3.1.1.7.1.1.0-565 : Apache License 2.0
-Apache Hadoop Azure Data Lake support 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Azure Data Lake support 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Azure Data Lake support 3.1.1.7.1.0.0-714 : Apache License 2.0
 Apache Hadoop Azure support 3.1.1.7.1.1.0-565 : Apache License 2.0
-Apache Hadoop Client 3.1.1.7.1.1.0-565 : Apache License 2.0
-Apache Hadoop Cloud Storage 3.1.1.7.1.1.0-565 : Apache License 2.0
+Apache Hadoop Client 3.1.1.7.0.3.0-79 : Apache License 2.0
+Apache Hadoop Cloud Storage 3.1.1.7.1.0.0-714 : Apache License 2.0
 Apache Hadoop HDFS Client 3.1.1.7.1.1.0-565 : Apache License 2.0
 Apache HttpClient 4.5.7 : Apache License 2.0
-Apache HttpComponents Core 4.4.10 : Apache License 2.0
 Apache HttpComponents Core 4.4.11 : Apache License 2.0
 Apache HttpMime 4.5.6 : Apache License 2.0
-Apache Kafka 2.4.1 : Apache License 2.0
 Apache Kafka 2.4.1.7.1.1.0-565 : Apache License 2.0
+Apache Kafka 2.5.0 : Apache License 2.0
 Apache log4j 1.2.17-cloudera1 : Apache License 2.0
-Apache log4j 2.10.0 : Apache License 2.0
 Apache Maven 3.0 : Apache License 2.0
 Apache Solr Solrj 7.7.1 : Apache License 2.0
 Apache Yetus - Audience Annotations 0.5.0 : Apache License 2.0
+Apache ZooKeeper 3.5.5.7.0.3.0-79 : Apache License 2.0
 Apache ZooKeeper 3.5.5.7.1.1.0-565 : Apache License 2.0
 Apache ZooKeeper 3.5.8 : Apache License 2.0
-Apache ZooKeeper - Jute 3.5.5.7.1.1.0-565 : Apache License 2.0
+Apache ZooKeeper - Jute 3.5.5 : Apache License 2.0
+Apache ZooKeeper - Jute 3.5.5.7.0.3.0-79 : Apache License 2.0
 ApacheDS Protocol Kerberos Codec 2.0.0-M15 : Apache License 2.0
 argparse4j 0.8.1 : MIT License
 ASM 5.0.4 : BSD 3-clause "New" or "Revised" License
 ASM based accessors helper used by json-smart 1.2 : Apache License 2.0
 avro-examples 0.8.1.7.1.1.0-565 : Apache License 2.0
 azure-data-lake-store-java 2.3.6 : MIT License
-Bean Validation API 2.0.2 : Apache License 2.0
 beanvalidation-api 1.1.0.Final : Apache License 2.0
-beanvalidation-api 2.0.1.Final : Apache License 2.0
 btf 1.2 : Apache License 2.0
 cache 0.8.1.7.1.1.0-565 : Apache License 2.0
 Caffeine cache 2.6.2 : Apache License 2.0
-Caffeine cache 2.8.0 : Apache License 2.0
+Cassandra cassandra-4.0-alpha4 : Apache License 2.0
 Checker Qual 2.8.1 : MIT License
 classworlds 2.2.3 : Apache License 2.0
 com.machinepublishers:jbrowserdriver 1.1.1 : Apache License 2.0
@@ -97,14 +93,11 @@ com.papertrail:profiler 1.0.2 : Apache License 2.0
 Common library for Plugins 2.0.0 : Apache License 2.0
 Common library for Plugins 2.0.0.7.1.1.0-565 : Apache License 2.0
 common-auth 0.8.1.3.5.1.0-17 : Apache License 2.0
-Commons IO 2.5 : Apache License 2.0
 Commons IO 2.6 : Apache License 2.0
-Credential Support 2.0.0.7.1.1.0-565 : Apache License 2.0
 Curator Client 4.3.0 : Apache License 2.0
 Curator Framework 4.3.0 : Apache License 2.0
 Curator Recipes 4.1.0 : Apache License 2.0
 Curator Recipes 4.3.0 : Apache License 2.0
-Daikon main shared library 1.16.0 : Apache License 2.0
 dropwizard 1.3.22 : Apache License 2.0
 Dropwizard Asset Bundle 1.3.17 : Apache License 2.0
 Dropwizard Configuration Support 1.3.22 : Apache License 2.0
@@ -122,51 +115,50 @@ Dropwizard Utility Classes 1.3.22 : Apache License 2.0
 Dropwizard Validation Support 1.3.22 : Apache License 2.0
 Dropwizard Views 1.3.17 : Apache License 2.0
 dropwizard-auth 1.3.17 : Apache License 2.0
-EclipseLink 2.5.2 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 1.0)
-EclipseLink ANTLR 2.6.6-RC1 : Eclipse Distribution License - v 1.0
-EclipseLink ASM 3.3.1.v201206041142 : Eclipse Distribution License - v 1.0
-EclipseLink Core 2.5.2 : Eclipse Distribution License - v 1.0
-EclipseLink DBWS 2.5.2 : Eclipse Distribution License - v 1.0
-EclipseLink Hermes JPQL Parser 2.5.2 : Eclipse Distribution License - v 1.0
-EclipseLink JPA 2.5.2 : Eclipse Distribution License - v 1.0
-EclipseLink Moxy 2.5.3-RC1 : Eclipse Distribution License - v 1.0
-EclipseLink SDO 2.5.2-RC1 : Eclipse Distribution License - v 1.0
-Elastic JNA Distribution 4.5.1 : Apache License 2.0
+EclipseLink 2.7.7 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink ANTLR 2.7.2-RC2 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 1.0)
+EclipseLink ASM 2.7.7 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink Core 2.7.7 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink DBWS 2.7.3 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink Hermes JPQL Parser 2.7.6 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink JPA 2.7.6-RC1 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink Moxy 2.7.6-RC2 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+EclipseLink SDO 2.7.6 : (Eclipse Distribution License - v 1.0 AND Eclipse Public License 2.0)
+Elastic JNA Distribution 5.5.0 : Apache License 2.0
 Elasticsearch v7.0.1 : (Elastic License OR Apache License 2.0)
 error-prone annotations 2.3.2 : Apache License 2.0
 Expression Language 3.0 3.0.0 : Common Development and Distribution License 1.1
 Expression Language API 3.0-b08 : Common Development and Distribution License 1.1
 external-objenesis 1.0.4 : Apache License 2.0
 Fast Infoset 1.2.15 : Apache License 2.0
-FindBugs jsr305 0 : BSD 3-clause "New" or "Revised" License
-FindBugs jsr305 3.0.0 : Apache License 2.0
 FindBugs jsr305 3.0.2 : Apache License 2.0
+flink-avro-cloudera-registry 1.9.0-csa1.0.0.0 : Apache License 2.0
 flyway-core 5.1.4 : Apache License 2.0
 flyway-maven-plugin 5.1.1 : Apache License 2.0
 FreeMarker 2.3.28 : Apache License 2.0
 gateway-cloud-bindings 1.3.0.7.1.1.0-565 : Apache License 2.0
-gateway-i18n 1.3.0.7.1.1.0-565 : Apache License 2.0
+gateway-i18n 1.3.0.7.0.3.0-79 : Apache License 2.0
 gateway-shell 1.3.0.7.1.1.0-565 : Apache License 2.0
 gateway-util-common 1.3.0.7.1.1.0-565 : Apache License 2.0
-gcs-connector.jar 1.9.10.7.1.1.0-565 : Apache License 2.0
-gethostname4j 0.0.2 : MIT License
+gcs-connector.jar hadoop2-2.1.2 : Apache License 2.0
 Google Java Format 1.8 : Apache License 2.0
-google-gson 2.2.4 : Apache License 2.0
+google-gson 2.8.6 : Apache License 2.0
+Gradle Docker plugin 6.5.0 : Apache License 2.0
+GroupBy - Common - HTTP 135 : MIT License
 Guava InternalFutureFailureAccess and InternalFutures 1.0.1 : Apache License 2.0
 Guava ListenableFuture only 9999.0-empty-to-avoid-conflict-with-guava : Apache License 2.0
 Guava: Google Core Libraries for Java 28.1-jre : Apache License 2.0
 Guice - Bean injection 1.3.2 : Apache License 2.0
 Guice - Plexus shim 1.3.4.2 : Apache License 2.0
-hadoop-common 2.10.0 : Apache License 2.0
 hadoop-common 3.1.1.7.1.1.0-565 : Apache License 2.0
-hadoop-yarn-client 3.1.1.7.1.1.0-565 : Apache License 2.0
+hadoop-yarn-client 3.1.1.7.0.3.0-79 : Apache License 2.0
 Hibernate Validator 5.4.2.Final : Apache License 2.0
 HikariCP 2.2.5 : Apache License 2.0
 HikariCP-java6 2.2.5 : Apache License 2.0
 HK2 API module 2.5.0-b30 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-HK2 Implementation Utilities 2.5.0-b31 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
+HK2 Implementation Utilities 2.5.0-b32 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 htrace-core 4.1.0-incubating : Apache License 2.0
-Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b30 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
+Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b02 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 io.swagger:swagger-annotations 1.6.0 : Apache License 2.0
 istack common utility code runtime 3.0.7 : Common Development and Distribution License 1.1
 J2ObjC Annotations 1.3 : Apache License 2.0
@@ -175,76 +167,62 @@ Jackson JSON processor 1.9.13-cloudera.1 : Apache License 2.0
 Jackson module: Paranamer 2.10.0 : Apache License 2.0
 jackson-annotations jackson-annotations-2.10.1 : Apache License 2.0
 jackson-core 1.9.13-cloudera.1 : Apache License 2.0
-jackson-core 1.9.13-cloudera.2 : Apache License 2.0
 jackson-core 2.10.1 : Apache License 2.0
 jackson-coreutils 1.8 : Apache License 2.0
 jackson-databind 2.10.1 : Apache License 2.0
-jackson-dataformat-csv 2.10.0 : Apache License 2.0
 jackson-dataformat-csv 2.10.2 : Apache License 2.0
 jackson-dataformat-yaml 2.10.1 : Apache License 2.0
 jackson-datatype-guava 2.9.10 : Apache License 2.0
-Jackson-datatype-jdk8 2.10.0 : Apache License 2.0
+Jackson-datatype-jdk8 2.10.1 : Apache License 2.0
 Jackson-datatype-jdk8 2.9.10 : Apache License 2.0
 jackson-datatype-joda jackson-datatype-joda-2.9.10 : Apache License 2.0
 Jackson-Datatype-JSR310 2.9.10 : Apache License 2.0
-Jackson-JAXRS-base 2.10.0 : Apache License 2.0
-Jackson-JAXRS-base 2.10.1 : Apache License 2.0
-jackson-jaxrs-json-provider 2.10.0 : Apache License 2.0
-jackson-jaxrs-json-provider 2.10.1 : Apache License 2.0
+Jackson-JAXRS-base 2.10.2.1 : Apache License 2.0
+Jackson-JAXRS-base 2.9.10 : Apache License 2.0
+jackson-jaxrs-json-provider 2.9.10 : Apache License 2.0
 Jackson-module-Afterburner 2.9.10 : Apache License 2.0
-jackson-module-jaxb-annotations 2.10.0 : Apache License 2.0
-jackson-module-jaxb-annotations 2.10.1 : Apache License 2.0
+jackson-module-jaxb-annotations 2.10.2 : Apache License 2.0
+jackson-module-jaxb-annotations 2.9.10 : Apache License 2.0
 Jackson-module-parameter-names 2.9.10 : Apache License 2.0
-jackson-module-scala jackson-module-scala-2.10.0 : Apache License 2.0
+jackson-module-scala 2.10.1 : Apache License 2.0
 jakarta.xml.bind-api 2.3.2 : Eclipse Distribution License - v 1.0
 Java Architecture for XML Binding 2.2.12 : Common Development and Distribution License 1.1
-Java Native Access (JNA) 4.5.1 : (GNU Lesser General Public License v2.1 only OR Apache License 2.0)
 Java Native Access (JNA) 5.2.0 : Apache License 2.0
 Java redis client 3.5.0.Final : Apache License 2.0
+Java Servlet API 2.1 : Common Development and Distribution License 1.0
 Java Servlet API 3.1.0 : Common Development and Distribution License 1.1
 java-classmate 1.3.1 : Apache License 2.0
+Java-WebSocket v1.4.0 : MIT License
 JavaBeans Activation Framework 1.1 : Common Development and Distribution License 1.0
 JavaBeans Activation Framework 1.2.0 : Common Development and Distribution License 1.0
-JavaBeans Activation Framework 1.2.1 : BSD 3-clause "New" or "Revised" License
 JavaBeans Activation Framework API jar 1.2.0 : Common Development and Distribution License 1.1
-JavaBeans Activation Framework API jar 1.2.1 : BSD 3-clause "New" or "Revised" License
 JavaMail 1.4.3 : Common Development and Distribution License 1.0
-Javassist 3.18.1-GA : Apache License 2.0
-Javassist 3.20.0-GA : (Mozilla Public License 1.1 OR GNU Lesser General Public License v2.1 or later OR Apache License 2.0)
-Javassist rel_ : Mozilla Public License 1.1
+Javassist 3.24.1-GA : (Mozilla Public License 1.1 OR GNU Lesser General Public License v2.1 or later OR Apache License 2.0)
 Javax Inject from the JSR-330 Expert Group 1 : Apache License 2.0
-Javax Persistence API 2.0 2.0.5 : Eclipse Distribution License - v 1.0
-Javax Persistence API 2.0 2.1.0-RC2 : Eclipse Distribution License - v 1.0
+Javax Persistence API 2.0 2.2.0 : Eclipse Public License 1.0
 javax.annotation API 1.2 : Common Development and Distribution License 1.1
 javax.ws.rs-api 2.0.1 : Common Development and Distribution License 1.1
 JAX-RS provider for JSON content type 1.9.13 : Apache License 2.0
 JAXB CORE 2.3.0-b170127.1453 : Common Development and Distribution License 1.1
 JAXB Runtime 2.3.1 : Common Development and Distribution License 1.1
-JAXB XML Binding Code Generator Package 2.4.0-b180725.0644 : Common Development and Distribution License 1.1
 JBoss Logging 3 3.3.0.Final : Apache License 2.0
 JCIP Annotations under Apache License 1.0-1 : Apache License 2.0
 JCL 1.2 Implemented Over SLF4J 1.7.25 : MIT License
 Jersey 1.18.6 : Common Development and Distribution License 1.1
 Jersey 1.19.3 : Common Development and Distribution License 1.1
 Jersey 2.25.1 : (GNU General Public License v2.0 w/Classpath exception AND Common Development and Distribution License 1.1)
-Jersey 2.31 : (GNU General Public License v2.0 w/Classpath exception AND Eclipse Public License 2.0)
 jersey-atom 1.18.6 : Common Development and Distribution License 1.1
 jersey-bundle 1.19.3 : Common Development and Distribution License 1.1
 jersey-container-servlet 2.25.1 : Common Development and Distribution License 1.1
-jersey-container-servlet 2.31 : (MIT License AND BSD 2-clause "Simplified" License AND Eclipse Distribution License - v 1.0 AND Sun GPL With Classpath Exception v2.0 AND Apache License 2.0 AND BSD 3-clause "New" or "Revised" License AND Public Domain AND Eclipse Public License 2.0 AND W3C Software Notice and License (2002-12-31) AND Unknown License)
 jersey-container-servlet-core 2.25.1 : Common Development and Distribution License 1.1
-jersey-container-servlet-core 2.31 : (MIT License AND BSD 2-clause "Simplified" License AND Eclipse Distribution License - v 1.0 AND Sun GPL With Classpath Exception v2.0 AND Apache License 2.0 AND BSD 3-clause "New" or "Revised" License AND Public Domain AND Eclipse Public License 2.0 AND W3C Software Notice and License (2002-12-31) AND Unknown License)
 jersey-core-server 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-jersey-core-server 2.31 : (GNU General Public License v2.0 w/Classpath exception AND Apache License 2.0 AND BSD 3-clause "New" or "Revised" License AND Eclipse Public License 2.0)
 jersey-ext-bean-validation 2.25.1 : Common Development and Distribution License 1.1
-jersey-ext-entity-filtering 2.25 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 jersey-ext-entity-filtering 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 jersey-ext-metainf-services 2.25.1 : Common Development and Distribution License 1.1
 jersey-fastinfoset 1.9-ea07 : Common Development and Distribution License 1.1
 jersey-grizzly 1.18.6 : Common Development and Distribution License 1.1
 jersey-json 1.18.6 : Common Development and Distribution License 1.1
 jersey-media-jaxb 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-jersey-media-jaxb 2.31 : (MIT License AND BSD 2-clause "Simplified" License AND Eclipse Distribution License - v 1.0 AND Sun GPL With Classpath Exception v2.0 AND Apache License 2.0 AND BSD 3-clause "New" or "Revised" License AND Public Domain AND Eclipse Public License 2.0 AND W3C Software Notice and License (2002-12-31) AND Unknown License)
 jersey-media-json-jackson 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 jersey-media-multipart 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
 jersey-repackaged-guava 2.25.1 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
@@ -255,13 +233,11 @@ Jetty :: Servlet Handling 9.4.18.v20190429 : Apache License 2.0
 Jetty :: Servlet Handling 9.4.26.v20200117 : (Apache License 2.0 AND Eclipse Public License 1.0)
 Jetty :: Utility Servlets and Filters 9.4.18.v20190429 : Apache License 2.0
 Jetty Toolchain 1.0.3 : Apache License 2.0
-Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server 9.4.26.v20200117 : (Apache License 2.0 AND Eclipse Public License 1.0)
 Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server jetty-9.4.18.v20190429 : Apache License 2.0
-Joda Time 2.3 : Apache License 2.0
+Joda Time 2.10.1 : Apache License 2.0
 Joda Time 2.8.1 : Apache License 2.0
-JOpt Simple 4.6 : MIT License
 JOpt Simple 5.0.4 : MIT License
-JRuby 9.1.1.0 : Eclipse Public License 1.0
+JSch 0.1.54 : BSD 3-clause "New" or "Revised" License
 JSON Schema Validator 2.2.6 : Apache License 2.0
 json-schema-core 1.2.5 : Apache License 2.0
 	This software is dual-licensed under:
@@ -278,7 +254,6 @@ json-schema-core 1.2.5 : Apache License 2.0
 	- LGPL 3.0: https://www.gnu.org/licenses/lgpl-3.0.txt
 	- ASL 2.0: http://www.apache.org/licenses/LICENSE-2.0.txt
 json-smart-v1 2.3 : Apache License 2.0
-jsr311-api 1.1.1 : Common Development and Distribution License 1.0
 JUL to SLF4J bridge 1.7.26 : MIT License
 JVM Integration for Metrics 4.0.5 : Apache License 2.0
 Kerb Simple Kdc 1.1.1 : Apache License 2.0
@@ -300,14 +275,12 @@ libphonenumber 6.2 : Apache License 2.0
 libplexus-utils 3.1.0 : Apache License 2.0
 linkerd/linkerd 1.7.3 : Apache License 2.0
 localstack-utils 0.1.22 : Apache License 2.0
-Log Redactor 2.0.8 : Apache License 2.0
-Log4J API 2.10.0 : Apache License 2.0
 Log4j Implemented Over SLF4J 1.7.25 : Apache License 2.0
 Logback 1.2.3 : Eclipse Public License 1.0
 Logback Access Module 1.2.3 : Eclipse Public License 1.0
 Logback Classic Module 1.2.3 : Eclipse Public License 1.0
 Logspace Agent Controller 0.3.1 : Eclipse Public License 1.0
-LZ4 and xxHash 1.6.0 : Apache License 2.0
+LZ4 and xxHash 1.7.1 : Apache License 2.0
 Maven Aether Provider 3.0 : Apache License 2.0
 Maven Artifact 3.0 : Apache License 2.0
 Maven Model Builder 3.0 : Apache License 2.0
@@ -320,10 +293,9 @@ Metrics Integration for Jersey 2.x 4.0.5 : Apache License 2.0
 Metrics Integration for Jetty 9.1 and higher 4.0.5 : Apache License 2.0
 Metrics Integration for Logback 4.0.5 : Apache License 2.0
 Metrics Integration with JMX 4.0.5 : Apache License 2.0
-Metrics Servlet 2.2.0 : Apache License 2.0
 Metrics Utility Servlets 4.0.5 : Apache License 2.0
 Microsoft Azure SDK for Key Vault 1.0.0 : MIT License
-Microsoft Windows Azure Storage Client SDK 7.0.0 : Apache License 2.0
+Microsoft Windows Azure Storage Client SDK 7.0.1 : Apache License 2.0
 MIME streaming extension 1.9.6 : Common Development and Distribution License 1.1
 Mozilla Rhino 1.7r4 : Mozilla Public License 2.0
 msg-simple 1.1 : Apache License 2.0
@@ -336,12 +308,11 @@ Noggit JSON Parser 0.8 : Apache License 2.0
 OkHttp 2.7.5 : Apache License 2.0
 OkIO 1.6.0 : Apache License 2.0
 org.eclipse.osgi.services 3.5.2 : Apache License 2.0
-org.lucee:commons-io 2.5.0 : Apache License 2.0
+org.genomicsdb:genomicsdb 1.3.0 : MIT License
 org.osgi.compendium r4v42-20090728 : Apache License 2.0
 OSGi LogService implemented over SLF4J 1.7.13 : MIT License
 OSGi R4 compendium 1.4.0 : Apache License 2.0
 OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.1 : Common Development and Distribution License 1.1
-OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.3 : (Sun GPL With Classpath Exception v2.0 AND Eclipse Public License 2.0)
 osgi.core 4.3.1 : Apache License 2.0
 osgi.enterprise 4.2.0 : Apache License 2.0
 p6spy 3.8.7 : Apache License 2.0
@@ -351,42 +322,45 @@ Policeman's Forbidden API Checker 2.7 : Apache License 2.0
 PostgreSQL JDBC Driver (pgjdbc) REL42.2.13 : BSD 2-clause "Simplified" License
 Protocol Buffer Java API 2.5.0 : BSD 3-clause "New" or "Revised" License
 Proxy Vole 1.0.5 : Apache License 2.0
+Pulsar Client Admin 2.2.1 : Apache License 2.0
+QWAZR Extractor 1.1.0 : Apache License 2.0
 Ranger Remote Authorization Hook - ABFS driver 2.0.0.7.1.1.0-565 : Apache License 2.0
-Ranger Remote Authorization Integration 2.0.0.7.1.1.0-565 : Apache License 2.0
+Ranger Remote Authorization Integration 2.0.0.7.1.0.0-714 : Apache License 2.0
+ranger-plugin-classloader 1.2.0.3.1.4.13-1 : Apache License 2.0
 ranger-plugin-classloader 2.0.0.7.1.1.0-565 : Apache License 2.0
 re2j 1.2 : BSD 3-clause "New" or "Revised" License
 reflections 0.9.11 : Do What The F*ck You Want To Public License
-registry-common 0.9.0 : Apache License 2.0
+registry-common 0.3.1 : Apache License 2.0
+registry-common 0.8.1.7.1.1.0-565 : Apache License 2.0
 registry-common-client 0.9.0 : Apache License 2.0
+registry-webservice 0.8.1.3.5.1.3-3 : Apache License 2.0
 registry-webservice 0.9.0 : Apache License 2.0
 RocksDB JNI 5.18.3 : Apache License 2.0
 RxJava 1.1.6 : Apache License 2.0
-Scala 2.11.12 : BSD 3-clause Clear License
-scala-collection-compat 2.1.2 : Apache License 2.0
+scala-collection-compat 2.1.3-RC2 : Apache License 2.0
 scala-java8-compat 0.9.0 : BSD 3-clause "New" or "Revised" License
-scalalogging 3.9.2 : Apache License 2.0
+scala-logging 3.9.2 : Apache License 2.0
 schema-registry-authorization-agent 0.9.0 : Apache License 2.0
 schema-registry-authorizer-core 0.9.0 : Apache License 2.0
 schema-registry-client 0.8.1.7.1.1.0-565 : Apache License 2.0
 schema-registry-common 0.8.1.7.1.1.0-565 : Apache License 2.0
-schema-registry-core 0.9.0 : Apache License 2.0
-schema-registry-ranger-authorizer 0.8.1.7.1.1.0-565 : Apache License 2.0
-schema-registry-ranger-authorizer-shim 0.8.1.7.1.1.0-565 : Apache License 2.0
+schema-registry-core 0.5.3 : Apache License 2.0
+schema-registry-ranger-authorizer 0.9.0 : Apache License 2.0
+schema-registry-ranger-authorizer-shim 0.9.0 : Apache License 2.0
 schema-registry-serdes 0.8.1.7.1.1.0-565 : Apache License 2.0
 schema-registry-webservice 0.9.0 : Apache License 2.0
 SDO API 2.1.1 : Eclipse Distribution License - v 1.0
-serdes-examples 0.9.0 : Apache License 2.0
+Search Solr MapReduce Indexer 1.0.0.7.1.0.0-714 : Apache License 2.0
+serdes-examples 0.5.1.3.1.2.9-1 : Apache License 2.0
 ServiceLocator Default Implementation 2.5.0-b32 : (Common Development and Distribution License 1.1 OR Sun GPL With Classpath Exception v2.0)
-Simple Logging Facade for Java (SLF4J) 1.7.25 : MIT License
 Sisu - Guice 2.1.7 : Apache License 2.0
 Sisu - Inject (JSR330 bean support) 1.4.1 : Apache License 2.0
 Sisu - Inject (Plexus bean support) 1.4.2 : Apache License 2.0
 SLF4J API Module 1.7.25 : MIT License
 SLF4J Simple Binding 1.7.25 : MIT License
 SnakeYAML 1.24 : Apache License 2.0
-snappy-java 1.1.4 : Apache License 2.0
 snappy-java 1.1.7.3 : Apache License 2.0
-spine-bootstrap 1.5.8 : Apache License 2.0
+spectator-reg-atlas 0.101.0 : Apache License 2.0
 Spring Commons Logging Bridge 5.0.16.RELEASE : Apache License 2.0
 Spring Framework 5.0.16.RELEASE : Apache License 2.0
 Spring Security 3.2.7 : Apache License 2.0
@@ -394,17 +368,15 @@ Spring Security Kerberos Core 1.0.1.RELEASE : Apache License 2.0
 spring-aopalliance 1.0 : Apache License 2.0
 stax-ex 1.8 : Common Development and Distribution License 1.1
 Stax2 API 3.1.4 : BSD 3-clause "New" or "Revised" License
-storage-common 0.9.0 : Apache License 2.0
+storage-common 0.8.1.3.5.1.1-3 : Apache License 2.0
 storage-core 0.8.1.7.1.1.0-565 : Apache License 2.0
 storage-tool 0.8.1.7.1.1.0-565 : Apache License 2.0
 storm-starter 1.2.1.3.1.5.47-2 : Apache License 2.0
-Swagger v1.6.0 : Apache License 2.0
-swagger-codegen v2.4.14 : Apache License 2.0
+swagger-core v1.6.0 : Apache License 2.0
 swagger-jaxrs 1.6.0 : Apache License 2.0
 swagger-jersey2-jaxrs (Jersey 2.x support) 1.6.0 : Apache License 2.0
 swagger-models 1.6.0 : Apache License 2.0
 swagger-ui 3.24.3 : Apache License 2.0
-Telegram Bots 3.6 : MIT License
 Token provider 1.1.1 : Apache License 2.0
 TXW2 Runtime 2.3.1 : Common Development and Distribution License 1.1
 Type arithmetic library for Java5 1.3 : Common Development and Distribution License 1.0
@@ -416,11 +388,12 @@ wildfly-openssl-java 1.0.8.Final : Apache License 2.0
 Woodstox 4.4.1 : Apache License 2.0
 Woodstox 5.0.3 : Apache License 2.0
 zstd-jni 1.4.3-1 : BSD 2-clause "Simplified" License
+zstd-jni 1.4.4-7 : BSD 2-clause "Simplified" License
 
 Licenses: 
 
 Apache License 2.0
-(Aether :: API 1.7, Aether :: Implementation 1.6, Aether :: SPI 1.6, Aether :: Utilities 1.7, alibaba/nacos 1.3.0, Annotations for Metrics 4.0.5, Apache Atlas Web Application 2.0.0.7.1.1.0-565, Apache Avro 1.9.1, Apache Commons BeanUtils 1.9.4, Apache Commons CLI 1.3.1, Apache Commons Codec 1.11, Apache Commons Codec 1.14, Apache Commons Collections 3.2.2, Apache Commons Compress 1.18, Apache Commons Configuration 1.10, Apache Commons Configuration 2.1.1, Apache Commons Lang 2.6, Apache Commons Lang 3.8.1, Apache Commons Logging 1.2, Apache Commons Math 3.1.1, Apache Commons Net 3.6, Apache Commons Text 1.2, Apache Directory API ASN.1 API 1.0.0-M19, Apache Directory LDAP API Utilities 1.0.0-M20, Apache Directory Studio 2.0.0-M15, Apache Felix Configuration Admin Service 1.2.8, Apache Felix Http Api 2.3.0, Apache Felix Web Management Console 4.5.2, Apache Hadoop Amazon Web Services support 3.1.1.7.1.1.0-565, Apache Hadoop Annotations 3.1.1.7.1.1.0-565, Apache Hadoop Auth 3.1.1.7.1.1.0-565, Apache Hadoop Azure Data Lake support 3.1.1.7.1.1.0-565, Apache Hadoop Azure support 3.1.1.7.1.1.0-565, Apache Hadoop Client 3.1.1.7.1.1.0-565, Apache Hadoop Cloud Storage 3.1.1.7.1.1.0-565, Apache Hadoop HDFS Client 3.1.1.7.1.1.0-565, Apache HttpClient 4.5.7, Apache HttpComponents Core 4.4.10, Apache HttpComponents Core 4.4.11, Apache HttpMime 4.5.6, Apache Kafka 2.4.1, Apache Kafka 2.4.1.7.1.1.0-565, Apache log4j 1.2.17-cloudera1, Apache log4j 2.10.0, Apache Maven 3.0, Apache Solr Solrj 7.7.1, Apache Yetus - Audience Annotations 0.5.0, Apache ZooKeeper 3.5.5.7.1.1.0-565, Apache ZooKeeper 3.5.8, Apache ZooKeeper - Jute 3.5.5.7.1.1.0-565, ApacheDS Protocol Kerberos Codec 2.0.0-M15, ASM based accessors helper used by json-smart 1.2, avro-examples 0.8.1.7.1.1.0-565, Bean Validation API 2.0.2, beanvalidation-api 1.1.0.Final, beanvalidation-api 2.0.1.Final, btf 1.2, cache 0.8.1.7.1.1.0-565, Caffeine cache 2.6.2, Caffeine cache 2.8.0, classworlds 2.2.3, com.machinepublishers:jbrowserdriver 1.1.1, com.papertrail:profiler 1.0.2, Common library for Plugins 2.0.0, Common library for Plugins 2.0.0.7.1.1.0-565, common-auth 0.8.1.3.5.1.0-17, Commons IO 2.5, Commons IO 2.6, Credential Support 2.0.0.7.1.1.0-565, Curator Client 4.3.0, Curator Framework 4.3.0, Curator Recipes 4.1.0, Curator Recipes 4.3.0, Daikon main shared library 1.16.0, dropwizard 1.3.22, Dropwizard Asset Bundle 1.3.17, Dropwizard Configuration Support 1.3.22, Dropwizard Freemarker Views 1.3.17, Dropwizard Jackson Support 1.3.22, Dropwizard Jersey Support 1.3.22, Dropwizard Jetty Support 1.3.22, Dropwizard Lifecycle Support 1.3.22, Dropwizard Logging Support 1.3.22, Dropwizard Metrics Support 1.3.22, Dropwizard Request Logging Support 1.3.22, Dropwizard Servlet Support 1.3.22, Dropwizard Swagger support 1.3.17-1, Dropwizard Utility Classes 1.3.22, Dropwizard Validation Support 1.3.22, Dropwizard Views 1.3.17, dropwizard-auth 1.3.17, Elastic JNA Distribution 4.5.1, Elasticsearch v7.0.1, error-prone annotations 2.3.2, external-objenesis 1.0.4, Fast Infoset 1.2.15, FindBugs jsr305 3.0.0, FindBugs jsr305 3.0.2, flyway-core 5.1.4, flyway-maven-plugin 5.1.1, FreeMarker 2.3.28, gateway-cloud-bindings 1.3.0.7.1.1.0-565, gateway-i18n 1.3.0.7.1.1.0-565, gateway-shell 1.3.0.7.1.1.0-565, gateway-util-common 1.3.0.7.1.1.0-565, gcs-connector.jar 1.9.10.7.1.1.0-565, Google Java Format 1.8, google-gson 2.2.4, Guava InternalFutureFailureAccess and InternalFutures 1.0.1, Guava ListenableFuture only 9999.0-empty-to-avoid-conflict-with-guava, Guava: Google Core Libraries for Java 28.1-jre, Guice - Bean injection 1.3.2, Guice - Plexus shim 1.3.4.2, hadoop-common 2.10.0, hadoop-common 3.1.1.7.1.1.0-565, hadoop-yarn-client 3.1.1.7.1.1.0-565, Hibernate Validator 5.4.2.Final, HikariCP 2.2.5, HikariCP-java6 2.2.5, htrace-core 4.1.0-incubating, io.swagger:swagger-annotations 1.6.0, J2ObjC Annotations 1.3, Jackson Integration for Metrics 4.0.5, Jackson JSON processor 1.9.13-cloudera.1, Jackson module: Paranamer 2.10.0, jackson-annotations jackson-annotations-2.10.1, jackson-core 1.9.13-cloudera.1, jackson-core 1.9.13-cloudera.2, jackson-core 2.10.1, jackson-coreutils 1.8, jackson-databind 2.10.1, jackson-dataformat-csv 2.10.0, jackson-dataformat-csv 2.10.2, jackson-dataformat-yaml 2.10.1, jackson-datatype-guava 2.9.10, Jackson-datatype-jdk8 2.10.0, Jackson-datatype-jdk8 2.9.10, jackson-datatype-joda jackson-datatype-joda-2.9.10, Jackson-Datatype-JSR310 2.9.10, Jackson-JAXRS-base 2.10.0, Jackson-JAXRS-base 2.10.1, jackson-jaxrs-json-provider 2.10.0, jackson-jaxrs-json-provider 2.10.1, Jackson-module-Afterburner 2.9.10, jackson-module-jaxb-annotations 2.10.0, jackson-module-jaxb-annotations 2.10.1, Jackson-module-parameter-names 2.9.10, jackson-module-scala jackson-module-scala-2.10.0, Java Native Access (JNA) 4.5.1, Java Native Access (JNA) 5.2.0, Java redis client 3.5.0.Final, java-classmate 1.3.1, Javassist 3.18.1-GA, Javassist 3.20.0-GA, Javax Inject from the JSR-330 Expert Group 1, JAX-RS provider for JSON content type 1.9.13, JBoss Logging 3 3.3.0.Final, JCIP Annotations under Apache License 1.0-1, jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-core-server 2.31, jersey-media-jaxb 2.31, JetBrains.RdGen 2020.1.0-preview1, Jetty :: Servlet Handling 9.4.18.v20190429, Jetty :: Servlet Handling 9.4.26.v20200117, Jetty :: Utility Servlets and Filters 9.4.18.v20190429, Jetty Toolchain 1.0.3, Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server 9.4.26.v20200117, Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server jetty-9.4.18.v20190429, Joda Time 2.3, Joda Time 2.8.1, JSON Schema Validator 2.2.6, json-schema-core 1.2.5, json-smart-v1 2.3, JVM Integration for Metrics 4.0.5, Kerb Simple Kdc 1.1.1, Kerby ASN1 Project 1.1.1, Kerby Config 1.1.1, Kerby PKIX Project 1.1.1, Kerby Util 1.1.1, Kerby XDR Project 1.1.1, Kerby-kerb Admin 1.1.1, Kerby-kerb Client 1.1.1, Kerby-kerb Common 1.1.1, Kerby-kerb core 1.1.1, Kerby-kerb Crypto 1.1.1, Kerby-kerb Identity 1.1.1, Kerby-kerb Server 1.1.1, Kerby-kerb Util 1.1.1, KnowHowLab jmx-1.0.0, libphonenumber 6.2, libplexus-utils 3.1.0, linkerd/linkerd 1.7.3, localstack-utils 0.1.22, Log Redactor 2.0.8, Log4J API 2.10.0, Log4j Implemented Over SLF4J 1.7.25, LZ4 and xxHash 1.6.0, Maven Aether Provider 3.0, Maven Artifact 3.0, Maven Model Builder 3.0, Maven Plugin API 3.0-beta-2, Maven Settings Builder 3.0-beta-3, Metrics Core 4.0.5, Metrics Core Library 2.2.0, Metrics Health Checks 4.0.5, Metrics Integration for Jersey 2.x 4.0.5, Metrics Integration for Jetty 9.1 and higher 4.0.5, Metrics Integration for Logback 4.0.5, Metrics Integration with JMX 4.0.5, Metrics Servlet 2.2.0, Metrics Utility Servlets 4.0.5, Microsoft Windows Azure Storage Client SDK 7.0.0, msg-simple 1.1, Netty Project 4.1.46.Final, Netty Project netty-4.1.47.Final, Netty/Codec/Redis 4.1.43.Final, Netty/Codec/SMTP 4.1.46.Final, Nimbus-JOSE-JWT 7.9, Noggit JSON Parser 0.8, OkHttp 2.7.5, OkIO 1.6.0, org.eclipse.osgi.services 3.5.2, org.lucee:commons-io 2.5.0, org.osgi.compendium r4v42-20090728, OSGi R4 compendium 1.4.0, osgi.core 4.3.1, osgi.enterprise 4.2.0, p6spy 3.8.7, plexus-sec-dispatcher 1.3.1, Policeman's Forbidden API Checker 2.7, Proxy Vole 1.0.5, Ranger Remote Authorization Hook - ABFS driver 2.0.0.7.1.1.0-565, Ranger Remote Authorization Integration 2.0.0.7.1.1.0-565, ranger-plugin-classloader 2.0.0.7.1.1.0-565, registry-common 0.9.0, registry-common-client 0.9.0, registry-webservice 0.9.0, RocksDB JNI 5.18.3, RxJava 1.1.6, scala-collection-compat 2.1.2, scalalogging 3.9.2, schema-registry-authorization-agent 0.9.0, schema-registry-authorizer-core 0.9.0, schema-registry-client 0.8.1.7.1.1.0-565, schema-registry-common 0.8.1.7.1.1.0-565, schema-registry-core 0.9.0, schema-registry-ranger-authorizer 0.8.1.7.1.1.0-565, schema-registry-ranger-authorizer-shim 0.8.1.7.1.1.0-565, schema-registry-serdes 0.8.1.7.1.1.0-565, schema-registry-webservice 0.9.0, serdes-examples 0.9.0, Sisu - Guice 2.1.7, Sisu - Inject (JSR330 bean support) 1.4.1, Sisu - Inject (Plexus bean support) 1.4.2, SnakeYAML 1.24, snappy-java 1.1.4, snappy-java 1.1.7.3, spine-bootstrap 1.5.8, Spring Commons Logging Bridge 5.0.16.RELEASE, Spring Framework 5.0.16.RELEASE, Spring Security 3.2.7, Spring Security Kerberos Core 1.0.1.RELEASE, spring-aopalliance 1.0, storage-common 0.9.0, storage-core 0.8.1.7.1.1.0-565, storage-tool 0.8.1.7.1.1.0-565, storm-starter 1.2.1.3.1.5.47-2, Swagger v1.6.0, swagger-codegen v2.4.14, swagger-jaxrs 1.6.0, swagger-jersey2-jaxrs (Jersey 2.x support) 1.6.0, swagger-models 1.6.0, swagger-ui 3.24.3, Token provider 1.1.1, uri-template 0.9, WildFly 17.0.1.Final, wildfly-openssl 1.0.7.Final, wildfly-openssl-java 1.0.8.Final, Woodstox 4.4.1, Woodstox 5.0.3)
+(Aether :: API 1.7, Aether :: Implementation 1.6, Aether :: SPI 1.6, Aether :: Utilities 1.7, alibaba/nacos 1.3.0, Annotations for Metrics 4.0.5, Apache Avro 1.9.1, Apache Commons BeanUtils 1.9.4, Apache Commons CLI 1.3.1, Apache Commons Codec 1.11, Apache Commons Collections 3.2.2, Apache Commons Compress 1.19, Apache Commons Configuration 1.10, Apache Commons Configuration 2.1.1, Apache Commons Lang 2.6, Apache Commons Lang 3.8.1, Apache Commons Logging 1.2, Apache Commons Math 3.1.1, Apache Commons Net 3.6, Apache Commons Text 1.2, Apache Directory API ASN.1 API 1.0.0-M19, Apache Directory LDAP API Utilities 1.0.0-M20, Apache Directory Studio 2.0.0-M15, Apache Felix Configuration Admin Service 1.2.8, Apache Felix Http Api 2.3.0, Apache Hadoop Amazon Web Services support 3.1.1.7.1.1.0-565, Apache Hadoop Annotations 3.1.1.7.0.3.0-79, Apache Hadoop Auth 3.1.1.7.0.3.0-79, Apache Hadoop Auth 3.1.1.7.1.1.0-565, Apache Hadoop Azure Data Lake support 3.1.1.7.0.3.0-79, Apache Hadoop Azure Data Lake support 3.1.1.7.1.0.0-714, Apache Hadoop Azure support 3.1.1.7.1.1.0-565, Apache Hadoop Client 3.1.1.7.0.3.0-79, Apache Hadoop Cloud Storage 3.1.1.7.1.0.0-714, Apache Hadoop HDFS Client 3.1.1.7.1.1.0-565, Apache HttpClient 4.5.7, Apache HttpComponents Core 4.4.11, Apache HttpMime 4.5.6, Apache Kafka 2.4.1.7.1.1.0-565, Apache Kafka 2.5.0, Apache log4j 1.2.17-cloudera1, Apache Maven 3.0, Apache Solr Solrj 7.7.1, Apache Yetus - Audience Annotations 0.5.0, Apache ZooKeeper 3.5.5.7.0.3.0-79, Apache ZooKeeper 3.5.5.7.1.1.0-565, Apache ZooKeeper 3.5.8, Apache ZooKeeper - Jute 3.5.5, Apache ZooKeeper - Jute 3.5.5.7.0.3.0-79, ApacheDS Protocol Kerberos Codec 2.0.0-M15, ASM based accessors helper used by json-smart 1.2, avro-examples 0.8.1.7.1.1.0-565, beanvalidation-api 1.1.0.Final, btf 1.2, cache 0.8.1.7.1.1.0-565, Caffeine cache 2.6.2, Cassandra cassandra-4.0-alpha4, classworlds 2.2.3, com.machinepublishers:jbrowserdriver 1.1.1, com.papertrail:profiler 1.0.2, Common library for Plugins 2.0.0, Common library for Plugins 2.0.0.7.1.1.0-565, common-auth 0.8.1.3.5.1.0-17, Commons IO 2.6, Curator Client 4.3.0, Curator Framework 4.3.0, Curator Recipes 4.1.0, Curator Recipes 4.3.0, dropwizard 1.3.22, Dropwizard Asset Bundle 1.3.17, Dropwizard Configuration Support 1.3.22, Dropwizard Freemarker Views 1.3.17, Dropwizard Jackson Support 1.3.22, Dropwizard Jersey Support 1.3.22, Dropwizard Jetty Support 1.3.22, Dropwizard Lifecycle Support 1.3.22, Dropwizard Logging Support 1.3.22, Dropwizard Metrics Support 1.3.22, Dropwizard Request Logging Support 1.3.22, Dropwizard Servlet Support 1.3.22, Dropwizard Swagger support 1.3.17-1, Dropwizard Utility Classes 1.3.22, Dropwizard Validation Support 1.3.22, Dropwizard Views 1.3.17, dropwizard-auth 1.3.17, Elastic JNA Distribution 5.5.0, Elasticsearch v7.0.1, error-prone annotations 2.3.2, external-objenesis 1.0.4, Fast Infoset 1.2.15, FindBugs jsr305 3.0.2, flink-avro-cloudera-registry 1.9.0-csa1.0.0.0, flyway-core 5.1.4, flyway-maven-plugin 5.1.1, FreeMarker 2.3.28, gateway-cloud-bindings 1.3.0.7.1.1.0-565, gateway-i18n 1.3.0.7.0.3.0-79, gateway-shell 1.3.0.7.1.1.0-565, gateway-util-common 1.3.0.7.1.1.0-565, gcs-connector.jar hadoop2-2.1.2, Google Java Format 1.8, google-gson 2.8.6, Gradle Docker plugin 6.5.0, Guava InternalFutureFailureAccess and InternalFutures 1.0.1, Guava ListenableFuture only 9999.0-empty-to-avoid-conflict-with-guava, Guava: Google Core Libraries for Java 28.1-jre, Guice - Bean injection 1.3.2, Guice - Plexus shim 1.3.4.2, hadoop-common 3.1.1.7.1.1.0-565, hadoop-yarn-client 3.1.1.7.0.3.0-79, Hibernate Validator 5.4.2.Final, HikariCP 2.2.5, HikariCP-java6 2.2.5, htrace-core 4.1.0-incubating, io.swagger:swagger-annotations 1.6.0, J2ObjC Annotations 1.3, Jackson Integration for Metrics 4.0.5, Jackson JSON processor 1.9.13-cloudera.1, Jackson module: Paranamer 2.10.0, jackson-annotations jackson-annotations-2.10.1, jackson-core 1.9.13-cloudera.1, jackson-core 2.10.1, jackson-coreutils 1.8, jackson-databind 2.10.1, jackson-dataformat-csv 2.10.2, jackson-dataformat-yaml 2.10.1, jackson-datatype-guava 2.9.10, Jackson-datatype-jdk8 2.10.1, Jackson-datatype-jdk8 2.9.10, jackson-datatype-joda jackson-datatype-joda-2.9.10, Jackson-Datatype-JSR310 2.9.10, Jackson-JAXRS-base 2.10.2.1, Jackson-JAXRS-base 2.9.10, jackson-jaxrs-json-provider 2.9.10, Jackson-module-Afterburner 2.9.10, jackson-module-jaxb-annotations 2.10.2, jackson-module-jaxb-annotations 2.9.10, Jackson-module-parameter-names 2.9.10, jackson-module-scala 2.10.1, Java Native Access (JNA) 5.2.0, Java redis client 3.5.0.Final, java-classmate 1.3.1, Javassist 3.24.1-GA, Javax Inject from the JSR-330 Expert Group 1, JAX-RS provider for JSON content type 1.9.13, JBoss Logging 3 3.3.0.Final, JCIP Annotations under Apache License 1.0-1, JetBrains.RdGen 2020.1.0-preview1, Jetty :: Servlet Handling 9.4.18.v20190429, Jetty :: Servlet Handling 9.4.26.v20200117, Jetty :: Utility Servlets and Filters 9.4.18.v20190429, Jetty Toolchain 1.0.3, Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server jetty-9.4.18.v20190429, Joda Time 2.10.1, Joda Time 2.8.1, JSON Schema Validator 2.2.6, json-schema-core 1.2.5, json-smart-v1 2.3, JVM Integration for Metrics 4.0.5, Kerb Simple Kdc 1.1.1, Kerby ASN1 Project 1.1.1, Kerby Config 1.1.1, Kerby PKIX Project 1.1.1, Kerby Util 1.1.1, Kerby XDR Project 1.1.1, Kerby-kerb Admin 1.1.1, Kerby-kerb Client 1.1.1, Kerby-kerb Common 1.1.1, Kerby-kerb core 1.1.1, Kerby-kerb Crypto 1.1.1, Kerby-kerb Identity 1.1.1, Kerby-kerb Server 1.1.1, Kerby-kerb Util 1.1.1, KnowHowLab jmx-1.0.0, libphonenumber 6.2, libplexus-utils 3.1.0, linkerd/linkerd 1.7.3, localstack-utils 0.1.22, Log4j Implemented Over SLF4J 1.7.25, LZ4 and xxHash 1.7.1, Maven Aether Provider 3.0, Maven Artifact 3.0, Maven Model Builder 3.0, Maven Plugin API 3.0-beta-2, Maven Settings Builder 3.0-beta-3, Metrics Core 4.0.5, Metrics Core Library 2.2.0, Metrics Health Checks 4.0.5, Metrics Integration for Jersey 2.x 4.0.5, Metrics Integration for Jetty 9.1 and higher 4.0.5, Metrics Integration for Logback 4.0.5, Metrics Integration with JMX 4.0.5, Metrics Utility Servlets 4.0.5, Microsoft Windows Azure Storage Client SDK 7.0.1, msg-simple 1.1, Netty Project 4.1.46.Final, Netty Project netty-4.1.47.Final, Netty/Codec/Redis 4.1.43.Final, Netty/Codec/SMTP 4.1.46.Final, Nimbus-JOSE-JWT 7.9, Noggit JSON Parser 0.8, OkHttp 2.7.5, OkIO 1.6.0, org.eclipse.osgi.services 3.5.2, org.osgi.compendium r4v42-20090728, OSGi R4 compendium 1.4.0, osgi.core 4.3.1, osgi.enterprise 4.2.0, p6spy 3.8.7, plexus-sec-dispatcher 1.3.1, Policeman's Forbidden API Checker 2.7, Proxy Vole 1.0.5, Pulsar Client Admin 2.2.1, QWAZR Extractor 1.1.0, Ranger Remote Authorization Hook - ABFS driver 2.0.0.7.1.1.0-565, Ranger Remote Authorization Integration 2.0.0.7.1.0.0-714, ranger-plugin-classloader 1.2.0.3.1.4.13-1, ranger-plugin-classloader 2.0.0.7.1.1.0-565, registry-common 0.3.1, registry-common 0.8.1.7.1.1.0-565, registry-common-client 0.9.0, registry-webservice 0.8.1.3.5.1.3-3, registry-webservice 0.9.0, RocksDB JNI 5.18.3, RxJava 1.1.6, scala-collection-compat 2.1.3-RC2, scala-logging 3.9.2, schema-registry-authorization-agent 0.9.0, schema-registry-authorizer-core 0.9.0, schema-registry-client 0.8.1.7.1.1.0-565, schema-registry-common 0.8.1.7.1.1.0-565, schema-registry-core 0.5.3, schema-registry-ranger-authorizer 0.9.0, schema-registry-ranger-authorizer-shim 0.9.0, schema-registry-serdes 0.8.1.7.1.1.0-565, schema-registry-webservice 0.9.0, Search Solr MapReduce Indexer 1.0.0.7.1.0.0-714, serdes-examples 0.5.1.3.1.2.9-1, Sisu - Guice 2.1.7, Sisu - Inject (JSR330 bean support) 1.4.1, Sisu - Inject (Plexus bean support) 1.4.2, SnakeYAML 1.24, snappy-java 1.1.7.3, spectator-reg-atlas 0.101.0, Spring Commons Logging Bridge 5.0.16.RELEASE, Spring Framework 5.0.16.RELEASE, Spring Security 3.2.7, Spring Security Kerberos Core 1.0.1.RELEASE, spring-aopalliance 1.0, storage-common 0.8.1.3.5.1.1-3, storage-core 0.8.1.7.1.1.0-565, storage-tool 0.8.1.7.1.1.0-565, storm-starter 1.2.1.3.1.5.47-2, swagger-core v1.6.0, swagger-jaxrs 1.6.0, swagger-jersey2-jaxrs (Jersey 2.x support) 1.6.0, swagger-models 1.6.0, swagger-ui 3.24.3, Token provider 1.1.1, uri-template 0.9, WildFly 17.0.1.Final, wildfly-openssl 1.0.7.Final, wildfly-openssl-java 1.0.8.Final, Woodstox 4.4.1, Woodstox 5.0.3)
 
 Apache License
 Version 2.0, January 2004
@@ -607,7 +580,7 @@ third-party archives.
 ---
 
 BSD 2-clause "Simplified" License
-(jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-media-jaxb 2.31, PostgreSQL JDBC Driver (pgjdbc) REL42.2.13, zstd-jni 1.4.3-1)
+(PostgreSQL JDBC Driver (pgjdbc) REL42.2.13, zstd-jni 1.4.3-1, zstd-jni 1.4.4-7)
 
 BSD Two Clause License
 ======================
@@ -668,77 +641,7 @@ Redistribution and use in source and binary forms, with or without
 ---
 
 BSD 3-clause "New" or "Revised" License
-(FindBugs jsr305 0)
-
-Copyright (c) 2007-2009, JSR305 expert group
-All rights reserved.
-
-http://www.opensource.org/licenses/bsd-license.php
-
-Redistribution and use in source and binary forms, with or without 
-modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice, 
-      this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice, 
-      this list of conditions and the following disclaimer in the documentation 
-      and/or other materials provided with the distribution.
-    * Neither the name of the JSR305 expert group nor the names of its 
-      contributors may be used to endorse or promote products derived from 
-      this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE
-
----
-
-BSD 3-clause "New" or "Revised" License
-(JavaBeans Activation Framework 1.2.1, JavaBeans Activation Framework API jar 1.2.1)
-
-Copyright (c) 2018 Oracle and/or its affiliates. All rights reserved.
-   
-   
-
-Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
-   
-      - Redistributions of source code must retain the above copyright
-        notice, this list of conditions and the following disclaimer.
-   
-      - Redistributions in binary form must reproduce the above copyright
-        notice, this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-   
-      - Neither the name of the Eclipse Foundation, Inc. nor the names of its
-        contributors may be used to endorse or promote products derived
-        from this software without specific prior written permission.
-   
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-    IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-    PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
-
----
-
-BSD 3-clause "New" or "Revised" License
-(jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-core-server 2.31, jersey-media-jaxb 2.31, Protocol Buffer Java API 2.5.0, re2j 1.2, scala-java8-compat 0.9.0, Stax2 API 3.1.4)
+(JSch 0.1.54, Protocol Buffer Java API 2.5.0, re2j 1.2, scala-java8-compat 0.9.0, Stax2 API 3.1.4)
 
 Copyright (c) <YEAR>, <OWNER>
 All rights reserved.
@@ -807,49 +710,8 @@ Redistribution and use in source and binary forms, with or without
 
 ---
 
-BSD 3-clause Clear License
-(Scala 2.11.12)
-
-The Clear BSD License
-=====================
-
-This is a license template.
-
-Copyright (c) [xxxx]-[xxxx] [Owner Organization]
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted (subject to the limitations in the disclaimer below) provided that
-the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this
-    list of conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-  * Neither the name of [Owner Organization] nor the names of its contributors
-    may be used to endorse or promote products derived from this software without
-    specific prior written permission.
-
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
-LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
----
-
 Common Development and Distribution License 1.0
-(JavaBeans Activation Framework 1.1, JavaBeans Activation Framework 1.2.0, JavaMail 1.4.3, jsr311-api 1.1.1, Type arithmetic library for Java5 1.3)
+(Java Servlet API 2.1, JavaBeans Activation Framework 1.1, JavaBeans Activation Framework 1.2.0, JavaMail 1.4.3, Type arithmetic library for Java5 1.3)
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
 ==============================================================
@@ -1179,7 +1041,7 @@ COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
 ---
 
 Common Development and Distribution License 1.1
-(Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05, Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b14, Expression Language 3.0 3.0.0, Expression Language API 3.0-b08, HK2 API module 2.5.0-b30, HK2 Implementation Utilities 2.5.0-b31, Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b30, istack common utility code runtime 3.0.7, Java Architecture for XML Binding 2.2.12, Java Servlet API 3.1.0, JavaBeans Activation Framework API jar 1.2.0, javax.annotation API 1.2, javax.ws.rs-api 2.0.1, JAXB CORE 2.3.0-b170127.1453, JAXB Runtime 2.3.1, JAXB XML Binding Code Generator Package 2.4.0-b180725.0644, Jersey 1.18.6, Jersey 1.19.3, Jersey 2.25.1, jersey-atom 1.18.6, jersey-bundle 1.19.3, jersey-container-servlet 2.25.1, jersey-container-servlet-core 2.25.1, jersey-core-server 2.25.1, jersey-ext-bean-validation 2.25.1, jersey-ext-entity-filtering 2.25, jersey-ext-entity-filtering 2.25.1, jersey-ext-metainf-services 2.25.1, jersey-fastinfoset 1.9-ea07, jersey-grizzly 1.18.6, jersey-json 1.18.6, jersey-media-jaxb 2.25.1, jersey-media-json-jackson 2.25.1, jersey-media-multipart 2.25.1, jersey-repackaged-guava 2.25.1, jersey-server 1.19.3, jersey-servlet 1.19.3, MIME streaming extension 1.9.6, OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.1, ServiceLocator Default Implementation 2.5.0-b32, stax-ex 1.8, TXW2 Runtime 2.3.1)
+(Aopalliance Version 1.0 Repackaged As A Module 2.2.0-b26, Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05, Expression Language 3.0 3.0.0, Expression Language API 3.0-b08, HK2 API module 2.5.0-b30, HK2 Implementation Utilities 2.5.0-b32, Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b02, istack common utility code runtime 3.0.7, Java Architecture for XML Binding 2.2.12, Java Servlet API 3.1.0, JavaBeans Activation Framework API jar 1.2.0, javax.annotation API 1.2, javax.ws.rs-api 2.0.1, JAXB CORE 2.3.0-b170127.1453, JAXB Runtime 2.3.1, Jersey 1.18.6, Jersey 1.19.3, Jersey 2.25.1, jersey-atom 1.18.6, jersey-bundle 1.19.3, jersey-container-servlet 2.25.1, jersey-container-servlet-core 2.25.1, jersey-core-server 2.25.1, jersey-ext-bean-validation 2.25.1, jersey-ext-entity-filtering 2.25.1, jersey-ext-metainf-services 2.25.1, jersey-fastinfoset 1.9-ea07, jersey-grizzly 1.18.6, jersey-json 1.18.6, jersey-media-jaxb 2.25.1, jersey-media-json-jackson 2.25.1, jersey-media-multipart 2.25.1, jersey-repackaged-guava 2.25.1, jersey-server 1.19.3, jersey-servlet 1.19.3, MIME streaming extension 1.9.6, OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.1, ServiceLocator Default Implementation 2.5.0-b32, stax-ex 1.8, TXW2 Runtime 2.3.1)
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1
 ==============================================================
@@ -1557,7 +1419,7 @@ TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 ---
 
 Eclipse Distribution License - v 1.0
-(${oraclebndl.name} 2.6.0-M3, EclipseLink 2.5.2, EclipseLink ANTLR 2.6.6-RC1, EclipseLink ASM 3.3.1.v201206041142, EclipseLink Core 2.5.2, EclipseLink DBWS 2.5.2, EclipseLink Hermes JPQL Parser 2.5.2, EclipseLink JPA 2.5.2, EclipseLink Moxy 2.5.3-RC1, EclipseLink SDO 2.5.2-RC1, jakarta.xml.bind-api 2.3.2, Javax Persistence API 2.0 2.0.5, Javax Persistence API 2.0 2.1.0-RC2, jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-media-jaxb 2.31, SDO API 2.1.1)
+(${oraclebndl.name} 2.7.5-RC3, EclipseLink 2.7.7, EclipseLink ANTLR 2.7.2-RC2, EclipseLink ASM 2.7.7, EclipseLink Core 2.7.7, EclipseLink DBWS 2.7.3, EclipseLink Hermes JPQL Parser 2.7.6, EclipseLink JPA 2.7.6-RC1, EclipseLink Moxy 2.7.6-RC2, EclipseLink SDO 2.7.6, jakarta.xml.bind-api 2.3.2, SDO API 2.1.1)
 
 Eclipse Distribution License - v 1.0
 ====================================
@@ -1594,7 +1456,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 
 Eclipse Public License 1.0
-(EclipseLink 2.5.2, Jetty :: Servlet Handling 9.4.26.v20200117, Jetty: Java based HTTP/1.x, HTTP/2, Servlet, WebSocket Server 9.4.26.v20200117, JRuby 9.1.1.0, Logback 1.2.3, Logback Access Module 1.2.3, Logback Classic Module 1.2.3, Logspace Agent Controller 0.3.1, waffle-jna 1.9.1)
+(EclipseLink ANTLR 2.7.2-RC2, Javax Persistence API 2.0 2.2.0, Jetty :: Servlet Handling 9.4.26.v20200117, Logback 1.2.3, Logback Access Module 1.2.3, Logback Classic Module 1.2.3, Logspace Agent Controller 0.3.1, waffle-jna 1.9.1)
 
 Eclipse Public License - v 1.0
 ==============================
@@ -1809,7 +1671,7 @@ resulting litigation.
 ---
 
 Eclipse Public License 2.0
-(Jersey 2.31, jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-core-server 2.31, jersey-media-jaxb 2.31, OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.3)
+(${oraclebndl.name} 2.7.5-RC3, EclipseLink 2.7.7, EclipseLink ASM 2.7.7, EclipseLink Core 2.7.7, EclipseLink DBWS 2.7.3, EclipseLink Hermes JPQL Parser 2.7.6, EclipseLink JPA 2.7.6-RC1, EclipseLink Moxy 2.7.6-RC2, EclipseLink SDO 2.7.6)
 
 Eclipse Public License - v 2.0
 ==============================
@@ -2340,7 +2202,7 @@ You, or the legal entity on behalf of whom You are acting (as applicable, "You")
 ---
 
 GNU General Public License v2.0 w/Classpath exception
-(Jersey 2.25.1, Jersey 2.31, jersey-core-server 2.31)
+(Jersey 2.25.1)
 
 GNU Classpath License
 =====================
@@ -2700,511 +2562,8 @@ distributing those programs directly.
 
 ---
 
-GNU Lesser General Public License v2.1 only
-(Java Native Access (JNA) 4.5.1)
-
-GNU Lesser General Public License Version 2.1 Only
---------------------------------------------------
-
-"This library is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free
-Software Foundation[,][;] version 2.1 of the License."
-
-
-
-GNU Lesser General Public License
-=================================
-
-Version 2.1, February 1999
-
-      Copyright (C) 1991, 1999 Free Software Foundation, Inc.
-
-      59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-
-      Everyone is permitted to copy and distribute verbatim copies
-
-      of this license document, but changing it is not allowed.
-
-      [This is the first released version of the Lesser GPL. It also counts
-
-      as the successor of the GNU Library Public License, version 2, hence
-
-      the version number 2.1.]
-
-
-Preamble
---------
-
-The licenses for most software are designed to take away your freedom to share
-and change it. By contrast, the GNU General Public Licenses are intended to
-guarantee your freedom to share and change free software--to make sure the
-software is free for all its users.
-
-This license, the Lesser General Public License, applies to some specially
-designated software packages--typically libraries--of the Free Software
-Foundation and other authors who decide to use it. You can use it too, but we
-suggest you first think carefully about whether this license or the ordinary
-General Public License is the better strategy to use in any particular case,
-based on the explanations below.
-
-When we speak of free software, we are referring to freedom of use, not price.
-Our General Public Licenses are designed to make sure that you have the freedom
-to distribute copies of free software (and charge for this service if you wish);
-that you receive source code or can get it if you want it; that you can change
-the software and use pieces of it in new free programs; and that you are informed
-that you can do these things.
-
-To protect your rights, we need to make restrictions that forbid distributors to
-deny you these rights or to ask you to surrender these rights. These restrictions
-translate to certain responsibilities for you if you distribute copies of the
-library or if you modify it.
-
-For example, if you distribute copies of the library, whether gratis or for a
-fee, you must give the recipients all the rights that we gave you. You must make
-sure that they, too, receive or can get the source code. If you link other code
-with the library, you must provide complete object files to the recipients, so
-that they can relink them with the library after making changes to the library
-and recompiling it. And you must show them these terms so they know their rights.
-
-We protect your rights with a two-step method: (1) we copyright the library, and
-(2) we offer you this license, which gives you legal permission to copy,
-distribute and/or modify the library.
-
-To protect each distributor, we want to make it very clear that there is no
-warranty for the free library. Also, if the library is modified by someone else
-and passed on, the recipients should know that what they have is not the original
-version, so that the original author's reputation will not be affected by
-problems that might be introduced by others.
-
-Finally, software patents pose a constant threat to the existence of any free
-program. We wish to make sure that a company cannot effectively restrict the
-users of a free program by obtaining a restrictive license from a patent holder.
-Therefore, we insist that any patent license obtained for a version of the
-library must be consistent with the full freedom of use specified in this
-license.
-
-Most GNU software, including some libraries, is covered by the ordinary GNU
-General Public License. This license, the GNU Lesser General Public License,
-applies to certain designated libraries, and is quite different from the ordinary
-General Public License. We use this license for certain libraries in order to
-permit linking those libraries into non-free programs.
-
-When a program is linked with a library, whether statically or using a shared
-library, the combination of the two is legally speaking a combined work, a
-derivative of the original library. The ordinary General Public License therefore
-permits such linking only if the entire combination fits its criteria of freedom.
-The Lesser General Public License permits more lax criteria for linking other
-code with the library.
-
-We call this license the "Lesser" General Public License because it does Less to
-protect the user's freedom than the ordinary General Public License. It also
-provides other free software developers Less of an advantage over competing
-non-free programs. These disadvantages are the reason we use the ordinary General
-Public License for many libraries. However, the Lesser license provides
-advantages in certain special circumstances.
-
-For example, on rare occasions, there may be a special need to encourage the
-widest possible use of a certain library, so that it becomes a de-facto standard.
-To achieve this, non-free programs must be allowed to use the library. A more
-frequent case is that a free library does the same job as widely used non-free
-libraries. In this case, there is little to gain by limiting the free library to
-free software only, so we use the Lesser General Public License.
-
-In other cases, permission to use a particular library in non-free programs
-enables a greater number of people to use a large body of free software. For
-example, permission to use the GNU C Library in non-free programs enables many
-more people to use the whole GNU operating system, as well as its variant, the
-GNU/Linux operating system.
-
-Although the Lesser General Public License is Less protective of the users'
-freedom, it does ensure that the user of a program that is linked with the
-Library has the freedom and the wherewithal to run that program using a modified
-version of the Library.
-
-The precise terms and conditions for copying, distribution and modification
-follow. Pay close attention to the difference between a "work based on the
-library" and a "work that uses the library". The former contains code derived
-from the library, whereas the latter must be combined with the library in order
-to run.
-
-
-TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
----------------------------------------------------------------
-
-0. This License Agreement applies to any software library or other program which
-contains a notice placed by the copyright holder or other authorized party saying
-it may be distributed under the terms of this Lesser General Public License (also
-called "this License"). Each licensee is addressed as "you".
-
-A "library" means a collection of software functions and/or data prepared so as
-to be conveniently linked with application programs (which use some of those
-functions and data) to form executables.
-
-The "Library", below, refers to any such software library or work which has been
-distributed under these terms. A "work based on the Library" means either the
-Library or any derivative work under copyright law: that is to say, a work
-containing the Library or a portion of it, either verbatim or with modifications
-and/or translated straightforwardly into another language. (Hereinafter,
-translation is included without limitation in the term "modification".)
-
-"Source code" for a work means the preferred form of the work for making
-modifications to it. For a library, complete source code means all the source
-code for all modules it contains, plus any associated interface definition files,
-plus the scripts used to control compilation and installation of the library.
-
-Activities other than copying, distribution and modification are not covered by
-this License; they are outside its scope. The act of running a program using the
-Library is not restricted, and output from such a program is covered only if its
-contents constitute a work based on the Library (independent of the use of the
-Library in a tool for writing it). Whether that is true depends on what the
-Library does and what the program that uses the Library does.
-
-1. You may copy and distribute verbatim copies of the Library's complete source
-code as you receive it, in any medium, provided that you conspicuously and
-appropriately publish on each copy an appropriate copyright notice and disclaimer
-of warranty; keep intact all the notices that refer to this License and to the
-absence of any warranty; and distribute a copy of this License along with the
-Library.
-
-You may charge a fee for the physical act of transferring a copy, and you may at
-your option offer warranty protection in exchange for a fee.
-
-2. You may modify your copy or copies of the Library or any portion of it, thus
-forming a work based on the Library, and copy and distribute such modifications
-or work under the terms of Section 1 above, provided that you also meet all of
-these conditions:
-
-      a) The modified work must itself be a software library.
-
-      b) You must cause the files modified to carry prominent notices stating
-      that you changed the files and the date of any change.
-
-      c) You must cause the whole of the work to be licensed at no charge to all
-      third parties under the terms of this License.
-
-      d) If a facility in the modified Library refers to a function or a table of
-      data to be supplied by an application program that uses the facility, other
-      than as an argument passed when the facility is invoked, then you must make
-      a good faith effort to ensure that, in the event an application does not
-      supply such function or table, the facility still operates, and performs
-      whatever part of its purpose remains meaningful.
-
-      (For example, a function in a library to compute square roots has a purpose
-      that is entirely well-defined independent of the application. Therefore,
-      Subsection 2d requires that any application-supplied function or table used
-      by this function must be optional: if the application does not supply it,
-      the square root function must still compute square roots.)
-
-      These requirements apply to the modified work as a whole. If identifiable
-      sections of that work are not derived from the Library, and can be
-      reasonably considered independent and separate works in themselves, then
-      this License, and its terms, do not apply to those sections when you
-      distribute them as separate works. But when you distribute the same
-      sections as part of a whole which is a work based on the Library, the
-      distribution of the whole must be on the terms of this License, whose
-      permissions for other licensees extend to the entire whole, and thus to
-      each and every part regardless of who wrote it.
-
-      Thus, it is not the intent of this section to claim rights or contest your
-      rights to work written entirely by you; rather, the intent is to exercise
-      the right to control the distribution of derivative or collective works
-      based on the Library.
-
-      In addition, mere aggregation of another work not based on the Library with
-      the Library (or with a work based on the Library) on a volume of a storage
-      or distribution medium does not bring the other work under the scope of
-      this License.
-
-3. You may opt to apply the terms of the ordinary GNU General Public License
-instead of this License to a given copy of the Library. To do this, you must
-alter all the notices that refer to this License, so that they refer to the
-ordinary GNU General Public License, version 2, instead of to this License. (If a
-newer version than version 2 of the ordinary GNU General Public License has
-appeared, then you can specify that version instead if you wish.) Do not make any
-other change in these notices.
-
-Once this change is made in a given copy, it is irreversible for that copy, so
-the ordinary GNU General Public License applies to all subsequent copies and
-derivative works made from that copy.
-
-This option is useful when you wish to copy part of the code of the Library into
-a program that is not a library.
-
-4. You may copy and distribute the Library (or a portion or derivative of it,
-under Section 2) in object code or executable form under the terms of Sections 1
-and 2 above provided that you accompany it with the complete corresponding
-machine-readable source code, which must be distributed under the terms of
-Sections 1 and 2 above on a medium customarily used for software interchange.
-
-If distribution of object code is made by offering access to copy from a
-designated place, then offering equivalent access to copy the source code from
-the same place satisfies the requirement to distribute the source code, even
-though third parties are not compelled to copy the source along with the object
-code.
-
-5. A program that contains no derivative of any portion of the Library, but is
-designed to work with the Library by being compiled or linked with it, is called
-a "work that uses the Library". Such a work, in isolation, is not a derivative
-work of the Library, and therefore falls outside the scope of this License.
-
-However, linking a "work that uses the Library" with the Library creates an
-executable that is a derivative of the Library (because it contains portions of
-the Library), rather than a "work that uses the library". The executable is
-therefore covered by this License. Section 6 states terms for distribution of
-such executables.
-
-When a "work that uses the Library" uses material from a header file that is part
-of the Library, the object code for the work may be a derivative work of the
-Library even though the source code is not. Whether this is true is especially
-significant if the work can be linked without the Library, or if the work is
-itself a library. The threshold for this to be true is not precisely defined by
-law.
-
-If such an object file uses only numerical parameters, data structure layouts and
-accessors, and small macros and small inline functions (ten lines or less in
-length), then the use of the object file is unrestricted, regardless of whether
-it is legally a derivative work. (Executables containing this object code plus
-portions of the Library will still fall under Section 6.)
-
-Otherwise, if the work is a derivative of the Library, you may distribute the
-object code for the work under the terms of Section 6. Any executables containing
-that work also fall under Section 6, whether or not they are linked directly with
-the Library itself.
-
-6. As an exception to the Sections above, you may also combine or link a "work
-that uses the Library" with the Library to produce a work containing portions of
-the Library, and distribute that work under terms of your choice, provided that
-the terms permit modification of the work for the customer's own use and reverse
-engineering for debugging such modifications.
-
-You must give prominent notice with each copy of the work that the Library is
-used in it and that the Library and its use are covered by this License. You must
-supply a copy of this License. If the work during execution displays copyright
-notices, you must include the copyright notice for the Library among them, as
-well as a reference directing the user to the copy of this License. Also, you
-must do one of these things:
-
-      a) Accompany the work with the complete corresponding machine-readable
-      source code for the Library including whatever changes were used in the
-      work (which must be distributed under Sections 1 and 2 above); and, if the
-      work is an executable linked with the Library, with the complete
-      machine-readable "work that uses the Library", as object code and/or source
-      code, so that the user can modify the Library and then relink to produce a
-      modified executable containing the modified Library. (It is understood that
-      the user who changes the contents of definitions files in the Library will
-      not necessarily be able to recompile the application to use the modified
-      definitions.)
-
-      b) Use a suitable shared library mechanism for linking with the Library. A
-      suitable mechanism is one that (1) uses at run time a copy of the library
-      already present on the user's computer system, rather than copying library
-      functions into the executable, and (2) will operate properly with a
-      modified version of the library, if the user installs one, as long as the
-      modified version is interface-compatible with the version that the work was
-      made with.
-
-      c) Accompany the work with a written offer, valid for at least three years,
-      to give the same user the materials specified in Subsection 6a, above, for
-      a charge no more than the cost of performing this distribution.
-
-      d) If distribution of the work is made by offering access to copy from a
-      designated place, offer equivalent access to copy the above specified
-      materials from the same place.
-
-      e) Verify that the user has already received a copy of these materials or
-      that you have already sent this user a copy.
-
-For an executable, the required form of the "work that uses the Library" must
-include any data and utility programs needed for reproducing the executable from
-it. However, as a special exception, the materials to be distributed need not
-include anything that is normally distributed (in either source or binary form)
-with the major components (compiler, kernel, and so on) of the operating system
-on which the executable runs, unless that component itself accompanies the
-executable.
-
-It may happen that this requirement contradicts the license restrictions of other
-proprietary libraries that do not normally accompany the operating system. Such a
-contradiction means you cannot use both them and the Library together in an
-executable that you distribute.
-
-7. You may place library facilities that are a work based on the Library
-side-by-side in a single library together with other library facilities not
-covered by this License, and distribute such a combined library, provided that
-the separate distribution of the work based on the Library and of the other
-library facilities is otherwise permitted, and provided that you do these two
-things:
-
-      a) Accompany the combined library with a copy of the same work based on the
-      Library, uncombined with any other library facilities. This must be
-      distributed under the terms of the Sections above.
-
-      b) Give prominent notice with the combined library of the fact that part of
-      it is a work based on the Library, and explaining where to find the
-      accompanying uncombined form of the same work.
-
-8. You may not copy, modify, sublicense, link with, or distribute the Library
-except as expressly provided under this License. Any attempt otherwise to copy,
-modify, sublicense, link with, or distribute the Library is void, and will
-automatically terminate your rights under this License. However, parties who have
-received copies, or rights, from you under this License will not have their
-licenses terminated so long as such parties remain in full compliance.
-
-9. You are not required to accept this License, since you have not signed it.
-However, nothing else grants you permission to modify or distribute the Library
-or its derivative works. These actions are prohibited by law if you do not accept
-this License. Therefore, by modifying or distributing the Library (or any work
-based on the Library), you indicate your acceptance of this License to do so, and
-all its terms and conditions for copying, distributing or modifying the Library
-or works based on it.
-
-10. Each time you redistribute the Library (or any work based on the Library),
-the recipient automatically receives a license from the original licensor to
-copy, distribute, link with or modify the Library subject to these terms and
-conditions. You may not impose any further restrictions on the recipients'
-exercise of the rights granted herein. You are not responsible for enforcing
-compliance by third parties with this License.
-
-11. If, as a consequence of a court judgment or allegation of patent infringement
-or for any other reason (not limited to patent issues), conditions are imposed on
-you (whether by court order, agreement or otherwise) that contradict the
-conditions of this License, they do not excuse you from the conditions of this
-License. If you cannot distribute so as to satisfy simultaneously your
-obligations under this License and any other pertinent obligations, then as a
-consequence you may not distribute the Library at all. For example, if a patent
-license would not permit royalty-free redistribution of the Library by all those
-who receive copies directly or indirectly through you, then the only way you
-could satisfy both it and this License would be to refrain entirely from
-distribution of the Library.
-
-If any portion of this section is held invalid or unenforceable under any
-particular circumstance, the balance of the section is intended to apply, and the
-section as a whole is intended to apply in other circumstances.
-
-It is not the purpose of this section to induce you to infringe any patents or
-other property right claims or to contest validity of any such claims; this
-section has the sole purpose of protecting the integrity of the free software
-distribution system which is implemented by public license practices. Many people
-have made generous contributions to the wide range of software distributed
-through that system in reliance on consistent application of that system; it is
-up to the author/donor to decide if he or she is willing to distribute software
-through any other system and a licensee cannot impose that choice.
-
-This section is intended to make thoroughly clear what is believed to be a
-consequence of the rest of this License.
-
-12. If the distribution and/or use of the Library is restricted in certain
-countries either by patents or by copyrighted interfaces, the original copyright
-holder who places the Library under this License may add an explicit geographical
-distribution limitation excluding those countries, so that distribution is
-permitted only in or among countries not thus excluded. In such case, this
-License incorporates the limitation as if written in the body of this License.
-
-13. The Free Software Foundation may publish revised and/or new versions of the
-Lesser General Public License from time to time. Such new versions will be
-similar in spirit to the present version, but may differ in detail to address new
-problems or concerns.
-
-Each version is given a distinguishing version number. If the Library specifies a
-version number of this License which applies to it and "any later version", you
-have the option of following the terms and conditions either of that version or
-of any later version published by the Free Software Foundation. If the Library
-does not specify a license version number, you may choose any version ever
-published by the Free Software Foundation.
-
-14. If you wish to incorporate parts of the Library into other free programs
-whose distribution conditions are incompatible with these, write to the author to
-ask for permission. For software which is copyrighted by the Free Software
-Foundation, write to the Free Software Foundation; we sometimes make exceptions
-for this. Our decision will be guided by the two goals of preserving the free
-status of all derivatives of our free software and of promoting the sharing and
-reuse of software generally.
-
-NO WARRANTY
-
-15. BECAUSE THE LIBRARY IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE
-LIBRARY, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED
-IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE LIBRARY "AS IS"
-WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
-LIBRARY IS WITH YOU. SHOULD THE LIBRARY PROVE DEFECTIVE, YOU ASSUME THE COST OF
-ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
-
-16. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL
-ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE
-LIBRARY AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL,
-SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY
-TO USE THE LIBRARY (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
-RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF
-THE LIBRARY TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF SUCH HOLDER OR OTHER
-PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
-
-END OF TERMS AND CONDITIONS
-
-
-How to Apply These Terms to Your New Libraries
-----------------------------------------------
-
-If you develop a new library, and you want it to be of the greatest possible use
-to the public, we recommend making it free software that everyone can
-redistribute and change. You can do so by permitting redistribution under these
-terms (or, alternatively, under the terms of the ordinary General Public
-License).
-
-To apply these terms, attach the following notices to the library. It is safest
-to attach them to the start of each source file to most effectively convey the
-exclusion of warranty; and each file should have at least the "copyright" line
-and a pointer to where the full notice is found.
-
-      one line to give the library's name and an idea of what it does.
-
-      Copyright (C) year name of author
-
-      This library is free software; you can redistribute it and/or
-
-      modify it under the terms of the GNU Lesser General Public
-
-      License as published by the Free Software Foundation; either
-
-      version 2.1 of the License, or (at your option) any later version.
-
-      This library is distributed in the hope that it will be useful,
-
-      but WITHOUT ANY WARRANTY; without even the implied warranty of
-
-      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-
-      Lesser General Public License for more details.
-
-      You should have received a copy of the GNU Lesser General Public
-
-      License along with this library; if not, write to the Free Software
-
-      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-
-Also add information on how to contact you by electronic and paper mail.
-
-You should also get your employer (if you work as a programmer) or your school,
-if any, to sign a "copyright disclaimer" for the library, if necessary. Here is a
-sample; alter the names:
-
-      Yoyodyne, Inc., hereby disclaims all copyright interest in
-
-      the library `Frob' (a library for tweaking knobs) written
-
-      by James Random Hacker.
-
-      signature of Ty Coon, 1 April 1990
-
-      Ty Coon, President of Vice
-
-That's all there is to it!
-
----
-
 GNU Lesser General Public License v2.1 or later
-(Javassist 3.20.0-GA)
+(Javassist 3.24.1-GA)
 
 GNU Lesser General Public License
 =================================
@@ -3728,35 +3087,6 @@ Permission is hereby granted, free of charge, to any person
 ---
 
 MIT License
-(JOpt Simple 4.6)
-
-/*
- The MIT License
-
- Copyright (c) 2004-2014 Paul R. Holser, Jr.
-
-Permission is hereby granted, free of charge, to any person obtaining
- a copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
-
- The above copyright notice and this permission notice shall be
- included in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
-
----
-
-MIT License
 (JOpt Simple 5.0.4)
 
 /*
@@ -3786,29 +3116,30 @@ Permission is hereby granted, free of charge, to any person obtaining
 ---
 
 MIT License
-(Simple Logging Facade for Java (SLF4J) 1.7.25)
+(Java-WebSocket v1.4.0)
 
-Copyright (c) 2004-2017 QOS.ch
-All rights reserved.
+Copyright (c) 2010-2019 Nathan Rajlich
 
-Permission is hereby granted, free  of charge, to any person obtaining
-a  copy  of this  software  and  associated  documentation files  (the
-"Software"), to  deal in  the Software without  restriction, including
-without limitation  the rights to  use, copy, modify,  merge, publish,
-distribute,  sublicense, and/or sell  copies of  the Software,  and to
-permit persons to whom the Software  is furnished to do so, subject to
-the following conditions:
+Permission is hereby granted, free of charge, to any person
+ obtaining a copy of this software and associated documentation
+ files (the "Software"), to deal in the Software without
+ restriction, including without limitation the rights to use,
+ copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following
+ conditions:
 
-The  above  copyright  notice  and  this permission  notice  shall  be
-included in all copies or substantial portions of the Software.
+ The above copyright notice and this permission notice shall be
+ included in all copies or substantial portions of the Software.
 
-THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
-EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
-MERCHANTABILITY,    FITNESS    FOR    A   PARTICULAR    PURPOSE    AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ OTHER DEALINGS IN THE SOFTWARE
 
 ---
 
@@ -3841,7 +3172,7 @@ SOFTWARE
 ---
 
 MIT License
-(Animal Sniffer Annotations 1.18, Checker Qual 2.8.1, gethostname4j 0.0.2, JCL 1.2 Implemented Over SLF4J 1.7.25, jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-media-jaxb 2.31, JUL to SLF4J bridge 1.7.26, Microsoft Azure SDK for Key Vault 1.0.0, OSGi LogService implemented over SLF4J 1.7.13, SLF4J API Module 1.7.25, SLF4J Simple Binding 1.7.25, Telegram Bots 3.6)
+(Animal Sniffer Annotations 1.18, Checker Qual 2.8.1, GroupBy - Common - HTTP 135, JCL 1.2 Implemented Over SLF4J 1.7.25, JUL to SLF4J bridge 1.7.26, Microsoft Azure SDK for Key Vault 1.0.0, org.genomicsdb:genomicsdb 1.3.0, OSGi LogService implemented over SLF4J 1.7.13, SLF4J API Module 1.7.25, SLF4J Simple Binding 1.7.25)
 
 The MIT License
 ===============
@@ -3868,7 +3199,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ---
 
 Mozilla Public License 1.1
-(Javassist 3.20.0-GA, Javassist rel_)
+(Javassist 3.24.1-GA)
 
 MOZILLA PUBLIC LICENSE
 ======================
@@ -4709,14 +4040,14 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 ---
 
 Public Domain
-(AOP Alliance (Java/J2EE AOP standard) 1.0, jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-media-jaxb 2.31)
+(AOP Alliance (Java/J2EE AOP standard) 1.0)
 
 Public domain code is not subject to any license.
 
 ---
 
 Sun GPL With Classpath Exception v2.0
-(Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05, Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b14, HK2 API module 2.5.0-b30, HK2 Implementation Utilities 2.5.0-b31, Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b30, jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-core-server 2.25.1, jersey-ext-entity-filtering 2.25, jersey-ext-entity-filtering 2.25.1, jersey-media-jaxb 2.25.1, jersey-media-jaxb 2.31, jersey-media-json-jackson 2.25.1, jersey-media-multipart 2.25.1, jersey-repackaged-guava 2.25.1, OSGi resource locator bundle - used by various API providers that rely on META-INF/services mechanism to locate providers. 1.0.3, ServiceLocator Default Implementation 2.5.0-b32)
+(Aopalliance Version 1.0 Repackaged As A Module 2.2.0-b26, Aopalliance Version 1.0 Repackaged As A Module 2.5.0-b05, HK2 API module 2.5.0-b30, HK2 Implementation Utilities 2.5.0-b32, Injection API (JSR 330) version 1 repackaged as OSGi bundle 2.5.0-b02, jersey-core-server 2.25.1, jersey-ext-entity-filtering 2.25.1, jersey-media-jaxb 2.25.1, jersey-media-json-jackson 2.25.1, jersey-media-multipart 2.25.1, jersey-repackaged-guava 2.25.1, ServiceLocator Default Implementation 2.5.0-b32)
 
 "CLASSPATH" EXCEPTION TO THE GPL VERSION 2
 ==========================================
@@ -5071,63 +4402,5 @@ proprietary programs. If your program is a subroutine library, you may consider
 it more useful to permit linking proprietary applications with the library. If
 this is what you want to do, use the GNU Library General Public License instead
 of this License.
-
----
-
-Unknown License
-(jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-media-jaxb 2.31)
-
-The license has not been identified.
-
----
-
-W3C Software Notice and License (2002-12-31)
-(jersey-container-servlet 2.31, jersey-container-servlet-core 2.31, jersey-media-jaxb 2.31)
-
-W3C® SOFTWARE NOTICE AND LICENSE
-================================
-
-Copyright © 1994-2001 World Wide Web Consortium, (Massachusetts Institute of
-Technology, Institut National de Recherche en Informatique et en Automatique,
-Keio University). All Rights Reserved. http://www.w3.org/Consortium/Legal/
-
-This W3C work (including software, documents, or other related items) is being
-provided by the copyright holders under the following license. By obtaining,
-using and/or copying this work, you (the licensee) agree that you have read,
-understood, and will comply with the following terms and conditions:
-
-Permission to use, copy, modify, and distribute this software and its
-documentation, with or without modification, for any purpose and without fee or
-royalty is hereby granted, provided that you include the following on ALL copies
-of the software and documentation or portions thereof, including modifications,
-that you make:
-
-      1. The full text of this NOTICE in a location viewable to users of the
-      redistributed or derivative work.
-
-      2. Any pre-existing intellectual property disclaimers, notices, or terms
-      and conditions. If none exist, a short notice of the following form
-      (hypertext is preferred, text is permitted) should be used within the body
-      of any redistributed or derivative code: "Copyright © [$date-of-software]
-      World Wide Web Consortium, (Massachusetts Institute of Technology, Institut
-      National de Recherche en Informatique et en Automatique, Keio University).
-      All Rights Reserved. http://www.w3.org/Consortium/Legal/"
-
-      3. Notice of any changes or modifications to the W3C files, including the
-      date changes were made. (We recommend you provide URIs to the location from
-      which the code is derived.)
-
-THIS SOFTWARE AND DOCUMENTATION IS PROVIDED "AS IS," AND COPYRIGHT HOLDERS MAKE
-NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO, WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT
-THE USE OF THE SOFTWARE OR DOCUMENTATION WILL NOT INFRINGE ANY THIRD PARTY
-PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER RIGHTS.
-
-COPYRIGHT HOLDERS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL OR
-CONSEQUENTIAL DAMAGES ARISING OUT OF ANY USE OF THE SOFTWARE OR DOCUMENTATION.
-
-The name and trademarks of copyright holders may NOT be used in advertising or
-publicity pertaining to the software without specific, written prior permission.
-Title to copyright in this software and any associated documentation will at all
-times remain with copyright holders.
-
+----------------
+0.9.0
