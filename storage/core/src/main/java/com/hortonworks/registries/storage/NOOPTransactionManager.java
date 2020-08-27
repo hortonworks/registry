@@ -29,17 +29,17 @@ public class NOOPTransactionManager implements TransactionManager {
 
     @Override
     public void beginTransaction(TransactionIsolation transactionIsolationLevel) {
-        LOG.debug(String.format("--- Ignore call to begin transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
+        LOG.debug("--- Ignore call to begin transaction for thread id : {} ---", Thread.currentThread().getId());
     }
 
     @Override
     public void rollbackTransaction() {
-        LOG.debug(String.format("--- Ignore call to rollback transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
+        LOG.debug("--- Ignore call to rollback transaction for thread id : {} ---", Thread.currentThread().getId());
     }
 
     @Override
     public void commitTransaction() {
-        LOG.debug(String.format("--- Ignore call to commit transaction for thread id : %s ---", Long.toString(Thread.currentThread().getId())));
+        LOG.debug("--- Ignore call to commit transaction for thread id : {} ---", Thread.currentThread().getId());
     }
 
     @Override

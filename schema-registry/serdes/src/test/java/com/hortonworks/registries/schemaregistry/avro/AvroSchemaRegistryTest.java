@@ -18,7 +18,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -50,9 +49,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- *
- */
 public class AvroSchemaRegistryTest {
 
     private static final String SCHEMA_GROUP = "test-group";
@@ -70,8 +66,8 @@ public class AvroSchemaRegistryTest {
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new HAServerNotificationManager(), new SchemaLockManager(new NOOPTransactionManager()));
-        schemaRegistry.init(Collections.<String, Object>emptyMap());
+        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+        schemaRegistry.init(Collections.emptyMap());
     }
 
     protected String schema1;

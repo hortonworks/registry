@@ -17,7 +17,6 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
@@ -66,7 +65,7 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     public MockSchemaRegistryClient() {
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        this.schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new HAServerNotificationManager(), new SchemaLockManager(new NOOPTransactionManager()));
+        this.schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
         this.schemaRegistry.init(Collections.<String, Object>emptyMap());
     }
 
@@ -237,8 +236,33 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void archiveSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void disableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void startSchemaVersionReview(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public SchemaIdVersion uploadSchemaVersion(String schemaBranchName, String schemaName, String description, InputStream schemaVersionTextFile) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

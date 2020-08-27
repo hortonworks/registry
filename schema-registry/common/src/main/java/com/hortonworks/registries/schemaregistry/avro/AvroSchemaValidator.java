@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
@@ -40,7 +41,7 @@ import java.util.TreeSet;
 public final class AvroSchemaValidator implements SchemaValidator<Schema> {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaValidator.class);
 
-    private static final Map<SchemaCompatibility, SchemaCompatibilityValidator> COMPATIBILITY_VALIDATORS;
+    private static final Map<SchemaCompatibility, SchemaCompatibilityValidator<Schema>> COMPATIBILITY_VALIDATORS;
 
     static {
         AvroSchemaValidator avroSchemaValidator = new AvroSchemaValidator();
@@ -76,6 +77,7 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
 // -----------------------------------------------------------------------------------------------
 // Below code is borrowed from AVRO-2003 and AVRO-1933 patches
 // This will be replaced once those patches are merged into apache/avro repo.
+//    TODO This was done in avro 1.9.0
 // -----------------------------------------------------------------------------------------------
 
     /**
@@ -537,7 +539,7 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
         private SchemaCompatibilityResult checkReaderEnumContainsAllWriterEnumSymbols(
                 final Schema reader, final Schema writer, final Stack<String> location) {
             location.push("symbols");
-            final Set<String> symbols = new TreeSet<String>(writer.getEnumSymbols());
+            final Set<String> symbols = new TreeSet<>(writer.getEnumSymbols());
             symbols.removeAll(reader.getEnumSymbols());
             if (!symbols.isEmpty()) {
                 return SchemaCompatibilityResult.incompatible(
@@ -961,7 +963,7 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
      * Borrowed from Guava's Objects.equal(a, b)
      */
     private static boolean objectsEqual(Object obj1, Object obj2) {
-        return (obj1 == obj2) || ((obj1 != null) && obj1.equals(obj2));
+        return Objects.equals(obj1, obj2);
     }
 
 }

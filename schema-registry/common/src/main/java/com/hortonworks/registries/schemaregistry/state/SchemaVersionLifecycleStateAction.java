@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2020 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,5 +26,5 @@ public interface SchemaVersionLifecycleStateAction {
      * @throws SchemaLifecycleException any Exceptions occur will be wrapper in this and consumers of this API
      *                                  should check for root cause and take appropriate action.
      */
-    public void execute(SchemaVersionLifecycleContext context) throws SchemaLifecycleException;
+    void execute(SchemaVersionLifecycleContext context) throws SchemaLifecycleException;
 }

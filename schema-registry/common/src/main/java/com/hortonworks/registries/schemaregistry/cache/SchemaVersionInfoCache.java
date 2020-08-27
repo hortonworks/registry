@@ -62,7 +62,7 @@ public class SchemaVersionInfoCache implements AbstractCache {
                            .build(new CacheLoader<Key, SchemaVersionInfo>() {
                                        @Override
                                        public SchemaVersionInfo load(Key key) throws Exception {
-                                           LOG.info("Loading entry for cache with key [{}] from target service", key);
+                                           LOG.debug("Key is not in cache: [{}]. Loading from from target service", key);
                                            SchemaVersionInfo schemaVersionInfo;
                                            if (key.schemaVersionKey != null) {
                                                schemaVersionInfo = schemaRetriever.retrieveSchemaVersion(key.schemaVersionKey);
@@ -72,7 +72,9 @@ public class SchemaVersionInfoCache implements AbstractCache {
                                                throw new IllegalArgumentException("Given argument is not valid: " + key);
                                            }
 
+                                           LOG.debug("Update cache for entry {}", schemaVersionInfo);
                                            updateCacheInvalidationEntries(schemaVersionInfo);
+                                           LOG.trace("Return version {}", schemaVersionInfo);
                                            return schemaVersionInfo;
                                        }
                                    });
@@ -99,7 +101,9 @@ public class SchemaVersionInfoCache implements AbstractCache {
     public SchemaVersionInfo getSchema(SchemaVersionInfoCache.Key key) throws SchemaNotFoundException {
         try {
             LOG.debug("Trying to load entry for cache with key [{}] from target service", key);
-            return loadingCache.get(key);
+            SchemaVersionInfo schemaVersionInfo = loadingCache.get(key);
+            LOG.trace("Result: {}", schemaVersionInfo);
+            return schemaVersionInfo;
         } catch (ExecutionException e) {
             if (e.getCause().getClass() == SchemaNotFoundException.class)
                 throw (SchemaNotFoundException) e.getCause();

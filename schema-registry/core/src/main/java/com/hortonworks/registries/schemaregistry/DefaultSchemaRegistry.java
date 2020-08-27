@@ -14,7 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
-import com.google.common.base.Preconditions;
+import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
@@ -44,9 +44,11 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
+import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -57,10 +59,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * Default implementation for schema registry.
@@ -69,7 +75,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaRegistry.class);
 
     public static final String ORDER_BY_FIELDS_PARAM_NAME = "_orderByFields";
-    public static final String DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY = "OPTIMISTIC";
     private static final Long DEFAULT_SCHEMA_LOCK_TIMEOUT_IN_SECS = 120L;
 
     private final StorageManager storageManager;
@@ -80,18 +85,15 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private List<SchemaProviderInfo> schemaProviderInfos;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
     private SchemaBranchCache schemaBranchCache;
-    private HAServerNotificationManager haServerNotificationManager;
     private SchemaLockManager schemaLockManager;
 
     public DefaultSchemaRegistry(StorageManager storageManager,
                                  FileStorage fileStorage,
                                  Collection<Map<String, Object>> schemaProvidersConfig,
-                                 HAServerNotificationManager haServerNotificationManager,
                                  SchemaLockManager schemaLockManager) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaProvidersConfig = schemaProvidersConfig;
-        this.haServerNotificationManager = haServerNotificationManager;
         this.schemaLockManager = schemaLockManager;
     }
 
@@ -108,7 +110,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaSerDesMapping.class,
                         SchemaBranchStorable.class,
                         SchemaBranchVersionMapping.class,
-                        HostConfigStorable.class,
                         SchemaLockStorable.class));
 
         Options options = new Options(props);
@@ -117,11 +118,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                                   createSchemaBranchFetcher());
 
         SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
-        schemaVersionLifecycleManager = new SchemaVersionLifecycleManager(storageManager,
+        schemaVersionLifecycleManager = new DefaultSchemaVersionLifecycleManager(storageManager,
                                                                           props,
                                                                           schemaMetadataFetcher,
-                                                                          schemaBranchCache,
-                                                                          haServerNotificationManager);
+                                                                          schemaBranchCache);
 
         Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig,
                                                                                    schemaVersionLifecycleManager.getSchemaVersionRetriever());
@@ -295,7 +295,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // Remove all the schema version state entities for this schema name, invalidate relevant caches and notify all HA servers
         if (schemaVersionInfos != null) {
             for (SchemaVersionInfo schemaVersionInfo: schemaVersionInfos) {
-                invalidateCachesAndNotifyAllHAServers(schemaVersionInfo);
                 schemaMetadataId = schemaVersionInfo.getSchemaMetadataId();
                 List<QueryParam> queryParams = new ArrayList<>();
                 queryParams.add(new QueryParam(SchemaVersionStateStorable.SCHEMA_VERSION_ID, schemaVersionInfo.getId().toString()));
@@ -308,7 +307,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             }
         }
         // Remove all serdes mappings for this schema name
-        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
+        SchemaMetadataInfo schemaMetadataInfo = checkNotNull(getSchemaMetadataInfo(schemaName), "Could not find schema meta \"%s\"", schemaName);
         Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(schemaMetadataInfo.getId());
         if (schemaSerDesMappings != null) {
             for (SchemaSerDesMapping schemaSerDesMapping: schemaSerDesMappings) {
@@ -663,11 +662,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public void registerNodeDebut(String nodeUrl) {
-        haServerNotificationManager.addNodeUrl(nodeUrl);
-    }
-
-    @Override
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
                                                        boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY), disableCanonicalCheck);
@@ -689,7 +683,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
 
-        Preconditions.checkNotNull(schemaBranch.getName(), "Schema branch name can't be null");
+        checkNotNull(schemaBranch.getName(), "Schema branch name can't be null");
 
         SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
 
@@ -736,7 +730,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
 
-        Preconditions.checkNotNull(schemaBranchId, "Schema branch name can't be null");
+        checkNotNull(schemaBranchId, "Schema branch name can't be null");
 
         SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchId));
 
@@ -812,8 +806,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         storageManager.remove(new SchemaBranchStorable(schemaBranchId).getStorableKey());
-
-        invalidateSchemaBranchInAllHAServers(keyOfSchemaBranchToDelete);
     }
 
     @Override
@@ -892,8 +884,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     private List<SerDesInfo> getSerDesInfos(String schemaName) {
-        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(getSchemaMetadataInfo(schemaName)
-                                                                                               .getId());
+        Collection<SchemaSerDesMapping> schemaSerDesMappings = getSchemaSerDesMappings(
+                checkNotNull(getSchemaMetadataInfo(schemaName), "Did not find schema meta for \"%s\"", schemaName).getId());
         List<SerDesInfo> serDesInfos;
         if (schemaSerDesMappings == null || schemaSerDesMappings.isEmpty()) {
             serDesInfos = Collections.emptyList();
@@ -919,8 +911,15 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         storageManager.add(schemaSerDesMapping);
     }
 
-    @Override
-    public Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields) {
+    /**
+     * Searches the registry to find schemas according to the given {@code whereClause} and orders the results by given {@code orderByFields}
+     *
+     * @param whereClause
+     * @param orderByFields
+     *
+     * @return Collection of schemas from the results of given where clause.
+     */
+    private Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields) {
         SearchQuery searchQuery = SearchQuery.searchFrom(SchemaMetadataStorable.NAME_SPACE)
                                              .where(whereClause)
                                              .orderBy(orderByFields.toArray(new OrderBy[orderByFields.size()]));
@@ -930,6 +929,49 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                              .map(y -> ((SchemaMetadataStorable) y).toSchemaMetadataInfo())
                              .collect(Collectors.toList());
 
+    }
+
+    @Override
+    public Collection<SchemaMetadataInfo> searchSchemas(MultivaluedMap<String, String> queryParameters, Optional<String> orderBy) {
+        WhereClause whereClause = getWhereClause(queryParameters);
+        List<OrderBy> orderByFields = getOrderByFields(orderBy.orElse(""));
+        return searchSchemas(whereClause, orderByFields);
+    }
+
+    @VisibleForTesting
+    WhereClause getWhereClause(MultivaluedMap<String, String> queryParameters) {
+        String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
+        WhereClauseCombiner whereClauseCombiner = WhereClause.begin()
+                .contains(SchemaMetadataStorable.NAME, name);
+        String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
+        if (isNotBlank(description)){
+            whereClauseCombiner = whereClauseCombiner.or().contains(SchemaMetadataStorable.DESCRIPTION, description);
+        }
+        return whereClauseCombiner.combine();
+    }
+
+    private List<OrderBy> getOrderByFields(String value) {
+        List<OrderBy> orderByList = new ArrayList<>();
+        // _orderByFields=[<field-name>,<a/d>,]*
+        // example can be : _orderByFields=foo,a,bar,d
+        // order by foo with ascending then bar with descending
+        String[] splitStrings = value.split(",");
+        for (int i = 0; i < splitStrings.length; i += 2) {
+            String ascStr = splitStrings[i + 1];
+            boolean descending;
+            if ("a".equals(ascStr)) {
+                descending = false;
+            } else if ("d".equals(ascStr)) {
+                descending = true;
+            } else {
+                throw new IllegalArgumentException("Ascending or Descending identifier can only be 'a' or 'd' respectively.");
+            }
+
+            String fieldName = splitStrings[i];
+            orderByList.add(descending ? OrderBy.desc(fieldName) : OrderBy.asc(fieldName));
+        }
+
+        return orderByList;
     }
 
     @Override
@@ -990,73 +1032,5 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     @Override
     public SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
         return schemaVersionLifecycleManager.fetchSchemaVersionInfo(id);
-    }
-
-
-    public static class Options {
-        // we may want to remove schema.registry prefix from configuration properties as these are all properties
-        // given by client.
-        public static final String ENABLE_CACHING = "enableCaching";
-        public static final String CACHE = "cache";
-        public static final String SCHEMA_CACHE_SIZE = "schemaCacheSize";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schemaCacheExpiryInterval";
-        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
-
-        private final Map<String, ?> config;
-
-        public Options(Map<String, ?> config) {
-            this.config = (Map<String, ?>) getValue(config, CACHE, new HashMap<>());
-        }
-
-        private Object getValue(Map<String, ?> properties, String propertyKey, Object defaultValue) {
-            Object value = properties.get(propertyKey);
-            return value != null ? value : defaultValue;
-        }
-
-        private Object getPropertyValue(String propertyKey, Object defaultValue) {
-            Map<String, ?> properties = (Map<String, ?>) getValue(config, "properties", new HashMap<>());
-            return getValue(properties, propertyKey, defaultValue);
-        }
-
-        public Boolean isCacheEnabled() {
-            return (Boolean) getValue(config, ENABLE_CACHING, Boolean.TRUE);
-        }
-
-        public int getMaxSchemaCacheSize() {
-            return isCacheEnabled() == true ?
-                      Integer.parseInt(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString()) : 0;
-        }
-
-        public long getSchemaExpiryInSecs() {
-            return Long.valueOf(getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS)
-                                        .toString());
-        }
-    }
-
-    private void invalidateSchemaBranchInAllHAServers(SchemaBranchCache.Key key) {
-        schemaBranchCache.invalidateSchemaBranch(key);
-
-        String keyAsString;
-
-        try {
-           keyAsString = ObjectMapperUtils.serializeToString(key);
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("Failed to serialized key : %s", key),e);
-        }
-
-        haServerNotificationManager.notifyCacheInvalidation(schemaBranchCache.getCacheType(),keyAsString);
-    }
-
-    // Clear the relevant caches for this schema version and notify HA servers
-    private void invalidateCachesAndNotifyAllHAServers(SchemaVersionInfo schemaVersionInfo) {
-        Collection<SchemaBranch> schemaBranches = schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId());
-        if (schemaBranches != null) {
-            for (SchemaBranch schemaBranch: schemaBranches) {
-                invalidateSchemaBranchInAllHAServers(SchemaBranchCache.Key.of(schemaBranch.getId()));
-            }
-        }
-        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaVersionInfo.getName(), schemaVersionInfo.getVersion());
-        schemaVersionLifecycleManager.invalidateSchemaInAllHAServer(SchemaVersionInfoCache.Key.of(schemaVersionKey));
     }
 }

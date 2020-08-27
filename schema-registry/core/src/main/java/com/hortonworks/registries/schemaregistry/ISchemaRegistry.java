@@ -19,12 +19,12 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.storage.search.OrderBy;
-import com.hortonworks.registries.storage.search.WhereClause;
 
+import javax.ws.rs.core.MultivaluedMap;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  *
@@ -34,6 +34,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
     String SCHEMA_PROVIDERS = "schemaProviders";
 
     String AUTHORIZATION = "authorization";
+
+    String DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY = "OPTIMISTIC";
 
     /**
      * initializes it with the given properties
@@ -137,12 +139,9 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
     /**
      * Searches the registry to find schemas according to the given {@code whereClause} and orders the results by given {@code orderByFields}
      *
-     * @param whereClause
-     * @param orderByFields
-     *
      * @return Collection of schemas from the results of given where clause.
      */
-    Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields);
+    Collection<SchemaMetadataInfo> searchSchemas(MultivaluedMap<String, String> queryParameters, Optional<String> orderBy);
 
     /**
      *  Merges a given schema version to 'MASTER' branch with a merge strategy
@@ -211,10 +210,45 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      */
     void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString);
 
-    /**
-     *  A node which comes online in HA mode will notify all the existing node about its presence in the cluster, existing node will update their in memory cache of the complete list of nodes in HA mode.
-     * @param nodeUrl URL of the node making a debut in a HA environment
-     */
-    void registerNodeDebut(String nodeUrl);
+    class Options {
+        // we may want to remove schema.registry prefix from configuration properties as these are all properties
+        // given by client.
+        public static final String ENABLE_CACHING = "enableCaching";
+        public static final String CACHE = "cache";
+        public static final String SCHEMA_CACHE_SIZE = "schemaCacheSize";
+        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schemaCacheExpiryInterval";
+        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
+        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
+
+        private final Map<String, ?> config;
+
+        public Options(Map<String, ?> config) {
+            this.config = (Map<String, ?>) getValue(config, CACHE, new HashMap<>());
+        }
+
+        private Object getValue(Map<String, ?> properties, String propertyKey, Object defaultValue) {
+            Object value = properties.get(propertyKey);
+            return value != null ? value : defaultValue;
+        }
+
+        private Object getPropertyValue(String propertyKey, Object defaultValue) {
+            Map<String, ?> properties = (Map<String, ?>) getValue(config, "properties", new HashMap<>());
+            return getValue(properties, propertyKey, defaultValue);
+        }
+
+        public Boolean isCacheEnabled() {
+            return (Boolean) getValue(config, ENABLE_CACHING, Boolean.TRUE);
+        }
+
+        public int getMaxSchemaCacheSize() {
+            return isCacheEnabled() == true ?
+                    Integer.parseInt(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString()) : 0;
+        }
+
+        public long getSchemaExpiryInSecs() {
+            return Long.valueOf(getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS)
+                    .toString());
+        }
+    }
 
 }

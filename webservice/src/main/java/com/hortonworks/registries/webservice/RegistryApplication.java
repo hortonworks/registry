@@ -16,25 +16,18 @@ package com.hortonworks.registries.webservice;
 
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.GenericExceptionMapper;
-import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ModuleRegistration;
+import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
+import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
-import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.webservice.healthchecks.DummyHealthCheck;
-import com.hortonworks.registries.cron.RefreshHAServerManagedTask;
-import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
-import com.hortonworks.registries.schemaregistry.HAServersAware;
-import com.hortonworks.registries.schemaregistry.HostConfigStorable;
 import com.hortonworks.registries.storage.TransactionManagerAware;
 import com.hortonworks.registries.storage.transaction.TransactionEventListener;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import io.dropwizard.assets.AssetsBundle;
-import com.hortonworks.registries.common.ha.LeadershipAware;
-import com.hortonworks.registries.common.ha.LeadershipParticipant;
-import com.hortonworks.registries.common.ha.LocalLeader;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -62,24 +55,18 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  */
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
-    protected AtomicReference<LeadershipParticipant> leadershipParticipantRef = new AtomicReference<>();
     protected StorageManager storageManager;
-    protected HAServerNotificationManager haServerNotificationManager = new HAServerNotificationManager();
     protected TransactionManager transactionManager;
-    protected RefreshHAServerManagedTask refreshHAServerManagedTask;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
         initializeUGI(registryConfiguration);
-        // handle HA if it is configured
-        registerHA(registryConfiguration.getHaConfig(), environment);
 
         registerResources(environment, registryConfiguration);
 
@@ -92,7 +79,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         addServletFilters(registryConfiguration, environment);
 
-        registerAndNotifyOtherServers(registryConfiguration, environment);
+        registerModules(registryConfiguration, environment);
 
     }
 
@@ -127,89 +114,17 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
     }
 
-    private void registerAndNotifyOtherServers(RegistryConfiguration configuration, Environment environment) {
+    private void registerModules(RegistryConfiguration configuration, Environment environment) {
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
             @Override
             public void serverStarted(Server server) {
-
-                DefaultSchemaRegistry.Options options = null;
-
-                for (ModuleConfiguration moduleConfiguration : configuration.getModules()) {
-                    if (moduleConfiguration.getClassName().equals("com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule")) {
-                       options = new DefaultSchemaRegistry.Options(moduleConfiguration.getConfig());
-                       haServerNotificationManager.setIsCacheEnabled(options.isCacheEnabled());
-                    }
-                }
-
-                if (options.isCacheEnabled()) {
-                    LOG.debug("Enabled server side caching");
-
-                    String serverURL = server.getURI().toString();
-
-                    haServerNotificationManager.setHomeNodeURL(serverURL);
-
-                    try {
-                        transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
-                        HostConfigStorable hostConfigStorable = storageManager.get(new HostConfigStorable(serverURL).getStorableKey());
-                        if (hostConfigStorable == null) {
-                            storageManager.add(new HostConfigStorable(storageManager.nextId(HostConfigStorable.NAME_SPACE), serverURL,
-                                    System.currentTimeMillis()));
-                        }
-                        haServerNotificationManager.refreshServerInfo(storageManager.<HostConfigStorable>list(HostConfigStorable.NAME_SPACE));
-                        transactionManager.commitTransaction();
-                    } catch (Exception e) {
-                        transactionManager.rollbackTransaction();
-                        throw e;
-                    }
-
-                    haServerNotificationManager.notifyDebut();
-
-                    refreshHAServerManagedTask = new RefreshHAServerManagedTask(storageManager, transactionManager, haServerNotificationManager);
-                    environment.lifecycle().manage(refreshHAServerManagedTask);
-                    refreshHAServerManagedTask.start();
-                } else {
-                    LOG.debug("Disabled server side caching");
+                if (configuration.getModules().isEmpty() ||
+                        configuration.getModules().stream().noneMatch(ModuleConfiguration::isEnabled)) {
+                    throw new RuntimeException("There are no enabled modules!");
                 }
             }
         });
 
-    }
-
-    private void registerHA(HAConfiguration haConfiguration, Environment environment) throws Exception {
-        if (haConfiguration != null) {
-            environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
-                @Override
-                public void serverStarted(Server server) {
-
-                    String serverUrl = server.getURI().toString();
-
-                    LOG.info("Received callback as server is started with server URL:[{}]", server);
-                    LOG.info("HA configuration: [{}]", haConfiguration);
-                    String className = haConfiguration.getClassName();
-
-                    LeadershipParticipant leadershipParticipant = null;
-                    try {
-                        leadershipParticipant = (LeadershipParticipant) Class.forName(className).newInstance();
-                    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                    leadershipParticipant.init(haConfiguration.getConfig(), serverUrl);
-
-                    leadershipParticipantRef.set(leadershipParticipant);
-                    LOG.info("Registering for leadership with participant [{}]", leadershipParticipant);
-                    try {
-                        leadershipParticipantRef.get().participateForLeadership();
-                    } catch (Exception e) {
-                        LOG.error("Error occurred while participating for leadership with serverUrl [{}]", serverUrl, e);
-                        throw new RuntimeException(e);
-                    }
-                    LOG.info("Registered for leadership with participant [{}]", leadershipParticipant);
-                }
-            });
-        } else {
-            leadershipParticipantRef.set(LocalLeader.getInstance());
-            LOG.info("No HA configuration exists, using [{}]", leadershipParticipantRef);
-        }
     }
 
     @Override
@@ -241,9 +156,17 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         List<ModuleConfiguration> modules = registryConfiguration.getModules();
         List<Object> resourcesToRegister = new ArrayList<>();
+        SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
+        LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
         for (ModuleConfiguration moduleConfiguration : modules) {
             String moduleName = moduleConfiguration.getName();
             String moduleClassName = moduleConfiguration.getClassName();
+
+            if (!moduleConfiguration.isEnabled()) {
+                LOG.info("Module [{}] is disabled, skipping initialization", moduleClassName);
+                continue;
+            }
+
             LOG.info("Registering module [{}] with class [{}]", moduleName, moduleClassName);
             ModuleRegistration moduleRegistration = (ModuleRegistration) Class.forName(moduleClassName).newInstance();
             if (moduleConfiguration.getConfig() == null) {
@@ -261,18 +184,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 LOG.info("Module [{}] is TransactionManagerAware and setting TransactionManager.", moduleName);
                 TransactionManagerAware transactionManagerAware = (TransactionManagerAware) moduleRegistration;
                 transactionManagerAware.setTransactionManager(transactionManager);
-            }
-
-            if (moduleRegistration instanceof LeadershipAware) {
-                LOG.info("Module [{}] is registered for LeadershipParticipant registration.", moduleName);
-                LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
-                leadershipAware.setLeadershipParticipant(leadershipParticipantRef);
-            }
-
-            if (moduleRegistration instanceof HAServersAware) {
-                LOG.info("Module [{}] is registered for HAServersAware registration.");
-                HAServersAware leadershipAware = (HAServersAware) moduleRegistration;
-                leadershipAware.setHAServerConfigManager(haServerNotificationManager);
             }
 
             resourcesToRegister.addAll(moduleRegistration.getResources());

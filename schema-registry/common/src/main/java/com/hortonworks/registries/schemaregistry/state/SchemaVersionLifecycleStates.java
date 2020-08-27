@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.state;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
@@ -26,7 +27,10 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +45,8 @@ import java.util.stream.Collectors;
  */
 public final class SchemaVersionLifecycleStates {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SchemaVersionLifecycleStates.class);
+
     public static final InbuiltSchemaVersionLifecycleState INITIATED = new InitiatedState();
     public static final InbuiltSchemaVersionLifecycleState START_REVIEW = new StartReviewState();
     public static final InbuiltSchemaVersionLifecycleState CHANGES_REQUIRED = new ChangesRequiredState();
@@ -49,6 +55,24 @@ public final class SchemaVersionLifecycleStates {
     public static final InbuiltSchemaVersionLifecycleState DISABLED = new DisabledState();
     public static final InbuiltSchemaVersionLifecycleState ARCHIVED = new ArchivedState();
     public static final InbuiltSchemaVersionLifecycleState DELETED = new DeletedState();
+
+    private static final List<InbuiltSchemaVersionLifecycleState> inbuildStates =
+            ImmutableList.of(INITIATED, START_REVIEW, CHANGES_REQUIRED, REVIEWED, ENABLED, DISABLED, ARCHIVED, DELETED);
+
+    public static @Nullable InbuiltSchemaVersionLifecycleState valueOf(@Nullable Byte id) {
+        if (id == null) {
+            return null;
+        }
+
+        for (InbuiltSchemaVersionLifecycleState ls : inbuildStates) {
+            if (id.equals(ls.getId())) {
+                return ls;
+            }
+        }
+
+        LOG.warn("Not a built-in state id: " + id);
+        return null;
+    }
 
     private static final class InitiatedState extends AbstractInbuiltSchemaLifecycleState {
 

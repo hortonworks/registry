@@ -107,7 +107,7 @@ export default class SchemaRegistryContainer extends Component {
     const stateMachine = this.fetchStateMachine();
     Promise.all([fetchData, stateMachine]).then((res) => {
       const entities = res[0];
-      if(!entities.length){
+      if(!entities || !entities.length){
         this.setState({dataFound: false});
       }
     });

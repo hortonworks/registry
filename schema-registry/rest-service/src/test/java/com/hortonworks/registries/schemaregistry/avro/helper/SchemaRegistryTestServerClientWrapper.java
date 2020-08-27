@@ -24,8 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +37,7 @@ public class SchemaRegistryTestServerClientWrapper {
     private volatile SchemaRegistryClient cachedSchemaRegistryClient;
     private static final String V1_API_PATH = "api/v1";
 
-    public SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration schemaRegistryTestConfiguration) throws URISyntaxException {
+    public SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration schemaRegistryTestConfiguration) {
         this.schemaRegistryTestConfiguration = schemaRegistryTestConfiguration;
         localSchemaRegistryServer = new LocalSchemaRegistryServer(schemaRegistryTestConfiguration.getServerYAMLPath());
     }
@@ -55,10 +55,6 @@ public class SchemaRegistryTestServerClientWrapper {
         }
     }
 
-    public boolean hasLeadership() {
-        return this.localSchemaRegistryServer.hasLeadership();
-    }
-
     public int getLocalPort() {
         return this.localSchemaRegistryServer.getLocalPort();
     }
@@ -71,23 +67,12 @@ public class SchemaRegistryTestServerClientWrapper {
         localSchemaRegistryServer.stop();
     }
 
-    public SchemaRegistryClient getClient() throws IOException {
-        return getClient(false);
-    }
-
-    public SchemaRegistryClient getClient(boolean cached) throws IOException {
-        if (!cached) {
-            SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(exportClientConf(false));
-            if (cachedSchemaRegistryClient == null) {
-                cachedSchemaRegistryClient = schemaRegistryClient;
-            }
-            return schemaRegistryClient;
-        } else {
-            if (cachedSchemaRegistryClient == null) {
-                cachedSchemaRegistryClient = new SchemaRegistryClient(exportClientConf(true));
-            }
-            return cachedSchemaRegistryClient;
+    public SchemaRegistryClient getClient() {
+        SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(exportClientConf(false));
+        if (cachedSchemaRegistryClient == null) {
+            cachedSchemaRegistryClient = schemaRegistryClient;
         }
+        return schemaRegistryClient;
     }
 
     public Map<String, Object> exportClientConf() {
@@ -117,7 +102,7 @@ public class SchemaRegistryTestServerClientWrapper {
             return ret;
         }
         try (FileInputStream fis = new FileInputStream(schemaRegistryTestConfiguration.getClientYAMLPath())) {
-            Map<String, Object> ret = (Map<String, Object>) new Yaml().load(IOUtils.toString(fis, "UTF-8"));
+            Map<String, Object> ret = new Yaml().load(IOUtils.toString(fis, StandardCharsets.UTF_8));
             ret.put("schema.registry.url", registryURL);
             return ret;
         } catch(Exception e) {

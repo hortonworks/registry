@@ -15,19 +15,8 @@
  */
 package com.hortonworks.registries.common;
 
-import com.hortonworks.registries.common.ha.LeadershipParticipant;
-
 import java.util.Map;
 
-/**
- * Configuration for HighAvailability.
- * {@code className} represents {@link LeadershipParticipant} implementation class
- * {@code config} respective configuration for the above class.
- *
- * If no HAConfiguration is not configured on schema registry cluster nodes then it is considered that each node in the
- * cluster is eligible for writes.
- *
- */
 public class HAConfiguration {
     private String className;
     private Map<String, Object> config;

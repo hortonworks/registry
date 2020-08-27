@@ -1,5 +1,5 @@
 /*
- * Copyright  (c) 2011-2017, Hortonworks Inc.  All rights reserved.
+ * Copyright  (c) 2011-2020, Hortonworks Inc.  All rights reserved.
  *
  * Except as expressly permitted in a written agreement between your
  * company and Hortonworks, Inc, any use, reproduction, modification,
@@ -71,6 +71,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
    */
   private SchemaRegistryRestClient(RequestUrl requestURL) {
     this.requestUrl = requestURL;
+    LOG.info("Request URL: {}", requestUrl);
   }
 
   /**
@@ -214,7 +215,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
       CompatibilityResult compatibilityResponse = PojoUtils.getPojo(
           baseResponse.getContent(), CompatibilityResult.class);
       if (!compatibilityResponse.isCompatible()) {
-        LOG.error("Compatibility test failed: " + compatibilityResponse);
+        LOG.error("Compatibility test failed: {}", compatibilityResponse);
       }
     } catch (URISyntaxException | AuthenticationHandlerException | IOException e) {
       LOG.error("Post failed " + ExceptionUtils.getStackTrace(e));
@@ -269,7 +270,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
       assert baseResponse != null;
       schemaIdVersion = PojoUtils.getPojo(baseResponse.getContent(), SchemaIdVersion.class);
     } catch (IOException e) {
-      LOG.error("Pojo utils failed while converting %s to %s type",
+      LOG.error("Pojo utils failed while converting {} to {} type",
           baseResponse.getContent(),
           SchemaIdVersion.class.getName());
     }
@@ -344,6 +345,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
    */
   @Override
   public Collection<SchemaVersionInfo> getAllVersions(String schemaName) throws SchemaNotFoundException {
+    LOG.info("Get all versions for schema \"{}\"", schemaName);
     List<SchemaVersionInfo> schemaversions = null;
     try {
       ObjectMapper mapper = new ObjectMapper();
@@ -383,7 +385,7 @@ final class SchemaRegistryRestClient implements ISchemaRegistryClient {
       CompatibilityResult compatibilityResponse = PojoUtils.getPojo(
           baseResponse.getContent(), CompatibilityResult.class);
       if (!compatibilityResponse.isCompatible()) {
-        LOG.error("Compatibility test failed: " + compatibilityResponse);
+        LOG.error("Compatibility test failed: {}", compatibilityResponse);
       }
     } catch (IOException | AuthenticationHandlerException | URISyntaxException e) {
       logErrorMessage("Post", compatibilityURL, e);

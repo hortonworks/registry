@@ -47,6 +47,7 @@ if [ ! "x$EXT_CLASSPATH" = "x" ]; then
  CLASSPATH=$CLASSPATH:$EXT_CLASSPATH;
 fi
 
+CLASSPATH=$CLASSPATH:$base_dir/atlas-plugin/*
 CLASSPATH=$CLASSPATH:$base_dir/ranger-plugin/*
 CLASSPATH=$CLASSPATH:$base_dir/ranger-plugin/conf/
 
@@ -64,6 +65,10 @@ case $COMMAND in
   -daemon)
     DAEMON_MODE=true
     shift
+    ;;
+  -atlas)
+    REGISTRY_ATLAS_OPTS=$2
+    shift 2
     ;;
   *)
     ;;
@@ -98,7 +103,7 @@ APP_CLASS="com.hortonworks.registries.webservice.RegistryApplication"
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-    nohup $JAVA $REGISTRY_HEAP_OPTS $REGISTRY_JVM_PERFORMANCE_OPTS -cp $CLASSPATH $REGISTRY_OPTS "$APP_CLASS" "server" "$@" > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
+    nohup $JAVA $REGISTRY_ATLAS_OPTS $REGISTRY_HEAP_OPTS $REGISTRY_JVM_PERFORMANCE_OPTS -cp $CLASSPATH $REGISTRY_OPTS "$APP_CLASS" "server" "$@" > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
 else
-    exec $JAVA $REGISTRY_HEAP_OPTS $REGISTRY_JVM_PERFORMANCE_OPTS -cp $CLASSPATH $REGISTRY_OPTS "$APP_CLASS" "server" "$@"
+    exec $JAVA $REGISTRY_ATLAS_OPTS $REGISTRY_HEAP_OPTS $REGISTRY_JVM_PERFORMANCE_OPTS -cp $CLASSPATH $REGISTRY_OPTS "$APP_CLASS" "server" "$@"
 fi

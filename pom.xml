@@ -104,6 +104,7 @@
     <modules>
         <module>common-client</module>
         <module>common</module>
+        <module>atlas-integration</module>
         <module>cache</module>
         <module>storage</module>
         <module>webservice</module>
@@ -380,7 +381,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.12.10</scala.version>
-        <schema-registry-shaded.version>0.9.1.7.2.7.0-SNAPSHOT</schema-registry-shaded.version>
+        <!-- TODO change these to 7.2.7 once the artifacts are disted -->
+        <schema-registry-shaded.version>0.9.1.7.2.3.0-SNAPSHOT</schema-registry-shaded.version>
+        <atlas.version>2.0.0.7.2.3.0-SNAPSHOT</atlas.version>
         <junit.version>4.12</junit.version>
         <jackson.version>2.10.5</jackson.version>
         <jackson-mapper.version>1.9.13-cloudera.1</jackson-mapper.version>
@@ -454,6 +457,100 @@
     </distributionManagement>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-client-v2</artifactId>
+                <version>${atlas.version}</version>
+                <exclusions>
+                    <!-- clientv2 and intg pull in different dependencies which cause conflicts -->
+                    <exclusion>
+                        <groupId>org.apache.atlas</groupId>
+                        <artifactId>atlas-intg</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.nimbusds</groupId>
+                        <artifactId>nimbus-jose-jwt</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.jackson</groupId>
+                        <artifactId>jackson-core-asl</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.avro</groupId>
+                        <artifactId>avro</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>jul-to-slf4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>jdk.tools</groupId>
+                        <artifactId>jdk.tools</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-intg</artifactId>
+                <version>${atlas.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.sun.jersey</groupId>
+                        <artifactId>jersey-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.nimbusds</groupId>
+                        <artifactId>nimbus-jose-jwt</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.jackson</groupId>
+                        <artifactId>jackson-core-asl</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.avro</groupId>
+                        <artifactId>avro</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>jul-to-slf4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>jdk.tools</groupId>
+                        <artifactId>jdk.tools</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-plugin-classloader</artifactId>
+                <version>${atlas.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>

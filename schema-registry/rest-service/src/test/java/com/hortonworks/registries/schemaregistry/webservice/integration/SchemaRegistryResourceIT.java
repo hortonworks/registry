@@ -27,38 +27,36 @@ import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
-import com.hortonworks.registries.storage.search.OrderBy;
-import com.hortonworks.registries.storage.search.WhereClause;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.hamcrest.core.Is;
+
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SchemaRegistryResourceIT {
-    private static AtomicReference atomicReferenceMock = Mockito.mock(AtomicReference.class);
+
     private static ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
     private static AuthorizationAgent authorizationAgentMock = Mockito.mock(AuthorizationAgent.class);
     private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock = Mockito.mock(SchemaMetadataTypeValidator.class);
@@ -76,12 +74,7 @@ public class SchemaRegistryResourceIT {
             .build();
 
     private static SchemaRegistryResource instantiateResource() {
-        return new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null, schemaMetadataTypeValidatorMock) {
-            @Override
-            protected Response handleLeaderAction(UriInfo uriInfo, Supplier<Response> supplier) {
-                return supplier.get();
-            }
-        };
+        return new SchemaRegistryResource(schemaRegistryMock, null, authorizationAgentMock, null, schemaMetadataTypeValidatorMock);
     }
 
     @Test
@@ -89,8 +82,8 @@ public class SchemaRegistryResourceIT {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("apple", 1));
-        when(schemaRegistryMock.findSchemasByFields(ArgumentMatchers.any())).thenReturn(schemaversions);
-        when(authorizationAgentMock.authorizeFindSchemasByFields(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
+        when(schemaRegistryMock.findSchemasByFields(any())).thenReturn(schemaversions);
+        when(authorizationAgentMock.authorizeFindSchemasByFields(any(), any(), any())).thenReturn(schemaversions);
 
         //when
         Response response = testClient.target(
@@ -114,8 +107,8 @@ public class SchemaRegistryResourceIT {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("test", 1));
-        when(schemaRegistryMock.findSchemasByFields(ArgumentMatchers.any())).thenReturn(schemaversions);
-        when(authorizationAgentMock.authorizeFindSchemasByFields(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
+        when(schemaRegistryMock.findSchemasByFields(any())).thenReturn(schemaversions);
+        when(authorizationAgentMock.authorizeFindSchemasByFields(any(), any(), any())).thenReturn(schemaversions);
 
         //when
         Response response = testClient.target(
@@ -138,8 +131,8 @@ public class SchemaRegistryResourceIT {
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
-        when(authorizationAgentMock.authorizeFindSchemas(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
-        when(schemaRegistryMock.searchSchemas(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
+        when(authorizationAgentMock.authorizeFindSchemas(any(), any())).thenReturn(schemaversions);
+        when(schemaRegistryMock.searchSchemas(any(), any())).thenReturn(schemaversions);
 
         //when
         Response response = testClient.target(
@@ -150,11 +143,8 @@ public class SchemaRegistryResourceIT {
                 .get();
 
         //then
-        WhereClause whereClause = WhereClause.begin().contains("name", "apple").combine();
-        List<OrderBy> order = new ArrayList<>();
-        order.add(OrderBy.desc("timestamp"));
         verify(authorizationAgentMock).authorizeFindSchemas(null, schemaversions);
-        verify(schemaRegistryMock).searchSchemas(whereClause, order);
+        verify(schemaRegistryMock, atLeastOnce()).searchSchemas(any(MultivaluedMap.class), any(Optional.class));
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
         assertThat(actual.getEntities(), is(schemaversions));
         assertThat(response.getStatus(), is(200));
@@ -186,8 +176,8 @@ public class SchemaRegistryResourceIT {
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(schemaMetadata, null, null, Collections.emptyList(), Collections.emptyList());
         aggregatedSchemaMetadataInfos.add(aggregatedSchemaMetadataInfo);
-        when(authorizationAgentMock.authorizeGetAggregatedSchemaList(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(aggregatedSchemaMetadataInfos);
-        when(schemaRegistryMock.searchSchemas(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
+        when(authorizationAgentMock.authorizeGetAggregatedSchemaList(any(), any())).thenReturn(aggregatedSchemaMetadataInfos);
+        when(schemaRegistryMock.searchSchemas(any(), any())).thenReturn(schemaversions);
 
         //when
         Response response = testClient.target(
@@ -198,11 +188,8 @@ public class SchemaRegistryResourceIT {
                 .get();
 
         //then
-        WhereClause whereClause = WhereClause.begin().contains("name", "magnesium").combine();
-        List<OrderBy> order = new ArrayList<>();
-        order.add(OrderBy.desc("timestamp"));
         verify(authorizationAgentMock).authorizeGetAggregatedSchemaList(null, aggregatedSchemaMetadataInfos);
-        verify(schemaRegistryMock).searchSchemas(whereClause, order);
+        verify(schemaRegistryMock).searchSchemas(any(MultivaluedMap.class), any(Optional.class));
         TestResponseForAggregatedSchemaMetadataInfo actual = response.readEntity(TestResponseForAggregatedSchemaMetadataInfo.class);
         assertThat(response.getStatus(), is(200));
     }

@@ -19,7 +19,6 @@ import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.storage.search.WhereClause;
 import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,17 +34,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 
 public class SchemaRegistryResourceTest {
-    private MultivaluedMap<String, String> queryParametersWithNameAndDesc;
-    private MultivaluedMap<String, String> queryParametersWithoutDesc;
+
     private SchemaRegistryResource underTest;
-    private AtomicReference atomicReferenceMock = Mockito.mock(AtomicReference.class);
     private ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
     private AuthorizationAgent authorizationAgentMock = Mockito.mock(AuthorizationAgent.class);
     private static final String NAME = "name";
@@ -57,40 +53,8 @@ public class SchemaRegistryResourceTest {
 
     @Before
     public void setup() {
-        queryParametersWithNameAndDesc = new MultivaluedHashMap<>();
-        queryParametersWithoutDesc = new MultivaluedHashMap<>();
-        queryParametersWithNameAndDesc.putSingle(NAME, "some name");
-        queryParametersWithNameAndDesc.putSingle(DESCRIPTION, "some desc");
-        queryParametersWithNameAndDesc.putSingle(ORDER,"foo,a,bar,d");
-        queryParametersWithoutDesc.putSingle(NAME, "only name");
-        queryParametersWithoutDesc.putSingle(ORDER,"foo,a,bar,d");
-        underTest = new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null, null);
-    }
-    
-    @Test
-    public void getWhereClauseTest_NamePresent() {
-        //given
-        WhereClause expected = WhereClause.begin().contains(NAME, "only name").combine();
-        
-        //when
-        WhereClause actual = underTest.getWhereClause(queryParametersWithoutDesc);
-        
-        //then
-        assertThat(actual, is(expected));
-
-    }
-    
-    @Test
-    public void getWhereClauseTest_NameDescriptionPresent() {
-        //given
-        WhereClause expected = WhereClause.begin().contains(NAME, "some name").or().contains(DESCRIPTION, "some desc").combine();
-
-        //when
-        WhereClause actual = underTest.getWhereClause(queryParametersWithNameAndDesc);
-
-        //then
-        assertThat(actual, is(expected));
-
+        ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
+        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null);
     }
     
     @Test
@@ -266,7 +230,7 @@ public class SchemaRegistryResourceTest {
         String type = "type";
         SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null, null){
+        underTest = new SchemaRegistryResource(schemaRegistryMock, null, authorizationAgentMock, null, null){
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();

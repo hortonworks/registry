@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -94,7 +93,6 @@ public class DefaultAuthorizationAgentTest {
         schemaRegistry = new DefaultSchemaRegistry(storageManager,
                 null,
                 schemaProvidersConfig,
-                new HAServerNotificationManager(),
                 new SchemaLockManager(new NOOPTransactionManager()));
         schemaRegistry.init(Collections.emptyMap());
 

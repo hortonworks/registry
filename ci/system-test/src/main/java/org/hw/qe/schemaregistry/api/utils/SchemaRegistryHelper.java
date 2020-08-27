@@ -1,5 +1,5 @@
 /*
- * Copyright  (c) 2011-2017, Hortonworks Inc.  All rights reserved.
+ * Copyright  (c) 2011-2020, Hortonworks Inc.  All rights reserved.
  *
  * Except as expressly permitted in a written agreement between your
  * company and Hortonworks, Inc, any use, reproduction, modification,
@@ -7,6 +7,7 @@
  * any part of the contents of this file is strictly prohibited.
  */
 package org.hw.qe.schemaregistry.api.utils;
+
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -17,13 +18,17 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-
 
 /**
  * Schema registry helper class.
  */
 public final class SchemaRegistryHelper {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryHelper.class);
+
   private static final String DEFAULT_SCHEMA_GROUP = SchemaRegistryConstants.SchemaGroup.KAFKA.name().toLowerCase();
   public static final String DEFAULT_SCHEMA_TYPE = SchemaRegistryConstants.SchemaType.AVRO.name().toLowerCase();
   private final ISchemaRegistryClient schemaRegistryClient;
@@ -116,7 +121,9 @@ public final class SchemaRegistryHelper {
                                        SchemaMetadata expectedMetadata,
                                        Long expectedID,
                                        String message) {
+
     SchemaMetadataInfo actual = schemaRegistryClient.getSchemaMetadataInfo(schemaName);
+    LOG.info("Schema metadata for \"{}\": {}", schemaName, actual);
     Assert.assertEquals(actual.getSchemaMetadata(), expectedMetadata, "Schema metadata comparison failed " +
             "while " + message);
 
@@ -140,9 +147,10 @@ public final class SchemaRegistryHelper {
                                       SchemaIdVersion schemaIDVersion,
                                       SchemaVersionInfo expectedSchemaVersionInfo,
                                       String message) throws SchemaNotFoundException {
-    SchemaVersionInfo actualSchemaVersionInfoWithSchemaName;
-    actualSchemaVersionInfoWithSchemaName = schemaRegistryClient.getSchemaVersionInfo(
+
+    SchemaVersionInfo actualSchemaVersionInfoWithSchemaName = schemaRegistryClient.getSchemaVersionInfo(
             new SchemaVersionKey(schemaName, schemaIDVersion.getVersion()));
+    LOG.info("Actual schema version for \"{}\" and version {} is: {}", schemaName, schemaIDVersion, actualSchemaVersionInfoWithSchemaName);
     runAssertionsForSchemaVersionInfo(actualSchemaVersionInfoWithSchemaName, expectedSchemaVersionInfo, message);
 
     Assert.assertEquals(actualSchemaVersionInfoWithSchemaName.getId(), expectedSchemaVersionInfo.getId(),
@@ -152,6 +160,7 @@ public final class SchemaRegistryHelper {
             "Schema version number from get call different from schema ID version passed");
 
     SchemaVersionInfo actualVersionInfoWithSchemaID = schemaRegistryClient.getSchemaVersionInfo(schemaIDVersion);
+    LOG.info("Schema for version id {} is: {}", schemaIDVersion, actualVersionInfoWithSchemaID);
     runAssertionsForSchemaVersionInfo(actualVersionInfoWithSchemaID, expectedSchemaVersionInfo, message);
   }
 
@@ -167,8 +176,9 @@ public final class SchemaRegistryHelper {
                                             SchemaIdVersion schemaIDVersion,
                                             SchemaVersionInfo expectedSchemaVersionInfo,
                                             String message) throws SchemaNotFoundException {
-    SchemaVersionInfo actualLatestSchemaVersionInfo;
-    actualLatestSchemaVersionInfo = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+    SchemaVersionInfo actualLatestSchemaVersionInfo = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+    LOG.info("Latest schema versionInfo for \"{}\" is: {}", schemaName, actualLatestSchemaVersionInfo);
+    LOG.info("Expected versionInfo is: {}", expectedSchemaVersionInfo);
     runAssertionsForSchemaVersionInfo(actualLatestSchemaVersionInfo, expectedSchemaVersionInfo, message);
     Assert.assertEquals(schemaRegistryClient.getAllVersions(schemaName).size(),
             expectedSchemaVersionInfo.getVersion().intValue(),

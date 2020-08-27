@@ -24,6 +24,7 @@ import java.util.Map;
 public class ModuleConfiguration {
     private String name;
     private String className;
+    private boolean enabled = true;
     private Map<String, Object>  config;
 
     public String getClassName() {
@@ -49,5 +50,13 @@ public class ModuleConfiguration {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

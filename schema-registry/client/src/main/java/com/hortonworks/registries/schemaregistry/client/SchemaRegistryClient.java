@@ -810,33 +810,30 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
         if (schemaIdVersion.getSchemaVersionId() != null) {
-            LOG.info("Getting schema version from target registry for [{}]", schemaIdVersion.getSchemaVersionId());
-            return runRetryableBlock((SchemaRegistryTargets targets) -> {
-                return getEntity(targets
-                                .schemaVersionsByIdTarget
-                                .path(schemaIdVersion.getSchemaVersionId().toString()),
-                        SchemaVersionInfo.class);
-            });
+            LOG.info("Getting schema version from target registry by its id [{}]", schemaIdVersion.getSchemaVersionId());
+            return doGetSchemaIdVersionInfo(schemaIdVersion.getSchemaVersionId());
         } else if (schemaIdVersion.getSchemaMetadataId() != null) {
             SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaIdVersion.getSchemaMetadataId());
-            SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadataInfo.getSchemaMetadata()
-                    .getName(), schemaIdVersion.getVersion());
-            LOG.info("Getting schema version from target registry for key [{}]", schemaVersionKey);
+            final String schemaName = schemaMetadataInfo.getSchemaMetadata().getName();
+            SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaName, schemaIdVersion.getVersion());
+            LOG.info("Getting schema version for \"{}\" from target registry for key [{}]", schemaName, schemaVersionKey);
             return doGetSchemaVersionInfo(schemaVersionKey);
         }
 
         throw new IllegalArgumentException("Given argument not valid: " + schemaIdVersion);
     }
 
+    private SchemaVersionInfo doGetSchemaIdVersionInfo(Long versionId) {
+        return runRetryableBlock((SchemaRegistryTargets targets) ->
+                getEntity(targets.schemaVersionsByIdTarget.path(versionId.toString()), SchemaVersionInfo.class));
+    }
+
     private SchemaVersionInfo doGetSchemaVersionInfo(SchemaVersionKey schemaVersionKey) {
         LOG.info("Getting schema version from target registry for [{}]", schemaVersionKey);
         String schemaName = schemaVersionKey.getSchemaName();
-        return runRetryableBlock((SchemaRegistryTargets targets) -> {
-            WebTarget webTarget = targets.schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey
-                    .getVersion()));
-
-            return getEntity(webTarget, SchemaVersionInfo.class);
-        });
+        return runRetryableBlock((SchemaRegistryTargets targets) ->
+                getEntity(targets.schemasTarget.path(String.format("%s/versions/%d", schemaName, schemaVersionKey.getVersion())),
+                        SchemaVersionInfo.class));
     }
 
     @Override

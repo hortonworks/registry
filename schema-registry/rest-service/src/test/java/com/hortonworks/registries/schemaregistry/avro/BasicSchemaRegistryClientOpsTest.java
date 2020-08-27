@@ -73,7 +73,7 @@ public class BasicSchemaRegistryClientOpsTest {
     @Before
     public void startServer() throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
-        schemaRegistryClient = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient(false);
+        schemaRegistryClient = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient();
     }
 
     @After

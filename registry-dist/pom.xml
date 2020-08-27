@@ -60,6 +60,11 @@
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
+            <artifactId>atlas-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-serdes</artifactId>
             <version>${project.version}</version>
             <exclusions>

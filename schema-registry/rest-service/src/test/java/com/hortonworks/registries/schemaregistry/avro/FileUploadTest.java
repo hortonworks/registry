@@ -30,7 +30,7 @@ public class FileUploadTest {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(
                 SchemaRegistryTestProfileType.DEFAULT);
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
-        SCHEMA_REGISTRY_CLIENT = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient(false);
+        SCHEMA_REGISTRY_CLIENT = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient();
     }
 
     private String uploadValidFile() throws IOException {

@@ -25,6 +25,7 @@ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -76,6 +77,7 @@ public interface ISchemaRegistryService {
      *
      * @return information about given schema identified by {@code schemaName}
      */
+    @Nullable
     SchemaMetadataInfo getSchemaMetadataInfo(String schemaName);
 
 
@@ -402,25 +404,15 @@ public interface ISchemaRegistryService {
      */
     Collection<SerDesInfo> getSerDes(String schemaName);
 
-    default void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
-        throw new UnsupportedOperationException();
-    }
+    void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException;
 
-    default void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        throw new UnsupportedOperationException();
-    }
+    void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
 
-    default void archiveSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        throw new UnsupportedOperationException();
-    }
+    void archiveSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
 
-    default void disableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        throw new UnsupportedOperationException();
-    }
+    void disableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
 
-    default void startSchemaVersionReview(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
-        throw new UnsupportedOperationException();
-    }
+    void startSchemaVersionReview(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
 
     /**
      *  Merge a schema version to 'MASTER' branch
@@ -429,7 +421,6 @@ public interface ISchemaRegistryService {
      * @throws SchemaNotFoundException  if the {@code schemaVersionId} is can't found
      * @throws IncompatibleSchemaException  if the {@code schemaVersionId} to be merged is not compatible with the schema versions for that schema metadata in 'MASTER' branch
      */
-
     default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, false);
     }
@@ -446,10 +437,8 @@ public interface ISchemaRegistryService {
      * @throws IncompatibleSchemaException if the {@code schemaVersionId} to be merged is not compatible with the schema versions for that schema metadata in 'MASTER' branch
      */
 
-    default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
-                                                        boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
-        throw new UnsupportedOperationException();
-    }
+    SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
+                                                        boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException;
 
     void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException;
 

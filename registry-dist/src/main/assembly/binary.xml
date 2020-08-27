@@ -28,6 +28,9 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>libs</outputDirectory>
             <unpack>false</unpack>
+            <excludes>
+                <exclude>com.hortonworks.registries:atlas-shim</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 
@@ -142,6 +145,35 @@
             <outputDirectory>ranger-plugin</outputDirectory>
             <includes>
                 <include>*shim*jar</include>
+            </includes>
+        </fileSet>
+        
+        <!--
+            ATLAS-INTEGRATION
+        -->
+
+        <!-- Copy impl class to the plugin-impl dir -->
+        <fileSet>
+            <directory>${project.basedir}./atlas-integration/atlas-translate/target</directory>
+            <outputDirectory>atlas-plugin/atlas-schema-registry-plugin-impl</outputDirectory>
+            <includes>
+                <include>*translate*jar</include>
+            </includes>
+        </fileSet>
+        <!-- Copy impl deps (Atlas) to the plugin-impl dir -->
+        <fileSet>
+            <directory>${project.basedir}./atlas-integration/atlas-translate/target/atlas-schema-registry-plugin-impl</directory>
+            <outputDirectory>atlas-plugin/atlas-schema-registry-plugin-impl</outputDirectory>
+            <includes>
+                <include>*jar</include>
+            </includes>
+        </fileSet>
+        <!-- Copy shim class to the root of the plugin dir -->
+        <fileSet>
+            <directory>${project.basedir}./atlas-integration/atlas-shim/target</directory>
+            <outputDirectory>atlas-plugin</outputDirectory>
+            <includes>
+                <include>*shim*.jar</include>
             </includes>
         </fileSet>
     </fileSets>

@@ -1,5 +1,5 @@
 /*
- * Copyright  (c) 2011-2017, Hortonworks Inc.  All rights reserved.
+ * Copyright  (c) 2011-2020, Hortonworks Inc.  All rights reserved.
  *
  * Except as expressly permitted in a written agreement between your
  * company and Hortonworks, Inc, any use, reproduction, modification,
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * Primitive avro data types.
  */
-public class PrimitiveSchemaType implements AvroSchemaType, SchemaTestDataInterface {
+public class PrimitiveSchemaType implements AvroSchemaType, SchemaTestDataInterface<Schema> {
   /**
    * Get all types of primitive data type.
    * @return All types of primitive data type

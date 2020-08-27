@@ -17,11 +17,16 @@
 package com.hortonworks.registries.schemaregistry.avro.conf;
 
 import com.google.common.io.Resources;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URISyntaxException;
 
 public class SchemaRegistryTestConfiguration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryTestConfiguration.class);
+
     private String serverYAMLPath;
     private String clientYAMLPath;
 
@@ -33,6 +38,8 @@ public class SchemaRegistryTestConfiguration {
     public static SchemaRegistryTestConfiguration forProfileType(SchemaRegistryTestProfileType testProfileType) throws URISyntaxException {
         String serverYAMLFileName;
         String clientYAMLFileName;
+        LOG.info("Selected test profile: {}", testProfileType);
+        // TODO CDPD-18915 Add profile for Atlas tests
         switch (testProfileType) {
             case DEFAULT:
                 serverYAMLFileName = "schema-registry.yaml";

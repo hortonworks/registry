@@ -16,17 +16,12 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
-import com.hortonworks.registries.common.ha.LeadershipAware;
-import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.HAServerNotificationManager;
-import com.hortonworks.registries.schemaregistry.HAServersAware;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
@@ -45,7 +40,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.AUTHORIZATION;
 import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_PROVIDERS;
@@ -53,15 +47,13 @@ import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_P
 /**
  *
  */
-public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, LeadershipAware, HAServersAware, TransactionManagerAware {
+public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, TransactionManagerAware {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
 
     private Map<String, Object> config;
     private FileStorage fileStorage;
     private StorageManager storageManager;
     private TransactionManager transactionManager;
-    private HAServerNotificationManager haServerNotificationManager;
-    private AtomicReference<LeadershipParticipant> leadershipParticipant;
 
     @Override
     public void setStorageManager(StorageManager storageManager) {
@@ -80,25 +72,21 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager,
                                                                          fileStorage,
                                                                          schemaProviders,
-                                                                         haServerNotificationManager,
                                                                          new SchemaLockManager(transactionManager));
         schemaRegistry.init(config);
         SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
-        LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
         Map<String, Object> authorizationProps = (Map<String, Object>) config.get(AUTHORIZATION);
         AuthorizationAgent authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(authorizationProps);
 
         SchemaMetadataTypeValidator schemaMetadataTypeValidator = new SchemaMetadataTypeValidator(schemaRegistry);
         SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
-                                                                                   leadershipParticipant,
                                                                                    schemaRegistryVersion,
                                                                                    authorizationAgent,
                                                                                    new JarInputStreamValidator(),
                                                                                     schemaMetadataTypeValidator);
         ConfluentSchemaRegistryCompatibleResource
             confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry,
-                leadershipParticipant,
                 authorizationAgent);
 
         return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
@@ -128,17 +116,6 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
                 }
             }
         });
-    }
-
-    @Override
-    public void setLeadershipParticipant(AtomicReference<LeadershipParticipant> leadershipParticipant) {
-        Preconditions.checkState(this.leadershipParticipant == null, "leadershipParticipant " + leadershipParticipant + " is already set!!");
-        this.leadershipParticipant = leadershipParticipant;
-    }
-
-    @Override
-    public void setHAServerConfigManager(HAServerNotificationManager haServerNotificationManager) {
-        this.haServerNotificationManager = haServerNotificationManager;
     }
 
     @Override

@@ -248,7 +248,10 @@ public class AvroSchemaAdvancedLifecycleTest extends BaseAPITest {
     schema = SCHEMA_DATA.getPossibleDatatypeSchemas().get(1);
     schemaString = SCHEMA_TYPE.getJson(schema);
     schemaVersion = new SchemaVersion(schemaString, "Adding version 1 to schema");
+
     SchemaIdVersion schemaIdVersion = getSchemaRegistryClient().addSchemaVersion(getSchemaName(), schemaVersion);
+    getLog().info("Received from server: {}", schemaIdVersion);
+
     getSchemaRegistryHelper().assertLatestSchemaVersionInfo(getSchemaName(),
         schemaIdVersion,
         new SchemaVersionInfo(schemaIdVersion.getSchemaVersionId(), getSchemaName(),

@@ -1,7 +1,20 @@
 # registries configuration
 modules:
+#  - name: atlas-module
+#    className: com.cloudera.dim.atlas.AtlasModule
+#    enabled: true
+#    config:
+#      urls:
+#        - http://kevincostner-1.kevincostner.root.hwx.site:31000
+#      schemaProviders:
+#        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+#          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+#          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
+#          hashFunction: "MD5"
+#
   - name: schema-registry
     className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
+    enabled: true
     config:
       schemaProviders:
         - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
@@ -88,7 +101,7 @@ storageProviderConfiguration:
 
 #swagger configuration
 swagger:
-  resourcePackage: com.hortonworks.registries.schemaregistry.webservice
+  resourcePackage: com.hortonworks.registries.schemaregistry.webservice,com.cloudera.dim.atlas
 
 #enable CORS, may want to disable in production
 enableCors: true
@@ -118,4 +131,3 @@ logging:
 #    principal: "schema-registry/hostname@GCE.CLOUDERA.COM"
 #    keytab: "/tmp/schema-registry.keytab"
 
-  

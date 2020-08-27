@@ -19,7 +19,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
-import com.hortonworks.registries.common.ha.LeadershipParticipant;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
@@ -58,7 +57,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -77,9 +75,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     private final AuthorizationAgent authorizationAgent;
 
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
-                                                     AtomicReference<LeadershipParticipant> leadershipParticipant,
                                                      AuthorizationAgent authorizationAgent) {
-        super(schemaRegistry, leadershipParticipant);
+        super(schemaRegistry);
 
         this.authorizationAgent = authorizationAgent;
     }
@@ -338,51 +335,49 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                            String schema,
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
-        LOG.info("registerSchema for [{}] is [{}]", subject);
-        return handleLeaderAction(uriInfo, () -> {
-            Response response;
-            try {
-                LOG.info("registerSchema for [{}] is [{}]", subject);
-                SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
-                if (schemaMetadataInfo == null) {
-                    SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject)
-                            .type(AvroSchemaProvider.TYPE)
-                            .schemaGroup("Kafka")
-                            .build();
-                    authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
-                            schemaMetadata, Authorizer.AccessType.CREATE);
-                    schemaRegistry.addSchemaMetadata(schemaMetadata);
-                    schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
-                }
 
-                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                        subject, SchemaBranch.MASTER_BRANCH, Authorizer.AccessType.CREATE);
-                SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
-                                                                                    new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
-
-                Id id = new Id();
-                id.setId(schemaVersionInfo.getSchemaVersionId());
-                response = WSUtils.respondEntity(id, Response.Status.OK);
-
-            } catch (AuthorizationException e) {
-                LOG.debug("Access denied. ", e);
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-            } catch (InvalidSchemaException ex) {
-                LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
-                response = invalidSchemaError();
-            } catch (IncompatibleSchemaException ex) {
-                LOG.error("Incompatible schema error encountered while adding subject [{}]", subject, ex);
-                response = incompatibleSchemaError();
-            } catch (UnsupportedSchemaTypeException ex) {
-                LOG.error("Unsupported schema type encountered while adding subject [{}]", subject, ex);
-                response = incompatibleSchemaError();
-            } catch (Exception ex) {
-                LOG.error("Encountered error while adding subject [{}]", subject, ex);
-                response = serverError();
+        Response response;
+        try {
+            LOG.info("registerSchema for [{}] is [{}]", subject);
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
+            if (schemaMetadataInfo == null) {
+                SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject)
+                        .type(AvroSchemaProvider.TYPE)
+                        .schemaGroup("Kafka")
+                        .build();
+                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                        schemaMetadata, Authorizer.AccessType.CREATE);
+                schemaRegistry.addSchemaMetadata(schemaMetadata);
+                schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
             }
 
-            return response;
-        });
+            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    subject, SchemaBranch.MASTER_BRANCH, Authorizer.AccessType.CREATE);
+            SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
+                                                                                new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
+
+            Id id = new Id();
+            id.setId(schemaVersionInfo.getSchemaVersionId());
+            response = WSUtils.respondEntity(id, Response.Status.OK);
+
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (InvalidSchemaException ex) {
+            LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
+            response = invalidSchemaError();
+        } catch (IncompatibleSchemaException ex) {
+            LOG.error("Incompatible schema error encountered while adding subject [{}]", subject, ex);
+            response = incompatibleSchemaError();
+        } catch (UnsupportedSchemaTypeException ex) {
+            LOG.error("Unsupported schema type encountered while adding subject [{}]", subject, ex);
+            response = incompatibleSchemaError();
+        } catch (Exception ex) {
+            LOG.error("Encountered error while adding subject [{}]", subject, ex);
+            response = serverError();
+        }
+
+        return response;
     }
 
     public static Response serverError() {

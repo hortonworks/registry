@@ -1,5 +1,5 @@
 /*
- * Copyright  (c) 2011-2017, Hortonworks Inc.  All rights reserved.
+ * Copyright  (c) 2011-2020, Hortonworks Inc.  All rights reserved.
  *
  * Except as expressly permitted in a written agreement between your
  * company and Hortonworks, Inc, any use, reproduction, modification,
@@ -9,6 +9,7 @@
 package org.hw.qe.schemaregistry.api.schemaTypes.avro;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Suppliers;
 import lombok.Getter;
 import lombok.ToString;
 import org.apache.avro.Schema;
@@ -21,15 +22,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Json for complex avro schema type.
  */
 @Getter
 @ToString
-public class RecordSchemaType implements AvroSchemaType, SchemaTestDataInterface {
+public class RecordSchemaType implements AvroSchemaType, SchemaTestDataInterface<Schema> {
+
   private final Logger log = LoggerFactory.getLogger(this.getClass());
-  private static final ArrayList<Schema> SAMPLE_SCHEMAS = new ArrayList<>();
+
+  private static final Supplier<ArrayList<Schema>> SAMPLE_SCHEMAS = Suppliers.memoize(() -> {
+    final ArrayList<Schema> sampleSchemas = new ArrayList<>();
+    for (Schema.Type primitiveDataType : PrimitiveSchemaType.values()) {
+      Schema record = SchemaBuilder
+              .record(String.format("hwqe.registries.avro.complex.records_%s", primitiveDataType.name().toLowerCase()))
+              .aliases("records")
+              .fields()
+              .name("field_" + primitiveDataType.getName())
+              .type(primitiveDataType.name().toLowerCase())
+              .noDefault()
+              .name("field_with_default")
+              .type("int")
+              .withDefault(10)
+              .endRecord();
+      sampleSchemas.add(record);
+    }
+    return sampleSchemas;
+  });
 
   /**
    * Get the list of sample records to be tested.
@@ -38,24 +59,7 @@ public class RecordSchemaType implements AvroSchemaType, SchemaTestDataInterface
   @Override
   @JsonIgnore
   public ArrayList<Schema> getPossibleDatatypeSchemas() {
-    if (SAMPLE_SCHEMAS.isEmpty()) {
-      for (Schema.Type primitiveDataType : PrimitiveSchemaType.values()) {
-        Schema record = SchemaBuilder
-                .record(
-                    String.format("hwqe.registries.avro.complex.records_%s", primitiveDataType.name().toLowerCase()))
-                .aliases("records")
-                .fields()
-                .name("field_" + primitiveDataType.getName())
-                .type(primitiveDataType.name().toLowerCase())
-                .noDefault()
-                .name("field_with_default")
-                .type("int")
-                .withDefault(10)
-                .endRecord();
-        SAMPLE_SCHEMAS.add(record);
-      }
-    }
-    return SAMPLE_SCHEMAS;
+    return SAMPLE_SCHEMAS.get();
   }
 
   @Override
