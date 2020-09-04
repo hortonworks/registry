@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * This class represents aggregated information about schema metadata which includes versions and mapped serdes.
@@ -88,5 +89,22 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
                 ", schemaBranches=" + schemaBranches +
                 ", serDesInfos=" + serDesInfos +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AggregatedSchemaMetadataInfo that = (AggregatedSchemaMetadataInfo) o;
+        return Objects.equals(schemaMetadata, that.schemaMetadata) &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(timestamp, that.timestamp) &&
+                Objects.equals(schemaBranches, that.schemaBranches) &&
+                Objects.equals(serDesInfos, that.serDesInfos);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(schemaMetadata, id, timestamp, schemaBranches, serDesInfos);
     }
 }

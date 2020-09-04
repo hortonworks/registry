@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -58,6 +59,30 @@ public class SchemaFieldQuery {
         }
 
         return Collections.unmodifiableMap(queryMap);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SchemaFieldQuery that = (SchemaFieldQuery) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(namespace, that.namespace) &&
+                Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, namespace, type);
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaFieldQuery{" +
+                "name='" + name + '\'' +
+                ", namespace='" + namespace + '\'' +
+                ", type='" + type + '\'' +
+                '}';
     }
 
     public static class Builder {

@@ -16,8 +16,9 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
-import com.hortonworks.registries.schemaregistry.state.details.AbstractStateDetails;
+import io.swagger.annotations.ApiModelProperty;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 
 /**
@@ -61,10 +62,14 @@ public class SchemaVersion implements Serializable {
         this.stateDetails = abstractStateDetails;
     }
 
+    @ApiModelProperty(required = true, value = "Description must not be null")
+    @Nonnull
     public String getDescription() {
         return description;
     }
-
+    
+    @ApiModelProperty(required = true, value = "Schema text must not be null")
+    @Nonnull
     public String getSchemaText() {
         return schemaText;
     }

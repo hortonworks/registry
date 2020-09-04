@@ -383,7 +383,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.12.10</scala.version>
-        <schema-registry-shaded.version>0.9.1.7.2.2.0-SNAPSHOT</schema-registry-shaded.version>
+        <schema-registry-shaded.version>0.9.1</schema-registry-shaded.version>
         <junit.version>4.12</junit.version>
         <jackson.version>2.10.1</jackson.version>
         <commons-cli.version>1.3.1</commons-cli.version>
@@ -418,7 +418,7 @@
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
-        <maven-surefire.version>2.18.1</maven-surefire.version>
+        <maven-surefire.version>2.19.1</maven-surefire.version>
         <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
@@ -440,6 +440,7 @@
         <jaxb-runtime.version>2.3.1</jaxb-runtime.version>
         <hibernate-validator.version>5.4.2.Final</hibernate-validator.version>
         <joda.version>2.10.1</joda.version>
+        <swagger-annotations.version>1.6.0</swagger-annotations.version>
     </properties>
 
     <distributionManagement>
@@ -714,6 +715,11 @@
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger-annotations.version}</version>
             </dependency>
 
             <!-- To match the version used by Dropwizard instead of that of hadoop-azure -->
@@ -1094,6 +1100,19 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven-surefire.version}</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*IT</include>
+                        </includes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
