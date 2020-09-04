@@ -15,7 +15,9 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
@@ -49,9 +51,10 @@ public final class SchemaMetadataInfo implements Serializable {
         this(schemaMetadata, null, null);
     }
 
-    public SchemaMetadataInfo(SchemaMetadata schemaMetadata,
-                       Long id,
-                       Long timestamp) {
+    @JsonCreator
+    public SchemaMetadataInfo(@JsonProperty("schemaMetadata") SchemaMetadata schemaMetadata,
+                              @JsonProperty("id") Long id,
+                              @JsonProperty("timestamp") Long timestamp) {
         Preconditions.checkNotNull(schemaMetadata, "schemaMetadata can not be null");
         this.schemaMetadata = schemaMetadata;
         this.id = id;

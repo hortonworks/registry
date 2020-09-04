@@ -17,7 +17,9 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.annotations.ApiModelProperty;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -58,6 +60,8 @@ public class SchemaBranch implements Serializable {
         return this.id;
     }
 
+    @ApiModelProperty(required = true, value = "Name must not be null")
+    @Nonnull
     public String getName() {
         return this.name;
     }

@@ -17,7 +17,9 @@ package com.hortonworks.registries.schemaregistry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import io.swagger.annotations.ApiModelProperty;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 
 
@@ -96,6 +98,8 @@ public class SchemaMetadata implements Serializable {
     /**
      * @return unique name of schema with in a group and type.
      */
+    @ApiModelProperty(required = true, value = "Name must not be null")
+    @Nonnull
     public String getName() {
         return name;
     }
@@ -103,6 +107,8 @@ public class SchemaMetadata implements Serializable {
     /**
      * @return group of the schema. For ex: Kafka, Hive.
      */
+    @ApiModelProperty(required = true, value = "SchemaGroup must not be null")
+    @Nonnull
     public String getSchemaGroup() {
         return schemaGroup;
     }
@@ -110,6 +116,8 @@ public class SchemaMetadata implements Serializable {
     /**
      * @return type of the schema. For ex: AVRO, JSON
      */
+    @ApiModelProperty(required = true, value = "Type must not be null")
+    @Nonnull
     public String getType() {
         return type;
     }

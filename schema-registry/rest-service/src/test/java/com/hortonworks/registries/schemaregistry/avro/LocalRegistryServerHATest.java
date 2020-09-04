@@ -144,7 +144,7 @@ public class LocalRegistryServerHATest {
         Assert.assertNotNull(schemaId);
 
         // registering a new schema on follower, this should have been redirected to leader.
-        String schema1 = IOUtils.toString(LocalRegistryServerTest.class.getResourceAsStream("/schema-1.avsc"), "UTF-8");
+        String schema1 = IOUtils.toString(LocalRegistryServerIT.class.getResourceAsStream("/schema-1.avsc"), "UTF-8");
         SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaName,
                                                                    new SchemaVersion(schema1, "Initial version of the schema"));
 

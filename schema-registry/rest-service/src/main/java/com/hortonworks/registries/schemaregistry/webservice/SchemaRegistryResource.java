@@ -67,6 +67,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -79,6 +80,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -93,6 +95,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
@@ -166,15 +169,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response listAggregatedSchemas(@Context UriInfo uriInfo,
+    public Response listAggregatedSchemas(@QueryParam("name") String schemaName,
+                                          @QueryParam("description") String schemaDescription,
+                                          @ApiParam(value = "_orderByFields=[<field-name>,<a/d>,]*\na = ascending, d = descending\nOrdering can be by id, type, schemaGroup, name, compatibility, validationLevel, timestamp, description, evolve") @QueryParam("_orderByFields") @DefaultValue("timestamp,d") String orderByFields,
+                                          @QueryParam("id") String id,
+                                          @QueryParam("type") String type,
+                                          @QueryParam("schemaGroup") String schemaGroup,
+                                          @QueryParam("validationLevel") String validationLevel,
+                                          @QueryParam("compatibility") String compatibility,
+                                          @QueryParam("evolve") String evolve,
                                           @Context SecurityContext securityContext) {
         try {
-            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
-            Map<String, String> filters = new HashMap<>();
-            for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
-                List<String> value = entry.getValue();
-                filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
-            }
+            Map<String, String> filters = createFilterForSchema(Optional.ofNullable(schemaName), Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
             Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = authorizationAgent
             .authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findAggregatedSchemaMetadata(filters));
 
@@ -225,15 +231,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response listSchemas(@Context UriInfo uriInfo,
+    public Response listSchemas(@QueryParam("name") String schemaName,
+                                @QueryParam("description") String schemaDescription,
+                                @ApiParam(value = "_orderByFields=[<field-name>,<a/d>,]*\na = ascending, d = descending\nOrdering can be by id, type, schemaGroup, name, compatibility, validationLevel, timestamp, description, evolve") @QueryParam("_orderByFields") @DefaultValue("timestamp,d") String orderByFields,
+                                @QueryParam("id") String id,
+                                @QueryParam("type") String type,
+                                @QueryParam("schemaGroup") String schemaGroup,
+                                @QueryParam("validationLevel") String validationLevel,
+                                @QueryParam("compatibility") String compatibility,
+                                @QueryParam("evolve") String evolve,
                                 @Context SecurityContext securityContext) {
         try {
-            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
-            Map<String, String> filters = new HashMap<>();
-            for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
-                List<String> value = entry.getValue();
-                filters.put(entry.getKey(), value != null && !value.isEmpty() ? value.get(0) : null);
-            }
+            Map<String, String> filters = createFilterForSchema(Optional.ofNullable(schemaName), Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
 
             Collection<SchemaMetadataInfo> schemaMetadatas = authorizationAgent
                     .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findSchemaMetadata(filters));
@@ -244,6 +253,31 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
     }
+    
+    @VisibleForTesting
+    Map<String, String> createFilterForSchema(Optional<String> name, Optional<String> description, Optional<String> orderByFields, Optional<String> id, Optional<String> type, Optional<String> schemaGroup, Optional<String> validationLevel, Optional<String> compatibility, Optional<String> evolve){
+        Map<String, String> filters = new HashMap<>();
+        name.ifPresent(n -> filters.put("name", n));
+        description.ifPresent(d -> filters.put("description", d));
+        orderByFields.ifPresent(o -> filters.put("_orderByFields", o));
+        id.ifPresent(i -> filters.put("id", i));
+        type.ifPresent(t -> filters.put("type", t));
+        schemaGroup.ifPresent(s -> filters.put("schemaGroup", s));
+        validationLevel.ifPresent(v -> filters.put("validationLevel", v));
+        compatibility.ifPresent(c -> filters.put("compatibility", c));
+        evolve.ifPresent(e -> filters.put("evolve", e));
+        return filters;
+    }
+
+    @VisibleForTesting
+    Map<String, String> createFilterForNamespace(Optional<String> name, Optional<String> fieldNamespace, Optional<String> type){
+        Map<String, String> filters = new HashMap<>();
+        name.ifPresent(n -> filters.put("name", n));
+        fieldNamespace.ifPresent(f -> filters.put("fieldNamespace", f));
+        type.ifPresent(t -> filters.put("type", t));
+
+        return filters;
+    }
 
     @GET
     @Path("/search/schemas")
@@ -252,9 +286,15 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemas(@Context UriInfo uriInfo,
+    public Response findSchemas(@ApiParam(required = true) @NotNull @QueryParam("name") String schemaName,
+                                @QueryParam("description") String schemaDescription,
+                                @ApiParam(value = "_orderByFields=[<field-name>,<a/d>,]*\na = ascending, d = descending\nOrdering can be by id, type, schemaGroup, name, compatibility, validationLevel, timestamp, description, evolve\nRecommended value is: timestamp,d", required = true) @NotNull @QueryParam("_orderByFields") String orderByFields,
                                 @Context SecurityContext securityContext) {
-        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null)).entrySet()){
+            queryParameters.add(entry.getKey(), entry.getValue());
+        }
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
                     .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
@@ -265,7 +305,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
     }
 
-    private Collection<SchemaMetadataInfo> findSchemaMetadataInfos(MultivaluedMap<String, String> queryParameters) {
+    @VisibleForTesting
+    Collection<SchemaMetadataInfo> findSchemaMetadataInfos(MultivaluedMap<String, String> queryParameters) {
         Collection<SchemaMetadataInfo> schemaMetadataInfos;
         // name and description for now, complex queries are supported by backend and front end can send the json
         // query for those complex queries.
@@ -325,11 +366,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@Context UriInfo uriInfo,
+    public Response findAggregatedSchemas(@ApiParam(value = "name of the schema", required = true) @NotNull @QueryParam("name") @DefaultValue("") String schemaName, 
+                                          @QueryParam("description") String schemaDescription, 
+                                          @QueryParam("_orderByFields") @ApiParam(required = true) @NotNull @DefaultValue("timestamp,d") String orderByFields,
                                           @Context SecurityContext securityContext) {
-        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null)).entrySet()){
+            queryParameters.add(entry.getKey(), entry.getValue());
+        }
         try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(uriInfo.getQueryParameters());
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
             List<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
             for (SchemaMetadataInfo schemaMetadataInfo : schemaMetadataInfos) {
                 SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
@@ -357,13 +403,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @GET
     @Path("/search/schemas/fields")
     @ApiOperation(value = "Search for schemas containing the given field names",
-            notes = "Search the schemas for given field names and return a list of schemas that contain the field.",
+            notes = "Search the schemas for given field names and return a list of schemas that contain the field.\nIf no parameter added, returns all schemas as many times as they have fields.",
             response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemasByFields(@Context UriInfo uriInfo,
+    public Response findSchemasByFields(@QueryParam("name") String name,
+                                        @QueryParam("fieldNamespace") String nameSpace,
+                                        @QueryParam("type") String type,
                                         @Context SecurityContext securityContext) {
-        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        for (Map.Entry<String, String> entry : createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(nameSpace), Optional.ofNullable(type)).entrySet()){
+            queryParameters.add(entry.getKey(), entry.getValue());
+        }
         try {
             Collection<SchemaVersionKey> schemaVersionKeys = authorizationAgent
                     .authorizeFindSchemasByFields(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
@@ -376,7 +427,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
     }
 
-    private SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
+    @VisibleForTesting
+    SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
         SchemaFieldQuery.Builder builder = new SchemaFieldQuery.Builder();
         for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
             List<String> entryValue = entry.getValue();
@@ -453,7 +505,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
-                                     @ApiParam(value = "Schema to be added to the registry", required = true)
+                                     @ApiParam(value = "Schema to be added to the registry\nType of schema can be e.g. AVRO, JSON\nName should be the same as in body\nGroup of schema can be e.g. kafka, hive", required = true)
                                          SchemaMetadata schemaMetadata,
                                      @Context UriInfo uriInfo,
                                      @Context SecurityContext securityContext) {
@@ -531,7 +583,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/schemasById/{schemaId}")
-    @ApiOperation(value = "Get schema for a given schema identifier",
+    @ApiOperation(value = "Get schema information for a given schema identifier",
             response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -585,7 +637,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @POST
     @Path("/schemas/{name}/versions/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation(value = "Register a new version of the schema by uploading schema version text",
+    @ApiOperation(value = "Register a new version of an existing schema by uploading schema version text",
             notes = "Registers the given schema version to schema with name if the given file content is not registered as a version for this schema, " +
                     "and returns respective version number." +
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
@@ -640,10 +692,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response addSchemaVersion(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+    public Response addSchemaVersion(@ApiParam(required = true) @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
                                      @ApiParam(value = "Schema name", required = true) @PathParam("name")
                                       String schemaName,
-                                     @ApiParam(value = "Details about the schema", required = true)
+                                     @ApiParam(value = "Details about the schema, schemaText in one line", required = true)
                                       SchemaVersion schemaVersion,
                                      @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                      @Context UriInfo uriInfo,
@@ -791,7 +843,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/schemas/versionsById/{id}")
-    @ApiOperation(value = "Get a version of the schema identified by the given versionid",
+    @ApiOperation(value = "Get a version of the schema identified by the given version id",
             response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -865,7 +917,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas/versions/{id}/state/enable")
-    @ApiOperation(value = "Enables version of the schema identified by the given versionid",
+    @ApiOperation(value = "Enables version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -932,7 +984,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas/versions/{id}/state/archive")
-    @ApiOperation(value = "Disables version of the schema identified by the given version id",
+    @ApiOperation(value = "Archives version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -965,7 +1017,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas/versions/{id}/state/delete")
-    @ApiOperation(value = "Disables version of the schema identified by the given version id",
+    @ApiOperation(value = "Deletes version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -997,7 +1049,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas/versions/{id}/state/startReview")
-    @ApiOperation(value = "Disables version of the schema identified by the given version id",
+    @ApiOperation(value = "Starts review version of the schema identified by the given version id",
             response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -1034,7 +1086,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response executeState(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                 @ApiParam(value = "", required = true) @PathParam("stateId") Byte stateId,
+                                 @ApiParam(value = "stateId can be the name or id of the target state of the schema\nMore information about the states can be accessed at /api/v1/schemaregistry/schemas/versions/statemachine", required = true) @PathParam("stateId") Byte stateId,
                                  byte [] transitionDetails,
                                  @Context SecurityContext securityContext) {
 
@@ -1073,7 +1125,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response checkCompatibilityWithSchema(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
                                                  @ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                                 @ApiParam(value = "schema text", required = true) String schemaText,
+                                                 @ApiParam(value = "schema text to be checked for compatibility", required = true) String schemaText,
                                                  @Context SecurityContext securityContext) {
         Response response;
         try {
@@ -1370,9 +1422,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @DELETE
     @Path("/schemas/branch/{branchId}")
-    @ApiOperation(value = "Delete a branch give its name", tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Delete a branch given its branch id", tags = OPERATION_GROUP_SCHEMA)
     @UnitOfWork
-    public Response deleteSchemaBranch(@ApiParam(value = "Schema Branch Name", required = true) @PathParam("branchId") Long schemaBranchId,
+    public Response deleteSchemaBranch(@ApiParam(value = "ID of the Schema Branch", required = true) @PathParam("branchId") Long schemaBranchId,
                                        @Context SecurityContext securityContext) {
         try {
             authorizationAgent.authorizeDeleteSchemaBranch(AuthorizationUtils.getUserAndGroups(securityContext),
