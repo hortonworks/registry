@@ -5,14 +5,17 @@ import os
 import xml.etree.ElementTree as ET
 
 print('<results>')
+reports_dirs = ['/target/surefire-reports', '/target/failsafe-reports']
 for root, directories, filenames in os.walk('.'):
-  reports_dir = '/target/surefire-reports'
-  if reports_dir in root:
+  matching_reports_dirs = list(filter(lambda x: root.endswith(x), reports_dirs))
+  test_xmls = fnmatch.filter(filenames, 'TEST-*.xml')
+  if len(matching_reports_dirs) > 0 and len(test_xmls) > 0:
+    reports_dir = matching_reports_dirs[0] # should only one match or the reports_dir list has duplicates
     module = root[2: len(root) - len(reports_dir)]
     print('<module>')
     print('<name>{}</name>'.format(module))
     print('<testsuites>')
-    for filename in fnmatch.filter(filenames, '*.xml'):
+    for filename in test_xmls:
       file_path = os.path.join(root, filename)
       xml = ET.parse(file_path)
       testsuite = xml.getroot()
