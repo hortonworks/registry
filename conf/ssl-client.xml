@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><configuration>
+<property><name>ssl.client.truststore.location</name><value>/var/lib/cloudera-scm-agent/agent-cert/cm-auto-global_truststore.jks</value><final>false</final><source>programmatically</source></property>
+<property><name>ssl.client.truststore.type</name><value>jks</value><final>false</final><source>programmatically</source></property>
+<property><name>hadoop.security.credential.provider.path</name><value>jceks://file/tmp/atlasclientpoc/target/atlas-conf/rangertagsyncssl.jceks</value><final>false</final><source>programmatically</source></property>
+</configuration>
