@@ -23,6 +23,7 @@ import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationA
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
@@ -118,17 +119,20 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final SchemaRegistryVersion schemaRegistryVersion;
     private final AuthorizationAgent authorizationAgent;
     private final JarInputStreamValidator jarInputStreamValidator;
+    private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
 
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AtomicReference<LeadershipParticipant> leadershipParticipant,
                                   SchemaRegistryVersion schemaRegistryVersion,
                                   AuthorizationAgent authorizationAgent,
-                                  JarInputStreamValidator jarInputStreamValidator) {
+                                  JarInputStreamValidator jarInputStreamValidator,
+                                  SchemaMetadataTypeValidator schemaMetadataTypeValidator) {
         super(schemaRegistry, leadershipParticipant);
         this.schemaRegistryVersion = schemaRegistryVersion;
 
         this.authorizationAgent = authorizationAgent;
         this.jarInputStreamValidator = jarInputStreamValidator;
+        this.schemaMetadataTypeValidator = schemaMetadataTypeValidator;
     }
 
     @GET
@@ -509,6 +513,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                          SchemaMetadata schemaMetadata,
                                      @Context UriInfo uriInfo,
                                      @Context SecurityContext securityContext) {
+        if (!schemaMetadataTypeValidator.isValid(schemaMetadata.getType())){
+            LOG.error("SchemaMetadata type is invalid", schemaMetadata);
+            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, "SchemaMetadata type is invalid");
+        }
         return handleLeaderAction(uriInfo, () -> {
             Response response;
             try {

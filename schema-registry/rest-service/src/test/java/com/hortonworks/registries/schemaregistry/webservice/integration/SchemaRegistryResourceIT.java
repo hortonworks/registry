@@ -26,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.WhereClause;
@@ -38,6 +39,8 @@ import org.mockito.Mockito;
 
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
@@ -56,6 +59,7 @@ public class SchemaRegistryResourceIT {
     private static AtomicReference atomicReferenceMock = Mockito.mock(AtomicReference.class);
     private static ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
     private static AuthorizationAgent authorizationAgentMock = Mockito.mock(AuthorizationAgent.class);
+    private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock = Mockito.mock(SchemaMetadataTypeValidator.class);
     private ObjectMapper om = new ObjectMapper();
     private Client testClient = resource.client();
     
@@ -65,7 +69,7 @@ public class SchemaRegistryResourceIT {
     }
     @ClassRule
     public static final ResourceTestRule resource = ResourceTestRule.builder()
-            .addResource(new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null))
+            .addResource(new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null, schemaMetadataTypeValidatorMock))
             .addProperty("jersey.config.server.provider.classnames", "org.glassfish.jersey.media.multipart.MultiPartFeature")
             .build();
     @Test
@@ -208,7 +212,23 @@ public class SchemaRegistryResourceIT {
         assertThat(actual.getErrors(), hasItems(errors));
         assertThat(response.getStatus(), Is.is(400));
     }
-    
+
+    @Test
+    public void updateSchemaInfo_BadType() throws Exception{
+        //given
+        SchemaMetadata updatedSchemaMetadata = new SchemaMetadata.Builder("updated").description("SchemaMetadata with bad type").type("cat").build();
+        Mockito.when(schemaMetadataTypeValidatorMock.isValid("cat")).thenReturn(false);
+
+        //when
+        Response response = testClient.target(
+                String.format("/api/v1/schemaregistry/schemas/dummy"))
+                .request(MediaType.APPLICATION_JSON)
+                .post(Entity.json(updatedSchemaMetadata), Response.class);
+
+        //then
+        assertThat(response.getStatus(), Is.is(400));
+
+    }
 }
 class TestResponseForSchemaVersionKey {
     private List<SchemaVersionKey> entities;

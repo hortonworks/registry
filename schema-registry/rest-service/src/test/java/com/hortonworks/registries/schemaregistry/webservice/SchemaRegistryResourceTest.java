@@ -64,7 +64,7 @@ public class SchemaRegistryResourceTest {
         queryParametersWithNameAndDesc.putSingle(ORDER,"foo,a,bar,d");
         queryParametersWithoutDesc.putSingle(NAME, "only name");
         queryParametersWithoutDesc.putSingle(ORDER,"foo,a,bar,d");
-        underTest = new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null);
+        underTest = new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null, null);
     }
     
     @Test
@@ -266,7 +266,7 @@ public class SchemaRegistryResourceTest {
         String type = "type";
         SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null){
+        underTest = new SchemaRegistryResource(schemaRegistryMock, atomicReferenceMock, null, authorizationAgentMock, null, null){
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();
