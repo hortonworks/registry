@@ -20,6 +20,7 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.READER_SCHEMA;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.WRITER_SCHEMA;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -116,7 +117,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         super.doInit(config);
         SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
         avroSchemaResolver = new AvroSchemaResolver(schemaVersionRetriever);
-        useSpecificAvroReader = (boolean) getValue(config, SPECIFIC_AVRO_READER, false);
+        useSpecificAvroReader = getBooleanValue(config, SPECIFIC_AVRO_READER, false);
     }
 
     private SchemaVersionRetriever createSchemaVersionRetriever() {
@@ -178,5 +179,10 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId);
 
         return serDesProtocolHandler.handlePayloadDeserialization(payloadInputStream, props);
+    }
+
+    @VisibleForTesting
+    boolean isUseSpecificAvroReader() {
+        return useSpecificAvroReader;
     }
 }

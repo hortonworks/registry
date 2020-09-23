@@ -101,7 +101,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     }
 
     private Long getCacheExpiryInSecs(Map<String, ?> config) {
-        Long value = (Long) getValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS);
+        Long value = getLongValue(config, DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS, DEFAULT_DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS);
         if (value < 0) {
             throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_EXPIRY_IN_SECS + " must be non negative.");
         }
@@ -109,7 +109,7 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
     }
 
     private Integer getCacheMaxSize(Map<String, ?> config) {
-        Integer value = (Integer) getValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
+        Integer value = getIntegerValue(config, DESERIALIZER_SCHEMA_CACHE_MAX_SIZE, DEFAULT_SCHEMA_CACHE_SIZE);
         if (value < 0) {
             throw new IllegalArgumentException("Property: " + DESERIALIZER_SCHEMA_CACHE_MAX_SIZE + " must be non negative.");
         }
@@ -122,6 +122,45 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
             value = defaultValue;
         }
         return value;
+    }
+
+    protected Boolean getBooleanValue(Map<String, ?> config, String key, Boolean defaultValue) {
+        Object value = config.get(key);
+        if (value == null) {
+            return defaultValue;
+        } else if (value instanceof Boolean){
+            return (Boolean) value;
+        } else if (value instanceof String){
+            return Boolean.parseBoolean((String) value);
+        } else {
+            throw new IllegalArgumentException("Value for key: " + key + " is invalid");
+        }
+    }
+
+    protected Integer getIntegerValue(Map<String, ?> config, String key, Integer defaultValue) {
+        Object value = config.get(key);
+        if (value == null) {
+            return defaultValue;
+        } else if (value instanceof Integer){
+            return (Integer) value;
+        } else if (value instanceof String){
+            return Integer.parseInt((String) value);
+        } else {
+            throw new IllegalArgumentException("Value for key: " + key + " is invalid");
+        }
+    }
+
+    protected Long getLongValue(Map<String, ?> config, String key, Long defaultValue) {
+        Object value = config.get(key);
+        if (value == null) {
+            return defaultValue;
+        } else if (value instanceof Long){
+            return (Long) value;
+        } else if (value instanceof String){
+            return Long.parseLong((String) value);
+        } else {
+            throw new IllegalArgumentException("Value for key: " + key + " is invalid");
+        }
     }
 
     /**
