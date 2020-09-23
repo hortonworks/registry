@@ -7,6 +7,7 @@
     tiller_namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
     repository: "docker-registry.infra.cloudera.com/kubernator-ci/"
     service_type: ClusterIP
+    cldr_helm_repo: "https://docker-registry.infra.cloudera.com:8443/helm/"
 
   environment:
     DOCKER_HOST: "{{ docker_host }}"
