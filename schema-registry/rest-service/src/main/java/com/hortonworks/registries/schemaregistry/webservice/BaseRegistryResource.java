@@ -56,7 +56,7 @@ abstract class BaseRegistryResource {
      * @param supplier
      * @return
      */
-    Response handleLeaderAction(UriInfo uriInfo, Supplier<Response> supplier) {
+    protected Response handleLeaderAction(UriInfo uriInfo, Supplier<Response> supplier) {
         LOG.info("URI info [{}]", uriInfo.getRequestUri());
         if (!leadershipParticipant.get().isLeader()) {
             URI location = null;

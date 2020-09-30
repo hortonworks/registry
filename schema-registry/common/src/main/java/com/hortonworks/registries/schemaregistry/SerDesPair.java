@@ -18,7 +18,9 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.annotations.ApiModelProperty;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -28,10 +30,18 @@ import java.io.Serializable;
 public class SerDesPair implements Serializable {
     private static final long serialVersionUID = -1291992612139840722L;
 
+    @ApiModelProperty(required = true, value = "Name must not be null")
+    @NotNull
     private String name;
     private String description;
+    @ApiModelProperty(required = true, value = "FileId must not be null")
+    @NotNull
     private String fileId;
+    @ApiModelProperty(required = true, value = "SerializerClassName must not be null")
+    @NotNull
     private String serializerClassName;
+    @ApiModelProperty(required = true, value = "DeserializerClassName must not be null")
+    @NotNull
     private String deserializerClassName;
 
     public SerDesPair() {
@@ -47,18 +57,8 @@ public class SerDesPair implements Serializable {
         this.fileId = fileId;
         this.serializerClassName = serializerClassName;
         this.deserializerClassName = deserializerClassName;
-        checkNotNullAndEmpty(name, "name");
-        checkNotNullAndEmpty(fileId, "fileId");
-        checkNotNullAndEmpty(serializerClassName, "serializerClassName");
-        checkNotNullAndEmpty(deserializerClassName, "deserializerClassName");
     }
-
-    private void checkNotNullAndEmpty(String arg, String argName) {
-        if(arg == null || arg.trim().isEmpty()) {
-            throw new IllegalArgumentException(argName + " can not be null");
-        }
-    }
-
+    
     public String getName() {
         return name;
     }

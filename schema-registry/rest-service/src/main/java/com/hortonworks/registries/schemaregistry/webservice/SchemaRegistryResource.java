@@ -68,6 +68,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -1248,7 +1249,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @ApiOperation(value = "Add a Serializer/Deserializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
     @Timed
     @UnitOfWork
-    public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) SerDesPair serDesPair,
+    public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) @Valid SerDesPair serDesPair,
                               @Context UriInfo uriInfo,
                               @Context SecurityContext securityContext) {
         return handleLeaderAction(uriInfo, () -> _addSerDesInfo(serDesPair, securityContext));
@@ -1261,7 +1262,21 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @UnitOfWork
     public Response getSerDes(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId,
                               @Context SecurityContext securityContext) {
-        return _getSerDesInfo(serializerId, securityContext);
+        Response response;
+        try {
+            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
+            SerDesInfo serializerInfo = schemaRegistry.getSerDes(serializerId);
+            if (serializerInfo != null) {
+                response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
+            } else {
+                LOG.error("Ser/Des not found with id: " + serializerId);
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, serializerId.toString());
+            }
+        } catch (Exception ex) {
+            LOG.error("Encountered error while getting serializer/deserializer [{}]", serializerId, ex);
+            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+        return response;
     }
 
     private Response _addSerDesInfo(SerDesPair serDesInfo, SecurityContext securityContext) {
@@ -1278,19 +1293,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
 
-        return response;
-    }
-
-    private Response _getSerDesInfo(Long serializerId, SecurityContext securityContext) {
-        Response response;
-        try {
-            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
-            SerDesInfo serializerInfo = schemaRegistry.getSerDes(serializerId);
-            response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
-        } catch (Exception ex) {
-            LOG.error("Encountered error while getting serializer/deserializer [{}]", serializerId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
         return response;
     }
 
