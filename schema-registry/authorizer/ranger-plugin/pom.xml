@@ -13,7 +13,7 @@
     </modules>
 
     <properties>
-        <ranger.version>2.0.0.7.1.4.0-SNAPSHOT</ranger.version>
+        <ranger.version>2.1.0.7.1.4.0-SNAPSHOT</ranger.version>
         <hadoop.version>3.1.1.7.1.4.0-SNAPSHOT</hadoop.version>
     </properties>
 
