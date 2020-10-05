@@ -33,6 +33,14 @@
                     <groupId>net.java.dev.jna</groupId>
                     <artifactId>jna</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -143,6 +151,14 @@
                 <exclusion>
                     <groupId>org.glassfish.jersey.core</groupId>
                     <artifactId>jersey-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

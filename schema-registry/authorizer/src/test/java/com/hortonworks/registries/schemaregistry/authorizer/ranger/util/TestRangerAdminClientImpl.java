@@ -37,6 +37,10 @@ public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
     private final static String tagFilename = "schema-registry-policies-tag.json";
     private Gson gson;
 
+    public TestRangerAdminClientImpl() {
+        LOG.info("Using test configuration for Ranger");
+    }
+
     public void init(String serviceName, String appId, String configPropertyPrefix) {
         Gson gson = null;
         try {
@@ -55,6 +59,7 @@ public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
         }
 
         java.nio.file.Path cachePath = FileSystems.getDefault().getPath(basedir, "/src/test/resources/" + cacheFilename);
+        LOG.info("Using Ranger cache path: {}", cachePath.getFileName());
         byte[] cacheBytes = Files.readAllBytes(cachePath);
 
         return gson.fromJson(new String(cacheBytes), ServicePolicies.class);
@@ -67,6 +72,7 @@ public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
         }
 
         java.nio.file.Path cachePath = FileSystems.getDefault().getPath(basedir, "/src/test/resources/" + tagFilename);
+        LOG.info("Using Ranger tags path: {}", cachePath.getFileName());
         byte[] cacheBytes = Files.readAllBytes(cachePath);
 
         return gson.fromJson(new String(cacheBytes), ServiceTags.class);
