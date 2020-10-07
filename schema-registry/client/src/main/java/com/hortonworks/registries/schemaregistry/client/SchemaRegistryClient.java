@@ -99,6 +99,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedAction;
@@ -206,7 +207,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private static Map<String, ?> buildConfFromFile(File confFile) throws IOException {
         try (FileInputStream fis = new FileInputStream(confFile)) {
-            return (Map<String, Object>) new Yaml().load(IOUtils.toString(fis, "UTF-8"));
+            return (Map<String, Object>) new Yaml().load(IOUtils.toString(fis, StandardCharsets.UTF_8));
         }
     }
 
@@ -639,11 +640,15 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return handleSchemaIdVersionResponse(schemaMetadataInfo, response);
     }
 
+    private String getHashFunction() {
+        return configuration.getValue(Configuration.HASH_FUNCTION.name());
+    }
+
     private SchemaDigestEntry buildSchemaTextEntry(SchemaVersion schemaVersion, String name) {
         byte[] digest;
         try {
-            digest = MessageDigest.getInstance("MD5").digest(schemaVersion.getSchemaText().getBytes("UTF-8"));
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            digest = MessageDigest.getInstance(getHashFunction()).digest(schemaVersion.getSchemaText().getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
 
@@ -1576,6 +1581,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         String.class,
                         "Password for basic authentication",
                         null,
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
+
+        public static final ConfigEntry<String> HASH_FUNCTION =
+                ConfigEntry.optional("schema.registry.hash.function",
+                        String.class,
+                        "Hashing algorithm for generating schema fingerprints",
+                        "MD5",
                         ConfigEntry.StringConverter.get(),
                         ConfigEntry.NonEmptyStringValidator.get());
 

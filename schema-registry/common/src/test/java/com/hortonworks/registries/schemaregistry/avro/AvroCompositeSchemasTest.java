@@ -24,7 +24,6 @@ import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyEx
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,6 +34,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  *
@@ -110,13 +112,13 @@ public class AvroCompositeSchemasTest {
         Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
         LOG.info("effectiveSchema = %s", effectiveSchema);
         String returnedSchemaText = effectiveSchema.toString();
-        Assert.assertEquals(getResourceText(expectedSchemaLocation).replace(" ", ""),
+        assertEquals(getResourceText(expectedSchemaLocation).replace(" ", ""),
                             returnedSchemaText.replace(" ", ""));
 
         // double check whether the effective schema is semantically right parsing
         Schema.Parser parser = new Schema.Parser();
         Schema parsedReturnedSchema = parser.parse(returnedSchemaText);
-        Assert.assertEquals(effectiveSchema, parsedReturnedSchema);
+        assertEquals(effectiveSchema, parsedReturnedSchema);
     }
 
     @Test
@@ -137,15 +139,60 @@ public class AvroCompositeSchemasTest {
         Schema effectiveSchema = avroSchemaResolver.handleUnionFieldsWithNull(schema, new HashSet<>());
         LOG.info("effectiveSchema = %s", effectiveSchema);
         String returnedSchemaText = effectiveSchema.toString();
-        Assert.assertEquals("foo", effectiveSchema.getField("name").getProp("someProp"));
-        Assert.assertEquals("bar", effectiveSchema.getField("address").getProp("otherProp"));
-        Assert.assertEquals("baz", effectiveSchema.getField("address").schema().getField("pincode").getProp("anotherProp"));
-        Assert.assertEquals("quux", effectiveSchema.getField("secondaryAddress").getProp("moreProps"));
+        assertEquals("foo", effectiveSchema.getField("name").getProp("someProp"));
+        assertEquals("bar", effectiveSchema.getField("address").getProp("otherProp"));
+        assertEquals("baz", effectiveSchema.getField("address").schema().getField("pincode").getProp("anotherProp"));
+        assertEquals("quux", effectiveSchema.getField("secondaryAddress").getProp("moreProps"));
 
         // double check whether the effective schema is semantically right parsing
         Schema.Parser parser = new Schema.Parser();
         Schema parsedReturnedSchema = parser.parse(returnedSchemaText);
-        Assert.assertEquals(effectiveSchema, parsedReturnedSchema);
+        assertEquals(effectiveSchema, parsedReturnedSchema);
+    }
+
+    @Test
+    public void testHashing() throws Exception {
+        final String originalText = getResourceText("/avro/composites/account.avsc");
+        assertNotNull(originalText);
+
+        HashMap<String, Object> config = new HashMap<>();
+        config.putAll(avroSchemaProvider.getConfig());
+
+        // md5
+
+        config.put(SchemaProvider.HASH_FUNCTION_CONFIG, "MD5");
+        avroSchemaProvider.init(config);
+
+        String md5hash = bytesToHex(avroSchemaProvider.getFingerprint(originalText));
+        assertEquals("8500728a811352bd7380466798187ff3", md5hash);
+
+        // sha
+
+        config.put(SchemaProvider.HASH_FUNCTION_CONFIG, "SHA-1");
+        avroSchemaProvider.init(config);
+
+        String shaHash = bytesToHex(avroSchemaProvider.getFingerprint(originalText));
+        assertEquals("a6ea2620bce432bc20b6f580ddc1c4ed79d1c167", shaHash);
+
+        // sha-256
+
+        config.put(SchemaProvider.HASH_FUNCTION_CONFIG, "SHA-256");
+        avroSchemaProvider.init(config);
+
+        String sha256Hash = bytesToHex(avroSchemaProvider.getFingerprint(originalText));
+        assertEquals("a379dec4b97b622cc28bc2c19f164dff91d64432165b4e7ed043d5f825b9684b", sha256Hash);
+    }
+
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder();
+        for (int i = 0; i < hash.length; i++) {
+            String hex = Integer.toHexString(0xff & hash[i]);
+            if(hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 
 }
