@@ -29,6 +29,7 @@ public abstract class AbstractSchemaProvider implements SchemaProvider {
     private String defaultSerializerClassName;
     private String defaultDeserializerClassName;
     private SchemaVersionRetriever schemaVersionRetriever;
+    private String hashFunction = "MD5";  // default value
 
     @Override
     public void init(Map<String, Object> config) {
@@ -36,6 +37,7 @@ public abstract class AbstractSchemaProvider implements SchemaProvider {
         schemaVersionRetriever = (SchemaVersionRetriever) config.get(SchemaProvider.SCHEMA_VERSION_RETRIEVER_CONFIG);
         defaultSerializerClassName = (String) config.get("defaultSerializerClass");
         defaultDeserializerClassName = (String) config.get("defaultDeserializerClass");
+        hashFunction = (String) config.getOrDefault(SchemaProvider.HASH_FUNCTION_CONFIG, "MD5");
     }
 
     @Override
@@ -55,6 +57,10 @@ public abstract class AbstractSchemaProvider implements SchemaProvider {
 
     public SchemaVersionRetriever getSchemaVersionRetriever() {
         return schemaVersionRetriever;
+    }
+
+    protected String getHashFunction() {
+        return hashFunction;
     }
 
 }

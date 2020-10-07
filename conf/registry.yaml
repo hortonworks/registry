@@ -7,6 +7,7 @@ modules:
         - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
           defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
           defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
+          hashFunction: "MD5"
       # schema reviewer configuration
       customSchemaStateExecutor:
         className: "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor"

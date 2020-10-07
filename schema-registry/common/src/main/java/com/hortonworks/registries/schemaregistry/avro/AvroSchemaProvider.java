@@ -14,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.hortonworks.registries.schemaregistry.AbstractSchemaProvider;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -22,8 +23,6 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -38,7 +37,6 @@ import java.util.stream.Collectors;
  *
  */
 public class AvroSchemaProvider extends AbstractSchemaProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaProvider.class);
 
     public static final String TYPE = "avro";
 
@@ -72,7 +70,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         try {
             // generates fingerprint of canonical form of the given schema.
             Schema schema = new Schema.Parser().parse(getResultantSchema(schemaText));
-            return MessageDigest.getInstance("MD5").digest(normalize(schema).getBytes());
+            return MessageDigest.getInstance(getHashFunction()).digest(normalize(schema).getBytes());
         } catch (IOException e) {
             throw new InvalidSchemaException("Given schema is invalid", e);
         } catch (NoSuchAlgorithmException e) {
@@ -196,6 +194,11 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         env.put(name, qname);
         appendable.append("{\"name\":").append(qname);
         appendable.append(",\"type\":\"").append(schemaType.getName()).append("\"");
+    }
+
+    @VisibleForTesting
+    Map<String, Object> getConfig() {
+        return this.config;
     }
 
 }

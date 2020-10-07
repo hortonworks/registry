@@ -25,6 +25,7 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +35,6 @@ import java.util.List;
  */
 public class StreamsSchemaProvider extends AbstractSchemaProvider {
     public static final String TYPE = "streams";
-    public static final String UTF_8 = "UTF-8";
-    public static final String MD5 = "MD5";
 
     public StreamsSchemaProvider() {
     }
@@ -65,7 +64,7 @@ public class StreamsSchemaProvider extends AbstractSchemaProvider {
     @Override
     public byte[] getFingerprint(String schemaText) throws InvalidSchemaException {
         try {
-            return MessageDigest.getInstance(MD5).digest(schemaText.getBytes(UTF_8));
+            return MessageDigest.getInstance(getHashFunction()).digest(schemaText.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new InvalidSchemaException(e);
         }

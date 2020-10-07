@@ -98,9 +98,10 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * If there is a version of the schema with the given fingerprint then it returns the respective {@link SchemaVersionInfo},
      * else it throws a {@link SchemaNotFoundException}.
      *
-     * @param fingerprint MD5 hash of the schemaText
+     * @param fingerprint hash of the schemaText (hashing function depends on config)
      * @return the {@link SchemaVersionInfo} of the schema version with the given fingerprint.
      * @throws SchemaNotFoundException when no schema version registered with the given fingerprint.
+     * @see SchemaProvider#HASH_FUNCTION_CONFIG
      */
     SchemaVersionInfo findSchemaVersionByFingerprint(String fingerprint) throws SchemaNotFoundException;
 
