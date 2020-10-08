@@ -1139,9 +1139,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<String>() {
                     @Override
                     public String run() {
-                        return targets.filesTarget.request()
-                                .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
-                    }
+                            return targets.filesTarget.request().accept(MediaType.TEXT_PLAIN)
+                                    .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
+                        }
                 });
             } catch (LoginException | ProcessingException e) {
                 throw new RegistryRetryableException(e);

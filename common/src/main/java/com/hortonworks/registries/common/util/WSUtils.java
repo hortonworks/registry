@@ -62,6 +62,12 @@ public final class WSUtils {
                 .build();
     }
 
+    public static Response respondString(Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
+        return Response.status(status)
+                .entity(CatalogResponse.newResponse(msg).format(formatArgs).getResponseMessage())
+                .build();
+    }
+
     public static StreamingOutput wrapWithStreamingOutput(final InputStream inputStream) {
         return new StreamingOutput() {
             public void write(OutputStream os) throws IOException, WebApplicationException {

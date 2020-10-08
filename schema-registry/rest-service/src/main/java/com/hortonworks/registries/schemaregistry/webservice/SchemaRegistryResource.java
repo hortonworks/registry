@@ -1191,6 +1191,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("/files")
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response uploadFile(@FormDataParam("file") final InputStream inputStream,
@@ -1205,13 +1206,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
         } catch (InvalidJarFileException e ) {
             LOG.debug("Invalid JAR file. ", e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
+            response = WSUtils.respondString(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
-            response = WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+            response = WSUtils.respondString(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while uploading file", ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+            response = WSUtils.respondString(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
 
         return response;
@@ -1222,7 +1223,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/files/download/{fileId}")
     @ApiOperation(value = "Downloads the respective for the given fileId if it exists", response = StreamingOutput.class, tags = OPERATION_GROUP_OTHER)
     @Timed
-    public Response downloadFile(@ApiParam(value = "Identifier of the file to be downloaded", required = true) @PathParam("fileId") String fileId,
+    public Response downloadFile(@ApiParam(value = "Identifier of the file (with extension) to be downloaded", required = true) @PathParam("fileId") String fileId,
                                  @Context SecurityContext securityContext) {
         Response response;
         try {
@@ -1460,8 +1461,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     // TODO: This API was introduced as a temporary solution to address HA requirements with cache synchronization. A more permanent and stable fix should be incorporated.
     @POST
     @Path("/cache/{cacheType}/invalidate")
+    @ApiOperation(value = "Address HA requirements with cache synchronization.")
     @UnitOfWork
-    public Response invalidateCache(@ApiParam(value = "Cache Id to be invalidated", required = true) @PathParam("cacheType") SchemaRegistryCacheType cacheType, String keyString) {
+    public Response invalidateCache(@ApiParam(value = "Cache Id to be invalidated", required = true) @PathParam("cacheType") SchemaRegistryCacheType cacheType, 
+                                    @ApiParam(value = "key") String keyString) {
         try {
             LOG.debug("RetryableBlock to invalidate cache : {} with key : {} accepted", cacheType.name(), keyString);
             schemaRegistry.invalidateCache(cacheType, keyString);
@@ -1476,7 +1479,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     // TODO: This API was introduced as a temporary solution to address HA requirements with cache synchronization. A more permanent and stable fix should be incorporated.
     @POST
     @Path(("/notifications/node/debut"))
-    public Response registerNodeDebut(String nodeUrl) {
+    @ApiOperation(value = "Address HA requirements with cache synchronization.")
+    public Response registerNodeDebut(@ApiParam(value = "nodeUrl") String nodeUrl) {
         try {
             LOG.debug("Acknowledged another peer server : {}", nodeUrl);
             schemaRegistry.registerNodeDebut(nodeUrl);

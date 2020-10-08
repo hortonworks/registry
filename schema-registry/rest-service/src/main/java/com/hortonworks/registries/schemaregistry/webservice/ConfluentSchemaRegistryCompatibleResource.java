@@ -188,7 +188,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     @GET
     @Path("/subjects/{subject}/versions")
-    @ApiOperation(value = "Get all schema versions of given subject",
+    @ApiOperation(value = "Get the number of all schema versions of given subject",
             response = Integer.class, responseContainer = "List", tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
@@ -293,7 +293,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @Timed
     @UnitOfWork
     public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
-                                         @ApiParam(value = "The schema ", required = true) String schema,
+                                         @ApiParam(value = "Confluent Schema Registry compatible schema text in one line", required = true) String schema,
                                          @Context SecurityContext securityContext) {
         Response response;
         try {
@@ -334,7 +334,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @UnitOfWork
     public Response registerSchemaVersion(@ApiParam(value = "subject", required = true) @PathParam("subject")
                                            String subject,
-                                   @ApiParam(value = "Details about the schema", required = true)
+                                   @ApiParam(value = "Confluent Schema Registry compatible schema text in one line", required = true)
                                            String schema,
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
