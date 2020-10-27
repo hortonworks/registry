@@ -100,7 +100,7 @@ public interface AuthorizationAgent {
 
     void authorizeCreateSchemaBranch(Authorizer.UserAndGroups userAndGroups,
                                      ISchemaRegistry schemaRegistry,
-                                     String schemaMetadataName,
+                                     Long schemaMetadataId,
                                      Long versionId,
                                      String branchTocreate)
             throws AuthorizationException, SchemaNotFoundException;
