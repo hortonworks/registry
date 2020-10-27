@@ -91,7 +91,7 @@ public class TestAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void authorizeCreateSchemaBranch(Authorizer.UserAndGroups userAndGroups,
                                             ISchemaRegistry schemaRegistry,
-                                            String schemaMetadataName,
+                                            Long schemaMetadataId,
                                             Long versionId,
                                             String branchTocreate)   {
         throw new RuntimeException("Not implemented");

@@ -101,7 +101,7 @@ public class NOOPAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void authorizeCreateSchemaBranch(Authorizer.UserAndGroups userAndGroups,
                                             ISchemaRegistry schemaRegistry,
-                                            String schemaMetadataName,
+                                            Long schemaMetadataId,
                                             Long versionId,
                                             String branchTocreate) { }
 

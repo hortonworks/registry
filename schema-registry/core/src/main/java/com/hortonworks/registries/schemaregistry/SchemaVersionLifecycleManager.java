@@ -549,7 +549,7 @@ public class SchemaVersionLifecycleManager {
                                  disableCanonicalCheck);
     }
 
-    private SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
+    public SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
         StorableKey storableKey = new StorableKey(SchemaVersionStorable.NAME_SPACE, SchemaVersionStorable.getPrimaryKey(id));
 
         SchemaVersionStorable versionedSchema = storageManager.get(storableKey);

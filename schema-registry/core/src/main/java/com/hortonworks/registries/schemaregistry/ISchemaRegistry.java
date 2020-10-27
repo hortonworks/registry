@@ -196,6 +196,12 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      */
     Collection<SchemaBranch> getSchemaBranchesForVersion(Long vertionId) throws SchemaBranchNotFoundException;
 
+    /**
+     * Get schema version by its unique ID. If the version does not exist an exception will be thrown.
+     * @param id    id of the version
+     */
+    SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException;
+
 
     /**
      *  Invalidates a cache entry given its cache type and its key, invalidates all entries in all the caches if the cache type is 'ALL'

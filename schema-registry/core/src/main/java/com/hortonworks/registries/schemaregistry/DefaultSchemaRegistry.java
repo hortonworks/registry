@@ -987,6 +987,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return schemaVersionLifecycleManager.getSchemaBranches(vertionId);
     }
 
+    @Override
+    public SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
+        return schemaVersionLifecycleManager.fetchSchemaVersionInfo(id);
+    }
+
 
     public static class Options {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties

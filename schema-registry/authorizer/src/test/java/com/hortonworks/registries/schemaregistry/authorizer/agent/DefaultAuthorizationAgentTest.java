@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
+import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
@@ -74,7 +75,7 @@ public class DefaultAuthorizationAgentTest {
     private static SchemaIdVersion siv31;
     private static SchemaIdVersion siv4;
     private static SchemaBranch branch3;
-
+    private static Map<String, Long> schemaNameToIdMap;
 
     @BeforeClass
     public static void setUp() throws SchemaNotFoundException,
@@ -82,6 +83,8 @@ public class DefaultAuthorizationAgentTest {
             IncompatibleSchemaException,
             SchemaBranchAlreadyExistsException {
         ///////////////////////////////// SchemaRegistry instantiation ////////////////
+
+        final ImmutableMap.Builder<String, Long> schemaIdMap = ImmutableMap.builder();
 
         Collection<Map<String, Object>> schemaProvidersConfig =
                 Collections.singleton(Collections.singletonMap("providerClass",
@@ -93,7 +96,7 @@ public class DefaultAuthorizationAgentTest {
                 schemaProvidersConfig,
                 new HAServerNotificationManager(),
                 new SchemaLockManager(new NOOPTransactionManager()));
-        schemaRegistry.init(Collections.<String, Object>emptyMap());
+        schemaRegistry.init(Collections.emptyMap());
 
         ///////////////////////////////// SchemaRegistry initialization ////////////////
 
@@ -102,7 +105,7 @@ public class DefaultAuthorizationAgentTest {
                 .schemaGroup("Group3")
                 .type("avro")
                 .build();
-        schemaRegistry.addSchemaMetadata(sm3);
+        schemaIdMap.put("Schema3", schemaRegistry.addSchemaMetadata(sm3));
 
         SchemaVersion sv3 = new SchemaVersion(SchemaTextStore.SCHEMA_TEXT_3, "dummy");
         siv3 = schemaRegistry.addSchemaVersion("Schema3", sv3);
@@ -118,7 +121,7 @@ public class DefaultAuthorizationAgentTest {
                 .schemaGroup("Group4")
                 .type("avro")
                 .build();
-        schemaRegistry.addSchemaMetadata(sm4);
+        schemaIdMap.put("Schema4", schemaRegistry.addSchemaMetadata(sm4));
 
         SchemaVersion sv4 = new SchemaVersion(SchemaTextStore.SCHEMA_TEXT_4, "dummy");
         siv4 = schemaRegistry.addSchemaVersion("Schema4", sv4);
@@ -270,6 +273,7 @@ public class DefaultAuthorizationAgentTest {
                 Authorizer.AccessType.DELETE);
         testAuthorizer.addPolicy(p16);
 
+        schemaNameToIdMap = schemaIdMap.build();
     }
 
     @Test
@@ -678,13 +682,13 @@ public class DefaultAuthorizationAgentTest {
         // Access allowed by p4 (for creating Branch3) and p5 (for reading siv3)
         authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc3),
                 schemaRegistry,
-                schemaName3,
+                schemaNameToIdMap.get(schemaName3),
                  new Long(siv3.getSchemaVersionId()), "Branch3");
 
         // Access allowed by p6 (for creating Branch3) and p7 (for reading siv31)
         authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc3),
                 schemaRegistry,
-                schemaName3,
+                schemaNameToIdMap.get(schemaName3),
                 siv31.getSchemaVersionId(), "Branch4");
 
         ///////////////////////////// Negative cases /////////////////////////////////
@@ -694,7 +698,7 @@ public class DefaultAuthorizationAgentTest {
         try {
             authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc999),
                     schemaRegistry,
-                    schemaName3,
+                    schemaNameToIdMap.get(schemaName3),
                     new Long(siv31.getSchemaVersionId()), "Branch4");
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
@@ -709,7 +713,7 @@ public class DefaultAuthorizationAgentTest {
             // Creation is allowed by p6
             authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc4),
                     schemaRegistry,
-                    schemaName3,
+                    schemaNameToIdMap.get(schemaName3),
                     new Long(siv31.getSchemaVersionId()), "Branch4");
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
@@ -722,11 +726,22 @@ public class DefaultAuthorizationAgentTest {
         try {
             authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc3),
                     schemaRegistry,
-                    "Schema3",
+                    schemaNameToIdMap.get(schemaName3),
                     -9999L,
                     "Branch3");
         } catch(SchemaNotFoundException e) {
             String expectedMsg = "Schema version with id : -9999 not found";
+            assertThat(e.getMessage(), is(expectedMsg));
+        }
+
+        try {
+            authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(sc4),
+                    schemaRegistry,
+                    99999999999999L,
+                    siv31.getSchemaVersionId(),
+                    "BranchX");
+        } catch(SchemaNotFoundException e) {
+            String expectedMsg = "Could not find schema with ID 99999999999999";
             assertThat(e.getMessage(), is(expectedMsg));
         }
     }

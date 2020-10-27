@@ -220,14 +220,16 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     @Override
     public void authorizeCreateSchemaBranch(UserAndGroups userAndGroups,
                                             ISchemaRegistry schemaRegistry,
-                                            String schemaMetadataName,
+                                            Long schemaMetadataId,
                                             Long schemaVersionId,
                                             String branchTocreate)
             throws AuthorizationException, SchemaNotFoundException {
 
-        SchemaMetadata sM = schemaRegistry
-                .getSchemaMetadataInfo(schemaMetadataName)
-                .getSchemaMetadata();
+        SchemaMetadataInfo schemaMeta = schemaRegistry.getSchemaMetadataInfo(schemaMetadataId);
+        if (schemaMeta == null) {
+            throw new SchemaNotFoundException("Could not find schema with ID " + schemaMetadataId);
+        }
+        SchemaMetadata sM = schemaMeta.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
         String sName = sM.getName();
 

@@ -1385,9 +1385,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch,
                                         @Context SecurityContext securityContext) {
         try {
+            LOG.debug("Create branch \"{}\" for version with id {}", schemaBranch.getName(), schemaVersionId);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.fetchSchemaVersionInfo(schemaVersionId);
+
             authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry,
-                    schemaBranch.getSchemaMetadataName(),
+                    schemaVersionInfo.getSchemaMetadataId(),
                     schemaVersionId,
                     schemaBranch.getName());
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
