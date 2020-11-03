@@ -3,7 +3,7 @@
 
     <groupId>com.hortonworks.registries</groupId>
     <artifactId>registries</artifactId>
-    <version>0.9.1.7.2.7.0-SNAPSHOT</version>
+    <version>0.10.0.7.2.7.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Registry</name>
     <description>
