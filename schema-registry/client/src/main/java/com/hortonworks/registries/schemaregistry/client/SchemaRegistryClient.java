@@ -16,7 +16,6 @@ package com.hortonworks.registries.schemaregistry.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
@@ -111,12 +110,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL;
@@ -163,8 +164,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serdes/";
     private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
-    private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
-    private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.<Class<?>>newHashSet(SnapshotSerializer.class, PullSerializer.class);
+    private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
+    private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
@@ -205,6 +206,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         this(buildConfFromFile(confFile));
     }
 
+    @SuppressWarnings("unchecked")
     private static Map<String, ?> buildConfFromFile(File confFile) throws IOException {
         try (FileInputStream fis = new FileInputStream(confFile)) {
             return (Map<String, Object>) new Yaml().load(IOUtils.toString(fis, StandardCharsets.UTF_8));
@@ -213,46 +215,71 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     public SchemaRegistryClient(Map<String, ?> conf) {
         configuration = new Configuration(conf);
-        initializeSecurityContext();
+        initializeSecurityContext();   // configure kerberos
+
         ClientConfig config = createClientConfig(conf);
         ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
                                                    .withConfig(config)
                                                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
         if (conf.containsKey(SSL_CONFIGURATION_KEY) || conf.containsKey(SSL_PROTOCOL_KEY)) {
-            Map<String, String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
-
-            if (sslConfigurations == null) {
-                sslConfigurations = conf.entrySet().stream()
-                    .filter(entry -> entry.getKey().startsWith(SSL_CONFIGURATION_KEY + "."))
-                    .collect(Collectors.toMap(entry -> entry.getKey().substring(SSL_CONFIGURATION_KEY.length() + 1),
-                        entry -> (String) entry.getValue()));
-            }
-
-            clientBuilder.sslContext(createSSLContext(sslConfigurations));
-            if (sslConfigurations.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
-                HostnameVerifier hostNameVerifier = null;
-                String hostNameVerifierClassName = sslConfigurations.get(HOSTNAME_VERIFIER_CLASS_KEY);
-                try {
-                    hostNameVerifier = (HostnameVerifier) Class.forName(hostNameVerifierClassName).newInstance();
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to instantiate hostNameVerifierClass : " + hostNameVerifierClassName, e);
-                }
-                clientBuilder.hostnameVerifier(hostNameVerifier);
-            }
+            configureClientForSsl(conf, clientBuilder);
         }
+
         client = clientBuilder.build();
         client.register(MultiPartFeature.class);
+        configureClientForBasicAuth(client);
+
+        // get list of urls and create given or default UrlSelector.
+        urlSelector = createUrlSelector();
+        urlWithTargets = new ConcurrentHashMap<>();
+
+        retryExecutor = createRetryExecutor(conf);
+
+        classLoaderCache = new ClassLoaderCache(this);
+
+        schemaVersionInfoCache = createSchemaVersionInfoCache();
+
+        schemaMetadataCache = createSchemaMetadataCache();
+
+        schemaTextCache = createSchemaTextCache();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void configureClientForSsl(Map<String, ?> conf, ClientBuilder clientBuilder) {
+        Map<String, String> sslConfigurations = (Map<String, String>) conf.get(SSL_CONFIGURATION_KEY);
+
+        if (sslConfigurations == null) {
+            sslConfigurations = conf.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(SSL_CONFIGURATION_KEY + "."))
+                .collect(Collectors.toMap(entry -> entry.getKey().substring(SSL_CONFIGURATION_KEY.length() + 1),
+                    entry -> (String) entry.getValue()));
+        }
+
+        clientBuilder.sslContext(createSSLContext(sslConfigurations));
+        if (sslConfigurations.containsKey(HOSTNAME_VERIFIER_CLASS_KEY)) {
+            HostnameVerifier hostNameVerifier = null;
+            String hostNameVerifierClassName = sslConfigurations.get(HOSTNAME_VERIFIER_CLASS_KEY);
+            try {
+                hostNameVerifier = (HostnameVerifier) Class.forName(hostNameVerifierClassName).newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to instantiate hostNameVerifierClass : " + hostNameVerifierClassName, e);
+            }
+            clientBuilder.hostnameVerifier(hostNameVerifier);
+        }
+    }
+
+    private void configureClientForBasicAuth(Client client) {
         String userName = configuration.getValue(Configuration.AUTH_USERNAME.name());
         String password = configuration.getValue(Configuration.AUTH_PASSWORD.name());
         if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)){
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(userName, password);
             client.register(feature);
         }
-        // get list of urls and create given or default UrlSelector.
-        urlSelector = createUrlSelector();
-        urlWithTargets = new ConcurrentHashMap<>();
+    }
 
+    @SuppressWarnings("unchecked")
+    private RetryExecutor createRetryExecutor(Map<String, ?> conf) {
         String retryPolicyClass = DEFAULT_RETRY_STRATEGY_CLASS;
         Map<String, Object> retryPolicyProps = new HashMap<>();
         if (conf.containsKey(CLIENT_RETRY_POLICY_KEY)) {
@@ -262,15 +289,34 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 retryPolicyProps = (Map<String, Object>) retryStrategyConfigurations.get(RETRY_POLICY_CONFIG_KEY);
             }
         }
+
         BackoffPolicy backoffPolicy = createRetryPolicy(retryPolicyClass, retryPolicyProps);
-        retryExecutor = new RetryExecutor.Builder()
+        return new RetryExecutor.Builder()
                                          .backoffPolicy(backoffPolicy)
                                          .retryOnException(RegistryRetryableException.class)
                                          .build();
+    }
 
-        classLoaderCache = new ClassLoaderCache(this);
+    private Cache<SchemaDigestEntry, SchemaIdVersion> createSchemaTextCache() {
+        long cacheSize = ((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE.name())).longValue();
+        long expiryInSecs = ((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue();
 
-        schemaVersionInfoCache = new SchemaVersionInfoCache(
+        return CacheBuilder.newBuilder()
+                .maximumSize(cacheSize)
+                .expireAfterAccess(expiryInSecs, TimeUnit.SECONDS)
+                .build();
+    }
+
+    private SchemaMetadataCache createSchemaMetadataCache() {
+        SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
+        long cacheSize = ((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE.name())).longValue();
+        long expiryInSecs = ((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue();
+
+        return new SchemaMetadataCache(cacheSize, expiryInSecs, schemaMetadataFetcher);
+    }
+
+    private SchemaVersionInfoCache createSchemaVersionInfoCache() {
+        return new SchemaVersionInfoCache(
                 new SchemaVersionRetriever() {
                     @Override
                     public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
@@ -285,27 +331,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).intValue(),
                 ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue() * 1000L
         );
-
-        SchemaMetadataCache.SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
-        schemaMetadataCache = new SchemaMetadataCache(((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_SIZE
-                                                                                               .name())).longValue(),
-                                                      ((Number) configuration.getValue(Configuration.SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                               .name())).longValue(),
-                                                      schemaMetadataFetcher);
-
-        schemaTextCache = CacheBuilder.newBuilder()
-                                      .maximumSize(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_SIZE
-                                                                                            .name())).longValue())
-                                      .expireAfterAccess(((Number) configuration.getValue(Configuration.SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS
-                                                                                                  .name())).longValue(),
-                                                         TimeUnit.SECONDS)
-                                      .build();
     }
 
+    @SuppressWarnings("unchecked")
     private BackoffPolicy createRetryPolicy(String retryPolicyClass, Map<String, Object> retryPolicyProps) {
         ClassLoader classLoader = this.getClass().getClassLoader();
         BackoffPolicy backoffPolicy;
-        Class<? extends BackoffPolicy> clazz = null;
+        Class<? extends BackoffPolicy> clazz;
         try {
             clazz = (Class<? extends BackoffPolicy>) Class.forName(retryPolicyClass, true, classLoader);
         } catch (ClassNotFoundException e) {
@@ -321,36 +353,45 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return backoffPolicy;
     }
 
+    /** Login with kerberos */
     protected void initializeSecurityContext() {
+        this.login = dynamicJaasLogin().orElse(staticJaasLogin());
+    }
+
+    /** Attempt to login with dynamic JAAS (from an in-memory string) */
+    private Optional<Login> dynamicJaasLogin() {
         String saslJaasConfig = configuration.getValue(Configuration.SASL_JAAS_CONFIG.name());
         if (saslJaasConfig != null) {
             KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
             try {
                 kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
                 kerberosLogin.login();
-                login = kerberosLogin;
-                return;
+                return Optional.of(kerberosLogin);
             } catch (LoginException e) {
-                LOG.error("Failed to initialize the dynamic JAAS config: " + saslJaasConfig + ". Attempting static JAAS config.");
+                LOG.error("Failed to initialize the dynamic JAAS config: {}. Attempting static JAAS config.", saslJaasConfig);
             } catch (Exception e) {
                 LOG.error("Failed to parse the dynamic JAAS config. Attempting static JAAS config.", e);
             }
         }
+        return Optional.empty();
+    }
 
-        String jaasConfigFile = System.getProperty("java.security.auth.login.config");
+    /** Attempt to login with static JAAS (from a file) */
+    private Login staticJaasLogin() {
+        String jaasConfigFile = System.getProperty(KerberosLogin.JAAS_CONFIG_SYSTEM_PROPERTY);
         if (jaasConfigFile != null && !jaasConfigFile.trim().isEmpty()) {
             KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
             kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION);
             try {
                 kerberosLogin.login();
-                login = kerberosLogin;
+                return kerberosLogin;
             } catch (LoginException e) {
-                LOG.error("Could not login using jaas config  section " + REGISTY_CLIENT_JAAS_SECTION);
-                login = new NOOPLogin();
+                LOG.error("Could not login using jaas config section {}", REGISTY_CLIENT_JAAS_SECTION);
+                return new NOOPLogin();
             }
         } else {
-            LOG.warn("System property for jaas config file is not defined. Its okay if schema registry is not running in secured mode");
-            login = new NOOPLogin();
+            LOG.warn("System property for jaas config file is not defined. This is okay if schema registry is not running in secured mode");
+            return new NOOPLogin();
         }
     }
 
@@ -516,11 +557,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private Long doRegisterSchemaMetadata(SchemaMetadata schemaMetadata, WebTarget schemasTarget) {
         try {
             return postEntity(schemasTarget, schemaMetadata, Long.class);
-        } catch(BadRequestException ex) {
+        } catch (BadRequestException ex) {
             Response response = ex.getResponse();
             CatalogResponse catalogResponse = SchemaRegistryClient.readCatalogResponse(response.readEntity(String.class));
-            if(catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ENTITY_CONFLICT.getCode()) {
-                return getSchemaMetadataInfo(schemaMetadata.getName()).getId();
+            if (catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ENTITY_CONFLICT.getCode()) {
+                SchemaMetadataInfo meta = checkNotNull(getSchemaMetadataInfo(schemaMetadata.getName()), "Did not find schema " + schemaMetadata.getName());
+                return meta.getId();
             } else {
                 throw ex;
             }
@@ -1385,7 +1427,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                     throw retryableException;
                 }
                 try {
-                    LOG.debug("Using '" + targets.rootTarget + "' to make request");
+                    LOG.debug("Using '{}' to make request", targets.rootTarget);
                     return registryRetryableBlock.run(targets);
                 } catch (RegistryRetryableException e) {
                     urlSelector.urlWithError(targets.rootTarget.getUri().toString(), e);
@@ -1661,8 +1703,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final byte[] schemaDigest;
 
         SchemaDigestEntry(String name, byte[] schemaDigest) {
-            Preconditions.checkNotNull(name, "name can not be null");
-            Preconditions.checkNotNull(schemaDigest, "schema digest can not be null");
+            checkNotNull(name, "name can not be null");
+            checkNotNull(schemaDigest, "schema digest can not be null");
 
             this.name = name;
             this.schemaDigest = schemaDigest;

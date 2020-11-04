@@ -39,7 +39,7 @@ public abstract class AbstractLogin implements Login {
 
     protected String loginContextName;
     protected LoginContext loginContext;
-    protected static final String JAAS_CONFIG_SYSTEM_PROPERTY = "java.security.auth.login.config";
+    public static final String JAAS_CONFIG_SYSTEM_PROPERTY = "java.security.auth.login.config";
     protected Configuration jaasConfiguration;
 
     @Override
