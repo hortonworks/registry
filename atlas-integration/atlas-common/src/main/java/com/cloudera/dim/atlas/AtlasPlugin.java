@@ -20,6 +20,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
@@ -217,5 +218,32 @@ public interface AtlasPlugin {
      * @throws SchemaNotFoundException      If there is no schema with the given name.
      */
     Collection<SerDesInfo> getAllSchemaSerdes(String schemaName) throws SchemaNotFoundException;
+
+    /**
+     * Delete a whole schema with Metadata, Versions and Branches
+     * @param schemaName        unique name of the schema
+     */
+    void deleteSchema(String schemaName) throws SchemaNotFoundException;
+
+    /**
+     * Delete a specific Schema Branch
+     * @param branchId      unique id of Schema Branch
+     * @throws SchemaBranchNotFoundException    if there is no schema branch with the given id.
+     */
+    void deleteSchemaBranch(Long branchId) throws SchemaBranchNotFoundException;
+
+    /**
+     * Delete a specific Schema Version
+     * @param id        unique id of Schema Version
+     */
+    void deleteSchemaVersion(Long id);
+
+
+    /**
+     * Delete a specific Schema Version with given SchemaVersionKey
+     * @param schemaVersionKey      unique identifier of Schema Version
+     * @throws SchemaNotFoundException  if there is no schema for given SchemaVersionKey
+     */
+    void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
 
 }

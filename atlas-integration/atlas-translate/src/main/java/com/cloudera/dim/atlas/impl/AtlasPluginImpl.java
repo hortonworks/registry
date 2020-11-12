@@ -35,6 +35,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -42,6 +43,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
@@ -62,12 +64,14 @@ import org.apache.atlas.model.instance.AtlasStruct;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.model.instance.EntityMutations;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,6 +79,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -93,6 +98,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     private final BranchTranslator branchTranslator = new BranchTranslator();
     private final SerdesInfoTranslator serdesInfoTranslator = new SerdesInfoTranslator();
     private final Map<String, IdGenerator> idGenerators = new HashMap<>();
+    private final static Set<AtlasEntity.Status> DELETED_ATLAS_ENTITY_STATUS = ImmutableSet.of(AtlasEntity.Status.DELETED, AtlasEntity.Status.PURGED);
+    private final static Set<AtlasRelationship.Status> DELETED_ATLAS_RELATIONSHIP_STATUS = ImmutableSet.of(AtlasRelationship.Status.DELETED);
 
     AtlasClientV2 atlasClient;
 
@@ -186,9 +193,9 @@ public class AtlasPluginImpl implements AtlasPlugin {
                     AtlasEntity.AtlasEntitiesWithExtInfo entitiesWithExtInfo = new AtlasEntity.AtlasEntitiesWithExtInfo();
                     entitiesWithExtInfo.addEntity(metaEntity);
 
-                    AtlasEntity branchEntity = branchTranslator
-                            .toAtlas(new SchemaBranch(branchId, SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), 
-                                    String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis()));
+                    AtlasEntity branchEntity = branchTranslator.toAtlas(new SchemaBranch(branchId, SchemaBranch.MASTER_BRANCH, 
+                            schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), 
+                            System.currentTimeMillis()));
                     entitiesWithExtInfo.addEntity(branchEntity);
 
                     if (LOG.isTraceEnabled()) {
@@ -278,8 +285,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                     randomize -> generateUniqueId(VersionEntityDef.SCHEMA_VERSION_INFO, randomize),
                     versionId -> {
                         try {
-                            AtlasEntity versionEntity = schemaVersionTranslator
-                                    .toAtlas(versionId, schemaVersion, schemaMetadataInfo, schemaName, existingCount + 1, fingerprint);
+                            AtlasEntity versionEntity = schemaVersionTranslator.toAtlas(versionId, schemaVersion, schemaMetadataInfo, schemaName, existingCount + 1, fingerprint);
                             AtlasEntity.AtlasEntitiesWithExtInfo entitiesWithExtInfo = new AtlasEntity.AtlasEntitiesWithExtInfo();
                             entitiesWithExtInfo.addEntity(versionEntity);
                             EntityMutationResponse entities = atlasClient.createEntities(entitiesWithExtInfo);
@@ -378,7 +384,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             if (branches instanceof Collection) {
                 // relationship contains the branch name, so we can obtain the guid without having to query the full rel.
                 Collection<SchemaBranch> schemaBranches = extractSchemaBranchesFromAtlas((Collection<?>) branches,
-                        f -> branchName.equals(f.get(BranchEntityDef.NAME)));
+                        f -> branchName.equals(f.get(BranchEntityDef.NAME)), false);
                 if (schemaBranches == null || schemaBranches.isEmpty()) {
                     LOG.debug("Schema \"{}\" does not have any branches with the name \"{}\"", schemaName, branchName);
                     return Optional.empty();
@@ -395,6 +401,50 @@ public class AtlasPluginImpl implements AtlasPlugin {
             throw new AtlasUncheckedException(e);
         }
         return Optional.empty();
+    }
+
+    private Optional<Collection<SchemaBranch>> getAllSchemaBranchesOfSchemaMetadata(AtlasEntity metaEntity) {
+        try {
+            Object branches = metaEntity.getRelationshipAttribute(MetaBranchRelationshipDef.REL_ONE);
+            Collection branchCollection = getCollectionIfPossible(branches);
+            Collection<SchemaBranch> schemaBranches = extractSchemaBranchesFromAtlas((Collection<?>) branches, null, false);
+                if (schemaBranches == null || schemaBranches.isEmpty()) {
+                    LOG.debug("AtlasEntity: {} does not have any branches", metaEntity);
+                    return Optional.empty();
+                }
+                return Optional.of(schemaBranches);
+            
+        } catch (AtlasServiceException e) {
+            if (e.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw new AtlasUncheckedException(e);
+        } catch (IllegalArgumentException e) {
+            LOG.error("branches of AtlasEntity: {} is not a Collection", metaEntity, e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<Collection<SchemaVersionInfo>> getAllSchemaVersionsOfSchemaMetadata(AtlasEntity metaEntity) {
+        try {
+            Object versions = metaEntity.getRelationshipAttribute(SchemaVersionRelationshipDef.REL_ONE);
+            Collection versionsCollection = getCollectionIfPossible(versions);
+            Collection<SchemaVersionInfo> schemaVersionInfos = extractSchemaVersionsFromAtlas((Collection<?>) versions, null, false);
+                if (schemaVersionInfos == null || schemaVersionInfos.isEmpty()) {
+                    LOG.debug("AtlasEntity: {} does not have any branches", metaEntity);
+                    return Optional.empty();
+                }
+                return Optional.of(schemaVersionInfos);
+            
+        } catch (AtlasServiceException e) {
+            if (e.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw new AtlasUncheckedException(e);
+        } catch (IllegalArgumentException e) {
+            LOG.error("versions for AtlasEntity: {} is not a Collection", metaEntity, e);
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -484,13 +534,13 @@ public class AtlasPluginImpl implements AtlasPlugin {
             final AtlasEntity metaAtlasEntity = getSchemaMetadataInfoAtlasEntity(schemaName);
             if (metaAtlasEntity.getRelationshipAttributes() != null) {
                 Object serdes = metaAtlasEntity.getRelationshipAttributes().get(SerdesMappingRelationshipDef.REL_ONE);
-                if (serdes instanceof Collection) {
-                    return extractSchemaSerdesFromAtlas((Collection<?>) serdes);
+                Collection serdesCollection = getCollectionIfPossible(serdes);
+                return extractSchemaSerdesFromAtlas(serdesCollection, false);
                 }
-            }
-
         } catch (AtlasServiceException asex) {
             throw new AtlasUncheckedException("Could not retrieve all serdes for schema " + schemaName, asex);
+        } catch (IllegalArgumentException e) {
+            LOG.error("serdes for schema: {} is not a Collection", schemaName, e);
         }
 
         // happens if relationship is missing in Atlas
@@ -607,7 +657,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 Object versions = metaAtlasEntity.getRelationshipAttributes().get(SchemaVersionRelationshipDef.REL_ONE);
                 if (versions instanceof Collection) {
                     Collection<SchemaVersionInfo> versionsFound = extractSchemaVersionsFromAtlas((Collection<?>) versions,
-                            map -> map != null && version.equals(map.get(VersionEntityDef.VERSION)));
+                            map -> map != null && version.equals(map.get(VersionEntityDef.VERSION)), false);
 
                     if (versionsFound.size() > 1) {
                         LOG.warn("Found multiple versions {} for schema \"{}\"", version, schemaName);
@@ -626,9 +676,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public Optional<SchemaVersionInfo> getSchemaVersionById(Long versionId) {
         checkNotNull(versionId, "versionId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
-                    .getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
-            if (atlasEntity == null || atlasEntity.getEntity() == null) {
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
+            if (isEntityMissing(atlasEntity)) {
                 return Optional.empty();
             }
             return Optional.ofNullable(schemaVersionInfoTranslator.fromAtlas(atlasEntity.getEntity()));
@@ -644,15 +693,14 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public List<SchemaVersionInfo> getSchemaVersionsByBranchId(Long branchId) throws SchemaBranchNotFoundException {
         checkNotNull(branchId, "branchId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
-                    .getEntityByAttribute(BranchEntityDef.SCHEMA_BRANCH, ImmutableMap.of(BranchEntityDef.ID, String.valueOf(branchId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(BranchEntityDef.SCHEMA_BRANCH, ImmutableMap.of(BranchEntityDef.ID, String.valueOf(branchId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 throw new SchemaBranchNotFoundException("Did not find branch with id " + branchId);
             }
 
             Object versions = atlasEntity.getEntity().getRelationshipAttributes().get(VersionBranchRelationshipDef.REL_MANY);
             if (versions instanceof Collection) {
-                return new ArrayList<>(extractSchemaVersionsFromAtlas((Collection<?>) versions, null));
+                return new ArrayList<>(extractSchemaVersionsFromAtlas((Collection<?>) versions, null, false));
             }
 
         } catch (AtlasServiceException asex) {
@@ -665,19 +713,26 @@ public class AtlasPluginImpl implements AtlasPlugin {
         return new ArrayList<>();
     }
 
+    private boolean isEntityMissing(AtlasEntity.AtlasEntityWithExtInfo atlasEntity) {
+        return atlasEntity == null || atlasEntity.getEntity() == null || DELETED_ATLAS_ENTITY_STATUS.contains(atlasEntity.getEntity().getStatus());
+    }
+
+    private boolean isRelationshipMissing(AtlasRelationship relationship) {
+        return relationship == null || DELETED_ATLAS_RELATIONSHIP_STATUS.contains(relationship.getStatus());
+    }
+
     @Override
     public Collection<SchemaBranch> getSchemaBranchesByVersionId(Long versionId) throws SchemaBranchNotFoundException {
         checkNotNull(versionId, "versionId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
-                    .getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 throw new SchemaBranchNotFoundException("Did not find schema version with ID " + versionId);
             }
 
             Object branches = atlasEntity.getEntity().getRelationshipAttributes().get(VersionBranchRelationshipDef.REL_ONE);
             if (branches instanceof Collection) {
-                return extractSchemaBranchesFromAtlas((Collection<?>) branches, null);
+                return extractSchemaBranchesFromAtlas((Collection<?>) branches, null, false);
             }
         } catch (AtlasServiceException asex) {
             if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
@@ -713,27 +768,27 @@ public class AtlasPluginImpl implements AtlasPlugin {
     }
 
     private Collection<SchemaVersionInfo> extractSchemaVersionsFromAtlas(Collection<?> versions) throws AtlasServiceException {
-        return extractSchemaVersionsFromAtlas(versions, null);
+        return extractSchemaVersionsFromAtlas(versions, null, false);
     }
 
     private Collection<SchemaVersionInfo> extractSchemaVersionsFromAtlas(
-            Collection<?> versions, @Nullable Predicate<Map<String, ?>> filter) throws AtlasServiceException {
+            Collection<?> versions, @Nullable Predicate<Map<String, ?>> filter, boolean showDeleted) throws AtlasServiceException {
 
-        return extractRelatedEntitiesFromAtlas(versions, filter, schemaVersionInfoTranslator::fromAtlas, VersionEntityDef.SCHEMA_VERSION_INFO);
+        return extractRelatedEntitiesFromAtlas(versions, filter, schemaVersionInfoTranslator::fromAtlas, VersionEntityDef.SCHEMA_VERSION_INFO, showDeleted);
     }
 
     private Collection<SchemaBranch> extractSchemaBranchesFromAtlas(
-            Collection<?> branches, @Nullable Predicate<Map<String, ?>> filter) throws AtlasServiceException {
-        return extractRelatedEntitiesFromAtlas(branches, filter, branchTranslator::fromAtlas, BranchEntityDef.SCHEMA_BRANCH);
+            Collection<?> branches, @Nullable Predicate<Map<String, ?>> filter, boolean showDeleted) throws AtlasServiceException {
+        return extractRelatedEntitiesFromAtlas(branches, filter, branchTranslator::fromAtlas, BranchEntityDef.SCHEMA_BRANCH, showDeleted);
     }
 
-    private Collection<SerDesInfo> extractSchemaSerdesFromAtlas(Collection<?> serdes) throws AtlasServiceException {
-        return extractRelatedEntitiesFromAtlas(serdes, null, serdesInfoTranslator::fromAtlas, SerdesEntityDef.SCHEMA_SERDES_INFO);
+    private Collection<SerDesInfo> extractSchemaSerdesFromAtlas(Collection<?> serdes, boolean showDeleted) throws AtlasServiceException {
+        return extractRelatedEntitiesFromAtlas(serdes, null, serdesInfoTranslator::fromAtlas, SerdesEntityDef.SCHEMA_SERDES_INFO, showDeleted);
     }
 
     private <T> Collection<T> extractRelatedEntitiesFromAtlas(
             Collection<?> relatedList, @Nullable Predicate<Map<String, ?>> filter,
-            Function<AtlasEntity, T> converter, String requiredType) throws AtlasServiceException {
+            Function<AtlasEntity, T> converter, String requiredType, boolean showDeleted) throws AtlasServiceException {
         List<String> guids = relatedList.stream().map(header -> {
             if (header instanceof Map) {
                 String guid = (String) ((Map) header).get(AtlasObjectId.KEY_GUID);
@@ -765,7 +820,9 @@ public class AtlasPluginImpl implements AtlasPlugin {
         }
 
         AtlasEntity.AtlasEntitiesWithExtInfo entitiesByGuids = atlasClient.getEntitiesByGuids(guids);
-        return entitiesByGuids.getEntities().stream().map(converter).collect(Collectors.toList());
+        return entitiesByGuids.getEntities().stream()
+                .filter(e -> showDeleted || !DELETED_ATLAS_ENTITY_STATUS.contains(e.getStatus()))
+                .map(converter).collect(Collectors.toList());
     }
 
     @Override
@@ -833,7 +890,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             if (versions instanceof Collection) {
                 // relationship contains the fingerprint, so we can filter for only those versions which match
                 return extractSchemaVersionsFromAtlas((Collection<?>) versions,
-                        f -> fingerprint.equals(f.get(VersionEntityDef.FINGERPRINT)));
+                        f -> fingerprint.equals(f.get(VersionEntityDef.FINGERPRINT)), false);
             }
         } catch (AtlasServiceException asex) {
             if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
@@ -916,10 +973,203 @@ public class AtlasPluginImpl implements AtlasPlugin {
             }
 
         } catch (AtlasServiceException e) {
-            e.printStackTrace();
+            LOG.error("Error while getting serDes mapping for schema: " + schemaName, e);
         }
 
         return ImmutableList.of();
+    }
+
+    @Override
+    public void deleteSchema(String schemaName) throws SchemaNotFoundException {
+        try {
+            AtlasEntity schemaForDeletion = getSchemaMetadataInfoAtlasEntity(schemaName);
+            Optional<Collection<SchemaBranch>> branchesForDeletion = getAllSchemaBranchesOfSchemaMetadata(schemaForDeletion);
+            Optional<Collection<SchemaVersionInfo>> versionsForDeletion = getAllSchemaVersionsOfSchemaMetadata(schemaForDeletion);
+            deleteSchemaVersions(versionsForDeletion);
+            deleteBranches(branchesForDeletion);
+            deleteSchemaMetadata(schemaForDeletion);
+        } catch (AtlasServiceException ex) {
+            LOG.error("Error while deleting schema: {}", schemaName, ex);
+            throw new AtlasUncheckedException("Error while deleting schema: " + schemaName);
+        }
+    }
+
+    private void deleteSchemaMetadata(AtlasEntity atlasEntity) {
+        try {
+            LOG.debug("Deleting schema metadata: {}", atlasEntity.getGuid());
+            EntityMutationResponse entityMutationResponse = atlasClient.deleteEntityByGuid(atlasEntity.getGuid());
+            LOG.debug("Response is: {}", entityMutationResponse.getDeletedEntities().get(0));
+        } catch (AtlasServiceException ex) {
+            LOG.error("Error while deleting schema metadata: {}", atlasEntity, ex);
+        }
+    }
+
+    private void deleteSchemaVersions(Optional<Collection<SchemaVersionInfo>> schemaVersionsForDeletion) {
+        if (!schemaVersionsForDeletion.isPresent()) {
+            return;
+        }
+        for (SchemaVersionInfo schema : schemaVersionsForDeletion.get()) {
+            deleteSchemaVersion(schema.getId());
+        }
+
+    }
+
+    private void deleteBranches(Optional<Collection<SchemaBranch>> schemaBranches) {
+        if (schemaBranches.isPresent()) {
+            return;
+        }
+        for (SchemaBranch sb : schemaBranches.get()) {
+            deleteSchemaBranch(sb.getId());
+        }
+    }
+
+    private Optional<AtlasEntity> getAtlasEntityFromId(Long id, String typeName) throws AtlasServiceException {
+        String entityId = null;
+        if (typeName.equals(VersionEntityDef.SCHEMA_VERSION_INFO)) {
+            entityId = VersionEntityDef.ID;
+        } else if (typeName.equals(BranchEntityDef.SCHEMA_BRANCH)) {
+            entityId = BranchEntityDef.ID;
+        }
+        if (entityId != null) {
+            AtlasEntity.AtlasEntityWithExtInfo entity = atlasClient.getEntityByAttribute(typeName,
+                    ImmutableMap.of(entityId, String.valueOf(id)));
+            return Optional.of(entity.getEntity());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteSchemaVersion(Long id) {
+        try {
+            Optional<AtlasEntity> schemaVersionForDeletion = getAtlasEntityFromId(id, VersionEntityDef.SCHEMA_VERSION_INFO);
+            if (schemaVersionForDeletion.isPresent()) {
+                deleteSchemaVersionByAtlasEntity(schemaVersionForDeletion.get());
+            }
+        } catch (AtlasServiceException ex) {
+            if (ex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                LOG.error("Schema version with id {} not found", id);
+            }
+            LOG.error("Error while deleting schema branch: {}", ex, ex);
+        }
+    }
+
+    @Override
+    public void deleteSchemaVersion(@NotNull SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
+        try {
+            Optional<SchemaVersionInfo> schemaVersionForDeletion = getSchemaVersion(schemaVersionKey.getSchemaName(), schemaVersionKey.getVersion());
+            if (schemaVersionForDeletion.isPresent()) {
+                LOG.debug("SchemaVersionInfo for SchemaVersionKey: {} is: {}", schemaVersionKey, schemaVersionForDeletion);
+                AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, schemaVersionForDeletion.get().getId().toString()));
+                AtlasEntity atlasEntityForDeletion = atlasEntity.getEntity();
+                LOG.debug("AtlasEntity for SchemaVersion deletion is: {}", atlasEntityForDeletion);
+                deleteSchemaVersionByAtlasEntity(atlasEntityForDeletion);
+            }
+        } catch (AtlasServiceException ex) {
+            if (ex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                LOG.error("Schema version with schema version key: {} not found", schemaVersionKey);
+            }
+            LOG.error("Error while deleting schema branch: {}", ex);
+        }
+    }
+
+    private void relationDeletion(Object relation) throws AtlasServiceException {
+        String relationGuid = (String) ((Map) relation).get(AtlasRelatedObjectId.KEY_RELATIONSHIP_GUID);
+        if (!StringUtils.isBlank(relationGuid)) {
+            AtlasRelationship relationship = atlasClient.getRelationshipByGuid(relationGuid).getRelationship();
+            if (!isRelationshipMissing(relationship)) {
+                if (!isRelationshipMissing(atlasClient.getRelationshipByGuid(relationGuid).getRelationship())) {
+                    atlasClient.deleteRelationshipByGuid(relationGuid);
+                    LOG.debug("Deleted relation {}", relation);
+                }
+            }
+        } else {
+            LOG.warn("Relationship is null.");
+        }
+    }
+
+    private void deleteSchemaVersionByAtlasEntity(@NotNull AtlasEntity schemaVersionForDeletion) throws AtlasServiceException {
+        LOG.debug("Start deleting relations");
+        Object metaRelation = schemaVersionForDeletion.getRelationshipAttribute(SchemaVersionRelationshipDef.REL_MANY);
+        if (metaRelation instanceof Map) {
+            relationDeletion(metaRelation);
+        } else {
+            LOG.error("metaRelation is not a Map");
+        }
+        Object branchDeletion = schemaVersionForDeletion.getRelationshipAttribute(VersionBranchRelationshipDef.REL_ONE);
+        try {
+            Collection branchRelationsCollection = getCollectionIfPossible(branchDeletion);
+            for (Object header : branchRelationsCollection) {
+                if (header instanceof Map) {
+                    relationDeletion(header);
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            LOG.error("Branches for AtlasEntity: {} is not a Collection", schemaVersionForDeletion,  e);
+        }
+        EntityMutationResponse entityMutationResponse = atlasClient.deleteEntityByGuid(schemaVersionForDeletion.getGuid());
+        LOG.debug("Response is: {}", entityMutationResponse.getDeletedEntities().get(0));
+    }
+
+    @Override
+    public void deleteSchemaBranch(Long id) throws SchemaBranchNotFoundException {
+        LOG.debug("deleting branch with id: {}", id);
+        try {
+            Optional<AtlasEntity> branchForDeletion = getAtlasEntityFromId(id, BranchEntityDef.SCHEMA_BRANCH);
+            if (branchForDeletion.isPresent()) {
+                LOG.debug("Start deleting relations");
+                Object metaRelation = branchForDeletion.get().getRelationshipAttribute(MetaBranchRelationshipDef.REL_MANY);
+                if (metaRelation instanceof Map) {
+                    relationDeletion(metaRelation);
+                }
+                List<SchemaVersionInfo> schemaVersions = getSchemaVersionsByBranchId(id);
+                if (!schemaVersions.isEmpty()) {
+                    for (int i = 0; i < schemaVersions.size(); i++) {
+                        if (!isSchemaVersionConnectedToMoreThanOneSchemaBranch(schemaVersions.get(i))) {
+                            deleteSchemaVersion(new SchemaVersionKey(schemaVersions.get(i).getName(), schemaVersions.get(i).getVersion()));
+                        } else {
+                            Object versionRelation = branchForDeletion.get().getRelationshipAttribute(VersionBranchRelationshipDef.REL_MANY);
+                            if (versionRelation instanceof Map) {
+                                relationDeletion(versionRelation);
+                            }
+                        }
+                    }
+                }
+                LOG.debug("Deleting AtlasEntity: {}", branchForDeletion);
+                EntityMutationResponse entityMutationResponse = atlasClient.deleteEntityByGuid(branchForDeletion.get().getGuid());
+                LOG.debug("Response is: {}", entityMutationResponse.getDeletedEntities().get(0));
+            }
+        } catch (AtlasServiceException ex) {
+            if (ex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                throw new SchemaBranchNotFoundException("Schema Branch with id " + id + " not found.");
+            }
+            LOG.error("Error while deleting schema branch: {}", ex, ex);
+        } catch (SchemaNotFoundException e) {
+            LOG.error("Schema Branch with id " + id + " not found.", e);
+        }
+    }
+
+    private boolean isSchemaVersionConnectedToMoreThanOneSchemaBranch(SchemaVersionInfo schemaVersionInfo) throws AtlasServiceException {
+        AtlasEntity.AtlasEntityWithExtInfo versionEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(schemaVersionInfo.getId())));
+
+        if (versionEntity != null || versionEntity.getEntity() != null) {
+            Object branchRelations = versionEntity.getEntity().getRelationshipAttribute(VersionBranchRelationshipDef.REL_ONE);
+            try {
+                Collection branchRelationsCollection = getCollectionIfPossible(branchRelations);
+                return (branchRelationsCollection.size() > 1);
+            } catch (IllegalArgumentException e) {
+                LOG.error("branchRelations for SchemaVersionInfo: {} is not a Collection", schemaVersionInfo, e);
+            }
+        }
+        return false;
+    }
+    
+    private Collection getCollectionIfPossible(Object object) throws IllegalArgumentException {
+        if (object instanceof Collection) {
+            return (Collection) object;
+        } else {
+            throw new IllegalArgumentException("Not a collection: " + object);
+        }
     }
 
     @VisibleForTesting

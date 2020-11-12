@@ -210,6 +210,8 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     @Override
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
         LOG.info("++++++++++++ deleteSchemaVersion {}", schemaVersionKey);
+        atlasClient.deleteSchemaVersion(schemaVersionKey);
+        
     }
 
     @Override
@@ -278,6 +280,7 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     @Override
     public void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException {
         LOG.info("++++++++++++ deleteSchemaVersion {}", schemaVersionId);
+        atlasClient.deleteSchemaVersion(schemaVersionId);
     }
 
     @Override

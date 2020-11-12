@@ -120,12 +120,13 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
         this.schemaTypeWithProviders = schemaProviders.stream().collect(Collectors.toMap(SchemaProvider::getType, Function.identity()));
 
         schemaProviderInfos = Collections.unmodifiableList(
-                schemaProviders.stream().map(schemaProvider -> new SchemaProviderInfo(schemaProvider.getType(),
-                                schemaProvider.getName(),
-                                schemaProvider.getDescription(),
-                                schemaProvider.getDefaultSerializerClassName(),
-                                schemaProvider.getDefaultDeserializerClassName()))
-                        .collect(Collectors.toList()));
+                schemaProviders.stream().map(schemaProvider -> new SchemaProviderInfo(
+                            schemaProvider.getType(),
+                            schemaProvider.getName(),
+                            schemaProvider.getDescription(),
+                            schemaProvider.getDefaultSerializerClassName(),
+                            schemaProvider.getDefaultDeserializerClassName()))
+                            .collect(Collectors.toList()));
 
         Options options = new Options(config);
         SchemaBranchCache schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(), 
@@ -174,7 +175,7 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
                 throw new IllegalArgumentException(e);
             }
         })
-        .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     private SchemaBranchCache.SchemaBranchFetcher createSchemaBranchFetcher() {
@@ -325,7 +326,7 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     @Override
     public void deleteSchema(String schemaName) throws SchemaNotFoundException {
         LOG.info("--------------- deleteSchema {}", schemaName);
-        // TODO delete schema, versions, branches, serdes
+        atlasClient.deleteSchema(schemaName);
     }
 
     @Override
@@ -753,9 +754,15 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     @Override
     public void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
         LOG.info("--------------- deleteSchemaBranch {}", schemaBranchId);
-        // TODO
+        Optional<SchemaBranch> branchForDeletion = atlasClient.getSchemaBranchById(schemaBranchId);
+        if (branchForDeletion.isPresent()) {
+            atlasClient.deleteSchemaBranch(schemaBranchId);
+        } else {
+            throw new SchemaBranchNotFoundException(String.format("SchemaBranch with id: {} not found", schemaBranchId));
+        }
+
     }
-    
+
     @Override
     public SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException {
         return schemaVersionLifecycleManager.fetchSchemaVersionInfo(id);

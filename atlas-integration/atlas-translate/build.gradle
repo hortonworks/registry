@@ -20,6 +20,7 @@ dependencies {
     compile libraries.avro
     compile libraries.atlas.client
     compile libraries.guava
+    compile group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     
     testCompile libraries.junit
 
