@@ -382,8 +382,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.12.10</scala.version>
         <!-- TODO change these to 7.2.7 once the artifacts are disted -->
-        <schema-registry-shaded.version>0.9.1.7.2.7.0-SNAPSHOT</schema-registry-shaded.version>
-        <atlas.version>2.0.0.7.2.3.0-SNAPSHOT</atlas.version>
+        <schema-registry-shaded.version>0.10.0.7.2.7.0-SNAPSHOT</schema-registry-shaded.version>
+        <atlas.version>2.1.0.7.2.7.0-SNAPSHOT</atlas.version>
         <junit.version>4.12</junit.version>
         <jackson.version>2.10.5</jackson.version>
         <jackson-mapper.version>1.9.13-cloudera.1</jackson-mapper.version>
