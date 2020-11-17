@@ -205,7 +205,7 @@ public final class ConfigEntry<T> implements Serializable {
          *
          * @throws IllegalArgumentException when the given value is not valid.
          */
-        void validate(V v);
+        void validate(String key, V v);
 
         /**
          * Multiple {@link Validator}s can be composed with this method.
@@ -226,10 +226,10 @@ public final class ConfigEntry<T> implements Serializable {
          * @return Returns the current Validator instance.
          */
         default Validator<V> with(final Iterable<Validator<V>> others) {
-            return v -> {
-                this.validate(v);
+            return (key, v) -> {
+                this.validate(key, v);
                 for (Validator<V> other : others) {
-                    other.validate(v);
+                    other.validate(key, v);
                 }
             };
         }
@@ -240,9 +240,9 @@ public final class ConfigEntry<T> implements Serializable {
         private static ConfigEntry.Validator<String> instance = new NonEmptyStringValidator();
 
         @Override
-        public void validate(String str) {
-            if (str == null || str.isEmpty()) {
-                throw new IllegalArgumentException("Given string " + str + " must be non empty");
+        public void validate(String key, String value) {
+            if (value == null || value.isEmpty()) {
+                throw new IllegalArgumentException("Given string for key " + key + " must be non empty");
             }
         }
 
@@ -255,9 +255,13 @@ public final class ConfigEntry<T> implements Serializable {
         private static final PositiveNumberValidator instance = new PositiveNumberValidator();
 
         @Override
-        public void validate(Number number) {
+        public void validate(String key, Number number) {
             if (number.doubleValue() <= 0) {
-                throw new IllegalArgumentException("Given number " + number + " must be greater than zero.");
+                if (key == null) {
+                    throw new IllegalArgumentException("Given number " + number + " must be greater than zero.");
+                } else {
+                    throw new IllegalArgumentException("Given number " + number + " with key " + key + " must be greater than zero.");
+                }
             }
         }
 

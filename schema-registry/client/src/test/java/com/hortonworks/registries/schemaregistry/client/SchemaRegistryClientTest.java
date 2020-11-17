@@ -15,15 +15,20 @@
  **/
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import mockit.Expectations;
 import mockit.Tested;
+import org.hamcrest.core.Is;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static mockit.Deencapsulation.invoke;
 
@@ -57,5 +62,38 @@ public class SchemaRegistryClientTest {
         schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
         schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
         schemaRegistryClient.addSchemaVersion(schemaName, schemaVersion);
+    }
+    
+    @Test
+    public void testConfigEntryValidation(){
+        //given
+        Map<String, String> goodConf = new HashMap<>();
+        goodConf.put("schema.registry.url", "goodvalue");
+        goodConf.put("schema.registry.client.url.selector", "nonnullvalue");
+
+        SchemaRegistryClient.Configuration configuration = new SchemaRegistryClient.Configuration(ImmutableMap.of("key", "value"));
+        
+        //when
+        Map<String, ?> result = configuration.buildConfig(goodConf);
+        
+        //then
+        Assert.assertThat(result, Is.is(goodConf));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testConfigEntryValidation_badconf(){
+        //given
+        Map<String, String> badConf = new HashMap<>();
+        badConf.put("schema.registry.url", "goodvalue");
+        badConf.put("schema.registry.client.url.selector", "nonnullvalue");
+        badConf.put("schema.registry.client.local.jars.path", "");
+
+        SchemaRegistryClient.Configuration configuration = new SchemaRegistryClient.Configuration(ImmutableMap.of("key", "value"));
+        
+        //when
+        Map<String, ?> result = configuration.buildConfig(badConf);
+        
+        //then
+        Assert.assertThat(result, Is.is(badConf));
     }
 }

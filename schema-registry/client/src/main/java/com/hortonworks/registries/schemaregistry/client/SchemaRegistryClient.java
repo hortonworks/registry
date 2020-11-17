@@ -1640,7 +1640,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             this.config = buildConfig(config);
         }
 
-        private Map<String, ?> buildConfig(Map<String, ?> config) {
+        Map<String, ?> buildConfig(Map<String, ?> config) {
             Map<String, Object> result = new HashMap<>();
             for (Map.Entry<String, ?> entry : config.entrySet()) {
                 String key = entry.getKey();
@@ -1651,7 +1651,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 if (configEntry != null) {
                     if (value != null) {
                         finalValue = configEntry.converter().convert(value);
-                        configEntry.validator().validate((finalValue));
+                        configEntry.validator().validate(key, finalValue);
                     } else {
                         finalValue = configEntry.defaultValue();
                     }
