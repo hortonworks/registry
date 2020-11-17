@@ -16,6 +16,12 @@
             <groupId>com.hortonworks.registries</groupId>
             <artifactId>schema-registry-common</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.hortonworks.registries</groupId>
