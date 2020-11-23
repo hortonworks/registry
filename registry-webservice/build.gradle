@@ -1,0 +1,116 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+plugins {
+    id "com.github.node-gradle.node" version "2.2.4"
+    id 'application'
+}
+
+application {
+    mainClassName = 'com.hortonworks.registries.webservice.RegistryApplication'
+}
+
+def nodeJsSrc = 'src/main/nodeJs'
+
+sourceSets {
+    main {
+        resources {
+            srcDir nodeJsSrc
+        }
+    }
+}
+
+dependencies {
+
+    compile libraries.hadoop.aws
+    compile libraries.hadoop.azure
+    compile libraries.hadoop.azure_datalake
+    compile libraries.hadoop.cloud
+    compile libraries.hadoop.client
+    compile libraries.hadoop.common
+    
+    compile libraries.guava
+    compile libraries.logging.slf4j_api
+    compile libraries.commons.lang3
+    compile libraries.nimbus
+    compile libraries.jersey.media_multipart
+    compile project(':storage:storage-core')
+    compile project(':cache')
+    compile project(':schema-registry:schema-registry-common')
+    compile(project(':common-auth')) {
+        exclude group: 'javax.servlet', module: 'servlet-api'
+    }
+    compile libraries.dropwizard.core
+    compile libraries.dropwizard.swagger
+    compile libraries.dropwizard.assets
+    compile libraries.dropwizard.auth
+    compile libraries.dropwizard.metrics
+    compile libraries.hibernate_validator
+    compile libraries.curator.framework
+    compile libraries.curator.client
+    compile libraries.curator.recipes
+    testCompile libraries.curator.test
+    testCompile libraries.junit
+    compile project(':schema-registry:schema-registry-core')
+
+}
+
+node {
+    download = true
+    version = "13.11.0"
+    npmVersion = "6.13.7"
+}
+npmInstall.args = ['--loglevel', 'info']
+
+task installWebsiteModules(type: NpmTask) {
+    npmCommand = [ 'install' ]
+    workingDir = sourceSets.main.output.resourcesDir
+    ignoreExitValue = true
+}
+task buildWebsite(type: NpmTask) {
+    npmCommand = [ 'run-script', 'build' ]
+    workingDir = sourceSets.main.output.resourcesDir
+    ignoreExitValue = true
+}
+
+task copyWebsiteAssets(type: Copy) {
+    from "$sourceSets.main.output.resourcesDir/public/assets"
+    into "$sourceSets.main.output.resourcesDir/assets"
+}
+
+processResources.finalizedBy(installWebsiteModules)
+installWebsiteModules.dependsOn(processResources)
+
+installWebsiteModules.finalizedBy(buildWebsite)
+buildWebsite.dependsOn(installWebsiteModules)
+
+buildWebsite.finalizedBy(copyWebsiteAssets)
+copyWebsiteAssets.dependsOn(buildWebsite)
+
+task copyLegal2(type: Copy) {
+    from(rootDir) {
+        include 'LICENSE.txt'
+        include 'NOTICE.txt'
+    }
+    into new File(sourceSets.main.output.resourcesDir, "public")
+}
+build.finalizedBy(copyLegal2)
+
+jar {
+    include('com/**', 'assets/**')
+}
+
+

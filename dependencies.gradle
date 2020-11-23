@@ -1,0 +1,258 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+ext.java_version = JavaVersion.VERSION_1_8
+
+ext.libraries = [
+
+   atlas: [
+      classloader    : dependencies.create("org.apache.atlas:atlas-plugin-classloader:$versions_atlas") {
+          exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+      },
+      client         : dependencies.create("org.apache.atlas:atlas-client-v2:$versions_atlas") {
+          exclude group: 'com.google.code.findbugs', module: 'jsr305'
+          exclude group: 'com.nimbusds', module: 'nimbus-jose-jwt'
+          exclude group: 'org.codehaus.jackson', module: 'jackson-core-asl'
+          exclude group: 'org.apache.avro', module: 'avro'
+          exclude group: 'jdk.tools', module: 'jdk.tools'
+          exclude group: 'org.apache.curator'
+      }
+   ],
+   avro              : "org.apache.avro:avro:$versions_avro",
+
+   commons: [
+      cli            : "commons-cli:commons-cli:$versions_commons_cli",
+      codec          : "commons-codec:commons-codec:$versions_commons_codec",
+      io             :"commons-io:commons-io:$versions_commons_io",
+      lang3          : "org.apache.commons:commons-lang3:$versions_commons_lang3",
+   ],
+   curator: [
+      client         : "org.apache.curator:curator-client:$versions_curator",
+      framework      : "org.apache.curator:curator-framework:$versions_curator",
+      recipes        : "org.apache.curator:curator-recipes:$versions_curator",
+      test           : "org.apache.curator:curator-test:$versions_curator",
+   ],
+   directory_api     : "org.apache.directory.api:api-util:$versions_directory_api",
+   directory_server: dependencies.create("org.apache.directory.server:apacheds-kerberos-codec:$versions_directory_server") {
+       exclude group: 'org.apache.directory.api', module: 'api-asn1-ber'
+       exclude group: 'org.apache.directory.api', module: 'api-i18n'
+       exclude group: 'org.apache.directory.api', module: 'api-ldap-model'
+       exclude group: 'org.apache.directory.api', module: 'api-util'
+       exclude group: 'net.sf.ehcache', module: 'ehcache-core'
+       exclude group: 'org.slf4j', module: 'slf4j-api'
+   },
+
+   dropwizard: [
+      core           : "io.dropwizard:dropwizard-core:$versions_dropwizard",
+      assets         : "io.dropwizard:dropwizard-assets:$versions_dropwizard",
+      auth           : "io.dropwizard:dropwizard-auth:$versions_dropwizard",
+      jersey         : "io.dropwizard:dropwizard-jersey:$versions_dropwizard",
+      util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
+      metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
+      testing        : "io.dropwizard:dropwizard-testing:$versions_dropwizard_testing",
+      swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger"
+   ],
+   swagger           : "io.swagger:swagger-annotations:$versions_swagger",
+
+   el_api            : "javax.el:javax.el-api:$versions_el_api",
+
+   flyway            : "org.flywaydb:flyway-gradle-plugin:$versions_flyway",
+
+   jackson: [
+      annotations    : "com.fasterxml.jackson.core:jackson-annotations:$versions_jackson2",
+      core           : "com.fasterxml.jackson.core:jackson-core:$versions_jackson2",
+      databind       : "com.fasterxml.jackson.core:jackson-databind:$versions_jackson2",
+      dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
+      dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:$versions_jackson2",
+      dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
+      jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson2",
+      mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
+      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_2.12:$versions_jackson_scala",
+   ],
+   jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
+
+   jersey: [
+      client: dependencies.create("org.glassfish.jersey.core:jersey-client:$versions_jersey") {
+          exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
+      },
+      server         : "org.glassfish.jersey.core:jersey-server:$versions_jersey",
+      media_json     : "org.glassfish.jersey.media:jersey-media-json-jackson:$versions_jersey",
+      media_multipart: "org.glassfish.jersey.media:jersey-media-multipart:$versions_jersey"
+   ],
+
+   jetty             : "org.eclipse.jetty:jetty-server:$versions_jetty",
+   joda_time         : "joda-time:joda-time:$versions_joda_time",
+   jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
+
+   json_schema_validator : "com.github.fge:json-schema-validator:$versions_json_schema_validator",
+   junit             : "junit:junit:$versions_junit",
+   jmockit           : "org.jmockit:jmockit:$versions_jmockit",
+   mockito           : "org.mockito:mockito-core:$versions_mockito",
+   powermock_api     : "org.powermock:powermock-api-mockito2:$versions_powermock",
+   powermock_module  : "org.powermock:powermock-module-junit4:$versions_powermock",
+
+   lettuce           : "biz.paluch.redis:lettuce:$versions_lettuce",
+
+   logging: [
+      logback        : "ch.qos.logback:logback-classic:$versions_logback",
+      log4j          : "log4j:log4j:$versions_log4j",
+      slf4j_log4j    : "org.slf4j:log4j-over-slf4j:$versions_slf4j",
+      slf4j_api      : "org.slf4j:slf4j-api:$versions_slf4j",
+      slf4j_simple   : "org.slf4j:slf4j-simple:$versions_slf4j"
+   ],
+
+   gson              : "com.google.code.gson:gson:$versions_gson",
+   libphonenumber    : "com.googlecode.libphonenumber:libphonenumber:$versions_libphonenumber",
+   guava             : "com.google.guava:guava:$versions_guava",
+   guice             : "com.google.inject:guice:$versions_guice",
+
+   h2                : "com.h2database:h2:$versions_h2",
+   hikari            : "com.zaxxer:HikariCP:$versions_hikari",
+   hibernate_validator: "org.hibernate:hibernate-validator:$versions_hibernate_validator",
+   httpclient        : "org.apache.httpcomponents:httpclient:$versions_httpclient",
+   jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
+   netty: [
+      common         : "io.netty:netty-common:$versions_netty",
+      handler        : "io.netty:netty-handler:$versions_netty",
+      transport      : "io.netty:netty-transport:$versions_netty"
+   ],
+   nimbus            : "com.nimbusds:nimbus-jose-jwt:$versions_nimbus",
+
+   kafka: [
+     avro_serializer : "io.confluent:kafka-avro-serializer:$versions_kafka_avro",
+     core : dependencies.create("org.apache.kafka:kafka_2.12:$versions_kafka") {
+         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
+         exclude group: 'log4j', module: 'log4j'
+     },
+     clients         : "org.apache.kafka:kafka-clients:$versions_kafka",
+     streams         : "org.apache.kafka:kafka-streams:$versions_kafka",
+     streams_test_utils: "org.apache.kafka:kafka-streams-test-utils:$versions_kafka",
+     test: [
+         core         : "org.apache.kafka:kafka_2.12:$versions_kafka:test",
+         clients      : "org.apache.kafka:kafka-clients:$versions_kafka:test",
+         streams      : "org.apache.kafka:kafka-streams:$versions_kafka:test",
+         streams_test_utils: "org.apache.kafka:kafka-streams-test-utils:$versions_kafka:test"
+     ]
+   ],
+
+   hadoop: [
+     aws: dependencies.create("org.apache.hadoop:hadoop-aws:$versions_hadoop") {
+         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'javax.servlet', module: 'javax.servlet-api'
+         exclude group: 'org.eclipse.jetty'
+         exclude group: 'org.apache.curator'
+         exclude group: 'com.sun.jersey'
+         exclude group: 'org.apache.avro'
+         exclude group: 'org.apache.zookeeper'
+         exclude group: 'com.nimbusds'
+     },
+     azure: dependencies.create("org.apache.hadoop:hadoop-azure:$versions_hadoop") {
+         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.eclipse.jetty'
+         exclude group: 'org.apache.curator'
+         exclude group: 'com.sun.jersey'
+         exclude group: 'org.apache.avro'
+         exclude group: 'org.apache.zookeeper'
+         exclude group: 'com.nimbusds'
+     },
+     azure_datalake: dependencies.create("org.apache.hadoop:hadoop-azure-datalake:$versions_hadoop") {
+         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'javax.servlet', module: 'javax.servlet-api'
+         exclude group: 'org.eclipse.jetty'
+         exclude group: 'org.apache.curator'
+         exclude group: 'com.sun.jersey'
+         exclude group: 'org.apache.avro'
+         exclude group: 'org.apache.zookeeper'
+         exclude group: 'com.nimbusds'
+     },
+     client: dependencies.create("org.apache.hadoop:hadoop-client:$versions_hadoop") {
+         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'javax.servlet', module: 'javax.servlet-api'
+         exclude group: 'org.eclipse.jetty'
+         exclude group: 'org.apache.curator'
+         exclude group: 'com.sun.jersey'
+         exclude group: 'org.apache.avro'
+         exclude group: 'org.apache.zookeeper'
+         exclude group: 'com.nimbusds'
+     },
+     cloud: dependencies.create("org.apache.hadoop:hadoop-cloud-storage:$versions_hadoop") {
+         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'javax.servlet', module: 'javax.servlet-api'
+         exclude group: 'org.eclipse.jetty'
+         exclude group: 'org.apache.curator'
+         exclude group: 'com.sun.jersey'
+         exclude group: 'org.apache.avro'
+         exclude group: 'org.apache.zookeeper'
+         exclude group: 'com.nimbusds'
+     },
+     common: dependencies.create("org.apache.hadoop:hadoop-common:$versions_hadoop") {
+         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'javax.servlet', module: 'javax.servlet-api'
+         exclude group: 'org.apache.curator'
+         //
+         exclude group: 'org.apache.zookeeper'
+         exclude group: 'org.eclipse.jetty'
+         exclude group: 'com.sun.jersey'
+         exclude group: 'org.apache.avro'
+         exclude group: 'com.nimbusds'
+     },
+     minikdc: "org.apache.hadoop:hadoop-minikdc:$versions_hadoop"  // was 3.0.0
+   ],
+
+   plexus: [
+     annotations     : "org.codehaus.plexus:plexus-component-annotations:$versions_plexus_annotations",
+     utils           : "org.codehaus.plexus:plexus-utils:$versions_plexus_utils",
+     dispatcher      : "org.sonatype.plexus:plexus-sec-dispatcher:$versions_plexus_dispatcher"
+   ],
+
+   pmml: [
+     evaluator       : "org.jpmml:pmml-evaluator:$versions_pmml",
+     schema          : "org.jpmml:pmml-schema:$versions_pmml"
+   ],
+
+   postgresql         : "org.postgresql:postgresql:$versions_postgresql",
+
+   ranger_shaded: dependencies.create("com.hortonworks.registries:ranger-shaded:$versions_sr_shaded") {
+      exclude group: 'com.sun.jersey', module: 'jersey-bundle'
+      exclude group: 'com.sun.jersey', module: 'jersey-core'
+      exclude group: 'org.apache.hadoop', module: 'hadoop-common'
+   },
+   jersey_shaded      : "com.hortonworks.registries:jersey-shaded:0.10.0.7.2.7.0-SNAPSHOT", //$versions_sr_shaded",
+
+   servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
+   snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
+
+   spring: [
+     context         : "org.springframework:spring-context:$versions_spring",
+     core            : "org.springframework:spring-core:$versions_spring",
+     kerberos: dependencies.create("org.springframework.security.kerberos:spring-security-kerberos-core:$versions_spring_kerberos") {
+         exclude group: 'org.springframework', module: 'spring-context'
+         exclude group: 'org.springframework', module: 'spring-core'
+         exclude group: 'org.springframework', module: 'spring-aop'
+         exclude group: 'org.springframework', module: 'spring-beans'
+         exclude group: 'org.springframework', module: 'spring-expression'
+     },
+   ],
+
+   validation_api     : "javax.validation:validation-api:$versions_validation_api"
+
+]

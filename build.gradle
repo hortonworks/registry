@@ -1,0 +1,181 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+allprojects {
+  repositories {
+
+      jcenter()
+      mavenCentral() {
+        mavenContent {
+            releasesOnly()
+        }
+      }
+      maven {
+          url "https://nexus-private.hortonworks.com/nexus/content/groups/public/"
+      }
+      maven {
+          url "https://repository.apache.org/content/repositories/snapshots/"
+      }
+      maven {
+          url "http://oss.jfrog.org/artifactory/oss-snapshot-local/"
+      }
+      maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+        mavenContent {
+           snapshotsOnly()
+        }
+      }
+  }
+}
+
+subprojects {
+    apply plugin: 'com.github.ben-manes.versions'
+    apply from: "$rootDir/dependencies.gradle"
+
+    version = project_version
+    group = 'com.hortonworks.registries'
+
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'project-report'
+    apply plugin: 'jacoco'
+    apply plugin: 'com.bmuschko.nexus'
+
+    configurations {
+        compile {
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        }
+        tests.extendsFrom testRuntime
+    }
+
+    java {
+        sourceCompatibility = java_version
+        targetCompatibility = java_version
+        withJavadocJar()
+        withSourcesJar()
+    }
+    test.finalizedBy(jacocoTestReport)
+    jacocoTestReport.dependsOn(test)
+
+    task testJar(type: Jar, dependsOn: testClasses) {
+       classifier = 'test'
+       from sourceSets.test.output
+    }
+
+    artifacts {
+        tests testJar
+    }
+
+    // include license files into every jar
+    task copyLegal(type: Copy) {
+        from(rootDir) {
+            include 'LICENSE.txt'
+            include 'NOTICE.txt'
+        }
+        into new File(sourceSets.main.output.resourcesDir, "META-INF")
+    }
+    build.finalizedBy(copyLegal)
+    build.finalizedBy(projectReport)
+
+    tasks.withType(Javadoc) {
+        failOnError false
+        options.addStringOption('Xdoclint:none', '-quiet')
+        options.addStringOption('encoding', 'UTF-8')
+        options.addStringOption('charSet', 'UTF-8')
+    }
+
+    task allDeps(type: DependencyReportTask) {}
+
+    jacocoTestReport {
+        reports {
+            xml.enabled true
+            html.enabled true
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = group
+
+                from components.java
+            }
+        }
+    }
+
+    // put your password into ~/.gradle/build.gradle and then run "gradle sign uploadArchive" to upload into nexus
+    modifyPom {
+        project {
+            name 'Registry'
+            description 'Registry is a versioned entity framework that allows to build various registry services such as Schema Registry, ML Model Registry etc..'
+            url 'http://github.com/hortonworks/registry'
+
+            scm {
+                url 'http://github.com/hortonworks/registry'
+                connection 'scm:git:git://github.com/hortonworks/registry.git'
+                developerConnection 'scm:git:git@github.com:hortonworks/registry.git'
+            }
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'galyo'
+                    name 'Csaba Galyo'
+                    email 'galyo@cloudera.com'
+                }
+                developer {
+                    id 'csenge.maruzsi'
+                    name 'Csenge Virag Maruzsi'
+                    email 'csenge.maruzsi@cloudera.com'
+                }
+            }
+        }
+    }
+
+    extraArchive {
+        sources = false
+        tests = false
+        javadoc = false
+    }
+
+    nexus {
+        sign = true
+        repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+          url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
+    }
+}

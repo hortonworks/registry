@@ -43,3 +43,5 @@ limitations under the License.
 * Hugo da Cruz Louro ([@hlouro](http://twitter.com/hlouro))
 * Mani Kumar reddy ([@omkreddy](http://twitter.com/omkreddy))
 * Saravanan Raju ([@raju-saravanan](https://github.com/raju-saravanan))
+* Csaba Galyo ([@gcsaba2](https://github.com/gcsaba2))
+* Csenge Virag Maruzsi ([@csengevirag](https://github.com/csengevirag))

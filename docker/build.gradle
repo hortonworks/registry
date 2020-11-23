@@ -1,0 +1,62 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+plugins {
+    id 'com.google.cloud.tools.jib' version '2.6.0'
+    id 'application'
+}
+
+application {
+    mainClassName = 'com.hortonworks.registries.webservice.RegistryApplication'
+}
+
+def imageName = 'schema-registry'
+def jibDir = "$buildDir/jib-directories"
+
+jib {
+    from {
+        image = 'ubuntu:16.04'
+    }
+
+    to {
+        image = "$imageName:${project.version}"
+        tags = [ imageName, project_version ]
+    }
+    
+    extraDirectories.paths = [ jibDir ]
+    
+    container {
+        mainClass = 'com.hortonworks.registries.webservice.RegistryApplication'
+        ports = [ '9090' ]
+    }
+}
+
+tasks.register('jib-directories') {
+    doLast {
+        copy {
+            from zipTree("$rootDir/registries-bin/build/distributions/schema-registry-${project_version}.zip")
+            into jibDir
+        }
+    }
+}
+
+tasks.named('jib').configure {
+    dependsOn 'jib-directories'
+}
+
+dependencies {
+    compile project(':hortonworks-registries-bin')
+}

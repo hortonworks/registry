@@ -1,0 +1,45 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+rootProject.name = 'registry'
+
+include ':registry-common-client'
+include ':registry-common'
+include ':cache'
+include ':common-auth'
+include ':schema-registry:schema-registry-common'
+include ':atlas-integration:atlas-common'
+include ':atlas-integration:atlas-shim'
+include ':atlas-integration:atlas-translate'
+include ':storage:storage-common'
+include ':storage:storage-core'
+include ':storage:storage-tool'
+include ':schema-registry:schema-registry-core'
+include ':schema-registry:schema-registry-authorizer'
+include ':schema-registry:schema-registry-client'
+include ':schema-registry:schema-registry-serdes'
+include ':registry-webservice'
+include ':schema-registry:schema-registry-webservice'
+include ':atlas-integration:atlas-module'
+include ':model-registry'
+include ':examples:schema-registry:serdes-examples'
+include ':examples:schema-registry:avro-examples'
+include ':examples:schema-registry:schema-lifecycle'
+include ':registries-bin'
+include ':docker'
+
+project(":registries-bin").name = "hortonworks-registries-bin"
+project(":docker").name = "hortonworks-registries-docker"

@@ -1,0 +1,138 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+plugins {
+    id 'distribution'
+}
+
+distributions {
+    main {
+        baseName = 'schema-registry'
+        contents {
+            into('bin/') {
+                from("$rootDir/bin")
+                fileMode = 0755
+            }
+            into('bootstrap/') {
+                from("$rootDir/bootstrap")
+                fileMode = 0755
+            }
+            into('bootstrap/lib') {
+                from("$rootDir/storage/storage-tool/build/libs") {
+                    exclude '*javadoc*jar'
+                    exclude '*sources*jar'
+                }
+            }
+            into('libs/') {
+                from(configurations.runtimeClasspath) {
+                    exclude '*shim*'
+                    exclude '*ranger-shaded*jar'
+                }
+            }
+            
+            // Ranger plugin
+            into('ranger-plugin/ranger-schema-registry-plugin-impl/') {
+                from("$rootDir/schema-registry/schema-registry-authorizer/build/libs") {
+                    include '*ranger*jar'
+                }
+                from("$rootDir/schema-registry/schema-registry-authorizer/build/dependency") {
+                    include '*ranger-shaded*jar'
+                }
+            }
+            into('ranger-plugin/conf/') {
+                from("$rootDir/schema-registry/schema-registry-authorizer/conf")
+            }
+            into('ranger-plugin/') {
+                from("$rootDir/schema-registry/schema-registry-authorizer/build/libs") {
+                    include '*shim*jar'
+                }
+            }
+            
+            // Atlas plugin
+            into('atlas-plugin/atlas-schema-registry-plugin-impl/') {
+                from("$rootDir/atlas-integration/atlas-translate/build/libs") {
+                    exclude '*javadoc*jar'
+                    exclude '*sources*jar'
+                }
+                from("$rootDir/atlas-integration/atlas-translate/build/dependency") {
+                    include '*jar'
+                }
+            }
+            into('atlas-plugin/') {
+                from("$rootDir/atlas-integration/atlas-shim/build/libs") {
+                    exclude '*javadoc*jar'
+                    exclude '*sources*jar'
+                }
+            }
+            
+            // examples 
+            into('examples/schema-registry/avro') {
+                from("$rootDir/examples/schema-registry/avro-examples/build/libs") {
+                    exclude '*javadoc*jar'
+                    exclude '*sources*jar'
+                }
+            }
+            into('examples/schema-registry/serdes') {
+                from("$rootDir/examples/schema-registry/serdes-examples/build/libs") {
+                    exclude '*javadoc*jar'
+                    exclude '*sources*jar'
+                }
+            }
+            into('examples/schema-registry/avro/data') {
+                from("$rootDir/examples/schema-registry/avro-examples/src/main/resources")
+            }
+            
+            into('conf/') {
+                from("$rootDir/conf")
+            }
+            
+            // Licenses
+            into('.') {
+                from(rootDir) {
+                    include 'README.md'
+                    include 'LICENSE.txt'
+                    include 'NOTICE.txt'
+                }
+            }
+            
+        }
+    }
+}
+
+tasks.withType(Tar){
+    compression = Compression.GZIP
+}
+
+dependencies {
+
+    compile project(':schema-registry:schema-registry-client')
+    compile(project(':schema-registry:schema-registry-webservice')) {
+        exclude group: 'mysql'
+    }
+    compile project(':atlas-integration:atlas-module')
+    compile project(':schema-registry:schema-registry-serdes')
+    
+    compile(libraries.jackson.scala_module)
+
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "https://oss.sonatype.org/content/repositories/snapshots")
+        }
+    }
+}

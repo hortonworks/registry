@@ -1,0 +1,66 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+dependencies {
+
+    compile(project(':registry-common')) { transitive = false }
+    compile project(':registry-common-client')
+    compile(project(':registry-webservice')) {
+        exclude group: 'com.sun.jersey.contribs', module: 'jersey-guice'
+    }
+    compile(project(':schema-registry:schema-registry-authorizer')) {
+        // this has to be on a separate classpath
+        exclude group: 'com.hortonworks.registries', module: 'ranger-shaded'
+    }
+    compile project(':schema-registry:schema-registry-core')
+
+    compile libraries.hibernate_validator
+    compile libraries.el_api
+    compile libraries.jetty
+    compile libraries.guice
+    compile libraries.dropwizard.core
+    
+    testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
+    
+    testImplementation group: 'org.scala-lang', name: 'scala-library', version: scala_version
+    testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
+    
+    testCompile libraries.kafka.avro_serializer
+
+    testCompile project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests')
+    testCompile project(path: ':schema-registry:schema-registry-common', configuration: 'tests')
+    testCompile project(path: ':registry-common', configuration: 'tests')
+    
+    testCompile group: 'org.slf4j', name: 'jul-to-slf4j', version: versions_slf4j
+
+    testCompile libraries.junit
+    testCompile libraries.mockito
+    testCompile libraries.dropwizard.testing
+    
+    testCompile libraries.kafka.test.clients
+    testCompile libraries.kafka.test.streams
+    testCompile libraries.kafka.test.streams_test_utils
+    
+    testCompile(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
+    testCompile(libraries.kafka.core) { exclude group: 'org.scala-lang' }
+
+    testCompile libraries.curator.test
+    testCompile libraries.logging.log4j
+    testCompile libraries.httpclient
+    
+    runtimeOnly group: 'mysql', name: 'mysql-connector-java', version: '5.1.38'
+
+}

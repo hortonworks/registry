@@ -1,0 +1,68 @@
+/*
+ * Copyright 2018-2020 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+/*
+// TODO when 1.9.1 is published you can enable this code and remove the genVersion() task below
+// see: https://github.com/lessthanoptimal/gversion-plugin
+plugins {
+  id "com.peterabeles.gversion" version "1.9.1"
+}
+
+gversion {
+  srcDir       = "src/main/resources/registry"
+  className    = "VERSION"
+  language     = "PROPERTIES"
+}
+*/
+import java.text.SimpleDateFormat
+
+dependencies {
+
+    compile libraries.jackson.databind
+    compile libraries.jackson.dataformat
+    
+    compile libraries.snakeyaml
+    
+    compile libraries.logging.slf4j_log4j
+    compile libraries.logging.slf4j_api
+
+}
+
+// Generate VERSION file to be included in SchemaRegistry
+def generatedResources = sourceSets.main.output.resourcesDir
+
+task genVersion() {
+    outputs.dir generatedResources
+    doLast {
+        new File(generatedResources, '/registry').mkdirs()
+        new File(generatedResources, '/registry/VERSION').text = """
+#Created by build system. Do not modify
+#${new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date())}
+version=$version
+name=registry-common-client
+timestamp=${System.currentTimeMillis()}
+"""
+    }
+}
+
+compileJava.dependsOn(genVersion)
+
+/*
+task depps() {
+    configurations.compile.dependencies.collect { println(it.group+":"+it.name+":"+it.version) }
+}
+
+*/
