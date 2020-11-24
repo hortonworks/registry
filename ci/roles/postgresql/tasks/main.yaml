@@ -5,4 +5,5 @@
         --set postgresqlUsername=registry,postgresqlPassword=registry,postgresqlDatabase=registry,persistence.enabled=false
         --tiller-namespace={{ tiller_namespace }}
         --set "db.user=registry,db.password=registry,db.name=registry,replication.enabled=false,master.persistence.enabled=false"
+        --version 9.8.12
         --wait
