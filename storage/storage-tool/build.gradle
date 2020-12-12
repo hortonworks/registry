@@ -33,3 +33,13 @@ dependencies {
     compile libraries.plexus.utils
 
 }
+
+jar {
+    manifest {
+        attributes "Main-Class": "com.hortonworks.registries.storage.tool.shell.ShellMigrationInitializer"
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}

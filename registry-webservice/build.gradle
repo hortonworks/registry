@@ -75,15 +75,37 @@ node {
 }
 npmInstall.args = ['--loglevel', 'info']
 
+def parseNpmSettings(String settingsStr) {
+  def result = new HashMap()
+  if (settingsStr != null && !settingsStr.trim().equals("")) {
+     def counter = 0
+     def tokens = settingsStr.split("\\,\\s*")
+     tokens.each { val -> 
+        def keyVal = val.split("\\=\\>")
+        if (keyVal.length == 2) {
+            counter = counter + 1
+            if (counter == 1) {
+                println("NPM Environment Variables:")
+            }
+            println("\t" + keyVal[0] + " = " + keyVal[1])
+            result.put(keyVal[0], keyVal[1])
+        }
+     }
+  }
+  return result
+}
+
 task installWebsiteModules(type: NpmTask) {
     npmCommand = [ 'install' ]
     workingDir = sourceSets.main.output.resourcesDir
     ignoreExitValue = true
+    environment = parseNpmSettings(npm_settings)
 }
 task buildWebsite(type: NpmTask) {
     npmCommand = [ 'run-script', 'build' ]
     workingDir = sourceSets.main.output.resourcesDir
     ignoreExitValue = true
+    environment = parseNpmSettings(npm_settings)
 }
 
 task copyWebsiteAssets(type: Copy) {

@@ -38,8 +38,8 @@ include ':model-registry'
 include ':examples:schema-registry:serdes-examples'
 include ':examples:schema-registry:avro-examples'
 include ':examples:schema-registry:schema-lifecycle'
-include ':registries-bin'
+include ':registry-dist'
 include ':docker'
 
-project(":registries-bin").name = "hortonworks-registries-bin"
+project(":registry-dist").name = "hortonworks-registries-bin"
 project(":docker").name = "hortonworks-registries-docker"

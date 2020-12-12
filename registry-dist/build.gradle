@@ -20,7 +20,7 @@ plugins {
 
 distributions {
     main {
-        baseName = 'schema-registry'
+        baseName = final_name
         contents {
             into('bin/') {
                 from("$rootDir/bin")
@@ -114,6 +114,7 @@ distributions {
 
 tasks.withType(Tar){
     compression = Compression.GZIP
+    archiveExtension = 'tar.gz'
 }
 
 dependencies {
@@ -129,10 +130,10 @@ dependencies {
 
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "https://oss.sonatype.org/content/repositories/snapshots")
-        }
-    }
-}
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            repository(url: "https://oss.sonatype.org/content/repositories/snapshots")
+//        }
+//    }
+//}

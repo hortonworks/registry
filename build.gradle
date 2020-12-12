@@ -17,15 +17,15 @@
 allprojects {
   repositories {
 
+      mavenLocal()
       jcenter()
       mavenCentral() {
         mavenContent {
             releasesOnly()
         }
       }
-      maven {
-          url "https://nexus-private.hortonworks.com/nexus/content/groups/public/"
-      }
+      maven { url gbnUrl }
+      maven { url mavenUrl }
       maven {
           url "https://repository.apache.org/content/repositories/snapshots/"
       }
