@@ -46,6 +46,7 @@ dependencies {
     compile libraries.logging.slf4j_api
     compile libraries.commons.lang3
     compile libraries.nimbus
+    compile libraries.json_smart
     compile libraries.jersey.media_multipart
     compile project(':storage:storage-core')
     compile project(':cache')
@@ -68,13 +69,6 @@ dependencies {
 
 }
 
-node {
-    download = true
-    version = "13.11.0"
-    npmVersion = "6.13.7"
-}
-npmInstall.args = ['--loglevel', 'info']
-
 def parseNpmSettings(String settingsStr) {
   def result = new HashMap()
   if (settingsStr != null && !settingsStr.trim().equals("")) {
@@ -95,17 +89,28 @@ def parseNpmSettings(String settingsStr) {
   return result
 }
 
+def npmSettingsMap = parseNpmSettings(npm_settings)
+
+// nodejs will be downloaded into the .gradle directory
+node {
+    download = true
+    version = "13.11.0"
+    npmVersion = "6.13.7"
+    distBaseUrl = npmSettingsMap['nodeDownloadRoot'] ?: 'https://nodejs.org/dist'
+}
+npmInstall.args = ['--loglevel', 'info']
+
 task installWebsiteModules(type: NpmTask) {
     npmCommand = [ 'install' ]
     workingDir = sourceSets.main.output.resourcesDir
     ignoreExitValue = true
-    environment = parseNpmSettings(npm_settings)
+    environment = npmSettingsMap
 }
 task buildWebsite(type: NpmTask) {
     npmCommand = [ 'run-script', 'build' ]
     workingDir = sourceSets.main.output.resourcesDir
     ignoreExitValue = true
-    environment = parseNpmSettings(npm_settings)
+    environment = npmSettingsMap
 }
 
 task copyWebsiteAssets(type: Copy) {

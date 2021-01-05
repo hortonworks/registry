@@ -127,6 +127,26 @@ dependencies {
     compile project(':schema-registry:schema-registry-serdes')
     
     compile(libraries.jackson.scala_module)
+    
+    // this will force Gradle to build the tar and zip file only after every other project was built
+    distTar.dependsOn(':schema-registry:schema-registry-webservice:build')
+    distTar.dependsOn(':registry-common-client:build')
+    distTar.dependsOn(':cache:build')
+    distTar.dependsOn(':common-auth:build')
+    distTar.dependsOn(':schema-registry:schema-registry-common:build')
+    distTar.dependsOn(':atlas-integration:atlas-common:build')
+    distTar.dependsOn(':atlas-integration:atlas-shim:build')
+    distTar.dependsOn(':atlas-integration:atlas-translate:build')
+    distTar.dependsOn(':storage:storage-common:build')
+    distTar.dependsOn(':storage:storage-core:build')
+    distTar.dependsOn(':storage:storage-tool:build')
+    distTar.dependsOn(':schema-registry:schema-registry-core:build')
+    distTar.dependsOn(':schema-registry:schema-registry-authorizer:build')
+    distTar.dependsOn(':schema-registry:schema-registry-authorizer:copyDependencies')
+    distTar.dependsOn(':examples:schema-registry:serdes-examples:build')
+    distTar.dependsOn(':examples:schema-registry:avro-examples:build')
+    distTar.dependsOn(':examples:schema-registry:schema-lifecycle:build')
+    distTar.dependsOn(':registry-webservice:build')
 
 }
 

@@ -42,6 +42,7 @@ dependencies {
     compile libraries.hadoop.common
     
     compile libraries.nimbus
+    compile libraries.json_smart
     
     compile libraries.jersey.media_multipart
     

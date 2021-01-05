@@ -129,7 +129,10 @@ ext.libraries = [
       handler        : "io.netty:netty-handler:$versions_netty",
       transport      : "io.netty:netty-transport:$versions_netty"
    ],
-   nimbus            : "com.nimbusds:nimbus-jose-jwt:$versions_nimbus",
+   nimbus            : dependencies.create("com.nimbusds:nimbus-jose-jwt:$versions_nimbus") {
+       exclude group: 'net.minidev', module: 'json-smart'
+   },
+   json_smart        : "net.minidev:json-smart:$versions_json_smart",
 
    kafka: [
      avro_serializer : "io.confluent:kafka-avro-serializer:$versions_kafka_avro",
