@@ -89,7 +89,25 @@ def parseNpmSettings(String settingsStr) {
   return result
 }
 
+/*
+  Below code might look complicated so here's a brief overview of what it does.
+  1. Install nodejs and npm under .gradle (they are downloaded from a repo)
+  2. Copy npm files from src/main/nodejs to build/resources
+  3. Copy files from build/resources to build/reactWebsite. This is needed because npm modifies the 
+     input files. If we were to run npm inside build/resources, it would cause Gradle to copy the npm 
+     files again during the next run, causing npm to run again, even if no source files have been modified.
+  4. Run npm, the generated files will be located under public/assets 
+  5. Copy public/assets to ./assets 
+  6. Build a JAR file which includes any Java classes and ./assets 
+  
+  Note that the npm tasks are disabled by default. They are only enabled if "processResources" runs.
+  In turn, "processResources" will only run if the javascript files were modified. This task will 
+  set the property "runNpmBuild" to true, which will enable the npm tasks.
+*/
+
 def npmSettingsMap = parseNpmSettings(npm_settings)
+
+def reactWebsite = file("$sourceSets.main.output.resourcesDir/../reactWebsite")
 
 // nodejs will be downloaded into the .gradle directory
 node {
@@ -100,32 +118,45 @@ node {
 }
 npmInstall.args = ['--loglevel', 'info']
 
-task installWebsiteModules(type: NpmTask) {
+project.ext {
+    runNpmBuild = false
+}
+
+processResources.doLast {
+    println("Triggering website build")
+    project.ext.runNpmBuild = true
+}
+
+tasks.register("copyReactWorkspace", Copy) {
+    from "$sourceSets.main.output.resourcesDir"
+    into reactWebsite
+    dependsOn(processResources)
+    onlyIf { project.ext.runNpmBuild }
+}
+tasks.register("installWebsiteModules", NpmTask) {
     npmCommand = [ 'install' ]
-    workingDir = sourceSets.main.output.resourcesDir
+    workingDir = reactWebsite
     ignoreExitValue = true
     environment = npmSettingsMap
+    dependsOn(copyReactWorkspace)
+    onlyIf { project.ext.runNpmBuild }
 }
-task buildWebsite(type: NpmTask) {
+tasks.register("buildWebsite", NpmTask) {
     npmCommand = [ 'run-script', 'build' ]
-    workingDir = sourceSets.main.output.resourcesDir
-    ignoreExitValue = true
+    workingDir = reactWebsite
+    ignoreExitValue = false
     environment = npmSettingsMap
+    dependsOn(installWebsiteModules)
+    onlyIf { project.ext.runNpmBuild }
+}
+tasks.register("copyWebsiteAssets", Copy) {
+    from "$reactWebsite/public/assets"
+    into "$reactWebsite/assets"
+    dependsOn(buildWebsite)
+    onlyIf { project.ext.runNpmBuild }
 }
 
-task copyWebsiteAssets(type: Copy) {
-    from "$sourceSets.main.output.resourcesDir/public/assets"
-    into "$sourceSets.main.output.resourcesDir/assets"
-}
-
-processResources.finalizedBy(installWebsiteModules)
-installWebsiteModules.dependsOn(processResources)
-
-installWebsiteModules.finalizedBy(buildWebsite)
-buildWebsite.dependsOn(installWebsiteModules)
-
-buildWebsite.finalizedBy(copyWebsiteAssets)
-copyWebsiteAssets.dependsOn(buildWebsite)
+classes.dependsOn(copyWebsiteAssets)
 
 task copyLegal2(type: Copy) {
     from(rootDir) {
@@ -137,7 +168,15 @@ task copyLegal2(type: Copy) {
 build.finalizedBy(copyLegal2)
 
 jar {
-    include('com/**', 'assets/**')
+    manifest {
+        attributes(
+            "Main-Class": application.mainClassName,
+            "Implementation-Title": project.name,
+            "Implementation-Version": version
+        )
+    }
+    from {
+        sourceSets.main.output.classesDirs
+        fileTree("$reactWebsite/assets/**")
+    }
 }
-
-
