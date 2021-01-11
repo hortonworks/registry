@@ -25,6 +25,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.Collection;
@@ -54,48 +55,48 @@ public interface AuthorizationAgent {
 
     Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList(Authorizer.UserAndGroups userAndGroups,
                                                                               Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList)
-            throws SchemaNotFoundException;
+            throws SchemaNotFoundException, RangerException;
 
 
     AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(Authorizer.UserAndGroups userAndGroups,
                                                                   AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     Collection<SchemaMetadataInfo> authorizeFindSchemas(Authorizer.UserAndGroups userAndGroups,
                                                         Collection<SchemaMetadataInfo> schemas)
-            throws SchemaNotFoundException;
+            throws SchemaNotFoundException, RangerException;
 
 
     Collection<SchemaVersionKey> authorizeFindSchemasByFields(Authorizer.UserAndGroups userAndGroups,
                                                               ISchemaRegistry schemaRegistry,
                                                               Collection<SchemaVersionKey> versions)
-            throws SchemaNotFoundException;
+            throws SchemaNotFoundException, RangerException;
 
 
     void authorizeDeleteSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
                                        ISchemaRegistry schemaRegistry,
                                        String schemaMetadataName)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
                                  SchemaMetadata schemaMetadata,
                                  Authorizer.AccessType accessType)
-            throws AuthorizationException;
+            throws AuthorizationException, RangerException;
 
 
     void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
                                  SchemaMetadataInfo schemaMetadataInfo,
                                  Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaMetadata(Authorizer.UserAndGroups userAndGroups,
                                  ISchemaRegistry schemaRegistry,
                                  String schemaMetadataName,
                                  Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeCreateSchemaBranch(Authorizer.UserAndGroups userAndGroups,
@@ -103,20 +104,20 @@ public interface AuthorizationAgent {
                                      Long schemaMetadataId,
                                      Long versionId,
                                      String branchTocreate)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeDeleteSchemaBranch(Authorizer.UserAndGroups userAndGroups,
                                      ISchemaRegistry schemaRegistry,
                                      Long schemaBranchId)
-            throws AuthorizationException;
+            throws AuthorizationException, RangerException;
 
 
     Collection<SchemaBranch> authorizeGetAllBranches(Authorizer.UserAndGroups userAndGroups,
                                                      ISchemaRegistry schemaRegistry,
                                                      String schemaMetadataName,
                                                      Collection<SchemaBranch> branches)
-            throws SchemaNotFoundException;
+            throws SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
@@ -124,62 +125,62 @@ public interface AuthorizationAgent {
                                 String schemaMetadataName,
                                 String schemaBranch,
                                 Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 SchemaVersionKey versionKey,
                                 Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 SchemaVersionInfo versionInfo,
                                 Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 SchemaIdVersion versionId,
                                 Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                 ISchemaRegistry schemaRegistry,
                                 Long versionId,
                                 Authorizer.AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeMergeSchemaVersion(Authorizer.UserAndGroups userAndGroups,
                                      ISchemaRegistry schemaRegistry,
                                      Long versionId)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     void authorizeSerDes(Authorizer.UserAndGroups userAndGroups,
                          Authorizer.AccessType accessType)
-            throws AuthorizationException;
+            throws AuthorizationException, RangerException;
 
 
     void authorizeGetSerializers(Authorizer.UserAndGroups userAndGroups,
                                  SchemaMetadataInfo schemaMetadataInfo)
-            throws AuthorizationException;
+            throws AuthorizationException, RangerException;
 
 
     void authorizeMapSchemaWithSerDes(Authorizer.UserAndGroups userAndGroups,
                                       ISchemaRegistry schemaRegistry,
                                       String schemaMetadataName)
-            throws AuthorizationException, SchemaNotFoundException;
+            throws AuthorizationException, SchemaNotFoundException, RangerException;
 
 
     Collection<SchemaVersionInfo> authorizeGetAllVersions(Authorizer.UserAndGroups userAndGroups,
                                                           ISchemaRegistry schemaRegistry,
                                                           Collection<SchemaVersionInfo> versions)
-            throws SchemaNotFoundException;
+            throws SchemaNotFoundException, RangerException;
 
 }

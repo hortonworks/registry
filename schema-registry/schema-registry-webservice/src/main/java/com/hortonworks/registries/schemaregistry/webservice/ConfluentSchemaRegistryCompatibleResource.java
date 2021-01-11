@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -104,6 +105,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema version found with id [{}]", id, ex);
             response = schemaNotFoundError();
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving Schema with id: [{}]", id, ex);
             response = serverError();
@@ -127,6 +130,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                     .collect(Collectors.toList());
 
             response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
             response = serverError();
@@ -206,6 +211,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
             response = serverError();
@@ -277,6 +284,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
             response = serverError();
@@ -312,6 +321,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving schema version with subject: [{}]", subject, ex);
             response = serverError();
@@ -372,6 +383,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (UnsupportedSchemaTypeException ex) {
             LOG.error("Unsupported schema type encountered while adding subject [{}]", subject, ex);
             response = incompatibleSchemaError();
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while adding subject [{}]", subject, ex);
             response = serverError();

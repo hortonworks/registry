@@ -28,6 +28,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.authorizer.AuthorizerFactory;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
             (UserAndGroups userAndGroups,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList)
-            throws SchemaNotFoundException {
+            throws SchemaNotFoundException, RangerException {
 
         return removeUnauthorizedAndNullEntities(aggregatedSchemaMetadataInfoList,
                 aggregatedSchemaMetadataInfo -> authorizeGetAggregatedSchemaInfo(userAndGroups,
@@ -74,7 +75,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     @Override
     public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(UserAndGroups userAndGroups,
                                                                          AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
         SchemaMetadata sm = aggregatedSchemaMetadataInfo.getSchemaMetadata();
 
         authorizeSchemaMetadata(userAndGroups, sm, AccessType.READ);
@@ -85,11 +86,16 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         Collection<SerDesInfo> serDesInfos = aggregatedSchemaMetadataInfo.getSerDesInfos();
 
-        if(serDesInfos != null &&
-                !serDesInfos.isEmpty() &&
-                !authorizer.authorize(new Authorizer.SerdeResource(), AccessType.READ, userAndGroups)) {
-            serDesInfos = new ArrayList<>();
+        try{
+            if(serDesInfos != null &&
+                    !serDesInfos.isEmpty() &&
+                    !authorizer.authorize(new Authorizer.SerdeResource(), AccessType.READ, userAndGroups)) {
+                serDesInfos = new ArrayList<>();
+            }
+        } catch (Exception e){
+            throw new RangerException("Could not perform authorization due to an error: ", e);
         }
+        
 
         return new AggregatedSchemaMetadataInfo(sm,
                 aggregatedSchemaMetadataInfo.getId(),
@@ -101,7 +107,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     private AggregatedSchemaBranch authorizeGetAggregatedBranch(SchemaMetadata sm,
                                                         UserAndGroups userAndGroups,
                                                         AggregatedSchemaBranch branch)
-                throws AuthorizationException {
+                throws AuthorizationException, RangerException {
 
         String sGroup = sm.getSchemaGroup();
         String sName = sm.getName();
@@ -121,7 +127,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     @Override
     public Collection<SchemaMetadataInfo> authorizeFindSchemas(UserAndGroups userAndGroups,
                                                                Collection<SchemaMetadataInfo> schemas)
-            throws SchemaNotFoundException {
+            throws SchemaNotFoundException, RangerException {
 
         return authorizeGetEntities(userAndGroups, schemas, schemaMetadataInfo -> {
             SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
@@ -137,7 +143,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public Collection<SchemaVersionKey> authorizeFindSchemasByFields
             (UserAndGroups userAndGroups,
              ISchemaRegistry schemaRegistry,
-             Collection<SchemaVersionKey> versions) throws SchemaNotFoundException {
+             Collection<SchemaVersionKey> versions) throws SchemaNotFoundException, RangerException {
 
         return authorizeGetEntities(userAndGroups, versions, schemaVersionKey -> {
             String sName = schemaVersionKey.getSchemaName();
@@ -153,7 +159,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public void authorizeDeleteSchemaMetadata(UserAndGroups userAndGroups,
                                               ISchemaRegistry schemaRegistry,
                                               String schemaMetadataName)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if(smi == null) {
@@ -178,7 +184,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                         ISchemaRegistry schemaRegistry,
                                         String schemaMetadataName,
                                         AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if(smi == null) {
@@ -193,7 +199,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public void authorizeSchemaMetadata(UserAndGroups userAndGroups,
                                         SchemaMetadataInfo schemaMetadataInfo,
                                         AccessType accessType)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
         authorizeSchemaMetadata(userAndGroups,
                 schemaMetadataInfo.getSchemaMetadata(),
@@ -203,17 +209,17 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
     @Override
     public void authorizeSchemaMetadata(UserAndGroups userAndGroups, SchemaMetadata schemaMetadata,
-                                         AccessType accessType) throws AuthorizationException {
-
+                                         AccessType accessType) throws AuthorizationException, RangerException {
+        if(accessType == AccessType.DELETE) {
+            throw new NotSupportedException("AccessType.DELETE is not supported for authorizeSchemaMetadata method");
+        }
+        
         String sGroup = schemaMetadata.getSchemaGroup();
         String sName = schemaMetadata.getName();
 
         Authorizer.SchemaMetadataResource schemaMetadataResource = new Authorizer.SchemaMetadataResource(sGroup, sName);
+        
         authorize(schemaMetadataResource, accessType, userAndGroups);
-
-        if(accessType == AccessType.DELETE) {
-            throw new NotSupportedException("AccessType.DELETE is not supported for authorizeSchemaMetadata method");
-        }
     }
 
 
@@ -223,7 +229,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                             Long schemaMetadataId,
                                             Long schemaVersionId,
                                             String branchTocreate)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         SchemaMetadataInfo schemaMeta = schemaRegistry.getSchemaMetadataInfo(schemaMetadataId);
         if (schemaMeta == null) {
@@ -252,7 +258,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public void authorizeDeleteSchemaBranch(UserAndGroups userAndGroups,
                                             ISchemaRegistry schemaRegistry,
                                             Long schemaBranchId)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
         SchemaBranch sb = schemaRegistry.getSchemaBranch(schemaBranchId);
         SchemaMetadataInfo sMi = schemaRegistry.getSchemaMetadataInfo(sb.getSchemaMetadataName());
@@ -263,7 +269,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     private void authorizeDeleteSchemaBranch(UserAndGroups userAndGroups,
                                              SchemaBranch schemaBranch,
                                              SchemaMetadataInfo schemaMetadataInfo)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
         SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
@@ -288,7 +294,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                                             ISchemaRegistry schemaRegistry,
                                                             String schemaMetadataName,
                                                             Collection<SchemaBranch> branches)
-            throws SchemaNotFoundException {
+            throws SchemaNotFoundException, RangerException {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if(smi == null) {
@@ -308,7 +314,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                        ISchemaRegistry schemaRegistry,
                                        SchemaIdVersion versionId,
                                        AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         authorizeSchemaVersion(userAndGroups,
                 schemaRegistry,
@@ -321,7 +327,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                        ISchemaRegistry schemaRegistry,
                                        Long versionId,
                                        AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
         authorizeSchemaVersion(userAndGroups, schemaRegistry, schemaVersionInfo, accessType);
@@ -332,7 +338,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                        ISchemaRegistry schemaRegistry,
                                        SchemaVersionKey versionKey,
                                        AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         authorizeSchemaVersion(userAndGroups,
                 schemaRegistry,
@@ -345,7 +351,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                        ISchemaRegistry schemaRegistry,
                                        SchemaVersionInfo versionInfo,
                                        AccessType accessType)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
         SchemaMetadataInfo schemaMetadataInfo =
                 schemaRegistry.getSchemaMetadataInfo(versionInfo.getSchemaMetadataId());
@@ -360,7 +366,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                        String schemaMetadataName,
                                        String schemaBranch,
                                        AccessType accessType)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if(schemaMetadataInfo == null) {
@@ -373,7 +379,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                                         SchemaMetadataInfo schemaMetadataInfo,
                                         String schemaBranch,
                                         AccessType accessType)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
         SchemaMetadata sM = schemaMetadataInfo.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
@@ -387,7 +393,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
     public void authorizeGetSerializers(UserAndGroups userAndGroups,
                                         SchemaMetadataInfo schemaMetadataInfo)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
         authorizeSchemaMetadata(userAndGroups, schemaMetadataInfo.getSchemaMetadata(), AccessType.READ);
         authorizeSerDes(userAndGroups, AccessType.READ);
@@ -395,7 +401,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
     @Override
     public void authorizeSerDes(UserAndGroups userAndGroups, AccessType accessType)
-            throws AuthorizationException  {
+            throws AuthorizationException, RangerException  {
 
         Authorizer.SerdeResource serdeResource = new Authorizer.SerdeResource();
         authorize(serdeResource, accessType, userAndGroups);
@@ -421,7 +427,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public void authorizeMergeSchemaVersion(UserAndGroups userAndGroups,
                                             ISchemaRegistry schemaRegistry,
                                             Long versionId)
-            throws AuthorizationException, SchemaNotFoundException {
+            throws AuthorizationException, SchemaNotFoundException, RangerException {
 
         SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(versionId));
         SchemaMetadata sM = schemaRegistry.getSchemaMetadataInfo(schemaVersionInfo.getSchemaMetadataId()).getSchemaMetadata();
@@ -443,7 +449,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     public Collection<SchemaVersionInfo> authorizeGetAllVersions(UserAndGroups userAndGroups,
                                                                  ISchemaRegistry schemaRegistry,
                                                                  Collection<SchemaVersionInfo> versions)
-            throws SchemaNotFoundException {
+            throws SchemaNotFoundException, RangerException {
 
         return authorizeGetEntities(userAndGroups, versions, schemaVersionInfo -> {
             SchemaMetadata sM =
@@ -465,7 +471,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     }
 
     private interface EntityFilterFunction<T> {
-        T filter(T elem) throws AuthorizationException, SchemaNotFoundException;
+        T filter(T elem) throws AuthorizationException, SchemaNotFoundException, RangerException;
     }
 
     private interface EntityToAuthorizerResourceMapFunc<T> {
@@ -475,15 +481,24 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     private <T> Collection<T> authorizeGetEntities(UserAndGroups userAndGroups,
                                                    Collection<T> entities,
                                                    EntityToAuthorizerResourceMapFunc<T> mapFunc)
-            throws SchemaNotFoundException {
-        return removeUnauthorizedAndNullEntities(entities, elem ->
-                authorizer.authorize(mapFunc.map(elem), AccessType.READ, userAndGroups) ?
-                        elem : null);
+            throws SchemaNotFoundException, RangerException {
+
+        return removeUnauthorizedAndNullEntities(entities, new EntityFilterFunction<T>() {
+            @Override
+            public T filter(T elem) throws AuthorizationException, SchemaNotFoundException, RangerException {
+                try {
+                    return authorizer.authorize(mapFunc.map(elem), AccessType.READ, userAndGroups) ? elem : null;
+                } catch (Exception e){
+                    throw new RangerException("Could not perform authorization due to an error: ", e);
+                }
+            }
+            
+        });
     }
 
     private <T> Collection<T> removeUnauthorizedAndNullEntities(Collection<T> elems,
                                                                 EntityFilterFunction<T> filterFunc)
-            throws SchemaNotFoundException {
+            throws SchemaNotFoundException, RangerException {
         if(elems == null) {
             return null;
         }
@@ -501,9 +516,14 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
     }
 
     private void authorize(Authorizer.Resource resource, AccessType accessType, UserAndGroups userAndGroups)
-            throws AuthorizationException {
+            throws AuthorizationException, RangerException {
 
-        boolean isAuthorized = authorizer.authorize(resource, accessType, userAndGroups);
+        boolean isAuthorized;
+        try{
+            isAuthorized = authorizer.authorize(resource, accessType, userAndGroups);
+        } catch (Exception e){
+            throw new RangerException("Could not perform authorization due to an error: ", e);
+        }
 
         raiseAuthorizationExceptionIfNeeded(isAuthorized,
                 userAndGroups.getUser(),

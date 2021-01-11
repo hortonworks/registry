@@ -25,6 +25,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
 import io.dropwizard.testing.junit.ResourceTestRule;
@@ -37,6 +38,7 @@ import javax.ws.rs.BeanParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
@@ -52,7 +54,9 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -84,8 +88,9 @@ public class SchemaRegistryResourceIT {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("apple", 1));
-        when(schemaRegistryMock.findSchemasByFields(any())).thenReturn(schemaversions);
-        when(authorizationAgentMock.authorizeFindSchemasByFields(any(), any(), any())).thenReturn(schemaversions);
+        SchemaFieldQuery query = new SchemaFieldQuery("apple", "pear", null);
+        when(schemaRegistryMock.findSchemasByFields(query)).thenReturn(schemaversions);
+        when(authorizationAgentMock.authorizeFindSchemasByFields(any(), any(), eq(schemaversions))).thenReturn(schemaversions);
 
         //when
         Response response = testClient.target(
@@ -133,7 +138,7 @@ public class SchemaRegistryResourceIT {
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
-        when(authorizationAgentMock.authorizeFindSchemas(any(), any())).thenReturn(schemaversions);
+        when(authorizationAgentMock.authorizeFindSchemas(any(), eq(schemaversions))).thenReturn(schemaversions);
         when(schemaRegistryMock.searchSchemas(any(), any())).thenReturn(schemaversions);
 
         //when
@@ -178,8 +183,11 @@ public class SchemaRegistryResourceIT {
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(schemaMetadata, null, null, Collections.emptyList(), Collections.emptyList());
         aggregatedSchemaMetadataInfos.add(aggregatedSchemaMetadataInfo);
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        queryParameters.add("name", "magnesium");
+        queryParameters.add("_orderByFields", "timestamp,d");
         when(authorizationAgentMock.authorizeGetAggregatedSchemaList(any(), any())).thenReturn(aggregatedSchemaMetadataInfos);
-        when(schemaRegistryMock.searchSchemas(any(), any())).thenReturn(schemaversions);
+        when(schemaRegistryMock.searchSchemas(queryParameters, Optional.of("timestamp,d"))).thenReturn(schemaversions);
 
         //when
         Response response = testClient.target(
@@ -191,7 +199,7 @@ public class SchemaRegistryResourceIT {
 
         //then
         verify(authorizationAgentMock).authorizeGetAggregatedSchemaList(null, aggregatedSchemaMetadataInfos);
-        verify(schemaRegistryMock).searchSchemas(any(MultivaluedMap.class), any(Optional.class));
+        verify(schemaRegistryMock).searchSchemas(queryParameters, Optional.of("timestamp,d"));
         TestResponseForAggregatedSchemaMetadataInfo actual = response.readEntity(TestResponseForAggregatedSchemaMetadataInfo.class);
         assertThat(response.getStatus(), is(200));
     }
@@ -311,6 +319,48 @@ public class SchemaRegistryResourceIT {
 
         //then
         assertThat(response.getStatus(), is(500));
+    }
+
+    @Test
+    public void querySchemas_ThrowRangerException() throws Exception {
+        //given
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("foo").type("avro").schemaGroup("foundation").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
+        schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        queryParameters.add("name", "foo");
+        queryParameters.add("_orderByFields", "timestamp,d");
+        when(authorizationAgentMock.authorizeFindSchemas(any(), eq(schemaversions))).thenThrow(new RangerException("Ranger Exception"));
+        when(schemaRegistryMock.findSchemaMetadata(any())).thenReturn(Collections.emptyList());
+        when(schemaRegistryMock.searchSchemas(queryParameters, Optional.ofNullable("timestamp,d"))).thenReturn(schemaversions);
+
+        //when
+        Response response = testClient.target(
+                String.format("/api/v1/schemaregistry/search/schemas"))
+                .queryParam("name", "foo")
+                .queryParam("_orderByFields", "timestamp,d")
+                .request()
+                .get();
+
+        //then
+        assertThat(response.getStatus(), is(502));
+    }
+
+    @Test
+    public void postSchema_ThrowRangerException() throws Exception {
+        //given
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        doThrow(new RangerException("Ranger Exception")).when(authorizationAgentMock).authorizeSchemaMetadata(any(), any(SchemaMetadata.class), any());
+        when(schemaRegistryMock.addSchemaMetadata(schemaMetadata, true)).thenReturn(1L);
+
+        //when
+        Response response = testClient.target(
+                String.format("/api/v1/schemaregistry/schemas"))
+                .request(MediaType.APPLICATION_JSON)
+                .post(Entity.json(schemaMetadata), Response.class);
+
+        //then
+        assertThat(response.getStatus(), is(502));
     }
 
 }

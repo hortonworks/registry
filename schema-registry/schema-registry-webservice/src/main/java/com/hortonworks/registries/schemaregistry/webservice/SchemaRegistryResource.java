@@ -22,6 +22,7 @@ import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationA
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
@@ -182,11 +183,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             Map<String, String> filters = createFilterForSchema(Optional.ofNullable(schemaName), Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
             Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = authorizationAgent
-            .authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findAggregatedSchemaMetadata(filters));
+                    .authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findAggregatedSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.BAD_REQUEST, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -221,6 +224,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.BAD_REQUEST, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -256,6 +261,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.BAD_REQUEST, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -311,6 +318,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
                     .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -373,6 +382,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -404,6 +415,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                             schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -473,6 +486,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             } catch (StorageException ex) {
                 LOG.error("Unable to add schema metadata [{}]", schemaMetadata, ex);
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_CONFLICT, ex.getMessage());
+            } catch (RangerException rex){
+                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
             }
             catch (Exception ex) {
                 // TODO CDPD-14184 Refactor exception handling
@@ -522,6 +537,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (IllegalArgumentException ex) {
             LOG.error("Expected parameter is invalid for schema \"{}\": {}", schemaName, schemaMetadata, ex);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             // TODO CDPD-14184 Refactor exception handling
             if (ex instanceof UndeclaredThrowableException) {
@@ -570,6 +587,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -601,6 +620,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -631,6 +652,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (SchemaNotFoundException e) {
             LOG.error("No schema metadata found with name: [{}]", schemaName);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -679,6 +702,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
                 return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+            } catch (RangerException rex){
+                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
             } catch (IOException ex) {
                 LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
                 response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -728,6 +753,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
             } catch (SchemaBranchNotFoundException e) {
                 return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+            } catch (RangerException rex){
+                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
             } catch (Exception ex) {
                 if (ex instanceof UndeclaredThrowableException) {
                     ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -768,6 +795,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -810,6 +839,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -845,6 +876,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (SchemaNotFoundException e) {
             LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -878,6 +911,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with schema version id : [{}]", versionId);
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -909,6 +944,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (SchemaNotFoundException e) {
             LOG.info("No schema version is found with fingerprint : [{}]", fingerprint);
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, fingerprint);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -966,6 +1003,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch(SchemaLifecycleException e) {
             LOG.error("Encountered error while enabling schema version with id [{}]", versionId, e);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1001,7 +1040,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch(SchemaLifecycleException e) {
             LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        }catch (Exception ex) {
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
             }
@@ -1036,7 +1077,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch(SchemaLifecycleException e) {
             LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        }catch (Exception ex) {
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
             }
@@ -1072,6 +1115,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch(SchemaLifecycleException e) {
             LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1107,6 +1152,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch(SchemaLifecycleException e) {
             LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
             response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1148,6 +1195,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     ? CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA
                     : CatalogResponse.ResponseMessage.BAD_REQUEST;
             response = WSUtils.respond(Response.Status.BAD_REQUEST, badRequestResponse, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1183,6 +1232,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
         } catch (SchemaBranchNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1216,6 +1267,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1249,6 +1302,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
             response = WSUtils.respondString(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1279,6 +1334,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (FileNotFoundException e) {
             LOG.error("No file found for fileId [{}]", fileId, e);
             response = WSUtils.respondEntity(fileId, Response.Status.NOT_FOUND);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1318,6 +1375,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 LOG.error("Ser/Des not found with id: " + serializerId);
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, serializerId.toString());
             }
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while getting serializer/deserializer [{}]", serializerId, ex);
             response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
@@ -1334,6 +1393,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
             return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1363,6 +1424,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
                 return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+            } catch (RangerException rex){
+                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
             } catch (Exception ex) {
                 if (ex instanceof UndeclaredThrowableException) {
                     ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1397,6 +1460,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (SchemaLifecycleException e) {
             LOG.error("Failed to delete schema name: [{}], version : [{}]", schemaName, versionNumber, e);
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1422,6 +1487,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
         }  catch(SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1458,6 +1525,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  schemaBranch.getName());
         } catch (SchemaNotFoundException e) {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1487,6 +1556,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
         } catch (IncompatibleSchemaException e) {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();
@@ -1514,6 +1585,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaBranchId.toString());
         } catch (InvalidSchemaBranchDeletionException e) {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
+        } catch (RangerException rex){
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException)ex).getUndeclaredThrowable();

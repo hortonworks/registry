@@ -35,6 +35,7 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.util.Authorizat
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -532,7 +533,7 @@ public class DefaultAuthorizationAgentTest {
     }
 
     @Test
-    public void authorizeFindSchemasByFields() throws SchemaNotFoundException {
+    public void authorizeFindSchemasByFields() throws SchemaNotFoundException, RangerException {
         String user3 = "user3";
         SecurityContext sc3 = new SecurityContextForTesting(user3);
 

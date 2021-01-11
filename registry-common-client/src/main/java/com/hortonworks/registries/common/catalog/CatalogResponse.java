@@ -52,7 +52,8 @@ public class CatalogResponse {
         BAD_REQUEST(1110, "Bad Request.", 0),
         ENTITY_CONFLICT(1111, "An entity with id [%s] already exists",1),
         BAD_REQUEST_WITH_MESSAGE(1112, "Bad Request - %s",1),
-        ACCESS_DENIED(1113, "Access denied. - %s", 1);
+        ACCESS_DENIED(1113, "Access denied. - %s", 1),
+        EXTERNAL_ERROR(1114, "External service failed, - %s", 1);
 
         private final int code;
         private final String msg;
