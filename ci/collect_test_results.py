@@ -5,7 +5,7 @@ import os
 import xml.etree.ElementTree as ET
 
 print('<results>')
-reports_dirs = ['/target/surefire-reports', '/target/failsafe-reports']
+reports_dirs = ['/build/test-results/test']
 for root, directories, filenames in os.walk('.'):
   matching_reports_dirs = list(filter(lambda x: root.endswith(x), reports_dirs))
   test_xmls = fnmatch.filter(filenames, 'TEST-*.xml')

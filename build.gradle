@@ -41,6 +41,7 @@ subprojects {
     apply plugin: 'project-report'
     apply plugin: 'jacoco'
     apply plugin: 'com.bmuschko.nexus'
+    apply plugin: 'checkstyle'
 
     configurations {
         compile {
@@ -66,6 +67,13 @@ subprojects {
     artifacts {
         tests testJar
     }
+    
+    checkstyle {
+        toolVersion = '8.1'
+        ignoreFailures = true
+        configFile = rootProject.file('checkstyle/checkstyle.xml')
+    }
+    test.dependsOn('checkstyleMain', 'checkstyleTest')
 
     // include license files into every jar
     task copyLegal(type: Copy) {

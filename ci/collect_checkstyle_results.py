@@ -7,7 +7,7 @@ print('<results>')
 abspath = os.path.abspath('.')
 checkstyle_result = 'checkstyle-result.xml'
 for root, directories, filenames in os.walk('.'):
-  target_dir = '/target'
+  target_dir = '/build/reports/checkstyle'
   if root.endswith(target_dir) and checkstyle_result in filenames:
     module = root[2: len(root) - len(target_dir)]
     file_path = os.path.join(root, checkstyle_result)
