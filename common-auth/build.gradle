@@ -29,6 +29,5 @@ dependencies {
     testCompile libraries.mockito
     testCompile group: 'org.mortbay.jetty', name: 'jetty-util', version: '6.1.26'
     testCompile group: 'org.mortbay.jetty', name: 'jetty', version: '6.1.26'
-    testCompile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-core', version: '7.0.55'
 
 }
