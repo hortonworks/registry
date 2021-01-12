@@ -27,7 +27,7 @@ dependencies {
     testCompile libraries.httpclient
     testCompile libraries.junit
     testCompile libraries.mockito
-    testCompile group: 'org.mortbay.jetty', name: 'jetty-util', version: '6.1.26'
-    testCompile group: 'org.mortbay.jetty', name: 'jetty', version: '6.1.26'
+    testCompile libraries.jetty
+    testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
 
 }

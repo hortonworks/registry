@@ -26,11 +26,13 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.FilterHolder;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletHolder;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -48,6 +50,7 @@ import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.security.Principal;
+import java.util.EnumSet;
 import java.util.Properties;
 
 import org.junit.Assert;
@@ -56,7 +59,7 @@ public class AuthenticatorTestCase {
     private Server server;
     private String host = null;
     private int port = -1;
-    Context context;
+    ServletContextHandler context;
 
     private static Properties authenticatorConfig;
 
@@ -103,16 +106,17 @@ public class AuthenticatorTestCase {
     }
 
     protected void start() throws Exception {
-        server = new Server(0);
-        context = new Context();
-        context.setContextPath("/foo");
-        server.setHandler(context);
-        context.addFilter(new FilterHolder(TestFilter.class), "/*", 0);
-        context.addServlet(new ServletHolder(TestServlet.class), "/bar");
         host = "localhost";
         port = getLocalPort();
-        server.getConnectors()[0].setHost(host);
-        server.getConnectors()[0].setPort(port);
+        server = new Server(port);
+        ServerConnector  connector = new ServerConnector(server);
+        connector.setHost(host);
+        connector.setPort(port);
+        context = new ServletContextHandler();
+        context.setContextPath("/foo");
+        context.addFilter(new FilterHolder(new TestFilter()), "/*", EnumSet.of(DispatcherType.REQUEST));
+        context.addServlet(new ServletHolder(new TestServlet()), "/bar");
+        server.setHandler(context);
         server.start();
         System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
     }

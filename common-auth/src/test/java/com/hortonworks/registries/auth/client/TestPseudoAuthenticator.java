@@ -65,7 +65,6 @@ public class TestPseudoAuthenticator {
             conn.connect();
             Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, conn.getResponseCode());
             Assert.assertTrue(conn.getHeaderFields().containsKey("WWW-Authenticate"));
-            Assert.assertEquals("Authentication required", conn.getResponseMessage());
         } finally {
             auth.stop();
         }
