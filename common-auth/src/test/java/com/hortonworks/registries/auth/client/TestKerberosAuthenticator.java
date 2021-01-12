@@ -20,37 +20,15 @@ import com.hortonworks.registries.auth.server.PseudoAuthenticationHandler;
 import com.hortonworks.registries.auth.server.KerberosAuthenticationHandler;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-@Ignore
-@RunWith(Parameterized.class)
 public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
-
-    private boolean useTomcat = false;
-
-    public TestKerberosAuthenticator(boolean useTomcat) {
-        this.useTomcat = useTomcat;
-    }
-
-    @Parameterized.Parameters
-    public static Collection booleans() {
-        return Arrays.asList(new Object[][]{
-                {false},
-                {true}
-        });
-    }
 
     @Before
     public void setup() throws Exception {
@@ -75,7 +53,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testFallbacktoPseudoAuthenticator() throws Exception {
-        AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        AuthenticatorTestCase auth = new AuthenticatorTestCase();
         Properties props = new Properties();
         props.setProperty(AuthenticationFilter.AUTH_TYPE, "simple");
         props.setProperty(PseudoAuthenticationHandler.ANONYMOUS_ALLOWED, "false");
@@ -85,7 +63,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testFallbacktoPseudoAuthenticatorAnonymous() throws Exception {
-        AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        AuthenticatorTestCase auth = new AuthenticatorTestCase();
         Properties props = new Properties();
         props.setProperty(AuthenticationFilter.AUTH_TYPE, "simple");
         props.setProperty(PseudoAuthenticationHandler.ANONYMOUS_ALLOWED, "true");
@@ -95,7 +73,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testNotAuthenticated() throws Exception {
-        AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(getAuthenticationHandlerConfiguration());
         auth.start();
         try {
@@ -111,7 +89,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testAuthentication() throws Exception {
-        final AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration());
         KerberosTestUtils.doAsClient(new Callable<Void>() {
@@ -125,7 +103,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testAuthenticationPost() throws Exception {
-        final AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration());
         KerberosTestUtils.doAsClient(new Callable<Void>() {
@@ -139,7 +117,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testAuthenticationHttpClient() throws Exception {
-        final AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration());
         KerberosTestUtils.doAsClient(new Callable<Void>() {
@@ -153,7 +131,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testAuthenticationHttpClientPost() throws Exception {
-        final AuthenticatorTestCase auth = new AuthenticatorTestCase(useTomcat);
+        final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration());
         KerberosTestUtils.doAsClient(new Callable<Void>() {
