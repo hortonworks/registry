@@ -98,10 +98,16 @@ subprojects {
         publications {
             mavenJava(MavenPublication) {
                 groupId = group
-
                 from components.java
+                artifact(testJar) {
+                    classifier "tests"
+                }
             }
         }
+    }
+
+    signing {
+        sign publishing.publications.mavenJava
     }
 
     // put your password into ~/.gradle/build.gradle and then run "gradle sign uploadArchive" to upload into nexus
