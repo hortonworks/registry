@@ -16,7 +16,7 @@
 
 dependencies {
 
-    compile libraries.ranger_shaded
+    compileOnly project(':ranger-plugin')
     compile libraries.spring.core
     compile libraries.jna_platform
 
@@ -25,15 +25,16 @@ dependencies {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
     
+    testCompile project(':ranger-plugin')
     testCompile libraries.junit
     
 }
 
-task copyDependencies(type: Copy) {
+task copyDependencies(type: Sync) {
     into "$buildDir/dependency"
     from configurations.runtime
 }
-build.finalizedBy(copyDependencies)
+assemble.dependsOn(copyDependencies)
 
 // This project generates 3 JAR files
 

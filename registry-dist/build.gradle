@@ -19,6 +19,10 @@ plugins {
     id 'signing'
 }
 
+configurations {
+    runtimeJars
+}
+
 distributions {
     main {
         baseName = final_name
@@ -38,9 +42,8 @@ distributions {
                 }
             }
             into('libs/') {
-                from(configurations.runtimeClasspath) {
+                from(configurations.runtimeJars) {
                     exclude '*shim*'
-                    exclude '*ranger-shaded*jar'
                 }
             }
             
@@ -49,8 +52,9 @@ distributions {
                 from("$rootDir/schema-registry/schema-registry-authorizer/build/libs") {
                     include '*ranger*jar'
                 }
-                from("$rootDir/schema-registry/schema-registry-authorizer/build/dependency") {
-                    include '*ranger-shaded*jar'
+                from("$rootDir/ranger-plugin/build/dependency") {
+                    include '*jar'
+                    exclude 'ranger-plugin-classloader*jar'
                 }
             }
             into('ranger-plugin/conf/') {
@@ -119,6 +123,8 @@ tasks.withType(Tar){
 }
 
 dependencies {
+    
+    runtimeJars configurations.runtimeClasspath
 
     compile project(':schema-registry:schema-registry-client')
     compile(project(':schema-registry:schema-registry-webservice')) {
@@ -127,13 +133,15 @@ dependencies {
     compile project(':atlas-integration:atlas-module')
     compile project(':schema-registry:schema-registry-serdes')
     
-    compile(libraries.jackson.scala_module)
+    compile libraries.jackson.scala_module
+    compile libraries.ranger.classloader
     
     // this will force Gradle to build the tar and zip file only after every other project was built
     distTar.dependsOn(':schema-registry:schema-registry-webservice:build')
     distTar.dependsOn(':registry-common-client:build')
     distTar.dependsOn(':cache:build')
     distTar.dependsOn(':common-auth:build')
+    distTar.dependsOn(':ranger-plugin:build')
     distTar.dependsOn(':schema-registry:schema-registry-common:build')
     distTar.dependsOn(':atlas-integration:atlas-common:build')
     distTar.dependsOn(':atlas-integration:atlas-shim:build')

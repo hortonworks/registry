@@ -23,7 +23,7 @@ dependencies {
     }
     compile(project(':schema-registry:schema-registry-authorizer')) {
         // this has to be on a separate classpath
-        exclude group: 'com.hortonworks.registries', module: 'ranger-shaded'
+        exclude group: 'com.hortonworks.registries', module: 'ranger-plugin'
     }
     compile project(':schema-registry:schema-registry-core')
 

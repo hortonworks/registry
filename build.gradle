@@ -84,8 +84,8 @@ subprojects {
         }
         into new File(sourceSets.main.output.resourcesDir, "META-INF")
     }
-    build.finalizedBy(copyLegal)
-    build.finalizedBy(projectReport)
+    assemble.dependsOn(copyLegal)
+    assemble.dependsOn(projectReport)
 
     tasks.withType(Javadoc) {
         failOnError false

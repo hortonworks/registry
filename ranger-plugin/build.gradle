@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Cloudera, Inc.
+ * Copyright 2018-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,22 @@
 
 dependencies {
 
-    compile project(':atlas-integration:atlas-common')
-    compile libraries.avro
-    compile libraries.atlas.client
-    compile libraries.guava
+    compileOnly group: 'org.scala-lang', name: 'scala-library', version: scala_version
+    compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
     
-    testCompile libraries.junit
-
+    compile libraries.ranger.common
+    compile libraries.ranger.audit
+    compile libraries.ranger.classloader
+    
+    compile libraries.jna
+    compile libraries.httpclient
+    compile libraries.hadoop.common
+    compile libraries.guava
+    compile libraries.gson
+    
 }
 
-task copyDependencies(type: Copy) {
+task copyDependencies(type: Sync) {
     into "$buildDir/dependency"
     from configurations.runtime
 }

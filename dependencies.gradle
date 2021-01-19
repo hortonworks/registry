@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Cloudera, Inc.
+ * Copyright 2018-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,7 @@ ext.libraries = [
    hikari            : "com.zaxxer:HikariCP:$versions_hikari",
    hibernate_validator: "org.hibernate:hibernate-validator:$versions_hibernate_validator",
    httpclient        : "org.apache.httpcomponents:httpclient:$versions_httpclient",
+   jna               : "net.java.dev.jna:jna:$versions_jna_platform",
    jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
    netty: [
       common         : "io.netty:netty-common:$versions_netty",
@@ -153,8 +154,8 @@ ext.libraries = [
 
    hadoop: [
      aws: dependencies.create("org.apache.hadoop:hadoop-aws:$versions_hadoop") {
-         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
          exclude group: 'javax.servlet', module: 'javax.servlet-api'
          exclude group: 'org.eclipse.jetty'
          exclude group: 'org.apache.curator'
@@ -164,8 +165,8 @@ ext.libraries = [
          exclude group: 'com.nimbusds'
      },
      azure: dependencies.create("org.apache.hadoop:hadoop-azure:$versions_hadoop") {
-         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
          exclude group: 'org.eclipse.jetty'
          exclude group: 'org.apache.curator'
          exclude group: 'com.sun.jersey'
@@ -174,8 +175,8 @@ ext.libraries = [
          exclude group: 'com.nimbusds'
      },
      azure_datalake: dependencies.create("org.apache.hadoop:hadoop-azure-datalake:$versions_hadoop") {
-         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
          exclude group: 'javax.servlet', module: 'javax.servlet-api'
          exclude group: 'org.eclipse.jetty'
          exclude group: 'org.apache.curator'
@@ -185,8 +186,8 @@ ext.libraries = [
          exclude group: 'com.nimbusds'
      },
      client: dependencies.create("org.apache.hadoop:hadoop-client:$versions_hadoop") {
-         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
          exclude group: 'javax.servlet', module: 'javax.servlet-api'
          exclude group: 'org.eclipse.jetty'
          exclude group: 'org.apache.curator'
@@ -196,8 +197,8 @@ ext.libraries = [
          exclude group: 'com.nimbusds'
      },
      cloud: dependencies.create("org.apache.hadoop:hadoop-cloud-storage:$versions_hadoop") {
-         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
          exclude group: 'javax.servlet', module: 'javax.servlet-api'
          exclude group: 'org.eclipse.jetty'
          exclude group: 'org.apache.curator'
@@ -207,18 +208,17 @@ ext.libraries = [
          exclude group: 'com.nimbusds'
      },
      common: dependencies.create("org.apache.hadoop:hadoop-common:$versions_hadoop") {
-         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-         exclude group: 'log4j', module: 'log4j'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
          exclude group: 'javax.servlet', module: 'javax.servlet-api'
          exclude group: 'org.apache.curator'
-         //
          exclude group: 'org.apache.zookeeper'
          exclude group: 'org.eclipse.jetty'
          exclude group: 'com.sun.jersey'
          exclude group: 'org.apache.avro'
          exclude group: 'com.nimbusds'
      },
-     minikdc: "org.apache.hadoop:hadoop-minikdc:$versions_hadoop"  // was 3.0.0
+     minikdc: "org.apache.hadoop:hadoop-minikdc:$versions_hadoop"
    ],
 
    plexus: [
@@ -232,14 +232,46 @@ ext.libraries = [
      schema          : "org.jpmml:pmml-schema:$versions_pmml"
    ],
 
-   postgresql         : "org.postgresql:postgresql:$versions_postgresql",
+   postgresql        : "org.postgresql:postgresql:$versions_postgresql",
 
-   ranger_shaded: dependencies.create("com.hortonworks.registries:ranger-shaded:$versions_sr_shaded") {
-      exclude group: 'com.sun.jersey', module: 'jersey-bundle'
-      exclude group: 'com.sun.jersey', module: 'jersey-core'
-      exclude group: 'org.apache.hadoop', module: 'hadoop-common'
-   },
-   jersey_shaded      : "com.hortonworks.registries:jersey-shaded:0.10.0.7.2.7.0-SNAPSHOT", //$versions_sr_shaded",
+   ranger: [
+     common: dependencies.create("org.apache.ranger:ranger-plugins-common:$versions_ranger") {
+         exclude group: 'com.google.cloud.bigdataoss', module: 'gcs-connector'
+         exclude group: 'org.apache.hadoop', module: 'hadoop-common'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
+         exclude group: 'org.apache.curator', module: 'curator-client'
+         exclude group: 'org.apache.curator', module: 'curator-recipes'
+         exclude group: 'org.apache.curator', module: 'curator-framework'
+         exclude group: 'org.apache.kafka', module: 'kafka_2.12'
+         exclude group: 'org.javassist', module: 'javassist'
+         exclude group: 'net.java.dev.jna', module: 'jna'
+         exclude group: 'net.java.dev.jna', module: 'jna-platform'
+         exclude group: 'org.apache.httpcomponents', module: 'httpcore'
+         exclude group: 'org.codehaus.jackson', module: 'jackson-core-asl'
+         exclude group: 'com.google.code.findbugs', module: 'jsr305'
+     },
+     audit: dependencies.create("org.apache.ranger:ranger-plugins-audit:$versions_ranger") {
+         exclude group: 'com.google.cloud.bigdataoss', module: 'gcs-connector'
+         exclude group: 'org.apache.hadoop', module: 'hadoop-common'
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
+         exclude group: 'org.apache.kafka', module: 'kafka_2.12'
+         exclude group: 'org.javassist', module: 'javassist'
+         exclude group: 'org.scala-lang', module: 'scala-library'
+         exclude group: 'org.scala-lang', module: 'scala-reflect'
+         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
+         exclude group: 'org.apache.httpcomponents', module: 'httpcore'
+         exclude group: 'org.apache.commons', module: 'commons-math3'
+         exclude group: 'commons-io', module: 'commons-io'
+         exclude group: 'org.cloudera.logredactor', module: 'logredactor'
+     },
+     classloader: dependencies.create("org.apache.ranger:ranger-plugin-classloader:$versions_ranger") {
+         exclude group: 'org.slf4j'
+         exclude group: 'log4j'
+     }
+   ],
+   jersey_shaded      : "com.hortonworks.registries:jersey-shaded:$versions_sr_shaded",
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
    snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
