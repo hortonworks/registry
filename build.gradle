@@ -42,6 +42,7 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'com.bmuschko.nexus'
     apply plugin: 'checkstyle'
+    apply plugin: 'signing'
 
     configurations {
         compile {
@@ -113,7 +114,7 @@ subprojects {
             }
         }
     }
-
+    
     signing {
         sign publishing.publications.mavenJava
     }

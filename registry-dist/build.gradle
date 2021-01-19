@@ -16,6 +16,7 @@
 
 plugins {
     id 'distribution'
+    id 'signing'
 }
 
 distributions {
@@ -148,6 +149,11 @@ dependencies {
     distTar.dependsOn(':examples:schema-registry:schema-lifecycle:build')
     distTar.dependsOn(':registry-webservice:build')
 
+}
+
+signing {
+    sign distTar
+    sign distZip
 }
 
 //uploadArchives {

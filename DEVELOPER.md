@@ -171,45 +171,37 @@ After the PR is merged, in normal only the PR will be closed. You may need to ha
 # Build the code and run the tests
 
 ## Prerequisites
-Make sure you have maven 3.2.5 or higher and JDK 1.8 or higher.
+Make sure you have Gradle 6.7 and JDK 1.8 or higher. If you're running the Gradle wrapper script, it will download Gradle for you.
 
 ## Building
 
 The following commands must be run from the top-level directory.
 
-`mvn clean install`
+`./gradlew clean build`
 
-If you wish to skip the unit tests you can do this by adding `-DskipTests` to the command line. 
+If you wish to skip the unit tests you can do this by adding `-x test -x check` to the command line. 
+
+If you already have Gradle installed locally and don't want to use the wrapper script, then just use `gradle` instead of `gradlew`. 
+Note, however, that you may get unexpected results in this case.
 
 ## Create a distribution (packaging)
 
-You can create a _distribution_ as follows.
+The default build command also builds distribution packages for you.
 
-    # First, build the code.
-    # Pivot module required for the dist package to be built , Its not run as part of default build.
-    # To build pivot along with all the other modules. 
-    $ mvn clean install -Pall 
-
-    # Create the binary distribution.
-    $ cd registry-dist && mvn package
-
-You can also use the maven `dist` profile to build the code and create the distribution in one step.
-
-    $ mvn clean install -P dist 
+    $ ./gradlew clean build signArchives -x test -x check
 
 The binaries will be created at:
 
-    registry-dist/target/hortonworks-registry-<version>.pom
-    registry-dist/target/hortonworks-registry-<version>.tar.gz
-    registry-dist/target/hortonworks-registry-<version>.zip
+    registry-dist/build/distributions/schemaregistry-<version>.tar.gz
+    registry-dist/build/distributions/schemaregistry-<version>.zip
 
 including corresponding `*.asc` digital signature files.
 
-After running `mvn package` you may be asked to enter your GPG/PGP credentials (once for each binary file, in fact).
+After running `gradlew build signArchives` you may be asked to enter your GPG/PGP credentials (once for each binary file, in fact).
 This happens because the packaging step will create `*.asc` digital signatures for all the binaries, and in the workflow
 above _your_ GPG private key will be used to create those signatures.
 
 You can verify whether the digital signatures match their corresponding files:
 
     # Example: Verify the signature of the `.tar.gz` binary.
-    $ gpg --verify registry-dist/target/hortonworks-registry-<version>.tar.gz.asc
+    $ gpg --verify registry-dist/build/distributions/schemaregistry-<version>.tar.gz.asc
