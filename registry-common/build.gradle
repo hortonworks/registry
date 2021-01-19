@@ -39,8 +39,6 @@ dependencies {
     compile libraries.jopt
     compile libraries.joda_time
     
-    compile libraries.hadoop.common
-    
     compile libraries.nimbus
     compile libraries.json_smart
     
@@ -49,6 +47,7 @@ dependencies {
     compile libraries.hibernate_validator
     compile libraries.spring.context
     
+    testCompile libraries.commons.io
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.powermock_api

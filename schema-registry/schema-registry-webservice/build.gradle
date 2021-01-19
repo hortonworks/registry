@@ -32,6 +32,7 @@ dependencies {
     compile libraries.jetty
     compile libraries.guice
     compile libraries.dropwizard.core
+    compile libraries.hadoop.common
     
     testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
     
