@@ -12,14 +12,14 @@
 #  limitations under the License.
 
 echo "Python version :  " `python -V 2>&1`
-echo "Maven version  :  " `mvn -v`
 
 SRC_ROOT_DIR=$1
 
 TRAVIS_SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+echo "Running from : $TRAVIS_SCRIPT_DIR"
 
 cd ${SRC_ROOT_DIR}
-python ${TRAVIS_SCRIPT_DIR}/save-logs.py "install.txt" mvn clean install -DskipTests --batch-mode
+python ${TRAVIS_SCRIPT_DIR}/save-logs.py "install.txt" "$TRAVIS_SCRIPT_DIR/../../gradlew" clean build -x test -x check -x javadoc --continue
 BUILD_RET_VAL=$?
 
 if [[ "$BUILD_RET_VAL" != "0" ]];
