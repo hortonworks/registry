@@ -37,7 +37,7 @@ public final class SchemaRegistryServiceInfo {
             Properties props = new Properties();
             props.load(inputStream);
             String version = props.getProperty("version", "unknown");
-            String revision = props.getProperty("revision", "unknown");
+            String revision = props.getProperty("sha", "unknown");
             String timestampProp = props.getProperty("timestamp");
             Long timestamp = timestampProp != null ? Long.parseLong(timestampProp) : null;
 

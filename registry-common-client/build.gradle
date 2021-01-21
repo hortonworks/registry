@@ -14,11 +14,8 @@
  * limitations under the License.
 */
 
-/*
-// TODO when 1.9.1 is published you can enable this code and remove the genVersion() task below
-// see: https://github.com/lessthanoptimal/gversion-plugin
 plugins {
-  id "com.peterabeles.gversion" version "1.9.1"
+  id "com.peterabeles.gversion"
 }
 
 gversion {
@@ -26,8 +23,6 @@ gversion {
   className    = "VERSION"
   language     = "PROPERTIES"
 }
-*/
-import java.text.SimpleDateFormat
 
 dependencies {
 
@@ -41,28 +36,4 @@ dependencies {
 
 }
 
-// Generate VERSION file to be included in SchemaRegistry
-def generatedResources = sourceSets.main.output.resourcesDir
-
-task genVersion() {
-    outputs.dir generatedResources
-    doLast {
-        new File(generatedResources, '/registry').mkdirs()
-        new File(generatedResources, '/registry/VERSION').text = """
-#Created by build system. Do not modify
-#${new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date())}
-version=$version
-name=registry-common-client
-timestamp=${System.currentTimeMillis()}
-"""
-    }
-}
-
-compileJava.dependsOn(genVersion)
-
-/*
-task depps() {
-    configurations.compile.dependencies.collect { println(it.group+":"+it.name+":"+it.version) }
-}
-
-*/
+assemble.dependsOn(createVersionFile)
