@@ -88,6 +88,7 @@ ext.libraries = [
       client: dependencies.create("org.glassfish.jersey.core:jersey-client:$versions_jersey") {
           exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
       },
+      hk2            : "org.glassfish.jersey.inject:jersey-hk2:$versions_jersey",
       server         : "org.glassfish.jersey.core:jersey-server:$versions_jersey",
       media_json     : "org.glassfish.jersey.media:jersey-media-json-jackson:$versions_jersey",
       media_multipart: "org.glassfish.jersey.media:jersey-media-multipart:$versions_jersey"
@@ -271,7 +272,6 @@ ext.libraries = [
          exclude group: 'log4j'
      }
    ],
-   jersey_shaded      : "com.hortonworks.registries:jersey-shaded:$versions_sr_shaded",
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
    snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",

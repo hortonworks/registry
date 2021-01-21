@@ -1,0 +1,74 @@
+/*
+ * Copyright 2018-2021 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+plugins {
+    id 'com.github.johnrengelman.shadow'
+}
+
+def shadingPrefix = 'com.hortonworks.registries.shaded'
+
+dependencies {
+    
+    compile libraries.jersey.client
+    compile libraries.jersey.hk2
+    compile(libraries.jersey.media_multipart) {
+        exclude group: 'ch.qos.logback'
+    }
+    compile libraries.jersey.media_json
+    compile libraries.jackson.jaxrs
+    
+}
+
+shadowJar {
+    mergeServiceFiles()  // relocate meta-inf/services files
+    
+    relocate 'javax.ws.rs', "${shadingPrefix}.javax.ws.rs"
+    relocate 'org.glassfish.jersey', "${shadingPrefix}.org.glassfish.jersey"
+    relocate 'org.glassfish.hk2', "${shadingPrefix}.org.glassfish.hk2"
+    relocate 'org.jvnet.hk2', "${shadingPrefix}.org.jvnet.hk2"
+    relocate 'com.fasterxml.jackson', "${shadingPrefix}.com.fasterxml.jackson"
+}
+
+compileJava.finalizedBy(shadowJar)
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) { publication ->
+            groupId = group
+            publication.artifact(project.tasks.named("shadowJar")) {
+                classifier ""
+            }
+            
+            publication.pom { pom ->
+                pom.withXml { xml ->
+                    def dependenciesNode = xml.asNode().appendNode('dependencies')
+
+                    project.configurations.shadow.allDependencies.each {
+                        if ((it instanceof ProjectDependency) || ! (it instanceof SelfResolvingDependency)) {
+                            def dependencyNode = dependenciesNode.appendNode('dependency')
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'runtime')
+                        }
+                    }
+                }
+            }
+
+        }
+        
+    }
+}

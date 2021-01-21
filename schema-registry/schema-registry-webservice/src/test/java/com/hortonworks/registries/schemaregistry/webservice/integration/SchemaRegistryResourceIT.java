@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2020 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -60,7 +60,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@Ignore
 public class SchemaRegistryResourceIT {
 
     private static ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);

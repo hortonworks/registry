@@ -20,7 +20,7 @@ dependencies {
         exclude group: 'javax.validation', module: 'validation-api'
     }
     
-    compile libraries.jersey_shaded
+    compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
     compile project(':registry-common-client')
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'

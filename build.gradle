@@ -103,20 +103,22 @@ subprojects {
         }
     }
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                groupId = group
-                from components.java
-                artifact(testJar) {
-                    classifier "tests"
+    if (it.name != 'jersey-shaded') {  // jersey-shaded has custom publication
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    groupId = group
+                    from components.java
+                    artifact(testJar) {
+                        classifier "tests"
+                    }
                 }
             }
         }
-    }
-    
-    signing {
-        sign publishing.publications.mavenJava
+        
+        signing {
+            sign publishing.publications.mavenJava
+        }
     }
 
     // put your password into ~/.gradle/build.gradle and then run "gradle sign uploadArchive" to upload into nexus
@@ -181,5 +183,6 @@ buildscript {
         classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
         classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
         classpath "com.peterabeles.gversion:com.peterabeles.gversion.gradle.plugin:1.10"
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
     }
 }
