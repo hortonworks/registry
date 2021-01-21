@@ -61,7 +61,5 @@ dependencies {
     testCompile libraries.curator.test
     testCompile libraries.logging.log4j
     testCompile libraries.httpclient
-    
-    runtimeOnly group: 'mysql', name: 'mysql-connector-java', version: '5.1.38'
 
 }
