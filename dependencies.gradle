@@ -250,6 +250,7 @@ ext.libraries = [
          exclude group: 'net.java.dev.jna', module: 'jna-platform'
          exclude group: 'org.apache.httpcomponents', module: 'httpcore'
          exclude group: 'org.codehaus.jackson', module: 'jackson-core-asl'
+         exclude group: 'org.codehaus.jackson', module: 'jackson-mapper-asl'
          exclude group: 'com.google.code.findbugs', module: 'jsr305'
      },
      audit: dependencies.create("org.apache.ranger:ranger-plugins-audit:$versions_ranger") {
