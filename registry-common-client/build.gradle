@@ -36,4 +36,4 @@ dependencies {
 
 }
 
-assemble.dependsOn(createVersionFile)
+classes.dependsOn(createVersionFile)

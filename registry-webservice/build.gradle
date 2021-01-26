@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Cloudera, Inc.
+ * Copyright 2018-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,9 @@ def parseNpmSettings(String settingsStr) {
   3. Copy files from build/resources to build/reactWebsite. This is needed because npm modifies the 
      input files. If we were to run npm inside build/resources, it would cause Gradle to copy the npm 
      files again during the next run, causing npm to run again, even if no source files have been modified.
-  4. Run npm, the generated files will be located under public/assets 
-  5. Copy public/assets to ./assets 
-  6. Build a JAR file which includes any Java classes and ./assets 
+  4. Run npm, the generated files will be located under public/assets
+  5. Copy public/assets to ./assets
+  6. Build a JAR file which includes any Java classes and ./assets
   
   Note that the npm tasks are disabled by default. They are only enabled if "processResources" runs.
   In turn, "processResources" will only run if the javascript files were modified. This task will 
@@ -107,7 +107,7 @@ def parseNpmSettings(String settingsStr) {
 
 def npmSettingsMap = parseNpmSettings(npm_settings)
 
-def reactWebsite = file("$sourceSets.main.output.resourcesDir/../reactWebsite")
+def reactWebsite = file("$buildDir/reactWebsite")
 
 // nodejs will be downloaded into the .gradle directory
 node {
@@ -156,27 +156,37 @@ tasks.register("copyWebsiteAssets", Copy) {
     onlyIf { project.ext.runNpmBuild }
 }
 
-classes.dependsOn(copyWebsiteAssets)
-
 task copyLegal2(type: Copy) {
     from(rootDir) {
         include 'LICENSE.txt'
         include 'NOTICE.txt'
     }
-    into new File(sourceSets.main.output.resourcesDir, "public")
+    into new File("$reactWebsite/assets")
 }
-build.finalizedBy(copyLegal2)
+copyLegal2.dependsOn(copyWebsiteAssets)
+classes.dependsOn(copyLegal2)
 
 jar {
     manifest {
         attributes(
             "Main-Class": application.mainClassName,
             "Implementation-Title": project.name,
-            "Implementation-Version": version
+            "Implementation-Version": project.version
         )
     }
-    from {
-        sourceSets.main.output.classesDirs
-        fileTree("$reactWebsite/assets/**")
+
+    from(reactWebsite) {
+        include "assets/**"
     }
+
+    eachFile { f ->
+        String prefix = f.relativeSourcePath.pathString
+        if (!(prefix.startsWith("assets") || prefix.startsWith("com") || prefix.startsWith("META-INF"))) {
+            logger.debug("Excluding from the JAR file: $f\n")
+            f.exclude()
+        } else {
+            logger.debug("Including into the JAR file: $f\n")
+        }
+    }
+
 }
