@@ -1,7 +1,7 @@
 Schema Registry cluster deployment using SASL
 =============================================
 
-Dockerized Schema Registry application with SASL enabled to run System tests. 
+Dockerized Schema Registry application.
 
 
 # Dependencies
@@ -26,113 +26,62 @@ for more information.
 If you're running on windows / Mac OS X, you need to use Docker machine to start the Docker host. Docker runs natively on
 Linux, so the Docker host will be your machine. 
 
-```
-sh kdc-registry.sh start-machine
-```
-It starts a Linux virtual machine setup and installs the Docker Engine on top of it.
-This VM is used as Docker host machine as there are known problems in Docker Engine when
-running it on Mac and Windows OS.
-
-<B>NOTE:</B> Once the machine started, you should configure your terminal window to attach it to your new Docker Machine.
-Always, run the below command whenever opening a new terminal.
-
-``` eval $(docker-machine env hwx-machine)```
 
 ### Build the Registry Image
+
+We use the Jib plugin to build the docker image. Jib uses the Gradle dependency management and eliminates
+the need to write a Dockerfile.
+
+There are 3 ways to build a docker image:
+* jib - builds an image and uploads it to Docker's registry
+* jibDockerBuild - builds and image and pushes it to the local Docker daemon
+* jibBuildTar - builds a tarball file which can then be imported into Docker 
+
+Example run:
+
 ```
-sh kdc-registry.sh build
+gradle jibDockerBuild -x test -x check
 ```
 
-It builds the Key Distribution Center, Apache Zookeeper, Apache Kafka and Schema Registry Images.
-And, pulls the official images of MySQL, Oracle and Postgresql database images from the docker store.
+The image will contain the Schema Registry service. It doesn't use kerberos authentication and doesn't
+support TLS. These can be added optionally by you if you modify the build.gradle file.
 
-To run registry application with Oracle db, user needs to manually download the [ojdbc.jar](http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html) from the Oracle website and 
-copy it to `extlibs` directory before building the image.
 
-To build Schema Registry from specific tag release, export this variable before building the image. (Only tar file supported)
+### Database connection
+
+By default Schema Registry will use conf/registry.yaml which is set to connect to a database under localhost.
+You can use docker-compose to run MySql together with Schema Registry. 
+If you're running Schema Registry alone then you need to modify conf/registry.yaml before building the 
+docker image. Change the JDBC port and instead of "localhost" write the IP address of the MySql server.
+
 ```
-export schema_registry_download_url="https://github.com/hortonworks/registry/releases/download/v0.5.0/hortonworks-registry-0.5.0.tar.gz"
+dataSource.url: "jdbc:mysql://12.10.7.120/schema_registry"
 ```
+
 
 ### Run the container
 ```
-sh kdc-registry.sh start
+docker run schema-registry
 ```
 
-Starts Schema Registry application with all the dependent services (KDC, ZK, AK and DB). Asks user 
-which underlying database to use to store the data. All the containers are connected with the 
-private network.
+### Connecting to Schema Registry 
 
-To connect with the schema registry app when security enabled, copy the krb5.conf and keytabs from the `$(pwd)/secrets` 
-directory (where pwd denotes ~/registry/docker directory) and paste it to respective directories [OR] point those files
- using the System property.(-Djava.security.auth.login.config=path/abc_jaas.conf, -Djava.security.krb5.conf=path/krb5.conf)
+Docker will open ports 9090 and 9091. You need to connect to the docker container's host.
+Get the container's id with "docker ps" and then run the below command:
 
-#### Run a single container
 ```
-sh kdc-registry.sh start ${name}
+docker inspect --format '{{ .NetworkSettings.IPAddress }}' <the-container-id>
 ```
-Starts a single container with the specified name.
+
+This outputs the container's IP address.
+
 
 ### Lists the active containers
 ```
-sh kdc-registry.sh ps
+docker ps
 ```
 Lists all the active containers that are connected with the private network.
 
-### Lists all containers
-```
-sh kdc-registry.sh ps-all
-```
-Lists all the containers that are connected with the private network.
-
-### Container Shell
-```
-sh kdc-registry.sh shell ${name}
-```
-Login into the container and provides a Shell to the user.
-
-### Container Logs
-```
-sh kdc-registry.sh logs ${name}
-```
-Shows the logs from the container.
-
-### Container Exposed ports
-```
-sh kdc-registry.sh port ${name}
-```
-Shows the exposed ports from the container to the host machine.
-
-### Stop the container
-```
-sh kdc-registry.sh stop
-```
-Stops all the running containers that are connected with the private network.
-
-#### Stop a single container
-```
-sh kdc-registry.sh stop ${name}
-```
-Stops the container with the specified name
-
-### Clean
-```
-sh kdc-registry.sh clean
-```
-Removes all the stopped containers that are connected with the private network. This will also remove the created images, 
-dangling images and network. This will free disk space. 
-
-#### Clean a single container
-```
-sh kdc-registry.sh clean ${name}
-```
-Removes only the container with the specified name
-
-### Stop the docker machine
-```
-sh kdc-registry.sh stop-machine
-```
-This will stop and power-off the Linux Virtual machine.
 
 ### Other docker commands
 
