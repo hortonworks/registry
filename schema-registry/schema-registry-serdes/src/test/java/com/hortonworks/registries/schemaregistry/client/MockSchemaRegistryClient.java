@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -50,6 +51,7 @@ import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -324,6 +326,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     @Override
     public <T> T createDeserializerInstance(SerDesInfo serDesInfo) {
         return null;
+    }
+
+    @Override
+    public List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(String schemaName, String schemaDescription, String orderByFields) {
+        return new ArrayList<>();
     }
 
     @Override

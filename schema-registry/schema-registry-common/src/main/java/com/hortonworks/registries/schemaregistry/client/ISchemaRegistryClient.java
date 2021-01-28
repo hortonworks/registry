@@ -15,6 +15,7 @@
 
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistryService;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
@@ -25,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * This interface defines different methods to interact with remote schema registry.
@@ -123,7 +125,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      * @throws SchemaNotFoundException     if the given schemaMetadata not found.
      */
-    public SchemaIdVersion uploadSchemaVersion(final String schemaName,
+    SchemaIdVersion uploadSchemaVersion(final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionTextFile)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
@@ -142,7 +144,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @throws IncompatibleSchemaException if the given versionedSchema is incompatible according to the compatibility set.
      * @throws SchemaNotFoundException     if the given schemaMetadata not found.
      */
-    public SchemaIdVersion uploadSchemaVersion(final String schemaBranchName,
+    SchemaIdVersion uploadSchemaVersion(final String schemaBranchName,
                                                final String schemaName,
                                                final String description,
                                                final InputStream schemaVersionTextFile)
@@ -187,7 +189,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @throws SerDesException          if the serializer class is not found or any error while creating an instance of serializer class.
      * @throws IllegalArgumentException if the given {@code type} is not registered as schema provider in the target schema registry.
      */
-    public <T> T getDefaultSerializer(String type) throws SerDesException;
+    <T> T getDefaultSerializer(String type) throws SerDesException;
 
 
     /**
@@ -199,7 +201,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @throws SerDesException          if the deserializer class is not found or any error while creating an instance of deserializer class.
      * @throws IllegalArgumentException if the given {@code type} is not registered as schema provider in the target schema registry.
      */
-    public <T> T getDefaultDeserializer(String type) throws SerDesException;
+    <T> T getDefaultDeserializer(String type) throws SerDesException;
 
     /**
      * Returns a new instance of the respective Serializer class for the given {@code serializerInfo}
@@ -224,5 +226,16 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @throws SerDesException throws an Exception if serializer or deserializer class is not an instance of {@code T}
      */
     <T> T createDeserializerInstance(SerDesInfo deserializerInfo);
+
+    /**
+     * Search for schemas by name or description. All fields are optional.
+     *
+     * @param schemaName            name of the schema
+     * @param schemaDescription     description
+     * @param orderByFields         list of tuples containing the ordering (default value: timestamp,d)
+     *
+     * @return  list of aggregates schema metadata info
+     */
+    List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(String schemaName, String schemaDescription, String orderByFields);
 
 }

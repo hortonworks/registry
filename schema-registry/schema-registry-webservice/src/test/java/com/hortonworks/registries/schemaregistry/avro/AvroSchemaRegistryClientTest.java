@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.state.InbuiltSchemaVersionLifecycleState;
 import com.hortonworks.registries.shaded.javax.ws.rs.BadRequestException;
 import com.hortonworks.registries.shaded.javax.ws.rs.core.Response;
@@ -616,6 +617,43 @@ public class AvroSchemaRegistryClientTest {
     private Set<SchemaIdVersion> transformToSchemaIdVersions(Collection<SchemaVersionInfo> versionInfos) {
         return versionInfos.stream().map(versionInfo -> new SchemaIdVersion(versionInfo.getSchemaMetadataId(), versionInfo.getVersion(), versionInfo.getId()))
                 .collect(Collectors.toSet());
+    }
+
+    @Test
+    public void testFindAggregatedSchemas() throws Exception {
+        SchemaMetadata schemaMetadata = createSchemaMetadata("apples", SchemaCompatibility.BOTH);
+        final String schema1 = schemaMetadata.getName();
+        final Long id = SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata);
+        SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schema1, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc"), "Initial version of the schema"));
+        SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schema1, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-2.avsc"), "Second version of the schema"));
+
+        SchemaMetadata schemaMetadata2 = createSchemaMetadata("oranges", SchemaCompatibility.BACKWARD);
+        final String schema2 = schemaMetadata2.getName();
+        final Long id2 = SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata2);
+        SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schema2, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc"), "Initial version of the schema"));
+
+        List<AggregatedSchemaMetadataInfo> result1 = SCHEMA_REGISTRY_CLIENT.findAggregatedSchemas(schema1, null, null);
+        Assert.assertNotNull(result1);
+        Assert.assertFalse(result1.isEmpty());
+        Assert.assertEquals(1, result1.size());
+        Assert.assertEquals(id, result1.get(0).getId());
+
+        List<AggregatedSchemaMetadataInfo> result2 = SCHEMA_REGISTRY_CLIENT.findAggregatedSchemas(schema2, null, null);
+        Assert.assertNotNull(result2);
+        Assert.assertFalse(result2.isEmpty());
+        Assert.assertEquals(1, result2.size());
+        Assert.assertEquals(id2, result2.get(0).getId());
+
+        List<AggregatedSchemaMetadataInfo> bothSchemas = SCHEMA_REGISTRY_CLIENT.findAggregatedSchemas(null, null, null);
+        Assert.assertNotNull(bothSchemas);
+        Assert.assertFalse(bothSchemas.isEmpty());
+        Assert.assertTrue(bothSchemas.size() >= 2);
+        Assert.assertTrue(bothSchemas.stream().anyMatch(s -> s.getId().equals(id)));
+        Assert.assertTrue(bothSchemas.stream().anyMatch(s -> s.getId().equals(id2)));
+
+        List<AggregatedSchemaMetadataInfo> notFound = SCHEMA_REGISTRY_CLIENT.findAggregatedSchemas("differentSchema", null, null);
+        Assert.assertNotNull(notFound);
+        Assert.assertTrue(notFound.isEmpty());
     }
 
 }

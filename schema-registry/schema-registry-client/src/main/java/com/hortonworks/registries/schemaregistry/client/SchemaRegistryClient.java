@@ -27,6 +27,7 @@ import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.util.ClassLoaderAwareInvocationHandler;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ConfigEntry;
 import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
@@ -167,6 +168,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
+    private static final String FIND_AGGREGATED_SCHEMAS = SCHEMA_REGISTRY_PATH + "/search/schemas/aggregated";
     private static final long KERBEROS_SYNCHRONIZATION_TIMEOUT_MS = 180000;
 
     private static final String SSL_KEY_PASSWORD = "keyPassword";
@@ -434,6 +436,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         private final WebTarget schemasByIdTarget;
         private final WebTarget rootTarget;
         private final WebTarget searchFieldsTarget;
+        private final WebTarget findAggregatedSchemasTarget;
         private final WebTarget serializersTarget;
         private final WebTarget filesTarget;
         private final WebTarget schemaVersionsTarget;
@@ -449,6 +452,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             schemaVersionsTarget = rootTarget.path(SCHEMA_VERSIONS_PATH);
             schemaVersionsStatesMachineTarget = schemaVersionsTarget.path("statemachine");
             searchFieldsTarget = rootTarget.path(SEARCH_FIELDS);
+            findAggregatedSchemasTarget = rootTarget.path(FIND_AGGREGATED_SCHEMAS);
             serializersTarget = rootTarget.path(SERIALIZERS_PATH);
             filesTarget = rootTarget.path(FILES_PATH);
         }
@@ -1120,6 +1124,31 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName);
             return getEntities(webTarget, SchemaVersionInfo.class);
+        });
+    }
+
+    @Override
+    public List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(String schemaName, String schemaDescription, String orderByFields) {
+        if (StringUtils.isBlank(schemaName)) {
+            schemaName = "";
+        }
+        if (StringUtils.isBlank(schemaDescription)) {
+            schemaDescription = null;
+        }
+        if (StringUtils.isBlank(orderByFields)) {
+            orderByFields = "timestamp,d";
+        }
+        final String schemaNameParam = schemaName;
+        final String schemaDescriptionParam = schemaDescription;
+        final String orderByFieldsParam = orderByFields;
+
+        return runRetryableBlock((SchemaRegistryTargets targets) -> {
+            WebTarget target = targets.findAggregatedSchemasTarget;
+            target = target.queryParam("name", schemaNameParam);
+            if (schemaDescriptionParam != null) target = target.queryParam("description", schemaDescriptionParam);
+            target = target.queryParam("_orderByFields", orderByFieldsParam);
+
+            return getEntities(target, AggregatedSchemaMetadataInfo.class);
         });
     }
 

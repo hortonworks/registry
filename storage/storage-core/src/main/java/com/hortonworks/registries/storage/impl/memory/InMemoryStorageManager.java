@@ -26,6 +26,8 @@ import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.storage.search.Predicate;
+import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +36,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -193,8 +197,39 @@ public class InMemoryStorageManager implements StorageManager {
 
     @Override
     public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
-        LOG.warn("This storage manager does not support search query, returning all instances with the given namespace [{}]", searchQuery.getNameSpace());
-        return list(searchQuery.getNameSpace());
+        LOG.warn("This storage manager does not support search query in a meaningful way. Do not use it in production! Returning instances with the given namespace [{}]", searchQuery.getNameSpace());
+        Collection<T> list = new ArrayList<>(list(searchQuery.getNameSpace()));
+        Map<Storable, Map<String, Object>> pairs = new HashMap<>();
+        for (Storable storable : list(searchQuery.getNameSpace())) {
+            pairs.put(storable, storable.toMap());
+        }
+
+        Collection<T> result = new ArrayList<>(list.size());
+        for (PredicateCombinerPair predicateCombinerPair : searchQuery.getWhereClause().getPredicateCombinerPairs()) {
+            for (T storable : list) {
+                Map<String, Object> map = pairs.get(storable);
+                final Predicate.Operation op = predicateCombinerPair.getPredicate().getOperation();
+                switch (op) {
+                    case EQ: case CONTAINS:
+                        if (map.containsKey(predicateCombinerPair.getPredicate().getField())) {
+                            Object value = map.get(predicateCombinerPair.getPredicate().getField());
+                            if (value == null) {
+                                continue;
+                            } else if (op == Predicate.Operation.EQ && Objects.equals(value, predicateCombinerPair.getPredicate().getValue())) {
+                                result.add(storable);
+                            } else if (op == Predicate.Operation.CONTAINS && value.toString().toLowerCase().contains(predicateCombinerPair.getPredicate().getValue().toString())) {
+                                result.add(storable);
+                            }
+                        }
+                        break;
+                    default:
+                        result.add(storable);
+                        break;
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override
