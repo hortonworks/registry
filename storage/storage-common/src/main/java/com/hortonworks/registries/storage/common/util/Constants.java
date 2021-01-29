@@ -24,5 +24,6 @@ public final class Constants {
         public static final String USER = "dataSource.user";
         public static final String PASSWORD = "dataSource.password";
         public static final String CONNECTION_PROPERTIES = "connection.properties";
+        public static final String CLASS_NAME = "dataSourceClassName";
     }
 }

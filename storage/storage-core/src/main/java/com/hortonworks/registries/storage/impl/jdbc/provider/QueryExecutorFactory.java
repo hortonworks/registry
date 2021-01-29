@@ -18,6 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider;
 
 import com.google.common.collect.Lists;
 import com.hortonworks.registries.storage.common.DatabaseType;
+import com.hortonworks.registries.storage.common.util.Constants;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.config.HikariConfigFactory;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
@@ -64,13 +65,15 @@ public class QueryExecutorFactory {
     }
 
     private static HikariCPConnectionBuilder getHikariCPConnnectionBuilder(DatabaseType type, Map<String, Object> dbProperties) {
-        Util.validateJDBCProperties(dbProperties, Lists.newArrayList("dataSourceClassName", "dataSource.url"));
+        Util.validateJDBCProperties(dbProperties, Lists.newArrayList(Constants.DataSource.CLASS_NAME, Constants.DataSource.URL));
 
-        String dataSourceClassName = (String) dbProperties.get("dataSourceClassName");
-        LOG.info("data source class: [{}]", dataSourceClassName);
+        if (LOG.isDebugEnabled()) {
+            String dataSourceClassName = (String) dbProperties.get(Constants.DataSource.CLASS_NAME);
+            LOG.debug("data source class: [{}]", dataSourceClassName);
 
-        String jdbcUrl = (String) dbProperties.get("dataSource.url");
-        LOG.info("dataSource.url is: [{}] ", jdbcUrl);
+            String jdbcUrl = (String) dbProperties.get(Constants.DataSource.URL);
+            LOG.debug("dataSource.url is: [{}] ", jdbcUrl);
+        }
 
         HikariConfig hikariConfig = HikariConfigFactory.get(type, dbProperties);
 
