@@ -106,7 +106,7 @@ public class SlotSynchronizer<K> {
             count.decrementAndGet();
 
             // remove this slot if it's count is zero.
-            if(count.get() == 0) {
+            if (count.get() == 0) {
                 locks.remove(k, this);
             }
 

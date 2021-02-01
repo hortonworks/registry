@@ -19,7 +19,7 @@ package com.hortonworks.registries.cache.view.io.loader;
 import com.hortonworks.registries.cache.Cache;
 import com.hortonworks.registries.cache.view.datastore.DataStoreReader;
 
-public class CacheLoaderAsyncFactory<K,V> implements CacheLoaderFactory<K,V> {
+public class CacheLoaderAsyncFactory<K, V> implements CacheLoaderFactory<K, V> {
     @Override
     public CacheLoader<K, V> create(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader) {
         return new CacheLoaderAsync<>(cache, dataStoreReader);

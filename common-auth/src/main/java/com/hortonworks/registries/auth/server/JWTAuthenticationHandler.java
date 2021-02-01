@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.text.ParseException;
 
@@ -160,7 +159,8 @@ public class JWTAuthenticationHandler implements AuthenticationHandler {
     }
 
     @Override
-    public boolean managementOperation(AuthenticationToken token, HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {
+    public boolean managementOperation(AuthenticationToken token, HttpServletRequest request, HttpServletResponse response)
+            throws IOException, AuthenticationException {
         return true;
     }
 
@@ -190,7 +190,7 @@ public class JWTAuthenticationHandler implements AuthenticationHandler {
                 } else {
                     LOG.warn("jwtToken failed validation: " + jwtToken.serialize());
                 }
-            } catch(ParseException pe) {
+            } catch (ParseException pe) {
                 // unable to parse the token let's try and get another one
                 LOG.warn("Unable to parse the JWT token", pe);
             }

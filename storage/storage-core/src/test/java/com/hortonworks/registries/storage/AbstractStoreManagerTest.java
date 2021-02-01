@@ -20,9 +20,6 @@ import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
-import com.hortonworks.registries.storage.search.OrderBy;
-import com.hortonworks.registries.storage.search.SearchQuery;
-import com.hortonworks.registries.storage.search.WhereClause;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -80,7 +77,7 @@ public abstract class AbstractStoreManagerTest {
     // Test methods use the widely accepted naming convention  [UnitOfWork_StateUnderTest_ExpectedBehavior]
 
     @Test
-    public void testCrud_AllStorableEntities_NoExceptions() {
+    public void testCrudAllStorableEntitiesNoExceptions() {
         for (StorableTest test : storableTests) {
             try {
                 test.init();
@@ -93,7 +90,7 @@ public abstract class AbstractStoreManagerTest {
 
     // UnequalExistingStorable => Storable that has the same StorableKey but does NOT verify .equals()
     @Test(expected = AlreadyExistsException.class)
-    public void testAdd_UnequalExistingStorable_AlreadyExistsException() {
+    public void testAddUnequalExistingStorableAlreadyExistsException() {
         for (StorableTest test : storableTests) {
             Storable storable1 = test.getStorableList().get(0);
             Storable storable2 = test.getStorableList().get(1);
@@ -106,7 +103,7 @@ public abstract class AbstractStoreManagerTest {
 
     // EqualExistingStorable => Storable that has the same StorableKey and verifies .equals()
     @Test
-    public void testAdd_EqualExistingStorable_NoOperation() {
+    public void testAddEqualExistingStorableNoOperation() {
         for (StorableTest test : storableTests) {
             Storable storable1 = test.getStorableList().get(0);
             getStorageManager().add(storable1);
@@ -116,7 +113,7 @@ public abstract class AbstractStoreManagerTest {
     }
 
     @Test
-    public void testRemove_NonExistentStorable_null() {
+    public void testRemoveNonExistentStorableNull() {
         for (StorableTest test : storableTests) {
             Storable removed = getStorageManager().remove(test.getStorableList().get(0).getStorableKey());
             Assert.assertNull(removed);
@@ -124,12 +121,12 @@ public abstract class AbstractStoreManagerTest {
     }
 
     @Test(expected = StorageException.class)
-    public void testList_NonexistentNameSpace_StorageException() {
+    public void testListNonexistentNameSpaceStorageException() {
         Assert.assertTrue(getStorageManager().list("NONEXISTENT_NAME_SPACE").isEmpty());
     }
 
     @Test
-    public void testFind_NullQueryParams_AllEntries() {
+    public void testFindNullQueryParamsAllEntries() {
         for (StorableTest test : storableTests) {
             test.addAllToStorage();
             Collection<Storable> allExisting = getStorageManager().list(test.getNameSpace());
@@ -163,7 +160,7 @@ public abstract class AbstractStoreManagerTest {
     }
 
     @Test
-    public void testFind_NonExistentQueryParams_EmptyList() {
+    public void testFindNonExistentQueryParamsEmptyList() {
         for (StorableTest test : storableTests) {
             test.addAllToStorage();
             List<QueryParam> queryParams = new ArrayList<QueryParam>() {
@@ -179,14 +176,14 @@ public abstract class AbstractStoreManagerTest {
     }
 
     @Test
-    public void testNextId_AutoincrementColumn_IdPlusOne() throws Exception {
+    public void testNextIdAutoincrementColumnIdPlusOne() throws Exception {
         for (StorableTest test : storableTests) {
             // Device does not have auto_increment, and therefore there is no concept of nextId and should throw exception
-            doTestNextId_AutoincrementColumn_IdPlusOne(test);
+            doTestNextIdAutoincrementColumnIdPlusOne(test);
         }
     }
 
-    protected void doTestNextId_AutoincrementColumn_IdPlusOne(StorableTest test) throws SQLException {
+    protected void doTestNextIdAutoincrementColumnIdPlusOne(StorableTest test) throws SQLException {
         Long actualNextId = getStorageManager().nextId(test.getNameSpace());
         Long expectedNextId = actualNextId;
         Assert.assertEquals(expectedNextId, actualNextId);

@@ -67,9 +67,9 @@ public class OracleInsertUpdateDuplicate extends AbstractStorableSqlQuery {
                 "( SELECT " + join(getColumnNames(columns, "? as \"%s\""), ",") +
                 " FROM dual ) t2 ON ( " + join(primaryColumnNames.stream().map(pCol ->
                 String.format("t1.\"%s\"=t2.\"%s\"", pCol, pCol)).collect(Collectors.toList()), " AND ") + " )" +
-                ( nonPrimaryColumnNames.size() == 0 ? "" :
+                (nonPrimaryColumnNames.size() == 0 ? "" :
                 " WHEN MATCHED THEN UPDATE SET " + join(nonPrimaryColumnNames.stream().map(col ->
-                String.format("t1.\"%s\"=t2.\"%s\"", col, col)).collect(Collectors.toList()), " , ") ) +
+                String.format("t1.\"%s\"=t2.\"%s\"", col, col)).collect(Collectors.toList()), " , ")) +
                 " WHEN NOT MATCHED THEN INSERT (" + join(columnNames, ",") + ") VALUES (" +
                 getBindVariables("?,", columnNames.size()) + ")";
         LOG.debug(sql);

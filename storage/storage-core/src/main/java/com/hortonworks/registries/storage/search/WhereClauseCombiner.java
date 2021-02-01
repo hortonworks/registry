@@ -21,7 +21,7 @@ package com.hortonworks.registries.storage.search;
  *
  */
 public class WhereClauseCombiner {
-    public enum Operation {AND, OR, ENCL_START, ENCL_FINISH}
+    public enum Operation { AND, OR, ENCL_START, ENCL_FINISH }
 
     private WhereClause.Builder builder;
     private Predicate predicate;

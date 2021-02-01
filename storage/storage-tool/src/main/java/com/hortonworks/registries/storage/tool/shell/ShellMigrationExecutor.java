@@ -62,12 +62,12 @@ public class ShellMigrationExecutor implements MigrationExecutor {
             builder.redirectErrorStream(true);
             Process process = builder.start();
             Scanner in = new Scanner(process.getInputStream());
-            System.out.println(StringUtils.repeat("+",200));
+            System.out.println(StringUtils.repeat("+", 200));
             while (in.hasNextLine()) {
                 System.out.println(in.nextLine());
             }
             int returnCode = process.waitFor();
-            System.out.println(StringUtils.repeat("+",200));
+            System.out.println(StringUtils.repeat("+", 200));
             if (returnCode != 0) {
                 throw new FlywayException("script exited with value : " + returnCode);
             }

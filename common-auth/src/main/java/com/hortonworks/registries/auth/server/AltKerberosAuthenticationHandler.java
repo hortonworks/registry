@@ -14,7 +14,6 @@
 package com.hortonworks.registries.auth.server;
 
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

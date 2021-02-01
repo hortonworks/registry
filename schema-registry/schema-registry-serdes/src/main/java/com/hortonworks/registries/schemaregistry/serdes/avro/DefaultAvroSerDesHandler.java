@@ -118,14 +118,17 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
         if (readerSchema == null) {
             Class readerClass = SpecificData.get().getClass(writerSchema);
             if (readerClass == null) {
-                throw new AvroException("Could not find class " + writerSchema.getFullName() + " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
+                throw new AvroException("Could not find class " + writerSchema.getFullName() + 
+                        " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
             }
             try {
                 readerSchema = ((SpecificRecord) readerClass.newInstance()).getSchema();
             } catch (InstantiationException e) {
-                throw new AvroException(writerSchema.getFullName() + " specified by the " + "writers schema could not be instantiated to find the readers schema.");
+                throw new AvroException(writerSchema.getFullName() + " specified by the " + 
+                        "writers schema could not be instantiated to find the readers schema.");
             } catch (IllegalAccessException e) {
-                throw new AvroException(writerSchema.getFullName() + " specified by the " + "writers schema is not allowed to be instantiated to find the readers schema.");
+                throw new AvroException(writerSchema.getFullName() + " specified by the " + 
+                        "writers schema is not allowed to be instantiated to find the readers schema.");
             }
 
             this.readerSchemaCache.put(writerSchema.getFullName(), readerSchema);

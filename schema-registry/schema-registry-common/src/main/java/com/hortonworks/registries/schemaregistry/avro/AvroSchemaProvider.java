@@ -107,14 +107,14 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         Schema.Type schemaType = schema.getType();
         String fullName = schema.getFullName();
         switch (schemaType) {
-            default: // boolean, bytes, double, float, int, long, null, string
-                return appendable.append('"').append(schemaType.getName()).append('"');
-
             case UNION:
                 appendable.append('[');
                 for (Schema b : schema.getTypes()) {
-                    if (!firstTime) appendable.append(',');
-                    else firstTime = false;
+                    if (!firstTime) {
+                        appendable.append(',');
+                    } else {
+                        firstTime = false;
+                    }
                     build(env, b, appendable);
                 }
                 return appendable.append(']');
@@ -122,9 +122,11 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
             case ARRAY:
             case MAP:
                 appendable.append("{\"type\":\"").append(schemaType.getName()).append("\"");
-                if (schemaType == Schema.Type.ARRAY)
+                if (schemaType == Schema.Type.ARRAY) {
                     build(env, schema.getElementType(), appendable.append(",\"items\":"));
-                else build(env, schema.getValueType(), appendable.append(",\"values\":"));
+                } else {
+                    build(env, schema.getValueType(), appendable.append(",\"values\":"));
+                }
                 return appendable.append("}");
 
             case ENUM:
@@ -135,8 +137,11 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
 
                 appendable.append(",\"symbols\":[");
                 for (String enumSymbol : schema.getEnumSymbols()) {
-                    if (!firstTime) appendable.append(',');
-                    else firstTime = false;
+                    if (!firstTime) {
+                        appendable.append(',');
+                    } else {
+                        firstTime = false;
+                    }
                     appendable.append('"').append(enumSymbol).append('"');
                 }
                 return appendable.append("]").append("}");
@@ -186,6 +191,10 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
                     build(env, field.schema(), appendable).append("}");
                 }
                 return appendable.append("]").append("}");
+                
+            default: // boolean, bytes, double, float, int, long, null, string
+                return appendable.append('"').append(schemaType.getName()).append('"');
+
         }
     }
 

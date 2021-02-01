@@ -52,7 +52,7 @@ public class RewriteUriFilter implements Filter {
     }
 
     private Map<String, String> buildRewritePathsMap(String pathsStr) {
-        if(pathsStr == null || pathsStr.trim().isEmpty()) {
+        if (pathsStr == null || pathsStr.trim().isEmpty()) {
             return Collections.emptyMap();
         }
 
@@ -71,7 +71,8 @@ public class RewriteUriFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) 
+            throws IOException, ServletException {
         if (!handleRewriteUris(servletRequest, servletResponse)) {
             LOG.debug("No rewrite or forward path found, ");
             filterChain.doFilter(servletRequest, servletResponse);
@@ -84,7 +85,7 @@ public class RewriteUriFilter implements Filter {
 
         String redirectPath = findRewritePath(reqPath, redirectPaths);
         LOG.debug("request path [{}], redirectPath [{}]", reqPath, redirectPath);
-        if(redirectPath != null) {
+        if (redirectPath != null) {
             LOG.info("Redirecting request [{}] to [{}]", servletRequest, redirectPath);
             ((HttpServletResponse) servletResponse).sendRedirect(redirectPath);
             return true;

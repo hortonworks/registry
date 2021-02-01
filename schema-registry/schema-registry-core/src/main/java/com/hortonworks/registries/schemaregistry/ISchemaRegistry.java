@@ -66,7 +66,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException when no schema metadata registered with the given schema name.
      * @throws InvalidSchemaException  when the given {@code schemaText} is not valid.
      */
-     default SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
+     default SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText) 
+             throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
          return getSchemaVersionInfo(schemaName, schemaText, false);
      }
 
@@ -79,7 +80,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * If there is a version of the schema with the given schemaText for schema name then it returns respective {@link SchemaVersionInfo},
@@ -94,7 +96,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException when no schema metadata registered with the given schema name.
      * @throws InvalidSchemaException  when the given {@code schemaText} is not valid.
      */
-    SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText, boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException;
+    SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText, boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException;
 
     /**
      * If there is a version of the schema with the given fingerprint then it returns the respective {@link SchemaVersionInfo},
@@ -112,7 +115,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      *
      * @return Collects aggregated schema metadata which contains the given properties.
      */
-    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * @param schemaName name of the schema
@@ -151,7 +155,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException
      * @throws IncompatibleSchemaException
      */
-    default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) throws SchemaNotFoundException, IncompatibleSchemaException {
+    default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy) 
+            throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, schemaVersionMergeStrategy, false);
     }
 
@@ -166,7 +171,9 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @throws SchemaNotFoundException
      * @throws IncompatibleSchemaException
      */
-    SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy, boolean disableCanonicalCheck) throws IncompatibleSchemaException, SchemaNotFoundException;
+    SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, 
+                                                SchemaVersionMergeStrategy schemaVersionMergeStrategy, 
+                                                boolean disableCanonicalCheck) throws IncompatibleSchemaException, SchemaNotFoundException;
 
     /**
      * @param schemaName name identifying a schema
@@ -241,7 +248,7 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
         }
 
         public int getMaxSchemaCacheSize() {
-            return isCacheEnabled() == true ?
+            return isCacheEnabled() ?
                     Integer.parseInt(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString()) : 0;
         }
 

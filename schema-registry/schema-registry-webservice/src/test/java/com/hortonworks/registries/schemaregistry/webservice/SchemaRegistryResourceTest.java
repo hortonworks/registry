@@ -58,7 +58,7 @@ public class SchemaRegistryResourceTest {
     }
     
     @Test
-    public void createFilterForTest_NameDescOrder(){
+    public void createFilterForTestNameDescOrder() {
         //given
         String name = "some name";
         String desc = "interesting desc";
@@ -69,14 +69,16 @@ public class SchemaRegistryResourceTest {
         expected.put(ORDER, order);
         
         //when
-        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), Optional.ofNullable(order), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null));
+        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), 
+                Optional.ofNullable(order), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), 
+                Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null));
         
         //then
         assertThat(actual, is(expected));
     }
 
     @Test
-    public void createFilterForTest_AllQueries(){
+    public void createFilterForTestAllQueries() {
         //given
         String name = "some name";
         String desc = "interesting desc";
@@ -99,14 +101,16 @@ public class SchemaRegistryResourceTest {
         expected.put("evolve", evolve);
 
         //when
-        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
+        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), 
+                Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), 
+                Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
 
         //then
         assertThat(actual, is(expected));
     }
 
     @Test
-    public void createFilterForTest_NameDescType(){
+    public void createFilterForTestNameDescType() {
         //given
         String name = "some name";
         String desc = "interesting desc";
@@ -123,14 +127,17 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
 
         //when
-        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
+        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), 
+                Optional.ofNullable(desc), Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), 
+                Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), 
+                Optional.ofNullable(evolve));
 
         //then
         assertThat(actual, is(expected));
     }
 
     @Test
-    public void createFilterForNamespaceTest_NameGroupType(){
+    public void createFilterForNamespaceTestNameGroupType() {
         //given
         String name = "unique name";
         String namespace = "namespace";
@@ -141,7 +148,8 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
         
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
+                Optional.ofNullable(namespace), Optional.ofNullable(type));
         
         //then
         assertThat(actual, is(expected));
@@ -149,7 +157,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void createFilterForNamespaceTest_NameGroup(){
+    public void createFilterForNamespaceTestNameGroup() {
         //given
         String name = "unique name";
         String namespace = "namespace";
@@ -159,7 +167,8 @@ public class SchemaRegistryResourceTest {
         expected.put(FIELD_NAMESPACE, namespace);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
+                Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
         assertThat(actual, is(expected));
@@ -167,7 +176,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void createFilterForNamespaceTest_NameType(){
+    public void createFilterForNamespaceTestNameType() {
         //given
         String name = "unique name";
         String namespace = null;
@@ -177,7 +186,8 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
+                Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
         assertThat(actual, is(expected));
@@ -185,7 +195,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void createFilterForNamespaceTest_GroupType(){
+    public void createFilterForNamespaceTestGroupType() {
         //given
         String name = null;
         String namespace = "namespace";
@@ -195,7 +205,8 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
+                Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
         assertThat(actual, is(expected));
@@ -203,7 +214,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void createFilterForNamespaceTest_Name(){
+    public void createFilterForNamespaceTestName() {
         //given
         String name = "unique name";
         String namespace = null;
@@ -212,7 +223,8 @@ public class SchemaRegistryResourceTest {
         expected.put(NAME, name);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
+                Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
         assertThat(actual, is(expected));
@@ -220,17 +232,19 @@ public class SchemaRegistryResourceTest {
     }
     
     @Test
-    public void findSchemaByFields_AllParametersProvided() throws Exception{
+    public void findSchemaByFieldsAllParametersProvided() throws Exception {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("test", 1));
-        Mockito.when(authorizationAgentMock.authorizeFindSchemasByFields(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
+        Mockito.when(authorizationAgentMock.authorizeFindSchemasByFields(ArgumentMatchers.any(), 
+                ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
         String name = "name";
         String namespace = "namespace";
         String type = "type";
         SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, null, authorizationAgentMock, null, null){
+        underTest = new SchemaRegistryResource(schemaRegistryMock, 
+                null, authorizationAgentMock, null, null) {
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();
@@ -251,12 +265,12 @@ public class SchemaRegistryResourceTest {
         Mockito.verify(authorizationAgentMock).authorizeFindSchemasByFields(null, schemaRegistryMock, schemaversions);
         CollectionResponse expectedEntity = CollectionResponse.newResponse().entities(schemaversions).build();
         assertThat(actual.getStatus(), is(200));
-        assertThat(((CollectionResponse)(actual.getEntity())).getEntities(), is(expectedEntity.getEntities()));
+        assertThat(((CollectionResponse) (actual.getEntity())).getEntities(), is(expectedEntity.getEntities()));
 
     }
     
     @Test
-    public void buildSchemaFieldQueryTest_NameNamespaceType(){
+    public void buildSchemaFieldQueryTestNameNamespaceType() {
         //given
         String name = "apple";
         String namespace = "pear";
@@ -275,7 +289,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void buildSchemaFieldQueryTest_NameType(){
+    public void buildSchemaFieldQueryTestNameType() {
         //given
         String name = "apple";
         String namespace = "pear";
@@ -292,7 +306,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void buildSchemaFieldQueryTest_NamespaceType(){
+    public void buildSchemaFieldQueryTestNamespaceType() {
         //given
         String namespace = "pear";
         String type = "strawberry";
@@ -309,7 +323,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void buildSchemaFieldQueryTest_NameNamespace(){
+    public void buildSchemaFieldQueryTestNameNamespace() {
         //given
         String name = "apple";
         String namespace = "pear";
@@ -326,7 +340,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void buildSchemaFieldQueryTest_Type(){
+    public void buildSchemaFieldQueryTestType() {
         //given
         String type = "strawberry";
         MultivaluedMap<String, String> queryparameters = new MultivaluedHashMap<>();
@@ -341,7 +355,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void buildSchemaFieldQueryTest_Namespace(){
+    public void buildSchemaFieldQueryTestNamespace() {
         //given
         String namespace = "pear";
         MultivaluedMap<String, String> queryparameters = new MultivaluedHashMap<>();
@@ -356,7 +370,7 @@ public class SchemaRegistryResourceTest {
     }
 
     @Test
-    public void buildSchemaFieldQueryTest_Name(){
+    public void buildSchemaFieldQueryTestName() {
         //given
         String name = "apple";
         MultivaluedMap<String, String> queryparameters = new MultivaluedHashMap<>();

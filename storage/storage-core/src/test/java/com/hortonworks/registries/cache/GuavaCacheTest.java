@@ -54,7 +54,7 @@ public class GuavaCacheTest {
     }
 
     @Test
-    public void test_get_unexisting_key_null_expected() {
+    public void testGetUnexistingKeyNullExpected() {
         Storable val = cache.get(storableKey);
         Assert.assertNull(val);
     }
@@ -63,7 +63,7 @@ public class GuavaCacheTest {
      * Asserts that cache has not given key, puts (key,val) pair, retrieves key, and removes key at the end
      **/
     @Test
-    public void test_put_get_existing_remove_key() {
+    public void testPutGetExistingRemoveKey() {
         try {
             Assert.assertNull(cache.get(storableKey));
 
@@ -114,8 +114,12 @@ public class GuavaCacheTest {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             TestStorable that = (TestStorable) o;
 

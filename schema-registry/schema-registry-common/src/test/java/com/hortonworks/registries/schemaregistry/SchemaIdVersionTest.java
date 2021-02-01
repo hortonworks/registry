@@ -42,17 +42,17 @@ public class SchemaIdVersionTest {
         Long schemaVersionId = 1L;
 
         // SchemaIdVersion objects containing same schemaVersionId
-        SchemaIdVersion schemaIdVersion_1 = new SchemaIdVersion(metadataId, version, schemaVersionId);
-        SchemaIdVersion schemaIdVersion_2 = new SchemaIdVersion(schemaVersionId);
-        map.put(schemaIdVersion_1, value);
+        SchemaIdVersion schemaIdVersion1 = new SchemaIdVersion(metadataId, version, schemaVersionId);
+        SchemaIdVersion schemaIdVersion2 = new SchemaIdVersion(schemaVersionId);
+        map.put(schemaIdVersion1, value);
 
-        String storedValue = map.get(schemaIdVersion_2);
+        String storedValue = map.get(schemaIdVersion2);
         Assert.assertEquals(value, storedValue);
 
-        // invalidating schemaIdVersion_2 should remove value
-        map.remove(schemaIdVersion_2);
-        Assert.assertFalse(map.containsKey(schemaIdVersion_1));
-        Assert.assertFalse(map.containsKey(schemaIdVersion_2));
+        // invalidating schemaIdVersion2 should remove value
+        map.remove(schemaIdVersion2);
+        Assert.assertFalse(map.containsKey(schemaIdVersion1));
+        Assert.assertFalse(map.containsKey(schemaIdVersion2));
 
 
     }

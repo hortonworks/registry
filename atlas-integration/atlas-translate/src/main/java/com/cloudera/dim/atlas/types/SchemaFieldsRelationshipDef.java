@@ -20,7 +20,7 @@ import org.apache.atlas.model.typedef.AtlasStructDef.AtlasAttributeDef.Cardinali
 
 public class SchemaFieldsRelationshipDef extends AtlasRelationshipDef implements SchemaRegistryServiceType {
 
-    public static final String RELATIONSHIP_NAME = "schema_fields"+TODORemoveThis.COUNTER;
+    public static final String RELATIONSHIP_NAME = "schema_fields" + TODORemoveThis.COUNTER;
     public static final String RELATIONSHIP_LABEL = "schema.fields";
 
     public static final String REL_ONE = "fields";  // rel.name from the PoV of one

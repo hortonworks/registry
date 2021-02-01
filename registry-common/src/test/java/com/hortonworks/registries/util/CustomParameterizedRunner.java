@@ -216,7 +216,8 @@
 
 
 /**
- *   This is clone of the pull request https://github.com/junit-team/junit4/pull/1435, which has been merged to junit master and provides support for BeforeParam and AfterParam.
+ *   This is clone of the pull request https://github.com/junit-team/junit4/pull/1435, 
+ *   which has been merged to junit master and provides support for BeforeParam and AfterParam.
  *   This class should be removed once the pull request is available in the future release.
  */
 

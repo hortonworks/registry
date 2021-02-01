@@ -24,7 +24,7 @@ public class SchemaLockManager {
     private TransactionManager transactionManager;
 
     public SchemaLockManager(TransactionManager transactionManager) {
-        Preconditions.checkNotNull(transactionManager,"Transaction manager can't be null");
+        Preconditions.checkNotNull(transactionManager, "Transaction manager can't be null");
         this.transactionManager = transactionManager;
     }
 

@@ -34,12 +34,12 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 public class HdfsFileStorageTest {
-    private final String HDFS_DIR;
+    private final String hdfsDir;
     private HdfsFileStorage fileStorage;
 
     public HdfsFileStorageTest() {
         try {
-            HDFS_DIR = Files.createTempDirectory("upload").toFile().getAbsolutePath();
+            hdfsDir = Files.createTempDirectory("upload").toFile().getAbsolutePath();
         } catch (Exception ex) {
             throw new RuntimeException("Could not create temporary directory for uploading files. ", ex);
         }
@@ -52,7 +52,7 @@ public class HdfsFileStorageTest {
 
     @After
     public void tearDown() throws Exception {
-        FileUtils.deleteQuietly(new File(HDFS_DIR));
+        FileUtils.deleteQuietly(new File(hdfsDir));
         FileUtils.deleteQuietly(new File(FileStorage.DEFAULT_DIR));
     }
 
@@ -65,7 +65,7 @@ public class HdfsFileStorageTest {
     public void testUploadJarWithDir() throws Exception {
         Map<String, String> config = new HashMap<>();
         config.put(HdfsFileStorage.CONFIG_FSURL, "file:///");
-        config.put(HdfsFileStorage.CONFIG_DIRECTORY, HDFS_DIR);
+        config.put(HdfsFileStorage.CONFIG_DIRECTORY, hdfsDir);
         fileStorage.init(config);
 
         File file = File.createTempFile("test", ".tmp");

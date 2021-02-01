@@ -96,8 +96,12 @@ public final class SchemaIdVersion implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaIdVersion that = (SchemaIdVersion) o;
 
@@ -106,8 +110,9 @@ public final class SchemaIdVersion implements Serializable {
             return schemaVersionId.equals(that.schemaVersionId);
         }
 
-        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
+        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null) {
             return false;
+        }
         return (version != null ? version.equals(that.version) : that.version == null);
     }
 

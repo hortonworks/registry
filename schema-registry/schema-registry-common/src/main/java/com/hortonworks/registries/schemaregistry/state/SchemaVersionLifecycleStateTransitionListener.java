@@ -18,7 +18,8 @@ package com.hortonworks.registries.schemaregistry.state;
 
 /**
  *  This useful to add any custom logic for the existing transitions or any custom transitions registered.
- *  After a SchemaVersionLifecycleStateTransitionListener has been defined, one can register with SchemaVersionLifecycleStateMachine.Builder as shown below
+ *  After a SchemaVersionLifecycleStateTransitionListener has been defined, 
+ *  one can register with SchemaVersionLifecycleStateMachine.Builder as shown below
  *  <pre>
  *       builder.getTransitionsWithActions().entrySet().stream().
  *       filter(transitionAction -&lt; transitionAction.getKey().getTargetStateId().equals(SchemaVersionLifecycleStates.ENABLED.getId())).

@@ -34,11 +34,11 @@ import java.util.Map;
  *
  */
 public class PostgresSelectQueryTest {
-    private static final String nameSpace = "topic";
+    private static final String NAME_SPACE = "topic";
 
     @Test
     public void testSelectQuery() throws Exception {
-        PostgresqlSelectQuery postgresqlSelectQuery = new PostgresqlSelectQuery(nameSpace);
+        PostgresqlSelectQuery postgresqlSelectQuery = new PostgresqlSelectQuery(NAME_SPACE);
         String parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
         Assert.assertEquals("SELECT * FROM \"topic\"", parametrizedSql);
@@ -46,7 +46,7 @@ public class PostgresSelectQueryTest {
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
 
-        postgresqlSelectQuery = new PostgresqlSelectQuery(new StorableKey(nameSpace, new PrimaryKey(fieldToObjectMap)));
+        postgresqlSelectQuery = new PostgresqlSelectQuery(new StorableKey(NAME_SPACE, new PrimaryKey(fieldToObjectMap)));
         parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
         Assert.assertEquals("SELECT * FROM \"topic\" WHERE \"foo\" = ?", parametrizedSql);
@@ -64,7 +64,7 @@ public class PostgresSelectQueryTest {
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
 
-        postgresqlSelectQuery = new PostgresqlSelectQuery(new StorableKey(nameSpace, new PrimaryKey(fieldToObjectMap)), orderByFields);
+        postgresqlSelectQuery = new PostgresqlSelectQuery(new StorableKey(NAME_SPACE, new PrimaryKey(fieldToObjectMap)), orderByFields);
         parametrizedSql = postgresqlSelectQuery.getParametrizedSql();
 
         Assert.assertEquals("SELECT * FROM \"topic\" WHERE \"foo\" = ? ORDER BY \"foo\" DESC, ORDER BY \"bar\" ASC", parametrizedSql);

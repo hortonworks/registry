@@ -35,8 +35,9 @@ public class SchemaMigrationHelper {
 
     private void create() throws SQLException {
         try (Connection connection = flyway.getDataSource().getConnection()) {
-            if (!isDatabaseEmpty(connection))
+            if (!isDatabaseEmpty(connection)) {
                 throw new SchemaMigrationException("Please use an empty database or use \"migrate\" if you are already running a previous version.");
+            }
         }
         flyway.migrate();
     }

@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 
 public class RedisClients {
 //    protected static final Logger LOG = LoggerFactory.getLogger(RedisClients.class);
-    private static final RedisConnection<String, String> connection = RedisCacheTestMain.getConnection();
-    private static final RedisConnection<String, String> connection1 = RedisCacheTestMain.getConnection();
+    private static final RedisConnection<String, String> CONNECTION = RedisCacheTestMain.getConnection();
+    private static final RedisConnection<String, String> CONNECTION1 = RedisCacheTestMain.getConnection();
 
     public RedisClients() {
     }
@@ -34,8 +34,8 @@ public class RedisClients {
         @Override
         public void run() {
             while (true) {
-                LOG.info("conn - " + connection.get("h"));
-                LOG.info("conn1 - " + connection1.get("h"));
+                LOG.info("conn - " + CONNECTION.get("h"));
+                LOG.info("conn1 - " + CONNECTION1.get("h"));
 //                RedisCacheTestMain.readInput();
                 sleep();
             }
@@ -49,8 +49,8 @@ public class RedisClients {
         @Override
         public void run() {
             while (true) {
-                LOG.info("conn - " + connection.hgetall("hugo"));
-                LOG.info("conn1 - " + connection1.hgetall("hugo"));
+                LOG.info("conn - " + CONNECTION.hgetall("hugo"));
+                LOG.info("conn1 - " + CONNECTION1.hgetall("hugo"));
 //                RedisCacheTestMain.readInput();
                 sleep();
             }

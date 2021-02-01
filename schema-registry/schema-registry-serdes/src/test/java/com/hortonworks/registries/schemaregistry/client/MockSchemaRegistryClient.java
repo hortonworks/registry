@@ -66,8 +66,10 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
 
     public MockSchemaRegistryClient() {
         StorageManager storageManager = new InMemoryStorageManager();
-        Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        this.schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+        Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", 
+                AvroSchemaProvider.class.getName()));
+        this.schemaRegistry = new DefaultSchemaRegistry(storageManager, 
+                null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
         this.schemaRegistry.init(Collections.<String, Object>emptyMap());
     }
 
@@ -129,7 +131,9 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, 
+                                            SchemaVersion schemaVersion, boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, disableCanonicalCheck);
     }
 
@@ -154,7 +158,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return null;
     }
 
@@ -164,7 +169,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException {
+    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) 
+            throws SchemaBranchNotFoundException, SchemaNotFoundException {
         return schemaRegistry.findSchemasByFields(schemaFieldQuery);
     }
 
@@ -184,7 +190,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
     }
 
@@ -194,17 +201,20 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.getAllVersions(schemaBranchName, schemaName);
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.checkCompatibility(schemaName, toSchemaText);
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.checkCompatibility(schemaBranchName, schemaName, toSchemaText);
     }
 
@@ -238,7 +248,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
+    public void enableSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
         throw new UnsupportedOperationException();
     }
 
@@ -263,12 +274,14 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion uploadSchemaVersion(String schemaBranchName, String schemaName, String description, InputStream schemaVersionTextFile) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion uploadSchemaVersion(String schemaBranchName, String schemaName, String description, InputStream schemaVersionTextFile) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return false;
     }
 
@@ -300,7 +313,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
+    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) 
+            throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
        return schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
     }
 
@@ -315,7 +329,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
     }
 
@@ -334,7 +349,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, IncompatibleSchemaException {
          return schemaRegistry.mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC, disableCanonicalCheck);
     }
 

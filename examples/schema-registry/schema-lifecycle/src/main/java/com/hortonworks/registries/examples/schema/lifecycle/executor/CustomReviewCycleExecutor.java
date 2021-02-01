@@ -43,8 +43,10 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
 
     public void registerTechnicalLeadReviewState(SchemaVersionLifecycleStateMachine.Builder builder) {
         builder.register(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE);
-        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(),
-                CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getName(), CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getDescription()), (SchemaVersionLifecycleContext context) -> {
+        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), 
+                CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(),
+                CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getName(), CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getDescription()),
+                (SchemaVersionLifecycleContext context) -> {
             // Plugin a custom code to trigger as a part of the state transition, here we just record the state change in the database
             LOG.debug("Making a transition from 'PEER REVIEW' to 'TECHNICAL LEAD REVIEW' state");
             transitionToState(context, CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE);
@@ -52,8 +54,10 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
     }
 
     public void registerReviewedState(SchemaVersionLifecycleStateMachine.Builder builder) {
-        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), SchemaVersionLifecycleStates.REVIEWED.getId(),
-                SchemaVersionLifecycleStates.REVIEWED.getName(), SchemaVersionLifecycleStates.REVIEWED.getDescription()), (SchemaVersionLifecycleContext context) -> {
+        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), 
+                SchemaVersionLifecycleStates.REVIEWED.getId(),
+                SchemaVersionLifecycleStates.REVIEWED.getName(), SchemaVersionLifecycleStates.REVIEWED.getDescription()), 
+                (SchemaVersionLifecycleContext context) -> {
             // Plugin a custom code to trigger as a part of the state transition, here we just record the state change in the database
             LOG.debug("Making a transition from 'TECHNICAL LEAD REVIEW' to 'REVIEWED' state");
             transitionToState(context, SchemaVersionLifecycleStates.REVIEWED);
@@ -62,14 +66,18 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
 
     public void registerRejectedState(SchemaVersionLifecycleStateMachine.Builder builder) {
         builder.register(CustomReviewCycleStates.REJECTED_REVIEW_STATE);
-        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(),
-                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getName(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getDescription()), (SchemaVersionLifecycleContext context) -> {
+        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), 
+                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(),
+                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getName(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getDescription()), 
+                (SchemaVersionLifecycleContext context) -> {
             // Plugin a custom code to trigger as a part of the state transition, here we just record the state change in the database
             LOG.debug("Making a transition from 'PEER REVIEW' to 'REJECTED' state");
             transitionToState(context, CustomReviewCycleStates.REJECTED_REVIEW_STATE);
         });
-        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(),
-                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getName(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getDescription()), (SchemaVersionLifecycleContext context) -> {
+        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), 
+                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(),
+                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getName(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getDescription()), 
+                (SchemaVersionLifecycleContext context) -> {
             // Plugin a custom code to trigger as a part of the state transition, here we just record the state change in the database
             LOG.debug("Making a transition from 'TECHNICAL LEAD REVIEW' to 'REJECTED' state");
             transitionToState(context, CustomReviewCycleStates.REJECTED_REVIEW_STATE);
@@ -77,13 +85,16 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
     }
 
     public void registerChangesRequiredState(SchemaVersionLifecycleStateMachine.Builder builder) {
-        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(),
-                SchemaVersionLifecycleStates.CHANGES_REQUIRED.getName(), SchemaVersionLifecycleStates.CHANGES_REQUIRED.getDescription()), (SchemaVersionLifecycleContext context) -> {
+        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), 
+                SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(),
+                SchemaVersionLifecycleStates.CHANGES_REQUIRED.getName(), SchemaVersionLifecycleStates.CHANGES_REQUIRED.getDescription()), 
+                (SchemaVersionLifecycleContext context) -> {
             // Plugin a custom code to trigger as a part of the state transition, here we just record the state change in the database
             LOG.debug("Making a transition from 'PEER REVIEW' to 'REJECTED' state");
             transitionToState(context, SchemaVersionLifecycleStates.CHANGES_REQUIRED);
         });
-        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(),
+        builder.transition(new SchemaVersionLifecycleStateTransition(CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), 
+                        SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(),
                         SchemaVersionLifecycleStates.CHANGES_REQUIRED.getName(), SchemaVersionLifecycleStates.CHANGES_REQUIRED.getDescription()),
                 (SchemaVersionLifecycleContext context) -> {
                     // Plugin a custom code to trigger as a part of the state transition, here we just record the state change in the database
@@ -106,7 +117,7 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
                         LOG.debug("postStateTransition() calling external review service to notify the state transition");
                         Long schemaVersionId = context.getSchemaVersionId();
                         WebTarget webTarget = ClientBuilder.newClient().target(props.get("review.service.url").toString()).
-                                path("/v1/transition/schema/"+schemaVersionId+"/notify");
+                                path("/v1/transition/schema/" + schemaVersionId + "/notify");
                         webTarget.request().post(null);
                     }
                 }));
@@ -114,8 +125,9 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
 
     private void transitionToState(SchemaVersionLifecycleContext context,
                                    SchemaVersionLifecycleState targetState) throws SchemaLifecycleException {
-        if (context.getDetails() == null || context.getDetails().length == 0)
+        if (context.getDetails() == null || context.getDetails().length == 0) {
             throw new RuntimeException("This state transition should not be triggered through UI");
+        }
         context.setState(targetState);
         try {
             context.updateSchemaVersionState();
@@ -135,7 +147,8 @@ public class CustomReviewCycleExecutor implements CustomSchemaStateExecutor {
     }
 
     @Override
-    public void executeReviewState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, SchemaNotFoundException {
+    public void executeReviewState(SchemaVersionLifecycleContext schemaVersionLifecycleContext) 
+            throws SchemaLifecycleException, SchemaNotFoundException {
         schemaVersionLifecycleContext.setState(CustomReviewCycleStates.PEER_REVIEW_STATE);
         schemaVersionLifecycleContext.updateSchemaVersionState();
     }

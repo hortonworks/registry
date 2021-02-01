@@ -74,7 +74,8 @@ public final class CompatibilityResult implements Serializable {
     }
 
     /**
-     * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#isCompatible()} as false and {@link CompatibilityResult#getErrorMessage()} as given {@code errorMessage}
+     * Returns {@link CompatibilityResult} instance with {@link CompatibilityResult#isCompatible()} as false and 
+     * {@link CompatibilityResult#getErrorMessage()} as given {@code errorMessage}
      * @param errorMessage error message
      * @param errorLocation location of the error
      * @param schema schema for which this incompatibility result is returned.

@@ -33,7 +33,8 @@ import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
  * JAAS configuration can be provided to an application using a static file provided by java.security.auth.login.config property.
  * Alternately, the JAAS Configuration can be constructed dynamically using this class which parses the configuration string.
  * <p/>
- * JAAS configuration file format is described <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/LoginConfigFile.html">here</a>.
+ * JAAS configuration file format is described 
+ * <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/LoginConfigFile.html">here</a>.
  * The format of the property value is:
  * <pre>
  * {@code
@@ -59,9 +60,9 @@ public class JaasConfiguration extends Configuration {
             while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
                 configEntries.add(parseAppConfigurationEntry(tokenizer));
             }
-            if (configEntries.isEmpty())
+            if (configEntries.isEmpty()) {
                 throw new IllegalArgumentException("Login module not specified in JAAS config");
-
+            }
             this.loginContextName = loginContextName;
 
         } catch (IOException e) {
@@ -71,10 +72,11 @@ public class JaasConfiguration extends Configuration {
 
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
-        if (this.loginContextName.equals(name))
+        if (this.loginContextName.equals(name)) {
             return configEntries.toArray(new AppConfigurationEntry[0]);
-        else
-            return  null;
+        } else {
+            return null;
+        }
     }
 
     private LoginModuleControlFlag loginModuleControlFlag(String flag) {
@@ -100,19 +102,22 @@ public class JaasConfiguration extends Configuration {
 
     private AppConfigurationEntry parseAppConfigurationEntry(StreamTokenizer tokenizer) throws IOException {
         String loginModule = tokenizer.sval;
-        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF) {
             throw new IllegalArgumentException("Login module control flag not specified in JAAS config");
+        }
         LoginModuleControlFlag controlFlag = loginModuleControlFlag(tokenizer.sval);
         Map<String, String> options = new HashMap<>();
         while (tokenizer.nextToken() != StreamTokenizer.TT_EOF && tokenizer.ttype != ';') {
             String key = tokenizer.sval;
-            if (tokenizer.nextToken() != '=' || tokenizer.nextToken() == StreamTokenizer.TT_EOF || tokenizer.sval == null)
+            if (tokenizer.nextToken() != '=' || tokenizer.nextToken() == StreamTokenizer.TT_EOF || tokenizer.sval == null) {
                 throw new IllegalArgumentException("Value not specified for key '" + key + "' in JAAS config");
+            }
             String value = tokenizer.sval;
             options.put(key, value);
         }
-        if (tokenizer.ttype != ';')
+        if (tokenizer.ttype != ';') {
             throw new IllegalArgumentException("JAAS config entry not terminated by semi-colon");
+        }
         return new AppConfigurationEntry(loginModule, controlFlag, options);
     }
 }

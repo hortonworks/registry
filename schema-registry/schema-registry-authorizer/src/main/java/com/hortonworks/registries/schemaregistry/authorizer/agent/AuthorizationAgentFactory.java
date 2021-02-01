@@ -31,7 +31,7 @@ public class AuthorizationAgentFactory {
     public static AuthorizationAgent getAuthorizationAgent(Map<String, Object> props) {
 
         final String authorizationAgentClassName;
-        if(props == null || !props.containsKey(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG)) {
+        if (props == null || !props.containsKey(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG)) {
             authorizationAgentClassName = NOOPAuthorizationAgent.class.getCanonicalName();
         } else {
             authorizationAgentClassName = (String) props.get(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG);

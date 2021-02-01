@@ -28,27 +28,27 @@ import com.lambdaworks.redis.RedisConnection;
 import java.util.Arrays;
 import java.util.List;
 
-public class RedisCacheService<K,V> extends DataStoreBackedCacheService<K, V> {
-    private final Factory<RedisConnection<K,V>> connFactory;
+public class RedisCacheService<K, V> extends DataStoreBackedCacheService<K, V> {
+    private final Factory<RedisConnection<K, V>> connFactory;
 
-    private RedisCacheService(Builder<K,V> builder) {
+    private RedisCacheService(Builder<K, V> builder) {
         super(builder);
         this.connFactory = builder.connFactory;
     }
 
-    public static class Builder<K,V> extends DataStoreBackedCacheService.Builder<K,V> {
-        private final Factory<RedisConnection<K,V>> connFactory;
+    public static class Builder<K, V> extends DataStoreBackedCacheService.Builder<K, V> {
+        private final Factory<RedisConnection<K, V>> connFactory;
 
-        public Builder(String id, TypeConfig.Cache cacheType, Factory<RedisConnection<K,V>> connFactory) {
+        public Builder(String id, TypeConfig.Cache cacheType, Factory<RedisConnection<K, V>> connFactory) {
             super(id, cacheType);
             this.connFactory = connFactory;
         }
 
-        public RedisCacheService<K,V> build() {
+        public RedisCacheService<K, V> build() {
             return new RedisCacheService<>(this);
         }
 
-        public RedisCacheService<K,V> build(CacheConfig cacheConfig) {
+        public RedisCacheService<K, V> build(CacheConfig cacheConfig) {
             RedisCacheService<K, V> cacheService = new RedisCacheService<>(this);
             registerCaches(cacheService, cacheConfig);
             return cacheService;

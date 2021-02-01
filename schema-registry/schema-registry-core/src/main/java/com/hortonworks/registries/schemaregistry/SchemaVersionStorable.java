@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.AbstractVersionedStorable;
 import com.hortonworks.registries.storage.PrimaryKey;
-import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -233,20 +232,39 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaVersionStorable that = (SchemaVersionStorable) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (getSchemaMetadataId() != null ? !getSchemaMetadataId().equals(that.getSchemaMetadataId()) : that.getSchemaMetadataId() != null)
+        if (id != null ? !id.equals(that.id) : that.id != null) {
             return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-        if (fingerprint != null ? !fingerprint.equals(that.fingerprint) : that.fingerprint != null) return false;
+        }
+        if (getSchemaMetadataId() != null ? !getSchemaMetadataId().equals(that.getSchemaMetadataId()) : that.getSchemaMetadataId() != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) {
+            return false;
+        }
+        if (version != null ? !version.equals(that.version) : that.version != null) {
+            return false;
+        }
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
+            return false;
+        }
+        if (fingerprint != null ? !fingerprint.equals(that.fingerprint) : that.fingerprint != null) {
+            return false;
+        }
         return state != null ? state.equals(that.state) : that.state == null;
     }
 

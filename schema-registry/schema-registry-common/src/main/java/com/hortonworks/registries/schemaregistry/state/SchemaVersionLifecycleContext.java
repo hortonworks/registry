@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.state;
 
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.state.details.AbstractStateDetails;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

@@ -72,7 +72,7 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Before
-    public void startUp () throws Exception {
+    public void startUp() throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
         schemaRegistryClient = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient();
     }
@@ -93,7 +93,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test
-    public void getAllBranches() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void getAllBranches() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -101,7 +103,8 @@ public class SchemaBranchLifeCycleTest {
         SchemaIdVersion masterSchemaIdVersion2 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device-incompat.avsc");
         SchemaBranch schemaBranch2 = addSchemaBranch("BRANCH2", schemaMetadata, masterSchemaIdVersion2.getSchemaVersionId());
 
-        Set<String> actualSchemaBranches = schemaRegistryClient.getSchemaBranches(schemaMetadata.getName()).stream().map(branch -> branch.getName()).collect(Collectors.toSet());
+        Set<String> actualSchemaBranches = schemaRegistryClient
+                .getSchemaBranches(schemaMetadata.getName()).stream().map(branch -> branch.getName()).collect(Collectors.toSet());
         Set<String> expectedSchemaBranches = new HashSet<>(Lists.newArrayList("MASTER", schemaBranch1.getName(), schemaBranch2.getName()));
 
         Assert.assertTrue(SetUtils.isEqualSet(actualSchemaBranches, expectedSchemaBranches));
@@ -110,11 +113,13 @@ public class SchemaBranchLifeCycleTest {
     @Test (expected = SchemaNotFoundException.class)
     public void createBranchWithInvalidSchemaId() throws SchemaNotFoundException, SchemaBranchAlreadyExistsException {
          SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
-         addSchemaBranch("BRANCH1", schemaMetadata, 1l);
+         addSchemaBranch("BRANCH1", schemaMetadata, 1L);
     }
 
     @Test (expected = SchemaBranchAlreadyExistsException.class)
-    public void createAlreadyExistingBranch() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void createAlreadyExistingBranch() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -124,7 +129,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test
-    public void addSchemaVersionToBranch() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void addSchemaVersionToBranch() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -132,7 +139,8 @@ public class SchemaBranchLifeCycleTest {
         addSchemaVersion(schemaBranch1.getName(), schemaMetadata, "/device-incompat.avsc");
         addSchemaVersion(schemaBranch1.getName(), schemaMetadata, "/device-compat.avsc");
 
-        Collection<SchemaVersionInfo> schemaBranch1VersionInfos = schemaRegistryClient.getAllVersions(schemaBranch1.getName(), schemaMetadata.getName());
+        Collection<SchemaVersionInfo> schemaBranch1VersionInfos = schemaRegistryClient.getAllVersions(schemaBranch1.getName(), 
+                schemaMetadata.getName());
         Collection<SchemaVersionInfo> masterSchemaVersionInfos = schemaRegistryClient.getAllVersions(schemaMetadata.getName());
         Assert.assertTrue(masterSchemaVersionInfos.size() == 1);
         Assert.assertTrue(schemaBranch1VersionInfos.size() == 3);
@@ -146,7 +154,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test (expected = IncompatibleSchemaException.class)
-    public void addIncompatibleSchemaToBranch() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void addIncompatibleSchemaToBranch() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
 
         SchemaIdVersion masterSchemaIdVersion = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -155,7 +165,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test (expected = InvalidSchemaException.class)
-    public void addInvalidSchemaToBranch() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void addInvalidSchemaToBranch() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
 
         SchemaIdVersion masterSchemaIdVersion = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -166,7 +178,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test
-    public void mergeSchemaWithDefaultMergeStrategy() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void mergeSchemaWithDefaultMergeStrategy() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.toString(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -176,7 +190,8 @@ public class SchemaBranchLifeCycleTest {
 
         schemaRegistryClient.mergeSchemaVersion(schemaBranch1Version2.getSchemaVersionId());
 
-        Collection<SchemaVersionInfo> branchSchemaVersionInfos = schemaRegistryClient.getAllVersions(schemaBranch1.getName(), schemaMetadata.getName());
+        Collection<SchemaVersionInfo> branchSchemaVersionInfos = schemaRegistryClient.getAllVersions(schemaBranch1.getName(), 
+                schemaMetadata.getName());
         Collection<SchemaVersionInfo> masterSchemaVersionInfos = schemaRegistryClient.getAllVersions(schemaMetadata.getName());
         Assert.assertTrue(masterSchemaVersionInfos.size() == 2);
         Assert.assertTrue(branchSchemaVersionInfos.size() == 3);
@@ -190,7 +205,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test
-    public void mergeSchemaWhenRootVersionIsNotLatest() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void mergeSchemaWhenRootVersionIsNotLatest() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -203,18 +220,22 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test (expected = SchemaNotFoundException.class)
-    public void mergeSchemaWithInvalidSchemaVersion() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
+    public void mergeSchemaWithInvalidSchemaVersion() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
         SchemaBranch schemaBranch1 = addSchemaBranch("BRANCH1", schemaMetadata, masterSchemaIdVersion1.getSchemaVersionId());
         SchemaIdVersion schemaBranch1Version1 = addSchemaVersion(schemaBranch1.getName(), schemaMetadata, "/device-incompat.avsc");
 
-        schemaRegistryClient.mergeSchemaVersion(schemaBranch1Version1.getSchemaVersionId()+1);
+        schemaRegistryClient.mergeSchemaVersion(schemaBranch1Version1.getSchemaVersionId() + 1);
     }
 
     @Test
-    public void deleteSchemaBranch() throws SchemaNotFoundException, SchemaBranchAlreadyExistsException, IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
+    public void deleteSchemaBranch() 
+            throws SchemaNotFoundException, SchemaBranchAlreadyExistsException, IOException, 
+            InvalidSchemaException, IncompatibleSchemaException, SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -233,7 +254,9 @@ public class SchemaBranchLifeCycleTest {
 
 
     @Test (expected = SchemaBranchNotFoundException.class)
-    public void deleteInvalidSchemaBranch() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException, InvalidSchemaBranchDeletionException {
+    public void deleteInvalidSchemaBranch() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException, InvalidSchemaBranchDeletionException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -244,14 +267,18 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test (expected = InvalidSchemaBranchDeletionException.class)
-    public void deleteMasterBranch() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException, InvalidSchemaBranchDeletionException {
+    public void deleteMasterBranch() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, 
+            SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException, InvalidSchemaBranchDeletionException {
         addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
-        schemaRegistryClient.deleteSchemaBranch(1l);
+        schemaRegistryClient.deleteSchemaBranch(1L);
     }
 
     @Test (expected = InvalidSchemaBranchDeletionException.class)
-    public void deleteBranchWithEnabledSchema() throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException, InvalidSchemaBranchDeletionException, SchemaLifecycleException {
+    public void deleteBranchWithEnabledSchema() 
+            throws IOException, SchemaBranchNotFoundException, InvalidSchemaException, SchemaNotFoundException, 
+            IncompatibleSchemaException, SchemaBranchAlreadyExistsException, InvalidSchemaBranchDeletionException, SchemaLifecycleException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -264,7 +291,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test
-    public void deleteBranchWithArchivedSchema() throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, SchemaBranchAlreadyExistsException, SchemaLifecycleException, InvalidSchemaBranchDeletionException {
+    public void deleteBranchWithArchivedSchema() 
+            throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, 
+            SchemaBranchAlreadyExistsException, SchemaLifecycleException, InvalidSchemaBranchDeletionException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -279,13 +308,15 @@ public class SchemaBranchLifeCycleTest {
 
 
     @Test (expected = InvalidSchemaBranchDeletionException.class)
-    public void deleteBranchWithRootVersionOfAnotherBranch() throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, SchemaBranchAlreadyExistsException, SchemaLifecycleException, InvalidSchemaBranchDeletionException {
+    public void deleteBranchWithRootVersionOfAnotherBranch() 
+            throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, 
+            SchemaBranchAlreadyExistsException, SchemaLifecycleException, InvalidSchemaBranchDeletionException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
         SchemaBranch schemaBranch1 = addSchemaBranch("BRANCH1", schemaMetadata, masterSchemaIdVersion1.getSchemaVersionId());
         SchemaIdVersion schemaBranch1Version1 = addSchemaVersion(schemaBranch1.getName(), schemaMetadata, "/device-incompat.avsc");
-        addSchemaBranch("CHILD-BRANCH", schemaMetadata,schemaBranch1Version1.getSchemaVersionId());
+        addSchemaBranch("CHILD-BRANCH", schemaMetadata, schemaBranch1Version1.getSchemaVersionId());
 
         schemaRegistryClient.enableSchemaVersion(schemaBranch1Version1.getSchemaVersionId());
         schemaRegistryClient.archiveSchemaVersion(schemaBranch1Version1.getSchemaVersionId());
@@ -294,7 +325,9 @@ public class SchemaBranchLifeCycleTest {
     }
 
     @Test (expected = SchemaLifecycleException.class)
-    public void deleteRootSchemaOfBranch() throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, SchemaBranchAlreadyExistsException, SchemaLifecycleException {
+    public void deleteRootSchemaOfBranch() 
+            throws InvalidSchemaException, SchemaNotFoundException, IncompatibleSchemaException, IOException, 
+            SchemaBranchAlreadyExistsException, SchemaLifecycleException {
         SchemaMetadata schemaMetadata = addSchemaMetadata(testNameRule.getMethodName(), SchemaCompatibility.NONE);
 
         SchemaIdVersion masterSchemaIdVersion1 = addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, "/device.avsc");
@@ -307,14 +340,17 @@ public class SchemaBranchLifeCycleTest {
 
      // AuthorizationUtils
 
-    private SchemaBranch addSchemaBranch(String schemaBranchName, SchemaMetadata schemaMetadata, Long versionId) throws SchemaNotFoundException, SchemaBranchAlreadyExistsException {
+    private SchemaBranch addSchemaBranch(String schemaBranchName, SchemaMetadata schemaMetadata, Long versionId) 
+            throws SchemaNotFoundException, SchemaBranchAlreadyExistsException {
         SchemaBranch branch = new SchemaBranch(schemaBranchName, schemaMetadata.getName());
         return schemaRegistryClient.createSchemaBranch(versionId, branch);
     }
 
-    private SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, String pathToSchema) throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException {
+    private SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, String pathToSchema) 
+            throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException {
         String schema = AvroSchemaRegistryClientUtil.getSchema(pathToSchema);
-        SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaBranchName, schemaMetadata, new SchemaVersion(schema, "schema version description"));
+        SchemaIdVersion schemaIdVersion = schemaRegistryClient
+                .addSchemaVersion(schemaBranchName, schemaMetadata, new SchemaVersion(schema, "schema version description"));
         return schemaIdVersion;
     }
 

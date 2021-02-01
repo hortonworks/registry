@@ -28,7 +28,7 @@ import java.io.Serializable;
 public class Predicate implements Serializable {
     private static final long serialVersionUID = 3928533466168563000L;
 
-    public enum Operation {EQ, LT, GT, LTE, GTE, CONTAINS}
+    public enum Operation { EQ, LT, GT, LTE, GTE, CONTAINS }
 
     private String field;
     private Object value;
@@ -57,13 +57,21 @@ public class Predicate implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Predicate predicate = (Predicate) o;
 
-        if (field != null ? !field.equals(predicate.field) : predicate.field != null) return false;
-        if (value != null ? !value.equals(predicate.value) : predicate.value != null) return false;
+        if (field != null ? !field.equals(predicate.field) : predicate.field != null) {
+            return false;
+        }
+        if (value != null ? !value.equals(predicate.value) : predicate.value != null) {
+            return false;
+        }
         return operation == predicate.operation;
     }
 

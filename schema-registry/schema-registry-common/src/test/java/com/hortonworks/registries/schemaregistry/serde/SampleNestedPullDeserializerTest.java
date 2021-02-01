@@ -32,7 +32,7 @@ import java.util.Random;
 public class SampleNestedPullDeserializerTest {
     private static final Logger log = LoggerFactory.getLogger(SampleNestedPullDeserializerTest.class);
 
-    private static final Schema schema = Schema.of(
+    private static final Schema SCHEMA = Schema.of(
             Schema.NestedField.of("devices",
                     Schema.NestedField.of("thermostat",
                             Schema.Field.of("id", Schema.Type.STRING),
@@ -53,12 +53,12 @@ public class SampleNestedPullDeserializerTest {
 
     @Test
     public void testPullParser() throws Exception {
-        _testNestedPullParser("/sample-parser-nested-payload-1.txt");
-        _testNestedPullParser("/sample-parser-nested-payload-2.txt");
+        testNestedPullParser("/sample-parser-nested-payload-1.txt");
+        testNestedPullParser("/sample-parser-nested-payload-2.txt");
     }
 
-    private void _testNestedPullParser(String payloadFile) throws Exception {
-        SchemaDetails schemaDetails = new SchemaDetails(schema, "test-schema", (new Random().nextInt() % 10));
+    private void testNestedPullParser(String payloadFile) throws Exception {
+        SchemaDetails schemaDetails = new SchemaDetails(SCHEMA, "test-schema", (new Random().nextInt() % 10));
         try (SampleNestedPullDeserializer pullParser
                      = new SampleNestedPullDeserializer(schemaDetails, this.getClass().getResourceAsStream(payloadFile))) {
             List<PullEventContext.FieldValue> events = new ArrayList<>();

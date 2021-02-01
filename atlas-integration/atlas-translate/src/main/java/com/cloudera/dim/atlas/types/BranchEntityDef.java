@@ -21,7 +21,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class BranchEntityDef extends AtlasEntityDef implements SchemaRegistryServiceType {
 
-    public static final String SCHEMA_BRANCH = "schema_branch"+TODORemoveThis.COUNTER;
+    public static final String SCHEMA_BRANCH = "schema_branch" + TODORemoveThis.COUNTER;
 
     public static final String ID = "id";
     public static final String NAME = "name";

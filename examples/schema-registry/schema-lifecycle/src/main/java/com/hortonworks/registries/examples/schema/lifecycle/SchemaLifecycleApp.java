@@ -16,7 +16,6 @@
 
 package com.hortonworks.registries.examples.schema.lifecycle;
 
-import com.hortonworks.registries.schemaregistry.SchemaBranchStorable;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 
 public class SchemaLifecycleApp {
@@ -28,7 +27,8 @@ public class SchemaLifecycleApp {
     }
 
     public static void startUp() throws Exception {
-        LOCAL_SCHEMA_REGISTRY_SERVER = new LocalSchemaRegistryServer(SchemaLifecycleApp.class.getClassLoader().getResource("registry-lifecycle-example.yaml").getPath());
+        LOCAL_SCHEMA_REGISTRY_SERVER = new LocalSchemaRegistryServer(SchemaLifecycleApp.class.getClassLoader()
+                .getResource("registry-lifecycle-example.yaml").getPath());
         LOCAL_SCHEMA_REGISTRY_SERVER.start();
     }
 

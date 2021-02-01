@@ -50,7 +50,7 @@ public class Model extends AtlasTypesDef {
             return false;
         }
 
-        AtlasTypesDef typesDef = (AtlasTypesDef)o;
+        AtlasTypesDef typesDef = (AtlasTypesDef) o;
 
         return entityDefsMatch(typesDef) &&
                 relationshipDefsMatch(typesDef);

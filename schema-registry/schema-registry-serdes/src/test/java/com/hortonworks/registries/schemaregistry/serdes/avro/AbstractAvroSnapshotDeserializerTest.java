@@ -16,25 +16,19 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
-import org.hamcrest.core.Is;
-import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.internal.matchers.Any;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
 
 public class AbstractAvroSnapshotDeserializerTest {
 
     @Test
-    public void canReadBooleanPropertiesFromKafkaConfigs_StringValue() {
+    public void canReadBooleanPropertiesFromKafkaConfigsStringValue() {
         //given
         AvroSnapshotDeserializer underTest = new AvroSnapshotDeserializer();
         Map<String, String> config = new HashMap<>();
@@ -43,11 +37,11 @@ public class AbstractAvroSnapshotDeserializerTest {
         underTest.doInit(config);
         
         //then
-        Assert.assertThat(underTest.isUseSpecificAvroReader(), is(true));
+        assertThat(underTest.isUseSpecificAvroReader(), is(true));
     }
     
     @Test
-    public void canReadBooleanPropertiesFromKafkaConfigs_BooleanValue() {
+    public void canReadBooleanPropertiesFromKafkaConfigsBooleanValue() {
         //given
         AvroSnapshotDeserializer underTest = new AvroSnapshotDeserializer();
         Map<String, Boolean> config = new HashMap<>();
@@ -56,11 +50,11 @@ public class AbstractAvroSnapshotDeserializerTest {
         underTest.doInit(config);
 
         //then
-        Assert.assertThat(underTest.isUseSpecificAvroReader(), is(true));
+        assertThat(underTest.isUseSpecificAvroReader(), is(true));
     }
 
     @Test
-    public void canReadBooleanPropertiesFromKafkaConfigs_DefaultValue() {
+    public void canReadBooleanPropertiesFromKafkaConfigsDefaultValue() {
         //given
         AvroSnapshotDeserializer underTest = new AvroSnapshotDeserializer();
         Map<String, Boolean> config = new HashMap<>();
@@ -69,12 +63,13 @@ public class AbstractAvroSnapshotDeserializerTest {
         underTest.doInit(config);
 
         //then
-        Assert.assertThat(underTest.isUseSpecificAvroReader(), is(false));
+        assertThat(underTest.isUseSpecificAvroReader(), is(false));
     }
     
-    class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<String>{
+    class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<String> {
         @Override
-        protected Object doDeserialize(String input, byte protocolId, SchemaMetadata schemaMetadata, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
+        protected Object doDeserialize(String input, byte protocolId, SchemaMetadata schemaMetadata, 
+                                       Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
             return null;
         }
 

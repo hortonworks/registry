@@ -16,7 +16,11 @@ package com.hortonworks.registries.auth.server;
 import com.hortonworks.registries.auth.client.AuthenticatedURL;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.client.KerberosAuthenticator;
-import com.hortonworks.registries.auth.util.*;
+import com.hortonworks.registries.auth.util.FileSignerSecretProvider;
+import com.hortonworks.registries.auth.util.RandomSignerSecretProvider;
+import com.hortonworks.registries.auth.util.Signer;
+import com.hortonworks.registries.auth.util.SignerException;
+import com.hortonworks.registries.auth.util.SignerSecretProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +40,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.TimeZone;
 
 /**
  * <p>The {@link AuthenticationFilter} enables protecting web application
@@ -603,9 +614,8 @@ public class AuthenticationFilter implements Filter {
     private void drainInputStream(InputStream is) {
         try {
             byte[] buf = new byte[2048];
-            while (is.read(buf) > -1);
-        }
-        catch (IOException ioe) {
+            while (is.read(buf) > -1) { }
+        } catch (IOException ioe) {
             LOG.warn("Exception during draining input stream", ioe);
         }
     }
@@ -660,7 +670,7 @@ public class AuthenticationFilter implements Filter {
         resp.addHeader("Set-Cookie", sb.toString());
     }
 
-    private boolean isResourceAllowed (HttpServletRequest request) {
+    private boolean isResourceAllowed(HttpServletRequest request) {
         boolean result = false;
         String url = request.getRequestURL().toString();
         for (String allowedResource: allowedResources) {

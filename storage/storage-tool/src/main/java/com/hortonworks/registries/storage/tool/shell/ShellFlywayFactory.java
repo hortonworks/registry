@@ -25,31 +25,32 @@ import java.nio.charset.StandardCharsets;
 
 public class ShellFlywayFactory {
 
-    private static final String encoding = StandardCharsets.UTF_8.name();
-    private static final String metaDataTableName = "SCRIPT_CHANGE_LOG";
-    private static final String shellMigrationPrefix = "v";
-    private static final String shellMigrationSuffix = ".sh";
-    private static final String shellMigrationSeperator = "__";
-    private static final boolean validateOnMigrate = true;
-    private static final boolean outOfOrder = false;
-    private static final boolean baselineOnMigrate = true;
-    private static final String baselineVersion = "000";
-    private static final boolean cleanOnValidationError = false;
+    private static final String ENCODING = StandardCharsets.UTF_8.name();
+    private static final String META_DATA_TABLE_NAME = "SCRIPT_CHANGE_LOG";
+    private static final String SHELL_MIGRATION_PREFIX = "v";
+    private static final String SHELL_MIGRATION_SUFFIX = ".sh";
+    private static final String SHELL_MIGRATION_SEPERATOR = "__";
+    private static final boolean VALIDATE_ON_MIGRATE = true;
+    private static final boolean OUT_OF_ORDER = false;
+    private static final boolean BASELINE_ON_MIGRATE = true;
+    private static final String BASELINE_VERSION = "000";
+    private static final boolean CLEAN_ON_VALIDATION_ERROR = false;
 
 
     public static Flyway get(StorageProviderConfiguration conf, String scriptRootPath) {
         Flyway flyway = new Flyway();
 
         String location = "filesystem:" + scriptRootPath;
-        flyway.setEncoding(encoding);
-        flyway.setTable(metaDataTableName);
-        flyway.setValidateOnMigrate(validateOnMigrate);
-        flyway.setOutOfOrder(outOfOrder);
-        flyway.setBaselineOnMigrate(baselineOnMigrate);
-        flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
-        flyway.setCleanOnValidationError(cleanOnValidationError);
+        flyway.setEncoding(ENCODING);
+        flyway.setTable(META_DATA_TABLE_NAME);
+        flyway.setValidateOnMigrate(VALIDATE_ON_MIGRATE);
+        flyway.setOutOfOrder(OUT_OF_ORDER);
+        flyway.setBaselineOnMigrate(BASELINE_ON_MIGRATE);
+        flyway.setBaselineVersion(MigrationVersion.fromVersion(BASELINE_VERSION));
+        flyway.setCleanOnValidationError(CLEAN_ON_VALIDATION_ERROR);
         flyway.setLocations(location);
-        flyway.setResolvers(new ShellMigrationResolver(flyway.getConfiguration(), location, shellMigrationPrefix, shellMigrationSeperator, shellMigrationSuffix));
+        flyway.setResolvers(new ShellMigrationResolver(flyway.getConfiguration(), location,
+                SHELL_MIGRATION_PREFIX, SHELL_MIGRATION_SEPERATOR, SHELL_MIGRATION_SUFFIX));
         flyway.setDataSource(conf.getUrl(), conf.getUser(), conf.getPassword(), null);
 
         return flyway;

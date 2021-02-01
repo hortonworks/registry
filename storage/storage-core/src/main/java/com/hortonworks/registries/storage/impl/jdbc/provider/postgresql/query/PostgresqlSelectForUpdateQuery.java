@@ -18,7 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query;
 
 import com.hortonworks.registries.storage.StorableKey;
 
-public class PostgresqlSelectForUpdateQuery extends PostgresqlSelectQuery{
+public class PostgresqlSelectForUpdateQuery extends PostgresqlSelectQuery {
 
     public PostgresqlSelectForUpdateQuery(StorableKey storableKey) {
         super(storableKey);

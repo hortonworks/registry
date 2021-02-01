@@ -35,7 +35,7 @@ public class AuthorizationUtils {
     public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 
         Principal p = sc.getUserPrincipal();
-        if(p == null) {
+        if (p == null) {
             return null;
         }
         KerberosName kerberosName = new KerberosName(p.getName());
@@ -43,7 +43,7 @@ public class AuthorizationUtils {
         try {
             String user = kerberosName.getShortName();
             Authorizer.UserAndGroups res = userGroupsStore.get(user);
-            if(res != null) {
+            if (res != null) {
                 return res;
             }
             List<String> groupsList = UserGroupInformation.createRemoteUser(user).getGroups();

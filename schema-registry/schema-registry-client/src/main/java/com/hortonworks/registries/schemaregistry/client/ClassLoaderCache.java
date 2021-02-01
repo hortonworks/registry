@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.channels.FileLock;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -63,7 +62,8 @@ public class ClassLoaderCache {
                                                       TimeUnit.SECONDS)
                                    .build(cacheLoader);
 
-        localJarsDir = new File((String) this.schemaRegistryClient.getConfiguration().getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
+        localJarsDir = new File((String) this.schemaRegistryClient.getConfiguration()
+                .getValue(SchemaRegistryClient.Configuration.LOCAL_JAR_PATH.name()));
         ensureLocalDirsExist();
     }
 

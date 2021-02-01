@@ -24,7 +24,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
@@ -117,7 +116,7 @@ public class KafkaAvroSerDesApp {
                     avroMsg = jsonToAvro(line, schema);
                 } catch (Exception ex) {
                     LOG.warn("Error encountered while converting json to avro of message [{}]", line, ex);
-                    if(ignoreInvalidMsgs) {
+                    if (ignoreInvalidMsgs) {
                         continue;
                     } else {
                         throw ex;
@@ -133,7 +132,7 @@ public class KafkaAvroSerDesApp {
                     producer.send(producerRecord, callback);
                 } catch (SerDesException ex) {
                     LOG.warn("Error encountered while sending message [{}]", line, ex);
-                    if(!ignoreInvalidMsgs) {
+                    if (!ignoreInvalidMsgs) {
                         throw ex;
                     }
                 }
@@ -188,10 +187,12 @@ public class KafkaAvroSerDesApp {
 
 
         Option dataFileOption = Option.builder("d").longOpt("data-file").hasArg().desc("Provide a data file").type(String.class).build();
-        Option producerFileOption = Option.builder("p").longOpt("producer-config").hasArg().desc("Provide a Kafka producer config file").type(String.class).build();
+        Option producerFileOption = Option.builder("p")
+                .longOpt("producer-config").hasArg().desc("Provide a Kafka producer config file").type(String.class).build();
         Option schemaOption = Option.builder("s").longOpt("schema-file").hasArg().desc("Provide a schema file").type(String.class).build();
 
-        Option consumerFileOption = Option.builder("c").longOpt("consumer-config").hasArg().desc("Provide a Kafka Consumer config file").type(String.class).build();
+        Option consumerFileOption = Option.builder("c")
+                .longOpt("consumer-config").hasArg().desc("Provide a Kafka Consumer config file").type(String.class).build();
 
         OptionGroup groupOpt = new OptionGroup();
         groupOpt.addOption(sendMessages);

@@ -16,7 +16,6 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.collect.Lists;
-import com.hortonworks.registries.common.util.FileStorage;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -53,7 +52,7 @@ public abstract class AbstractFileStorageTest {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
         String nextLine;
         List<String> actual = Lists.newArrayList();
-        while((nextLine = bufferedReader.readLine()) != null) {
+        while ((nextLine = bufferedReader.readLine()) != null) {
             actual.add(nextLine);
         }
         Assert.assertEquals(lines, actual);

@@ -60,14 +60,14 @@ public abstract class AbstractStorable implements Storable {
     public Map<String, Object> toMap() {
         Set<String> instanceVariableNames = ReflectionHelper.getFieldNamesToTypes(this.getClass()).keySet();
         Map<String, Object> fieldToVal = new HashMap<>();
-        for(String fieldName : instanceVariableNames) {
+        for (String fieldName : instanceVariableNames) {
             try {
                 Object val = ReflectionHelper.invokeGetter(fieldName, this);
                 fieldToVal.put(fieldName, val);
-                if(LOG.isTraceEnabled()) {
+                if (LOG.isTraceEnabled()) {
                     LOG.trace("toMap: Adding fieldName {} = {} ", fieldName, val);
                 }
-            } catch (NoSuchMethodException|InvocationTargetException|IllegalAccessException e) {
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 throw new StorageException(e);
             }
         }
@@ -84,12 +84,12 @@ public abstract class AbstractStorable implements Storable {
      * @return the storable
      */
     public Storable fromMap(Map<String, Object> map) {
-        for(Map.Entry<String, Object> entry: map.entrySet()) {
+        for (Map.Entry<String, Object> entry: map.entrySet()) {
             try {
-                if(entry.getValue() != null) {
+                if (entry.getValue() != null) {
                     ReflectionHelper.invokeSetter(entry.getKey(), this, entry.getValue());
                 }
-            } catch (NoSuchMethodException|InvocationTargetException|IllegalAccessException e) {
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 throw new StorageException(e);
             }
         }
@@ -107,13 +107,13 @@ public abstract class AbstractStorable implements Storable {
         Map<String, Class> fieldNamesToTypes = ReflectionHelper.getFieldNamesToTypes(this.getClass());
         List<Schema.Field> fields = new ArrayList<>();
 
-        for(Map.Entry<String, Class> entry : fieldNamesToTypes.entrySet()) {
+        for (Map.Entry<String, Class> entry : fieldNamesToTypes.entrySet()) {
             try {
                 getField(entry.getKey(), entry.getValue()).ifPresent(field -> {
                     fields.add(field);
                     LOG.trace("getSchema: Adding {}", field);
                 });
-            } catch (NoSuchFieldException|NoSuchMethodException|InvocationTargetException|IllegalAccessException|ParserException e) {
+            } catch (NoSuchFieldException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | ParserException e) {
                 throw new StorageException(e);
             }
         }

@@ -18,7 +18,8 @@ package com.hortonworks.registries.schemaregistry.serde.push;
 import java.io.InputStream;
 
 /**
- * This class can be implemented to handle events when it is registered with {@link PushDeserializer#deserialize(InputStream, Object, PushDeserializerHandler)}
+ * This class can be implemented to handle events when it is registered with 
+ * {@link PushDeserializer#deserialize(InputStream, Object, PushDeserializerHandler)}
  */
 public interface PushDeserializerHandler<F> {
 

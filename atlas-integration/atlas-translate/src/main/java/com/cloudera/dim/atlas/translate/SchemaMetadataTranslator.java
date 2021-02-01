@@ -69,7 +69,7 @@ public class SchemaMetadataTranslator implements AtlasTranslator<SchemaMetadata>
                 .description((String) metaEntity.getAttribute(DESCRIPTION))
                 .compatibility(SchemaCompatibility.valueOf((String) metaEntity.getAttribute(COMPATIBILITY)))
                 .validationLevel(SchemaValidationLevel.valueOf((String) metaEntity.getAttribute(VALIDATION_LEVEL)))
-                .evolve((Boolean)metaEntity.getAttribute(EVOLVE))
+                .evolve((Boolean) metaEntity.getAttribute(EVOLVE))
                 .build();
     }
 

@@ -22,7 +22,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class VersionBranchRelationshipDef extends AtlasRelationshipDef implements SchemaRegistryServiceType {
 
-    public static final String RELATIONSHIP_NAME = "version_branches"+TODORemoveThis.COUNTER;
+    public static final String RELATIONSHIP_NAME = "version_branches" + TODORemoveThis.COUNTER;
     public static final String RELATIONSHIP_LABEL = "version.branches";
 
     public static final String REL_ONE = "branches";  // rel.name from the PoV of one

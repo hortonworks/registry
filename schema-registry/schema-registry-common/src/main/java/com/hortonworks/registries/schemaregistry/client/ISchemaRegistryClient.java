@@ -161,7 +161,7 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @deprecated This is deprecated since 0.3.0 and {@link #checkCompatibility(String, String)} should
      * be used from next versions.
      */
-    boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException ;
+    boolean isCompatibleWithAllVersions(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
 
     /**
@@ -176,7 +176,8 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @deprecated This is deprecated since 0.3.0 and {@link #checkCompatibility(String, String)} should
      * be used from next versions.
      */
-    boolean isCompatibleWithAllVersions(String schemaBranchName,String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException ;
+    boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * Returns a new instance of default serializer configured for the given type of schema.

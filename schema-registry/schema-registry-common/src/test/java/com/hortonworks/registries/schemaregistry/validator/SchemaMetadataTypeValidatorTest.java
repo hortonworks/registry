@@ -34,9 +34,9 @@ public class SchemaMetadataTypeValidatorTest {
     public void canAcceptValidType() {
         //given
         SchemaMetadataTypeValidator underTest = new SchemaMetadataTypeValidator(mockSchemaRegistryServiceMock);
-        SchemaProviderInfo providerInfo_1 = new SchemaProviderInfo("json", null, null, null, null);
-        SchemaProviderInfo providerInfo_2 = new SchemaProviderInfo("avro", null, null, null, null);
-        when(mockSchemaRegistryServiceMock.getSupportedSchemaProviders()).thenReturn(Arrays.asList(new SchemaProviderInfo[]{providerInfo_1, providerInfo_2}));
+        SchemaProviderInfo providerInfo1 = new SchemaProviderInfo("json", null, null, null, null);
+        SchemaProviderInfo providerInfo2 = new SchemaProviderInfo("avro", null, null, null, null);
+        when(mockSchemaRegistryServiceMock.getSupportedSchemaProviders()).thenReturn(Arrays.asList(providerInfo1, providerInfo2));
 
         //when
         boolean actual = underTest.isValid("avro");
@@ -50,9 +50,9 @@ public class SchemaMetadataTypeValidatorTest {
     public void canAcceptInvalidType() {
         //given
         SchemaMetadataTypeValidator underTest = new SchemaMetadataTypeValidator(mockSchemaRegistryServiceMock);
-        SchemaProviderInfo providerInfo_1 = new SchemaProviderInfo("json", null, null, null, null);
-        SchemaProviderInfo providerInfo_2 = new SchemaProviderInfo("avro", null, null, null, null);
-        when(mockSchemaRegistryServiceMock.getSupportedSchemaProviders()).thenReturn(Arrays.asList(new SchemaProviderInfo[]{providerInfo_1, providerInfo_2}));
+        SchemaProviderInfo providerInfo1 = new SchemaProviderInfo("json", null, null, null, null);
+        SchemaProviderInfo providerInfo2 = new SchemaProviderInfo("avro", null, null, null, null);
+        when(mockSchemaRegistryServiceMock.getSupportedSchemaProviders()).thenReturn(Arrays.asList(providerInfo1, providerInfo2));
 
         //when
         boolean actual = underTest.isValid("cat");

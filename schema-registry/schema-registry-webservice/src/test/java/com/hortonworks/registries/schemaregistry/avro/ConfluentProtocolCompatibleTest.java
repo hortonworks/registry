@@ -51,7 +51,9 @@ public class ConfluentProtocolCompatibleTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfluentProtocolCompatibleTest.class);
     public static final String GENERIC_TEST_RECORD_SCHEMA =
-        "{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}";
+        "{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\"," +
+        "\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":" +
+        "\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}";
 
     private LocalSchemaRegistryServer localSchemaRegistryServer;
 
@@ -90,7 +92,8 @@ public class ConfluentProtocolCompatibleTest {
         kafkaAvroSerializer.configure(confluentConfig, false);
         byte[] bytes = kafkaAvroSerializer.serialize("topic", record);
 
-        io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = new io.confluent.kafka.serializers.KafkaAvroDeserializer();
+        io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = 
+                new io.confluent.kafka.serializers.KafkaAvroDeserializer();
         confluentKafkaAvroDeserializer.configure(confluentConfig, false);
 
         GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
@@ -136,7 +139,8 @@ public class ConfluentProtocolCompatibleTest {
         LOG.info(registryResult.toString());
 
 
-        io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = new io.confluent.kafka.serializers.KafkaAvroDeserializer();
+        io.confluent.kafka.serializers.KafkaAvroDeserializer confluentKafkaAvroDeserializer = 
+                new io.confluent.kafka.serializers.KafkaAvroDeserializer();
         confluentKafkaAvroDeserializer.configure(confluentConfig, false);
 
         GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
@@ -169,7 +173,9 @@ public class ConfluentProtocolCompatibleTest {
             HttpResponse response = httpClient.execute(getRequest);
             Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
         } finally {
-            if (httpClient != null) httpClient.close();
+            if (httpClient != null) {
+                httpClient.close();
+            }
         }
     }
 

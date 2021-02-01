@@ -20,7 +20,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 
-public class RedisConnectionPoolFactory<K,V> extends AbstractRedisConnectionFactory<K,V> {
+public class RedisConnectionPoolFactory<K, V> extends AbstractRedisConnectionFactory<K, V> {
     // Defaults for Lettuce Redis Client 3.4.2
     private static final int MAX_IDLE = 5;
     private static final int MAX_ACTIVE = 20;

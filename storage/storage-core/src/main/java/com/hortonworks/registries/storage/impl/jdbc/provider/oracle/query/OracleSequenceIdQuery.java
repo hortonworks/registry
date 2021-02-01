@@ -30,7 +30,7 @@ import java.sql.SQLException;
 
 public class OracleSequenceIdQuery {
     private static final Logger log = LoggerFactory.getLogger(OracleSequenceIdQuery.class);
-    private static final String nextValueFunction = "nextval";
+    private static final String NEXT_VALUE_FUNCTION = "nextval";
     private final String namespace;
     private final OracleDataTypeContext oracleDatabaseStorageContext;
     private final int queryTimeoutSecs;
@@ -43,13 +43,14 @@ public class OracleSequenceIdQuery {
 
     public Long getNextID(Connection connection) {
 
-        OracleSqlQuery nextValueQuery = new OracleSqlQuery(String.format("SELECT \"%s\".%s from DUAL", namespace.toUpperCase(), nextValueFunction));
-        Long nextId = 0l;
+        OracleSqlQuery nextValueQuery = new OracleSqlQuery(String.format("SELECT \"%s\".%s from DUAL", namespace.toUpperCase(), NEXT_VALUE_FUNCTION));
+        Long nextId = 0L;
 
-        try (PreparedStatement preparedStatement = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), oracleDatabaseStorageContext, nextValueQuery).getPreparedStatement(nextValueQuery);
+        try (PreparedStatement preparedStatement = PreparedStatementBuilder.of(connection, 
+                new ExecutionConfig(queryTimeoutSecs), oracleDatabaseStorageContext, nextValueQuery).getPreparedStatement(nextValueQuery);
              ResultSet selectResultSet = preparedStatement.executeQuery()) {
             if (selectResultSet.next()) {
-                nextId = selectResultSet.getLong(nextValueFunction);
+                nextId = selectResultSet.getLong(NEXT_VALUE_FUNCTION);
             } else {
                 throw new RuntimeException("No sequence-id created for the current sequence of [" + namespace + "]");
             }

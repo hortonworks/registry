@@ -90,7 +90,8 @@ public class MySqlExecutor extends AbstractQueryExecutor {
 
     @Override
     public <T extends Storable> Collection<T> select(SearchQuery searchQuery) {
-        return executeQuery(searchQuery.getNameSpace(), new MySqlSelectQuery(searchQuery, storableFactory.create(searchQuery.getNameSpace()).getSchema()));
+        return executeQuery(searchQuery.getNameSpace(), 
+                new MySqlSelectQuery(searchQuery, storableFactory.create(searchQuery.getNameSpace()).getSchema()));
     }
 
     @Override

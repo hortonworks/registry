@@ -64,7 +64,8 @@ public class HfsFileStorageKerberosTest {
     private static final String DIRECTORY = "/registry";
     private static final String ADJUSTED_DIRECTORY = HdfsFileStorage.adjustDirectory(FS_URL, DIRECTORY);
     private static final String LOGIN_PRINCIPAL = "schemaregistry/hostname@DOMAIN";
-    private static final String LOGIN_KEYTAB = "/var/run/cloudera-scm-agent/process/1546340168-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab";
+    private static final String LOGIN_KEYTAB = 
+            "/var/run/cloudera-scm-agent/process/1546340168-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab";
     private static final String JAR_FILE = "serdes.jar";
 
     @Before

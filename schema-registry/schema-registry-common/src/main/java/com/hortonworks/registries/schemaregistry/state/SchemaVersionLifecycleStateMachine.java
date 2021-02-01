@@ -42,13 +42,15 @@ public class SchemaVersionLifecycleStateMachine {
     private final Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions;
     private final Map<SchemaVersionLifecycleStateTransition, List<SchemaVersionLifecycleStateTransitionListener>> listeners;
 
-    private SchemaVersionLifecycleStateMachine(Map<Byte, SchemaVersionLifecycleState> states,
-                                               Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions,
-                                               Map<SchemaVersionLifecycleStateTransition, ConcurrentLinkedQueue<SchemaVersionLifecycleStateTransitionListener>> listeners) {
+    private SchemaVersionLifecycleStateMachine(
+            Map<Byte, SchemaVersionLifecycleState> states, 
+            Map<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction> transitions,
+            Map<SchemaVersionLifecycleStateTransition, ConcurrentLinkedQueue<SchemaVersionLifecycleStateTransitionListener>> listeners) {
         this.states = Collections.unmodifiableMap(states);
         this.transitions = Collections.unmodifiableMap(transitions);
         this.listeners = Collections.unmodifiableMap(listeners).entrySet().stream().
-                collect(Collectors.toMap(Map.Entry::getKey, transitionWithListener -> Lists.newArrayList(transitionWithListener.getValue().iterator())));
+                collect(Collectors.toMap(Map.Entry::getKey, transitionWithListener -> 
+                        Lists.newArrayList(transitionWithListener.getValue().iterator())));
     }
 
     public Map<Byte, SchemaVersionLifecycleState> getStates() {
@@ -142,8 +144,9 @@ public class SchemaVersionLifecycleStateMachine {
 
         public void registerListener(SchemaVersionLifecycleStateTransition transition, SchemaVersionLifecycleStateTransitionListener listener) {
             SchemaVersionLifecycleStateAction schemaVersionLifecycleStateAction = transitionsWithActions.get(transition);
-            if (schemaVersionLifecycleStateAction == null)
+            if (schemaVersionLifecycleStateAction == null) {
                 throw new IllegalArgumentException("Given transition doesn't have any action associated with it");
+            }
             ConcurrentLinkedQueue<SchemaVersionLifecycleStateTransitionListener> listeners = transitionsWithListeners.computeIfAbsent(transition,
                     missingTransition -> new ConcurrentLinkedQueue<>());
             listeners.add(listener);
@@ -171,7 +174,7 @@ public class SchemaVersionLifecycleStateMachine {
         }
 
         public SchemaVersionLifecycleStateMachine build() {
-            return new SchemaVersionLifecycleStateMachine(states, transitionsWithActions , transitionsWithListeners);
+            return new SchemaVersionLifecycleStateMachine(states, transitionsWithActions, transitionsWithListeners);
         }
     }
 

@@ -136,6 +136,6 @@ public interface AuthenticationHandler {
      * @return <code>TRUE</code> if this request should be authenticated by the handler,
      * <code>FALSE</code> otherwise.
      */
-    public boolean shouldAuthenticate( HttpServletRequest request);
+    public boolean shouldAuthenticate(HttpServletRequest request);
 
 }

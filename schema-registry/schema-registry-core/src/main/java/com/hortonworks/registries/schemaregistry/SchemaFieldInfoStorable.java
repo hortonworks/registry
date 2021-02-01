@@ -142,18 +142,30 @@ public class SchemaFieldInfoStorable extends AbstractStorable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaFieldInfoStorable that = (SchemaFieldInfoStorable) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (fieldNamespace != null ? !fieldNamespace.equals(that.fieldNamespace) : that.fieldNamespace != null)
+        if (id != null ? !id.equals(that.id) : that.id != null) {
             return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (schemaInstanceId != null ? !schemaInstanceId.equals(that.schemaInstanceId) : that.schemaInstanceId != null)
+        }
+        if (fieldNamespace != null ? !fieldNamespace.equals(that.fieldNamespace) : that.fieldNamespace != null) {
             return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (type != null ? !type.equals(that.type) : that.type != null) {
+            return false;
+        }
+        if (schemaInstanceId != null ? !schemaInstanceId.equals(that.schemaInstanceId) : that.schemaInstanceId != null) {
+            return false;
+        }
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
     }

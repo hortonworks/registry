@@ -17,19 +17,11 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
-import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractSelectQuery;
-import com.hortonworks.registries.storage.search.OrderBy;
-import com.hortonworks.registries.storage.search.Predicate;
-import com.hortonworks.registries.storage.search.PredicateCombinerPair;
 import com.hortonworks.registries.storage.search.SearchQuery;
-import com.hortonworks.registries.storage.search.WhereClause;
-import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**

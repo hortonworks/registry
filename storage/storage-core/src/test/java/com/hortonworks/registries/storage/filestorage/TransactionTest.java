@@ -71,7 +71,7 @@ public class TransactionTest {
             throw e;
         }
 
-        try{
+        try {
             transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
             String update = input + " new text";
             dbFileStorage.upload(IOUtils.toInputStream(update, "UTF-8"), FILE_NAME);

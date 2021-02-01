@@ -16,6 +16,6 @@
 
 package com.hortonworks.registries.cache.view.impl.guava;
 
-public class GuavaCache<K,V> {
+public class GuavaCache<K, V> {
 
 }

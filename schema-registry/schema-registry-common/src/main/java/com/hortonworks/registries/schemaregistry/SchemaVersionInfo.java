@@ -138,26 +138,49 @@ public final class SchemaVersionInfo implements Serializable {
         return schemaMetadataId;
     }
 
-    public MergeInfo getMergeInfo() { return this.mergeInfo;}
+    public MergeInfo getMergeInfo() { 
+        return this.mergeInfo; 
+    }
 
-    public void setMergeInfo(MergeInfo mergeInfo) { this.mergeInfo = mergeInfo;}
+    public void setMergeInfo(MergeInfo mergeInfo) { 
+        this.mergeInfo = mergeInfo;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaVersionInfo that = (SchemaVersionInfo) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
+        if (id != null ? !id.equals(that.id) : that.id != null) {
             return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) return false;
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-        if (mergeInfo != null ? !mergeInfo.equals(that.mergeInfo) : that.mergeInfo != null) return false;
+        }
+        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (version != null ? !version.equals(that.version) : that.version != null) {
+            return false;
+        }
+        if (schemaText != null ? !schemaText.equals(that.schemaText) : that.schemaText != null) {
+            return false;
+        }
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
+            return false;
+        }
+        if (mergeInfo != null ? !mergeInfo.equals(that.mergeInfo) : that.mergeInfo != null) {
+            return false;
+        }
         return stateId != null ? stateId.equals(that.stateId) : that.stateId == null;
     }
 

@@ -61,11 +61,11 @@ public class BranchTranslator implements AtlasTranslator<SchemaBranch> {
     @Override
     public SchemaBranch fromAtlas(AtlasStruct atlasEntity) {
         return new SchemaBranch(
-                ((Number)atlasEntity.getAttribute(ID)).longValue(),
-                (String)atlasEntity.getAttribute(NAME),
-                (String)atlasEntity.getAttribute(SCHEMA_METADATA_NAME),
-                (String)atlasEntity.getAttribute(DESCRIPTION),
-                ((Number)atlasEntity.getAttribute(TIMESTAMP)).longValue());
+                ((Number) atlasEntity.getAttribute(ID)).longValue(),
+                (String) atlasEntity.getAttribute(NAME),
+                (String) atlasEntity.getAttribute(SCHEMA_METADATA_NAME),
+                (String) atlasEntity.getAttribute(DESCRIPTION),
+                ((Number) atlasEntity.getAttribute(TIMESTAMP)).longValue());
     }
 
     public AtlasRelationship createRelationshipWithMeta(AtlasEntity meta, AtlasEntity branch) {

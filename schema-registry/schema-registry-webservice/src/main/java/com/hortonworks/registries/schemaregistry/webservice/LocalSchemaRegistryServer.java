@@ -113,7 +113,7 @@ public class LocalSchemaRegistryServer {
         }
 
         void start() throws Exception {
-            if(localServer == null) {
+            if (localServer == null) {
                 LOG.info("Local schema registry instance is getting started.");
                 run("server", configFilePath);
                 LOG.info("Local schema registry instance is started at port [{}]", getLocalPort());

@@ -17,15 +17,15 @@
 package com.hortonworks.registries.cache.view.config;
 
 public interface TypeConfig {
-    enum Cache {REDIS, GUAVA, MEMCACHED}
+    enum Cache { REDIS, GUAVA, MEMCACHED }
 
-    enum RedisDatatype {STRINGS, HASHES}
+    enum RedisDatatype { STRINGS, HASHES }
 
-    enum DataStore {PHOENIX, MYSQL, HBASE}
+    enum DataStore { PHOENIX, MYSQL, HBASE }
 
-    enum CacheLoader {SYNC, ASYNC}
+    enum CacheLoader { SYNC, ASYNC }
 
-    enum CacheReader {THROUGH}
+    enum CacheReader { THROUGH }
 
-    enum CacheWriter {SYNC, ASYNC}
+    enum CacheWriter { SYNC, ASYNC }
 }

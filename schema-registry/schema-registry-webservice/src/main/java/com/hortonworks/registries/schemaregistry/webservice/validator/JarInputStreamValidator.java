@@ -17,8 +17,9 @@ public class JarInputStreamValidator {
         try {
             allBytesFromStream = IOUtils.toByteArray(inputStream);
             JarInputStream jarInputStream = new JarInputStream(new ByteArrayInputStream(allBytesFromStream), false);
-            if (jarInputStream.getNextJarEntry() == null)
+            if (jarInputStream.getNextJarEntry() == null) {
                 throw new InvalidJarFileException("Jar file corrupted.");
+            }
         } catch (ZipException e) {
             throw new InvalidJarFileException("Jar file corrupted.", e);
         } finally {

@@ -85,7 +85,8 @@ public interface AtlasPlugin {
      * @return  the unique ID of the new version
      * @throws SchemaNotFoundException  If there is no schema with the given name.
      */
-    SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion, String fingerprint, SchemaBranch schemaBranch) throws SchemaNotFoundException;
+    SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion, String fingerprint, SchemaBranch schemaBranch) 
+            throws SchemaNotFoundException;
 
     /**
      * Get schema by its unique name. If it's not found then none will be returned.

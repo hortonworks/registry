@@ -34,12 +34,12 @@ public abstract class AbstractInMemoryStorageManagerTest extends AbstractStoreMa
     }
 
     @Test
-    public void testList_NonexistentNameSpace_StorageException() {
+    public void testListNonexistentNameSpaceStorageException() {
         Collection<Storable> found = getStorageManager().list("NONEXISTENT_NAME_SPACE");
         Assert.assertTrue(found.isEmpty());
     }
 
-    protected void doTestNextId_AutoincrementColumn_IdPlusOne(StorableTest test) throws SQLException {
+    protected void doTestNextIdAutoincrementColumnIdPlusOne(StorableTest test) throws SQLException {
         Long actualNextId = getStorageManager().nextId(test.getNameSpace());
         Long expectedNextId = actualNextId;
         // increment two numbers for InmemoryManager as nextId() always increments.

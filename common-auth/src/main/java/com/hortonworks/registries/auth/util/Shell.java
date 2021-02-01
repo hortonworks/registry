@@ -133,8 +133,9 @@ abstract public class Shell {
         } catch (InterruptedException ie) {
             throw new IOException(ie.toString());
         } finally {
-            if (timeoutTimer != null)
+            if (timeoutTimer != null) {
                 timeoutTimer.cancel();
+            }
 
             // close the input stream
             try {
@@ -142,8 +143,9 @@ abstract public class Shell {
             } catch (IOException ioe) {
                 LOG.warn("Error while closing the input stream", ioe);
             }
-            if (!completed.get())
+            if (!completed.get()) {
                 errThread.interrupt();
+            }
 
             try {
                 errReader.close();
@@ -251,7 +253,7 @@ abstract public class Shell {
      * @param cmd shell command to execute.
      * @return the output of the executed command.
      */
-    public static String execCommand(String ... cmd) throws IOException {
+    public static String execCommand(String... cmd) throws IOException {
         return execCommand(cmd, -1);
     }
 

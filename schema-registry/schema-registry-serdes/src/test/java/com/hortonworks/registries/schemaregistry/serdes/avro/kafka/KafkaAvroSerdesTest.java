@@ -159,7 +159,7 @@ public class KafkaAvroSerdesTest {
 
         GenericRecord record = new GenericRecordBuilder(schema).set("field1", "some value").set("field2", "some other value").build();
 
-        byte[] bytes = kafkaAvroSerializer.serialize(topic , record);
+        byte[] bytes = kafkaAvroSerializer.serialize(topic, record);
         Object o = kafkaAvroDeserializer.deserialize(topic, bytes);
         checkGenericSerializedGenericDeserializedEquals(record, o);
 

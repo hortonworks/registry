@@ -23,5 +23,5 @@ import com.hortonworks.registries.cache.view.datastore.DataStoreWriter;
  * @param <K>   Type of the key
  * @param <V>   Type of the value
  */
-public interface CacheWriter<K,V> extends DataStoreWriter<K,V> {
+public interface CacheWriter<K, V> extends DataStoreWriter<K, V> {
 }

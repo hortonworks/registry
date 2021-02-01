@@ -38,7 +38,8 @@ import static mockit.Deencapsulation.invoke;
 public class SchemaRegistryClientTest {
 
     @Tested
-    private SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), "some-url"));
+    private SchemaRegistryClient schemaRegistryClient = 
+            new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), "some-url"));
 
     @Test
     public void testClientWithCache() throws Exception {
@@ -65,7 +66,7 @@ public class SchemaRegistryClientTest {
     }
     
     @Test
-    public void testConfigEntryValidation(){
+    public void testConfigEntryValidation() {
         //given
         Map<String, String> goodConf = new HashMap<>();
         goodConf.put("schema.registry.url", "goodvalue");
@@ -81,7 +82,7 @@ public class SchemaRegistryClientTest {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void testConfigEntryValidation_badconf(){
+    public void testConfigEntryValidationBadconf() {
         //given
         Map<String, String> badConf = new HashMap<>();
         badConf.put("schema.registry.url", "goodvalue");

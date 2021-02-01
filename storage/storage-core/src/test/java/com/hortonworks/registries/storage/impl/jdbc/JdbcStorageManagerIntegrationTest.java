@@ -47,7 +47,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     protected static Database database;
     protected static ConnectionBuilder connectionBuilder;
 
-    protected enum Database {MYSQL, H2}
+    protected enum Database { MYSQL, H2 }
 
     // ===== Tests Setup ====
     // Class level initialization is done in the implementing subclasses
@@ -72,7 +72,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     // =============== TEST METHODS ===============
 
     @Test(expected = Exception.class)
-    public void testAdd_UnequalExistingStorable_AlreadyExistsException() {
+    public void testAddUnequalExistingStorableAlreadyExistsException() {
         for (StorableTest test : storableTests) {
             Storable storable1 = test.getStorableList().get(0);
             Storable storable2 = test.getStorableList().get(1);
@@ -84,7 +84,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     }
 
     @Test
-    public void testList_EmptyDb_EmptyCollection() {
+    public void testListEmptyDbEmptyCollection() {
         for (StorableTest test : storableTests) {
             Collection<Storable> found = getStorageManager().list(test.getStorableList().get(0).getStorableKey().getNameSpace());
             Assert.assertNotNull(found);
@@ -115,7 +115,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
             Collection<Storable> allStorables = getStorageManager().list(searchQuery.getNameSpace());
             System.out.println("list = " + allStorables);
 
-            Assert.assertEquals(allStorables.size()-1, storablesWithIdGt1.size());
+            Assert.assertEquals(allStorables.size() - 1, storablesWithIdGt1.size());
         }
     }
 
@@ -126,10 +126,10 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     
     @Test
     @Ignore
-    public void testNextId_AutoincrementColumn_IdPlusOne() throws Exception {
+    public void testNextIdAutoincrementColumnIdPlusOne() throws Exception {
 
         for (StorableTest test : storableTests) {
-                doTestNextId_AutoincrementColumn_IdPlusOne(test);
+                doTestNextIdAutoincrementColumnIdPlusOne(test);
         }
     }
 

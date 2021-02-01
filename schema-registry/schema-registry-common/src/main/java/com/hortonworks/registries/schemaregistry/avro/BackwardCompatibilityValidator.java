@@ -18,9 +18,6 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaValidator;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  */

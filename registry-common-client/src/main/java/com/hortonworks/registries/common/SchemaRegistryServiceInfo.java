@@ -33,7 +33,7 @@ public final class SchemaRegistryServiceInfo {
     private SchemaRegistryVersion version;
 
     private static SchemaRegistryVersion fetchRegistryVersion() {
-        try(InputStream inputStream = SchemaRegistryServiceInfo.class.getResourceAsStream("/registry/VERSION")) {
+        try (InputStream inputStream = SchemaRegistryServiceInfo.class.getResourceAsStream("/registry/VERSION")) {
             Properties props = new Properties();
             props.load(inputStream);
             String version = props.getProperty("version", "unknown");

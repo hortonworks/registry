@@ -81,7 +81,8 @@ import static org.apache.avro.Schema.Type.RECORD;
      "name": "uuid",
      "type": "record",
      "namespace": "com.hortonworks.datatypes",
-     "doc": "A Universally Unique Identifier, in canonical form in lowercase. This is generated from java.util.UUID Example: de305d54-75b4-431b-adb2-eb6b9e546014",
+     "doc": "A Universally Unique Identifier, in canonical form in lowercase. 
+        This is generated from java.util.UUID Example: de305d54-75b4-431b-adb2-eb6b9e546014",
      "fields": [
          {
              "name": "value",

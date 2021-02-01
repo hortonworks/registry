@@ -79,13 +79,18 @@ public class SchemaBranchVersionMapping extends AbstractStorable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaBranchVersionMapping that = (SchemaBranchVersionMapping) o;
 
-        if (schemaBranchId != null ? !schemaBranchId.equals(that.schemaBranchId) : that.schemaBranchId != null)
+        if (schemaBranchId != null ? !schemaBranchId.equals(that.schemaBranchId) : that.schemaBranchId != null) {
             return false;
+        }
         return schemaVersionInfoId != null ? schemaVersionInfoId.equals(that.schemaVersionInfoId) : that.schemaVersionInfoId == null;
 
     }

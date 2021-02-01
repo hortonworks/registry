@@ -16,7 +16,7 @@ import static org.hamcrest.core.Is.is;
 public class AbstractSnapshotDeserializerTest {
 
     @Test
-    public void getBooleanValue_CanReadStringValue() {
+    public void getBooleanValueCanReadStringValue() {
         //given
         SnapshotDeserializer underTest = new SnapshotDeserializer();
         Map<String, String> config = new HashMap<>();
@@ -30,7 +30,7 @@ public class AbstractSnapshotDeserializerTest {
     }
 
     @Test
-    public void getBooleanValue_CanReadBooleanValue() {
+    public void getBooleanValueCanReadBooleanValue() {
         //given
         SnapshotDeserializer underTest = new SnapshotDeserializer();
         Map<String, Boolean> config = new HashMap<>();
@@ -44,7 +44,7 @@ public class AbstractSnapshotDeserializerTest {
     }
 
     @Test
-    public void getBooleanValue_CanReadDefaultValue() {
+    public void getBooleanValueCanReadDefaultValue() {
         //given
         SnapshotDeserializer underTest = new SnapshotDeserializer();
         Map<String, Boolean> config = new HashMap<>();
@@ -72,7 +72,7 @@ public class AbstractSnapshotDeserializerTest {
     }
 
     @Test
-    public void getIntegerValue_CanReadStringValue() {
+    public void getIntegerValueCanReadStringValue() {
         //given
         SnapshotDeserializer underTest = new SnapshotDeserializer();
         Map<String, String> config = new HashMap<>();
@@ -114,7 +114,7 @@ public class AbstractSnapshotDeserializerTest {
     }
 
     @Test
-    public void getLongValue_CanReadStringValue() {
+    public void getLongValueCanReadStringValue() {
         //given
         SnapshotDeserializer underTest = new SnapshotDeserializer();
         Map<String, String> config = new HashMap<>();
@@ -128,7 +128,7 @@ public class AbstractSnapshotDeserializerTest {
     }
 
     @Test
-    public void getLongValue_CanReadDefaultValue() {
+    public void getLongValueCanReadDefaultValue() {
         //given
         SnapshotDeserializer underTest = new SnapshotDeserializer();
         Map<String, String> config = new HashMap<>();
@@ -141,7 +141,7 @@ public class AbstractSnapshotDeserializerTest {
         Assert.assertThat(actual, is(99L));
     }
     
-    class SnapshotDeserializer extends AbstractSnapshotDeserializer{
+    class SnapshotDeserializer extends AbstractSnapshotDeserializer {
 
         @Override
         protected Object getParsedSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException {
@@ -149,7 +149,8 @@ public class AbstractSnapshotDeserializerTest {
         }
 
         @Override
-        protected Object doDeserialize(Object input, byte protocolId, SchemaMetadata schemaMetadata, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
+        protected Object doDeserialize(Object input, byte protocolId, SchemaMetadata schemaMetadata, 
+                                       Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
             return null;
         }
 

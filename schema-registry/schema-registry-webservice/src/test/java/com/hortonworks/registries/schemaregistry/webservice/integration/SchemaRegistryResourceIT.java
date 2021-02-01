@@ -48,7 +48,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import org.junit.Ignore;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
@@ -65,7 +64,7 @@ public class SchemaRegistryResourceIT {
     private static ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
     private static AuthorizationAgent authorizationAgentMock = Mockito.mock(AuthorizationAgent.class);
     private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock = Mockito.mock(SchemaMetadataTypeValidator.class);
-    private Client testClient = resource.client();
+    private Client testClient = RESOURCE.client();
 
     @BeanParam
     public InputStream getInputStream() {
@@ -73,7 +72,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @ClassRule
-    public static final ResourceTestRule resource = ResourceTestRule.builder()
+    public static final ResourceTestRule RESOURCE = ResourceTestRule.builder()
             .addResource(instantiateResource())
             .addProperty("jersey.config.server.provider.classnames", "org.glassfish.jersey.media.multipart.MultiPartFeature")
             .build();
@@ -83,7 +82,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void findSchemasByFields_NameNamespace() throws Exception {
+    public void findSchemasByFieldsNameNamespace() throws Exception {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("apple", 1));
@@ -109,7 +108,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void findSchemasByFields_Empty() throws Exception {
+    public void findSchemasByFieldsEmpty() throws Exception {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("test", 1));
@@ -132,9 +131,16 @@ public class SchemaRegistryResourceIT {
     }
     
     @Test
-    public void findSchemas_CanDelegate() throws Exception {
+    public void findSchemasCanDelegate() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        SchemaMetadata schemaMetadata = new SchemaMetadata
+                .Builder("magnesium")
+                .type("avro")
+                .schemaGroup("eyebrow")
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .validationLevel(SchemaValidationLevel.LATEST)
+                .description("b6")
+                .build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
         when(authorizationAgentMock.authorizeFindSchemas(any(), eq(schemaversions))).thenReturn(schemaversions);
@@ -157,7 +163,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void findSchemasWithoutNameAndDesc_ResultingBadRequest() {
+    public void findSchemasWithoutNameAndDescResultingBadRequest() {
         //given
         
         //when
@@ -174,13 +180,21 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void findAggregatedSchemas_CanDelegate() throws Exception {
+    public void findAggregatedSchemasCanDelegate() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        SchemaMetadata schemaMetadata = new SchemaMetadata
+                .Builder("magnesium")
+                .type("avro")
+                .schemaGroup("eyebrow")
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .validationLevel(SchemaValidationLevel.LATEST)
+                .description("b6")
+                .build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
-        AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(schemaMetadata, null, null, Collections.emptyList(), Collections.emptyList());
+        AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(schemaMetadata, 
+                null, null, Collections.emptyList(), Collections.emptyList());
         aggregatedSchemaMetadataInfos.add(aggregatedSchemaMetadataInfo);
         MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
         queryParameters.add("name", "magnesium");
@@ -205,7 +219,7 @@ public class SchemaRegistryResourceIT {
     
 
     @Test
-    public void findAggregatedSchemaWithoutNameAndOrder_ResultingBadRequest() {
+    public void findAggregatedSchemaWithoutNameAndOrderResultingBadRequest() {
         //given
 
         //when
@@ -222,9 +236,13 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void updateSchemaInfo_BadType() {
+    public void updateSchemaInfoBadType() {
         //given
-        SchemaMetadata updatedSchemaMetadata = new SchemaMetadata.Builder("updated").description("SchemaMetadata with bad type").type("cat").build();
+        SchemaMetadata updatedSchemaMetadata = new SchemaMetadata
+                .Builder("updated")
+                .description("SchemaMetadata with bad type")
+                .type("cat")
+                .build();
         when(schemaMetadataTypeValidatorMock.isValid("cat")).thenReturn(false);
 
         //when
@@ -239,7 +257,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void addSerDes_ValidSerDesPair() {
+    public void addSerDesValidSerDesPair() {
         //given
         SerDesPair serDesPair = new SerDesPair("name", "desc", "fileid", "ser", "des");
         when(schemaRegistryMock.addSerDes(serDesPair)).thenReturn(66L);
@@ -255,7 +273,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void addSerDes_InvalidSerDesPair() {
+    public void addSerDesInvalidSerDesPair() {
         //given
         SerDesPair serDesPair = new SerDesPair(null, null, null, null, null);
         when(schemaRegistryMock.addSerDes(serDesPair)).thenReturn(66L);
@@ -268,12 +286,13 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSerDesInfo responseFor = response.readEntity(TestResponseForSerDesInfo.class);
-        String[] errors = {"name must not be null", "deserializerClassName must not be null", "serializerClassName must not be null", "fileId must not be null"};
+        String[] errors = {"name must not be null", 
+                "deserializerClassName must not be null", "serializerClassName must not be null", "fileId must not be null"};
         assertThat(responseFor.getErrors(), hasItems(errors));
     }
 
     @Test
-    public void getSerDesInfo_ExistingId() {
+    public void getSerDesInfoExistingId() {
         //given
         SerDesPair serDesPair = new SerDesPair("name", "desc", "fileid", "ser", "des");
         SerDesInfo serDesInfo = new SerDesInfo(1L, System.currentTimeMillis(), serDesPair);
@@ -291,13 +310,13 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void getSerDesInfo_NotExistingId() {
+    public void getSerDesInfoNotExistingId() {
         //given
-        when(schemaRegistryMock.getSerDes(6L)).thenReturn(null);
+        when(schemaRegistryMock.getSerDes(8L)).thenReturn(null);
 
         //when
         Response response = testClient.target(
-                String.format("/api/v1/schemaregistry/serdes/6"))
+                String.format("/api/v1/schemaregistry/serdes/8"))
                 .request()
                 .get();
 
@@ -306,7 +325,7 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void getSerDesInfo_ThrowException() {
+    public void getSerDesInfoThrowException() {
         //given
         when(schemaRegistryMock.getSerDes(6L)).thenThrow(new RuntimeException("Test"));
 
@@ -321,9 +340,16 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void querySchemas_ThrowRangerException() throws Exception {
+    public void querySchemasThrowRangerException() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("foo").type("avro").schemaGroup("foundation").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        SchemaMetadata schemaMetadata = new SchemaMetadata
+                .Builder("foo")
+                .type("avro")
+                .schemaGroup("foundation")
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .validationLevel(SchemaValidationLevel.LATEST)
+                .description("b6")
+                .build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
         MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
@@ -346,10 +372,18 @@ public class SchemaRegistryResourceIT {
     }
 
     @Test
-    public void postSchema_ThrowRangerException() throws Exception {
+    public void postSchemaThrowRangerException() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
-        doThrow(new RangerException("Ranger Exception")).when(authorizationAgentMock).authorizeSchemaMetadata(any(), any(SchemaMetadata.class), any());
+        SchemaMetadata schemaMetadata = new SchemaMetadata
+                .Builder("magnesium")
+                .type("avro")
+                .schemaGroup("eyebrow")
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .validationLevel(SchemaValidationLevel.LATEST)
+                .description("b6")
+                .build();
+        doThrow(new RangerException("Ranger Exception"))
+                .when(authorizationAgentMock).authorizeSchemaMetadata(any(), any(SchemaMetadata.class), any());
         when(schemaRegistryMock.addSchemaMetadata(schemaMetadata, true)).thenReturn(1L);
 
         //when

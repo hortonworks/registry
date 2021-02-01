@@ -25,7 +25,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class SchemaVersionRelationshipDef extends AtlasRelationshipDef implements SchemaRegistryServiceType {
 
-    public static final String RELATIONSHIP_NAME = "schema_version"+TODORemoveThis.COUNTER;
+    public static final String RELATIONSHIP_NAME = "schema_version" + TODORemoveThis.COUNTER;
     public static final String RELATIONSHIP_LABEL = "meta.version";
 
     public static final String REL_ONE = "versions";  // rel.name from the PoV of one

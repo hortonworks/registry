@@ -68,8 +68,7 @@ public class NOOPAuthorizationAgent implements AuthorizationAgent {
                                         Authorizer.AccessType accessType) { }
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
-            (Authorizer.UserAndGroups userAndGroups,
+    public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList(Authorizer.UserAndGroups userAndGroups,
              Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
 
         return aggregatedSchemaMetadataInfoList;
@@ -94,7 +93,7 @@ public class NOOPAuthorizationAgent implements AuthorizationAgent {
     @Override
     public Collection<SchemaVersionInfo> authorizeGetAllVersions(Authorizer.UserAndGroups userAndGroups,
                                                              ISchemaRegistry schemaRegistry,
-                                                             Collection<SchemaVersionInfo> versions){
+                                                             Collection<SchemaVersionInfo> versions) {
         return versions;
     }
 

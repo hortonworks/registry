@@ -34,11 +34,11 @@ import java.util.Map;
  *
  */
 public class MySqlSelectQueryTest {
-    private static final String nameSpace = "topic";
+    private static final String NAME_SPACE = "topic";
 
     @Test
     public void testSelectQuery() throws Exception {
-        MySqlSelectQuery mySqlSelectQuery = new MySqlSelectQuery(nameSpace);
+        MySqlSelectQuery mySqlSelectQuery = new MySqlSelectQuery(NAME_SPACE);
         String parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
         Assert.assertEquals("SELECT * FROM topic", parametrizedSql);
@@ -46,7 +46,7 @@ public class MySqlSelectQueryTest {
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
 
-        mySqlSelectQuery = new MySqlSelectQuery(new StorableKey(nameSpace, new PrimaryKey(fieldToObjectMap)));
+        mySqlSelectQuery = new MySqlSelectQuery(new StorableKey(NAME_SPACE, new PrimaryKey(fieldToObjectMap)));
         parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
         Assert.assertEquals("SELECT * FROM topic WHERE `foo` = ?", parametrizedSql);
@@ -65,7 +65,7 @@ public class MySqlSelectQueryTest {
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
 
-        mySqlSelectQuery = new MySqlSelectQuery(new StorableKey(nameSpace, new PrimaryKey(fieldToObjectMap)), orderByFields);
+        mySqlSelectQuery = new MySqlSelectQuery(new StorableKey(NAME_SPACE, new PrimaryKey(fieldToObjectMap)), orderByFields);
         parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
         Assert.assertEquals("SELECT * FROM topic WHERE `foo` = ? ORDER BY `foo` DESC, ORDER BY `bar` ASC", parametrizedSql);

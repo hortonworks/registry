@@ -57,8 +57,12 @@ public class SchemaRegistryVersion {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SchemaRegistryVersion that = (SchemaRegistryVersion) o;
         return Objects.equals(version, that.version) &&
                Objects.equals(revision, that.revision) &&

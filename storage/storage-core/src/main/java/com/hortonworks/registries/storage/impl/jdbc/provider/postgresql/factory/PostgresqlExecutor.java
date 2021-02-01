@@ -67,7 +67,8 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
      * @param cacheBuilder      Guava cache configuration. The maximum number of entries in cache (open connections)
      *                          must not exceed the maximum number of open database connections allowed
      */
-    public PostgresqlExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
+    public PostgresqlExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, 
+                              CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         super(config, connectionBuilder, cacheBuilder);
     }
 

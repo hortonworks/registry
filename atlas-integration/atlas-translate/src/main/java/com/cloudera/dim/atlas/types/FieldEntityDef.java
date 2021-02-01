@@ -21,7 +21,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class FieldEntityDef extends AtlasEntityDef implements SchemaRegistryServiceType {
 
-    public static final String SCHEMA_FIELD_INFO = "schema_field_info"+TODORemoveThis.COUNTER;
+    public static final String SCHEMA_FIELD_INFO = "schema_field_info" + TODORemoveThis.COUNTER;
 
     public static final String ID = "id";
     public static final String SCHEMA_INSTANCE_ID = "schemaInstanceId";

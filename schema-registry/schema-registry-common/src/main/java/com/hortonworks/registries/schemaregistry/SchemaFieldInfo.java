@@ -67,14 +67,24 @@ public class SchemaFieldInfo implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaFieldInfo schemaFieldInfo = (SchemaFieldInfo) o;
 
-        if (id != null ? !id.equals(schemaFieldInfo.id) : schemaFieldInfo.id != null) return false;
-        if (namespace != null ? !namespace.equals(schemaFieldInfo.namespace) : schemaFieldInfo.namespace != null) return false;
-        if (name != null ? !name.equals(schemaFieldInfo.name) : schemaFieldInfo.name != null) return false;
+        if (id != null ? !id.equals(schemaFieldInfo.id) : schemaFieldInfo.id != null) {
+            return false;
+        }
+        if (namespace != null ? !namespace.equals(schemaFieldInfo.namespace) : schemaFieldInfo.namespace != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(schemaFieldInfo.name) : schemaFieldInfo.name != null) {
+            return false;
+        }
         return type != null ? type.equals(schemaFieldInfo.type) : schemaFieldInfo.type == null;
 
     }

@@ -74,7 +74,7 @@ public class AvroCompositeSchemasTest {
     }
 
     private SchemaVersionInfo cretaeSchemaVersionInfo(String name) throws IOException {
-        return new SchemaVersionInfo(1l, name, 1, getResourceText(name), System.currentTimeMillis(), "");
+        return new SchemaVersionInfo(1L, name, 1, getResourceText(name), System.currentTimeMillis(), "");
     }
 
     private String getResourceText(String name) throws IOException {
@@ -187,7 +187,7 @@ public class AvroCompositeSchemasTest {
         StringBuilder hexString = new StringBuilder();
         for (int i = 0; i < hash.length; i++) {
             String hex = Integer.toHexString(0xff & hash[i]);
-            if(hex.length() == 1) {
+            if (hex.length() == 1) {
                 hexString.append('0');
             }
             hexString.append(hex);

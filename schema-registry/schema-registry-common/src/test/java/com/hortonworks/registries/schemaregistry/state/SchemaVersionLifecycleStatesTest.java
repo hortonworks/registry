@@ -199,8 +199,8 @@ public class SchemaVersionLifecycleStatesTest {
         }
     }
 
-    private void checkEnableNotSupported(InbuiltSchemaVersionLifecycleState state,
-                                         SchemaVersionLifecycleContext context) throws SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchNotFoundException {
+    private void checkEnableNotSupported(InbuiltSchemaVersionLifecycleState state, SchemaVersionLifecycleContext context) 
+            throws SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchNotFoundException {
         try {
             state.enable(context);
             Assert.fail(state.getName() + " should not lead to enable state");

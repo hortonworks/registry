@@ -109,12 +109,14 @@ public class KafkaAvroDeserializer implements Deserializer<Object> {
     @SuppressWarnings("unchecked")
     public void configure(Map<String, ?> configs, boolean isKey) {
         this.isKey = isKey;
-        this.keySchemaVersionIdHeaderName = Utils.getOrDefault(configs, KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID);
+        this.keySchemaVersionIdHeaderName = Utils.getOrDefault(configs, 
+                KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID);
         if (keySchemaVersionIdHeaderName == null || keySchemaVersionIdHeaderName.isEmpty()) {
             throw new IllegalArgumentException("keySchemaVersionIdHeaderName should not be null or empty");
         }
 
-        this.valueSchemaVersionIdHeaderName = Utils.getOrDefault(configs, KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
+        this.valueSchemaVersionIdHeaderName = Utils.getOrDefault(configs, 
+                KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
         if (valueSchemaVersionIdHeaderName == null || valueSchemaVersionIdHeaderName.isEmpty()) {
             throw new IllegalArgumentException("valueSchemaVersionIdHeaderName should not be null or empty");
         }

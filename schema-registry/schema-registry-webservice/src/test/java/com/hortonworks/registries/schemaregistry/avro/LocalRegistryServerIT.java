@@ -59,12 +59,12 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
 public class LocalRegistryServerIT {
 
     private static SchemaRegistryTestConfiguration SCHEMA_REGISTRY_TEST_CONFIGURATION;
-    private static SchemaMetadata schemaMetadata_0;
-    private static SchemaMetadata schemaMetadata_1;
-    private static SchemaMetadata schemaMetadata_2;
-    private static Long schemaId_0;
-    private static Long schemaId_1;
-    private static Long schemaId_2;
+    private static SchemaMetadata schemaMetadata0;
+    private static SchemaMetadata schemaMetadata1;
+    private static SchemaMetadata schemaMetadata2;
+    private static Long schemaId0;
+    private static Long schemaId1;
+    private static Long schemaId2;
     private static SchemaMetadataInfo schemaMetadataInfo0;
     private static SchemaMetadataInfo schemaMetadataInfo1;
     private static SchemaMetadataInfo schemaMetadataInfo2;
@@ -86,22 +86,44 @@ public class LocalRegistryServerIT {
 
     }
     @Before
-    public void setup() throws Exception{
-        schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration.forProfileType(SchemaRegistryTestProfileType.DEFAULT));
+    public void setup() throws Exception {
+        schemaRegistryTestServerClientWrapper = 
+                new SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration.forProfileType(SchemaRegistryTestProfileType.DEFAULT));
         schemaRegistryTestServerClientWrapper.startTestServer();
         SchemaRegistryClient schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
         
-        schemaMetadata_0 = new SchemaMetadata.Builder("dummy").description("important desc").validationLevel(SchemaValidationLevel.ALL).compatibility(SchemaCompatibility.BACKWARD).schemaGroup("Kafka").type("avro").build();
-        schemaMetadata_1 = new SchemaMetadata.Builder("plant").description("very important desc").validationLevel(SchemaValidationLevel.ALL).compatibility(SchemaCompatibility.NONE).schemaGroup("Kafka").type("avro").build();
-        schemaMetadata_2 = new SchemaMetadata.Builder("plutonium").description("spacemacs").validationLevel(SchemaValidationLevel.LATEST).compatibility(SchemaCompatibility.BACKWARD).schemaGroup("Kafka").type("avro").build();
+        schemaMetadata0 = new SchemaMetadata
+                .Builder("dummy")
+                .description("important desc")
+                .validationLevel(SchemaValidationLevel.ALL)
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .schemaGroup("Kafka")
+                .type("avro")
+                .build();
+        schemaMetadata1 = new SchemaMetadata
+                .Builder("plant")
+                .description("very important desc")
+                .validationLevel(SchemaValidationLevel.ALL)
+                .compatibility(SchemaCompatibility.NONE)
+                .schemaGroup("Kafka")
+                .type("avro")
+                .build();
+        schemaMetadata2 = new SchemaMetadata
+                .Builder("plutonium")
+                .description("spacemacs")
+                .validationLevel(SchemaValidationLevel.LATEST)
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .schemaGroup("Kafka")
+                .type("avro")
+                .build();
 
-        schemaId_0 = schemaRegistryClient.registerSchemaMetadata(schemaMetadata_0);
-        schemaId_1 = schemaRegistryClient.registerSchemaMetadata(schemaMetadata_1);
-        schemaId_2 = schemaRegistryClient.registerSchemaMetadata(schemaMetadata_2);
+        schemaId0 = schemaRegistryClient.registerSchemaMetadata(schemaMetadata0);
+        schemaId1 = schemaRegistryClient.registerSchemaMetadata(schemaMetadata1);
+        schemaId2 = schemaRegistryClient.registerSchemaMetadata(schemaMetadata2);
 
-        schemaMetadataInfo0 = new SchemaMetadataInfo(schemaMetadata_0, schemaId_0, null);
-        schemaMetadataInfo1 = new SchemaMetadataInfo(schemaMetadata_1, schemaId_1, null);
-        schemaMetadataInfo2 = new SchemaMetadataInfo(schemaMetadata_2, schemaId_2, null);
+        schemaMetadataInfo0 = new SchemaMetadataInfo(schemaMetadata0, schemaId0, null);
+        schemaMetadataInfo1 = new SchemaMetadataInfo(schemaMetadata1, schemaId1, null);
+        schemaMetadataInfo2 = new SchemaMetadataInfo(schemaMetadata2, schemaId2, null);
 
         Map<String, String> conf = new HashMap<>();
         conf.put("name", "config");
@@ -113,14 +135,15 @@ public class LocalRegistryServerIT {
     }
     
     @After 
-    public void deleteSetup() throws Exception{
+    public void deleteSetup() throws Exception {
         schemaRegistryTestServerClientWrapper.stopTestServer();
     }
     
     @Test
     public void testSanity() throws Exception {
 
-        SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(SCHEMA_REGISTRY_TEST_CONFIGURATION);
+        SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper = 
+                new SchemaRegistryTestServerClientWrapper(SCHEMA_REGISTRY_TEST_CONFIGURATION);
         schemaRegistryTestServerClientWrapper.startTestServer();
         SchemaRegistryClient schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
 
@@ -138,12 +161,14 @@ public class LocalRegistryServerIT {
     }
 
     @Test
-    public void listSchemas_NameOrderValidation() throws Exception {
+    public void listSchemasNameOrderValidation() throws Exception {
         //given
         SchemaMetadataInfo expected = schemaMetadataInfo1;
         
         //when
-        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = 
+                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", 
+                        schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = schemaMetadataInfo.getEntities().get(0);
         
         //then
@@ -151,31 +176,34 @@ public class LocalRegistryServerIT {
         Assert.assertThat(actual.getId(), Is.is(expected.getId()));
     }
     @Test
-    public void listSchemas_OrderCompatibility() throws Exception {
+    public void listSchemasOrderCompatibility() throws Exception {
         //given
         List<SchemaMetadata> expecteds = new ArrayList<SchemaMetadata>();
-        expecteds.add(schemaMetadata_0);
-        expecteds.add(schemaMetadata_2);
+        expecteds.add(schemaMetadata0);
+        expecteds.add(schemaMetadata2);
         
         //when
-        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?compatibility=BACKWARD&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
-        SchemaMetadataInfo actual_1 = (SchemaMetadataInfo)((ArrayList)schemaMetadataInfo.getEntities()).get(0);
-        SchemaMetadataInfo actual_2 = (SchemaMetadataInfo)((ArrayList)schemaMetadataInfo.getEntities()).get(1);
+        TestResponse schemaMetadataInfo = 
+                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?compatibility=BACKWARD&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
+        SchemaMetadataInfo actual1 = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
+        SchemaMetadataInfo actual2 = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(1);
         List<SchemaMetadata> actuals = new ArrayList<SchemaMetadata>();
-        actuals.add(actual_1.getSchemaMetadata());
-        actuals.add(actual_2.getSchemaMetadata());
+        actuals.add(actual1.getSchemaMetadata());
+        actuals.add(actual2.getSchemaMetadata());
         
         //then
         Assert.assertThat(actuals, Is.is(expecteds));
     }
 
     @Test
-    public void listSchemas_NameDescSchemaGroup() throws Exception {
+    public void listSchemasNameDescSchemaGroup() throws Exception {
         //given
         SchemaMetadataInfo expected = schemaMetadataInfo2;
         
         //when
-        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plutonium&desc=spacemacs&schemaGroup=Kafka", schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = 
+                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plutonium&desc=spacemacs&schemaGroup=Kafka", 
+                        schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
         
         //then
@@ -186,12 +214,14 @@ public class LocalRegistryServerIT {
 
     
     @Test
-    public void listAggregatedSchemas_NameOrderValidation() throws Exception {
+    public void listAggregatedSchemasNameOrderValidation() throws Exception {
         //given
         SchemaMetadataInfo expected = schemaMetadataInfo1;
 
         //when
-        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = 
+                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", 
+                        schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
 
         //then
@@ -200,31 +230,35 @@ public class LocalRegistryServerIT {
     }
 
     @Test
-    public void listAggregatedSchemas_OrderCompatibility() throws Exception {
+    public void listAggregatedSchemasOrderCompatibility() throws Exception {
         //given
         List<SchemaMetadata> expecteds = new ArrayList<SchemaMetadata>();
-        expecteds.add(schemaMetadata_0);
-        expecteds.add(schemaMetadata_2);
+        expecteds.add(schemaMetadata0);
+        expecteds.add(schemaMetadata2);
 
         //when
-        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?compatibility=BACKWARD&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
-        SchemaMetadataInfo actual_1 = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
-        SchemaMetadataInfo actual_2 = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(1);
+        TestResponse schemaMetadataInfo = 
+                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?compatibility=BACKWARD&_orderByFields=timestamp,a", 
+                        schemaRegistryTestServerClientWrapper, restClient);
+        SchemaMetadataInfo actual1 = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
+        SchemaMetadataInfo actual2 = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(1);
         List<SchemaMetadata> actuals = new ArrayList<SchemaMetadata>();
-        actuals.add(actual_1.getSchemaMetadata());
-        actuals.add(actual_2.getSchemaMetadata());
+        actuals.add(actual1.getSchemaMetadata());
+        actuals.add(actual2.getSchemaMetadata());
 
         //then
         Assert.assertThat(actuals, Is.is(expecteds));
     }
     
     @Test
-    public void listAggregatedSchemas_NameDescSchemaGroup() throws Exception {
+    public void listAggregatedSchemasNameDescSchemaGroup() throws Exception {
         //given
         SchemaMetadataInfo expected = schemaMetadataInfo2;
         
         //when
-        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plutonium&desc=spacemacs&schemaGroup=Kafka", schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = 
+                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plutonium&desc=spacemacs&schemaGroup=Kafka", 
+                        schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
         
         //then
@@ -232,7 +266,9 @@ public class LocalRegistryServerIT {
         Assert.assertThat(actual.getId(), Is.is(expected.getId()));
     }
     
-    TestResponse createSchemaMetadataInfoFromQuery(String query, SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper, Client restClient) throws Exception{
+    TestResponse createSchemaMetadataInfoFromQuery(String query, 
+                                                   SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper, 
+                                                   Client restClient) throws Exception {
         String uri = schemaRegistryTestServerClientWrapper.exportClientConf().get("schema.registry.url").toString() + query;
         WebTarget target = restClient.target(uri);
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).get();
@@ -253,9 +289,9 @@ public class LocalRegistryServerIT {
     }
     
 }
-class TestResponse{
+class TestResponse {
     private List<SchemaMetadataInfo> entities;
-    public TestResponse(){}
+    public TestResponse() { }
 
     public List<SchemaMetadataInfo> getEntities() {
         return entities;

@@ -42,7 +42,7 @@ public final class SchemaMetadataInfo implements Serializable {
     private Long timestamp;
 
     @SuppressWarnings("unused")
-    private SchemaMetadataInfo() { /* Private constructor for Jackson JSON mapping */}
+    private SchemaMetadataInfo() { /* Private constructor for Jackson JSON mapping */ }
 
     /**
      * @param schemaMetadata schema metadata
@@ -75,14 +75,21 @@ public final class SchemaMetadataInfo implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaMetadataInfo that = (SchemaMetadataInfo) o;
 
-        if (schemaMetadata != null ? !schemaMetadata.equals(that.schemaMetadata) : that.schemaMetadata != null)
+        if (schemaMetadata != null ? !schemaMetadata.equals(that.schemaMetadata) : that.schemaMetadata != null) {
             return false;
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        }
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
     }

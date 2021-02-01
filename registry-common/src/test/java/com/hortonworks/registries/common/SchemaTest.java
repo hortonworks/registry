@@ -17,7 +17,6 @@
 package com.hortonworks.registries.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hortonworks.registries.common.Schema;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
@@ -35,10 +34,13 @@ import static org.junit.Assert.assertTrue;
 public class SchemaTest {
     @Test
     public void testGetTypeOfValue() {
-        final List<String> queryValues = Lists.newArrayList(Boolean.TRUE.toString(), Byte.toString(Byte.MAX_VALUE), Short.toString(Short.MAX_VALUE),
-                Integer.toString(Integer.MAX_VALUE), Long.toString(Long.MAX_VALUE), Float.toString(Float.MAX_VALUE), Double.toString(Double.MAX_VALUE), "SOME_STRING");
+        final List<String> queryValues = Lists.newArrayList(Boolean.TRUE.toString(), 
+                Byte.toString(Byte.MAX_VALUE), Short.toString(Short.MAX_VALUE),
+                Integer.toString(Integer.MAX_VALUE), Long.toString(Long.MAX_VALUE), 
+                Float.toString(Float.MAX_VALUE), Double.toString(Double.MAX_VALUE), "SOME_STRING");
 
-        final List<Type> expectedTypes = Lists.newArrayList(Type.BOOLEAN, Type.BYTE, Type.SHORT, Type.INTEGER, Type.LONG, Type.FLOAT, Type.DOUBLE, Type.STRING);
+        final List<Type> expectedTypes = Lists.newArrayList(Type.BOOLEAN, Type.BYTE, Type.SHORT, Type.INTEGER, 
+                Type.LONG, Type.FLOAT, Type.DOUBLE, Type.STRING);
 
         final List<Integer> indexes = Lists.newArrayList(0, 1, 2, 3, 4, 5, 6, 7);
 
@@ -93,14 +95,14 @@ public class SchemaTest {
         assertEquals(Type.STRING, fields.get(0).getType());
         assertEquals("arrayField", fields.get(1).getName());
         assertEquals(Type.ARRAY, fields.get(1).getType());
-        assertEquals(1, ((Schema.ArrayField)fields.get(1)).getMembers().size());
-        assertEquals(Type.INTEGER, ((Schema.ArrayField)fields.get(1)).getMembers().get(0).getType());
-        assertTrue(((Schema.ArrayField)fields.get(1)).isHomogenous());
+        assertEquals(1, ((Schema.ArrayField) fields.get(1)).getMembers().size());
+        assertEquals(Type.INTEGER, ((Schema.ArrayField) fields.get(1)).getMembers().get(0).getType());
+        assertTrue(((Schema.ArrayField) fields.get(1)).isHomogenous());
         assertEquals("arrayField2", fields.get(2).getName());
         assertEquals(Type.ARRAY, fields.get(2).getType());
-        assertEquals(Type.INTEGER, ((Schema.ArrayField)fields.get(2)).getMembers().get(0).getType());
-        assertEquals(Type.STRING, ((Schema.ArrayField)fields.get(2)).getMembers().get(1).getType());
-        assertFalse(((Schema.ArrayField)fields.get(2)).isHomogenous());
+        assertEquals(Type.INTEGER, ((Schema.ArrayField) fields.get(2)).getMembers().get(0).getType());
+        assertEquals(Type.STRING, ((Schema.ArrayField) fields.get(2)).getMembers().get(1).getType());
+        assertFalse(((Schema.ArrayField) fields.get(2)).isHomogenous());
     }
 }
 

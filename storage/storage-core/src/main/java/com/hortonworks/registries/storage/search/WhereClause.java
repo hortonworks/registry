@@ -67,12 +67,17 @@ public class WhereClause implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         WhereClause whereClause = (WhereClause) o;
 
-        return predicateCombinerPairs != null ? predicateCombinerPairs.equals(whereClause.predicateCombinerPairs) : whereClause.predicateCombinerPairs == null;
+        return predicateCombinerPairs != null ? 
+                predicateCombinerPairs.equals(whereClause.predicateCombinerPairs) : whereClause.predicateCombinerPairs == null;
     }
 
     @Override

@@ -22,7 +22,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
@@ -94,16 +93,18 @@ public class SchemaMetadataCache {
         return schemaMetadataInfo;
     }
 
-    public void invalidateSchemaMetadata (SchemaMetadataCache.Key key) {
+    public void invalidateSchemaMetadata(SchemaMetadataCache.Key key) {
         LOG.info("Invalidating cache entry for key [{}]", key);
 
         // If the cache doesn't have entry for the key, then no need to invalidate the cache
-        if(loadingCache.getIfPresent(key) != null)
+        if (loadingCache.getIfPresent(key) != null) {
             loadingCache.invalidate(key);
+        }
 
         Key otherKey = key.id == null ? Key.of(schemaNameToIdMap.get(key.name)) : Key.of(schemaNameToIdMap.inverse().get(key.id));
-        if(loadingCache.getIfPresent(otherKey) != null)
+        if (loadingCache.getIfPresent(otherKey) != null) {
             loadingCache.invalidate(otherKey);
+        }
     }
 
     public void put(Key key, SchemaMetadataInfo schemaMetadataInfo) {
@@ -144,12 +145,18 @@ public class SchemaMetadataCache {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Key key = (Key) o;
 
-            if (name != null ? !name.equals(key.name) : key.name != null) return false;
+            if (name != null ? !name.equals(key.name) : key.name != null) {
+                return false;
+            }
             return id != null ? id.equals(key.id) : key.id == null;
 
         }

@@ -32,7 +32,7 @@ public class CollectionResponse {
      */
     private Collection<?> entities;
 
-    private CollectionResponse() {}
+    private CollectionResponse() { }
 
     public void setEntities(Collection<?> entities) {
         this.entities = entities;

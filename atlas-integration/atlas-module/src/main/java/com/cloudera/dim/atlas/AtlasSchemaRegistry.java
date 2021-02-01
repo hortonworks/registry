@@ -113,7 +113,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
                         .collect(Collectors.toList()));
 
         Options options = new Options(config);
-        SchemaBranchCache schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(), options.getSchemaExpiryInSecs(), createSchemaBranchFetcher());
+        SchemaBranchCache schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(), 
+                options.getSchemaExpiryInSecs(), createSchemaBranchFetcher());
 
         schemaVersionLifecycleManager = new AtlasSchemaVersionLifecycleManager(atlasClient, config, schemaBranchCache) {
             @Override
@@ -146,7 +147,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
             }
 
             try {
-                SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, true, Thread.currentThread().getContextClassLoader()).newInstance();
+                SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, true, Thread.currentThread().getContextClassLoader())
+                        .newInstance();
                 HashMap<String, Object> config = new HashMap<>(schemaProviderConfig);
                 config.put(SchemaProvider.SCHEMA_VERSION_RETRIEVER_CONFIG, schemaVersionRetriever);
                 schemaProvider.init(Collections.unmodifiableMap(config));
@@ -199,7 +201,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<AggregatedSchemaMetadataInfo> findAggregatedSchemaMetadata(Map<String, String> props) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("--------------- findAggregatedSchemaMetadata {}", props);
 
         return findSchemaMetadata(props)
@@ -214,7 +217,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
                 .collect(Collectors.toList());
     }
 
-    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    private AggregatedSchemaMetadataInfo buildAggregatedSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         if (schemaMetadataInfo == null) {
             return null;
         }
@@ -233,7 +237,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public AggregatedSchemaMetadataInfo getAggregatedSchemaMetadataInfo(String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("--------------- getAggregatedSchemaMetadataInfo {}", schemaName);
 
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
@@ -341,25 +346,33 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------1 addSchemaVersion {} {}", schemaMetadata, schemaVersion);
 
         // TODO
         //lockSchemaMetadata(schemaMetadata.getName());  // ??
-        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), disableCanonicalCheck);
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, 
+                schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), disableCanonicalCheck);
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, 
+                                            SchemaMetadata schemaMetadata,
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------2 addSchemaVersion {} {} {}", schemaMetadata, schemaBranchName, schemaVersion);
 
         // TODO
         //lockSchemaMetadata(schemaMetadata.getName());  // ??
-        return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), disableCanonicalCheck);
+        return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), 
+                disableCanonicalCheck);
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------3 addSchemaVersion {}", schemaName);
 
         // TODO
@@ -368,7 +381,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, String schemaName, SchemaVersion schemaVersion, boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------4 addSchemaVersion {} {}", schemaName, schemaBranchName);
 
         SchemaIdVersion schemaIdVersion;
@@ -411,7 +425,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("--------------- getLatestSchemaVersionInfo {} {}", schemaName, schemaBranchName);
         return schemaVersionLifecycleManager.getLatestSchemaVersionInfo(schemaBranchName, schemaName);
     }
@@ -423,23 +438,27 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------2 getAllVersions {} {}", schemaName, schemaBranchName);
         return schemaVersionLifecycleManager.getAllVersions(schemaBranchName, schemaName);
     }
 
     @Override
-    public Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<AggregatedSchemaBranch> getAggregatedSchemaBranch(String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("--------------- getAggregatedSchemaBranch {}", schemaName);
 
         Collection<AggregatedSchemaBranch> aggregatedSchemaBranches = new ArrayList<>();
         for (SchemaBranch schemaBranch : getSchemaBranches(schemaName)) {
-            Long rootVersion = schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH) ? null: schemaVersionLifecycleManager.getRootVersion(schemaBranch).getId();
+            Long rootVersion = schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH) ? null : 
+                    schemaVersionLifecycleManager.getRootVersion(schemaBranch).getId();
             Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaBranch.getName(), schemaName);
             schemaVersionInfos.stream().forEach(schemaVersionInfo -> {
                 SchemaVersionLifecycleContext context = null;
                 try {
-                    context = schemaVersionLifecycleManager.createSchemaVersionLifeCycleContext(schemaVersionInfo.getId(), SchemaVersionLifecycleStates.INITIATED);
+                    context = schemaVersionLifecycleManager
+                            .createSchemaVersionLifeCycleContext(schemaVersionInfo.getId(), SchemaVersionLifecycleStates.INITIATED);
                     MergeInfo mergeInfo = null;
                     if (context.getDetails() == null) {
                         mergeInfo = null;
@@ -448,7 +467,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
                             InitializedStateDetails details = ObjectMapperUtils.deserialize(context.getDetails(), InitializedStateDetails.class);
                             mergeInfo = details.getMergeInfo();
                         } catch (IOException e) {
-                            throw new RuntimeException(String.format("Failed to serialize state details of schema version : '%s'",context.getSchemaVersionId()),e);
+                            throw new RuntimeException(String.format("Failed to serialize state details of schema version : '%s'", 
+                                    context.getSchemaVersionId()), e);
                         }
                     }
                     schemaVersionInfo.setMergeInfo(mergeInfo);
@@ -494,13 +514,15 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaVersionInfo getLatestEnabledSchemaVersionInfo(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("--------------- getLatestEnabledSchemaVersionInfo {} {}", schemaName, schemaBranchName);
         return schemaVersionLifecycleManager.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
     }
 
     @Override
-    public SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText, boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
+    public SchemaVersionInfo getSchemaVersionInfo(String schemaName, String schemaText, boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
         LOG.info("--------------- getSchemaVersionInfo {}", schemaName);
         return schemaVersionLifecycleManager.getSchemaVersionInfo(schemaName, schemaText, disableCanonicalCheck);
     }
@@ -512,7 +534,10 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy, boolean disableCanonicalCheck) throws IncompatibleSchemaException, SchemaNotFoundException {
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, 
+                                                       SchemaVersionMergeStrategy schemaVersionMergeStrategy, 
+                                                       boolean disableCanonicalCheck) 
+            throws IncompatibleSchemaException, SchemaNotFoundException {
         LOG.info("--------------- mergeSchemaVersion {}", schemaVersionId);
         return schemaVersionLifecycleManager.mergeSchemaVersion(schemaVersionId, schemaVersionMergeStrategy, disableCanonicalCheck);
     }
@@ -530,30 +555,35 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------1 checkCompatibility {}", schemaName);
         return schemaVersionLifecycleManager.checkCompatibility(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("---------------2 checkCompatibility {} {} {} {}", schemaName, schemaBranchName, schemaName, toSchemaText);
         return schemaVersionLifecycleManager.checkCompatibility(schemaBranchName, schemaName, toSchemaText);
     }
 
     @Override
-    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException {
+    public Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) 
+            throws SchemaBranchNotFoundException, SchemaNotFoundException {
         LOG.info("--------------- findSchemasByFields {}", schemaFieldQuery);
         return null;  // TODO
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("--------------- getAllVersions {} {}", schemaName, schemaBranchName);
-        if (stateIds == null || stateIds.isEmpty())
+        if (stateIds == null || stateIds.isEmpty()) {
             return getAllVersions(schemaBranchName, schemaName);
-        else
+        } else {
             return schemaVersionLifecycleManager.getAllVersions(schemaBranchName, schemaName, stateIds);
+        }
     }
 
     @Override
@@ -607,7 +637,8 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
+    public void enableSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
         schemaVersionLifecycleManager.enableSchemaVersion(schemaVersionId);
     }
 
@@ -632,12 +663,14 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY), disableCanonicalCheck);
     }
 
     @Override
-    public void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException {
+    public void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) 
+            throws SchemaNotFoundException, SchemaLifecycleException {
         LOG.info("--------------- transitionState {} {}", schemaVersionId, targetStateId);
         schemaVersionLifecycleManager.executeState(schemaVersionId, targetStateId, transitionDetails);
     }
@@ -649,14 +682,16 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     }
 
     @Override
-    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
+    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) 
+            throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
         LOG.info("--------------- createSchemaBranch {}", schemaVersionId);
         checkNotNull(schemaBranch.getName(), "Schema branch name can't be null");
 
         SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
 
         SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranch.getName(), schemaVersionInfo.getName());
-        Optional<SchemaBranch> existingSchemaBranch = atlasClient.getSchemaBranch(schemaBranchKey.getSchemaMetadataName(), schemaBranchKey.getSchemaBranchName());
+        Optional<SchemaBranch> existingSchemaBranch = atlasClient.getSchemaBranch(schemaBranchKey.getSchemaMetadataName(), 
+                schemaBranchKey.getSchemaBranchName());
 
         if (existingSchemaBranch.isPresent()) {
             throw new SchemaBranchAlreadyExistsException(String.format("A schema branch with name : '%s' already exists", schemaBranch.getName()));
@@ -677,7 +712,7 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
             try {
                 return schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId()).stream();
             } catch (SchemaBranchNotFoundException e) {
-                throw new RuntimeException(String.format("Failed to obtain schema branch associated with schema name : %s", schemaName),e);
+                throw new RuntimeException(String.format("Failed to obtain schema branch associated with schema name : %s", schemaName), e);
             }
         }).collect(Collectors.toSet());
     }

@@ -47,7 +47,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class InMemoryStorageManager implements StorageManager {
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryStorageManager.class);
 
-    private final ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>> storageMap = new ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>>();
+    private final ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>> storageMap = 
+            new ConcurrentHashMap<String, ConcurrentHashMap<PrimaryKey, Storable>>();
     private final ConcurrentHashMap<String, AtomicLong> sequenceMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Class<?>> nameSpaceClassMap = new ConcurrentHashMap<String, Class<?>>();
 
@@ -165,12 +166,12 @@ public class InMemoryStorageManager implements StorageManager {
                         Comparable value2 = ReflectionHelper.invokeGetter(orderByField.getFieldName(), storable2);
                         int compareTo;
                         // same values continue
-                        if(value1 == value2) {
+                        if (value1 == value2) {
                             continue;
-                        } else if(value1 == null) {
+                        } else if (value1 == null) {
                             // value2 is non null
                             compareTo = -1;
-                        } else if(value2 == null) {
+                        } else if (value2 == null) {
                             // value1 is non null
                             compareTo = 1;
                         } else {

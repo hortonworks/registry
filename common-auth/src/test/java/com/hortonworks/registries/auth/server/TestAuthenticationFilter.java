@@ -564,9 +564,9 @@ public class TestAuthenticationFilter {
         }
     }
 
-    private void _testDoFilterAuthentication(boolean withDomainPath,
-                                             boolean invalidToken,
-                                             boolean expired) throws Exception {
+    private void testDoFilterAuthentication(boolean withDomainPath,
+                                            boolean invalidToken,
+                                            boolean expired) throws Exception {
         AuthenticationFilter filter = new AuthenticationFilter();
         FilterConfig config = Mockito.mock(FilterConfig.class);
         Mockito.when(config.getInitParameter("management.operation.return")).
@@ -601,14 +601,12 @@ public class TestAuthenticationFilter {
 
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         Mockito.when(request.getParameter("authenticated")).thenReturn("true");
-        Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer
-                ("http://foo:8080/bar"));
+        Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
         Mockito.when(request.getRequestURI()).thenReturn("/bar");
         Mockito.when(request.getQueryString()).thenReturn("authenticated=true");
 
         if (invalidToken) {
-            Mockito.when(request.getCookies()).thenReturn(new Cookie[]{new Cookie
-                    (AuthenticatedURL.AUTH_COOKIE, "foo")});
+            Mockito.when(request.getCookies()).thenReturn(new Cookie[]{new Cookie(AuthenticatedURL.AUTH_COOKIE, "foo")});
         }
 
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -634,8 +632,7 @@ public class TestAuthenticationFilter {
             } else {
                 String v = cookieMap.get(AuthenticatedURL.AUTH_COOKIE);
                 Assert.assertNotNull("cookie missing", v);
-                Assert.assertTrue(v.contains("u=") && v.contains("p=") && v.contains
-                        ("t=") && v.contains("e=") && v.contains("s="));
+                Assert.assertTrue(v.contains("u=") && v.contains("p=") && v.contains("t=") && v.contains("e=") && v.contains("s="));
                 Mockito.verify(chain).doFilter(Mockito.any(ServletRequest.class),
                         Mockito.any(ServletResponse.class));
 
@@ -681,22 +678,22 @@ public class TestAuthenticationFilter {
 
     @Test
     public void testDoFilterAuthentication() throws Exception {
-        _testDoFilterAuthentication(false, false, false);
+        testDoFilterAuthentication(false, false, false);
     }
 
     @Test
     public void testDoFilterAuthenticationImmediateExpiration() throws Exception {
-        _testDoFilterAuthentication(false, false, true);
+        testDoFilterAuthentication(false, false, true);
     }
 
     @Test
     public void testDoFilterAuthenticationWithInvalidToken() throws Exception {
-        _testDoFilterAuthentication(false, true, false);
+        testDoFilterAuthentication(false, true, false);
     }
 
     @Test
     public void testDoFilterAuthenticationWithDomainPath() throws Exception {
-        _testDoFilterAuthentication(true, false, false);
+        testDoFilterAuthentication(true, false, false);
     }
 
     @Test
@@ -886,11 +883,9 @@ public class TestAuthenticationFilter {
 
         Mockito.verify(response).sendError(Mockito.eq(HttpServletResponse
                 .SC_UNAUTHORIZED), Mockito.anyString());
-        Mockito.verify(chain, Mockito.never()).doFilter(Mockito.any
-                (ServletRequest.class), Mockito.any(ServletResponse.class));
+        Mockito.verify(chain, Mockito.never()).doFilter(Mockito.any(ServletRequest.class), Mockito.any(ServletResponse.class));
 
-        Assert.assertTrue("cookie is missing",
-                cookieMap.containsKey(AuthenticatedURL.AUTH_COOKIE));
+        Assert.assertTrue("cookie is missing", cookieMap.containsKey(AuthenticatedURL.AUTH_COOKIE));
         Assert.assertEquals("", cookieMap.get(AuthenticatedURL.AUTH_COOKIE));
     }
 

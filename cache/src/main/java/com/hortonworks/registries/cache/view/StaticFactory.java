@@ -16,6 +16,6 @@
 
 package com.hortonworks.registries.cache.view;
 
-public interface StaticFactory<T,P> {
+public interface StaticFactory<T, P> {
     T create(P param);
 }

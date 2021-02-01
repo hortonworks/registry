@@ -24,14 +24,14 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Map;
 
-public class CacheLoaderSync<K,V> extends CacheLoader<K,V> {
+public class CacheLoaderSync<K, V> extends CacheLoader<K, V> {
     protected static final Logger LOG = LoggerFactory.getLogger(CacheLoaderSync.class);
 
-    public CacheLoaderSync(Cache<K, V> cache, DataStoreReader<K,V> dataStoreReader) {
+    public CacheLoaderSync(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader) {
         super(cache, dataStoreReader);
     }
 
-    public void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K,V> callback) {
+    public void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback) {
         Map<K, V> entries;
         try {
             entries = dataStoreReader.readAll(keys);

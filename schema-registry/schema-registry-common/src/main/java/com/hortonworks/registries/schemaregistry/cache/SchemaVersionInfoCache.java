@@ -105,8 +105,9 @@ public class SchemaVersionInfoCache implements AbstractCache {
             LOG.trace("Result: {}", schemaVersionInfo);
             return schemaVersionInfo;
         } catch (ExecutionException e) {
-            if (e.getCause().getClass() == SchemaNotFoundException.class)
+            if (e.getCause().getClass() == SchemaNotFoundException.class) {
                 throw (SchemaNotFoundException) e.getCause();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -127,7 +128,7 @@ public class SchemaVersionInfoCache implements AbstractCache {
         if (schemaVersionKey != null) {
             loadingCache.invalidate(Key.of(schemaVersionKey));
             List<SchemaIdVersion> schemaIdVersions = nameVersionWithIds.get(schemaVersionKey);
-            if(schemaIdVersions != null) {
+            if (schemaIdVersions != null) {
                 for (SchemaIdVersion schemaIdVersion : schemaIdVersions) {
                     loadingCache.invalidate(Key.of(schemaIdVersion));
                 }
@@ -172,7 +173,7 @@ public class SchemaVersionInfoCache implements AbstractCache {
         }
 
         // For JSON serialization/deserialization
-        private Key () {
+        private Key() {
 
         }
 
@@ -186,14 +187,19 @@ public class SchemaVersionInfoCache implements AbstractCache {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Key key = (Key) o;
 
             if (schemaVersionKey != null ? !schemaVersionKey.equals(key.schemaVersionKey)
-                                         : key.schemaVersionKey != null)
+                                         : key.schemaVersionKey != null) {
                 return false;
+            }
             return schemaIdVersion != null ? schemaIdVersion.equals(key.schemaIdVersion) : key.schemaIdVersion == null;
         }
 

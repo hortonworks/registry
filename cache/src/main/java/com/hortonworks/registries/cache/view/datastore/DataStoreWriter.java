@@ -19,7 +19,7 @@ package com.hortonworks.registries.cache.view.datastore;
 import java.util.Collection;
 import java.util.Map;
 
-public interface DataStoreWriter<K,V> {
+public interface DataStoreWriter<K, V> {
     void write(K key, V val);
 
     void writeAll(Map<? extends K, ? extends V> entries);

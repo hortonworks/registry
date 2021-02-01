@@ -43,7 +43,7 @@ public class RedisCacheTestMain {
 //        Thread.sleep(10_000);
         List<String> keys = connection.keys("*");
 //        System.out.println(keys);
-        LOG.info("{}",keys);
+        LOG.info("{}", keys);
         readInput();
     }
 

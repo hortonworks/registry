@@ -42,12 +42,18 @@ public class StorableKey {
     // TODO: apply some syntax formatting guidelines
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         StorableKey that = (StorableKey) o;
 
-        if (primaryKey != null ? !primaryKey.equals(that.primaryKey) : that.primaryKey != null) return false;
+        if (primaryKey != null ? !primaryKey.equals(that.primaryKey) : that.primaryKey != null) {
+            return false;
+        }
         return !(nameSpace != null ? !nameSpace.equals(that.nameSpace) : that.nameSpace != null);
 
     }

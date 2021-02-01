@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaBranchKey;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
-import com.hortonworks.registries.schemaregistry.utils.ObjectMapperUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +39,7 @@ public class SchemaBranchCache implements AbstractCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaBranchCache.class);
 
     private final LoadingCache<Key, SchemaBranch> loadingCache;
-    private final BiMap <SchemaBranchKey, Long> schemaBranchNameToIdMap;
+    private final BiMap<SchemaBranchKey, Long> schemaBranchNameToIdMap;
 
     public SchemaBranchCache(Integer size, Long expiryInSecs, final SchemaBranchFetcher schemaBranchFetcher) {
         schemaBranchNameToIdMap = Maps.synchronizedBiMap(HashBiMap.create());
@@ -101,12 +100,14 @@ public class SchemaBranchCache implements AbstractCache {
         LOG.info("Invalidating cache entry for key [{}]", key);
 
         // If the cache doesn't have entry for the key, then no need to invalidate the cache
-        if(loadingCache.getIfPresent(key) == null)
+        if (loadingCache.getIfPresent(key) == null) {
             return;
+        }
 
         loadingCache.invalidate(key);
 
-        Key otherKey = key.id == null ? Key.of(schemaBranchNameToIdMap.get(key.getSchemaBranchKey())) : Key.of(schemaBranchNameToIdMap.inverse().get(key.id));
+        Key otherKey = key.id == null ? 
+                Key.of(schemaBranchNameToIdMap.get(key.getSchemaBranchKey())) : Key.of(schemaBranchNameToIdMap.inverse().get(key.id));
         loadingCache.invalidate(otherKey);
     }
 
@@ -161,12 +162,18 @@ public class SchemaBranchCache implements AbstractCache {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Key key = (Key) o;
 
-            if (schemaBranchKey != null ? !schemaBranchKey.equals(key.schemaBranchKey) : key.schemaBranchKey != null) return false;
+            if (schemaBranchKey != null ? !schemaBranchKey.equals(key.schemaBranchKey) : key.schemaBranchKey != null) {
+                return false;
+            }
             return id != null ? id.equals(key.id) : key.id == null;
 
         }

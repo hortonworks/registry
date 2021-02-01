@@ -74,7 +74,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
 
     @Rule
-    public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
+    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
 
     @CustomParameterizedRunner.Parameters
     public static Iterable<SchemaRegistryTestProfileType> profiles() {
@@ -132,34 +132,34 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
     @Test
     public void testPrimitivesInKafkaCluster() throws Exception {
-        String topicPrefix = TEST_NAME_RULE.getMethodName();
+        String topicPrefix = testNameRule.getMethodName();
 
         Object[] msgs = AvroSchemaRegistryClientUtil.generatePrimitivePayloads();
 
-        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix, msgs);
+        testByStoringSchemaIdInHeaderOrPayload(topicPrefix, msgs);
     }
 
     @Test
     public void testAvroRecordsInKafkaCluster() throws Exception {
-        String topicPrefix = TEST_NAME_RULE.getMethodName();
+        String topicPrefix = testNameRule.getMethodName();
 
-        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
-        _testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
+        testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
+        testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
     }
 
-    private void _testByStoringSchemaIdInHeaderOrPayload(String topicPrefix, Object[] msgs) throws InterruptedException {
+    private void testByStoringSchemaIdInHeaderOrPayload(String topicPrefix, Object[] msgs) throws InterruptedException {
         for (Object msg : msgs) {
             String topicName = topicPrefix + (msg != null ? msg.getClass().getName().replace("$", "_") : "null");
-            _testByStoringSchemaIdInHeaderOrPayload(topicName, msg);
+            testByStoringSchemaIdInHeaderOrPayload(topicName, msg);
         }
     }
 
-    private void _testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg) throws InterruptedException {
-        _testByStoringSchemaIdInHeaderOrPayload(topicName, msg, false);
-        _testByStoringSchemaIdInHeaderOrPayload(topicName, msg, true);
+    private void testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg) throws InterruptedException {
+        testByStoringSchemaIdInHeaderOrPayload(topicName, msg, false);
+        testByStoringSchemaIdInHeaderOrPayload(topicName, msg, true);
     }
 
-    private void _testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg, boolean storeSchemaIdInHeader) throws InterruptedException {
+    private void testByStoringSchemaIdInHeaderOrPayload(String topicName, Object msg, boolean storeSchemaIdInHeader) throws InterruptedException {
         createTopic(topicName);
         try {
             String bootstrapServers = produceMessage(topicName, msg, storeSchemaIdInHeader);
@@ -184,14 +184,14 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
     private void createTopic(String topicName) throws InterruptedException {
         long start = System.currentTimeMillis();
-        while(true) {
+        while (true) {
             try {
                 CLUSTER.createTopic(topicName);
                 break;
             } catch (TopicExistsException e) {
                 // earlier deleted topic may not yet have been deleted.
                 // need to fix in EmbeddedSingleNodeKafkaCluster
-                if(System.currentTimeMillis() - start > 30000) {
+                if (System.currentTimeMillis() - start > 30000) {
                     throw e;
                 }
                 Thread.sleep(2000);
@@ -270,16 +270,16 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
     @Test
     public void testSchemasCompatibility() throws Exception {
-        String topic = TEST_NAME_RULE.getMethodName() + "-" + System.currentTimeMillis();
+        String topic = testNameRule.getMethodName() + "-" + System.currentTimeMillis();
 
         // send initial message
         Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
-        _testByStoringSchemaIdInHeaderOrPayload(topic, initialMsg);
+        testByStoringSchemaIdInHeaderOrPayload(topic, initialMsg);
 
         // send a message with incompatible version of the schema
         Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
-            _testByStoringSchemaIdInHeaderOrPayload(topic, incompatMsg);
+            testByStoringSchemaIdInHeaderOrPayload(topic, incompatMsg);
             Assert.fail("An error should have been received here because of incompatible schemas");
         } catch (Exception e) {
             // should have received an error.
@@ -287,7 +287,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         // send a message with compatible version of the schema
         Object compatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForCompatDevice();
-        _testByStoringSchemaIdInHeaderOrPayload(topic, compatMsg);
+        testByStoringSchemaIdInHeaderOrPayload(topic, compatMsg);
     }
 
 }

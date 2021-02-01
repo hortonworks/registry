@@ -93,8 +93,12 @@ public class AggregatedSchemaMetadataInfo implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         AggregatedSchemaMetadataInfo that = (AggregatedSchemaMetadataInfo) o;
         return Objects.equals(schemaMetadata, that.schemaMetadata) &&
                 Objects.equals(id, that.id) &&

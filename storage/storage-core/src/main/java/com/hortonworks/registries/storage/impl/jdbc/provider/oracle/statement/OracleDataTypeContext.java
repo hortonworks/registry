@@ -33,15 +33,17 @@ public class OracleDataTypeContext extends DefaultStorageDataTypeContext {
                                            Schema.Type type, int index, Object val) throws SQLException {
         if (type == Schema.Type.STRING && StringUtils.isEmpty((String) val)) {
             preparedStatement.setString(index, EMPTY_STRING_PLACEHOLDER);
-        } else
+        } else {
             super.setPreparedStatementParams(preparedStatement, type, index, val);
+        }
     }
 
     protected Object getJavaObject(Class columnJavaType, String columnLabel, ResultSet resultSet) throws SQLException {
         if (columnJavaType.equals(String.class)) {
             String stringValue = resultSet.getString(columnLabel);
-            if (stringValue != null && stringValue.equals(EMPTY_STRING_PLACEHOLDER))
+            if (stringValue != null && stringValue.equals(EMPTY_STRING_PLACEHOLDER)) {
                 return "";
+            }
         }
         return super.getJavaObject(columnJavaType, columnLabel, resultSet);
     }

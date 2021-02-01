@@ -33,7 +33,7 @@ import java.util.Random;
  *
  */
 public class SamplePullDeserializerTest {
-    private static final Schema schema = Schema.of(
+    private static final Schema SCHEMA = Schema.of(
             Schema.Field.of("dev", Schema.Type.STRING),
             Schema.Field.of("temp", Schema.Type.STRING),
             Schema.Field.of("loc", Schema.Type.STRING)
@@ -41,7 +41,7 @@ public class SamplePullDeserializerTest {
 
     @Test
     public void testPullParser() throws Exception {
-        SchemaDetails schemaInfo = new SchemaDetails(schema, "test-schema", (new Random().nextInt() % 10));
+        SchemaDetails schemaInfo = new SchemaDetails(SCHEMA, "test-schema", (new Random().nextInt() % 10));
 
         try (SamplePullDeserializer pullParser
                      = new SamplePullDeserializer(schemaInfo, this.getClass().getResourceAsStream("/sample-parser-payload.txt"))) {

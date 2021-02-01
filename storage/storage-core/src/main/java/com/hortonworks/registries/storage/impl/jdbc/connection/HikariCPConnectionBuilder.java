@@ -40,7 +40,7 @@ public class HikariCPConnectionBuilder implements ConnectionBuilder<HikariConfig
 
     @Override
     public synchronized void prepare() {
-        if(dataSource == null) {
+        if (dataSource == null) {
             if (configMap != null) {
                 Properties properties = new Properties();
                 properties.putAll(configMap);
@@ -66,7 +66,7 @@ public class HikariCPConnectionBuilder implements ConnectionBuilder<HikariConfig
 
     @Override
     public void cleanup() {
-        if(dataSource != null) {
+        if (dataSource != null) {
             dataSource.close();
         }
     }

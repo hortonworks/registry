@@ -26,7 +26,8 @@ import java.io.IOException;
 /**
  * This is the default implementation of {@link AbstractAvroSnapshotDeserializer}.
  * <p>
- * <p>Common way to use this serializer implementation is like below as mentioned in {@link com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer}. </p>
+ * <p>Common way to use this serializer implementation is like below as mentioned in 
+ * {@link com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer}. </p>
  * <pre>{@code
  *     AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
  *     // initialize with given configuration

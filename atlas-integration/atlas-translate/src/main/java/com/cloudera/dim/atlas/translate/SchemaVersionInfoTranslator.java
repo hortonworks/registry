@@ -67,14 +67,14 @@ public class SchemaVersionInfoTranslator implements AtlasTranslator<SchemaVersio
 
     public SchemaVersionInfo fromAtlas(AtlasStruct atlasEntity, Long metaId) {
         return new SchemaVersionInfo(
-                ((Number)atlasEntity.getAttribute(ID)).longValue(),
-                (String)atlasEntity.getAttribute(NAME),
-                (Integer)atlasEntity.getAttribute(VERSION),
+                ((Number) atlasEntity.getAttribute(ID)).longValue(),
+                (String) atlasEntity.getAttribute(NAME),
+                (Integer) atlasEntity.getAttribute(VERSION),
                 metaId,
-                (String)atlasEntity.getAttribute(SCHEMA_TEXT),
-                ((Number)atlasEntity.getAttribute(TIMESTAMP)).longValue(),
-                (String)atlasEntity.getAttribute(DESCRIPTION),
-                (Byte)atlasEntity.getAttribute(STATE)
+                (String) atlasEntity.getAttribute(SCHEMA_TEXT),
+                ((Number) atlasEntity.getAttribute(TIMESTAMP)).longValue(),
+                (String) atlasEntity.getAttribute(DESCRIPTION),
+                (Byte) atlasEntity.getAttribute(STATE)
         );
     }
 }

@@ -89,13 +89,13 @@ public class Util {
     }
 
     public static void validateJDBCProperties(Map<String, Object> jdbcProps, List<String> propertyNames) {
-        if(jdbcProps == null || jdbcProps.isEmpty()) {
+        if (jdbcProps == null || jdbcProps.isEmpty()) {
             throw new IllegalArgumentException("jdbc properties can neither be null nor empty");
         }
 
         for (String property : propertyNames) {
-            if(!jdbcProps.containsKey(property)) {
-                throw new IllegalArgumentException("jdbc properties should contain "+property);
+            if (!jdbcProps.containsKey(property)) {
+                throw new IllegalArgumentException("jdbc properties should contain " + property);
             }
         }
     }

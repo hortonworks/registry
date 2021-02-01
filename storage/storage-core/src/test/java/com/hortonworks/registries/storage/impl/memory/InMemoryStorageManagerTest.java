@@ -33,7 +33,7 @@ public abstract class InMemoryStorageManagerTest extends AbstractStoreManagerTes
     }
 
     @Test
-    public void testList_NonexistentNameSpace_StorageException() {
+    public void testListNonexistentNameSpaceStorageException() {
         Collection<Storable> found = getStorageManager().list("NONEXISTENT_NAME_SPACE");
         Assert.assertTrue(found.isEmpty());
     }

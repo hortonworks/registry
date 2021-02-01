@@ -109,5 +109,5 @@ public class AtlasPluginFactory {
                 new Class[] { AtlasPlugin.class }, atlasPlugin);
     }
 
-    private AtlasPluginFactory() {}
+    private AtlasPluginFactory() { }
 }

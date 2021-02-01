@@ -20,7 +20,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 
-public class RedisConnectionFactory<K,V> extends AbstractRedisConnectionFactory<K,V> {
+public class RedisConnectionFactory<K, V> extends AbstractRedisConnectionFactory<K, V> {
     public RedisConnectionFactory(RedisClient redisClient, RedisCodec<K, V> codec) {
         super(redisClient, codec);
     }

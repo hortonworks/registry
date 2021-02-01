@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class OracleUpdateQuery extends AbstractStorableUpdateQuery {
 
-    private Map<Schema.Field,Object> whereClauseColumnToValueMap = new HashMap<>();
+    private Map<Schema.Field, Object> whereClauseColumnToValueMap = new HashMap<>();
 
     public OracleUpdateQuery(Storable storable) {
         super(storable);
@@ -48,8 +48,9 @@ public class OracleUpdateQuery extends AbstractStorableUpdateQuery {
                     throw new OracleQueryException(String.format("Column \"%s\" of the table \"%s\" is compared against a value \"%s\", " +
                                     "which is greater than 4k characters",
                             columnKeyValue.getKey().getName(), tableName, stringValue));
-                } else
+                } else {
                     whereClauseColumns.add(String.format(" to_char(\"%s\") = ?", columnKeyValue.getKey().getName()));
+                }
             } else {
                 whereClauseColumns.add(String.format(" \"%s\" = ?", columnKeyValue.getKey().getName()));
             }
@@ -64,8 +65,8 @@ public class OracleUpdateQuery extends AbstractStorableUpdateQuery {
 
     private Map<Schema.Field, Object> createWhereClauseColumnToValueMap() {
         Map<Schema.Field, Object> bindingMap = new HashMap<>();
-        for(Pair<Schema.Field, Object> fieldObjectPair: getBindings()){
-            bindingMap.put(fieldObjectPair.getKey(),fieldObjectPair.getValue());
+        for (Pair<Schema.Field, Object> fieldObjectPair: getBindings()) {
+            bindingMap.put(fieldObjectPair.getKey(), fieldObjectPair.getValue());
         }
         return whereFields.stream().collect(Collectors.toMap(f -> f, f -> bindingMap.get(f)));
     }

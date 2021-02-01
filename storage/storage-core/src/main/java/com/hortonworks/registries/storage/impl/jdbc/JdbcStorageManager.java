@@ -134,7 +134,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
         long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
 
-        if(remainingTime < 0) {
+        if (remainingTime < 0) {
             throw new IllegalArgumentException("Wait time for obtaining the lock can't be negative");
         }
 
@@ -146,7 +146,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
             } else {
                 Thread.sleep(500);
             }
-        } while((System.currentTimeMillis() - startTime) < remainingTime);
+        } while ((System.currentTimeMillis() - startTime) < remainingTime);
 
 
         return false;
@@ -272,7 +272,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     @Override
     public void init(Map<String, Object> properties) {
 
-        if(!properties.containsKey(DB_TYPE)) {
+        if (!properties.containsKey(DB_TYPE)) {
             throw new IllegalArgumentException("db.type should be set on jdbc properties");
         }
 

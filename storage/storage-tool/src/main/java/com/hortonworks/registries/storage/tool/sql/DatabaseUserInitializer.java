@@ -21,10 +21,17 @@ import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreator;
 import com.hortonworks.registries.storage.tool.sql.initenv.DatabaseCreatorFactory;
 import com.hortonworks.registries.storage.tool.sql.initenv.UserCreator;
 import com.hortonworks.registries.storage.tool.sql.initenv.UserCreatorFactory;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
-import java.io.*;
-import java.net.*;
+
+import java.io.IOException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

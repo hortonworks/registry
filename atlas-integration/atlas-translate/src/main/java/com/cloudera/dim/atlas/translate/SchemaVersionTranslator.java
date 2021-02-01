@@ -19,13 +19,11 @@ import com.cloudera.dim.atlas.types.SchemaVersionRelationshipDef;
 import com.cloudera.dim.atlas.types.VersionEntityDef;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
-import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.state.InbuiltSchemaVersionLifecycleState;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasRelationship;
 import org.apache.atlas.model.instance.AtlasStruct;
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,13 +61,18 @@ public class SchemaVersionTranslator implements AtlasTranslator<SchemaVersion> {
     @Override
     public SchemaVersion fromAtlas(AtlasStruct atlasEntity) {
         return new SchemaVersion(
-                (String)atlasEntity.getAttribute(SCHEMA_TEXT),
-                (String)atlasEntity.getAttribute(DESCRIPTION),
-                (Byte)atlasEntity.getAttribute(STATE)
+                (String) atlasEntity.getAttribute(SCHEMA_TEXT),
+                (String) atlasEntity.getAttribute(DESCRIPTION),
+                (Byte) atlasEntity.getAttribute(STATE)
         );
     }
 
-    public AtlasEntity toAtlas(long versionId, SchemaVersion schemaVersion, SchemaMetadataInfo schemaMetadataInfo, String schemaName, int version, String fingerprint) {
+    public AtlasEntity toAtlas(long versionId, 
+                               SchemaVersion schemaVersion, 
+                               SchemaMetadataInfo schemaMetadataInfo, 
+                               String schemaName, 
+                               int version, 
+                               String fingerprint) {
         AtlasEntity atlasEntity = toAtlas(schemaVersion);
 
         Map<String, Object> attributes = atlasEntity.getAttributes();

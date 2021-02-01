@@ -36,17 +36,18 @@ public class DefaultSchemaRegistryTest {
 
         queryParametersWithNameAndDesc.putSingle(NAME, "some name");
         queryParametersWithNameAndDesc.putSingle(DESCRIPTION, "some desc");
-        queryParametersWithNameAndDesc.putSingle(ORDER,"foo,a,bar,d");
+        queryParametersWithNameAndDesc.putSingle(ORDER, "foo,a,bar,d");
         queryParametersWithoutDesc.putSingle(NAME, "only name");
-        queryParametersWithoutDesc.putSingle(ORDER,"foo,a,bar,d");
+        queryParametersWithoutDesc.putSingle(ORDER, "foo,a,bar,d");
 
         StorageManager storageManager = new InMemoryStorageManager();
-        Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
+        Collection<Map<String, Object>> schemaProvidersConfig = 
+                Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         underTest = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
     }
 
     @Test
-    public void getWhereClauseTest_NamePresent() {
+    public void getWhereClauseTestNamePresent() {
         //given
         WhereClause expected = WhereClause.begin().contains(NAME, "only name").combine();
 
@@ -58,7 +59,7 @@ public class DefaultSchemaRegistryTest {
     }
 
     @Test
-    public void getWhereClauseTest_NameDescriptionPresent() {
+    public void getWhereClauseTestNameDescriptionPresent() {
         //given
         WhereClause expected = WhereClause.begin().contains(NAME, "some name").or().contains(DESCRIPTION, "some desc").combine();
 

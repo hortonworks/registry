@@ -105,8 +105,9 @@ public class SchemaRegistryTestServerClientWrapper {
             Map<String, Object> ret = new Yaml().load(IOUtils.toString(fis, StandardCharsets.UTF_8));
             ret.put("schema.registry.url", registryURL);
             return ret;
-        } catch(Exception e) {
-            throw new RuntimeException("Failed to export schema client configuration for yaml : " + schemaRegistryTestConfiguration.getClientYAMLPath(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to export schema client configuration for yaml : " + 
+                    schemaRegistryTestConfiguration.getClientYAMLPath(), e);
         }
     }
 }

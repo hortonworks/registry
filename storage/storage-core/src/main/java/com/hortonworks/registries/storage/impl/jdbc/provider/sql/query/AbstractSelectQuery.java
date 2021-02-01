@@ -30,7 +30,6 @@ import com.hortonworks.registries.storage.search.WhereClause;
 import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +90,7 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
         String sql = "SELECT * FROM " + fieldEncloser() + tableName + fieldEncloser();
 
         WhereClause whereClause = searchQuery.getWhereClause();
-        Map<Schema.Field, Object> fieldsToValues = new LinkedHashMap<Schema.Field, Object>() {};
+        Map<Schema.Field, Object> fieldsToValues = new LinkedHashMap<Schema.Field, Object>() { };
         if (whereClause != null) {
             sql += " WHERE";
             StringBuilder clauseString = new StringBuilder();
@@ -137,7 +136,7 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
     protected abstract String fieldEncloser();
 
     private String generateClauseString(Predicate predicate, Map<Schema.Field, Object> fieldsToValues, Schema schema) {
-        if(predicate == null) {
+        if (predicate == null) {
             return "";
         }
 
@@ -178,9 +177,15 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
 
         AbstractSelectQuery that = (AbstractSelectQuery) o;
 

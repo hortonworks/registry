@@ -19,7 +19,7 @@ package com.hortonworks.registries.cache.view.io.loader;
 import com.hortonworks.registries.cache.Cache;
 import com.hortonworks.registries.cache.view.datastore.DataStoreReader;
 
-public interface CacheLoaderFactory<K,V> {
-    CacheLoader<K,V> create(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader);
+public interface CacheLoaderFactory<K, V> {
+    CacheLoader<K, V> create(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader);
 
 }

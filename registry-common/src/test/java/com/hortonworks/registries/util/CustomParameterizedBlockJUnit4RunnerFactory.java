@@ -216,7 +216,8 @@
 
 
 /**
- *   This is clone of the pull request https://github.com/junit-team/junit4/pull/1435, which has been merged to junit master and provides support for BeforeParam and AfterParam.
+ *   This is clone of the pull request https://github.com/junit-team/junit4/pull/1435, 
+ *   which has been merged to junit master and provides support for BeforeParam and AfterParam.
  *   This class should be removed once the pull request is available in the future release.
  */
 
@@ -227,7 +228,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.parameterized.ParametersRunnerFactory;
 import org.junit.runners.parameterized.TestWithParameters;
 
-public class CustomParameterizedBlockJUnit4RunnerFactory implements ParametersRunnerFactory{
+public class CustomParameterizedBlockJUnit4RunnerFactory implements ParametersRunnerFactory {
 
     public Runner createRunnerForTestWithParameters(TestWithParameters test)
             throws InitializationError {

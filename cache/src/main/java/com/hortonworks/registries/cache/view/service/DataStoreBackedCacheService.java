@@ -28,12 +28,12 @@ import com.hortonworks.registries.cache.view.io.loader.CacheLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class DataStoreBackedCacheService<K,V> extends CacheService<K,V> {
+public class DataStoreBackedCacheService<K, V> extends CacheService<K, V> {
     protected final CacheLoaderFactory<K, V> cacheLoaderFactory;              // used to load cache sync or async
     protected final CacheWriter<K, V> cacheWriter;                            // used to write to db sync or async
     protected final DataStoreReader<K, V> dataStoreReader;                    // used for read through
 
-    protected final ConcurrentMap<String, CacheLoader<K,V>> cacheLoaders = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<String, CacheLoader<K, V>> cacheLoaders = new ConcurrentHashMap<>();
 
     protected DataStoreBackedCacheService(Builder<K, V> builder) {
         super(builder);
@@ -42,7 +42,7 @@ public class DataStoreBackedCacheService<K,V> extends CacheService<K,V> {
         this.dataStoreReader = builder.dataStoreReader;
     }
 
-    public static class Builder<K,V> extends CacheService.Builder<K,V> {
+    public static class Builder<K, V> extends CacheService.Builder<K, V> {
         private CacheLoaderFactory<K, V> cacheLoaderFactory;
         private CacheWriter<K, V> cacheWriter;
         private DataStoreReader<K, V> dataStoreReader;
@@ -51,27 +51,27 @@ public class DataStoreBackedCacheService<K,V> extends CacheService<K,V> {
             super(id, cacheType);
         }
 
-        public Builder<K,V> setCacheLoaderFactory(CacheLoaderFactory<K, V> cacheLoaderFactory) {
+        public Builder<K, V> setCacheLoaderFactory(CacheLoaderFactory<K, V> cacheLoaderFactory) {
             this.cacheLoaderFactory = cacheLoaderFactory;
             return this;
         }
 
-        public Builder<K,V> setCacheWriter(CacheWriter<K, V> cacheWriter) {
+        public Builder<K, V> setCacheWriter(CacheWriter<K, V> cacheWriter) {
             this.cacheWriter = cacheWriter;
             return this;
         }
 
-        public Builder<K,V> setDataStoreReader(DataStoreReader<K, V> dataStoreReader) {
+        public Builder<K, V> setDataStoreReader(DataStoreReader<K, V> dataStoreReader) {
             this.dataStoreReader = dataStoreReader;
             return this;
         }
 
-        public DataStoreBackedCacheService<K,V> build() {
+        public DataStoreBackedCacheService<K, V> build() {
             return new DataStoreBackedCacheService<>(this);
         }
     }
 
-    public void registerCache(String id, Cache<K,V> cache) {
+    public void registerCache(String id, Cache<K, V> cache) {
         if (isDataStoreBacked()) {
             caches.putIfAbsent(this.id, createDataStoreBackedCache(id, cache));
         } else {

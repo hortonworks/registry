@@ -30,7 +30,7 @@ public class Utils {
      * @param daemon Should the thread block JVM shutdown?
      * @return The unstarted thread
      */
-    public static Thread newThread (String name, Runnable runnable, boolean daemon) {
+    public static Thread newThread(String name, Runnable runnable, boolean daemon) {
         Thread thread = new Thread(runnable, name);
         thread.setDaemon(daemon);
         thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -46,7 +46,7 @@ public class Utils {
      * @param nonBrowserUserAgentsConfig config string
      * @return array of strings converted to lowercase where each string is a non browser user agent
      */
-    public static String[] getNonBrowserUserAgents (String nonBrowserUserAgentsConfig) {
+    public static String[] getNonBrowserUserAgents(String nonBrowserUserAgentsConfig) {
         String[] result = nonBrowserUserAgentsConfig.split("\\W*,\\W*");
         for (int i = 0; i < result.length; i++) {
             result[i] = result[i].toLowerCase(Locale.ENGLISH);
@@ -86,7 +86,7 @@ public class Utils {
         }
 
         int strLen = cs.length();
-        for(int i = 0; i < strLen; ++i) {
+        for (int i = 0; i < strLen; ++i) {
             if (!Character.isWhitespace(cs.charAt(i))) {
                 return false;
             }

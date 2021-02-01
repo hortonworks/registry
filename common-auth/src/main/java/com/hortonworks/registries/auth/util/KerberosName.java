@@ -43,7 +43,7 @@ public class KerberosName {
     /**
      * A pattern that matches a Kerberos name with at most 2 components.
      */
-    private static final Pattern nameParser =
+    private static final Pattern NAME_PARSER =
             Pattern.compile("([^/@]*)(/([^/@]*))?@([^/@]*)");
 
     /**
@@ -56,14 +56,14 @@ public class KerberosName {
     /**
      * A pattern for parsing a auth_to_local rule.
      */
-    private static final Pattern ruleParser =
+    private static final Pattern RULE_PARSER =
             Pattern.compile("\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?" +
                     "(s/([^/]*)/([^/]*)/(g)?)?))/?(L)?");
 
     /**
      * A pattern that recognizes simple/non-simple names.
      */
-    private static final Pattern nonSimplePattern = Pattern.compile("[/@]");
+    private static final Pattern NON_SIMPLE_PATTERN = Pattern.compile("[/@]");
 
     /**
      * The list of translation rules.
@@ -86,7 +86,7 @@ public class KerberosName {
      * @param name full Kerberos principal name.
      */
     public KerberosName(String name) {
-        Matcher match = nameParser.matcher(name);
+        Matcher match = NAME_PARSER.matcher(name);
         if (!match.matches()) {
             if (name.contains("@")) {
                 throw new IllegalArgumentException("Malformed Kerberos name: " + name);
@@ -302,7 +302,7 @@ public class KerberosName {
                     }
                 }
             }
-            if (result != null && nonSimplePattern.matcher(result).find()) {
+            if (result != null && NON_SIMPLE_PATTERN.matcher(result).find()) {
                 LOG.info("Non-simple name {} after auth_to_local rule {}", result, this);
             }
             if (toLowerCase && result != null) {
@@ -316,7 +316,7 @@ public class KerberosName {
         List<Rule> result = new ArrayList<Rule>();
         String remaining = rules.trim();
         while (remaining.length() > 0) {
-            Matcher matcher = ruleParser.matcher(remaining);
+            Matcher matcher = RULE_PARSER.matcher(remaining);
             if (!matcher.lookingAt()) {
                 throw new IllegalArgumentException("Invalid rule: " + remaining);
             }

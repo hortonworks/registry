@@ -255,19 +255,39 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaMetadataStorable that = (SchemaMetadataStorable) o;
 
-        if (evolve != that.evolve) return false;
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-        if (validationLevel != null ? !validationLevel.equals(that.validationLevel) : that.validationLevel != null) return false;
+        if (evolve != that.evolve) {
+            return false;
+        }
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
+        if (type != null ? !type.equals(that.type) : that.type != null) {
+            return false;
+        }
+        if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
+            return false;
+        }
+        if (validationLevel != null ? !validationLevel.equals(that.validationLevel) : that.validationLevel != null) {
+            return false;
+        }
         return compatibility == that.compatibility;
     }
 

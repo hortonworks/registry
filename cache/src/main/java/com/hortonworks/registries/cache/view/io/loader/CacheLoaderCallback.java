@@ -18,7 +18,7 @@ package com.hortonworks.registries.cache.view.io.loader;
 
 import java.util.Map;
 
-public interface CacheLoaderCallback<K,V> {
+public interface CacheLoaderCallback<K, V> {
     void onCacheLoaded(Map<K, V> loaded);
 
     void onCacheLoadingFailure(Throwable t);

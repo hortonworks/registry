@@ -57,7 +57,7 @@ public class AvroSchemaRegistryTest {
     private DefaultSchemaRegistry schemaRegistry;
 
     @Rule
-    public TestName TEST_NAME_RULE = new TestName();
+    public TestName testNameRule = new TestName();
 
     @Before
     public void setup() throws IOException {
@@ -65,8 +65,10 @@ public class AvroSchemaRegistryTest {
         schema2 = getSchema("/device-compat.avsc");
         schemaName = "org.hwx.schemas.test-schema." + UUID.randomUUID();
         StorageManager storageManager = new InMemoryStorageManager();
-        Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+        Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", 
+                AvroSchemaProvider.class.getName()));
+        schemaRegistry = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, 
+                new SchemaLockManager(new NOOPTransactionManager()));
         schemaRegistry.init(Collections.emptyMap());
     }
 
@@ -142,7 +144,8 @@ public class AvroSchemaRegistryTest {
         Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getSchemaBranches().iterator().next().getSchemaVersionInfos().size());
         Assert.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
 
-        Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());
+        Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry
+                .findAggregatedSchemaMetadata(Collections.emptyMap());
         Assert.assertEquals(1, aggregatedSchemaMetadataCollection.size());
 
         // Serializing and deserializing AggregatedSchemaMetadataInfo should not throw any errors
@@ -151,7 +154,7 @@ public class AvroSchemaRegistryTest {
 
         Collection<AggregatedSchemaMetadataInfo> returnedResult =
                 new ObjectMapper().readValue(aggregateSchemaMetadataStr,
-                        new TypeReference<Collection<AggregatedSchemaMetadataInfo>>() {});
+                        new TypeReference<Collection<AggregatedSchemaMetadataInfo>>() { });
     }
 
     @Test
@@ -161,7 +164,8 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test(expected = SchemaNotFoundException.class)
-    public void testAddVersionToNonExistingSchema() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
+    public void testAddVersionToNonExistingSchema() 
+            throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
         schemaRegistry.addSchemaVersion(INVALID_SCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy"));
     }
 
@@ -169,7 +173,7 @@ public class AvroSchemaRegistryTest {
     public void testInvalidSchema() throws Exception {
         String schema = "--- random invalid schema ---" + new Date();
 
-        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
 
         // registering a new schema
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
@@ -180,7 +184,7 @@ public class AvroSchemaRegistryTest {
     @Test(expected = InvalidSchemaException.class)
     public void testSchemaTextAsNull() throws Exception {
 
-        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
 
         // registering a new schema
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
@@ -191,7 +195,7 @@ public class AvroSchemaRegistryTest {
     @Test(expected = InvalidSchemaException.class)
     public void testSchemaTextAsEmpty() throws Exception {
 
-        SchemaMetadata schemaMetadataInfo = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
 
         // registering a new schema
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
@@ -204,7 +208,7 @@ public class AvroSchemaRegistryTest {
         String schema = getSchema("/device.avsc");
         String incompatSchema = getSchema("/device-incompat.avsc");
 
-        SchemaMetadata schemaMetadata = createSchemaInfo(TEST_NAME_RULE.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadata = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
 
         // registering a new schema
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadata,
@@ -220,7 +224,7 @@ public class AvroSchemaRegistryTest {
     @Test
     public void testFindSchemaVersionByFingerprintSingle() throws Exception {
         final String schemaText = getSchema("/device.avsc");
-        registerSchemaVersion(TEST_NAME_RULE.getMethodName(), schemaText);
+        registerSchemaVersion(testNameRule.getMethodName(), schemaText);
 
         final AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
         final String fingerprint = Hex.encodeHexString(avroSchemaProvider.getFingerprint(schemaText));

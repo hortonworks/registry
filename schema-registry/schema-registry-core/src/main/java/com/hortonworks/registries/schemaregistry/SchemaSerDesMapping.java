@@ -80,13 +80,18 @@ public class SchemaSerDesMapping extends AbstractStorable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaSerDesMapping that = (SchemaSerDesMapping) o;
 
-        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null)
+        if (schemaMetadataId != null ? !schemaMetadataId.equals(that.schemaMetadataId) : that.schemaMetadataId != null) {
             return false;
+        }
         return serDesId != null ? serDesId.equals(that.serDesId) : that.serDesId == null;
 
     }

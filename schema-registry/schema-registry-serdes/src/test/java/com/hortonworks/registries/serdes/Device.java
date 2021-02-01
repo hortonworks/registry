@@ -7,8 +7,10 @@ package com.hortonworks.registries.serdes;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class Device extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Device\",\"namespace\":\"com.hortonworks.registries.serdes\",\"fields\":[{\"name\":\"xid\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"version\",\"type\":\"int\"},{\"name\":\"timestamp\",\"type\":\"long\"}]}");
-    public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
+    public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Device\",\"namespace\":\"com.hortonworks.registries.serdes\",\"fields\":[{\"name\":\"xid\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"version\",\"type\":\"int\"},{\"name\":\"timestamp\",\"type\":\"long\"}]}");
+    public static org.apache.avro.Schema getClassSchema() {
+        return SCHEMA;
+    }
     @Deprecated public long xid;
     @Deprecated public CharSequence name;
     @Deprecated public int version;
@@ -19,7 +21,7 @@ public class Device extends org.apache.avro.specific.SpecificRecordBase implemen
      * to their default values from the schema.  If that is desired then
      * one should use <code>newBuilder()</code>.
      */
-    public Device() {}
+    public Device() { }
 
     /**
      * All-args constructor.
@@ -31,10 +33,12 @@ public class Device extends org.apache.avro.specific.SpecificRecordBase implemen
         this.timestamp = timestamp;
     }
 
-    public org.apache.avro.Schema getSchema() { return SCHEMA$; }
+    public org.apache.avro.Schema getSchema() {
+        return SCHEMA; 
+    }
     // Used by DatumWriter.  Applications should not call.
-    public Object get(int field$) {
-        switch (field$) {
+    public Object get(int field) {
+        switch (field) {
             case 0: return xid;
             case 1: return name;
             case 2: return version;
@@ -43,13 +47,17 @@ public class Device extends org.apache.avro.specific.SpecificRecordBase implemen
         }
     }
     // Used by DatumReader.  Applications should not call.
-    @SuppressWarnings(value="unchecked")
-    public void put(int field$, Object value$) {
-        switch (field$) {
-            case 0: xid = (Long)value$; break;
-            case 1: name = (CharSequence)value$; break;
-            case 2: version = (Integer)value$; break;
-            case 3: timestamp = (Long)value$; break;
+    @SuppressWarnings(value = "unchecked")
+    public void put(int field, Object value) {
+        switch (field) {
+            case 0: xid = (Long) value;
+                break;
+            case 1: name = (CharSequence) value;
+                break;
+            case 2: version = (Integer) value;
+                break;
+            case 3: timestamp = (Long) value;
+                break;
             default: throw new org.apache.avro.AvroRuntimeException("Bad index");
         }
     }
@@ -142,7 +150,7 @@ public class Device extends org.apache.avro.specific.SpecificRecordBase implemen
 
         /** Creates a new Builder */
         private Builder() {
-            super(Device.SCHEMA$);
+            super(Device.SCHEMA);
         }
 
         /** Creates a Builder by copying an existing Builder */
@@ -168,7 +176,7 @@ public class Device extends org.apache.avro.specific.SpecificRecordBase implemen
 
         /** Creates a Builder by copying an existing Device instance */
         private Builder(Device other) {
-            super(Device.SCHEMA$);
+            super(Device.SCHEMA);
             if (isValidValue(fields()[0], other.xid)) {
                 this.xid = data().deepCopy(fields()[0].schema(), other.xid);
                 fieldSetFlags()[0] = true;

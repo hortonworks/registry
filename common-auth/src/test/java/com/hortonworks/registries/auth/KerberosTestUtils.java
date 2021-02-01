@@ -50,7 +50,7 @@ public class KerberosTestUtils {
     public static String getJaasConfigForClientPrincipal() {
         System.out.println(keytabFile);
         return "com.sun.security.auth.module.Krb5LoginModule required doNotPrompt=true useTicketCache=false principal=\"client@EXAMPLE.COM\" " +
-                "useKeyTab=true keyTab=\"" + keytabFile +"\" debug=true;";
+                "useKeyTab=true keyTab=\"" + keytabFile + "\" debug=true;";
     }
 
     public static String getClientPrincipal1() {
@@ -93,7 +93,7 @@ public class KerberosTestUtils {
             return new AppConfigurationEntry[]{
                     new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
                             AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
-                            options),};
+                            options), };
         }
     }
 

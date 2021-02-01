@@ -27,29 +27,41 @@ import com.hortonworks.registries.cache.view.service.registry.CacheServiceRegist
 import java.util.HashMap;
 
 public class CacheClientMain {
-    private static final CacheServiceRegistry cacheRegistry = CacheServiceLocalRegistry.INSTANCE;
+    private static final CacheServiceRegistry CACHE_REGISTRY = CacheServiceLocalRegistry.INSTANCE;
 
     public static void main(String[] args) {
         CacheClientMain instance = new CacheClientMain();
         instance.<String, String>registerCache(new CacheServiceId("id1"));
         instance.<Integer, Integer>registerCache(new CacheServiceId("id2"));
-        CacheService<String, String> id1 = cacheRegistry.getCacheService(new CacheServiceId("id1"));
+        CacheService<String, String> id1 = CACHE_REGISTRY.getCacheService(new CacheServiceId("id1"));
     }
 
     public void method() {
-        CacheService<String, String> cacheService = cacheRegistry.getCacheService(getDefaultRedisId());
+        CacheService<String, String> cacheService = CACHE_REGISTRY.getCacheService(getDefaultRedisId());
         Cache<String, String> cache = cacheService.getCache("namespace");
         String val = cache.get("key");
         cache.put("key", "val");
-        cache.putAll(new HashMap<String, String>(){{put("key", "val"); put("key1", "val1");}});
+        cache.putAll(new HashMap<String, String>() {
+                         {
+                             put("key", "val");
+                             put("key1", "val1");
+                         }
+                     }
+        );
     }
 
     public void method1() {
-        RedisCacheService cacheService = (RedisCacheService) cacheRegistry.<String, String>getCacheService(getDefaultRedisId());
+        RedisCacheService cacheService = (RedisCacheService) CACHE_REGISTRY.<String, String>getCacheService(getDefaultRedisId());
         DataStoreBackedCache<String, String> cache = (DataStoreBackedCache<String, String>) cacheService.getCache("");
         String val = cache.get("key");
         cache.put("key", "val");
-        cache.putAll(new HashMap<String, String>(){{put("key", "val"); put("key1", "val1");}});
+        cache.putAll(new HashMap<String, String>() {
+                         {
+                             put("key", "val");
+                             put("key1", "val1");
+                         }
+                     }
+        );
     }
 
     private CacheServiceId getDefaultRedisId() {
@@ -61,6 +73,6 @@ public class CacheClientMain {
     }
 
     public <K, V> void registerCache(CacheServiceId id) {
-        cacheRegistry.register(id, new RedisCacheService.Builder<>(null, null, null).build());  // TODO
+        CACHE_REGISTRY.register(id, new RedisCacheService.Builder<>(null, null, null).build());  // TODO
     }
 }

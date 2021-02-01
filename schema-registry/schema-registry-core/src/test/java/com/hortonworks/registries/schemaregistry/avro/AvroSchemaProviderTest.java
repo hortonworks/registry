@@ -37,7 +37,7 @@ public class AvroSchemaProviderTest {
     @Test
     public void testAvroSchemas() throws Exception {
         AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
-        try(InputStream schemaStream = AvroSchemaProviderTest.class.getResourceAsStream("/avro/trucks.avsc") ;) {
+        try (InputStream schemaStream = AvroSchemaProviderTest.class.getResourceAsStream("/avro/trucks.avsc");) {
             List<SchemaFieldInfo> schemaFieldInfos = avroSchemaProvider.generateFields(IOUtils.toString(schemaStream));
             LOG.info("generated schema fields [{}]", schemaFieldInfos);
             Assert.assertEquals(11, schemaFieldInfos.size());

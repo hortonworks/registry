@@ -31,7 +31,8 @@ public interface InbuiltSchemaVersionLifecycleState extends SchemaVersionLifecyc
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 
-    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    default void enable(SchemaVersionLifecycleContext schemaVersionLifecycleContext) 
+            throws SchemaLifecycleException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         throw new SchemaLifecycleException(" This operation is not supported for this instance: " + this);
     }
 

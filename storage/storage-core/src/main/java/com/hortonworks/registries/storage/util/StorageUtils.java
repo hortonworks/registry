@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import static com.hortonworks.registries.common.util.ReflectionHelper.getAnnotatedClasses;
 
 /**
  * Utility methods for the storage package.

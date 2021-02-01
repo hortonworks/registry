@@ -54,7 +54,8 @@ public class OracleExecutor extends AbstractQueryExecutor {
         super(config, connectionBuilder, ORACLE_DATA_TYPE_CONTEXT);
     }
 
-    public OracleExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
+    public OracleExecutor(ExecutionConfig config, 
+                          ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         super(config, connectionBuilder, cacheBuilder, ORACLE_DATA_TYPE_CONTEXT);
     }
 
@@ -80,7 +81,8 @@ public class OracleExecutor extends AbstractQueryExecutor {
 
     @Override
     public <T extends Storable> Collection<T> select(SearchQuery searchQuery) {
-        return executeQuery(searchQuery.getNameSpace(), new OracleSelectQuery(searchQuery, storableFactory.create(searchQuery.getNameSpace()).getSchema()));
+        return executeQuery(searchQuery.getNameSpace(), new OracleSelectQuery(searchQuery, 
+                storableFactory.create(searchQuery.getNameSpace()).getSchema()));
     }
 
     @Override
@@ -128,7 +130,7 @@ public class OracleExecutor extends AbstractQueryExecutor {
             Long id = oracleSequenceIdQuery.getNextID(connection);
             return id;
         } finally {
-            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+            if (!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
                 closeConnection(connection);
             }
         }
@@ -140,7 +142,8 @@ public class OracleExecutor extends AbstractQueryExecutor {
         Connection connection = null;
         try {
             connection = getConnection();
-            final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
+            final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, 
+                    new ExecutionConfig(queryTimeoutSecs), ORACLE_DATA_TYPE_CONTEXT,
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
                 columns.add(rsMetadata.getColumnName(i),
@@ -151,7 +154,7 @@ public class OracleExecutor extends AbstractQueryExecutor {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } finally {
-            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+            if (!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
                 closeConnection(connection);
             }
         }

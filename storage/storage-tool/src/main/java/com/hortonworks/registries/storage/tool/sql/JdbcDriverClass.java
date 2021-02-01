@@ -41,8 +41,9 @@ public enum JdbcDriverClass {
 
     public static JdbcDriverClass fromDatabaseType(DatabaseType databaseType) {
         for (JdbcDriverClass jdbcDriverClass : values()) {
-            if (jdbcDriverClass.name().equals(databaseType.name()))
+            if (jdbcDriverClass.name().equals(databaseType.name())) {
                 return jdbcDriverClass;
+            }
         }
         throw new IllegalArgumentException("Unknown Database Type : " + databaseType);
     }

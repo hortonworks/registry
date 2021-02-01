@@ -156,20 +156,23 @@ public class KerberosLogin extends AbstractLogin {
             if (entry.getOptions().get("useTicketCache") != null) {
                 String val = (String) entry.getOptions().get("useTicketCache");
                 isUsingTicketCache = val.equals("true");
-            } else
+            } else {
                 isUsingTicketCache = false;
-            if (entry.getOptions().get("principal") != null)
+            }
+            if (entry.getOptions().get("principal") != null) {
                 principal = (String) entry.getOptions().get("principal");
-            else
+            } else {
                 principal = null;
+            }
         }
         KerberosTicket tgt = getTGT();
         if (tgt != null) {
             if (isUsingTicketCache && tgt.getRenewTill() != null && tgt.getRenewTill().getTime() < tgt.getEndTime().getTime()) {
-                log.warn("The TGT cannot be renewed beyond the next expiry date: {}. This process will not be able to authenticate new clients after that " +
-                        "time. Ask your system administrator to either increase the 'renew until' time by doing : 'modprinc -maxrenewlife {} ' within " +
-                        "kadmin, or instead, to generate a keytab for {}. Because the TGT's expiry cannot be further extended by refreshing, exiting " +
-                        "refresh thread now.", new Date(tgt.getEndTime().getTime()), principal, principal);
+                log.warn("The TGT cannot be renewed beyond the next expiry date: {}. This process will not be able to authenticate" + 
+                        "new clients after that time. Ask your system administrator to either increase the 'renew until' time " +
+                        "by doing : 'modprinc -maxrenewlife {} ' within kadmin, or instead, to generate a keytab for {}. " +
+                        "Because the TGT's expiry cannot be further extended by refreshing, exiting refresh thread now.",
+                        new Date(tgt.getEndTime().getTime()), principal, principal);
             } else {
                 spawnReloginThread();
             }
@@ -270,11 +273,12 @@ public class KerberosLogin extends AbstractLogin {
         log.info("TGT expires: {}", tgt.getEndTime());
         long proposedSleepInterval = (long) ((expires - start) * (ticketRenewWindowFactor + (ticketRenewJitter * RNG.nextDouble())));
         long proposedRefresh = start + proposedSleepInterval;
-        if (proposedRefresh > expires)
+        if (proposedRefresh > expires) {
             // proposedRefresh is too far in the future: it's after ticket expires: simply return now.
             return System.currentTimeMillis();
-        else
+        } else {
             return proposedRefresh;
+        }
     }
 
     private KerberosTicket getTGT() {

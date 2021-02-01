@@ -15,8 +15,6 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.ranger.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.ranger.admin.client.AbstractRangerAdminClient;
 import org.apache.ranger.plugin.util.ServicePolicies;
 import org.apache.ranger.plugin.util.ServiceTags;
@@ -33,8 +31,8 @@ import java.util.List;
  */
 public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
     private static final Logger LOG = LoggerFactory.getLogger(TestRangerAdminClientImpl.class);
-    private final static String cacheFilename = "schema-registry-policies.json";
-    private final static String tagFilename = "schema-registry-policies-tag.json";
+    private final static String CACHE_FILENAME = "schema-registry-policies.json";
+    private final static String TAG_FILENAME = "schema-registry-policies-tag.json";
 
     public ServicePolicies getServicePoliciesIfUpdated(long lastKnownVersion, long lastActivationTimeInMillis) throws Exception {
 
@@ -43,7 +41,7 @@ public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
             basedir = new File(".").getCanonicalPath();
         }
 
-        java.nio.file.Path cachePath = FileSystems.getDefault().getPath(basedir, "/src/test/resources/" + cacheFilename);
+        java.nio.file.Path cachePath = FileSystems.getDefault().getPath(basedir, "/src/test/resources/" + CACHE_FILENAME);
         byte[] cacheBytes = Files.readAllBytes(cachePath);
 
         return gson.fromJson(new String(cacheBytes), ServicePolicies.class);
@@ -55,7 +53,7 @@ public class TestRangerAdminClientImpl extends AbstractRangerAdminClient {
             basedir = new File(".").getCanonicalPath();
         }
 
-        java.nio.file.Path cachePath = FileSystems.getDefault().getPath(basedir, "/src/test/resources/" + tagFilename);
+        java.nio.file.Path cachePath = FileSystems.getDefault().getPath(basedir, "/src/test/resources/" + TAG_FILENAME);
         byte[] cacheBytes = Files.readAllBytes(cachePath);
 
         return gson.fromJson(new String(cacheBytes), ServiceTags.class);

@@ -65,7 +65,7 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
     public boolean authorize(Resource resource,
                              AccessType accessType,
                              UserAndGroups userAndGroups) {
-        if(LOG.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
             LOG.trace(String.format(
                     "==> RangerSchemaRegistryAuthorizer.authorize(resource='%s' accessType='%s', uName='%s', uGroup='%s')",
                     resource,
@@ -84,7 +84,7 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
             deactivatePluginClassLoader();
         }
 
-        if(LOG.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
             LOG.trace("<== RangerSchemaRegistryAuthorizer.authorize: " + ret);
         }
 
@@ -92,13 +92,13 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
     }
 
     private void activatePluginClassLoader() {
-        if(rangerPluginClassLoader != null) {
+        if (rangerPluginClassLoader != null) {
             rangerPluginClassLoader.activate();
         }
     }
 
     private void deactivatePluginClassLoader() {
-        if(rangerPluginClassLoader != null) {
+        if (rangerPluginClassLoader != null) {
             rangerPluginClassLoader.deactivate();
         }
     }

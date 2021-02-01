@@ -27,13 +27,13 @@ import java.util.Properties;
 
 public class SchemaFlywayFactory {
 
-    private static final String encoding = StandardCharsets.UTF_8.name();
-    private static final String metaDataTableName = "DATABASE_CHANGE_LOG";
-    private static final String sqlMigrationPrefix = "v";
-    private static final boolean outOfOrder = false;
-    private static final boolean baselineOnMigrate = true;
-    private static final String baselineVersion = "000";
-    private static final boolean cleanOnValidationError = false;
+    private static final String ENCODING = StandardCharsets.UTF_8.name();
+    private static final String META_DATA_TABLE_NAME = "DATABASE_CHANGE_LOG";
+    private static final String SQL_MIGRATION_PREFIX = "v";
+    private static final boolean OUT_OF_ORDER = false;
+    private static final boolean BASELINE_ON_MIGRATE = true;
+    private static final String BASELINE_VERSION = "000";
+    private static final boolean CLEAN_ON_VALIDATION_ERROR = false;
 
 
     static Flyway get(StorageProviderConfiguration conf,
@@ -90,14 +90,14 @@ public class SchemaFlywayFactory {
         Flyway flyway = new Flyway();
 
         String location = "filesystem:" + scriptRootPath + File.separator + conf.getDbType();
-        flyway.setEncoding(encoding);
-        flyway.setTable(metaDataTableName);
-        flyway.setSqlMigrationPrefix(sqlMigrationPrefix);
+        flyway.setEncoding(ENCODING);
+        flyway.setTable(META_DATA_TABLE_NAME);
+        flyway.setSqlMigrationPrefix(SQL_MIGRATION_PREFIX);
         flyway.setValidateOnMigrate(validateOnMigrate);
-        flyway.setOutOfOrder(outOfOrder);
-        flyway.setBaselineOnMigrate(baselineOnMigrate);
-        flyway.setBaselineVersion(MigrationVersion.fromVersion(baselineVersion));
-        flyway.setCleanOnValidationError(cleanOnValidationError);
+        flyway.setOutOfOrder(OUT_OF_ORDER);
+        flyway.setBaselineOnMigrate(BASELINE_ON_MIGRATE);
+        flyway.setBaselineVersion(MigrationVersion.fromVersion(BASELINE_VERSION));
+        flyway.setCleanOnValidationError(CLEAN_ON_VALIDATION_ERROR);
         flyway.setLocations(location);
 
         return flyway;

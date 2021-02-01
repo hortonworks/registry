@@ -59,17 +59,30 @@ public class SchemaProviderInfo {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaProviderInfo that = (SchemaProviderInfo) o;
 
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (defaultSerializerClassName != null ? !defaultSerializerClassName.equals(that.defaultSerializerClassName) : that.defaultSerializerClassName != null)
+        if (type != null ? !type.equals(that.type) : that.type != null) {
             return false;
-        return defaultDeserializerClassName != null ? defaultDeserializerClassName.equals(that.defaultDeserializerClassName) : that.defaultDeserializerClassName == null;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (defaultSerializerClassName != null ? 
+                !defaultSerializerClassName.equals(that.defaultSerializerClassName) : that.defaultSerializerClassName != null) {
+            return false;      
+        }
+        return defaultDeserializerClassName != null ? 
+                defaultDeserializerClassName.equals(that.defaultDeserializerClassName) : that.defaultDeserializerClassName == null;
 
     }
 

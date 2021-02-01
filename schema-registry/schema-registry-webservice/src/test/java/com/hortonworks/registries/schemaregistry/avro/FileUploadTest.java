@@ -23,7 +23,7 @@ public class FileUploadTest {
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
     private static SchemaRegistryClient SCHEMA_REGISTRY_CLIENT;
     @Rule
-    public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
+    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
 
     @BeforeClass
     public static void setup() throws Exception {

@@ -43,12 +43,18 @@ public class OrderByField {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         OrderByField that = (OrderByField) o;
 
-        if (isDescending != that.isDescending) return false;
+        if (isDescending != that.isDescending) {
+            return false;
+        }
         return fieldName != null ? fieldName.equals(that.fieldName) : that.fieldName == null;
     }
 

@@ -20,7 +20,7 @@ import org.apache.atlas.model.typedef.AtlasStructDef.AtlasAttributeDef.Cardinali
 
 public class VersionStateRelationshipDef extends AtlasRelationshipDef implements SchemaRegistryServiceType {
 
-    public static final String RELATIONSHIP_NAME = "version_state"+TODORemoveThis.COUNTER;
+    public static final String RELATIONSHIP_NAME = "version_state" + TODORemoveThis.COUNTER;
     public static final String RELATIONSHIP_LABEL = "version.state";
 
     public static final String REL_ONE = "states";  // rel.name from the PoV of one

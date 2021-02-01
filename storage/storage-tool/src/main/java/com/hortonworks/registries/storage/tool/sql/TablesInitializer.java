@@ -139,7 +139,8 @@ public class TablesInitializer {
         for (SchemaMigrationOption schemaMigrationOption : SchemaMigrationOption.values()) {
             if (commandLine.hasOption(schemaMigrationOption.toString())) {
                 if (isSchemaMigrationOptionSpecified) {
-                    System.out.println("Only one operation can be execute at once, please select one of 'create', ',migrate', 'validate', 'info', 'drop', 'repair', 'check-connection'.");
+                    System.out.println("Only one operation can be execute at once, please select one of 'create'," +
+                                    "',migrate', 'validate', 'info', 'drop', 'repair', 'check-connection'.");
                     System.exit(1);
                 }
                 isSchemaMigrationOptionSpecified = true;
@@ -148,7 +149,8 @@ public class TablesInitializer {
         }
 
         if (!isSchemaMigrationOptionSpecified) {
-            System.out.println("One of the option 'create', ',migrate', 'validate', 'info', 'drop', 'repair', 'check-connection' must be specified to execute.");
+            System.out.println("One of the option 'create', ',migrate', 'validate', 'info', 'drop', 'repair', " +
+                            "'check-connection' must be specified to execute.");
             System.exit(1);
         }
 
@@ -169,7 +171,7 @@ public class TablesInitializer {
         }
 
         boolean disableValidateOnMigrate = commandLine.hasOption(DISABLE_VALIDATE_ON_MIGRATE);
-        if(disableValidateOnMigrate) {
+        if (disableValidateOnMigrate) {
             System.out.println("Disabling validation on schema migrate");
         }
         SchemaMigrationHelper schemaMigrationHelper = new SchemaMigrationHelper(

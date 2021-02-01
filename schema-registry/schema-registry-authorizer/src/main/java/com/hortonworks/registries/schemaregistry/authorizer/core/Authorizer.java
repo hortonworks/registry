@@ -62,9 +62,13 @@ public interface Authorizer {
 
         private final String name;
 
-        AccessType(String name) { this.name = name; }
+        AccessType(String name) { 
+            this.name = name; 
+        }
 
-        public String getName() { return name; }
+        public String getName() { 
+            return name; 
+        }
     }
 
     /**

@@ -20,7 +20,7 @@ import org.apache.atlas.model.typedef.AtlasStructDef.AtlasAttributeDef.Cardinali
 
 public class SerdesMappingRelationshipDef extends AtlasRelationshipDef implements SchemaRegistryServiceType {
 
-    public static final String RELATIONSHIP_NAME = "schema_serdes_mapping"+TODORemoveThis.COUNTER;
+    public static final String RELATIONSHIP_NAME = "schema_serdes_mapping" + TODORemoveThis.COUNTER;
     public static final String RELATIONSHIP_LABEL = "schema_serdes";
 
     public static final String REL_ONE = "serdes";  // rel.name from the PoV of meta

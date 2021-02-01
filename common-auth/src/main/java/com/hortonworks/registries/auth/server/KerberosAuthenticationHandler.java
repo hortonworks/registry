@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -47,7 +46,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -124,7 +122,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
             return new AppConfigurationEntry[]{
                     new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
                             AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
-                            options),};
+                            options), };
         }
     }
 

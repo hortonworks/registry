@@ -21,7 +21,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class SerdesEntityDef extends AtlasEntityDef implements SchemaRegistryServiceType {
 
-    public static final String SCHEMA_SERDES_INFO = "schema_serdes_info"+TODORemoveThis.COUNTER;
+    public static final String SCHEMA_SERDES_INFO = "schema_serdes_info" + TODORemoveThis.COUNTER;
 
     public static final String ID = "id";
     public static final String NAME = "name";

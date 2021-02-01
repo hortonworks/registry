@@ -165,7 +165,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String FILES_PATH = SCHEMA_REGISTRY_PATH + "/files/";
     private static final String SERIALIZERS_PATH = SCHEMA_REGISTRY_PATH + "/serdes/";
     private static final String REGISTY_CLIENT_JAAS_SECTION = "RegistryClient";
-    private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotDeserializer.class, PullDeserializer.class, PushDeserializer.class);
+    private static final Set<Class<?>> DESERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotDeserializer.class, PullDeserializer.class, 
+            PushDeserializer.class);
     private static final Set<Class<?>> SERIALIZER_INTERFACE_CLASSES = Sets.newHashSet(SnapshotSerializer.class, PullSerializer.class);
     private static final String SEARCH_FIELDS = SCHEMA_REGISTRY_PATH + "/search/schemas/fields";
     private static final String FIND_AGGREGATED_SCHEMAS = SCHEMA_REGISTRY_PATH + "/search/schemas/aggregated";
@@ -274,7 +275,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private void configureClientForBasicAuth(Client client) {
         String userName = configuration.getValue(Configuration.AUTH_USERNAME.name());
         String password = configuration.getValue(Configuration.AUTH_PASSWORD.name());
-        if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)){
+        if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)) {
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(userName, password);
             client.register(feature);
         }
@@ -366,7 +367,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         if (saslJaasConfig != null) {
             KerberosLogin kerberosLogin = new KerberosLogin(KERBEROS_SYNCHRONIZATION_TIMEOUT_MS);
             try {
-                kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
+                kerberosLogin.configure(new HashMap<>(), REGISTY_CLIENT_JAAS_SECTION, 
+                        new JaasConfiguration(REGISTY_CLIENT_JAAS_SECTION, saslJaasConfig));
                 kerberosLogin.login();
                 return Optional.of(kerberosLogin);
             } catch (LoginException e) {
@@ -565,7 +567,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             Response response = ex.getResponse();
             CatalogResponse catalogResponse = SchemaRegistryClient.readCatalogResponse(response.readEntity(String.class));
             if (catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ENTITY_CONFLICT.getCode()) {
-                SchemaMetadataInfo meta = checkNotNull(getSchemaMetadataInfo(schemaMetadata.getName()), "Did not find schema " + schemaMetadata.getName());
+                SchemaMetadataInfo meta = checkNotNull(getSchemaMetadataInfo(schemaMetadata.getName()), 
+                        "Did not find schema " + schemaMetadata.getName());
                 return meta.getId();
             } else {
                 throw ex;
@@ -623,8 +626,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws
-            InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName, 
+                                            SchemaMetadata schemaMetadata, 
+                                            SchemaVersion schemaVersion, 
+                                            boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         // get it, if it exists in cache
         SchemaDigestEntry schemaDigestEntry = buildSchemaTextEntry(schemaVersion, schemaMetadata.getName());
         SchemaIdVersion schemaIdVersion = schemaTextCache.getIfPresent(schemaDigestEntry);
@@ -709,7 +715,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(final String schemaBranchName, final String schemaName, final SchemaVersion schemaVersion, boolean disableCanonicalCheck)
+    public SchemaIdVersion addSchemaVersion(final String schemaBranchName, 
+                                            final String schemaName, 
+                                            final SchemaVersion schemaVersion, 
+                                            boolean disableCanonicalCheck)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         try {
@@ -719,9 +728,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             Throwable cause = e.getCause();
             LOG.error("Encountered error while adding new version [{}] of schema [{}] and error [{}]", schemaVersion, schemaName, e);
             if (cause != null) {
-                if (cause instanceof InvalidSchemaException)
+                if (cause instanceof InvalidSchemaException) {
                     throw (InvalidSchemaException) cause;
-                else if (cause instanceof IncompatibleSchemaException) {
+                } else if (cause instanceof IncompatibleSchemaException) {
                     throw (IncompatibleSchemaException) cause;
                 } else if (cause instanceof SchemaNotFoundException) {
                     throw (SchemaNotFoundException) cause;
@@ -769,7 +778,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     private SchemaIdVersion doAddSchemaVersion(String schemaBranchName, String schemaName,
-                                               SchemaVersion schemaVersion, boolean disableCanonicalCheck) throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
+                                               SchemaVersion schemaVersion, boolean disableCanonicalCheck)
+            throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
             throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
@@ -938,7 +948,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, IncompatibleSchemaException {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             try {
                 WebTarget target = targets.schemasTarget.path(schemaVersionId + "/merge").queryParam("disableCanonicalCheck", disableCanonicalCheck);
@@ -982,7 +993,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
+    public SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) 
+            throws SchemaBranchAlreadyExistsException, SchemaNotFoundException {
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget target = targets.schemasTarget.path("versionsById/" + schemaVersionId + "/branch");
             try {
@@ -1065,9 +1077,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return runRetryableBlock((SchemaRegistryTargets targets) -> {
-            WebTarget webTarget = targets.schemasTarget.path(encode(schemaName) + "/versions").queryParam("branch", schemaBranchName).queryParam("states", stateIds.toArray());
+            WebTarget webTarget = targets.schemasTarget
+                    .path(encode(schemaName) + "/versions")
+                    .queryParam("branch", schemaBranchName)
+                    .queryParam("states", stateIds.toArray());
             return getEntities(webTarget, SchemaVersionInfo.class);
         });
     }
@@ -1153,7 +1169,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return checkCompatibility(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);
     }
 
@@ -1182,7 +1199,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException {
+    public boolean isCompatibleWithAllVersions(String schemaBranchName, String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return checkCompatibility(schemaBranchName, schemaName, toSchemaText).isCompatible();
     }
 
@@ -1612,7 +1630,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          *
          */
         public static final ConfigEntry<String> SASL_JAAS_CONFIG =
-                ConfigEntry.optional( "sasl.jaas.config",
+                ConfigEntry.optional("sasl.jaas.config",
                         String.class,
                         "Schema Registry Dynamic JAAS config for SASL connection.",
                         null,
@@ -1738,12 +1756,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             SchemaDigestEntry that = (SchemaDigestEntry) o;
 
-            if (name != null ? !name.equals(that.name) : that.name != null) return false;
+            if (name != null ? !name.equals(that.name) : that.name != null) {
+                return false;
+            }
             return Arrays.equals(schemaDigest, that.schemaDigest);
 
         }

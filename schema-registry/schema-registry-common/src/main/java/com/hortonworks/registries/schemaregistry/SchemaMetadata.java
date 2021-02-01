@@ -162,18 +162,34 @@ public class SchemaMetadata implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaMetadata that = (SchemaMetadata) o;
 
-        if (evolve != that.evolve) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (evolve != that.evolve) {
+            return false;
+        }
+        if (type != null ? !type.equals(that.type) : that.type != null) {
+            return false;
+        }
+        if (schemaGroup != null ? !schemaGroup.equals(that.schemaGroup) : that.schemaGroup != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
         if (getValidationLevel() != null ? !getValidationLevel().equals(that.getValidationLevel())
-                                         : that.getValidationLevel() != null) return false;
+                                         : that.getValidationLevel() != null) {
+            return false;
+        }
         return getCompatibility() == that.getCompatibility();
     }
 

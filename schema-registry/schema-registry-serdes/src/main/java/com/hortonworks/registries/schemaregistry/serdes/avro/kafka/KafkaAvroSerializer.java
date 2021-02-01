@@ -74,8 +74,8 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     public static final String SCHEMA_COMPATIBILITY = "schema.compatibility";
 
     public static final String SCHEMA_GROUP = "schema.group";
-    public static final String SCHEMA_NAME_KEY_SUFFIX_ = "schema.name.key.suffix";
-    public static final String SCHEMA_NAME_VALUE_SUFFIX_= "schema.name.value.suffix";
+    public static final String SCHEMA_NAME_KEY_SUFFIX = "schema.name.key.suffix";
+    public static final String SCHEMA_NAME_VALUE_SUFFIX = "schema.name.value.suffix";
     public static final String STORE_SCHEMA_VERSION_ID_IN_HEADER = "store.schema.version.id.in.header";
 
     public static final String DEFAULT_SCHEMA_GROUP = "kafka";
@@ -115,21 +115,24 @@ public class KafkaAvroSerializer implements Serializer<Object> {
         );
 
         schemaGroup = Utils.getOrDefaultAsString(configs, SCHEMA_GROUP, DEFAULT_SCHEMA_GROUP);
-        schemaNameKeySuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_KEY_SUFFIX_, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
-        schemaNameValueSuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_VALUE_SUFFIX_, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
+        schemaNameKeySuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_KEY_SUFFIX, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
+        schemaNameValueSuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_VALUE_SUFFIX, DEFAULT_SCHEMA_NAME_VALUE_SUFFIX);
 
         this.isKey = isKey;
-        keySchemaVersionIdHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID);
+        keySchemaVersionIdHeaderName = Utils.getOrDefaultAsString(configs, 
+                KafkaAvroSerde.KEY_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID);
         if (keySchemaVersionIdHeaderName == null || keySchemaVersionIdHeaderName.isEmpty()) {
             throw new IllegalArgumentException("keySchemaVersionIdHeaderName should not be null or empty");
         }
 
-        valueSchemaVersionIdHeaderName = Utils.getOrDefaultAsString(configs, KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
+        valueSchemaVersionIdHeaderName = Utils.getOrDefaultAsString(configs, 
+                KafkaAvroSerde.VALUE_SCHEMA_VERSION_ID_HEADER_NAME, KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID);
         if (valueSchemaVersionIdHeaderName == null || valueSchemaVersionIdHeaderName.isEmpty()) {
             throw new IllegalArgumentException("valueSchemaVersionIdHeaderName should not be null or empty");
         }
 
-        useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, STORE_SCHEMA_VERSION_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER));
+        useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, 
+                STORE_SCHEMA_VERSION_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER));
 
         avroSnapshotSerializer.init(configs);
         messageAndMetadataAvroSerializer.init(configs);
@@ -159,12 +162,12 @@ public class KafkaAvroSerializer implements Serializer<Object> {
 
     public SchemaMetadata getSchemaKey(String topic, boolean isKey) {
         String name = topic;
-        if(isKey) {
-            if (schemaNameKeySuffix != null ) {
+        if (isKey) {
+            if (schemaNameKeySuffix != null) {
                 name += schemaNameKeySuffix;
             }
         } else {
-            if (schemaNameValueSuffix != null ) {
+            if (schemaNameValueSuffix != null) {
                 name += schemaNameValueSuffix;
             }
         }

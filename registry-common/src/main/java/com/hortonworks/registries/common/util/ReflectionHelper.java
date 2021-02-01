@@ -39,13 +39,15 @@ public class ReflectionHelper {
         return (T) Class.forName(className).newInstance();
     }
 
-    public static <T> T invokeGetter(String propertyName, Object object) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static <T> T invokeGetter(String propertyName, Object object) 
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String methodName = "get" + StringUtils.capitalize(propertyName);
         Method method = object.getClass().getMethod(methodName);
         return (T) method.invoke(object);
     }
 
-    public static <T> T invokeSetter(String propertyName, Object object, Object valueToSet) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static <T> T invokeSetter(String propertyName, Object object, Object valueToSet) 
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String methodName = "set" + StringUtils.capitalize(propertyName);
         Method method = null;
         try {
@@ -77,16 +79,17 @@ public class ReflectionHelper {
     public static Map<String, Class> getFieldNamesToTypes(Class clazz) {
         Field[] declaredFields = clazz.getDeclaredFields();
         Map<String, Class> instanceVariableNamesToTypes = new HashMap<>();
-        for(Field field : declaredFields) {
-            if(!Modifier.isStatic(field.getModifiers())) {
+        for (Field field : declaredFields) {
+            if (!Modifier.isStatic(field.getModifiers())) {
                 LOG.trace("clazz {} has field {} with type {}", clazz.getName(), field.getName(), field.getType().getName());
                 instanceVariableNamesToTypes.put(field.getName(), field.getType());
             } else {
-                LOG.trace("clazz {} has field {} with type {}, which is static so ignoring", clazz.getName(), field.getName(), field.getType().getName());
+                LOG.trace("clazz {} has field {} with type {}, which is static so ignoring", 
+                        clazz.getName(), field.getName(), field.getType().getName());
             }
         }
 
-        if(!clazz.getSuperclass().equals(Object.class)) {
+        if (!clazz.getSuperclass().equals(Object.class)) {
             instanceVariableNamesToTypes.putAll(getFieldNamesToTypes(clazz.getSuperclass()));
         }
         return instanceVariableNamesToTypes;

@@ -40,7 +40,7 @@ public final class AvroSchemaRegistryClientUtil {
     public static void assertAvroObjs(Object expected, Object given) {
         if (expected instanceof byte[]) {
             Assert.assertArrayEquals((byte[]) expected, (byte[]) given);
-        } else if(expected instanceof SpecificRecord) {
+        } else if (expected instanceof SpecificRecord) {
             Assert.assertTrue(SpecificData.get().compare(expected, given, ((SpecificRecord) expected).getSchema()) == 0);
         } else {
             Assert.assertEquals(expected, given);

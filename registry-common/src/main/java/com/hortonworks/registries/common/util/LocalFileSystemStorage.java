@@ -61,7 +61,7 @@ public class LocalFileSystemStorage implements FileStorage {
             }
         } else {
             if (!dirFile.isDirectory()) {
-                throw new RuntimeException("Given directory path "+directory+" is not a directory");
+                throw new RuntimeException("Given directory path " + directory + " is not a directory");
             }
         }
     }
@@ -73,7 +73,7 @@ public class LocalFileSystemStorage implements FileStorage {
         Path path = FileSystems.getDefault().getPath(directory, name);
         File file = path.toFile();
         if (!file.createNewFile()) {
-            throw new IOException("File: ["+name+"] already exists");
+            throw new IOException("File: [" + name + "] already exists");
         }
         try (OutputStream outputStream = new FileOutputStream(file)) {
             ByteStreams.copy(inputStream, outputStream);

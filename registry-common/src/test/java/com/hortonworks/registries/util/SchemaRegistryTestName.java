@@ -25,7 +25,7 @@ public class SchemaRegistryTestName extends TestWatcher {
 
     @Override
     protected void starting(Description d) {
-        name=d.getMethodName().replaceAll("[\\[\\]]","-");
+        name = d.getMethodName().replaceAll("[\\[\\]]", "-");
     }
 
     public String getMethodName() {

@@ -24,8 +24,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class CacheService<K,V> {
-    protected final ConcurrentMap<String, Cache<K,V>> caches = new ConcurrentHashMap<>();
+public class CacheService<K, V> {
+    protected final ConcurrentMap<String, Cache<K, V>> caches = new ConcurrentHashMap<>();
 
     protected final String id;
     protected final TypeConfig.Cache cacheType;
@@ -36,40 +36,40 @@ public class CacheService<K,V> {
         this.cacheType = cacheType;
     }
 
-    protected CacheService(Builder<K,V> builder) {
+    protected CacheService(Builder<K, V> builder) {
         this.id = builder.id;
         this.cacheType = builder.cacheType;
-        this.expiryPolicy= builder.expiryPolicy;
+        this.expiryPolicy = builder.expiryPolicy;
     }
 
-    public static class Builder<K,V> {
+    public static class Builder<K, V> {
         private final String id;
         private final TypeConfig.Cache cacheType;
         private ExpiryPolicy expiryPolicy;
 
         public Builder(String id, TypeConfig.Cache cacheType) {
             this.id = id;
-            this.cacheType= cacheType;
+            this.cacheType = cacheType;
         }
 
         /**
          * Sets the {@link ExpiryPolicy} used by all the caches registered, if not overridden for a particular cache
          */
-        public Builder<K,V> setExpiryPolicy(ExpiryPolicy expiryPolicy) {
+        public Builder<K, V> setExpiryPolicy(ExpiryPolicy expiryPolicy) {
             this.expiryPolicy = expiryPolicy;
             return this;
         }
 
-        public CacheService<K,V> build() {
+        public CacheService<K, V> build() {
             return new CacheService<>(this);
         }
     }
 
-    public <T extends Cache<K,V>> T getCache(String namespace) {
+    public <T extends Cache<K, V>> T getCache(String namespace) {
         return (T) caches.get(namespace);
     }
 
-    public void registerCache(String id, Cache<K,V> cache) {
+    public void registerCache(String id, Cache<K, V> cache) {
         caches.putIfAbsent(id, cache);   //TODO. What to do when attempting to register a cache with an ID that already exists?
     }
 

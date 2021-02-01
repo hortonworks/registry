@@ -216,7 +216,8 @@
 
 
 /**
- *   This is clone of the pull request https://github.com/junit-team/junit4/pull/1435, which has been merged to junit master and provides support for BeforeParam and AfterParam.
+ *   This is clone of the pull request https://github.com/junit-team/junit4/pull/1435, 
+ *   which has been merged to junit master and provides support for BeforeParam and AfterParam.
  *   This class should be removed once the pull request is available in the future release.
  */
 
@@ -229,7 +230,12 @@ import org.junit.runners.model.TestClass;
 import org.junit.runners.parameterized.ParametersRunnerFactory;
 import org.junit.runners.parameterized.TestWithParameters;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;

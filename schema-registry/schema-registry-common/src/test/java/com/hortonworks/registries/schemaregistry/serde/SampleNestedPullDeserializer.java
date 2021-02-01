@@ -169,12 +169,18 @@ public class SampleNestedPullDeserializer implements PullDeserializer<SchemaDeta
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             FieldWithIndex that = (FieldWithIndex) o;
 
-            if (index != that.index) return false;
+            if (index != that.index) {
+                return false;
+            }
             return field != null ? field.equals(that.field) : that.field == null;
 
         }
@@ -271,12 +277,18 @@ public class SampleNestedPullDeserializer implements PullDeserializer<SchemaDeta
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             MyFieldValue that = (MyFieldValue) o;
 
-            if (field != null ? !field.equals(that.field) : that.field != null) return false;
+            if (field != null ? !field.equals(that.field) : that.field != null) {
+                return false;
+            }
             return value != null ? value.equals(that.value) : that.value == null;
 
         }

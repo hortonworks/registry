@@ -32,8 +32,8 @@ public class TestAuthorizer implements Authorizer {
 
     @Override
     public boolean authorize(Resource resource, AccessType accessType, UserAndGroups userAndGroups) {
-        for(Policy p : policies) {
-            if(resourcesEqual(resource, p.resource)
+        for (Policy p : policies) {
+            if (resourcesEqual(resource, p.resource)
                && p.accessTypes.contains(accessType)
             && (p.users.contains(userAndGroups.getUser()))) {
                 return true;
@@ -60,7 +60,7 @@ public class TestAuthorizer implements Authorizer {
         public Policy(Resource resource, String[] users, AccessType... accessTypes) {
             this.resource = resource;
             this.users = Arrays.asList(users);
-            if(accessTypes == null || accessTypes.length == 0) {
+            if (accessTypes == null || accessTypes.length == 0) {
                 throw new IllegalArgumentException("accessTypes cannot be empty");
             }
             this.accessTypes = new HashSet<>(Arrays. asList(accessTypes));
@@ -72,20 +72,20 @@ public class TestAuthorizer implements Authorizer {
             return false;
         }
 
-        if(a instanceof SchemaMetadataResource) {
+        if (a instanceof SchemaMetadataResource) {
             SchemaMetadataResource smA = (SchemaMetadataResource) a;
             SchemaMetadataResource smB = (SchemaMetadataResource) b;
-            if(!smA.getsGroupName().equals(smB.getsGroupName())
+            if (!smA.getsGroupName().equals(smB.getsGroupName())
                     || !smA.getsMetadataName().equals(smB.getsMetadataName())) {
                 return false;
             }
         }
 
-        if(a instanceof SchemaBranchResource ||
+        if (a instanceof SchemaBranchResource ||
            a instanceof SchemaVersionResource) {
             SchemaBranchResource sbA = (SchemaBranchResource) a;
             SchemaBranchResource sbB = (SchemaBranchResource) b;
-            if(!sbA.getsBranchName().equals(sbB.getsBranchName())) {
+            if (!sbA.getsBranchName().equals(sbB.getsBranchName())) {
                 return false;
             }
         }

@@ -66,12 +66,18 @@ public final class SchemaVersionKey implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaVersionKey that = (SchemaVersionKey) o;
 
-        if (schemaName != null ? !schemaName.equals(that.schemaName) : that.schemaName != null) return false;
+        if (schemaName != null ? !schemaName.equals(that.schemaName) : that.schemaName != null) {
+            return false;
+        }
         return version != null ? version.equals(that.version) : that.version == null;
 
     }

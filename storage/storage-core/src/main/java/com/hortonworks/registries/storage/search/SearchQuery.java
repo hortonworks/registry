@@ -46,7 +46,7 @@ public class SearchQuery implements Serializable {
     }
 
     public SearchQuery where(WhereClause whereClause) {
-        if(this.whereClause != null) {
+        if (this.whereClause != null) {
             throw new IllegalArgumentException("where clause is already defined for this search query.");
         }
         this.whereClause = whereClause;
@@ -54,7 +54,7 @@ public class SearchQuery implements Serializable {
     }
 
     public SearchQuery orderBy(OrderBy... orderByFields) {
-        if(this.orderByFields != null) {
+        if (this.orderByFields != null) {
             throw new IllegalArgumentException("orderBy fields are already defined for this search query.");
         }
 
@@ -85,14 +85,21 @@ public class SearchQuery implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SearchQuery that = (SearchQuery) o;
 
-        if (nameSpace != null ? !nameSpace.equals(that.nameSpace) : that.nameSpace != null) return false;
-        if (orderByFields != null ? !orderByFields.equals(that.orderByFields) : that.orderByFields != null)
+        if (nameSpace != null ? !nameSpace.equals(that.nameSpace) : that.nameSpace != null) {
             return false;
+        }
+        if (orderByFields != null ? !orderByFields.equals(that.orderByFields) : that.orderByFields != null) {
+            return false;
+        }
         return whereClause != null ? whereClause.equals(that.whereClause) : that.whereClause == null;
     }
 

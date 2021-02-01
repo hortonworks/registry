@@ -92,16 +92,27 @@ public class SerDesPair implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SerDesPair that = (SerDesPair) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (fileId != null ? !fileId.equals(that.fileId) : that.fileId != null) return false;
-        if (serializerClassName != null ? !serializerClassName.equals(that.serializerClassName) : that.serializerClassName != null)
+        if (name != null ? !name.equals(that.name) : that.name != null) {
             return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (fileId != null ? !fileId.equals(that.fileId) : that.fileId != null) {
+            return false;
+        }
+        if (serializerClassName != null ? !serializerClassName.equals(that.serializerClassName) : that.serializerClassName != null) {
+            return false;
+        }
         return deserializerClassName != null ? deserializerClassName.equals(that.deserializerClassName) : that.deserializerClassName == null;
     }
 

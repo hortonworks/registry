@@ -37,7 +37,6 @@ import java.io.File;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 
 public class TestKerberosLogin extends KerberosSecurityTestcase {
 

@@ -104,10 +104,13 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
             public SchemaProvider apply(@Nullable Map<String, Object> schemaProviderConfig) {
                 String className = (String) schemaProviderConfig.get("providerClass");
                 if (className == null || className.isEmpty()) {
-                    throw new IllegalArgumentException("Schema provider class name must be non empty, Invalid provider class name [" + className + "]");
+                    throw new IllegalArgumentException("Schema provider class name must be non empty, Invalid provider class name [" + 
+                            className + "]");
                 }
                 try {
-                    SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, true, Thread.currentThread().getContextClassLoader()).newInstance();
+                    SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, 
+                            true, 
+                            Thread.currentThread().getContextClassLoader()).newInstance();
                     schemaProvider.init(schemaProviderConfig);
                     return schemaProvider;
                 } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {

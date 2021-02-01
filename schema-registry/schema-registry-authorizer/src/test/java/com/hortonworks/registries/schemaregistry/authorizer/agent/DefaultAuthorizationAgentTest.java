@@ -135,7 +135,7 @@ public class DefaultAuthorizationAgentTest {
         props.put(Authorizer.AUTHORIZER_CONFIG, TestAuthorizer.class.getCanonicalName());
 
         authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(props);
-        TestAuthorizer testAuthorizer = (TestAuthorizer) (((DefaultAuthorizationAgent)authorizationAgent)
+        TestAuthorizer testAuthorizer = (TestAuthorizer) (((DefaultAuthorizationAgent) authorizationAgent)
                 .getAuthorizer());
 
 
@@ -439,8 +439,8 @@ public class DefaultAuthorizationAgentTest {
         SchemaMetadataInfo smi3 = schemaRegistry.getSchemaMetadataInfo("Schema3");
         ArrayList<AggregatedSchemaBranch> aggregatedBranches = new ArrayList<>();
         ArrayList<SerDesInfo> serDesInfo = new ArrayList<>();
-        serDesInfo.add(new SerDesInfo(1l, smi3.getTimestamp(), new SerDesPair()));
-        serDesInfo.add(new SerDesInfo(2l, smi3.getTimestamp(), new SerDesPair()));
+        serDesInfo.add(new SerDesInfo(1L, smi3.getTimestamp(), new SerDesPair()));
+        serDesInfo.add(new SerDesInfo(2L, smi3.getTimestamp(), new SerDesPair()));
         List<SchemaVersionInfo> versions = new ArrayList<>();
         SchemaVersionInfo svi31 = schemaRegistry.getSchemaVersionInfo(siv31);
         versions.add(svi31);
@@ -473,8 +473,8 @@ public class DefaultAuthorizationAgentTest {
         SchemaMetadataInfo smi3 = schemaRegistry.getSchemaMetadataInfo("Schema3");
         ArrayList<AggregatedSchemaBranch> aggregatedBranches = new ArrayList<>();
         ArrayList<SerDesInfo> serDesInfo = new ArrayList<>();
-        serDesInfo.add(new SerDesInfo(1l, smi3.getTimestamp(), new SerDesPair()));
-        serDesInfo.add(new SerDesInfo(2l, smi3.getTimestamp(), new SerDesPair()));
+        serDesInfo.add(new SerDesInfo(1L, smi3.getTimestamp(), new SerDesPair()));
+        serDesInfo.add(new SerDesInfo(2L, smi3.getTimestamp(), new SerDesPair()));
         List<SchemaVersionInfo> versions = new ArrayList<>();
         SchemaVersionInfo svi31 = schemaRegistry.getSchemaVersionInfo(siv31);
         versions.add(svi31);
@@ -539,7 +539,8 @@ public class DefaultAuthorizationAgentTest {
 
         // Empty array should stay empty
         List<SchemaVersionKey> versions = new ArrayList<>();
-        Collection<SchemaVersionKey> res = authorizationAgent.authorizeFindSchemasByFields(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
+        Collection<SchemaVersionKey> res = authorizationAgent
+                .authorizeFindSchemasByFields(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
         assertTrue(res.isEmpty());
 
         SchemaVersionKey svi3 = new SchemaVersionKey("Schema3", siv3.getVersion());
@@ -586,9 +587,19 @@ public class DefaultAuthorizationAgentTest {
         SchemaMetadataInfo smi3 = new SchemaMetadataInfo(sm3);
 
         // Access allowed by policy p3
-        authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(sc3), sm3, Authorizer.AccessType.READ);
-        authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(sc3), smi3, Authorizer.AccessType.UPDATE);
-        authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, sm3.getName(), Authorizer.AccessType.READ);
+        authorizationAgent.authorizeSchemaMetadata(
+                AuthorizationUtils.getUserAndGroups(sc3), 
+                sm3,
+                Authorizer.AccessType.READ);
+        authorizationAgent.authorizeSchemaMetadata(
+                AuthorizationUtils.getUserAndGroups(sc3), 
+                smi3, 
+                Authorizer.AccessType.UPDATE);
+        authorizationAgent.authorizeSchemaMetadata(
+                AuthorizationUtils.getUserAndGroups(sc3), 
+                schemaRegistry, 
+                sm3.getName(), 
+                Authorizer.AccessType.READ);
 
         ///////////////////////////// Negative cases /////////////////////////////////
 
@@ -607,7 +618,7 @@ public class DefaultAuthorizationAgentTest {
             SecurityContext sc4 = new SecurityContextForTesting(user4);
             authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(sc4), sm3, Authorizer.AccessType.UPDATE);
             fail("Expected an AuthorizationException to be thrown");
-        } catch (AuthorizationException e){
+        } catch (AuthorizationException e) {
             String expectedMsg = "User 'user4' does not have [update] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
             assertThat(e.getMessage(), is(expectedMsg));
@@ -621,7 +632,11 @@ public class DefaultAuthorizationAgentTest {
             assertThat(e.getMessage(), is(expectedMsg));
         }
         try {
-            authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, sm3.getName(), Authorizer.AccessType.CREATE);
+            authorizationAgent.authorizeSchemaMetadata(
+                    AuthorizationUtils.getUserAndGroups(sc3), 
+                    schemaRegistry, 
+                    sm3.getName(),
+                    Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [create] permission on " +
@@ -653,7 +668,11 @@ public class DefaultAuthorizationAgentTest {
             assertThat(e.getMessage(), is(expectedMsg));
         }
         try {
-            authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, sm4.getName(), Authorizer.AccessType.DELETE);
+            authorizationAgent.authorizeSchemaMetadata(
+                    AuthorizationUtils.getUserAndGroups(sc3),
+                    schemaRegistry,
+                    sm4.getName(),
+                    Authorizer.AccessType.DELETE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [delete] permission on " +
@@ -732,7 +751,7 @@ public class DefaultAuthorizationAgentTest {
                     schemaNameToIdMap.get(schemaName3),
                     -9999L,
                     "Branch3");
-        } catch(SchemaNotFoundException e) {
+        } catch (SchemaNotFoundException e) {
             String expectedMsg = "Schema version with id : -9999 not found";
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -743,7 +762,7 @@ public class DefaultAuthorizationAgentTest {
                     99999999999999L,
                     siv31.getSchemaVersionId(),
                     "BranchX");
-        } catch(SchemaNotFoundException e) {
+        } catch (SchemaNotFoundException e) {
             String expectedMsg = "Could not find schema with ID 99999999999999";
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -795,7 +814,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeDeleteSchemaBranch(AuthorizationUtils.getUserAndGroups(sc88),
                     schemaRegistry,
                     new Long(-9999));
-        } catch(SchemaBranchNotFoundException e) {
+        } catch (SchemaBranchNotFoundException e) {
             String expectedMsg = "Schema branch with id : '-9999' not found";
             assertThat(e.getMessage(), is(expectedMsg));
         }
@@ -811,9 +830,9 @@ public class DefaultAuthorizationAgentTest {
                         "Schema3", branches);
         assertTrue(res.isEmpty());
 
-        SchemaBranch branch3 = new SchemaBranch("Branch3", "Schema3"),
-                branch4 = new SchemaBranch("Branch4", "Schema3"),
-                branch5 = new SchemaBranch("Branch5", "Schema3");
+        SchemaBranch branch3 = new SchemaBranch("Branch3", "Schema3");
+        SchemaBranch branch4 = new SchemaBranch("Branch4", "Schema3");
+        SchemaBranch branch5 = new SchemaBranch("Branch5", "Schema3");
 
         branches.add(branch3);
         branches.add(branch5);
@@ -955,7 +974,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            SchemaIdVersion notFoundSchemaIdVersion = new SchemaIdVersion(-9999l);
+            SchemaIdVersion notFoundSchemaIdVersion = new SchemaIdVersion(-9999L);
             authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry,
                     notFoundSchemaIdVersion, Authorizer.AccessType.DELETE);
             fail("Expected an SchemaNotFoundException to be thrown");
@@ -1129,7 +1148,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeMergeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc33), schemaRegistry, -9999l);
+            authorizationAgent.authorizeMergeSchemaVersion(AuthorizationUtils.getUserAndGroups(sc33), schemaRegistry, -9999L);
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with id -9999";
             assertThat(e.getMessage(), is(expectedMsg));
@@ -1143,7 +1162,8 @@ public class DefaultAuthorizationAgentTest {
 
         // Empty array should stay empty
         List<SchemaVersionInfo> versions = new ArrayList<>();
-        Collection<SchemaVersionInfo> res = authorizationAgent.authorizeGetAllVersions(AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
+        Collection<SchemaVersionInfo> res = authorizationAgent.authorizeGetAllVersions(
+                AuthorizationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
         assertTrue(res.isEmpty());
 
         SchemaVersionInfo svi3 = schemaRegistry.getSchemaVersionInfo(siv3);

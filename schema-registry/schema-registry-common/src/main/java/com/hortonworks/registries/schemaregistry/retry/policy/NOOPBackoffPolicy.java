@@ -26,7 +26,7 @@ import java.util.Map;
 public class NOOPBackoffPolicy extends BackoffPolicy {
 
     public NOOPBackoffPolicy() {
-        super(0L,1,0L);
+        super(0L, 1, 0L);
     }
 
     @Override

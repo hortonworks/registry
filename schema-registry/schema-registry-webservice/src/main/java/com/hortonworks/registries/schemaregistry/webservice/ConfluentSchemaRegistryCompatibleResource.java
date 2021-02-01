@@ -105,7 +105,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema version found with id [{}]", id, ex);
             response = schemaNotFoundError();
-        } catch (RangerException rex){
+        } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving Schema with id: [{}]", id, ex);
@@ -130,7 +130,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                     .collect(Collectors.toList());
 
             response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
-        } catch (RangerException rex){
+        } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
@@ -170,12 +170,18 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             ErrorMessage that = (ErrorMessage) o;
 
-            if (errorCode != that.errorCode) return false;
+            if (errorCode != that.errorCode) {
+                return false;
+            }
             return message != null ? message.equals(that.message) : that.message == null;
         }
 
@@ -211,7 +217,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
-        } catch (RangerException rex){
+        } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
@@ -284,7 +290,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
-        } catch (RangerException rex){
+        } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving all subjects", ex);
@@ -295,11 +301,14 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     @POST
     @Path("/subjects/{subject}")
-    @ApiOperation(value = "Get schema information for the given schema subject and schema text", response = Schema.class, tags = OPERATION_GROUP_CONFLUENT_SR)
+    @ApiOperation(value = "Get schema information for the given schema subject and schema text", 
+            response = Schema.class, 
+            tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
     public Response lookupSubjectVersion(@ApiParam(value = "Schema subject", required = true) @PathParam("subject") String subject,
-                                         @ApiParam(value = "Confluent Schema Registry compatible schema text in one line", required = true) String schema,
+                                         @ApiParam(value = "Confluent Schema Registry compatible schema text in one line", required = true) 
+                                                 String schema,
                                          @Context SecurityContext securityContext) {
         Response response;
         try {
@@ -308,7 +317,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaVersionInfo != null) {
                 authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaVersionInfo, Authorizer.AccessType.READ);
-                response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
+                response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), 
+                        schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
@@ -321,7 +331,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (SchemaNotFoundException ex) {
             LOG.error("No schema found with subject [{}]", subject, ex);
             response = subjectNotFoundError();
-        } catch (RangerException rex){
+        } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while retrieving schema version with subject: [{}]", subject, ex);
@@ -334,8 +344,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @POST
     @Path("/subjects/{subject}/versions")
     @ApiOperation(value = "Register a new version of the schema",
-            notes = "Registers the given schema version to schema with subject if the given schemaText is not registered as a version for this schema, " +
-                    "and returns respective unique id." +
+            notes = "Registers the given schema version to schema with subject if the given schemaText is not registered as a version for " + 
+                    "this schema, and returns respective unique id." + 
                     "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
             response = Id.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
@@ -383,7 +393,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         } catch (UnsupportedSchemaTypeException ex) {
             LOG.error("Unsupported schema type encountered while adding subject [{}]", subject, ex);
             response = incompatibleSchemaError();
-        } catch (RangerException rex){
+        } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
         } catch (Exception ex) {
             LOG.error("Encountered error while adding subject [{}]", subject, ex);
@@ -508,7 +518,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
         private Long id;
         private String schema;
 
-        public Schema(@JsonProperty("subject") String subject, @JsonProperty("version") Integer version, @JsonProperty("id") Long id, @JsonProperty("schema") String schema) {
+        public Schema(@JsonProperty("subject") String subject, 
+                      @JsonProperty("version") Integer version, 
+                      @JsonProperty("id") Long id, 
+                      @JsonProperty("schema") String schema) {
             this.subject = subject;
             this.version = version;
             this.id = id;

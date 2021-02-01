@@ -42,7 +42,7 @@ public class AvroNestedCheckerTest {
             - SimpleRecord.value : string
             - SimpleRecord.parent : Union(null, Record(Record_B))
          */
-        Assert.assertEquals(3 , new AvroFieldsGenerator().generateFields(simpleNestedSchema).size());
+        Assert.assertEquals(3, new AvroFieldsGenerator().generateFields(simpleNestedSchema).size());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class AvroNestedCheckerTest {
             - Record_A.arrayTest : array(Record_A)
             - Record_A.mapTest : map(Record_A)
          */
-        Assert.assertEquals(8 , new AvroFieldsGenerator().generateFields(complexNestedSchema).size());
+        Assert.assertEquals(8, new AvroFieldsGenerator().generateFields(complexNestedSchema).size());
     }
 
     @Test

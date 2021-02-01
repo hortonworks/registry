@@ -65,7 +65,7 @@ public class HdfsFileStorage implements FileStorage {
 
         hdfsConfig = new Configuration();
 
-        for(Map.Entry<String, String> entry:
+        for (Map.Entry<String, String> entry:
                 Sets.filter(config.entrySet(), e -> !OWN_CONFIGS.contains(e.getKey()))) {
             hdfsConfig.set(entry.getKey(), entry.getValue());
         }
@@ -103,13 +103,11 @@ public class HdfsFileStorage implements FileStorage {
     @VisibleForTesting
     static String adjustDirectory(String fsUrl, String directory) {
         String pathInFsUrl = URI.create(fsUrl).getPath();
-        if ( !(pathInFsUrl.endsWith("/") || directory.startsWith("/")) ) {
+        if (!(pathInFsUrl.endsWith("/") || directory.startsWith("/"))) {
             return pathInFsUrl + "/" + directory;
-        }
-        else if (pathInFsUrl.endsWith("/") && directory.startsWith("/")) {
+        } else if (pathInFsUrl.endsWith("/") && directory.startsWith("/")) {
             return pathInFsUrl + directory.substring(1);
-        }
-        else {
+        } else {
             return pathInFsUrl + directory;
         }
     }
@@ -140,7 +138,7 @@ public class HdfsFileStorage implements FileStorage {
 
     private String uploadInternal(InputStream inputStream, String name) throws IOException {
         Path jarPath = new Path(directory, name);
-        try(FSDataOutputStream outputStream = getFileSystem().create(jarPath, false)) {
+        try (FSDataOutputStream outputStream = getFileSystem().create(jarPath, false)) {
             ByteStreams.copy(inputStream, outputStream);
         }
 
@@ -171,15 +169,12 @@ public class HdfsFileStorage implements FileStorage {
                 UserGroupInformation ugi = UserGroupInformation.getLoginUser();
                 LOG.info("doAs, logged in user: {}", ugi);
                 return ugi.doAs(action);
-            }
-            else {
+            } else {
                 return action.run();
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             throw ex;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new IOException(ex);
         }
     }

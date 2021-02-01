@@ -764,37 +764,50 @@ public final class AvroSchemaValidator implements SchemaValidator<Schema> {
          */
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             SchemaCompatibilityResult other = (SchemaCompatibilityResult) obj;
             if (message == null) {
-                if (other.message != null)
+                if (other.message != null) {
                     return false;
-            } else if (!message.equals(other.message))
+                }
+            } else if (!message.equals(other.message)) {
                 return false;
+            }
             if (readerSubset == null) {
-                if (other.readerSubset != null)
+                if (other.readerSubset != null) {
                     return false;
-            } else if (!readerSubset.equals(other.readerSubset))
+                }
+            } else if (!readerSubset.equals(other.readerSubset)) {
                 return false;
-            if (compatibility != other.compatibility)
+            }
+            if (compatibility != other.compatibility) {
                 return false;
-            if (schemaIncompatibilityType != other.schemaIncompatibilityType)
+            }
+            if (schemaIncompatibilityType != other.schemaIncompatibilityType) {
                 return false;
+            }
             if (writerSubset == null) {
-                if (other.writerSubset != null)
+                if (other.writerSubset != null) {
                     return false;
-            } else if (!writerSubset.equals(other.writerSubset))
+                }
+            } else if (!writerSubset.equals(other.writerSubset)) {
                 return false;
+            }
             if (location == null) {
-                if (other.location != null)
+                if (other.location != null) {
                     return false;
-            } else if (!location.equals(other.location))
+                }
+            } else if (!location.equals(other.location)) {
                 return false;
+            }
             return true;
         }
 

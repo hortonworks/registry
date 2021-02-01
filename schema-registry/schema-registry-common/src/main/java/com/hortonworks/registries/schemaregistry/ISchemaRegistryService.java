@@ -116,7 +116,8 @@ public interface ISchemaRegistryService {
      * @throws SchemaNotFoundException     if the given schemaMetadata not found.
      */
     default SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata,
-                                             SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+                                             SchemaVersion schemaVersion) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return addSchemaVersion(schemaMetadata, schemaVersion, false);
     }
 
@@ -131,7 +132,8 @@ public interface ISchemaRegistryService {
      *
      * @param schemaMetadata information about the schema
      * @param schemaVersion  new version of the schema to be registered
-     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, 
+     *                              else false
      *
      * @return version of the schema added.
      *
@@ -141,7 +143,8 @@ public interface ISchemaRegistryService {
      */
     SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata,
                                      SchemaVersion schemaVersion,
-                                     boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
+                                     boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * Returns version of the schema added with the given schemaInfo.
@@ -164,7 +167,8 @@ public interface ISchemaRegistryService {
      */
     default SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                              SchemaMetadata schemaMetadata,
-                                             SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+                                             SchemaVersion schemaVersion) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return addSchemaVersion(schemaBranchName, schemaMetadata, schemaVersion, false);
     }
 
@@ -180,7 +184,8 @@ public interface ISchemaRegistryService {
      * @param schemaBranchName name of the schema branch
      * @param schemaMetadata   information about the schema
      * @param schemaVersion    new version of the schema to be registered
-     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, 
+     *                              else false
      *
      * @return version of the schema added.
      *
@@ -191,7 +196,8 @@ public interface ISchemaRegistryService {
     SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                      SchemaMetadata schemaMetadata,
                                      SchemaVersion schemaVersion,
-                                     boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
+                                     boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * Adds the given {@code schemaVersion} and returns the corresponding version number.
@@ -206,7 +212,8 @@ public interface ISchemaRegistryService {
      * @throws SchemaNotFoundException     if there is no schema metadata registered with the given {@code schemaName}
      */
     default SchemaIdVersion addSchemaVersion(String schemaName,
-                                             SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+                                             SchemaVersion schemaVersion) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return addSchemaVersion(schemaName, schemaVersion, false);
     }
 
@@ -215,7 +222,8 @@ public interface ISchemaRegistryService {
      *
      * @param schemaName    name identifying a schema
      * @param schemaVersion new version of the schema to be added
-     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, 
+     *                              else false
      *
      * @return version number of the schema added
      *
@@ -225,7 +233,8 @@ public interface ISchemaRegistryService {
      */
     SchemaIdVersion addSchemaVersion(String schemaName,
                                      SchemaVersion schemaVersion,
-                                     boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
+                                     boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * Adds the given {@code schemaVersion} and returns the corresponding version number.
@@ -242,7 +251,8 @@ public interface ISchemaRegistryService {
      */
     default SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                              String schemaName,
-                                             SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+                                             SchemaVersion schemaVersion) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         return addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false);
     }
 
@@ -252,7 +262,8 @@ public interface ISchemaRegistryService {
      * @param schemaBranchName name of the schema branch
      * @param schemaName       name identifying a schema
      * @param schemaVersion    new version of the schema to be added
-     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, 
+     *                              else false
      *
      * @return version number of the schema added
      *
@@ -263,7 +274,8 @@ public interface ISchemaRegistryService {
     SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                      String schemaName,
                                      SchemaVersion schemaVersion,
-                                     boolean disableCanonicalCheck) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
+                                     boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * Deletes a schema version given {@code schemaVersionKey}, throws an SchemaNotFoundException if the schema version is absent.
@@ -309,7 +321,8 @@ public interface ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    SchemaVersionInfo getLatestSchemaVersionInfo(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * @param schemaName name identifying a schema
@@ -328,7 +341,8 @@ public interface ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * @param schemaName   name identifying a schema
@@ -338,7 +352,8 @@ public interface ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
 
     /**
@@ -350,14 +365,16 @@ public interface ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    CompatibilityResult checkCompatibility(String schemaBranchName, String schemaName, String toSchemaText) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 
     /**
      * @param schemaFieldQuery {@link SchemaFieldQuery} instance to be run
      *
      * @return schema versions matching the fields specified in the query
      */
-    Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) throws SchemaBranchNotFoundException, SchemaNotFoundException;
+    Collection<SchemaVersionKey> findSchemasByFields(SchemaFieldQuery schemaFieldQuery) 
+            throws SchemaBranchNotFoundException, SchemaNotFoundException;
 
     /**
      * Uploads the given {@code inputStream} of any file and returns the identifier for which it can be downloaded later
@@ -369,7 +386,8 @@ public interface ISchemaRegistryService {
      *
      * @throws SerDesException if any error occurs while this operation is being done.
      */
-    String uploadFile(InputStream inputStream) throws SerDesException;
+    String uploadFile(InputStream inputStream) 
+            throws SerDesException;
 
     /**
      * Downloads the content of file stored with the given {@code fileId} earlier uploaded using {@link #uploadFile(InputStream)}.
@@ -380,7 +398,8 @@ public interface ISchemaRegistryService {
      *
      * @throws IOException when there is no file stored with the given {@code fileId}
      */
-    InputStream downloadFile(String fileId) throws IOException;
+    InputStream downloadFile(String fileId) 
+            throws IOException;
 
     /**
      * @param serializerInfo serializer information
@@ -404,24 +423,31 @@ public interface ISchemaRegistryService {
      */
     Collection<SerDesInfo> getSerDes(String schemaName);
 
-    void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException;
+    void enableSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException;
 
-    void deleteSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
+    void deleteSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException;
 
-    void archiveSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
+    void archiveSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException;
 
-    void disableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
+    void disableSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException;
 
-    void startSchemaVersionReview(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException;
+    void startSchemaVersionReview(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException;
 
     /**
      *  Merge a schema version to 'MASTER' branch
      * @param schemaVersionId  schema version to be used to merge to 'MASTER'
      * @return
      * @throws SchemaNotFoundException  if the {@code schemaVersionId} is can't found
-     * @throws IncompatibleSchemaException  if the {@code schemaVersionId} to be merged is not compatible with the schema versions for that schema metadata in 'MASTER' branch
+     * @throws IncompatibleSchemaException  if the {@code schemaVersionId} to be merged is not compatible 
+     * with the schema versions for that schema metadata in 'MASTER' branch
      */
-    default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, IncompatibleSchemaException {
+    default SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, false);
     }
 
@@ -429,18 +455,21 @@ public interface ISchemaRegistryService {
      * Merge a schema version to 'MASTER' branch
      *
      * @param schemaVersionId schema version to be used to merge to 'MASTER'
-     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, else false
+     * @param disableCanonicalCheck true if the schema version should be added despite being canonically similar to an existing schema version, 
+     *                              else false
      *
      * @return
      *
      * @throws SchemaNotFoundException     if the {@code schemaVersionId} is can't found
-     * @throws IncompatibleSchemaException if the {@code schemaVersionId} to be merged is not compatible with the schema versions for that schema metadata in 'MASTER' branch
+     * @throws IncompatibleSchemaException if the {@code schemaVersionId} to be merged is not compatible 
+     * with the schema versions for that schema metadata in 'MASTER' branch
      */
 
-    SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
-                                                        boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException;
+    SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, IncompatibleSchemaException;
 
-    void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) throws SchemaNotFoundException, SchemaLifecycleException;
+    void transitionState(Long schemaVersionId, Byte targetStateId, byte[] transitionDetails) 
+            throws SchemaNotFoundException, SchemaLifecycleException;
 
     SchemaVersionLifecycleStateMachineInfo getSchemaVersionLifecycleStateMachineInfo();
 
@@ -452,9 +481,11 @@ public interface ISchemaRegistryService {
      * @throws SchemaBranchAlreadyExistsException {@code schemaBranch} already exists
      * @throws SchemaNotFoundException  {@code schemaVersionId} to be used to create a {@code schemaBranch} can't be found
      */
-    SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) throws SchemaBranchAlreadyExistsException, SchemaNotFoundException;
+    SchemaBranch createSchemaBranch(Long schemaVersionId, SchemaBranch schemaBranch) 
+            throws SchemaBranchAlreadyExistsException, SchemaNotFoundException;
 
-    Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException;
+    Collection<SchemaBranch> getSchemaBranches(String schemaName) 
+            throws SchemaNotFoundException;
 
     /**
      *  Delete a schema branch and all the schema version part of the branch, only if the schema versions are not in enabled state.
@@ -463,7 +494,8 @@ public interface ISchemaRegistryService {
      * @throws InvalidSchemaBranchDeletionException  if the schema branch can't be deleted at the moment
      */
 
-    void deleteSchemaBranch(Long schemaBranchId) throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException;
+    void deleteSchemaBranch(Long schemaBranchId) 
+            throws SchemaBranchNotFoundException, InvalidSchemaBranchDeletionException;
 
 
     /**
@@ -476,5 +508,6 @@ public interface ISchemaRegistryService {
      *
      * @throws SchemaNotFoundException if there is no schema metadata registered with the given {@code schemaName}
      */
-    Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    Collection<SchemaVersionInfo> getAllVersions(String schemaBranchName, String schemaName, List<Byte> stateIds) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 }

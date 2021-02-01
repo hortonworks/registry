@@ -40,8 +40,8 @@ public class StorableFactory {
 
                 LOG.info("Storable class [{}] is getting registered with namespace [{}]", clazz, nameSpace);
 
-                if(nameSpaceWithClass.containsKey(nameSpace)) {
-                    throw new IllegalArgumentException("NameSpace ["+nameSpace+"] is already registered");
+                if (nameSpaceWithClass.containsKey(nameSpace)) {
+                    throw new IllegalArgumentException("NameSpace [" + nameSpace + "] is already registered");
                 }
 
                 nameSpaceWithClass.put(nameSpace, clazz);

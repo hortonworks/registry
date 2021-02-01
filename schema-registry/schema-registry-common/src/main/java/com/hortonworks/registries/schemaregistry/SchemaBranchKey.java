@@ -53,12 +53,18 @@ public final class SchemaBranchKey implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaBranchKey that = (SchemaBranchKey) o;
 
-        if (schemaBranchName != null ? !schemaBranchName.equals(that.schemaBranchName) : that.schemaBranchName != null) return false;
+        if (schemaBranchName != null ? !schemaBranchName.equals(that.schemaBranchName) : that.schemaBranchName != null) {
+            return false;
+        }
         return schemaMetadataName != null ? schemaMetadataName.equals(that.schemaMetadataName) : that.schemaMetadataName == null;
 
     }

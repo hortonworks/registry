@@ -58,7 +58,7 @@ public class BasicSchemaRegistryClientOpsTest {
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
 
     @Rule
-    public SchemaRegistryTestName TEST_NAME_RULE = new SchemaRegistryTestName();
+    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
 
     @CustomParameterizedRunner.Parameters
     public static Iterable<SchemaRegistryTestProfileType> profiles() {
@@ -94,8 +94,10 @@ public class BasicSchemaRegistryClientOpsTest {
         doTestSchemaOps(SchemaValidationLevel.ALL);
     }
 
-    private void doTestSchemaOps(SchemaValidationLevel validationLevel) throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException, SchemaLifecycleException {
-        String testName = TEST_NAME_RULE.getMethodName();
+    private void doTestSchemaOps(SchemaValidationLevel validationLevel) 
+            throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, 
+            SchemaBranchNotFoundException, SchemaLifecycleException {
+        String testName = testNameRule.getMethodName();
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(testName + "-schema")
                 .type(AvroSchemaProvider.TYPE)
                 .schemaGroup(testName + "-group")

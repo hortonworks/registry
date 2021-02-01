@@ -31,7 +31,12 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +154,7 @@ public class ConfluentRegistryCompatibleResourceTest {
                                                    Id.class).getId();
         Assert.assertTrue(initialSchemaId < secondSchemaId);
         // retrieve the schema for that version and check whether it has same schema.
-        String receivedSchema = getVersion(subjectName,"latest").getSchema();
+        String receivedSchema = getVersion(subjectName, "latest").getSchema();
         Assert.assertEquals(new org.apache.avro.Schema.Parser().parse(secondVersionSchema),
                             new org.apache.avro.Schema.Parser().parse(receivedSchema));
 
@@ -189,7 +194,7 @@ public class ConfluentRegistryCompatibleResourceTest {
                                                      Id.class).getId();
 
             // check get version api
-            Schema schemaVersionEntry = getVersion(subjectName,"latest");
+            Schema schemaVersionEntry = getVersion(subjectName, "latest");
 
             Assert.assertEquals(subjectName, schemaVersionEntry.getSubject());
             Assert.assertEquals(schemaId.intValue(), schemaVersionEntry.getId().intValue());
@@ -309,13 +314,16 @@ public class ConfluentRegistryCompatibleResourceTest {
         });
     }
 
-    private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getVersion(String subjectName, String version) throws IOException {
+    private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getVersion(String subjectName, 
+                                                                                                                             String version) 
+            throws IOException {
         WebTarget versionsTarget = rootTarget.path("/subjects/" + subjectName + "/versions/");
         String versionsResponse = versionsTarget.path(version).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
         return new ObjectMapper().readValue(versionsResponse, Schema.class);
     }
 
-    private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getSchemaById(Long schemaId) throws IOException {
+    private com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource.Schema getSchemaById(Long schemaId) 
+            throws IOException {
         WebTarget versionsTarget = rootTarget.path("/schemas/ids/");
         String versionsResponse = versionsTarget.path(schemaId.toString()).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
         return new ObjectMapper().readValue(versionsResponse, Schema.class);

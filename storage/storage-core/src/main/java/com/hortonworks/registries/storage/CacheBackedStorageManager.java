@@ -42,7 +42,7 @@ public class CacheBackedStorageManager implements StorageManager {
             throw new IllegalArgumentException("Cache and storage writer objects must not be null");
         }
         this.cache = cache;
-        this.dao = ((GuavaCache)cache).getDao();
+        this.dao = ((GuavaCache) cache).getDao();
         this.writer = storageWriter;
     }
 
@@ -108,13 +108,14 @@ public class CacheBackedStorageManager implements StorageManager {
     }
 
     @Override
-    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException {
-        return ((GuavaCache)cache).getDao().find(namespace, queryParams, orderByFields);
+    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) 
+            throws StorageException {
+        return ((GuavaCache) cache).getDao().find(namespace, queryParams, orderByFields);
     }
 
     @Override
     public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
-        return ((GuavaCache)cache).getDao().search(searchQuery);
+        return ((GuavaCache) cache).getDao().search(searchQuery);
     }
 
     @Override

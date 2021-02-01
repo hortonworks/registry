@@ -133,12 +133,12 @@ public class AtlasPluginImpl implements AtlasPlugin {
         Object o = checkNotNull(config.get(ATLAS_HOSTS_PARAM), "List of urls was empty.");
         String[] result;
         if (o instanceof String[]) {
-            result = (String[])o;
+            result = (String[]) o;
         } else if (o instanceof String) {
-            String urlString = (String)o;
+            String urlString = (String) o;
             result = urlString.split("\\,");
         } else if (o instanceof ArrayList) {
-            ArrayList<String> urls = (ArrayList<String>)o;
+            ArrayList<String> urls = (ArrayList<String>) o;
             result = urls.toArray(new String[urls.size()]);
         } else {
             throw new IllegalArgumentException("The list of Atlas hosts cannot be read. Please provide a list in readable format.");
@@ -168,7 +168,9 @@ public class AtlasPluginImpl implements AtlasPlugin {
                     AtlasEntity.AtlasEntitiesWithExtInfo entitiesWithExtInfo = new AtlasEntity.AtlasEntitiesWithExtInfo();
                     entitiesWithExtInfo.addEntity(metaEntity);
 
-                    AtlasEntity branchEntity = branchTranslator.toAtlas(new SchemaBranch(branchId, SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis()));
+                    AtlasEntity branchEntity = branchTranslator
+                            .toAtlas(new SchemaBranch(branchId, SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), 
+                                    String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis()));
                     entitiesWithExtInfo.addEntity(branchEntity);
 
                     if (LOG.isTraceEnabled()) {
@@ -258,7 +260,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
                     randomize -> generateUniqueId(VersionEntityDef.SCHEMA_VERSION_INFO, randomize),
                     versionId -> {
                         try {
-                            AtlasEntity versionEntity = schemaVersionTranslator.toAtlas(versionId, schemaVersion, schemaMetadataInfo, schemaName, existingCount + 1, fingerprint);
+                            AtlasEntity versionEntity = schemaVersionTranslator
+                                    .toAtlas(versionId, schemaVersion, schemaMetadataInfo, schemaName, existingCount + 1, fingerprint);
                             AtlasEntity.AtlasEntitiesWithExtInfo entitiesWithExtInfo = new AtlasEntity.AtlasEntitiesWithExtInfo();
                             entitiesWithExtInfo.addEntity(versionEntity);
                             EntityMutationResponse entities = atlasClient.createEntities(entitiesWithExtInfo);
@@ -303,7 +306,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
         checkNotNull(branchName, "branchName");
 
         final String metaName = checkNotNull(schemaVersion.getName(), "schema name");
-        final AtlasEntity metaEntity, versionEntity;
+        final AtlasEntity metaEntity;
+        final AtlasEntity versionEntity;
         try {
             metaEntity = getSchemaMetadataInfoAtlasEntity(metaName);
         } catch (AtlasServiceException e) {
@@ -468,7 +472,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             }
 
         } catch (AtlasServiceException asex) {
-            throw new AtlasUncheckedException("Could not retrieve all serdes for schema "+schemaName, asex);
+            throw new AtlasUncheckedException("Could not retrieve all serdes for schema " + schemaName, asex);
         }
 
         // happens if relationship is missing in Atlas
@@ -504,7 +508,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
         AtlasEntity.AtlasEntityWithExtInfo metaEntityInfo = atlasClient.getEntityByAttribute(
                 MetadataEntityDef.SCHEMA_METADATA_INFO, ImmutableMap.of(MetadataEntityDef.NAME, schemaName));
         if (metaEntityInfo == null || metaEntityInfo.getEntity() == null) {
-            throw new SchemaNotFoundException("Schema meta entity for name \""+schemaName+"\" was null");
+            throw new SchemaNotFoundException("Schema meta entity for name \"" + schemaName + "\" was null");
         }
         return metaEntityInfo.getEntity();
     }
@@ -514,7 +518,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
         AtlasEntity.AtlasEntityWithExtInfo metaEntityInfo = atlasClient.getEntityByAttribute(
                 MetadataEntityDef.SCHEMA_METADATA_INFO, ImmutableMap.of(MetadataEntityDef.SCHEMA_METADATA_ID, String.valueOf(id)));
         if (metaEntityInfo == null || metaEntityInfo.getEntity() == null) {
-            throw new SchemaNotFoundException("Schema meta entity for id \""+id+"\" was null");
+            throw new SchemaNotFoundException("Schema meta entity for id \"" + id + "\" was null");
         }
         return metaEntityInfo.getEntity();
     }
@@ -554,12 +558,13 @@ public class AtlasPluginImpl implements AtlasPlugin {
 
         try {
             AtlasEntity metaEntity;
-            if (clazz == Long.class)
-                metaEntity = getSchemaMetadataInfoAtlasEntity((Long)id);
-            else if (clazz == String.class)
-                metaEntity = getSchemaMetadataInfoAtlasEntity((String)id);
-            else
+            if (clazz == Long.class) {
+                metaEntity = getSchemaMetadataInfoAtlasEntity((Long) id);
+            } else if (clazz == String.class) {
+                metaEntity = getSchemaMetadataInfoAtlasEntity((String) id);
+            } else {
                 throw new Error("Unsupported id type: " + clazz);
+            }
 
             return Optional.ofNullable(schemaMetadataTranslator.fromAtlasIntoInfo(metaEntity));
         } catch (SchemaNotFoundException npex) {
@@ -593,7 +598,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 }
             }
         } catch (AtlasServiceException asex) {
-            throw new AtlasUncheckedException("Could not retrieve schema "+schemaName+" with version " + version, asex);
+            throw new AtlasUncheckedException("Could not retrieve schema " + schemaName + " with version " + version, asex);
         }
 
         return Optional.empty();
@@ -603,7 +608,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public Optional<SchemaVersionInfo> getSchemaVersionById(Long versionId) {
         checkNotNull(versionId, "versionId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
+                    .getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 return Optional.empty();
             }
@@ -620,7 +626,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public List<SchemaVersionInfo> getSchemaVersionsByBranchId(Long branchId) throws SchemaBranchNotFoundException {
         checkNotNull(branchId, "branchId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(BranchEntityDef.SCHEMA_BRANCH, ImmutableMap.of(BranchEntityDef.ID, String.valueOf(branchId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
+                    .getEntityByAttribute(BranchEntityDef.SCHEMA_BRANCH, ImmutableMap.of(BranchEntityDef.ID, String.valueOf(branchId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 throw new SchemaBranchNotFoundException("Did not find branch with id " + branchId);
             }
@@ -644,7 +651,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public Collection<SchemaBranch> getSchemaBranchesByVersionId(Long versionId) throws SchemaBranchNotFoundException {
         checkNotNull(versionId, "versionId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
+                    .getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 throw new SchemaBranchNotFoundException("Did not find schema version with ID " + versionId);
             }
@@ -678,7 +686,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             }
 
         } catch (AtlasServiceException asex) {
-            throw new AtlasUncheckedException("Could not retrieve all versions for schema "+schemaName, asex);
+            throw new AtlasUncheckedException("Could not retrieve all versions for schema " + schemaName, asex);
         }
 
         // happens if relationship is missing in Atlas
@@ -716,7 +724,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 // map relationshipAttributes inside map of headers
                 Map attributes = (Map) ((Map) header).get(AtlasRelatedObjectId.KEY_RELATIONSHIP_ATTRIBUTES);
                 if (attributes != null) {
-                    attributes = (Map)attributes.get("attributes");
+                    attributes = (Map) attributes.get("attributes");
                 }
                 if (attributes != null && filter != null && !filter.apply(attributes)) {
                     return "";
@@ -747,8 +755,16 @@ public class AtlasPluginImpl implements AtlasPlugin {
         LOG.debug("Search for schemas, name=\"{}\", desc=\"{}\"", nameOpt, descOpt.orElse(null));
 
         ImmutableMap.Builder<String, String> paramBuild = ImmutableMap.builder();
-        nameOpt.ifPresent(name -> { if (!name.trim().isEmpty()) { paramBuild.put(MetadataEntityDef.NAME, name.trim()); } });
-        descOpt.ifPresent(description -> { if (!description.trim().isEmpty()) { paramBuild.put(MetadataEntityDef.DESCRIPTION, description.trim()); } });
+        nameOpt.ifPresent(name -> {
+            if (!name.trim().isEmpty()) { 
+                paramBuild.put(MetadataEntityDef.NAME, name.trim()); 
+            } 
+        });
+        descOpt.ifPresent(description -> {
+            if (!description.trim().isEmpty()) {
+                paramBuild.put(MetadataEntityDef.DESCRIPTION, description.trim());
+            }
+        });
         final Map<String, String> params = paramBuild.build();
 
         List<? extends AtlasStruct> entities;
@@ -873,7 +889,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 if (serdes instanceof Collection) {
                     // TODO I don't know what will be in this collection
                     //((Collection<?>) serdes);
-                    for (Object o : ((Collection)serdes)) {
+                    for (Object o : ((Collection) serdes)) {
                         LOG.info("rel = {}", o);
                     }
                 } else {

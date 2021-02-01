@@ -46,19 +46,22 @@ public class TransactionBookKeeper {
             TransactionContext transactionContext = threadIdToConnectionMap.get(threadId);
             transactionContext.incrementNestedTransactionCount();
             threadIdToConnectionMap.put(threadId, transactionContext);
-        } else
+        } else {
             throw new TransactionException(String.format("No transaction is associated with thread id : %s", Long.toString(threadId)));
+        }
     }
 
     public void decrementNestedTransactionCount(Long threadId, TransactionState transactionState) {
         if (threadIdToConnectionMap.containsKey(threadId)) {
             TransactionContext transactionContext = threadIdToConnectionMap.get(threadId);
             transactionContext.decrementNestedTransactionCount();
-            if (transactionContext.getNestedTransactionCount() < 0)
+            if (transactionContext.getNestedTransactionCount() < 0) {
                 throw new TransactionException("Transaction was rolledback/committed more than necessary");
+            }
             transactionContext.recordState(transactionState);
-        } else
+        } else {
             throw new TransactionException(String.format("No transaction is associated with thread id : %s", Long.toString(threadId)));
+        }
     }
 
     public boolean whereThereAnyRollbacks(Long threadId) {
@@ -70,7 +73,7 @@ public class TransactionBookKeeper {
     }
 
     public void removeTransaction(Long threadId) {
-        if(threadIdToConnectionMap.containsKey(threadId)) {
+        if (threadIdToConnectionMap.containsKey(threadId)) {
             threadIdToConnectionMap.remove(threadId);
         } else {
             throw new TransactionException(String.format("No transaction is associated with thread id : %s", Long.toString(threadId)));

@@ -35,7 +35,6 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleContext;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleState;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
-import com.hortonworks.registries.schemaregistry.state.SchemaVersionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +64,11 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     }
 
     @Override @Nonnull
-    protected SchemaVersionInfo createSchemaVersion(String schemaBranchName, SchemaMetadata schemaMetadata, Long schemaMetadataId, SchemaVersion schemaVersion) throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    protected SchemaVersionInfo createSchemaVersion(String schemaBranchName, 
+                                                    SchemaMetadata schemaMetadata, 
+                                                    Long schemaMetadataId, 
+                                                    SchemaVersion schemaVersion) 
+            throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         checkNotNull(schemaBranchName, "schemaBranchName must not be null");
         checkNotNull(schemaMetadataId, "schemaMetadataId must not be null");
 
@@ -136,7 +139,12 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     }
 
     @Override
-    public SchemaVersionInfo findSchemaVersion(String schemaBranchName, String type, String schemaText, String schemaMetadataName, boolean disableCanonicalCheck) throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+    public SchemaVersionInfo findSchemaVersion(String schemaBranchName, 
+                                               String type, 
+                                               String schemaText, 
+                                               String schemaMetadataName, 
+                                               boolean disableCanonicalCheck) 
+            throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         LOG.info("++++++++++++++ findSchemaVersion {} {} {}", schemaMetadataName, schemaBranchName, type);
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
@@ -202,13 +210,18 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     }
 
     @Override
-    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, SchemaVersionMergeStrategy schemaVersionMergeStrategy, boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
+    public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, 
+                                                       SchemaVersionMergeStrategy schemaVersionMergeStrategy, 
+                                                       boolean disableCanonicalCheck) 
+            throws SchemaNotFoundException, IncompatibleSchemaException {
         LOG.info("++++++++++++ mergeSchemaVersion {} {}", schemaVersionId, schemaVersionMergeStrategy);
         return null;
     }
 
     @Override @Nonnull
-    public SchemaVersionLifecycleContext createSchemaVersionLifeCycleContext(Long schemaVersionId, SchemaVersionLifecycleState schemaVersionLifecycleState) throws SchemaNotFoundException {
+    public SchemaVersionLifecycleContext createSchemaVersionLifeCycleContext(Long schemaVersionId, 
+                                                                             SchemaVersionLifecycleState schemaVersionLifecycleState) 
+            throws SchemaNotFoundException {
         LOG.info("++++++++++++ createSchemaVersionLifeCycleContext {} {}", schemaVersionId, schemaVersionLifecycleState);
 
         // get the current state from storage for the given versionID
@@ -254,7 +267,8 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     }
 
     @Override
-    public void enableSchemaVersion(Long schemaVersionId) throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
+    public void enableSchemaVersion(Long schemaVersionId) 
+            throws SchemaNotFoundException, SchemaLifecycleException, IncompatibleSchemaException, SchemaBranchNotFoundException {
         LOG.info("++++++++++++ enableSchemaVersion {}", schemaVersionId);
     }
 
@@ -279,7 +293,8 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     }
 
     @Override
-    public void executeState(Long schemaVersionId, Byte targetState, byte[] transitionDetails) throws SchemaLifecycleException, SchemaNotFoundException {
+    public void executeState(Long schemaVersionId, Byte targetState, byte[] transitionDetails) 
+            throws SchemaLifecycleException, SchemaNotFoundException {
         LOG.info("++++++++++++ executeState {} {}", schemaVersionId, targetState);
     }
 

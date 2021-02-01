@@ -49,12 +49,18 @@ public class OrderBy implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         OrderBy orderBy = (OrderBy) o;
 
-        if (asc != orderBy.asc) return false;
+        if (asc != orderBy.asc) {
+            return false;
+        }
         return fieldName != null ? fieldName.equals(orderBy.fieldName) : orderBy.fieldName == null;
     }
 

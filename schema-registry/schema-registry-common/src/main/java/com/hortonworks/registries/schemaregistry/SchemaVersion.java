@@ -36,7 +36,7 @@ public class SchemaVersion implements Serializable {
     @SuppressWarnings("unused")
     private SchemaVersion() {
         /* Private constructor for Jackson JSON mapping */
-        this(null, null , null);
+        this(null, null, null);
     }
 
     public SchemaVersion(String schemaText, String description) {

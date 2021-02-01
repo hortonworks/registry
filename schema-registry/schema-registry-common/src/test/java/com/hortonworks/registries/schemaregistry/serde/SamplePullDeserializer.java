@@ -127,12 +127,18 @@ public class SamplePullDeserializer implements PullDeserializer<SchemaDetails, S
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof MyFieldValue)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof MyFieldValue)) {
+                return false;
+            }
 
             MyFieldValue that = (MyFieldValue) o;
 
-            if (separatorIndex != that.separatorIndex) return false;
+            if (separatorIndex != that.separatorIndex) {
+                return false;
+            }
             return fieldPayload.equals(that.fieldPayload);
 
         }

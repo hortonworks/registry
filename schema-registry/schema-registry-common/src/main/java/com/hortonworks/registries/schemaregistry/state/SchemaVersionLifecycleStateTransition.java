@@ -73,13 +73,18 @@ public class SchemaVersionLifecycleStateTransition implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaVersionLifecycleStateTransition that = (SchemaVersionLifecycleStateTransition) o;
 
-        if (sourceStateId != null ? !sourceStateId.equals(that.sourceStateId) : that.sourceStateId != null)
+        if (sourceStateId != null ? !sourceStateId.equals(that.sourceStateId) : that.sourceStateId != null) {
             return false;
+        }
         return targetStateId != null ? targetStateId.equals(that.targetStateId) : that.targetStateId == null;
     }
 

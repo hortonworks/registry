@@ -75,7 +75,7 @@ public class StreamsSchemaProvider extends AbstractSchemaProvider {
         // schema should be in json form.
         List<Schema.Field> fields;
         try {
-            fields = new ObjectMapper().readValue(schemaText, new TypeReference<List<Schema.Field>>() {});
+            fields = new ObjectMapper().readValue(schemaText, new TypeReference<List<Schema.Field>>() { });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

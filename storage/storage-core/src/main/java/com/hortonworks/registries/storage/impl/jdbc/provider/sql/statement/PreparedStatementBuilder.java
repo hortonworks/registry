@@ -32,7 +32,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -97,8 +96,10 @@ public class PreparedStatementBuilder {
      * @param sqlBuilder Sql builder object for which to build the {@link PreparedStatement}
      * @throws SQLException
      */
-    public static PreparedStatementBuilder supportReturnGeneratedKeys(Connection connection, ExecutionConfig config, StorageDataTypeContext storageDataTypeContext,
-                                                                      SqlQuery sqlBuilder) throws SQLException {
+    public static PreparedStatementBuilder supportReturnGeneratedKeys(Connection connection, ExecutionConfig config, 
+                                                                      StorageDataTypeContext storageDataTypeContext,
+                                                                      SqlQuery sqlBuilder) 
+            throws SQLException {
         return new PreparedStatementBuilder(connection, config, storageDataTypeContext, sqlBuilder, true);
     }
 
@@ -163,7 +164,7 @@ public class PreparedStatementBuilder {
     public PreparedStatement getPreparedStatement(SqlQuery sqlBuilder) throws SQLException {
         // If more types become available consider subclassing instead of going with this approach, which was chosen here for simplicity
         if (sqlBuilder instanceof AbstractStorableUpdateQuery) {
-            setStorableUpdatePreparedStatement((AbstractStorableUpdateQuery)sqlBuilder);
+            setStorableUpdatePreparedStatement((AbstractStorableUpdateQuery) sqlBuilder);
         } else if (sqlBuilder instanceof AbstractStorableKeyQuery) {
             setStorableKeyPreparedStatement(sqlBuilder);
         } else if (sqlBuilder instanceof AbstractStorableSqlQuery) {
@@ -202,7 +203,7 @@ public class PreparedStatementBuilder {
 
         if (columns != null) {
             final int len = columns.size();
-            final Map columnsToValues = ((AbstractStorableSqlQuery)sqlBuilder).getStorable().toMap();
+            final Map columnsToValues = ((AbstractStorableSqlQuery) sqlBuilder).getStorable().toMap();
 
             for (int j = 0; j < numPrepStmtParams; j++) {
                 Schema.Field column = columns.get(j % len);

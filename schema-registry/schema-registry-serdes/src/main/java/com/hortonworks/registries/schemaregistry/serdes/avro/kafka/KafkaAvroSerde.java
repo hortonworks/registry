@@ -48,7 +48,7 @@ public class KafkaAvroSerde implements Serde<Object> {
         deser.configure(configs, isKey);
     }
 
-    public void close(){
+    public void close() {
         ser.close();
         deser.close();
     }

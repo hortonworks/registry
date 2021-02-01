@@ -16,8 +16,6 @@ package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.google.common.base.Preconditions;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 abstract class BaseRegistryResource {
 

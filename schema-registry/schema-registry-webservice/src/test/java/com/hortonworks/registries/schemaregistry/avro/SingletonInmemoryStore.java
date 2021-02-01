@@ -29,80 +29,82 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This internally uses a single instance in a JVM, which can be used across multiple in-JVM local registry instances({@link com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer}).
+ * This internally uses a single instance in a JVM, which can be used across multiple in-JVM local registry instances
+ * ({@link com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer}).
  *
  */
 public class SingletonInmemoryStore implements StorageManager {
 
-    private static final InMemoryStorageManager inMemoryStorageManager = new InMemoryStorageManager();
+    private static final InMemoryStorageManager IN_MEMORY_STORAGE_MANAGER = new InMemoryStorageManager();
 
     @Override
     public void init(Map<String, Object> properties) {
-        inMemoryStorageManager.init(properties);
+        IN_MEMORY_STORAGE_MANAGER.init(properties);
     }
 
     @Override
     public void add(Storable storable) throws StorageException {
-        inMemoryStorageManager.add(storable);
+        IN_MEMORY_STORAGE_MANAGER.add(storable);
     }
 
     @Override
     public <T extends Storable> T remove(StorableKey key) throws StorageException {
-        return inMemoryStorageManager.remove(key);
+        return IN_MEMORY_STORAGE_MANAGER.remove(key);
     }
 
     @Override
     public void addOrUpdate(Storable storable) throws StorageException {
-        inMemoryStorageManager.addOrUpdate(storable);
+        IN_MEMORY_STORAGE_MANAGER.addOrUpdate(storable);
     }
 
     @Override
     public void update(Storable storable) {
-        inMemoryStorageManager.update(storable);
+        IN_MEMORY_STORAGE_MANAGER.update(storable);
     }
 
     @Override
     public <T extends Storable> T get(StorableKey key) throws StorageException {
-        return inMemoryStorageManager.get(key);
+        return IN_MEMORY_STORAGE_MANAGER.get(key);
     }
 
     @Override
     public boolean exists(StorableKey key) {
-        return inMemoryStorageManager.exists(key);
+        return IN_MEMORY_STORAGE_MANAGER.exists(key);
     }
 
     @Override
     public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams) throws StorageException {
-        return inMemoryStorageManager.find(namespace, queryParams);
+        return IN_MEMORY_STORAGE_MANAGER.find(namespace, queryParams);
     }
 
     @Override
-    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) throws StorageException {
-        return inMemoryStorageManager.find(namespace, queryParams, orderByFields);
+    public <T extends Storable> Collection<T> find(String namespace, List<QueryParam> queryParams, List<OrderByField> orderByFields) 
+            throws StorageException {
+        return IN_MEMORY_STORAGE_MANAGER.find(namespace, queryParams, orderByFields);
     }
 
     @Override
     public <T extends Storable> Collection<T> search(SearchQuery searchQuery) {
-        return inMemoryStorageManager.search(searchQuery);
+        return IN_MEMORY_STORAGE_MANAGER.search(searchQuery);
     }
 
     @Override
     public <T extends Storable> Collection<T> list(String namespace) throws StorageException {
-        return inMemoryStorageManager.list(namespace);
+        return IN_MEMORY_STORAGE_MANAGER.list(namespace);
     }
 
     @Override
     public void cleanup() throws StorageException {
-        inMemoryStorageManager.cleanup();
+        IN_MEMORY_STORAGE_MANAGER.cleanup();
     }
 
     @Override
     public Long nextId(String namespace) throws StorageException {
-        return inMemoryStorageManager.nextId(namespace);
+        return IN_MEMORY_STORAGE_MANAGER.nextId(namespace);
     }
 
     @Override
     public void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException {
-        inMemoryStorageManager.registerStorables(classes);
+        IN_MEMORY_STORAGE_MANAGER.registerStorables(classes);
     }
 }

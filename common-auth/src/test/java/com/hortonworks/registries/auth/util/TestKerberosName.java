@@ -14,7 +14,6 @@
 package com.hortonworks.registries.auth.util;
 
 
-import java.io.IOException;
 
 import com.hortonworks.registries.auth.KerberosTestUtils;
 import org.junit.After;

@@ -33,22 +33,22 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
+public class CacheLoaderAsync<K, V> extends CacheLoader<K, V> {
     private static final int DEFAULT_NUM_THREADS = 5;
     private static final Logger LOG = LoggerFactory.getLogger(CacheLoaderAsync.class);
 
     private final ListeningExecutorService executorService;
 
-    public CacheLoaderAsync(Cache<K, V> cache, DataStoreReader<K,V> dataStoreReader) {
+    public CacheLoaderAsync(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader) {
         this(cache, dataStoreReader, Executors.newFixedThreadPool(DEFAULT_NUM_THREADS));
     }
 
-    public CacheLoaderAsync(Cache<K, V> cache, DataStoreReader<K,V> dataStoreReader, ExecutorService executorService) {
+    public CacheLoaderAsync(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader, ExecutorService executorService) {
         super(cache, dataStoreReader);
         this.executorService = MoreExecutors.listeningDecorator(executorService);
     }
 
-    public void loadAll(final Collection<? extends K> keys, CacheLoaderCallback<K,V> callback) {
+    public void loadAll(final Collection<? extends K> keys, CacheLoaderCallback<K, V> callback) {
         try {
             ListenableFuture<Map<K, V>> myCall = executorService.submit(new DataStoreCallable(keys));
             Futures.addCallback(myCall, new CacheLoaderAsyncFutureCallback(keys, callback), executorService);
@@ -58,7 +58,7 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
         }
     }
 
-    private class DataStoreCallable implements Callable<Map<K,V>> {
+    private class DataStoreCallable implements Callable<Map<K, V>> {
         private final Collection<? extends K> keys;
 
         public DataStoreCallable(Collection<? extends K> keys) {
@@ -73,9 +73,9 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
         }
     }
 
-    public class CacheLoaderAsyncFutureCallback implements FutureCallback<Map<K,V>> {
+    public class CacheLoaderAsyncFutureCallback implements FutureCallback<Map<K, V>> {
         private final Collection<? extends K> keys;
-        private final CacheLoaderCallback<K,V> callback;
+        private final CacheLoaderCallback<K, V> callback;
 
         public CacheLoaderAsyncFutureCallback(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback) {
             this.keys = keys;
@@ -85,7 +85,7 @@ public class CacheLoaderAsync<K,V> extends CacheLoader<K,V> {
         @Override
         public void onSuccess(Map<K, V> read) {
             LOG.debug("Raw result of call to data store for keys [{}] returned [{}]", keys, read);
-            Map<K,V> loaded = new HashMap<>();
+            Map<K, V> loaded = new HashMap<>();
 
             if (read != null) {
                 for (Map.Entry<K, V> re : read.entrySet()) {

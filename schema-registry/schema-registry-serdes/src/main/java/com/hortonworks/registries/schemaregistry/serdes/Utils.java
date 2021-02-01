@@ -28,17 +28,20 @@ public final class Utils {
         Exception exception = null;
         for (AutoCloseable closeable : closeables) {
             try {
-                if (closeable != null)
+                if (closeable != null) {
                     closeable.close();
+                }
             } catch (Exception e) {
-                if (exception != null)
+                if (exception != null) {
                     exception.addSuppressed(e);
-                else
+                } else {
                     exception = e;
+                }
             }
         }
-        if (exception != null)
+        if (exception != null) {
             throw exception;
+        }
     }
 
     /**

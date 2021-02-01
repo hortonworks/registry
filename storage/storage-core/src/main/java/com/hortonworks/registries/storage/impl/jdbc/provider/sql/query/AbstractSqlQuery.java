@@ -93,13 +93,21 @@ public abstract class AbstractSqlQuery implements SqlQuery {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         AbstractSqlQuery that = (AbstractSqlQuery) o;
 
-        if (columns != null ? !columns.equals(that.columns) : that.columns != null) return false;
-        if (tableName != null ? !tableName.equals(that.tableName) : that.tableName != null) return false;
+        if (columns != null ? !columns.equals(that.columns) : that.columns != null) {
+            return false;
+        }
+        if (tableName != null ? !tableName.equals(that.tableName) : that.tableName != null) {
+            return false;
+        }
         return !(primaryKey != null ? !primaryKey.equals(that.primaryKey) : that.primaryKey != null);
 
     }

@@ -75,7 +75,7 @@ public class TestPseudoAuthenticator {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration(true));
-        auth._testAuthentication(new PseudoAuthenticator(), false);
+        auth.testAuthentication(new PseudoAuthenticator(), false);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class TestPseudoAuthenticator {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration(false));
-        auth._testAuthentication(new PseudoAuthenticator(), false);
+        auth.testAuthentication(new PseudoAuthenticator(), false);
     }
 
     @Test
@@ -91,7 +91,7 @@ public class TestPseudoAuthenticator {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration(true));
-        auth._testAuthentication(new PseudoAuthenticator(), true);
+        auth.testAuthentication(new PseudoAuthenticator(), true);
     }
 
     @Test
@@ -99,7 +99,7 @@ public class TestPseudoAuthenticator {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
                 getAuthenticationHandlerConfiguration(false));
-        auth._testAuthentication(new PseudoAuthenticator(), true);
+        auth.testAuthentication(new PseudoAuthenticator(), true);
     }
 
 }

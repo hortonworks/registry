@@ -19,7 +19,8 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
 /**
- * This interface is defined for resolving schemas which have dependencies on other schemas. {@link com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException}
+ * This interface is defined for resolving schemas which have dependencies on other schemas. 
+ * {@link com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException}
  * is thrown when there are cyclic dependencies among set of schemas.
  */
 public interface SchemaResolver {

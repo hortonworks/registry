@@ -56,7 +56,7 @@ public final class SchemaVersionLifecycleStates {
     public static final InbuiltSchemaVersionLifecycleState ARCHIVED = new ArchivedState();
     public static final InbuiltSchemaVersionLifecycleState DELETED = new DeletedState();
 
-    private static final List<InbuiltSchemaVersionLifecycleState> inbuildStates =
+    private static final List<InbuiltSchemaVersionLifecycleState> INBUILD_STATES =
             ImmutableList.of(INITIATED, START_REVIEW, CHANGES_REQUIRED, REVIEWED, ENABLED, DISABLED, ARCHIVED, DELETED);
 
     public static @Nullable InbuiltSchemaVersionLifecycleState valueOf(@Nullable Byte id) {
@@ -64,7 +64,7 @@ public final class SchemaVersionLifecycleStates {
             return null;
         }
 
-        for (InbuiltSchemaVersionLifecycleState ls : inbuildStates) {
+        for (InbuiltSchemaVersionLifecycleState ls : INBUILD_STATES) {
             if (id.equals(ls.getId())) {
                 return ls;
             }
@@ -94,7 +94,9 @@ public final class SchemaVersionLifecycleStates {
 
         @Override
         public Collection<Pair<SchemaVersionLifecycleStateTransition, SchemaVersionLifecycleStateAction>> getTransitionActions() {
-            return Lists.newArrayList(createStartReviewTransitionActionPair(getId()), createArchiveTransitionAction(getId()), createDeleteTransitionActionPair(getId()));
+            return Lists.newArrayList(createStartReviewTransitionActionPair(getId()), 
+                    createArchiveTransitionAction(getId()), 
+                    createDeleteTransitionActionPair(getId()));
         }
 
         @Override

@@ -20,7 +20,7 @@ import com.hortonworks.registries.cache.view.service.CacheService;
 import com.hortonworks.registries.cache.view.service.CacheServiceId;
 
 public interface CacheServiceRegistry {
-    <K,V> void register(CacheServiceId cacheServiceId, CacheService<K,V> cacheService);
+    <K, V> void register(CacheServiceId cacheServiceId, CacheService<K, V> cacheService);
 
-    <K,V> CacheService<K,V> getCacheService(CacheServiceId cacheServiceId);
+    <K, V> CacheService<K, V> getCacheService(CacheServiceId cacheServiceId);
 }

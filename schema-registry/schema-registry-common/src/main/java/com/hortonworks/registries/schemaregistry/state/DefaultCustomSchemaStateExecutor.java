@@ -63,7 +63,8 @@ public class DefaultCustomSchemaStateExecutor implements CustomSchemaStateExecut
                   (byte) 32,
                   "Finish the schema version."
                  );
-            SchemaVersionLifecycleStateTransition stateTransition = new SchemaVersionLifecycleStateTransition(getId(), targetState.getId(), "FinishReview", "Finish schema review process");
+            SchemaVersionLifecycleStateTransition stateTransition = 
+                    new SchemaVersionLifecycleStateTransition(getId(), targetState.getId(), "FinishReview", "Finish schema review process");
             SchemaVersionLifecycleStateAction stateAction = context -> {
                 context.setState(targetState);
                 try {

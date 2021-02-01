@@ -65,12 +65,18 @@ public final class SchemaVersionLifecycleStateMachineInfo implements Serializabl
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaVersionLifecycleStateMachineInfo that = (SchemaVersionLifecycleStateMachineInfo) o;
 
-        if (states != null ? !states.equals(that.states) : that.states != null) return false;
+        if (states != null ? !states.equals(that.states) : that.states != null) {
+            return false;
+        }
         return transitions != null ? transitions.equals(that.transitions) : that.transitions == null;
     }
 

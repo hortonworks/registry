@@ -54,7 +54,8 @@ public class CustomStateTransitionTest {
     public void startUp() throws Exception {
         String serverYAMLPath = CustomStateTransitionTest.class.getClassLoader().getResource("registry-lifecycle-test-example.yaml").getPath();
         String clientYAMLPath = CustomStateTransitionTest.class.getClassLoader().getResource("registry-lifecycle-client.yaml").getPath();
-        schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(new SchemaRegistryTestConfiguration(serverYAMLPath,clientYAMLPath));
+        schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(new SchemaRegistryTestConfiguration(serverYAMLPath, 
+                clientYAMLPath));
         schemaRegistryTestServerClientWrapper.startTestServer();
         schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
     }
@@ -65,7 +66,9 @@ public class CustomStateTransitionTest {
     }
 
     @Test
-    public void testTransitionToRejectedState() throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException, SchemaBranchAlreadyExistsException, SchemaLifecycleException {
+    public void testTransitionToRejectedState() 
+            throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException, 
+            SchemaBranchAlreadyExistsException, SchemaLifecycleException {
         SchemaMetadata schemaMetadata = createSchemaMetadata("test", SchemaCompatibility.NONE);
         SchemaBranch branch1 = new SchemaBranch("BRANCH1", schemaMetadata.getName());
 
@@ -80,18 +83,23 @@ public class CustomStateTransitionTest {
 
         String schema2 = AvroSchemaRegistryClientUtil.getSchema("/device1.avsc");
         LOG.info("Creating second version for the schema \"{}\"", schemaMetadata.getName());
-        SchemaIdVersion schemaIdVersion2 = schemaRegistryClient.addSchemaVersion(branch1.getName(), schemaMetadata, new SchemaVersion(schema2, "modify version"));
+        SchemaIdVersion schemaIdVersion2 = schemaRegistryClient
+                .addSchemaVersion(branch1.getName(), schemaMetadata, new SchemaVersion(schema2, "modify version"));
         LOG.info("ID of the second version is {}", schemaIdVersion2);
 
-        LOG.info("Starting review of the second version with ID {} (new state: {})", schemaIdVersion2.getSchemaVersionId(), CustomReviewCycleStates.PEER_REVIEW_STATE.getId());
+        LOG.info("Starting review of the second version with ID {} (new state: {})", 
+                schemaIdVersion2.getSchemaVersionId(), CustomReviewCycleStates.PEER_REVIEW_STATE.getId());
         schemaRegistryClient.startSchemaVersionReview(schemaIdVersion2.getSchemaVersionId());
-        SchemaVersionInfo schemaVersionInfoAtReviewState = schemaRegistryClient.getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));
+        SchemaVersionInfo schemaVersionInfoAtReviewState = schemaRegistryClient
+                .getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));
         LOG.info("1) Second version's state is now: {}", schemaVersionInfoAtReviewState);
         Assert.assertEquals(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), schemaVersionInfoAtReviewState.getStateId());
 
         LOG.info("Transitioning second version into REJECTED ({}) state.", CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId());
-        schemaRegistryClient.transitionState(schemaIdVersion2.getSchemaVersionId(), CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Rejected by X".getBytes());
-        SchemaVersionInfo schemaVersionInfoAtRejectedState = schemaRegistryClient.getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));
+        schemaRegistryClient.transitionState(schemaIdVersion2.getSchemaVersionId(), 
+                CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Rejected by X".getBytes());
+        SchemaVersionInfo schemaVersionInfoAtRejectedState = schemaRegistryClient
+                .getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));
         LOG.info("2) Second version's state is now: {}", schemaVersionInfoAtRejectedState);
         Assert.assertEquals(CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), schemaVersionInfoAtRejectedState.getStateId());
 

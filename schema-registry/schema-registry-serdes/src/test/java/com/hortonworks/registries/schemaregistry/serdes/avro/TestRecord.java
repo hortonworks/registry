@@ -7,8 +7,10 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class TestRecord extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
-  public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
+  public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\",\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null},{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
+  public static org.apache.avro.Schema getClassSchema() {
+    return SCHEMA;
+  }
   @Deprecated public String field1;
   @Deprecated public String field2;
 
@@ -17,7 +19,7 @@ public class TestRecord extends org.apache.avro.specific.SpecificRecordBase impl
    * to their default values from the schema.  If that is desired then
    * one should use <code>newBuilder()</code>.
    */
-  public TestRecord() {}
+  public TestRecord() { }
 
   /**
    * All-args constructor.
@@ -27,22 +29,26 @@ public class TestRecord extends org.apache.avro.specific.SpecificRecordBase impl
     this.field2 = field2;
   }
 
-  public org.apache.avro.Schema getSchema() { return SCHEMA$; }
+  public org.apache.avro.Schema getSchema() {
+    return SCHEMA;
+  }
   // Used by DatumWriter.  Applications should not call.
-  public Object get(int field$) {
-    switch (field$) {
+  public Object get(int field) {
+    switch (field) {
     case 0: return field1;
     case 1: return field2;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
   // Used by DatumReader.  Applications should not call.
-  @SuppressWarnings(value="unchecked")
-  public void put(int field$, Object value$) {
-    switch (field$) {
-    case 0: field1 = (String)value$; break;
-    case 1: field2 = (String)value$; break;
-    default: throw new org.apache.avro.AvroRuntimeException("Bad index");
+  @SuppressWarnings(value = "unchecked")
+  public void put(int field, Object value) {
+    switch (field) {
+      case 0: field1 = (String) value;
+        break;
+      case 1: field2 = (String) value;
+        break;
+      default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
 
@@ -102,7 +108,7 @@ public class TestRecord extends org.apache.avro.specific.SpecificRecordBase impl
 
     /** Creates a new Builder */
     private Builder() {
-      super(TestRecord.SCHEMA$);
+      super(TestRecord.SCHEMA);
     }
 
     /** Creates a Builder by copying an existing Builder */
@@ -120,7 +126,7 @@ public class TestRecord extends org.apache.avro.specific.SpecificRecordBase impl
 
     /** Creates a Builder by copying an existing AddedFieldTestRecord instance */
     private Builder(TestRecord other) {
-            super(TestRecord.SCHEMA$);
+            super(TestRecord.SCHEMA);
       if (isValidValue(fields()[0], other.field1)) {
         this.field1 = data().deepCopy(fields()[0].schema(), other.field1);
         fieldSetFlags()[0] = true;

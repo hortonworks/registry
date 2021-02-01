@@ -21,7 +21,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class VersionEntityDef extends AtlasEntityDef implements SchemaRegistryServiceType {
 
-    public static final String SCHEMA_VERSION_INFO = "schema_version_info"+TODORemoveThis.COUNTER;
+    public static final String SCHEMA_VERSION_INFO = "schema_version_info" + TODORemoveThis.COUNTER;
 
     public static final String ID = "id";
     public static final String NAME = "name";

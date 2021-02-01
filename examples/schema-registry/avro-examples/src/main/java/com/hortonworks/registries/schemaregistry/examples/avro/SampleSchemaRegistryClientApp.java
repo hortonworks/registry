@@ -191,7 +191,8 @@ public class SampleSchemaRegistryClientApp {
         Long serDesId = registerSimpleSerDes(fileId);
 
         // map serializer and deserializer with schemakey
-        // for each schema, one serializer/deserializer is sufficient unless someone want to maintain multiple implementations of serializers/deserializers
+        // for each schema, one serializer/deserializer is sufficient unless someone 
+        // want to maintain multiple implementations of serializers/deserializers
         String schemaName = schemaMetadata.getName();
         schemaRegistryClient.mapSchemaWithSerDes(schemaName, serDesId);
 

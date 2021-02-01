@@ -128,9 +128,9 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         Object value = config.get(key);
         if (value == null) {
             return defaultValue;
-        } else if (value instanceof Boolean){
+        } else if (value instanceof Boolean) {
             return (Boolean) value;
-        } else if (value instanceof String){
+        } else if (value instanceof String) {
             return Boolean.parseBoolean((String) value);
         } else {
             throw new IllegalArgumentException("Value for key: " + key + " is invalid");
@@ -141,9 +141,9 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         Object value = config.get(key);
         if (value == null) {
             return defaultValue;
-        } else if (value instanceof Integer){
+        } else if (value instanceof Integer) {
             return (Integer) value;
-        } else if (value instanceof String){
+        } else if (value instanceof String) {
             return Integer.parseInt((String) value);
         } else {
             throw new IllegalArgumentException("Value for key: " + key + " is invalid");
@@ -154,9 +154,9 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         Object value = config.get(key);
         if (value == null) {
             return defaultValue;
-        } else if (value instanceof Long){
+        } else if (value instanceof Long) {
             return (Long) value;
-        } else if (value instanceof String){
+        } else if (value instanceof String) {
             return Long.parseLong((String) value);
         } else {
             throw new IllegalArgumentException("Value for key: " + key + " is invalid");

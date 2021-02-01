@@ -31,7 +31,7 @@ public interface Cache<K, V> {
 
     void put(K key, V val);
 
-    void putAll(Map<? extends K,? extends V> entries);
+    void putAll(Map<? extends K, ? extends V> entries);
 
     void remove(K key);
 

@@ -109,7 +109,8 @@ public class TransactionEventListener implements ApplicationEventListener {
                         unitOfWork.map(x -> {
                                     TransactionIsolation result = x.transactionIsolation();
                                     if (result == TransactionIsolation.APPLICATION_DEFAULT) {
-                                        result = defaultTransactionIsolation == null ? TransactionIsolation.DATABASE_SENSITIVE : defaultTransactionIsolation;
+                                        result = defaultTransactionIsolation == null ? 
+                                    TransactionIsolation.DATABASE_SENSITIVE : defaultTransactionIsolation;
                                     }
                                     return result;
                                 }

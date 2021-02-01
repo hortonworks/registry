@@ -62,8 +62,9 @@ public class OracleSelectQuery extends AbstractSelectQuery {
                         throw new OracleQueryException(String.format("Column \"%s\" of the table \"%s\" is compared against a value \"%s\", " +
                                         "which is greater than 4k characters",
                                 columnKeyValue.getKey().getName(), tableName, stringValue));
-                    } else
+                    } else {
                         whereClauseColumns.add(String.format(" to_char(\"%s\") = ?", columnKeyValue.getKey().getName()));
+                    }
                 } else {
                     whereClauseColumns.add(String.format(" \"%s\" = ?", columnKeyValue.getKey().getName()));
                 }

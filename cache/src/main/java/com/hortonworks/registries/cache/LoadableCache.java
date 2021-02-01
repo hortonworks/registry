@@ -21,5 +21,5 @@ import com.hortonworks.registries.cache.view.io.loader.CacheLoaderCallback;
 import java.util.Collection;
 
 public interface LoadableCache<K, V> extends Cache<K, V> {
-    void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K,V> callback);
+    void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback);
 }

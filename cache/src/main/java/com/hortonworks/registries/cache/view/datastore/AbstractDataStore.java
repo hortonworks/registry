@@ -19,7 +19,7 @@ package com.hortonworks.registries.cache.view.datastore;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class AbstractDataStore<K,V> implements DataStoreReader<K,V>, DataStoreWriter<K,V> {
+public abstract class AbstractDataStore<K, V> implements DataStoreReader<K, V>, DataStoreWriter<K, V> {
     private final String nameSpace;
 
     public AbstractDataStore(String nameSpace) {

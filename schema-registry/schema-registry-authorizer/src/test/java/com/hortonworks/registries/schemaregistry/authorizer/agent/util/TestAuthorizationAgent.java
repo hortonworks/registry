@@ -36,14 +36,14 @@ public class TestAuthorizationAgent implements AuthorizationAgent {
     public void configure(Map<String, Object> props) { }
 
     @Override
-    public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList
-            (Authorizer.UserAndGroups userAndGroups, Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
+    public Collection<AggregatedSchemaMetadataInfo> authorizeGetAggregatedSchemaList(
+            Authorizer.UserAndGroups userAndGroups, Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfoList) {
         throw new RuntimeException("Not implemented");
     }
 
     @Override
-    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo
-            (Authorizer.UserAndGroups userAndGroups, 
+    public AggregatedSchemaMetadataInfo authorizeGetAggregatedSchemaInfo(
+            Authorizer.UserAndGroups userAndGroups, 
              AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo) {
         throw new RuntimeException("Not implemented");
     }
@@ -62,7 +62,8 @@ public class TestAuthorizationAgent implements AuthorizationAgent {
     }
 
     @Override
-    public void authorizeDeleteSchemaMetadata(Authorizer.UserAndGroups userAndGroups, ISchemaRegistry schemaRegistry, String schemaMetadataName) throws AuthorizationException, SchemaNotFoundException {
+    public void authorizeDeleteSchemaMetadata(Authorizer.UserAndGroups userAndGroups, ISchemaRegistry schemaRegistry, String schemaMetadataName) 
+            throws AuthorizationException, SchemaNotFoundException {
         throw new RuntimeException("Not implemented");
     }
 

@@ -50,7 +50,8 @@ public class MockFileSystem extends FileSystem {
     }
 
     @Override
-    public FSDataOutputStream create(Path path, FsPermission fsPermission, boolean b, int i, short i1, long l, Progressable progressable) throws IOException {
+    public FSDataOutputStream create(Path path, FsPermission fsPermission, boolean b, int i, short i1, long l, Progressable progressable) 
+            throws IOException {
         methodCalls.add("create " + path);
         return new FSDataOutputStream(new ByteArrayOutputStream(0), null);
     }

@@ -22,20 +22,20 @@ import org.slf4j.Logger;
 
 import java.util.Collection;
 
-public abstract class CacheLoader<K,V> {
-    protected final Cache<K,V> cache;
+public abstract class CacheLoader<K, V> {
+    protected final Cache<K, V> cache;
     protected final DataStoreReader<K, V> dataStoreReader;
 
-    public CacheLoader(Cache<K, V> cache, DataStoreReader<K,V> dataStoreReader) {
+    public CacheLoader(Cache<K, V> cache, DataStoreReader<K, V> dataStoreReader) {
         this.cache = cache;
         this.dataStoreReader = dataStoreReader;
     }
 
-    public abstract void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K,V> callback);
+    public abstract void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback);
 
-    protected void handleException(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback, Exception e, Logger LOG) {
+    protected void handleException(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback, Exception e, Logger log) {
         final String msg = String.format("Exception occurred while loading keys [%s]", keys);
         callback.onCacheLoadingFailure(new Exception(msg, e));
-        LOG.error(msg, e);
+        log.error(msg, e);
     }
 }

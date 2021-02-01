@@ -52,7 +52,8 @@ public abstract class AbstractSnapshotSerializer<I, O> extends AbstractSerDes im
 
         // register that schema and get the version
         try {
-            SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+            SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, 
+                    new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
             // write the version and given object to the output
             return doSerialize(input, schemaIdVersion);
         } catch (SchemaNotFoundException | IncompatibleSchemaException | InvalidSchemaException | SchemaBranchNotFoundException e) {

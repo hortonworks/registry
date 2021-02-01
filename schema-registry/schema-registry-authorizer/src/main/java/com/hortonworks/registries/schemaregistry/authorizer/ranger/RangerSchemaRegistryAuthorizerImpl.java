@@ -77,13 +77,13 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     RangerAccessResourceImpl registryResource2RangerResource(Resource registryResource) {
         RangerAccessResourceImpl rangerResource = new RangerAccessResourceImpl();
 
-        if(registryResource instanceof SchemaMetadataResource) {
+        if (registryResource instanceof SchemaMetadataResource) {
             SchemaMetadataResource smr = (SchemaMetadataResource) registryResource;
             rangerResource.setValue(RANGER_RESOURCE_SCHEMA_GROUP, smr.getsGroupName());
             rangerResource.setValue(RANGER_RESOURCE_SCHEMA_METADATA, smr.getsMetadataName());
         }
 
-        if(registryResource instanceof SchemaBranchResource) {
+        if (registryResource instanceof SchemaBranchResource) {
             SchemaBranchResource sbr = (SchemaBranchResource) registryResource;
             rangerResource.setValue(RANGER_RESOURCE_SCHEMA_BRANCH, sbr.getsBranchName());
         }

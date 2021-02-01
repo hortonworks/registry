@@ -77,7 +77,7 @@ public class RewriteUriFilterTest {
 
             rewriteUriFilter.doFilter(servletRequest, servletResponse, filterChain);
 
-            if(filterChainShouldBeInvoked) {
+            if (filterChainShouldBeInvoked) {
                 Assert.assertTrue("Filter chain should have been invoked", filterChain.isFilterChainInvoked());
             } else {
                 Assert.assertFalse("Filter chain should not have been invoked", filterChain.isFilterChainInvoked());

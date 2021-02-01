@@ -18,7 +18,7 @@ package com.hortonworks.registries.cache.view.service;
 
 import com.hortonworks.registries.cache.view.Factory;
 
-public class CacheServiceJsonFactory<K,V> implements Factory<CacheService<K,V>> {
+public class CacheServiceJsonFactory<K, V> implements Factory<CacheService<K, V>> {
     @Override
     public CacheService<K, V> create() {
 //        return new CacheService.Builder<K,V>(null,null).setCacheLoader(null).build();
@@ -27,6 +27,6 @@ public class CacheServiceJsonFactory<K,V> implements Factory<CacheService<K,V>> 
 //        return new CacheService<>(null, null);
     }
 
-    class Bar {}
+    class Bar { }
 
 }

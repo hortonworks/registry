@@ -60,12 +60,18 @@ public class PredicateCombinerPair implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         PredicateCombinerPair that = (PredicateCombinerPair) o;
 
-        if (predicate != null ? !predicate.equals(that.predicate) : that.predicate != null) return false;
+        if (predicate != null ? !predicate.equals(that.predicate) : that.predicate != null) {
+            return false;
+        }
         return combinerOperation == that.combinerOperation;
     }
 

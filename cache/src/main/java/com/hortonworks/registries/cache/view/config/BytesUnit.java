@@ -18,25 +18,55 @@ package com.hortonworks.registries.cache.view.config;
 
 public enum BytesUnit {
     BYTES {
-    public long toBytes(long d) { return d; }
-    public long toKilobytes(long d) { return d/RATIO; }
-    public long toMegabytes(long d)  { return d/RATIO_POW_2; }
+        public long toBytes(long d) {
+            return d;
+        }
+
+        public long toKilobytes(long d) {
+            return d / RATIO;
+        }
+
+        public long toMegabytes(long d) {
+            return d / RATIO_POW_2;
+        }
     },
     KILOBYTES {
-        public long toBytes(long d)  { return d*RATIO; }
-        public long toKilobytes(long d) { return d; }
-        public long toMegabytes(long d)  { return d/RATIO; }
+        public long toBytes(long d) {
+            return d * RATIO;
+        }
+        
+        public long toKilobytes(long d) {
+            return d;
+        }
+        
+        public long toMegabytes(long d) {
+            return d / RATIO;
+        }
     },
     MEGABYTES {
-        public long toBytes(long d)  { return d*RATIO_POW_2; }
-        public long toKilobytes(long d) { return d*RATIO; }
-        public long toMegabytes(long d)  { return d; }
+        public long toBytes(long d) {
+            return d * RATIO_POW_2;
+        }
+        
+        public long toKilobytes(long d) {
+            return d * RATIO;
+        }
+        
+        public long toMegabytes(long d) {
+            return d;
+        }
     };
 
     private static final long RATIO = 1024;
-    private static final long RATIO_POW_2 = 1024*1024;
+    private static final long RATIO_POW_2 = 1024 * 1024;
 
-    public long toBytes(long d)  {throw new AbstractMethodError(); }
-    public long toKilobytes(long d) {throw new AbstractMethodError(); }
-    public long toMegabytes(long d) {throw new AbstractMethodError(); }
+    public long toBytes(long d) {
+        throw new AbstractMethodError();
+    }
+    public long toKilobytes(long d) {
+        throw new AbstractMethodError();
+    }
+    public long toMegabytes(long d) {
+        throw new AbstractMethodError(); 
+    }
 }

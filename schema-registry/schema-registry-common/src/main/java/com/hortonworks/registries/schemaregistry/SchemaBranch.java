@@ -66,23 +66,36 @@ public class SchemaBranch implements Serializable {
         return this.name;
     }
 
-    public String getSchemaMetadataName() { return  this.schemaMetadataName;}
+    public String getSchemaMetadataName() { 
+        return this.schemaMetadataName;
+    }
 
     public Long getTimestamp() {
         return this.timestamp;
     }
 
-    public String getDescription() { return this.description;}
+    public String getDescription() { 
+        return this.description;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaBranch schemaFieldInfo = (SchemaBranch) o;
 
-        if (name != null ? !name.equals(schemaFieldInfo.name) : schemaFieldInfo.name != null) return false;
-        if (schemaMetadataName != null ? !schemaMetadataName.equals(schemaFieldInfo.schemaMetadataName) : schemaFieldInfo.schemaMetadataName != null) return false;
+        if (name != null ? !name.equals(schemaFieldInfo.name) : schemaFieldInfo.name != null) {
+            return false;
+        }
+        if (schemaMetadataName != null ? 
+                !schemaMetadataName.equals(schemaFieldInfo.schemaMetadataName) : schemaFieldInfo.schemaMetadataName != null) {
+            return false;
+        }
 
         return true;
     }

@@ -101,7 +101,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                             LOG.error("Failed to log in", e);
                         }
                     } else {
-                        LOG.error("Invalid service authentication configuration for 'kerberos' principal = '" + principal + "' and keytab = '" + keytab + "'");
+                        LOG.error("Invalid service authentication configuration for 'kerberos' principal = '" + 
+                                principal + "' and keytab = '" + keytab + "'");
                     }
                 } else {
                     LOG.error("No service authentication properties were configured for 'kerberos'");
@@ -148,10 +149,11 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
-        if (storageManager instanceof TransactionManager)
+        if (storageManager instanceof TransactionManager) {
             transactionManager = (TransactionManager) storageManager;
-        else
+        } else {
             transactionManager = new NOOPTransactionManager();
+        }
         FileStorage fileStorage = getJarStorage(registryConfiguration.getFileStorageConfiguration());
 
         List<ModuleConfiguration> modules = registryConfiguration.getModules();
@@ -214,7 +216,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     private FileStorage getJarStorage(FileStorageConfiguration fileStorageConfiguration) {
         FileStorage fileStorage = null;
-        if (fileStorageConfiguration.getClassName() != null)
+        if (fileStorageConfiguration.getClassName() != null) {
             try {
                 fileStorage = (FileStorage) Class.forName(fileStorageConfiguration.getClassName(), true,
                         Thread.currentThread().getContextClassLoader()).newInstance();
@@ -222,7 +224,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        return fileStorage;
+        }
+            return fileStorage;
     }
 
     private StorageManager getStorageManager(StorageProviderConfiguration storageProviderConfiguration) {

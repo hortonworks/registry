@@ -73,7 +73,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         this(config, connectionBuilder, null, new DefaultStorageDataTypeContext());
     }
 
-    public AbstractQueryExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
+    public AbstractQueryExecutor(ExecutionConfig config, 
+                                 ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder) {
         this(config, connectionBuilder, cacheBuilder, new DefaultStorageDataTypeContext());
     }
 
@@ -81,7 +82,11 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         this(config, connectionBuilder, null, storageDataTypeContext);
     }
 
-    public AbstractQueryExecutor(ExecutionConfig config, ConnectionBuilder connectionBuilder, CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder, StorageDataTypeContext storageDataTypeContext) {
+    public AbstractQueryExecutor(ExecutionConfig config,
+                                 ConnectionBuilder connectionBuilder,
+                                 CacheBuilder<SqlQuery,
+                                         PreparedStatementBuilder> cacheBuilder,
+                                 StorageDataTypeContext storageDataTypeContext) {
         this.connectionBuilder = connectionBuilder;
         this.config = config;
         cache = cacheBuilder != null ? buildCache(cacheBuilder) : null;
@@ -132,8 +137,9 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         Connection connection = null;
         try {
             connection = getConnection();
-            final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), storageDataTypeContext,
-                                                                             new SqlSelectQuery(namespace)).getMetaData();
+            final ResultSetMetaData rsMetadata = PreparedStatementBuilder.of(connection, new ExecutionConfig(queryTimeoutSecs), 
+                    storageDataTypeContext, 
+                    new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
                 columns.add(rsMetadata.getColumnName(i),
                         getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
@@ -143,7 +149,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } finally {
-            if(!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+            if (!transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
                 closeConnection(connection);
             }
         }
@@ -156,7 +162,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     public void closeConnection(Connection connection) {
         if (connection != null) {
             try {
-                if(!connection.isClosed()) {
+                if (!connection.isClosed()) {
                     connection.close();
                 }
                 log.debug("Closed connection {}", connection);
@@ -204,7 +210,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 final PreparedStatementBuilder preparedStatementBuilder = notification.getValue();
                 log.debug("Removed entry from cache [key:{}, val: {}]", notification.getKey(), preparedStatementBuilder);
                 log.debug("Cache size: {}", cache.size());
-                if(preparedStatementBuilder != null && !transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
+                if (preparedStatementBuilder != null && !transactionBookKeeper.hasActiveTransaction(Thread.currentThread().getId())) {
                     closeConnection(preparedStatementBuilder.getConnection());
                 }
             }
@@ -231,7 +237,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
                 Connection connection = connectionBuilder.getConnection();
                 if (transactionIsolationLevel == TransactionIsolation.JDBC_DEFAULT) {
-                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
+                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", 
+                            currentThreadId, transactionIsolationLevel.name());
                     // Use the transaction isolation as recommended by the JDBC driver
                 } else if (transactionIsolationLevel == TransactionIsolation.DATABASE_SENSITIVE) {
                     int transactionIsolation;
@@ -246,13 +253,15 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                             transactionIsolation = Connection.TRANSACTION_SERIALIZABLE;
                             break;
                         default:
-                            throw new TransactionException(String.format("Failed to set transaction isolation level for unknown database : %s", config.getDatabaseType().toString()));
+                            throw new TransactionException(String.format("Failed to set transaction isolation level for unknown database : %s", 
+                                    config.getDatabaseType().toString()));
                     }
                     log.debug(" --- Begin transaction for thread id : {} with isolation level : {} and jdbc transaction isolation level : {} --- ",
                             currentThreadId, transactionIsolationLevel.name(), transactionIsolation);
                     connection.setTransactionIsolation(transactionIsolation);
                 } else {
-                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", currentThreadId, transactionIsolationLevel.name());
+                    log.debug(" --- Begin transaction for thread id : {} with isolation level : {} --- ", 
+                            currentThreadId, transactionIsolationLevel.name());
                     connection.setTransactionIsolation(transactionIsolationLevel.getValue());
                 }
                 log.debug("Opened connection {}", connection);
@@ -262,8 +271,9 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             } else {
                 log.debug(" --- Reusing transaction for thread if : {} --- ", currentThreadId);
                 if (transactionIsolationLevel != TransactionIsolation.JDBC_DEFAULT &&
-                        transactionBookKeeper.getConnection(currentThreadId).getTransactionIsolation() != transactionIsolationLevel.getValue())
+                        transactionBookKeeper.getConnection(currentThreadId).getTransactionIsolation() != transactionIsolationLevel.getValue()) {
                     throw new TransactionException("Attempted to change the isolation level amidst an active transaction");
+                }
                 transactionBookKeeper.incrementNestedTransactionCount(currentThreadId);
             }
         } catch (SQLException e) {
@@ -289,7 +299,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 }
             }
         } else {
-            throw new TransactionException(String.format("Failed to rollback, No active transaction is associated with thread id : %s", Long.toString(currentThreadId)));
+            throw new TransactionException(String.format("Failed to rollback, No active transaction is associated with thread id : %s", 
+                    Long.toString(currentThreadId)));
         }
 
     }
@@ -312,7 +323,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 }
             }
         } else {
-            throw new TransactionException(String.format("Failed to commit, No active transaction is associated with thread id : %s", Long.toString(currentThreadId)));
+            throw new TransactionException(String.format("Failed to commit, No active transaction is associated with thread id : %s", 
+                    Long.toString(currentThreadId)));
         }
     }
 
@@ -320,12 +332,13 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         long currentThreadId = Thread.currentThread().getId();
         transactionBookKeeper.decrementNestedTransactionCount(currentThreadId, currentTransactionState);
         if (!transactionBookKeeper.hasActiveTransaction(currentThreadId)) {
-            if (transactionBookKeeper.whereThereAnyRollbacks(currentThreadId))
+            if (transactionBookKeeper.whereThereAnyRollbacks(currentThreadId)) {
                 transactionBookKeeper.getConnection(currentThreadId).rollback();
-            else if (transactionBookKeeper.whereThereAnyCommits(currentThreadId))
+            } else if (transactionBookKeeper.whereThereAnyCommits(currentThreadId)) {
                 transactionBookKeeper.getConnection(currentThreadId).commit();
-            else
+            } else {
                 throw new TransactionException("Attempted to close a transaction without explicit call to commit or rollback");
+            }
             transactionBookKeeper.getConnection(threadId).setAutoCommit(true);
         }
     }
@@ -434,7 +447,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             } else {
                 connection = getConnection();
                 log.debug("Got new connection to create PreparedStatement returning generated key: [{}]", connection);
-                preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
+                preparedStatementBuilder = PreparedStatementBuilder
+                        .supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
             }
             return preparedStatementBuilder.getPreparedStatement(sqlBuilder);
         }
@@ -466,7 +480,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                 Connection connection = getConnection();
                 log.debug("Got new connection to create PreparedStatementBuilder: [{}]", connection);
                 if (returnGeneratedKeys) {
-                    preparedStatementBuilder = PreparedStatementBuilder.supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
+                    preparedStatementBuilder = PreparedStatementBuilder
+                            .supportReturnGeneratedKeys(connection, config, storageDataTypeContext, sqlBuilder);
                 } else {
                     preparedStatementBuilder = PreparedStatementBuilder.of(connection, config, storageDataTypeContext, sqlBuilder);
                 }

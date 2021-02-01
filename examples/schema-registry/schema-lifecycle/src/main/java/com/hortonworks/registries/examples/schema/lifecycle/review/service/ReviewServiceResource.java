@@ -45,7 +45,8 @@ public class ReviewServiceResource {
     @Path("/transition/schema/{versionId}/notify")
     @POST
     @Timed
-    public Response recordTransitionEnable(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
+    public Response recordTransitionEnable(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                       Long schemaVersionId) {
         LOG.info("<<==== Schema version info : {} has transitioned to enabled state ====>>", schemaVersionId);
         return Response.ok().build();
     }
@@ -53,43 +54,49 @@ public class ReviewServiceResource {
     @Path("/review/peer/schema/{versionId}/accept")
     @POST
     @Timed
-    public Response acceptPeerReview(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
-        return transition(schemaVersionId, CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), "Reviewed by :- A,B and C" );
+    public Response acceptPeerReview(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                 Long schemaVersionId) {
+        return transition(schemaVersionId, CustomReviewCycleStates.TECHNICAL_LEAD_REVIEW_STATE.getId(), "Reviewed by :- A,B and C");
     }
 
     @Path("/review/peer/schema/{versionId}/reject")
     @POST
     @Timed
-    public Response declinePeerReview(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
-        return transition(schemaVersionId, CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Review declined by - C" );
+    public Response declinePeerReview(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                  Long schemaVersionId) {
+        return transition(schemaVersionId, CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Review declined by - C");
     }
 
     @Path("/review/peer/schema/{versionId}/modify")
     @POST
     @Timed
-    public Response changesRequiredPeerReview(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
-        return transition(schemaVersionId, SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(), "Changes requested by - B" );
+    public Response changesRequiredPeerReview(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                          Long schemaVersionId) {
+        return transition(schemaVersionId, SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(), "Changes requested by - B");
     }
 
     @Path("/review/technical/schema/{versionId}/accept")
     @POST
     @Timed
-    public Response declineTechnicalReview(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
-        return transition(schemaVersionId, SchemaVersionLifecycleStates.REVIEWED.getId(), "Reviewed by :- M and N" );
+    public Response declineTechnicalReview(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                       Long schemaVersionId) {
+        return transition(schemaVersionId, SchemaVersionLifecycleStates.REVIEWED.getId(), "Reviewed by :- M and N");
     }
 
     @Path("/review/technical/schema/{versionId}/reject")
     @POST
     @Timed
-    public Response acceptTechnicalReview(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
-        return transition(schemaVersionId, CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Review declined by - M" );
+    public Response acceptTechnicalReview(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                      Long schemaVersionId) {
+        return transition(schemaVersionId, CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Review declined by - M");
     }
 
     @Path("/review/technical/schema/{versionId}/modify")
     @POST
     @Timed
-    public Response changesRequiredTechnicalReview(@ApiParam(value = "Details about schema version",required = true) @PathParam("versionId") Long schemaVersionId) {
-       return transition(schemaVersionId, SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(), "Changes requested by - N" );
+    public Response changesRequiredTechnicalReview(@ApiParam(value = "Details about schema version", required = true) @PathParam("versionId") 
+                                                               Long schemaVersionId) {
+       return transition(schemaVersionId, SchemaVersionLifecycleStates.CHANGES_REQUIRED.getId(), "Changes requested by - N");
     }
 
     private Response transition(Long schemaVersionId, Byte targetStateId, String stateDetails) {

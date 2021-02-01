@@ -34,12 +34,12 @@ public final class SerDesProtocolHandlerRegistry {
     public static final byte VERSION_ID_AS_INT_PROTOCOL = 0x3;
     public static final byte CURRENT_PROTOCOL = VERSION_ID_AS_INT_PROTOCOL;
 
-    private static final SerDesProtocolHandlerRegistry instance = new SerDesProtocolHandlerRegistry();
+    private static final SerDesProtocolHandlerRegistry INSTANCE = new SerDesProtocolHandlerRegistry();
 
     private final Map<Byte, SerDesProtocolHandler> protocolWithHandlers = new ConcurrentHashMap<>();
 
     public static SerDesProtocolHandlerRegistry get() {
-        return instance;
+        return INSTANCE;
     }
 
     public SerDesProtocolHandler getSerDesProtocolHandler(Byte protocolId) {
@@ -51,8 +51,10 @@ public final class SerDesProtocolHandlerRegistry {
     }
 
     private SerDesProtocolHandlerRegistry() {
-        List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new ConfluentProtocolHandler(), new SchemaMetadataIdProtocolHandler(),
-                                                                    new SchemaVersionIdAsIntProtocolHandler(), new SchemaVersionIdAsLongProtocolHandler());
+        List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new ConfluentProtocolHandler(), 
+                new SchemaMetadataIdProtocolHandler(),
+                new SchemaVersionIdAsIntProtocolHandler(), 
+                new SchemaVersionIdAsLongProtocolHandler());
         for (SerDesProtocolHandler inbuiltHandler : inbuiltHandlers) {
             registerSerDesProtocolHandler(inbuiltHandler);
         }
@@ -66,7 +68,8 @@ public final class SerDesProtocolHandlerRegistry {
     public void registerSerDesProtocolHandler(SerDesProtocolHandler serDesProtocolHandler) {
         SerDesProtocolHandler existingHandler = protocolWithHandlers.putIfAbsent(serDesProtocolHandler.getProtocolId(), serDesProtocolHandler);
         if (existingHandler != null) {
-            throw new IllegalArgumentException("SerDesProtocolHandler is already registered with the given protocol id: " + serDesProtocolHandler.getProtocolId());
+            throw new IllegalArgumentException("SerDesProtocolHandler is already registered with the given protocol id: " + 
+                    serDesProtocolHandler.getProtocolId());
         }
     }
 

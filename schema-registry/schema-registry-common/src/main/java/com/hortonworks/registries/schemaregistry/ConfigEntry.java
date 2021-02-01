@@ -102,16 +102,30 @@ public final class ConfigEntry<T> implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         ConfigEntry<?> that = (ConfigEntry<?>) o;
 
-        if (mandatory != that.mandatory) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null) return false;
+        if (mandatory != that.mandatory) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (type != null ? !type.equals(that.type) : that.type != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null) {
+            return false;
+        }
         return validator != null ? validator.equals(that.validator) : that.validator == null;
 
     }
@@ -150,44 +164,45 @@ public final class ConfigEntry<T> implements Serializable {
 
     public static class IntegerConverter implements Converter<Integer> {
 
-        private static final Converter<Integer> instance = new IntegerConverter();
+        private static final Converter<Integer> INSTANCE = new IntegerConverter();
 
         @Override
         public Integer convert(Object obj) {
             if (obj instanceof String) {
                 try {
-                    return Integer.valueOf((String)obj);
+                    return Integer.valueOf((String) obj);
                 } catch (NumberFormatException e) {
                     throw new ConfigTypeConversionException(String.format("Value: %s can't be parsed as an Integer", obj), e);
                 }
-            } else if (obj instanceof Integer){
+            } else if (obj instanceof Integer) {
                 return ((Integer) obj);
             } else {
-                throw new ConfigTypeConversionException(String.format("Value: %s (type: %s) is expected to be convertible to an Integer", obj, obj.getClass().getCanonicalName()));
+                throw new ConfigTypeConversionException(String.format("Value: %s (type: %s) is expected to be convertible to an Integer", 
+                        obj, obj.getClass().getCanonicalName()));
             }
         }
 
         public static Converter<Integer> get() {
-            return instance;
+            return INSTANCE;
         }
     }
 
     public static class StringConverter implements Converter<String> {
 
-        private static final Converter<String> instance = new StringConverter();
+        private static final Converter<String> INSTANCE = new StringConverter();
 
         @Override
         public String convert(Object obj) {
 
             if (obj instanceof String) {
-                return (String)obj;
+                return (String) obj;
             } else {
                 return obj.toString();
             }
         }
 
         public static Converter<String> get() {
-            return instance;
+            return INSTANCE;
         }
     }
 
@@ -252,7 +267,7 @@ public final class ConfigEntry<T> implements Serializable {
     }
 
     public static class PositiveNumberValidator implements ConfigEntry.Validator<Number> {
-        private static final PositiveNumberValidator instance = new PositiveNumberValidator();
+        private static final PositiveNumberValidator INSTANCE = new PositiveNumberValidator();
 
         @Override
         public void validate(String key, Number number) {
@@ -266,7 +281,7 @@ public final class ConfigEntry<T> implements Serializable {
         }
 
         public static PositiveNumberValidator get() {
-            return instance;
+            return INSTANCE;
         }
     }
 

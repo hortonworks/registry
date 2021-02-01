@@ -58,7 +58,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         props.setProperty(AuthenticationFilter.AUTH_TYPE, "simple");
         props.setProperty(PseudoAuthenticationHandler.ANONYMOUS_ALLOWED, "false");
         AuthenticatorTestCase.setAuthenticationHandlerConfig(props);
-        auth._testAuthentication(new KerberosAuthenticator(), false);
+        auth.testAuthentication(new KerberosAuthenticator(), false);
     }
 
     @Test(timeout = 60000)
@@ -68,7 +68,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         props.setProperty(AuthenticationFilter.AUTH_TYPE, "simple");
         props.setProperty(PseudoAuthenticationHandler.ANONYMOUS_ALLOWED, "true");
         AuthenticatorTestCase.setAuthenticationHandlerConfig(props);
-        auth._testAuthentication(new KerberosAuthenticator(), false);
+        auth.testAuthentication(new KerberosAuthenticator(), false);
     }
 
     @Test(timeout = 60000)
@@ -95,7 +95,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         KerberosTestUtils.doAsClient(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                auth._testAuthentication(new KerberosAuthenticator(), false);
+                auth.testAuthentication(new KerberosAuthenticator(), false);
                 return null;
             }
         });
@@ -109,7 +109,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         KerberosTestUtils.doAsClient(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                auth._testAuthentication(new KerberosAuthenticator(), true);
+                auth.testAuthentication(new KerberosAuthenticator(), true);
                 return null;
             }
         });
@@ -123,7 +123,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         KerberosTestUtils.doAsClient(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                auth._testAuthenticationHttpClient(new KerberosAuthenticator(), false);
+                auth.testAuthenticationHttpClient(new KerberosAuthenticator(), false);
                 return null;
             }
         });
@@ -137,7 +137,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         KerberosTestUtils.doAsClient(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                auth._testAuthenticationHttpClient(new KerberosAuthenticator(), true);
+                auth.testAuthenticationHttpClient(new KerberosAuthenticator(), true);
                 return null;
             }
         });

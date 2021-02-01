@@ -41,5 +41,6 @@ public interface SchemaVersionService {
                                               String toSchemaText,
                                               String existingSchemaText);
 
-    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaBranchName, String schemaName) throws SchemaNotFoundException, SchemaBranchNotFoundException;
+    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaBranchName, String schemaName) 
+            throws SchemaNotFoundException, SchemaBranchNotFoundException;
 }

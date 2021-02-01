@@ -33,7 +33,7 @@ public class ExpiryPolicy {
         public Ttl(long count, TimeUnit unit) {
             this.count = count;
             this.unit = unit;
-            this.ttlSeconds= unit.toSeconds(count);
+            this.ttlSeconds = unit.toSeconds(count);
         }
 
         public long getCount() {

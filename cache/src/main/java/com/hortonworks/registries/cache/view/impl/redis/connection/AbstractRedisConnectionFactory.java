@@ -21,7 +21,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 
-public abstract class AbstractRedisConnectionFactory<K,V> implements Factory<RedisConnection<K, V>> {
+public abstract class AbstractRedisConnectionFactory<K, V> implements Factory<RedisConnection<K, V>> {
     protected final RedisClient redisClient;
     protected final RedisCodec<K, V> codec;
 

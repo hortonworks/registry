@@ -149,9 +149,9 @@ public class AuthenticatorTestCase {
         }
     }
 
-    private String POST = "test";
+    private String post = "test";
 
-    protected void _testAuthentication(Authenticator authenticator, boolean doPost) throws Exception {
+    protected void testAuthentication(Authenticator authenticator, boolean doPost) throws Exception {
         start();
         try {
             URL url = new URL(getBaseURL());
@@ -169,14 +169,14 @@ public class AuthenticatorTestCase {
             conn.connect();
             if (doPost) {
                 Writer writer = new OutputStreamWriter(conn.getOutputStream());
-                writer.write(POST);
+                writer.write(post);
                 writer.close();
             }
             Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
             if (doPost) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 String echo = reader.readLine();
-                Assert.assertEquals(POST, echo);
+                Assert.assertEquals(post, echo);
                 Assert.assertNull(reader.readLine());
             }
             aUrl = new AuthenticatedURL();
@@ -192,7 +192,7 @@ public class AuthenticatorTestCase {
     private SystemDefaultHttpClient getHttpClient() {
         final SystemDefaultHttpClient httpClient = new SystemDefaultHttpClient();
         httpClient.getAuthSchemes().register(AuthPolicy.SPNEGO, new SPNegoSchemeFactory(true));
-        Credentials use_jaas_creds = new Credentials() {
+        Credentials useJaasCreds = new Credentials() {
             public String getPassword() {
                 return null;
             }
@@ -203,7 +203,7 @@ public class AuthenticatorTestCase {
         };
 
         httpClient.getCredentialsProvider().setCredentials(
-                AuthScope.ANY, use_jaas_creds);
+                AuthScope.ANY, useJaasCreds);
         return httpClient;
     }
 
@@ -214,11 +214,13 @@ public class AuthenticatorTestCase {
             final int httpStatus = response.getStatusLine().getStatusCode();
             Assert.assertEquals(HttpURLConnection.HTTP_OK, httpStatus);
         } finally {
-            if (response != null) EntityUtils.consumeQuietly(response.getEntity());
+            if (response != null) {
+                EntityUtils.consumeQuietly(response.getEntity());
+            }
         }
     }
 
-    protected void _testAuthenticationHttpClient(Authenticator authenticator, boolean doPost) throws Exception {
+    protected void testAuthenticationHttpClient(Authenticator authenticator, boolean doPost) throws Exception {
         start();
         try {
             SystemDefaultHttpClient httpClient = getHttpClient();
@@ -227,7 +229,7 @@ public class AuthenticatorTestCase {
             // Always do a GET before POST to trigger the SPNego negotiation
             if (doPost) {
                 HttpPost post = new HttpPost(getBaseURL());
-                byte[] postBytes = POST.getBytes();
+                byte[] postBytes = this.post.getBytes();
                 ByteArrayInputStream bis = new ByteArrayInputStream(postBytes);
                 InputStreamEntity entity = new InputStreamEntity(bis, postBytes.length);
 

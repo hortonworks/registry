@@ -38,7 +38,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.security.Principal;
 import java.util.Properties;
 import java.util.Set;

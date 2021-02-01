@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DataStoreBackedCache<K,V> extends AbstractCache<K,V> implements LoadableCache<K,V> {
+public class DataStoreBackedCache<K, V> extends AbstractCache<K, V> implements LoadableCache<K, V> {
     private static final Logger LOG = LoggerFactory.getLogger(DataStoreBackedCache.class);
 
     private final Cache<K, V> cache;
@@ -53,7 +53,7 @@ public class DataStoreBackedCache<K,V> extends AbstractCache<K,V> implements Loa
         this.cacheWriter = cacheWriter;
     }
 
-    public void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K,V> callback) {
+    public void loadAll(Collection<? extends K> keys, CacheLoaderCallback<K, V> callback) {
         if (cacheLoader != null) {
             cacheLoader.loadAll(keys, callback);
         }
@@ -77,7 +77,8 @@ public class DataStoreBackedCache<K,V> extends AbstractCache<K,V> implements Loa
     }
 
     @Override
-    public Map<K, V> getAll(Collection<? extends K> keys) {  // TODO what if trying to load more keys than max number of keys that be kept in the cache ?
+    public Map<K, V> getAll(Collection<? extends K> keys) {  
+        // TODO what if trying to load more keys than max number of keys that be kept in the cache ?
         Map<K, V> present = cache.getAll(keys);
         if (dataStoreReader != null) {
             if (present == null || present.isEmpty()) {

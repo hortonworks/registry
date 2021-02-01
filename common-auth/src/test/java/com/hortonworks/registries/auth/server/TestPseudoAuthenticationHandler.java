@@ -83,7 +83,7 @@ public class TestPseudoAuthenticationHandler {
         }
     }
 
-    private void _testUserName(boolean anonymous) throws Exception {
+    private void testUserName(boolean anonymous) throws Exception {
         PseudoAuthenticationHandler handler = new PseudoAuthenticationHandler();
         try {
             Properties props = new Properties();
@@ -107,12 +107,12 @@ public class TestPseudoAuthenticationHandler {
 
     @Test
     public void testUserNameAnonymousOff() throws Exception {
-        _testUserName(false);
+        testUserName(false);
     }
 
     @Test
     public void testUserNameAnonymousOn() throws Exception {
-        _testUserName(true);
+        testUserName(true);
     }
 
 }

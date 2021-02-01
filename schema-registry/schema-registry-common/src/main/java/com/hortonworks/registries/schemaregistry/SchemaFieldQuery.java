@@ -48,13 +48,13 @@ public class SchemaFieldQuery {
 
     public Map<String, String> toQueryMap() {
         Map<String, String> queryMap = new HashMap<>();
-        if(name != null) {
+        if (name != null) {
             queryMap.put(SchemaFieldInfo.NAME, name);
         }
-        if(namespace != null) {
+        if (namespace != null) {
             queryMap.put(SchemaFieldInfo.FIELD_NAMESPACE, namespace);
         }
-        if(type != null) {
+        if (type != null) {
             queryMap.put(SchemaFieldInfo.TYPE, type);
         }
 
@@ -63,8 +63,12 @@ public class SchemaFieldQuery {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SchemaFieldQuery that = (SchemaFieldQuery) o;
         return Objects.equals(name, that.name) &&
                 Objects.equals(namespace, that.namespace) &&

@@ -20,9 +20,11 @@ public class AbstractSelectQueryTest {
         SearchQuery searchQuery = SearchQuery.searchFrom("table");
         searchQuery.where(whereClause);
         Schema schema = new Schema();
-        schema.setFields(Arrays.asList(Schema.Field.fromString("name='description', type=STRING"), Schema.Field.fromString("name='name', type=STRING")));
-        AbstractSelectQuery underTest =new SqlSelectQuery("table");
-        List<Schema.Field> expected = Arrays.asList(Schema.Field.fromString("name='description', type=STRING"), Schema.Field.fromString("name='name', type=STRING"));
+        schema.setFields(Arrays.asList(Schema.Field.fromString("name='description', type=STRING"), 
+                Schema.Field.fromString("name='name', type=STRING")));
+        AbstractSelectQuery underTest = new SqlSelectQuery("table");
+        List<Schema.Field> expected = Arrays.asList(Schema.Field.fromString("name='description', type=STRING"), 
+                Schema.Field.fromString("name='name', type=STRING"));
         
         //when
         underTest.buildSqlWithSearchQuery(searchQuery, schema);

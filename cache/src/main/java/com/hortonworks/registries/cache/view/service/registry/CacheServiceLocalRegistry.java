@@ -30,19 +30,19 @@ public enum CacheServiceLocalRegistry implements CacheServiceRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(CacheServiceLocalRegistry.class);
 
-    private final ConcurrentMap<CacheServiceId, CacheService<?,?>> serviceIdToService;
+    private final ConcurrentMap<CacheServiceId, CacheService<?, ?>> serviceIdToService;
 
     CacheServiceLocalRegistry() {
         serviceIdToService = new ConcurrentHashMap<>();
     }
 
     // TODO: Handle attempting to put an object with an already existing id
-    public <K,V> void register(CacheServiceId cacheServiceId, CacheService<K,V> cacheService) {
+    public <K, V> void register(CacheServiceId cacheServiceId, CacheService<K, V> cacheService) {
         serviceIdToService.putIfAbsent(cacheServiceId, cacheService);
         LOG.info("Registered cache service [{}] with id [{}].", cacheService, cacheServiceId);
     }
 
-    public <K,V> CacheService<K,V> getCacheService(CacheServiceId cacheServiceId) {
+    public <K, V> CacheService<K, V> getCacheService(CacheServiceId cacheServiceId) {
         return (CacheService<K, V>) serviceIdToService.get(cacheServiceId);
     }
 }

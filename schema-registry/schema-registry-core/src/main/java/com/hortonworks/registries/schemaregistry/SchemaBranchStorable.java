@@ -101,13 +101,21 @@ public class SchemaBranchStorable extends AbstractStorable {
         this.name = name;
     }
 
-    public String getSchemaMetadataName() { return this.schemaMetadataName;}
+    public String getSchemaMetadataName() { 
+        return this.schemaMetadataName;
+    }
 
-    public void setSchemaMetadataName(String schemaMetadataName) { this.schemaMetadataName = schemaMetadataName;}
+    public void setSchemaMetadataName(String schemaMetadataName) { 
+        this.schemaMetadataName = schemaMetadataName;
+    }
 
-    public String getDescription() { return this.description; }
+    public String getDescription() { 
+        return this.description; 
+    }
 
-    public void setDescription(String description) { this.description = description; }
+    public void setDescription(String description) { 
+        this.description = description; 
+    }
 
     public Long getTimestamp() {
         return this.timestamp;
@@ -130,15 +138,27 @@ public class SchemaBranchStorable extends AbstractStorable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         SchemaBranchStorable that = (SchemaBranchStorable) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (schemaMetadataName != null ? !schemaMetadataName.equals(that.schemaMetadataName) : that.schemaMetadataName != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        if (schemaMetadataName != null ? !schemaMetadataName.equals(that.schemaMetadataName) : that.schemaMetadataName != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
 
     }
@@ -147,7 +167,7 @@ public class SchemaBranchStorable extends AbstractStorable {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (schemaMetadataName != null ? schemaMetadataName.hashCode() : 0 );
+        result = 31 * result + (schemaMetadataName != null ? schemaMetadataName.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         return result;

@@ -58,7 +58,7 @@ public class DbFileStorage implements FileStorage, StorageManagerAware {
             fileBlob.setData(inputStream);
             dao.add(fileBlob);
         }
-        LOG.debug("Uploaded '{}' in '{}' milliseconds", name, (System.nanoTime() - start)/1000000);
+        LOG.debug("Uploaded '{}' in '{}' milliseconds", name, (System.nanoTime() - start) / 1000000);
         return name;
     }
 

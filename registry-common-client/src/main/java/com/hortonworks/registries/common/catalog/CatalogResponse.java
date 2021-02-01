@@ -50,8 +50,8 @@ public class CatalogResponse {
         UNSUPPORTED_SCHEMA_TYPE(1108, "Given schema type is not supported.", 0),
         UNSUPPORTED_MEDIA_TYPE(1109, "Unsupported Media Type.", 0),
         BAD_REQUEST(1110, "Bad Request.", 0),
-        ENTITY_CONFLICT(1111, "An entity with id [%s] already exists",1),
-        BAD_REQUEST_WITH_MESSAGE(1112, "Bad Request - %s",1),
+        ENTITY_CONFLICT(1111, "An entity with id [%s] already exists", 1),
+        BAD_REQUEST_WITH_MESSAGE(1112, "Bad Request - %s", 1),
         ACCESS_DENIED(1113, "Access denied. - %s", 1),
         EXTERNAL_ERROR(1114, "External service failed, - %s", 1);
 
@@ -107,7 +107,7 @@ public class CatalogResponse {
         private final ResponseMessage responseMessage;
         private Object entity;
         private Collection<?> entities;
-        private final String DOC_LINK_MESSAGE = " Please check webservice/ErrorCodes.md for more details.";
+        private final String docLinkMessage = " Please check webservice/ErrorCodes.md for more details.";
 
         public Builder(ResponseMessage responseMessage) {
             this.responseMessage = responseMessage;

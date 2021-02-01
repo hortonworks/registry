@@ -79,24 +79,24 @@ public class KerberosAuthenticator implements Authenticator {
     private static class KerberosConfiguration extends Configuration {
 
         private static final String OS_LOGIN_MODULE_NAME;
-        private static final boolean windows = System.getProperty("os.name").startsWith("Windows");
-        private static final boolean is64Bit = System.getProperty("os.arch").contains("64");
-        private static final boolean aix = System.getProperty("os.name").equals("AIX");
+        private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
+        private static final boolean IS_64_BIT = System.getProperty("os.arch").contains("64");
+        private static final boolean AIX = System.getProperty("os.name").equals("AIX");
 
         /* Return the OS login module class name */
         private static String getOSLoginModuleName() {
             if (IBM_JAVA) {
-                if (windows) {
-                    return is64Bit ? "com.ibm.security.auth.module.Win64LoginModule"
+                if (WINDOWS) {
+                    return IS_64_BIT ? "com.ibm.security.auth.module.Win64LoginModule"
                             : "com.ibm.security.auth.module.NTLoginModule";
-                } else if (aix) {
-                    return is64Bit ? "com.ibm.security.auth.module.AIX64LoginModule"
+                } else if (AIX) {
+                    return IS_64_BIT ? "com.ibm.security.auth.module.AIX64LoginModule"
                             : "com.ibm.security.auth.module.AIXLoginModule";
                 } else {
                     return "com.ibm.security.auth.module.LinuxLoginModule";
                 }
             } else {
-                return windows ? "com.sun.security.auth.module.NTLoginModule"
+                return WINDOWS ? "com.sun.security.auth.module.NTLoginModule"
                         : "com.sun.security.auth.module.UnixLoginModule";
             }
         }
