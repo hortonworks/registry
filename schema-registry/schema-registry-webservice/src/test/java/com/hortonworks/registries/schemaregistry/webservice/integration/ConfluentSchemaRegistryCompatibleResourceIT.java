@@ -30,10 +30,11 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
-import io.dropwizard.testing.junit.ResourceTestRule;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.client.Client;
@@ -44,7 +45,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -52,10 +53,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class ConfluentSchemaRegistryCompatibleResourceIT {
         private static ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
         private static AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
         private static AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
+        private static ResourceExtension RESOURCE = ResourceExtension.builder()
+                .addResource(instantiateResource())
+                .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
+                .build();
         private Client testClient = RESOURCE.client();
         private static final Long TIMESTAMP = System.currentTimeMillis();
 
@@ -63,12 +69,6 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         public InputStream getInputStream() {
             return new ByteArrayInputStream("test".getBytes());
         }
-
-        @ClassRule
-        public static final ResourceTestRule RESOURCE = ResourceTestRule.builder()
-                .addResource(instantiateResource())
-                .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
-                .build();
 
         private static ConfluentSchemaRegistryCompatibleResource instantiateResource() {
             return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils);

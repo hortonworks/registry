@@ -15,9 +15,6 @@
  */
 package com.hortonworks.registries.auth.server;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -40,15 +37,18 @@ import com.nimbusds.jose.JWSSigner;
 import org.apache.hadoop.minikdc.KerberosSecurityTestcase;
 import com.hortonworks.registries.auth.KerberosTestUtils;
 import com.hortonworks.registries.auth.client.AuthenticationException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jose.crypto.RSASSASigner;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestJWTAuthenticationHandler extends
         KerberosSecurityTestcase {
@@ -111,7 +111,7 @@ public class TestJWTAuthenticationHandler extends
 
             AuthenticationToken token = handler.authenticate(request,
                     response);
-            Assert.assertEquals("bob", token.getUserName());
+            Assertions.assertEquals("bob", token.getUserName());
         } catch (ServletException se) {
             fail("alternateAuthentication should NOT have thrown a ServletException: "
                     + se.getMessage());
@@ -279,8 +279,8 @@ public class TestJWTAuthenticationHandler extends
 
             AuthenticationToken token = handler.authenticate(request,
                     response);
-            Assert.assertNotNull("Token should not be null.", token);
-            Assert.assertEquals("bob", token.getUserName());
+            Assertions.assertNotNull(token, "Token should not be null.");
+            Assertions.assertEquals("bob", token.getUserName());
         } catch (ServletException se) {
             fail("alternateAuthentication should NOT have thrown a ServletException");
         } catch (AuthenticationException ae) {
@@ -344,7 +344,7 @@ public class TestJWTAuthenticationHandler extends
 
             AuthenticationToken token = handler.authenticate(request,
                     response);
-            Assert.assertEquals("bob", token.getUserName());
+            Assertions.assertEquals("bob", token.getUserName());
         } catch (ServletException se) {
             fail("alternateAuthentication should NOT have thrown a ServletException");
         } catch (AuthenticationException ae) {
@@ -374,8 +374,8 @@ public class TestJWTAuthenticationHandler extends
 
             AuthenticationToken token = handler.authenticate(request,
                     response);
-            Assert.assertNotNull("Token should not be null.", token);
-            Assert.assertEquals("alice", token.getUserName());
+            Assertions.assertNotNull(token, "Token should not be null.");
+            Assertions.assertEquals("alice", token.getUserName());
         } catch (ServletException se) {
             fail("alternateAuthentication should NOT have thrown a ServletException.");
         } catch (AuthenticationException ae) {
@@ -396,8 +396,8 @@ public class TestJWTAuthenticationHandler extends
         Mockito.when(request.getQueryString()).thenReturn("name=value");
 
         String loginURL = handler.constructLoginURL(request);
-        Assert.assertNotNull("loginURL should not be null.", loginURL);
-        Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL + "?name=value", loginURL);
+        Assertions.assertNotNull("loginURL should not be null.", loginURL);
+        Assertions.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL + "?name=value", loginURL);
     }
 
     @Test
@@ -413,11 +413,11 @@ public class TestJWTAuthenticationHandler extends
         Mockito.when(request.getQueryString()).thenReturn(null);
 
         String loginURL = handler.constructLoginURL(request);
-        Assert.assertNotNull("LoginURL should not be null.", loginURL);
-        Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
+        Assertions.assertNotNull("LoginURL should not be null.", loginURL);
+        Assertions.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception, NoSuchAlgorithmException {
         setupKerberosRequirements();
 
@@ -435,12 +435,14 @@ public class TestJWTAuthenticationHandler extends
         String[] keytabUsers = new String[] { "HTTP/host1", "HTTP/host2",
                 "HTTP2/host1", "XHTTP/host" };
         String keytab = KerberosTestUtils.getKeytabFile();
+        startMiniKdc();
         getKdc().createPrincipal(new File(keytab), keytabUsers);
     }
 
-    @After
+    @AfterEach
     public void teardown() throws Exception {
         handler.destroy();
+        stopMiniKdc();
     }
 
     protected Properties getProperties() {

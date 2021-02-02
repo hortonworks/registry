@@ -17,8 +17,8 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.avro.Schema;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -39,7 +39,7 @@ public class AvroSchemaFieldsGeneratorTest {
 
             List<SchemaFieldInfo> schemaFieldInfos = avroFieldsGenerator.generateFields(schema);
 
-            Assert.assertEquals(schemaFieldInfos.size(), 12);
+            Assertions.assertEquals(12, schemaFieldInfos.size());
         }
     }
 }

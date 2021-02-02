@@ -33,7 +33,6 @@ dependencies {
     testCompile libraries.kafka.clients
     
     testCompile libraries.spring.core
-    testCompile libraries.jmockit
     testCompile libraries.mockito
     testCompile libraries.junit
 

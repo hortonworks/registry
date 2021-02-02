@@ -57,6 +57,9 @@ subprojects {
         withJavadocJar()
         withSourcesJar()
     }
+    test {
+        useJUnitPlatform()
+    }
     test.finalizedBy(jacocoTestReport)
     jacocoTestReport.dependsOn(test)
 

@@ -30,9 +30,9 @@ import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -52,7 +52,7 @@ public class KafkaAvroSerdesTest {
                "\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}," +
                "{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
 
-    @Before
+    @BeforeEach
     public void setup() {
         schemaRegistryClient = new MockSchemaRegistryClient();
     }
@@ -80,10 +80,10 @@ public class KafkaAvroSerdesTest {
     }
 
     private void checkGenericSerializedSpecificDeserializedEquals(GenericRecord expected, Object o) {
-        Assert.assertEquals(o.getClass(), TestRecord.class);
+        Assertions.assertEquals(TestRecord.class, o.getClass());
         TestRecord actual = (TestRecord) o;
-        Assert.assertEquals(expected.get("field1"), actual.getField1());
-        Assert.assertEquals(expected.get("field2"), actual.getField2());
+        Assertions.assertEquals(expected.get("field1"), actual.getField1());
+        Assertions.assertEquals(expected.get("field2"), actual.getField2());
     }
 
     @Test
@@ -111,10 +111,10 @@ public class KafkaAvroSerdesTest {
     }
 
     private void checkSpecificSerializedSpecificDeserializedEquals(TestRecord expected, Object o) {
-        Assert.assertEquals(o.getClass(), TestRecord.class);
+        Assertions.assertEquals(TestRecord.class, o.getClass());
         TestRecord actual = (TestRecord) o;
-        Assert.assertEquals(expected.getField1(), actual.getField1());
-        Assert.assertEquals(expected.getField2(), actual.getField2());
+        Assertions.assertEquals(expected.getField1(), actual.getField1());
+        Assertions.assertEquals(expected.getField2(), actual.getField2());
     }
 
     @Test
@@ -142,10 +142,10 @@ public class KafkaAvroSerdesTest {
     }
 
     private void checkSpecificSerializedGenericDeserializedEquals(TestRecord expected, Object o) {
-        Assert.assertEquals(o.getClass(), GenericData.Record.class);
+        Assertions.assertEquals(GenericData.Record.class, o.getClass());
         GenericRecord result = (GenericRecord) o;
-        Assert.assertEquals(expected.getField1(), result.get("field1"));
-        Assert.assertEquals(expected.getField2(), result.get("field2"));
+        Assertions.assertEquals(expected.getField1(), result.get("field1"));
+        Assertions.assertEquals(expected.getField2(), result.get("field2"));
     }
 
     @Test
@@ -172,10 +172,10 @@ public class KafkaAvroSerdesTest {
     }
 
     private void checkGenericSerializedGenericDeserializedEquals(GenericRecord expected, Object o) {
-        Assert.assertEquals(o.getClass(), GenericData.Record.class);
+        Assertions.assertEquals(GenericData.Record.class, o.getClass());
         GenericRecord actual = (GenericRecord) o;
-        Assert.assertEquals(expected.get("field1"), actual.get("field1"));
-        Assert.assertEquals(expected.get("field2"), actual.get("field2"));
+        Assertions.assertEquals(expected.get("field1"), actual.get("field1"));
+        Assertions.assertEquals(expected.get("field2"), actual.get("field2"));
     }
 
     @Test
@@ -211,14 +211,14 @@ public class KafkaAvroSerdesTest {
 
             Headers headers = new RecordHeaders();
             final byte[] bytes = serializer.serialize(topic, headers, record);
-            Assert.assertArrayEquals(outputStream.toByteArray(), bytes);
-            Assert.assertEquals(isKey, headers.lastHeader(customKeySchemaHeaderName) != null);
-            Assert.assertEquals(!isKey, headers.lastHeader(customValueSchemaHeaderName) != null);
+            Assertions.assertArrayEquals(outputStream.toByteArray(), bytes);
+            Assertions.assertEquals(isKey, headers.lastHeader(customKeySchemaHeaderName) != null);
+            Assertions.assertEquals(!isKey, headers.lastHeader(customValueSchemaHeaderName) != null);
 
             final Deserializer<Object> deserializer = serde.deserializer();
             deserializer.configure(configs, isKey);
             final TestRecord actual = (TestRecord) deserializer.deserialize(topic, headers, bytes);
-            Assert.assertEquals(record, actual);
+            Assertions.assertEquals(record, actual);
         }
     }
 
@@ -240,12 +240,12 @@ public class KafkaAvroSerdesTest {
 
             Headers headers = new RecordHeaders();
             final byte[] bytes = serializer.serialize(topic, headers, record);
-            Assert.assertEquals(storeScheamIdInHeader, headers.lastHeader(keySchemaHeaderName) != null);
+            Assertions.assertEquals(storeScheamIdInHeader, headers.lastHeader(keySchemaHeaderName) != null);
 
             final Deserializer<Object> deserializer = serde.deserializer();
             deserializer.configure(configs, true);
             final TestRecord actual = (TestRecord) deserializer.deserialize(topic, headers, bytes);
-            Assert.assertEquals(record, actual);
+            Assertions.assertEquals(record, actual);
         }
     }
 }

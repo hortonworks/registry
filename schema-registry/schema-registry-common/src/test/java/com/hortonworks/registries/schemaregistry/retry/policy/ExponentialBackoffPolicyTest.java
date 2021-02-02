@@ -16,8 +16,8 @@
 
 package com.hortonworks.registries.schemaregistry.retry.policy;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ExponentialBackoffPolicyTest {
 
@@ -27,7 +27,7 @@ public class ExponentialBackoffPolicyTest {
         ExponentialBackoffPolicy exponentialBackoffRetryPolicy = new ExponentialBackoffPolicy(sleepMs, 10, 10000L);
         long[] sleepInterval = {100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200, 102400};
         for (int i = 1; i <= 10; i++) {
-            Assert.assertEquals(sleepInterval[i - 1], exponentialBackoffRetryPolicy.sleepTime(i, 1000));
+            Assertions.assertEquals(sleepInterval[i - 1], exponentialBackoffRetryPolicy.sleepTime(i, 1000));
         }
     }
 }

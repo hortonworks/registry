@@ -15,12 +15,11 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AvroSchemaProviderTest {
 
@@ -40,7 +39,7 @@ public class AvroSchemaProviderTest {
 
         String withNullDefaultsFingerprintHex = bytesToHex(avroSchemaProvider.getFingerprint(schemaWithNullDefaults));
 
-        Assert.assertThat(withNullDefaultsFingerprintHex, equalTo("e1e17a3aef8c728c131204bbf49046b2"));
+        assertEquals("e1e17a3aef8c728c131204bbf49046b2", withNullDefaultsFingerprintHex);
     }
 
     private static String bytesToHex(byte[] hash) {

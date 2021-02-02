@@ -16,8 +16,8 @@
 package com.hortonworks.registries.auth.util;
 
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -44,10 +44,10 @@ public class TestFileSignerSecretProvider {
                 AuthenticationFilter.SIGNATURE_SECRET_FILE,
                 secretFile.getAbsolutePath());
         secretProvider.init(secretProviderProps, null, -1);
-        Assert.assertArrayEquals(secretValue.getBytes(),
+        Assertions.assertArrayEquals(secretValue.getBytes(),
                 secretProvider.getCurrentSecret());
         byte[][] allSecrets = secretProvider.getAllSecrets();
-        Assert.assertEquals(1, allSecrets.length);
-        Assert.assertArrayEquals(secretValue.getBytes(), allSecrets[0]);
+        Assertions.assertEquals(1, allSecrets.length);
+        Assertions.assertArrayEquals(secretValue.getBytes(), allSecrets[0]);
     }
 }

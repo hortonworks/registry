@@ -24,8 +24,8 @@ import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,7 +43,7 @@ public class MySqlSelectQueryTest {
         MySqlSelectQuery mySqlSelectQuery = new MySqlSelectQuery(NAME_SPACE);
         String parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic", parametrizedSql);
+        Assertions.assertEquals("SELECT * FROM topic", parametrizedSql);
 
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
@@ -51,7 +51,7 @@ public class MySqlSelectQueryTest {
         mySqlSelectQuery = new MySqlSelectQuery(new StorableKey(NAME_SPACE, new PrimaryKey(fieldToObjectMap)));
         parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic WHERE `foo` = ?", parametrizedSql);
+        Assertions.assertEquals("SELECT * FROM topic WHERE `foo` = ?", parametrizedSql);
 
     }
 
@@ -62,7 +62,7 @@ public class MySqlSelectQueryTest {
         MySqlSelectQuery mySqlSelectQuery = new MySqlSelectQuery("topic", orderByFields);
         String parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic ORDER BY `foo` DESC, ORDER BY `bar` ASC", parametrizedSql);
+        Assertions.assertEquals("SELECT * FROM topic ORDER BY `foo` DESC, ORDER BY `bar` ASC", parametrizedSql);
 
         Map<Schema.Field, Object> fieldToObjectMap = new HashMap<>();
         fieldToObjectMap.put(new Schema.Field("foo", Schema.Type.LONG), 1);
@@ -70,7 +70,7 @@ public class MySqlSelectQueryTest {
         mySqlSelectQuery = new MySqlSelectQuery(new StorableKey(NAME_SPACE, new PrimaryKey(fieldToObjectMap)), orderByFields);
         parametrizedSql = mySqlSelectQuery.getParametrizedSql();
 
-        Assert.assertEquals("SELECT * FROM topic WHERE `foo` = ? ORDER BY `foo` DESC, ORDER BY `bar` ASC", parametrizedSql);
+        Assertions.assertEquals("SELECT * FROM topic WHERE `foo` = ? ORDER BY `foo` DESC, ORDER BY `bar` ASC", parametrizedSql);
 
     }
 }

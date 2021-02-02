@@ -19,8 +19,8 @@ import com.google.common.collect.Sets;
 import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,38 +87,38 @@ public class SchemaVersionInfoCacheTest {
         // access with all version id keys
         for (SchemaIdVersion key : allIdVersions) {
             SchemaVersionInfo recvdSchemaVersionInfo = schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(key));
-            Assert.assertEquals(schemaVersionInfo, recvdSchemaVersionInfo);
+            Assertions.assertEquals(schemaVersionInfo, recvdSchemaVersionInfo);
         }
 
         // access with version key
         SchemaVersionInfo recvdSchemaVersionInfo = schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
-        Assert.assertEquals(schemaVersionInfo, recvdSchemaVersionInfo);
+        Assertions.assertEquals(schemaVersionInfo, recvdSchemaVersionInfo);
 
         // invalidate one kind of schemaIdVersion, and all other combinations should return null
         schemaVersionInfoCache.invalidateSchema(SchemaVersionInfoCache.Key.of(withVersionId));
         for (SchemaIdVersion idVersion : allIdVersions) {
             recvdSchemaVersionInfo = schemaVersionInfoCache.getSchemaIfPresent(SchemaVersionInfoCache.Key.of(idVersion));
-            Assert.assertNull(recvdSchemaVersionInfo);
+            Assertions.assertNull(recvdSchemaVersionInfo);
         }
 
         SchemaVersionInfo recvdOtherSchemaVersionInfo = schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(otherSchemaVersionKey));
-        Assert.assertEquals(otherSchemaVersionInfo, recvdOtherSchemaVersionInfo);
+        Assertions.assertEquals(otherSchemaVersionInfo, recvdOtherSchemaVersionInfo);
         recvdOtherSchemaVersionInfo = schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(otherIdVersion));
-        Assert.assertEquals(otherSchemaVersionInfo, recvdOtherSchemaVersionInfo);
+        Assertions.assertEquals(otherSchemaVersionInfo, recvdOtherSchemaVersionInfo);
 
         // all values for these keys should be non existent in cache
         for (SchemaIdVersion idVersion : allIdVersions) {
-            Assert.assertNull(schemaVersionInfoCache.getSchemaIfPresent(SchemaVersionInfoCache.Key.of(idVersion)));
+            Assertions.assertNull(schemaVersionInfoCache.getSchemaIfPresent(SchemaVersionInfoCache.Key.of(idVersion)));
         }
 
         // all values for these keys should be loaded
         for (SchemaIdVersion idVersion : allIdVersions) {
-            Assert.assertEquals(schemaVersionInfo, schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(idVersion)));
+            Assertions.assertEquals(schemaVersionInfo, schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(idVersion)));
         }
 
         // all values for these keys should exist locally without loading from target
         for (SchemaIdVersion idVersion : allIdVersions) {
-            Assert.assertEquals(schemaVersionInfo, schemaVersionInfoCache.getSchemaIfPresent(SchemaVersionInfoCache.Key.of(idVersion)));
+            Assertions.assertEquals(schemaVersionInfo, schemaVersionInfoCache.getSchemaIfPresent(SchemaVersionInfoCache.Key.of(idVersion)));
         }
 
     }

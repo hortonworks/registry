@@ -23,6 +23,14 @@ configurations {
     }
 }
 
+sourceSets {
+    test {
+        java {
+            include '**/*.*'
+        }
+    }
+}
+
 dependencies {
 
     compile(project(':registry-common')) { transitive = false }
@@ -36,8 +44,8 @@ dependencies {
 
     testCompile libraries.junit
     testCompile libraries.mockito
-    testCompile libraries.powermock_api
-    testCompile libraries.powermock_module
+    testCompile libraries.mockito_inline
+
     testCompile libraries.logging.slf4j_api
     testCompile libraries.logging.slf4j_simple
 

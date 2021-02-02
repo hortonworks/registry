@@ -21,9 +21,8 @@ import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
-import org.hamcrest.core.Is;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -36,8 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +53,7 @@ public class SchemaRegistryResourceTest {
     private static final String TYPE = "type";
     
 
-    @Before
+    @BeforeEach
     public void setup() {
         ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
         underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null, null);
@@ -73,12 +71,13 @@ public class SchemaRegistryResourceTest {
         expected.put(ORDER, order);
         
         //when
-        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), 
-                Optional.ofNullable(order), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), 
-                Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null));
+        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), 
+                Optional.ofNullable(desc), Optional.ofNullable(order), Optional.ofNullable(null), 
+                Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), 
+                Optional.ofNullable(null), Optional.ofNullable(null));
         
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -106,11 +105,12 @@ public class SchemaRegistryResourceTest {
 
         //when
         Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), 
-                Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), Optional.ofNullable(schemaGroup), 
-                Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
+                Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), 
+                Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), 
+                Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -131,13 +131,13 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
 
         //when
-        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), 
-                Optional.ofNullable(desc), Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), 
-                Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), Optional.ofNullable(compatibility), 
-                Optional.ofNullable(evolve));
+        Map<String, String> actual = underTest.createFilterForSchema(Optional.ofNullable(name), Optional.ofNullable(desc), 
+                Optional.ofNullable(order), Optional.ofNullable(id), Optional.ofNullable(type), 
+                Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), 
+                Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -152,11 +152,10 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
         
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
-                Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
         
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
 
     }
 
@@ -171,11 +170,10 @@ public class SchemaRegistryResourceTest {
         expected.put(FIELD_NAMESPACE, namespace);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
-                Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
 
     }
 
@@ -190,11 +188,10 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
-                Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
 
     }
 
@@ -209,11 +206,10 @@ public class SchemaRegistryResourceTest {
         expected.put(TYPE, type);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
-                Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
 
     }
 
@@ -227,11 +223,10 @@ public class SchemaRegistryResourceTest {
         expected.put(NAME, name);
 
         //when
-        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), 
-                Optional.ofNullable(namespace), Optional.ofNullable(type));
+        Map<String, String> actual = underTest.createFilterForNamespace(Optional.ofNullable(name), Optional.ofNullable(namespace), Optional.ofNullable(type));
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
 
     }
     
@@ -254,7 +249,7 @@ public class SchemaRegistryResourceTest {
                 expectedParameters.add(NAME, "name");
                 expectedParameters.add(FIELD_NAMESPACE, "namespace");
                 expectedParameters.add(TYPE, "type");
-                assertThat(queryParameters, Is.is(expectedParameters));
+                assertEquals(expectedParameters, queryParameters);
                 return schemaFieldQuery;
             }
         };
@@ -267,8 +262,8 @@ public class SchemaRegistryResourceTest {
         verify(schemaRegistryMock).findSchemasByFields(schemaFieldQuery);
         verify(authorizationAgentMock).authorizeFindSchemasByFields(null, schemaRegistryMock, schemaversions);
         CollectionResponse expectedEntity = CollectionResponse.newResponse().entities(schemaversions).build();
-        assertThat(actual.getStatus(), is(200));
-        assertThat(((CollectionResponse) (actual.getEntity())).getEntities(), is(expectedEntity.getEntities()));
+        assertEquals(200, actual.getStatus());
+        assertEquals(expectedEntity.getEntities(), ((CollectionResponse) (actual.getEntity())).getEntities());
 
     }
     
@@ -288,7 +283,7 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
         
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 
     @Test
@@ -305,7 +300,7 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
 
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 
     @Test
@@ -322,7 +317,7 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
 
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 
     @Test
@@ -339,7 +334,7 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
 
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 
     @Test
@@ -354,7 +349,7 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
 
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 
     @Test
@@ -369,7 +364,7 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
 
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 
     @Test
@@ -384,6 +379,6 @@ public class SchemaRegistryResourceTest {
         SchemaFieldQuery actual = underTest.buildSchemaFieldQuery(queryparameters);
 
         //then
-        assertThat(actual.toQueryMap(), is(expected.toQueryMap()));
+        assertEquals(expected.toQueryMap(), actual.toQueryMap());
     }
 }

@@ -29,10 +29,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,14 +57,14 @@ public class ConfluentProtocolCompatibleTest {
 
     private LocalSchemaRegistryServer localSchemaRegistryServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         String configPath = new File(Resources.getResource("schema-registry.yaml").toURI()).getAbsolutePath();
         localSchemaRegistryServer = new LocalSchemaRegistryServer(configPath);
         localSchemaRegistryServer.start();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (localSchemaRegistryServer != null) {
             localSchemaRegistryServer.stop();
@@ -106,10 +106,10 @@ public class ConfluentProtocolCompatibleTest {
 
         LOG.info(registryResult.toString());
 
-        Assert.assertEquals(record, registryResult);
-        Assert.assertEquals(record, confluentResult);
+        Assertions.assertEquals(record, registryResult);
+        Assertions.assertEquals(record, confluentResult);
 
-        Assert.assertEquals(registryResult, confluentResult);
+        Assertions.assertEquals(registryResult, confluentResult);
     }
 
     @Test
@@ -146,10 +146,10 @@ public class ConfluentProtocolCompatibleTest {
         GenericRecord confluentResult = (GenericRecord) confluentKafkaAvroDeserializer.deserialize("topic", bytes);
         LOG.info(confluentResult.toString());
 
-        Assert.assertEquals(record, registryResult);
-        Assert.assertEquals(record, confluentResult);
+        Assertions.assertEquals(record, registryResult);
+        Assertions.assertEquals(record, confluentResult);
 
-        Assert.assertEquals(registryResult, confluentResult);
+        Assertions.assertEquals(registryResult, confluentResult);
     }
 
     @Test
@@ -171,7 +171,7 @@ public class ConfluentProtocolCompatibleTest {
             HttpGet getRequest = new HttpGet(url);
             getRequest.addHeader("accept", acceptContent);
             HttpResponse response = httpClient.execute(getRequest);
-            Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+            Assertions.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
         } finally {
             if (httpClient != null) {
                 httpClient.close();

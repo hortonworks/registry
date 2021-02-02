@@ -28,9 +28,9 @@ import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.apache.directory.shared.kerberos.KerberosTime;
 import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
 import org.apache.directory.shared.kerberos.components.EncryptionKey;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestKerberosUtil {
     static String testKeytab = "test.keytab";
@@ -42,7 +42,7 @@ public class TestKerberosUtil {
             "HTTP/testhostanother@testRealm"
     };
 
-    @After
+    @AfterEach
     public void deleteKeytab() {
         File keytabFile = new File(testKeytab);
         if (keytabFile.exists()) {
@@ -57,33 +57,28 @@ public class TestKerberosUtil {
         String testHost = "FooBar";
 
         // send null hostname
-        Assert.assertEquals("When no hostname is sent",
-                service + "/" + localHostname.toLowerCase(Locale.ENGLISH),
-                KerberosUtil.getServicePrincipal(service, null));
+        Assertions.assertEquals(service + "/" + localHostname.toLowerCase(Locale.ENGLISH),
+                KerberosUtil.getServicePrincipal(service, null), "When no hostname is sent");
         // send empty hostname
-        Assert.assertEquals("When empty hostname is sent",
-                service + "/" + localHostname.toLowerCase(Locale.ENGLISH),
-                KerberosUtil.getServicePrincipal(service, ""));
+        Assertions.assertEquals(service + "/" + localHostname.toLowerCase(Locale.ENGLISH),
+                KerberosUtil.getServicePrincipal(service, ""), "When empty hostname is sent");
         // send 0.0.0.0 hostname
-        Assert.assertEquals("When 0.0.0.0 hostname is sent",
-                service + "/" + localHostname.toLowerCase(Locale.ENGLISH),
-                KerberosUtil.getServicePrincipal(service, "0.0.0.0"));
+        Assertions.assertEquals(service + "/" + localHostname.toLowerCase(Locale.ENGLISH),
+                KerberosUtil.getServicePrincipal(service, "0.0.0.0"), "When 0.0.0.0 hostname is sent");
         // send uppercase hostname
-        Assert.assertEquals("When uppercase hostname is sent",
-                service + "/" + testHost.toLowerCase(Locale.ENGLISH),
-                KerberosUtil.getServicePrincipal(service, testHost));
+        Assertions.assertEquals(service + "/" + testHost.toLowerCase(Locale.ENGLISH),
+                KerberosUtil.getServicePrincipal(service, testHost), "When uppercase hostname is sent");
         // send lowercase hostname
-        Assert.assertEquals("When lowercase hostname is sent",
-                service + "/" + testHost.toLowerCase(Locale.ENGLISH),
+        Assertions.assertEquals(service + "/" + testHost.toLowerCase(Locale.ENGLISH),
                 KerberosUtil.getServicePrincipal(
-                        service, testHost.toLowerCase(Locale.ENGLISH)));
+                        service, testHost.toLowerCase(Locale.ENGLISH)), "When lowercase hostname is sent");
     }
 
     @Test
     public void testGetPrincipalNamesMissingKeytab() {
         try {
             KerberosUtil.getPrincipalNames(testKeytab);
-            Assert.fail("Exception should have been thrown");
+            Assertions.fail("Exception should have been thrown");
         } catch (IOException e) {
             //expects exception
         }
@@ -94,7 +89,7 @@ public class TestKerberosUtil {
         createKeyTab(testKeytab, new String[]{"test/testhost@testRealm"});
         try {
             KerberosUtil.getPrincipalNames(testKeytab, null);
-            Assert.fail("Exception should have been thrown");
+            Assertions.fail("Exception should have been thrown");
         } catch (Exception e) {
             //expects exception
         }
@@ -105,16 +100,16 @@ public class TestKerberosUtil {
         createKeyTab(testKeytab, testPrincipals);
         // read all principals in the keytab file
         String[] principals = KerberosUtil.getPrincipalNames(testKeytab);
-        Assert.assertNotNull("principals cannot be null", principals);
+        Assertions.assertNotNull(principals, "principals cannot be null");
 
         int expectedSize = 0;
         List<String> principalList = Arrays.asList(principals);
         for (String principal : testPrincipals) {
-            Assert.assertTrue("missing principal " + principal,
-                    principalList.contains(principal));
+            Assertions.assertTrue(principalList.contains(principal),
+                    "missing principal " + principal);
             expectedSize++;
         }
-        Assert.assertEquals(expectedSize, principals.length);
+        Assertions.assertEquals(expectedSize, principals.length);
     }
 
     @Test
@@ -125,18 +120,18 @@ public class TestKerberosUtil {
         Pattern httpPattern = Pattern.compile("HTTP/.*");
         String[] httpPrincipals =
                 KerberosUtil.getPrincipalNames(testKeytab, httpPattern);
-        Assert.assertNotNull("principals cannot be null", httpPrincipals);
+        Assertions.assertNotNull(httpPrincipals, "principals cannot be null");
 
         int expectedSize = 0;
         List<String> httpPrincipalList = Arrays.asList(httpPrincipals);
         for (String principal : testPrincipals) {
             if (httpPattern.matcher(principal).matches()) {
-                Assert.assertTrue("missing principal " + principal,
-                        httpPrincipalList.contains(principal));
+                Assertions.assertTrue(httpPrincipalList.contains(principal),
+                        "missing principal " + principal);
                 expectedSize++;
             }
         }
-        Assert.assertEquals(expectedSize, httpPrincipals.length);
+        Assertions.assertEquals(expectedSize, httpPrincipals.length);
     }
 
     private void createKeyTab(String fileName, String[] principalNames)

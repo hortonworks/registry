@@ -17,8 +17,8 @@ package com.hortonworks.registries.auth.client;
 
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.auth.server.PseudoAuthenticationHandler;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -36,7 +36,7 @@ public class TestPseudoAuthenticator {
     @Test
     public void testGetUserName() throws Exception {
         PseudoAuthenticator authenticator = new PseudoAuthenticator();
-        Assert.assertEquals(System.getProperty("user.name"), authenticator.getUserName());
+        Assertions.assertEquals(System.getProperty("user.name"), authenticator.getUserName());
     }
 
     @Test
@@ -49,7 +49,7 @@ public class TestPseudoAuthenticator {
             URL url = new URL(auth.getBaseURL());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
-            Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+            Assertions.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
         } finally {
             auth.stop();
         }
@@ -65,8 +65,8 @@ public class TestPseudoAuthenticator {
             URL url = new URL(auth.getBaseURL());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
-            Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, conn.getResponseCode());
-            Assert.assertTrue(conn.getHeaderFields().containsKey("WWW-Authenticate"));
+            Assertions.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, conn.getResponseCode());
+            Assertions.assertTrue(conn.getHeaderFields().containsKey("WWW-Authenticate"));
         } finally {
             auth.stop();
         }

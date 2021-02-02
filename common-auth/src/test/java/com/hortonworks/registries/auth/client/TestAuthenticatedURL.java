@@ -15,8 +15,8 @@
  */
 package com.hortonworks.registries.auth.client;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.net.HttpURLConnection;
@@ -31,10 +31,10 @@ public class TestAuthenticatedURL {
     @Test
     public void testToken() throws Exception {
         AuthenticatedURL.Token token = new AuthenticatedURL.Token();
-        Assert.assertFalse(token.isSet());
+        Assertions.assertFalse(token.isSet());
         token = new AuthenticatedURL.Token("foo");
-        Assert.assertTrue(token.isSet());
-        Assert.assertEquals("foo", token.toString());
+        Assertions.assertTrue(token.isSet());
+        Assertions.assertEquals("foo", token.toString());
     }
 
     @Test
@@ -62,7 +62,7 @@ public class TestAuthenticatedURL {
         AuthenticatedURL.Token token = new AuthenticatedURL.Token();
         AuthenticatedURL.extractToken(conn, token);
 
-        Assert.assertEquals(tokenStr, token.toString());
+        Assertions.assertEquals(tokenStr, token.toString());
     }
 
     @Test
@@ -82,12 +82,12 @@ public class TestAuthenticatedURL {
         token.set("bar");
         try {
             AuthenticatedURL.extractToken(conn, token);
-            Assert.fail();
+            Assertions.fail();
         } catch (AuthenticationException ex) {
             // Expected
-            Assert.assertFalse(token.isSet());
+            Assertions.assertFalse(token.isSet());
         } catch (Exception ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
@@ -114,7 +114,7 @@ public class TestAuthenticatedURL {
         Authenticator authenticator = Mockito.mock(Authenticator.class);
 
         AuthenticatedURL aURL = new AuthenticatedURL(authenticator);
-        Assert.assertEquals(authenticator, aURL.getAuthenticator());
+        Assertions.assertEquals(authenticator, aURL.getAuthenticator());
     }
 
 }

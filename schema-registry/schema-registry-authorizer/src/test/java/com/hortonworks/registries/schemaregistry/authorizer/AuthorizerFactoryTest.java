@@ -18,15 +18,12 @@ package com.hortonworks.registries.schemaregistry.authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(BlockJUnit4ClassRunner.class)
 public class AuthorizerFactoryTest {
 
     @Test

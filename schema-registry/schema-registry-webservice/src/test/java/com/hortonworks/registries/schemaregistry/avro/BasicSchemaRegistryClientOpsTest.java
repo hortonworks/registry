@@ -15,7 +15,6 @@
  */
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -34,70 +33,62 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
-import com.hortonworks.registries.schemaregistry.util.CustomParameterizedRunner;
-import com.hortonworks.registries.util.SchemaRegistryTestName;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
-/**
- *
- */
-@RunWith(CustomParameterizedRunner.class)
-@Category(IntegrationTest.class)
+@Tag("IntegrationTest")
 public class BasicSchemaRegistryClientOpsTest {
     private SchemaRegistryClient schemaRegistryClient;
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
 
-    @Rule
-    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
+    private String testName;
 
-    @CustomParameterizedRunner.Parameters
-    public static Iterable<SchemaRegistryTestProfileType> profiles() {
-        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    @BeforeEach
+    void init(TestInfo testInfo) {
+        testName = testInfo.getTestMethod().get().getName();
     }
 
-    @CustomParameterizedRunner.BeforeParam
-    public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
+    public static Stream<SchemaRegistryTestProfileType> profiles() {
+        return Stream.of(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    }
+
+    public void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
-    }
-
-    @Before
-    public void startServer() throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
         schemaRegistryClient = SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.getClient();
     }
 
-    @After
+    @AfterEach
     public void stopServer() throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.stopTestServer();
     }
 
-    public BasicSchemaRegistryClientOpsTest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
-    }
-
-    @Test
-    public void testSchemaOpsWithValidationLevelAsLatest() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testSchemaOpsWithValidationLevelAsLatest(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
         doTestSchemaOps(SchemaValidationLevel.LATEST);
     }
 
-    @Test
-    public void testSchemaOpsWithValidationLevelAsAll() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testSchemaOpsWithValidationLevelAsAll(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
         doTestSchemaOps(SchemaValidationLevel.ALL);
     }
 
     private void doTestSchemaOps(SchemaValidationLevel validationLevel) 
             throws IOException, InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, 
             SchemaBranchNotFoundException, SchemaLifecycleException {
-        String testName = testNameRule.getMethodName();
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(testName + "-schema")
                 .type(AvroSchemaProvider.TYPE)
                 .schemaGroup(testName + "-group")
@@ -107,46 +98,46 @@ public class BasicSchemaRegistryClientOpsTest {
                 .build();
 
         Long id = schemaRegistryClient.registerSchemaMetadata(schemaMetadata);
-        Assert.assertNotNull(id);
+        Assertions.assertNotNull(id);
 
         // registering a new schema
         String schemaName = schemaMetadata.getName();
         String schema1 = AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc");
         SchemaIdVersion v1 = schemaRegistryClient.addSchemaVersion(schemaName, new SchemaVersion(schema1, "Initial version of the schema"));
-        Assert.assertNotNull(v1.getSchemaMetadataId());
-        Assert.assertEquals(1, v1.getVersion().intValue());
+        Assertions.assertNotNull(v1.getSchemaMetadataId());
+        Assertions.assertEquals(1, v1.getVersion().intValue());
 
         SchemaMetadataInfo schemaMetadataInfoForId = schemaRegistryClient.getSchemaMetadataInfo(v1.getSchemaMetadataId());
         SchemaMetadataInfo schemaMetadataInfoForName = schemaRegistryClient.getSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(schemaMetadataInfoForId, schemaMetadataInfoForName);
+        Assertions.assertEquals(schemaMetadataInfoForId, schemaMetadataInfoForName);
 
         // adding a new version of the schema using uploadSchemaVersion API
         SchemaIdVersion v2 = schemaRegistryClient.uploadSchemaVersion(schemaMetadata.getName(),
                                                                       "second version",
                                                                       AvroSchemaRegistryClientTest.class.getResourceAsStream("/schema-2.avsc"));
-        Assert.assertEquals(v1.getVersion() + 1, v2.getVersion().intValue());
+        Assertions.assertEquals(v1.getVersion() + 1, v2.getVersion().intValue());
 
         SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2
                 .getVersion()));
         SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
-        Assert.assertEquals(latest, schemaVersionInfo);
+        Assertions.assertEquals(latest, schemaVersionInfo);
 
         Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
-        Assert.assertEquals(2, allVersions.size());
+        Assertions.assertEquals(2, allVersions.size());
 
         // receive the same version as earlier without adding a new schema entry as it exists in the same schema group.
         SchemaIdVersion version = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "already added schema"));
-        Assert.assertEquals(version, v1);
+        Assertions.assertEquals(version, v1);
 
         Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder()
                                                                                                                .name("md5")
                                                                                                                .build());
-        Assert.assertEquals(2, md5SchemaVersionKeys.size());
+        Assertions.assertEquals(2, md5SchemaVersionKeys.size());
 
         Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(new SchemaFieldQuery.Builder()
                                                                                                                 .name("txid")
                                                                                                                 .build());
-        Assert.assertEquals(1, txidSchemaVersionKeys.size());
+        Assertions.assertEquals(1, txidSchemaVersionKeys.size());
 
         // checks we can update schema meta data.
         SchemaMetadata currentSchemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaName)
@@ -155,13 +146,13 @@ public class BasicSchemaRegistryClientOpsTest {
                                                                                                    .build();
         SchemaMetadataInfo updatedSchemaMetadata = schemaRegistryClient.updateSchemaMetadata(schemaName, schemaMetadataToUpdateTo);
 
-        Assert.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata()
+        Assertions.assertEquals(SchemaValidationLevel.LATEST, updatedSchemaMetadata.getSchemaMetadata()
                                                                                .getValidationLevel());
 
         schemaRegistryClient.disableSchemaVersion(v2.getSchemaVersionId());
         SchemaVersionInfo latestSchemaVersion = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
 
-        Assert.assertEquals(v1.getSchemaVersionId(), latestSchemaVersion.getId());
+        Assertions.assertEquals(v1.getSchemaVersionId(), latestSchemaVersion.getId());
     }
 
 

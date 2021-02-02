@@ -16,8 +16,8 @@
 package com.hortonworks.registries.schemaregistry.client;
 
 import com.google.common.base.Joiner;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class LoadBalancedFailoverUrlSelectorTest {
 
         for (int i = 0; i < urls.length; i++) {
             String current = failoverUrlSelector.select();
-            Assert.assertEquals(urls[i], current);
+            Assertions.assertEquals(urls[i], current);
         }
 
         failoverUrlSelector.urlWithError(urls[0], new IOException());
@@ -47,10 +47,10 @@ public class LoadBalancedFailoverUrlSelectorTest {
         failoverUrlSelector.urlWithError(urls[2], new IOException());
 
         String current = failoverUrlSelector.select();
-        Assert.assertEquals(urls[3], current);
+        Assertions.assertEquals(urls[3], current);
 
         current = failoverUrlSelector.select();
-        Assert.assertEquals(urls[4], current);
+        Assertions.assertEquals(urls[4], current);
 
     }
 }

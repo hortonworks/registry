@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,18 @@ package com.hortonworks.registries.schemaregistry.examples.avro;
 import com.hortonworks.registries.webservice.RegistryApplication;
 import com.hortonworks.registries.webservice.RegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Map;
 
-/**
- *
- */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class SampleApplicationTest {
 
-    @ClassRule
-    public static final DropwizardAppRule<RegistryConfiguration> DROPWIZARD_APP_RULE
-            = new DropwizardAppRule<>(RegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
+    private static final DropwizardAppExtension<RegistryConfiguration> DROPWIZARD_APP_RULE =
+            new DropwizardAppExtension<>(RegistryApplication.class, ResourceHelpers.resourceFilePath("schema-registry-test.yaml"));
 
     @Test
     public void testApis() throws Exception {

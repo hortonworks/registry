@@ -22,8 +22,8 @@ import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.storage.search.WhereClause;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -32,8 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DefaultSchemaRegistryTest {
 
@@ -46,7 +45,7 @@ public class DefaultSchemaRegistryTest {
     private MultivaluedMap<String, String> queryParametersWithoutName;
     private DefaultSchemaRegistry underTest;
 
-    @Before
+    @BeforeEach
     public void setup() {
         queryParametersWithNameAndDesc = new MultivaluedHashMap<>();
         queryParametersWithoutDesc = new MultivaluedHashMap<>();
@@ -78,7 +77,7 @@ public class DefaultSchemaRegistryTest {
         WhereClause actual = underTest.getWhereClause(queryParametersWithoutDesc);
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -90,7 +89,7 @@ public class DefaultSchemaRegistryTest {
         WhereClause actual = underTest.getWhereClause(queryParametersWithNameAndDesc);
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -102,6 +101,6 @@ public class DefaultSchemaRegistryTest {
         WhereClause actual = underTest.getWhereClause(queryParametersWithoutName);
 
         //then
-        assertThat(actual, is(expected));
+        assertEquals(expected, actual);
     }
 }

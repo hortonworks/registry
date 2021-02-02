@@ -1,6 +1,6 @@
 providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
 properties:
-  db.type: "mysql"
+  db.type: ""
   queryTimeoutInSecs: 30
   db.properties:
     dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"

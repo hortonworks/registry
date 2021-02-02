@@ -18,8 +18,9 @@ package com.hortonworks.registries.common.util;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,7 +30,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HdfsFileStorageTest {
     private final String hdfsDir;
@@ -42,16 +43,16 @@ public class HdfsFileStorageTest {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         FileUtils.deleteQuietly(new File(hdfsDir));
         FileUtils.deleteQuietly(new File(FileStorage.DEFAULT_DIR));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testInitWithoutFsUrl() throws Exception {
         HdfsFileStorage fileStorage = new HdfsFileStorage(new FileStorageConfiguration());
-        fileStorage.exists("");
+        Assertions.assertThrows(RuntimeException.class, () -> fileStorage.exists(""));
     }
 
     @Test
@@ -88,7 +89,7 @@ public class HdfsFileStorageTest {
             String fsUrl = row[0];
             String directory = row[1];
             String expected = row[2];
-            assertEquals(fsUrl + " + " + directory, expected, HdfsFileStorage.adjustDirectory(fsUrl, directory));
+            assertEquals(expected, HdfsFileStorage.adjustDirectory(fsUrl, directory), fsUrl + " + " + directory);
         }
     }
 

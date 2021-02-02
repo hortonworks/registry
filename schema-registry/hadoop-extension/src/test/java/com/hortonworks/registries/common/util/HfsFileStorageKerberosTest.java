@@ -21,14 +21,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,94 +36,88 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-// TODO This test currently fails on java 11 due to Powermock
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({FileSystem.class, UserGroupInformation.class})
 public class HfsFileStorageKerberosTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(HfsFileStorageKerberosTest.class);
 
     private MockFileSystem fileSystem;
+    private static MockedStatic<UserGroupInformation> userGroupInformationClass;
     private UserGroupInformation userGroupInformation;
+    private static MockedStatic<FileSystem> fileSystemMock;
     private HdfsFileStorage testSubject;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     private static final String FS_URL = "mock://mybucket/mydatalake/myenv";
     private static final String DIRECTORY = "/tmp/uploaded-files";
     private static final String ADJUSTED_DIRECTORY = HdfsFileStorage.adjustDirectory(FS_URL, DIRECTORY);
     private static final String LOGIN_PRINCIPAL = "schemaregistry/hostname@DOMAIN";
-    private static final String LOGIN_KEYTAB = 
-            "/var/run/cloudera-scm-agent/process/1546340168-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab";
+    private static final String LOGIN_KEYTAB = "/var/run/cloudera-scm-agent/process/1546340168-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab";
     private static final String JAR_FILE = "serdes.jar";
 
-    @SuppressWarnings("unchecked")
-    @Before
+    @BeforeAll
+    public static void setupStaticMocks() {
+        userGroupInformationClass = mockStatic(UserGroupInformation.class);
+        fileSystemMock = mockStatic(FileSystem.class);
+    }
+
+    @BeforeEach
     public void setup() throws Exception {
         LOG.debug("Initializing the Hdfs test");
-        try {
-            userGroupInformation = PowerMockito.mock(UserGroupInformation.class);
-            fileSystem = new MockFileSystem();
+        userGroupInformationClass.reset();
+        fileSystemMock.reset();
 
-            PowerMockito.mockStatic(UserGroupInformation.class);
-            when(UserGroupInformation.getLoginUser()).thenReturn(userGroupInformation);
-            when(userGroupInformation.doAs(any(PrivilegedAction.class))).thenAnswer(invocation ->
-                    invocation.getArgument(0, PrivilegedAction.class).run());
-            when(userGroupInformation.doAs(any(PrivilegedExceptionAction.class))).thenAnswer(invocation ->
-                    invocation.getArgument(0, PrivilegedExceptionAction.class).run());
-            PowerMockito.mockStatic(FileSystem.class);
-            when(FileSystem.get(any(URI.class), any(Configuration.class))).thenAnswer(invocaton -> {
-                fileSystem.initialize(invocaton.getArgument(0, URI.class), invocaton.getArgument(1, Configuration.class));
-                return fileSystem;
-            });
+        userGroupInformation = mock(UserGroupInformation.class);
+        fileSystem = new MockFileSystem();
 
-        } catch (Throwable t) {
-            // Powermock can throw a NoClassDefFoundError which kills the test without logging out the error
-            // so we explicitly catch all errors here and print them out
-            LOG.error("Failed to initialize the test.", t);
-            fail(t.getMessage());
-        }
+        userGroupInformationClass.when(UserGroupInformation::getLoginUser).thenReturn(userGroupInformation);
+
+        when(userGroupInformation.doAs(any(PrivilegedAction.class))).thenAnswer(invocation ->
+                invocation.getArgument(0, PrivilegedAction.class).run());
+        when(userGroupInformation.doAs(any(PrivilegedExceptionAction.class))).thenAnswer(invocation ->
+                invocation.getArgument(0, PrivilegedExceptionAction.class).run());
+
+        fileSystemMock.when(() -> FileSystem.get(any(URI.class), any(Configuration.class))).thenAnswer(invocaton -> {
+            fileSystem.initialize(invocaton.getArgument(0, URI.class), invocaton.getArgument(1, Configuration.class));
+            return fileSystem;
+        });
     }
 
     @Test
     public void testInconistentConfig1() throws Exception {
-        // then
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("hdfs.kerberos.keytab is needed when hdfs.kerberos.principal (== " + LOGIN_PRINCIPAL + ") is specified.");
-
         // given
         FileStorageConfiguration config = baseConfig();
         config.getProperties().setKerberosPrincipal(LOGIN_PRINCIPAL);
 
         // when
         testSubject = new HdfsFileStorage(config);
-        testSubject.exists("");
+
+        // then
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> testSubject.exists(""));
+        assertEquals("hdfs.kerberos.keytab is needed when hdfs.kerberos.principal (== " + LOGIN_PRINCIPAL + ") is specified.", thrown.getMessage());
     }
 
     @Test
     public void testInconistentConfig2() throws Exception {
-        // then
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("hdfs.kerberos.principal is needed when hdfs.kerberos.keytab (== " + LOGIN_KEYTAB + ") is specified.");
-
         // given
         FileStorageConfiguration config = baseConfig();
         config.getProperties().setKeytabLocation(LOGIN_KEYTAB);
 
         // when
         testSubject = new HdfsFileStorage(config);
-        testSubject.exists("");
+
+        //then
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> testSubject.exists(""));
+        assertEquals("hdfs.kerberos.principal is needed when hdfs.kerberos.keytab (== " + LOGIN_KEYTAB + ") is specified.", thrown.getMessage());
     }    
     
     @Test
@@ -161,7 +151,6 @@ public class HfsFileStorageKerberosTest {
     }
 
     private void verifyPrivilegedExecution() throws Exception {
-        verifyStatic(UserGroupInformation.class, times(1));
         UserGroupInformation.loginUserFromKeytab(LOGIN_PRINCIPAL, LOGIN_KEYTAB);
 
         verify(userGroupInformation, never()).doAs(any(PrivilegedAction.class));
@@ -169,7 +158,8 @@ public class HfsFileStorageKerberosTest {
     }
 
     private void verifySimpleExecution() throws Exception {
-        verifyStatic(UserGroupInformation.class, never());
+        userGroupInformationClass.verifyNoInteractions();
+
         UserGroupInformation.loginUserFromKeytab(anyString(), anyString());
 
         verify(userGroupInformation, never()).doAs(any(PrivilegedAction.class));
@@ -177,7 +167,6 @@ public class HfsFileStorageKerberosTest {
     }
 
     private void verifyFileSystemCalls() throws IOException {
-        verifyStatic(FileSystem.class, times(4));
         FileSystem.get(any(URI.class), any(Configuration.class));
 
         Path path = new Path(ADJUSTED_DIRECTORY, JAR_FILE);

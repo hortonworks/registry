@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.exportimport.RawSchema;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +28,10 @@ import java.io.InputStream;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
 public class ConfluentFileReaderTest {
@@ -55,9 +55,9 @@ public class ConfluentFileReaderTest {
         ConfluentFileReader fileReader = new ConfluentFileReader(getClass().getResourceAsStream("/exportimport/confluent1.txt"));
         Set<RawSchema> allSchemas = parseAllSchemas(3, fileReader);
 
-        assertTrue("Did not find schema Car with version 1", findSchema(allSchemas, "Car", 1).isPresent());
-        assertTrue("Did not find schema Car with version 2", findSchema(allSchemas, "Car", 2).isPresent());
-        assertTrue("Did not find schema Fruit", findSchema(allSchemas, "Fruit").isPresent());
+        assertTrue(findSchema(allSchemas, "Car", 1).isPresent(), "Did not find schema Car with version 1");
+        assertTrue(findSchema(allSchemas, "Car", 2).isPresent(), "Did not find schema Car with version 2");
+        assertTrue(findSchema(allSchemas, "Fruit").isPresent(), "Did not find schema Fruit");
     }
 
     @Test
@@ -65,8 +65,8 @@ public class ConfluentFileReaderTest {
         ConfluentFileReader fileReader = new ConfluentFileReader(getClass().getResourceAsStream("/exportimport/confluent2.txt"));
         Set<RawSchema> allSchemas = parseAllSchemas(2, fileReader);
 
-        assertTrue("Did not find schema Animal", findSchema(allSchemas, "Animal").isPresent());
-        assertTrue("Did not find schema Fruit", findSchema(allSchemas, "Fruit").isPresent());
+        assertTrue(findSchema(allSchemas, "Animal").isPresent(), "Did not find schema Animal");
+        assertTrue(findSchema(allSchemas, "Fruit").isPresent(), "Did not find schema Fruit");
 
         RawSchema animal = findSchema(allSchemas, "Animal").get();
         RawSchema fruit = findSchema(allSchemas, "Fruit").get();
@@ -81,11 +81,11 @@ public class ConfluentFileReaderTest {
         ConfluentFileReader fileReader = new ConfluentFileReader(getClass().getResourceAsStream("/exportimport/confluent3.txt"));
         Set<RawSchema> allSchemas = parseAllSchemas(5, fileReader);
 
-        assertTrue("Did not find schema Car with version 1", findSchema(allSchemas, "Car", 1).isPresent());
-        assertTrue("Did not find schema Car with version 2", findSchema(allSchemas, "Car", 2).isPresent());
-        assertTrue("Did not find schema Mas with version 1", findSchema(allSchemas, "Mas", 1).isPresent());
-        assertTrue("Did not find schema Mas with version 2", findSchema(allSchemas, "Mas", 2).isPresent());
-        assertTrue("Did not find schema Mas with version 3", findSchema(allSchemas, "Mas", 3).isPresent());
+        assertTrue(findSchema(allSchemas, "Car", 1).isPresent(), "Did not find schema Car with version 1");
+        assertTrue(findSchema(allSchemas, "Car", 2).isPresent(), "Did not find schema Car with version 2");
+        assertTrue(findSchema(allSchemas, "Mas", 1).isPresent(), "Did not find schema Mas with version 1");
+        assertTrue(findSchema(allSchemas, "Mas", 2).isPresent(), "Did not find schema Mas with version 2");
+        assertTrue(findSchema(allSchemas, "Mas", 3).isPresent(), "Did not find schema Mas with version 3");
 
         assertEquals(SchemaCompatibility.BOTH, findSchema(allSchemas, "Car").get().getMetadata().getSchemaMetadata().getCompatibility());
         assertEquals(SchemaCompatibility.NONE, findSchema(allSchemas, "Mas").get().getMetadata().getSchemaMetadata().getCompatibility());
@@ -113,7 +113,7 @@ public class ConfluentFileReaderTest {
             }
         }
 
-        assertNull("Expected no more than " + expectedCount + " schemas.", fileReader.readSchema());
+        assertNull(fileReader.readSchema(), "Expected no more than " + expectedCount + " schemas.");
 
         return result.build();
     }

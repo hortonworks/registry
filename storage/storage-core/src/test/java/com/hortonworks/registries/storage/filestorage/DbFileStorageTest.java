@@ -18,7 +18,6 @@ package com.hortonworks.registries.storage.filestorage;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
-import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.config.HikariBasicConfig;
@@ -27,10 +26,10 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySql
 import com.hortonworks.registries.storage.util.StorageUtils;
 import org.apache.commons.io.IOUtils;
 import org.h2.tools.RunScript;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,13 +40,15 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 public class DbFileStorageTest {
     private static final String FILE_NAME = "data.txt";
     DbFileStorage dbFileStorage;
     TransactionManager transactionManager;
     HikariCPConnectionBuilder connectionBuilder;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         connectionBuilder = new HikariCPConnectionBuilder(HikariBasicConfig.getH2HikariConfig());
         MySqlExecutor queryExecutor = new MySqlExecutor(new ExecutionConfig(-1), connectionBuilder);
@@ -59,7 +60,7 @@ public class DbFileStorageTest {
         runScript("create_fileblob.sql");
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         runScript("drop_fileblob.sql");
     }
@@ -72,7 +73,7 @@ public class DbFileStorageTest {
             dbFileStorage.upload(IOUtils.toInputStream(input, "UTF-8"), FILE_NAME);
             InputStream is = dbFileStorage.download(FILE_NAME);
             String output = IOUtils.toString(is, "UTF-8");
-            Assert.assertEquals(input, output);
+            Assertions.assertEquals(input, output);
             transactionManager.commitTransaction();
         } catch (Exception e) {
             transactionManager.rollbackTransaction();
@@ -90,7 +91,7 @@ public class DbFileStorageTest {
             dbFileStorage.upload(IOUtils.toInputStream(update, "UTF-8"), FILE_NAME);
             InputStream is = dbFileStorage.download(FILE_NAME);
             String output = IOUtils.toString(is, "UTF-8");
-            Assert.assertEquals(update, output);
+            Assertions.assertEquals(update, output);
             transactionManager.commitTransaction();
         } catch (Exception e) {
             transactionManager.rollbackTransaction();
@@ -104,12 +105,12 @@ public class DbFileStorageTest {
             transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
             String input = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(FILE_NAME), "UTF-8");
             dbFileStorage.upload(IOUtils.toInputStream(input, "UTF-8"), FILE_NAME);
-            Assert.assertTrue(dbFileStorage.exists(FILE_NAME));
+            Assertions.assertTrue(dbFileStorage.exists(FILE_NAME));
             dbFileStorage.delete(FILE_NAME);
-            Assert.assertFalse(dbFileStorage.exists(FILE_NAME));
+            Assertions.assertFalse(dbFileStorage.exists(FILE_NAME));
             try {
                 dbFileStorage.download(FILE_NAME);
-                Assert.fail("Expected IOException in download after delete");
+                fail("Expected IOException in download after delete");
             } catch (IOException ex) {
             }
             transactionManager.commitTransaction();
@@ -119,7 +120,7 @@ public class DbFileStorageTest {
         }
     }
 
-    @Test (expected = StorageException.class)
+    @Test
     public void testConcurrentUpload() throws Throwable {
         try {
             transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
@@ -142,9 +143,7 @@ public class DbFileStorageTest {
             FutureTask<String> ft1 = new FutureTask<>(() -> {
                 try {
                     transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
-                    String name = dbFileStorage.upload(slowStream, FILE_NAME);
-                    transactionManager.commitTransaction();
-                    return name;
+                    return dbFileStorage.upload(slowStream, FILE_NAME); //this will throw an exception
                 } catch (Exception e) {
                     transactionManager.rollbackTransaction();
                     throw e;
@@ -172,11 +171,11 @@ public class DbFileStorageTest {
             } catch (ExecutionException ex) {
                 throw ex.getCause();
             }
-            transactionManager.commitTransaction();
         } catch (Exception e) {
             transactionManager.rollbackTransaction();
-            throw e;
+            return;
         }
+        fail("No exception is thrown, but should have been thrown.");
     }
 
     private void runScript(String fileName) throws SQLException, IOException {

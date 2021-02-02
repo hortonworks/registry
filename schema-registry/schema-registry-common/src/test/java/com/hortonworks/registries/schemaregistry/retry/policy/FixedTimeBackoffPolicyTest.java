@@ -16,8 +16,8 @@
 
 package com.hortonworks.registries.schemaregistry.retry.policy;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FixedTimeBackoffPolicyTest {
 
@@ -27,7 +27,7 @@ public class FixedTimeBackoffPolicyTest {
 
         FixedTimeBackoffPolicy fixedTimeRetryPolicy = new FixedTimeBackoffPolicy(sleepMs, 10, 10000L);
         for (int i = 0; i < 10; i++) {
-            Assert.assertEquals(sleepMs, fixedTimeRetryPolicy.sleepTime(i + 1, 1000));
+            Assertions.assertEquals(sleepMs, fixedTimeRetryPolicy.sleepTime(i + 1, 1000));
         }
     }
 }

@@ -17,15 +17,14 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- *
- */
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 public class SchemaIdVersionTest {
 
     @Test
@@ -47,12 +46,12 @@ public class SchemaIdVersionTest {
         map.put(schemaIdVersion1, value);
 
         String storedValue = map.get(schemaIdVersion2);
-        Assert.assertEquals(value, storedValue);
+        assertEquals(value, storedValue);
 
         // invalidating schemaIdVersion2 should remove value
         map.remove(schemaIdVersion2);
-        Assert.assertFalse(map.containsKey(schemaIdVersion1));
-        Assert.assertFalse(map.containsKey(schemaIdVersion2));
+        assertFalse(map.containsKey(schemaIdVersion1));
+        assertFalse(map.containsKey(schemaIdVersion2));
 
 
     }

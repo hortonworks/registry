@@ -29,21 +29,26 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.serdes.Device;
-import mockit.Expectations;
-import mockit.Mocked;
 import org.apache.avro.specific.SpecificData;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-/**
- *
- */
-public class MessageContextBasedAvroSerDesTest {
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-    @Mocked
+public class MessageContextBasedAvroSerDesTest {
+    
     SchemaRegistryClient mockSchemaRegistryClient;
+    
+    @BeforeEach
+    public void setup() {
+        mockSchemaRegistryClient = mock(SchemaRegistryClient.class);
+    }
 
     @Test
     public void testSerDes() throws Exception {
@@ -59,28 +64,19 @@ public class MessageContextBasedAvroSerDesTest {
                                                                     input.getSchema().toString(),
                                                                     System.currentTimeMillis(),
                                                                     "");
+        when(mockSchemaRegistryClient.addSchemaVersion(any(SchemaMetadata.class), any(SchemaVersion.class))).thenReturn(schemaIdVersion);
+        when(mockSchemaRegistryClient.getSchemaMetadataInfo(anyString())).thenReturn(new SchemaMetadataInfo(schemaMetadata));
+        when(mockSchemaRegistryClient.getSchemaVersionInfo(any(SchemaVersionKey.class))).thenReturn(schemaVersionInfo);
+        when(mockSchemaRegistryClient.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenReturn(schemaVersionInfo);
 
-        new Expectations() {
-            {
-                mockSchemaRegistryClient.addSchemaVersion(withInstanceOf(SchemaMetadata.class), withInstanceOf(SchemaVersion.class));
-                result = schemaIdVersion;
-
-                mockSchemaRegistryClient.getSchemaMetadataInfo(anyString);
-                result = new SchemaMetadataInfo(schemaMetadata);
-
-                mockSchemaRegistryClient.getSchemaVersionInfo(withInstanceOf(SchemaVersionKey.class));
-                result = schemaVersionInfo;
-            }
-        };
-
-        MessageContextBasedAvroSerializer serializer = new MessageContextBasedAvroSerializer();
+        MessageContextBasedAvroSerializer serializer = new MessageContextBasedAvroSerializer(mockSchemaRegistryClient);
         serializer.init(Collections.emptyMap());
 
         MessageContext messageContext = serializer.serialize(input, schemaMetadata);
 
-        MessageContextBasedAvroDeserializer deserializer = new MessageContextBasedAvroDeserializer();
+        MessageContextBasedAvroDeserializer deserializer = new MessageContextBasedAvroDeserializer(mockSchemaRegistryClient);
         deserializer.init(Collections.emptyMap());
         Object deserializedObject = deserializer.deserialize(messageContext, null);
 
-        Assert.assertTrue(SpecificData.get().compare(input, deserializedObject, input.getSchema()) == 0);    }
+        Assertions.assertTrue(SpecificData.get().compare(input, deserializedObject, input.getSchema()) == 0);    }
 }

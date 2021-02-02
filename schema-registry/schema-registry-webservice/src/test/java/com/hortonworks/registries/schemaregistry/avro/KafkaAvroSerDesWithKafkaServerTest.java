@@ -15,16 +15,12 @@
  **/
 package com.hortonworks.registries.schemaregistry.avro;
 
-import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
-import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
+import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerde;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
-import com.hortonworks.registries.schemaregistry.util.CustomParameterizedRunner;
-import com.hortonworks.registries.util.SchemaRegistryTestName;
-import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -37,19 +33,21 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +55,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 
 /**
@@ -64,8 +63,8 @@ import java.util.concurrent.TimeUnit;
  * {@link KafkaAvroSerializer} and {@link KafkaAvroDeserializer}
  */
 
-@RunWith(CustomParameterizedRunner.class)
-@Category(IntegrationTest.class)
+
+@Tag("IntegrationTest")
 public class KafkaAvroSerDesWithKafkaServerTest {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaAvroSerDesWithKafkaServerTest.class);
 
@@ -73,24 +72,26 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
 
-    @Rule
-    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
+    private String testName;
 
-    @CustomParameterizedRunner.Parameters
-    public static Iterable<SchemaRegistryTestProfileType> profiles() {
-        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    @BeforeEach
+    void init(TestInfo testInfo) {
+        testName = testInfo.getTestMethod().get().getName();
     }
-
-    @CustomParameterizedRunner.BeforeParam
-    public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
+    
+    public static Stream<SchemaRegistryTestProfileType> profiles() {
+        return Stream.of(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    }
+    
+    public void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
         CLUSTER =  new LocalKafkaCluster(1);
         CLUSTER.startCluster();
     }
 
-    @CustomParameterizedRunner.AfterParam
-    public static void afterParam() throws Exception {
+    @AfterEach
+    public void afterParam() throws Exception {
         CLUSTER.stopCluster();
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.stopTestServer();
     }
@@ -127,21 +128,22 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         }
     }
 
-    public KafkaAvroSerDesWithKafkaServerTest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
-    }
-
-    @Test
-    public void testPrimitivesInKafkaCluster() throws Exception {
-        String topicPrefix = testNameRule.getMethodName();
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testPrimitivesInKafkaCluster(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        String topicPrefix = testName;
 
         Object[] msgs = AvroSchemaRegistryClientUtil.generatePrimitivePayloads();
 
         testByStoringSchemaIdInHeaderOrPayload(topicPrefix, msgs);
     }
 
-    @Test
-    public void testAvroRecordsInKafkaCluster() throws Exception {
-        String topicPrefix = testNameRule.getMethodName();
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testAvroRecordsInKafkaCluster(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        String topicPrefix = testName;
 
         testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-generic", AvroSchemaRegistryClientUtil.createGenericRecordForDevice());
         testByStoringSchemaIdInHeaderOrPayload(topicPrefix + "-specific", AvroSchemaRegistryClientUtil.createSpecificRecord());
@@ -167,15 +169,15 @@ public class KafkaAvroSerDesWithKafkaServerTest {
             String consumerGroup = topicName + "-group-" + new Random().nextLong();
             ConsumerRecords<String, Object> consumerRecords = consumeMessage(topicName, bootstrapServers, consumerGroup);
 
-            Assert.assertEquals(1, consumerRecords.count());
+            Assertions.assertEquals(1, consumerRecords.count());
 
             ConsumerRecord<String, Object> consumerRecord = consumerRecords.iterator().next();
             final Headers headers = consumerRecord.headers();
-            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID) != null);
-            Assert.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID) != null);
+            Assertions.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_KEY_SCHEMA_VERSION_ID) != null);
+            Assertions.assertEquals(storeSchemaIdInHeader, headers.lastHeader(KafkaAvroSerde.DEFAULT_VALUE_SCHEMA_VERSION_ID) != null);
 
             Object value = consumerRecord.value();
-            Assert.assertEquals(getKey(msg), consumerRecord.key());
+            Assertions.assertEquals(getKey(msg), consumerRecord.key());
             AvroSchemaRegistryClientUtil.assertAvroObjs(msg, value);
         } finally {
             CLUSTER.deleteTopicAndWait(topicName);
@@ -268,9 +270,11 @@ public class KafkaAvroSerDesWithKafkaServerTest {
     }
 
 
-    @Test
-    public void testSchemasCompatibility() throws Exception {
-        String topic = testNameRule.getMethodName() + "-" + System.currentTimeMillis();
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testSchemasCompatibility(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        String topic = testName + "-" + System.currentTimeMillis();
 
         // send initial message
         Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
@@ -280,7 +284,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
             testByStoringSchemaIdInHeaderOrPayload(topic, incompatMsg);
-            Assert.fail("An error should have been received here because of incompatible schemas");
+            Assertions.fail("An error should have been received here because of incompatible schemas");
         } catch (Exception e) {
             // should have received an error.
         }

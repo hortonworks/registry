@@ -16,8 +16,8 @@
 package com.hortonworks.registries.auth.util;
 
 import com.hortonworks.registries.auth.client.AuthenticationException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestAuthToken {
 
@@ -25,51 +25,51 @@ public class TestAuthToken {
     public void testConstructor() throws Exception {
         try {
             new AuthToken(null, "p", "t");
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         try {
             new AuthToken("", "p", "t");
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         try {
             new AuthToken("u", null, "t");
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         try {
             new AuthToken("u", "", "t");
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         try {
             new AuthToken("u", "p", null);
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         try {
             new AuthToken("u", "p", "");
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         new AuthToken("u", "p", "t");
     }
@@ -79,13 +79,13 @@ public class TestAuthToken {
         long expires = System.currentTimeMillis() + 50;
         AuthToken token = new AuthToken("u", "p", "t");
         token.setExpires(expires);
-        Assert.assertEquals("u", token.getUserName());
-        Assert.assertEquals("p", token.getName());
-        Assert.assertEquals("t", token.getType());
-        Assert.assertEquals(expires, token.getExpires());
-        Assert.assertFalse(token.isExpired());
+        Assertions.assertEquals("u", token.getUserName());
+        Assertions.assertEquals("p", token.getName());
+        Assertions.assertEquals("t", token.getType());
+        Assertions.assertEquals(expires, token.getExpires());
+        Assertions.assertFalse(token.isExpired());
         Thread.sleep(70);               // +20 msec fuzz for timer granularity.
-        Assert.assertTrue(token.isExpired());
+        Assertions.assertTrue(token.isExpired());
     }
 
     @Test
@@ -95,12 +95,12 @@ public class TestAuthToken {
         token.setExpires(expires);
         String str = token.toString();
         token = AuthToken.parse(str);
-        Assert.assertEquals("p", token.getName());
-        Assert.assertEquals("t", token.getType());
-        Assert.assertEquals(expires, token.getExpires());
-        Assert.assertFalse(token.isExpired());
+        Assertions.assertEquals("p", token.getName());
+        Assertions.assertEquals("t", token.getType());
+        Assertions.assertEquals(expires, token.getExpires());
+        Assertions.assertFalse(token.isExpired());
         Thread.sleep(70);               // +20 msec fuzz for timer granularity.
-        Assert.assertTrue(token.isExpired());
+        Assertions.assertTrue(token.isExpired());
     }
 
     @Test
@@ -119,11 +119,11 @@ public class TestAuthToken {
         String str = ostr.substring(0, ostr.indexOf("e="));
         try {
             AuthToken.parse(str);
-            Assert.fail();
+            Assertions.fail();
         } catch (AuthenticationException ex) {
             // Expected
         } catch (Exception ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 }

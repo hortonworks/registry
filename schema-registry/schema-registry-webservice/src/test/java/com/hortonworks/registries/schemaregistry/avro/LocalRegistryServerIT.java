@@ -25,28 +25,25 @@ import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestCon
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.shaded.javax.ws.rs.client.Client;
-import com.hortonworks.registries.shaded.javax.ws.rs.client.ClientBuilder;
-import com.hortonworks.registries.shaded.javax.ws.rs.client.WebTarget;
-import com.hortonworks.registries.shaded.javax.ws.rs.core.MediaType;
-import com.hortonworks.registries.shaded.javax.ws.rs.core.Response;
-import com.hortonworks.registries.shaded.org.glassfish.jersey.client.ClientConfig;
-import com.hortonworks.registries.shaded.org.glassfish.jersey.client.ClientProperties;
-import com.hortonworks.registries.shaded.org.glassfish.jersey.client.JerseyClientBuilder;
-import com.hortonworks.registries.schemaregistry.util.CustomParameterizedRunner;
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.core.Is;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
@@ -55,7 +52,6 @@ import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryCli
  *
  */
 
-@RunWith(CustomParameterizedRunner.class)
 public class LocalRegistryServerIT {
 
     private static SchemaRegistryTestConfiguration SCHEMA_REGISTRY_TEST_CONFIGURATION;
@@ -71,24 +67,14 @@ public class LocalRegistryServerIT {
     private static Client restClient;
     private static SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper;
     
-
-    @CustomParameterizedRunner.Parameters
-    public static Iterable<SchemaRegistryTestProfileType> profiles() {
-        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    
+    public static Stream<SchemaRegistryTestProfileType> profiles() {
+        return Stream.of(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
     }
 
-    @CustomParameterizedRunner.BeforeParam
-    public static void setUp(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
+    public void setup(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
         SCHEMA_REGISTRY_TEST_CONFIGURATION = SchemaRegistryTestConfiguration.forProfileType(schemaRegistryTestProfileType);
-    }
-
-    public LocalRegistryServerIT(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
-
-    }
-    @Before
-    public void setup() throws Exception {
-        schemaRegistryTestServerClientWrapper = 
-                new SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration.forProfileType(SchemaRegistryTestProfileType.DEFAULT));
+        schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(SchemaRegistryTestConfiguration.forProfileType(SchemaRegistryTestProfileType.DEFAULT));
         schemaRegistryTestServerClientWrapper.startTestServer();
         SchemaRegistryClient schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
         
@@ -134,23 +120,24 @@ public class LocalRegistryServerIT {
         restClient = clientBuilder.build();
     }
     
-    @After 
+    @AfterEach
     public void deleteSetup() throws Exception {
         schemaRegistryTestServerClientWrapper.stopTestServer();
     }
-    
-    @Test
-    public void testSanity() throws Exception {
 
-        SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper = 
-                new SchemaRegistryTestServerClientWrapper(SCHEMA_REGISTRY_TEST_CONFIGURATION);
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testSanity(SchemaRegistryTestProfileType profile) throws Exception {
+        setup(profile);
+
+        SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(SCHEMA_REGISTRY_TEST_CONFIGURATION);
         schemaRegistryTestServerClientWrapper.startTestServer();
         SchemaRegistryClient schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
 
         // registering schema metadata
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("foo").type("avro").build();
         Long schemaId = schemaRegistryClient.registerSchemaMetadata(schemaMetadata);
-        Assert.assertNotNull(schemaId);
+        Assertions.assertNotNull(schemaId);
 
         // registering a new schema
         String schemaName = schemaMetadata.getName();
@@ -160,24 +147,26 @@ public class LocalRegistryServerIT {
         schemaRegistryTestServerClientWrapper.stopTestServer();
     }
 
-    @Test
-    public void listSchemasNameOrderValidation() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void listSchemasNameOrderValidation(SchemaRegistryTestProfileType profile) throws Exception {
         //given
+        setup(profile);
         SchemaMetadataInfo expected = schemaMetadataInfo1;
         
         //when
-        TestResponse schemaMetadataInfo = 
-                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", 
-                        schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = schemaMetadataInfo.getEntities().get(0);
         
         //then
-        Assert.assertThat(actual.getSchemaMetadata(), Is.is(expected.getSchemaMetadata()));
-        Assert.assertThat(actual.getId(), Is.is(expected.getId()));
+        Assertions.assertEquals(expected.getSchemaMetadata(), actual.getSchemaMetadata());
+        Assertions.assertEquals(expected.getId(), actual.getId());
     }
-    @Test
-    public void listSchemasOrderCompatibility() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void listSchemasOrderCompatibility(SchemaRegistryTestProfileType profile) throws Exception {
         //given
+        setup(profile);
         List<SchemaMetadata> expecteds = new ArrayList<SchemaMetadata>();
         expecteds.add(schemaMetadata0);
         expecteds.add(schemaMetadata2);
@@ -192,46 +181,48 @@ public class LocalRegistryServerIT {
         actuals.add(actual2.getSchemaMetadata());
         
         //then
-        Assert.assertThat(actuals, Is.is(expecteds));
+        Assertions.assertEquals(expecteds, actuals);
     }
 
-    @Test
-    public void listSchemasNameDescSchemaGroup() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void listSchemasNameDescSchemaGroup(SchemaRegistryTestProfileType profile) throws Exception {
         //given
+        setup(profile);
         SchemaMetadataInfo expected = schemaMetadataInfo2;
         
         //when
-        TestResponse schemaMetadataInfo = 
-                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plutonium&desc=spacemacs&schemaGroup=Kafka", 
-                        schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas?name=plutonium&desc=spacemacs&schemaGroup=Kafka", schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
         
         //then
-        Assert.assertThat(actual.getSchemaMetadata(), Is.is(expected.getSchemaMetadata()));
-        Assert.assertThat(actual.getId(), Is.is(expected.getId()));
+        Assertions.assertEquals(expected.getSchemaMetadata(), actual.getSchemaMetadata());
+        Assertions.assertEquals(expected.getId(), actual.getId());
 
     }
 
     
-    @Test
-    public void listAggregatedSchemasNameOrderValidation() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void listAggregatedSchemasNameOrderValidation(SchemaRegistryTestProfileType profile) throws Exception {
         //given
+        setup(profile);
         SchemaMetadataInfo expected = schemaMetadataInfo1;
 
         //when
-        TestResponse schemaMetadataInfo = 
-                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", 
-                        schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plant&validationLevel=ALL&_orderByFields=timestamp,a", schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
 
         //then
-        Assert.assertThat(actual.getSchemaMetadata(), Is.is(expected.getSchemaMetadata()));
-        Assert.assertThat(actual.getId(), Is.is(expected.getId()));
+        Assertions.assertEquals(expected.getSchemaMetadata(), actual.getSchemaMetadata());
+        Assertions.assertEquals(expected.getId(), actual.getId());
     }
 
-    @Test
-    public void listAggregatedSchemasOrderCompatibility() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void listAggregatedSchemasOrderCompatibility(SchemaRegistryTestProfileType profile) throws Exception {
         //given
+        setup(profile);
         List<SchemaMetadata> expecteds = new ArrayList<SchemaMetadata>();
         expecteds.add(schemaMetadata0);
         expecteds.add(schemaMetadata2);
@@ -247,28 +238,26 @@ public class LocalRegistryServerIT {
         actuals.add(actual2.getSchemaMetadata());
 
         //then
-        Assert.assertThat(actuals, Is.is(expecteds));
+        Assertions.assertEquals(expecteds, actuals);
     }
     
-    @Test
-    public void listAggregatedSchemasNameDescSchemaGroup() throws Exception {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void listAggregatedSchemasNameDescSchemaGroup(SchemaRegistryTestProfileType profile) throws Exception {
         //given
+        setup(profile);
         SchemaMetadataInfo expected = schemaMetadataInfo2;
         
         //when
-        TestResponse schemaMetadataInfo = 
-                createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plutonium&desc=spacemacs&schemaGroup=Kafka", 
-                        schemaRegistryTestServerClientWrapper, restClient);
+        TestResponse schemaMetadataInfo = createSchemaMetadataInfoFromQuery("/schemaregistry/schemas/aggregated?name=plutonium&desc=spacemacs&schemaGroup=Kafka", schemaRegistryTestServerClientWrapper, restClient);
         SchemaMetadataInfo actual = (SchemaMetadataInfo) ((ArrayList) schemaMetadataInfo.getEntities()).get(0);
         
         //then
-        Assert.assertThat(actual.getSchemaMetadata(), Is.is(expected.getSchemaMetadata()));
-        Assert.assertThat(actual.getId(), Is.is(expected.getId()));
+        Assertions.assertEquals(expected.getSchemaMetadata(), actual.getSchemaMetadata());
+        Assertions.assertEquals(expected.getId(), actual.getId());
     }
     
-    TestResponse createSchemaMetadataInfoFromQuery(String query, 
-                                                   SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper, 
-                                                   Client restClient) throws Exception {
+    TestResponse createSchemaMetadataInfoFromQuery(String query, SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper, Client restClient) throws Exception {
         String uri = schemaRegistryTestServerClientWrapper.exportClientConf().get("schema.registry.url").toString() + query;
         WebTarget target = restClient.target(uri);
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).get();

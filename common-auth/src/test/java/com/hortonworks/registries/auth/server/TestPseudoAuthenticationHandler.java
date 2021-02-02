@@ -16,8 +16,8 @@
 package com.hortonworks.registries.auth.server;
 
 import com.hortonworks.registries.auth.client.PseudoAuthenticator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ public class TestPseudoAuthenticationHandler {
             Properties props = new Properties();
             props.setProperty(PseudoAuthenticationHandler.ANONYMOUS_ALLOWED, "false");
             handler.init(props);
-            Assert.assertEquals(false, handler.getAcceptAnonymous());
+            Assertions.assertEquals(false, handler.getAcceptAnonymous());
         } finally {
             handler.destroy();
         }
@@ -43,7 +43,7 @@ public class TestPseudoAuthenticationHandler {
     @Test
     public void testType() throws Exception {
         PseudoAuthenticationHandler handler = new PseudoAuthenticationHandler();
-        Assert.assertEquals(PseudoAuthenticationHandler.TYPE, handler.getType());
+        Assertions.assertEquals(PseudoAuthenticationHandler.TYPE, handler.getType());
     }
 
     @Test
@@ -60,7 +60,7 @@ public class TestPseudoAuthenticationHandler {
 
             AuthenticationToken token = handler.authenticate(request, response);
 
-            Assert.assertEquals(AuthenticationToken.ANONYMOUS, token);
+            Assertions.assertEquals(AuthenticationToken.ANONYMOUS, token);
         } finally {
             handler.destroy();
         }
@@ -79,7 +79,7 @@ public class TestPseudoAuthenticationHandler {
             Mockito.when(request.getQueryString()).thenReturn("");
 
             AuthenticationToken token = handler.authenticate(request, response);
-            Assert.assertNull(token);
+            Assertions.assertNull(token);
         } finally {
             handler.destroy();
         }
@@ -98,10 +98,10 @@ public class TestPseudoAuthenticationHandler {
 
             AuthenticationToken token = handler.authenticate(request, response);
 
-            Assert.assertNotNull(token);
-            Assert.assertEquals("user", token.getUserName());
-            Assert.assertEquals("user", token.getName());
-            Assert.assertEquals(PseudoAuthenticationHandler.TYPE, token.getType());
+            Assertions.assertNotNull(token);
+            Assertions.assertEquals("user", token.getUserName());
+            Assertions.assertEquals("user", token.getName());
+            Assertions.assertEquals(PseudoAuthenticationHandler.TYPE, token.getType());
         } finally {
             handler.destroy();
         }

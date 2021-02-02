@@ -26,10 +26,11 @@ import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
 import javax.security.auth.Subject;
@@ -39,6 +40,7 @@ import java.io.File;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 public class TestKerberosLogin extends KerberosSecurityTestcase {
 
@@ -59,7 +61,7 @@ public class TestKerberosLogin extends KerberosSecurityTestcase {
         return props;
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         // create keytab
         File keytabFile = new File(KerberosTestUtils.getKeytabFile());
@@ -67,6 +69,7 @@ public class TestKerberosLogin extends KerberosSecurityTestcase {
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
         clientPrincipal = clientPrincipal.substring(0, clientPrincipal.lastIndexOf("@"));
+        startMiniKdc();
         getKdc().createPrincipal(keytabFile, serverPrincipal, clientPrincipal);
         // handler
         handler = getNewAuthenticationHandler();
@@ -79,7 +82,8 @@ public class TestKerberosLogin extends KerberosSecurityTestcase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithKerberosAuthorization() throws Exception {
         KerberosLogin login = new KerberosLogin();
         System.out.println(KerberosTestUtils.getJaasConfigForClientPrincipal());
@@ -129,8 +133,8 @@ public class TestKerberosLogin extends KerberosSecurityTestcase {
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
             Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
 
-            Assert.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
-            Assert.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
+            Assertions.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
+            Assertions.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
         } else {
             Mockito.verify(response).setHeader(Mockito.eq(KerberosAuthenticator.WWW_AUTHENTICATE),
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
@@ -138,7 +142,7 @@ public class TestKerberosLogin extends KerberosSecurityTestcase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (handler != null) {
             handler.destroy();

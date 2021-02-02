@@ -19,17 +19,15 @@ package com.hortonworks.registries.schemaregistry.retry;
 import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeBackoffPolicy;
 import com.hortonworks.registries.schemaregistry.retry.policy.BackoffPolicy;
-import com.hortonworks.registries.schemaregistry.util.CustomParameterizedRunner;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
-@RunWith(CustomParameterizedRunner.class)
 public class RetryExecutorTest {
 
     enum RetryPolicyType {
@@ -39,21 +37,18 @@ public class RetryExecutorTest {
 
     private static RetryPolicyType retryPolicyType;
 
-    @CustomParameterizedRunner.Parameters
-    public static Iterable<RetryPolicyType> profiles() {
-        return Arrays.asList(RetryPolicyType.FIXED, RetryPolicyType.EXPONENTIAL_BACKOFF);
+    public static Stream<RetryPolicyType> profiles() {
+        return Stream.of(RetryPolicyType.FIXED, RetryPolicyType.EXPONENTIAL_BACKOFF);
     }
 
-    @CustomParameterizedRunner.BeforeParam
-    public static void beforeParam(RetryPolicyType retryPolicyTypeFromParameter) throws Exception {
+    public void beforeParam(RetryPolicyType retryPolicyTypeFromParameter) throws Exception {
         retryPolicyType = retryPolicyTypeFromParameter;
     }
-
-    public RetryExecutorTest(RetryPolicyType retryPolicyType) {
-    }
-
-    @Test
-    public void testRetries() {
+    
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testRetries(RetryPolicyType profile) throws Exception {
+        beforeParam(profile);
         AtomicInteger attempt = new AtomicInteger(1);
 
         createRetryExecutor(100, 3, 100000).execute((() -> {
@@ -65,21 +60,25 @@ public class RetryExecutorTest {
             }
         }));
 
-        Assert.assertEquals(2, attempt.get());
+        Assertions.assertEquals(2, attempt.get());
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testExceptionOnExceedingMaxAttempts() {
-        createRetryExecutor(100, 1, 60_000).execute(() -> {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testExceptionOnExceedingMaxAttempts(RetryPolicyType profile) throws Exception {
+        beforeParam(profile);
+        Assertions.assertThrows(RuntimeException.class, () -> createRetryExecutor(100, 1, 60_000).execute(() -> {
             throw new RuntimeException();
-        });
+        }));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testExceptionOnExceedingMaxTimeout() {
-        createRetryExecutor(100, 1000, 300).execute(() -> {
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testExceptionOnExceedingMaxTimeout(RetryPolicyType profile) throws Exception {
+        beforeParam(profile);
+        Assertions.assertThrows(RuntimeException.class, () -> createRetryExecutor(100, 1000, 300).execute(() -> {
             throw new RuntimeException();
-        });
+        }));
     }
 
     private RetryExecutor createRetryExecutor(long sleepTimeMs, int maxAttempts, long timeoutMs) {

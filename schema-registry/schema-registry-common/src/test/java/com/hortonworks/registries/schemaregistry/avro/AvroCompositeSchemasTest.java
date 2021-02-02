@@ -24,8 +24,8 @@ import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyEx
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,8 +35,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -47,7 +48,7 @@ public class AvroCompositeSchemasTest {
     private AvroSchemaProvider avroSchemaProvider;
     private Map<String, SchemaVersionInfo> versions;
 
-    @Before
+    @BeforeEach
     public void testComposites() throws Exception {
         versions = new HashMap<>();
         versions.put("utils", cretaeSchemaVersionInfo("/avro/composites/util.avsc"));
@@ -91,9 +92,11 @@ public class AvroCompositeSchemasTest {
         LOG.info("parsedSchema [{}] ", parsedSchema);
     }
 
-    @Test(expected = CyclicSchemaDependencyException.class)
+    @Test
     public void testCyclicSchema() throws Exception {
-        String accountSchemaText = avroSchemaProvider.getResultantSchema(getResourceText("/avro/composites/account-ref-cyclic.avsc"));
+        assertThrows(CyclicSchemaDependencyException.class, () -> {
+            String accountSchemaText = avroSchemaProvider.getResultantSchema(getResourceText("/avro/composites/account-ref-cyclic.avsc"));
+        });
     }
 
     @Test

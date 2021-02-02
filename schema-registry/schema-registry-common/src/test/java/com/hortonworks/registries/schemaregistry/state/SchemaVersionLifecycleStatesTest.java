@@ -22,11 +22,9 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +38,9 @@ import java.util.Random;
 public class SchemaVersionLifecycleStatesTest {
     private static Logger LOG = LoggerFactory.getLogger(SchemaVersionLifecycleStatesTest.class);
 
-    @Rule
-    public TestName testName = new TestName();
-
     private SchemaVersionLifecycleContext context;
 
-    @Before
+    @BeforeEach
     public void setup() {
         SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("schema-1").type("avro")
                                                                               .schemaGroup("kafka")
@@ -176,7 +171,7 @@ public class SchemaVersionLifecycleStatesTest {
                                           SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.archive(context);
-            Assert.fail(state.getName() + " should not lead to archive state");
+            Assertions.fail(state.getName() + " should not lead to archive state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -185,7 +180,7 @@ public class SchemaVersionLifecycleStatesTest {
                                          SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.delete(context);
-            Assert.fail(state.getName() + " should not lead to delete state");
+            Assertions.fail(state.getName() + " should not lead to delete state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -194,7 +189,7 @@ public class SchemaVersionLifecycleStatesTest {
                                           SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.disable(context);
-            Assert.fail(state.getName() + " should not lead to disabled state");
+            Assertions.fail(state.getName() + " should not lead to disabled state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -203,7 +198,7 @@ public class SchemaVersionLifecycleStatesTest {
             throws SchemaNotFoundException, IncompatibleSchemaException, SchemaBranchNotFoundException {
         try {
             state.enable(context);
-            Assert.fail(state.getName() + " should not lead to enable state");
+            Assertions.fail(state.getName() + " should not lead to enable state");
         } catch (SchemaLifecycleException e) {
         }
     }
@@ -212,7 +207,7 @@ public class SchemaVersionLifecycleStatesTest {
                                               SchemaVersionLifecycleContext context) throws SchemaNotFoundException {
         try {
             state.startReview(context);
-            Assert.fail(state.getName() + " should not lead to startReview state");
+            Assertions.fail(state.getName() + " should not lead to startReview state");
         } catch (SchemaLifecycleException e) {
         }
     }

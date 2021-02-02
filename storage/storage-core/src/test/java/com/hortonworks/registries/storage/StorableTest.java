@@ -17,7 +17,7 @@ package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,28 +57,28 @@ public class StorableTest {
         String namespace = storable1.getNameSpace();
 
         // test get nonexistent key
-        Assert.assertNull(getStorageManager().get(storable1.getStorableKey()));
+        Assertions.assertNull(getStorageManager().get(storable1.getStorableKey()));
 
         //test add, get by inserting the first item in list.
         getStorageManager().add(storable1);
-        Assert.assertEquals(storable1, getStorageManager().get(storable1.getStorableKey()));
+        Assertions.assertEquals(storable1, getStorageManager().get(storable1.getStorableKey()));
 
         //test update by calling addOrUpdate on second item which should have the same primary key value as the first item.
-        Assert.assertEquals(storable1.getPrimaryKey(), storable2.getPrimaryKey());
+        Assertions.assertEquals(storable1.getPrimaryKey(), storable2.getPrimaryKey());
         getStorageManager().addOrUpdate(storable2);
-        Assert.assertEquals(storable2, getStorageManager().get(storable2.getStorableKey()));
+        Assertions.assertEquals(storable2, getStorageManager().get(storable2.getStorableKey()));
 
         //add 3rd item, only added so that list operation will return more than one item.
         getStorageManager().addOrUpdate(storable3);
-        Assert.assertEquals(storable3, getStorageManager().get(storable3.getStorableKey()));
+        Assertions.assertEquals(storable3, getStorageManager().get(storable3.getStorableKey()));
 
         //test remove by adding 4th item and removing it.
         getStorageManager().addOrUpdate(storable4);
-        Assert.assertEquals(storable4, getStorageManager().get(storable4.getStorableKey()));
+        Assertions.assertEquals(storable4, getStorageManager().get(storable4.getStorableKey()));
         Storable removed = getStorageManager().remove(storable4.getStorableKey());
-        Assert.assertNull(getStorageManager().get(storable4.getStorableKey()));
+        Assertions.assertNull(getStorageManager().get(storable4.getStorableKey()));
         // check that the correct removed item gets returned
-        Assert.assertEquals(storable4, removed);
+        Assertions.assertEquals(storable4, removed);
 
         //Test list method. The storage layer should have the 2nd item (updated version of 1st item) and 3rd Item.
         final Set<Storable> expected = new HashSet<Storable>() {{
@@ -86,12 +86,12 @@ public class StorableTest {
             add(storable3);
         }};
         final HashSet<Storable> allExisting = new HashSet<>(getStorageManager().list(getNameSpace()));
-        Assert.assertEquals(expected, allExisting);
+        Assertions.assertEquals(expected, allExisting);
 
         //Test method with query parameters(filter) matching only the item storable3
         final Collection<Storable> found = getStorageManager().find(namespace, buildQueryParamsForPrimaryKey(storable3));
-        Assert.assertEquals(1, found.size());
-        Assert.assertTrue(found.contains(storable3));
+        Assertions.assertEquals(1, found.size());
+        Assertions.assertTrue(found.contains(storable3));
     }
 
     public void close() {

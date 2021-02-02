@@ -17,13 +17,13 @@ package com.hortonworks.registries.schemaregistry.authorizer.ranger.shim;
 
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class RangerSchemaRegistryAuthorizerTest {
 

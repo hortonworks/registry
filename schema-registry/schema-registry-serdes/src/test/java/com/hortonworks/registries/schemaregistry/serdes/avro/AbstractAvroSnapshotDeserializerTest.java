@@ -17,13 +17,11 @@ package com.hortonworks.registries.schemaregistry.serdes.avro;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class AbstractAvroSnapshotDeserializerTest {
 
@@ -37,7 +35,7 @@ public class AbstractAvroSnapshotDeserializerTest {
         underTest.doInit(config);
         
         //then
-        assertThat(underTest.isUseSpecificAvroReader(), is(true));
+        Assertions.assertTrue(underTest.isUseSpecificAvroReader());
     }
     
     @Test
@@ -50,7 +48,7 @@ public class AbstractAvroSnapshotDeserializerTest {
         underTest.doInit(config);
 
         //then
-        assertThat(underTest.isUseSpecificAvroReader(), is(true));
+        Assertions.assertTrue(underTest.isUseSpecificAvroReader());
     }
 
     @Test
@@ -63,13 +61,12 @@ public class AbstractAvroSnapshotDeserializerTest {
         underTest.doInit(config);
 
         //then
-        assertThat(underTest.isUseSpecificAvroReader(), is(false));
+        Assertions.assertFalse(underTest.isUseSpecificAvroReader());
     }
     
     class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<String> {
         @Override
-        protected Object doDeserialize(String input, byte protocolId, SchemaMetadata schemaMetadata, 
-                                       Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
+        protected Object doDeserialize(String input, byte protocolId, SchemaMetadata schemaMetadata, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
             return null;
         }
 

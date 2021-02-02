@@ -28,7 +28,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
-import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
@@ -36,11 +35,10 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
 import org.apache.commons.codec.binary.Hex;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,10 +55,14 @@ public class AvroSchemaRegistryTest {
 
     private DefaultSchemaRegistry schemaRegistry;
 
-    @Rule
-    public TestName testNameRule = new TestName();
+    String displayName;
 
-    @Before
+    @BeforeEach
+    void init(TestInfo testInfo) {
+        displayName = testInfo.getDisplayName();
+    }
+
+    @BeforeEach
     public void setup() throws IOException {
         schema1 = getSchema("/device.avsc");
         schema2 = getSchema("/device-compat.avsc");
@@ -93,7 +95,7 @@ public class AvroSchemaRegistryTest {
 
             Long schemaMetadataId = schemaRegistry.registerSchemaMetadata(schemaMetadata);
             SchemaMetadata schemaMetadataReturned = schemaRegistry.getSchemaMetadataInfo(schemaMetadataId).getSchemaMetadata();
-            Assert.assertEquals(schemaMetadata, schemaMetadataReturned);
+            Assertions.assertEquals(schemaMetadata, schemaMetadataReturned);
         }
     }
 
@@ -108,7 +110,7 @@ public class AvroSchemaRegistryTest {
 
         Long schemaMetadataId = schemaRegistry.registerSchemaMetadata(schemaMetadata);
         SchemaMetadata schemaMetadataReturned = schemaRegistry.getSchemaMetadataInfo(schemaMetadataId).getSchemaMetadata();
-        Assert.assertEquals(schemaMetadata, schemaMetadataReturned);
+        Assertions.assertEquals(schemaMetadata, schemaMetadataReturned);
 
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadata,
                                                      new SchemaVersion(schema1, "initial version of the schema"))
@@ -116,37 +118,36 @@ public class AvroSchemaRegistryTest {
         Integer v2 = schemaRegistry.addSchemaVersion(schemaName,
                                                      new SchemaVersion(schema2, "second version of the the schema"))
                                    .getVersion();
-        Assert.assertTrue(v2 == v1 + 1);
+        Assertions.assertTrue(v2 == v1 + 1);
 
         Collection<SchemaVersionInfo> allSchemaVersions = schemaRegistry.getAllVersions(schemaName);
-        Assert.assertTrue(allSchemaVersions.size() == 2);
+        Assertions.assertTrue(allSchemaVersions.size() == 2);
 
         SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(schemaMetadata, schemaMetadataInfo.getSchemaMetadata());
+        Assertions.assertEquals(schemaMetadata, schemaMetadataInfo.getSchemaMetadata());
 
         Integer schemaVersion = schemaRegistry.getSchemaVersionInfo(schemaName, schema1).getVersion();
-        Assert.assertEquals(v1, schemaVersion);
+        Assertions.assertEquals(v1, schemaVersion);
 
         SchemaVersionInfo schemaVersionInfo1 = schemaRegistry.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v1));
-        Assert.assertEquals(schemaVersionInfo1.getSchemaText(), schema1);
+        Assertions.assertEquals(schema1, schemaVersionInfo1.getSchemaText());
 
         SchemaVersionInfo schemaVersionInfo2 = schemaRegistry.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
-        Assert.assertEquals(schemaVersionInfo2.getSchemaText(), schema2);
+        Assertions.assertEquals(schema2, schemaVersionInfo2.getSchemaText());
 
         // receive the same version as earlier without adding a new schema entry as it exists in the same schema group.
         Integer version = schemaRegistry.addSchemaVersion(schemaMetadata,
                                                           new SchemaVersion(schema1, "already added schema"))
                                         .getVersion();
-        Assert.assertEquals(version, v1);
+        Assertions.assertEquals(v1, version);
 
         //aggregate apis
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadata = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
-        Assert.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getSchemaBranches().iterator().next().getSchemaVersionInfos().size());
-        Assert.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
+        Assertions.assertEquals(allSchemaVersions.size(), aggregatedSchemaMetadata.getSchemaBranches().iterator().next().getSchemaVersionInfos().size());
+        Assertions.assertTrue(aggregatedSchemaMetadata.getSerDesInfos().isEmpty());
 
-        Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry
-                .findAggregatedSchemaMetadata(Collections.emptyMap());
-        Assert.assertEquals(1, aggregatedSchemaMetadataCollection.size());
+        Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataCollection = schemaRegistry.findAggregatedSchemaMetadata(Collections.emptyMap());
+        Assertions.assertEquals(1, aggregatedSchemaMetadataCollection.size());
 
         // Serializing and deserializing AggregatedSchemaMetadataInfo should not throw any errors
 
@@ -160,55 +161,54 @@ public class AvroSchemaRegistryTest {
     @Test
     public void testNonExistingSchemaMetadata() {
         SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(INVALID_SCHEMA_METADATA_KEY);
-        Assert.assertNull(schemaMetadataInfo);
+        Assertions.assertNull(schemaMetadataInfo);
     }
 
-    @Test(expected = SchemaNotFoundException.class)
-    public void testAddVersionToNonExistingSchema() 
-            throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, SchemaBranchNotFoundException {
-        schemaRegistry.addSchemaVersion(INVALID_SCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy"));
+    @Test
+    public void testAddVersionToNonExistingSchema() {
+        Assertions.assertThrows(SchemaNotFoundException.class, () -> schemaRegistry.addSchemaVersion(INVALID_SCHEMA_METADATA_KEY, new SchemaVersion("foo", "dummy")));
     }
 
-    @Test(expected = InvalidSchemaException.class)
+    @Test
     public void testInvalidSchema() throws Exception {
         String schema = "--- random invalid schema ---" + new Date();
 
-        SchemaMetadata schemaMetadataInfo = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(displayName, SchemaCompatibility.BACKWARD);
 
         // registering a new schema
-        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
-                                                     new SchemaVersion(schema, "Initial version of the schema"))
-                                   .getVersion();
+        Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion(schema, "Initial version of the schema"))
+                .getVersion());
     }
 
-    @Test(expected = InvalidSchemaException.class)
+    @Test
     public void testSchemaTextAsNull() throws Exception {
 
-        SchemaMetadata schemaMetadataInfo = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(displayName, SchemaCompatibility.BACKWARD);
 
         // registering a new schema
-        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
-                                                     new SchemaVersion(null, "Initial version of the schema"))
-                                   .getVersion();
+        Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion(null, "Initial version of the schema"))
+                .getVersion());
     }
 
-    @Test(expected = InvalidSchemaException.class)
+    @Test
     public void testSchemaTextAsEmpty() throws Exception {
 
-        SchemaMetadata schemaMetadataInfo = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(displayName, SchemaCompatibility.BACKWARD);
 
         // registering a new schema
-        Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadataInfo,
-                                                     new SchemaVersion("", "Initial version of the schema"))
-                                   .getVersion();
+        Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion("", "Initial version of the schema"))
+                .getVersion());
     }
 
-    @Test(expected = IncompatibleSchemaException.class)
+    @Test
     public void testIncompatibleSchemas() throws Exception {
         String schema = getSchema("/device.avsc");
         String incompatSchema = getSchema("/device-incompat.avsc");
 
-        SchemaMetadata schemaMetadata = createSchemaInfo(testNameRule.getMethodName(), SchemaCompatibility.BACKWARD);
+        SchemaMetadata schemaMetadata = createSchemaInfo(displayName, SchemaCompatibility.BACKWARD);
 
         // registering a new schema
         Integer v1 = schemaRegistry.addSchemaVersion(schemaMetadata,
@@ -216,23 +216,22 @@ public class AvroSchemaRegistryTest {
                                    .getVersion();
 
         // adding a new version of the schema
-        Integer v2 = schemaRegistry.addSchemaVersion(schemaMetadata,
-                                                     new SchemaVersion(incompatSchema, "second version"))
-                                   .getVersion();
+        Assertions.assertThrows(IncompatibleSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadata,
+                new SchemaVersion(incompatSchema, "second version"))
+                .getVersion());
     }
 
     @Test
     public void testFindSchemaVersionByFingerprintSingle() throws Exception {
         final String schemaText = getSchema("/device.avsc");
-        registerSchemaVersion(testNameRule.getMethodName(), schemaText);
+        registerSchemaVersion(displayName, schemaText);
 
         final AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
         final String fingerprint = Hex.encodeHexString(avroSchemaProvider.getFingerprint(schemaText));
 
         final SchemaVersionInfo schemaVersionFound = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
 
-        Assert.assertEquals("Didn't find the expected schema version using the schema fingerprint",
-                schemaText, schemaVersionFound.getSchemaText());
+        Assertions.assertEquals(schemaText, schemaVersionFound.getSchemaText(), "Didn't find the expected schema version using the schema fingerprint");
     }
 
     @Test
@@ -248,8 +247,8 @@ public class AvroSchemaRegistryTest {
 
         final SchemaVersionInfo schemaVersionFound = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
 
-        Assert.assertEquals("Didn't find the latest schema version using the schema fingerprint",
-                second.getSchemaVersionId(), schemaVersionFound.getId());
+        Assertions.assertEquals(second.getSchemaVersionId(), schemaVersionFound.getId(),
+                "Didn't find the latest schema version using the schema fingerprint");
     }
 
     private SchemaIdVersion registerSchemaVersion(final String schemaName,

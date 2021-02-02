@@ -19,8 +19,8 @@ import java.util.Properties;
 import javax.servlet.ServletContext;
 
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestSigner {
 
@@ -29,19 +29,19 @@ public class TestSigner {
         Signer signer = new Signer(createStringSignerSecretProvider());
         try {
             signer.sign(null);
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
         try {
             signer.sign("");
-            Assert.fail();
+            Assertions.fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
@@ -51,8 +51,8 @@ public class TestSigner {
         String s1 = signer.sign("ok");
         String s2 = signer.sign("ok");
         String s3 = signer.sign("wrong");
-        Assert.assertEquals(s1, s2);
-        Assert.assertNotEquals(s1, s3);
+        Assertions.assertEquals(s1, s2);
+        Assertions.assertNotEquals(s1, s3);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class TestSigner {
         String t = "test";
         String s = signer.sign(t);
         String e = signer.verifyAndExtract(s);
-        Assert.assertEquals(t, e);
+        Assertions.assertEquals(t, e);
     }
 
     @Test
@@ -69,11 +69,11 @@ public class TestSigner {
         Signer signer = new Signer(createStringSignerSecretProvider());
         try {
             signer.verifyAndExtract("test");
-            Assert.fail();
+            Assertions.fail();
         } catch (SignerException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
@@ -85,11 +85,11 @@ public class TestSigner {
         s += "x";
         try {
             signer.verifyAndExtract(s);
-            Assert.fail();
+            Assertions.fail();
         } catch (SignerException ex) {
             // Expected
         } catch (Throwable ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
@@ -109,27 +109,27 @@ public class TestSigner {
         String t1 = "test";
         String s1 = signer.sign(t1);
         String e1 = signer.verifyAndExtract(s1);
-        Assert.assertEquals(t1, e1);
+        Assertions.assertEquals(t1, e1);
         secretProvider.setPreviousSecret("secretA");
         String t2 = "test";
         String s2 = signer.sign(t2);
         String e2 = signer.verifyAndExtract(s2);
-        Assert.assertEquals(t2, e2);
-        Assert.assertEquals(s1, s2); //check is using current secret for signing
+        Assertions.assertEquals(t2, e2);
+        Assertions.assertEquals(s1, s2); //check is using current secret for signing
         secretProvider.setCurrentSecret("secretC");
         secretProvider.setPreviousSecret("secretB");
         String t3 = "test";
         String s3 = signer.sign(t3);
         String e3 = signer.verifyAndExtract(s3);
-        Assert.assertEquals(t3, e3);
-        Assert.assertNotEquals(s1, s3); //check not using current secret for signing
+        Assertions.assertEquals(t3, e3);
+        Assertions.assertNotEquals(s1, s3); //check not using current secret for signing
         String e1b = signer.verifyAndExtract(s1);
-        Assert.assertEquals(t1, e1b); // previous secret still valid
+        Assertions.assertEquals(t1, e1b); // previous secret still valid
         secretProvider.setCurrentSecret("secretD");
         secretProvider.setPreviousSecret("secretC");
         try {
             signer.verifyAndExtract(s1);  // previous secret no longer valid
-            Assert.fail();
+            Assertions.fail();
         } catch (SignerException ex) {
             // Expected
         }

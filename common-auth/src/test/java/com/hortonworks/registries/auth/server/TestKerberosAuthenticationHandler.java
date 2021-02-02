@@ -25,11 +25,11 @@ import com.hortonworks.registries.auth.util.KerberosUtil;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 import org.ietf.jgss.Oid;
 
@@ -44,8 +44,8 @@ import java.security.Principal;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
-@Ignore
 public class TestKerberosAuthenticationHandler
         extends KerberosSecurityTestcase {
 
@@ -72,7 +72,7 @@ public class TestKerberosAuthenticationHandler
         return props;
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         Properties props = loadProperties();
         try {
@@ -95,16 +95,18 @@ public class TestKerberosAuthenticationHandler
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         clientPrincipal = clientPrincipal.substring(0, clientPrincipal.lastIndexOf("@"));
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
+        startMiniKdc();
         getKdc().createPrincipal(keytabFile, clientPrincipal, serverPrincipal);
         // handler
         handler = getNewAuthenticationHandler();
         return kerberosHandlerProps;
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testNameRules() throws Exception {
         KerberosName kn = new KerberosName(KerberosTestUtils.getServerPrincipal());
-        Assert.assertEquals(KerberosTestUtils.getRealm(), kn.getRealm());
+        Assertions.assertEquals(KerberosTestUtils.getRealm(), kn.getRealm());
 
         //destroy handler created in setUp()
         handler.destroy();
@@ -119,23 +121,25 @@ public class TestKerberosAuthenticationHandler
         } catch (Exception ex) {
         }
         kn = new KerberosName("bar@BAR");
-        Assert.assertEquals("bar", kn.getShortName());
+        Assertions.assertEquals("bar", kn.getShortName());
         kn = new KerberosName("bar@FOO");
-        Assert.assertEquals("bar@FOO", kn.getShortName());
+        Assertions.assertEquals("bar@FOO", kn.getShortName());
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testInit() throws Exception {
-        Assert.assertEquals(KerberosTestUtils.getKeytabFile(), handler.getKeytab());
+        Assertions.assertEquals(KerberosTestUtils.getKeytabFile(), handler.getKeytab());
         Set<KerberosPrincipal> principals = handler.getPrincipals();
         Principal expectedPrincipal =
                 new KerberosPrincipal(KerberosTestUtils.getServerPrincipal());
-        Assert.assertTrue(principals.contains(expectedPrincipal));
-        Assert.assertEquals(1, principals.size());
+        Assertions.assertTrue(principals.contains(expectedPrincipal));
+        Assertions.assertEquals(1, principals.size());
     }
 
     // dynamic configuration of HTTP principals
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testDynamicPrincipalDiscovery() throws Exception {
         String[] keytabUsers = new String[]{
                 "HTTP/host1", "HTTP/host2", "HTTP2/host1", "XHTTP/host"
@@ -151,20 +155,21 @@ public class TestKerberosAuthenticationHandler
         handler = getNewAuthenticationHandler();
         handler.init(props);
 
-        Assert.assertEquals(KerberosTestUtils.getKeytabFile(), handler.getKeytab());
+        Assertions.assertEquals(KerberosTestUtils.getKeytabFile(), handler.getKeytab());
 
         Set<KerberosPrincipal> loginPrincipals = handler.getPrincipals();
         for (String user : keytabUsers) {
             Principal principal = new KerberosPrincipal(
                     user + "@" + KerberosTestUtils.getRealm());
             boolean expected = user.startsWith("HTTP/");
-            Assert.assertEquals("checking for " + user, expected,
-                    loginPrincipals.contains(principal));
+            Assertions.assertEquals(expected, loginPrincipals.contains(principal),
+                    "checking for " + user);
         }
     }
 
     // dynamic configuration of HTTP principals
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testDynamicPrincipalDiscoveryMissingPrincipals() throws Exception {
         String[] keytabUsers = new String[]{"hdfs/localhost"};
         String keytab = KerberosTestUtils.getKeytabFile();
@@ -178,25 +183,26 @@ public class TestKerberosAuthenticationHandler
         handler = getNewAuthenticationHandler();
         try {
             handler.init(props);
-            Assert.fail("init should have failed");
+            Assertions.fail("init should have failed");
         } catch (ServletException ex) {
-            Assert.assertEquals("Principals do not exist in the keytab",
+            Assertions.assertEquals("Principals do not exist in the keytab",
                     ex.getCause().getMessage());
         } catch (Throwable t) {
-            Assert.fail("wrong exception: " + t);
+            Assertions.fail("wrong exception: " + t);
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testType() throws Exception {
-        Assert.assertEquals(getExpectedType(), handler.getType());
+        Assertions.assertEquals(getExpectedType(), handler.getType());
     }
 
     @Test
     public void testTrustedProxyNilConfig() {
         KerberosAuthenticationHandler handler = new KerberosAuthenticationHandler();
         KerberosAuthenticationHandler.ProxyUserAuthorization proxyUserAuthorization = handler.new ProxyUserAuthorization(new Properties());
-        Assert.assertFalse(proxyUserAuthorization.authorize("knox", "127.0.0.1"));
+        Assertions.assertFalse(proxyUserAuthorization.authorize("knox", "127.0.0.1"));
     }
 
     @Test
@@ -207,16 +213,16 @@ public class TestKerberosAuthenticationHandler
             put("proxyuser.admin.hosts", "10.222.0.0,10.113.221.221");
             put("proxyuser.user1.hosts", "*");
         }});
-        Assert.assertTrue(proxyUserAuthorization.authorize("knox", "127.0.0.1"));
-        Assert.assertFalse(proxyUserAuthorization.authorize("knox", "10.222.0.0"));
+        Assertions.assertTrue(proxyUserAuthorization.authorize("knox", "127.0.0.1"));
+        Assertions.assertFalse(proxyUserAuthorization.authorize("knox", "10.222.0.0"));
 
-        Assert.assertTrue(proxyUserAuthorization.authorize("admin", "10.222.0.0"));
-        Assert.assertTrue(proxyUserAuthorization.authorize("admin", "10.113.221.221"));
-        Assert.assertFalse(proxyUserAuthorization.authorize("admin", "127.0.0.1"));
+        Assertions.assertTrue(proxyUserAuthorization.authorize("admin", "10.222.0.0"));
+        Assertions.assertTrue(proxyUserAuthorization.authorize("admin", "10.113.221.221"));
+        Assertions.assertFalse(proxyUserAuthorization.authorize("admin", "127.0.0.1"));
 
-        Assert.assertTrue(proxyUserAuthorization.authorize("user1", "10.222.0.0"));
-        Assert.assertTrue(proxyUserAuthorization.authorize("user1", "10.113.221.221"));
-        Assert.assertTrue(proxyUserAuthorization.authorize("user1", "127.0.0.1"));
+        Assertions.assertTrue(proxyUserAuthorization.authorize("user1", "10.222.0.0"));
+        Assertions.assertTrue(proxyUserAuthorization.authorize("user1", "10.113.221.221"));
+        Assertions.assertTrue(proxyUserAuthorization.authorize("user1", "127.0.0.1"));
     }
 
     @Test
@@ -239,8 +245,8 @@ public class TestKerberosAuthenticationHandler
         Mockito.when(request.getQueryString()).thenReturn("doAs=user1");
 
         AuthenticationToken authToken = kerberosAuthHandler.authenticate(request, response);
-        Assert.assertEquals("user1", authToken.getName());
-        Assert.assertEquals("user1", authToken.getUserName());
+        Assertions.assertEquals("user1", authToken.getName());
+        Assertions.assertEquals("user1", authToken.getUserName());
 
         //Request comes from proxyuser from non-whitelisted host with a doAsUser
         HttpServletRequest request2 = Mockito.mock(HttpServletRequest.class);
@@ -253,7 +259,7 @@ public class TestKerberosAuthenticationHandler
         Mockito.when(request2.getQueryString()).thenReturn("doAs=user1");
 
         AuthenticationToken authToken2 = kerberosAuthHandler.authenticate(request2, response2);
-        Assert.assertNull(authToken2);
+        Assertions.assertNull(authToken2);
 
         //Request comes from proxyuser from non-whitelisted host without a doAsUser
         HttpServletRequest request3 = Mockito.mock(HttpServletRequest.class);
@@ -265,8 +271,8 @@ public class TestKerberosAuthenticationHandler
         Mockito.when(request3.getRemoteAddr()).thenReturn("10.222.0.0");
 
         AuthenticationToken authToken3 = kerberosAuthHandler.authenticate(request3, response3);
-        Assert.assertEquals("client@EXAMPLE.COM", authToken3.getName());
-        Assert.assertEquals("client", authToken3.getUserName());
+        Assertions.assertEquals("client@EXAMPLE.COM", authToken3.getName());
+        Assertions.assertEquals("client", authToken3.getUserName());
 
         kerberosAuthHandler.destroy();
     }
@@ -275,23 +281,23 @@ public class TestKerberosAuthenticationHandler
     public void testGetDoAsUser() throws UnsupportedEncodingException {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         Mockito.when(request.getQueryString()).thenReturn("doAs=user1");
-        Assert.assertEquals("user1", KerberosAuthenticationHandler.getDoasUser(request));
+        Assertions.assertEquals("user1", KerberosAuthenticationHandler.getDoasUser(request));
 
         Mockito.when(request.getQueryString()).thenReturn("x=y&z=a");
-        Assert.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
+        Assertions.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
 
         Mockito.when(request.getQueryString()).thenReturn("x=y&doAs=");
-        Assert.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
+        Assertions.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
 
         Mockito.when(request.getQueryString()).thenReturn("x=y&doAs=%20");
-        Assert.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
+        Assertions.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
     }
 
     public void testRequestWithoutAuthorization() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
-        Assert.assertNull(handler.authenticate(request, response));
+        Assertions.assertNull(handler.authenticate(request, response));
         Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
         Mockito.verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
@@ -301,12 +307,13 @@ public class TestKerberosAuthenticationHandler
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
         Mockito.when(request.getHeader(KerberosAuthenticator.AUTHORIZATION)).thenReturn("invalid");
-        Assert.assertNull(handler.authenticate(request, response));
+        Assertions.assertNull(handler.authenticate(request, response));
         Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
         Mockito.verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithIncompleteAuthorization() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -315,11 +322,11 @@ public class TestKerberosAuthenticationHandler
                 .thenReturn(KerberosAuthenticator.NEGOTIATE);
         try {
             handler.authenticate(request, response);
-            Assert.fail();
+            Assertions.fail();
         } catch (AuthenticationException ex) {
             // Expected
         } catch (Exception ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
@@ -340,9 +347,9 @@ public class TestKerberosAuthenticationHandler
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
             Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
 
-            Assert.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
-            Assert.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
-            Assert.assertEquals(getExpectedType(), authToken.getType());
+            Assertions.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
+            Assertions.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
+            Assertions.assertEquals(getExpectedType(), authToken.getType());
         } else {
             Mockito.verify(response).setHeader(Mockito.eq(KerberosAuthenticator.WWW_AUTHENTICATE),
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
@@ -362,11 +369,11 @@ public class TestKerberosAuthenticationHandler
 
         try {
             handler.authenticate(request, response);
-            Assert.fail();
+            Assertions.fail();
         } catch (AuthenticationException ex) {
             // Expected
         } catch (Exception ex) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
@@ -402,11 +409,12 @@ public class TestKerberosAuthenticationHandler
         return token;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (handler != null) {
             handler.destroy();
             handler = null;
         }
+        stopMiniKdc();
     }
 }

@@ -27,9 +27,9 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySql
 import com.hortonworks.registries.storage.util.StorageUtils;
 import org.apache.commons.io.IOUtils;
 import org.h2.tools.RunScript;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +45,7 @@ public class TransactionTest {
     TransactionManager transactionManager;
     HikariCPConnectionBuilder connectionBuilder;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         connectionBuilder = new HikariCPConnectionBuilder(HikariBasicConfig.getH2HikariConfig());
         MySqlExecutor queryExecutor = new MySqlExecutor(new ExecutionConfig(-1), connectionBuilder);
@@ -77,7 +77,7 @@ public class TransactionTest {
             dbFileStorage.upload(IOUtils.toInputStream(update, "UTF-8"), FILE_NAME);
             InputStream is = dbFileStorage.download(FILE_NAME);
             String output = IOUtils.toString(is, "UTF-8");
-            Assert.assertEquals(update, output);
+            Assertions.assertEquals(update, output);
             throw new Exception();
         } catch (Exception e) {
             transactionManager.rollbackTransaction();
@@ -87,7 +87,7 @@ public class TransactionTest {
             transactionManager.beginTransaction(TransactionIsolation.SERIALIZABLE);
             InputStream is = dbFileStorage.download(FILE_NAME);
             String output = IOUtils.toString(is, "UTF-8");
-            Assert.assertEquals(input, output);
+            Assertions.assertEquals(input, output);
             transactionManager.commitTransaction();
         } catch (Exception e) {
             transactionManager.rollbackTransaction();

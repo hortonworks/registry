@@ -17,16 +17,16 @@ package com.hortonworks.registries.auth.server;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.hortonworks.registries.auth.client.AuthenticationException;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
-@Ignore
 public class TestAltKerberosAuthenticationHandler
         extends TestKerberosAuthenticationHandler {
 
@@ -52,7 +52,8 @@ public class TestAltKerberosAuthenticationHandler
         return AltKerberosAuthenticationHandler.TYPE;
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testAlternateAuthenticationAsBrowser() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -62,12 +63,13 @@ public class TestAltKerberosAuthenticationHandler
         Mockito.when(request.getHeader("User-Agent")).thenReturn("Some Browser");
 
         AuthenticationToken token = handler.authenticate(request, response);
-        Assert.assertEquals("A", token.getUserName());
-        Assert.assertEquals("B", token.getName());
-        Assert.assertEquals(getExpectedType(), token.getType());
+        Assertions.assertEquals("A", token.getUserName());
+        Assertions.assertEquals("B", token.getName());
+        Assertions.assertEquals(getExpectedType(), token.getType());
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testNonDefaultNonBrowserUserAgentAsBrowser() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -90,12 +92,13 @@ public class TestAltKerberosAuthenticationHandler
         Mockito.when(request.getHeader("User-Agent")).thenReturn("blah");
         // Should use alt authentication
         AuthenticationToken token = handler.authenticate(request, response);
-        Assert.assertEquals("A", token.getUserName());
-        Assert.assertEquals("B", token.getName());
-        Assert.assertEquals(getExpectedType(), token.getType());
+        Assertions.assertEquals("A", token.getUserName());
+        Assertions.assertEquals("B", token.getName());
+        Assertions.assertEquals(getExpectedType(), token.getType());
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testNonDefaultNonBrowserUserAgentAsNonBrowser() throws Exception {
         if (handler != null) {
             handler.destroy();

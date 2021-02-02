@@ -26,7 +26,9 @@ dependencies {
     testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
     
     testCompile libraries.junit
-    testCompile project(path: ':schema-registry:schema-registry-webservice', configuration: 'tests')
+    testCompile(project(path: ':schema-registry:schema-registry-webservice', configuration: 'tests')) {
+        exclude group: 'junit'
+    }
 
 
 }

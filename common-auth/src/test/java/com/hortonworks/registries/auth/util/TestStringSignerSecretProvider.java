@@ -18,8 +18,8 @@ package com.hortonworks.registries.auth.util;
 import java.util.Properties;
 
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestStringSignerSecretProvider {
 
@@ -33,9 +33,9 @@ public class TestStringSignerSecretProvider {
                 AuthenticationFilter.SIGNATURE_SECRET, "secret");
         secretProvider.init(secretProviderProps, null, -1);
         byte[] secretBytes = secretStr.getBytes();
-        Assert.assertArrayEquals(secretBytes, secretProvider.getCurrentSecret());
+        Assertions.assertArrayEquals(secretBytes, secretProvider.getCurrentSecret());
         byte[][] allSecrets = secretProvider.getAllSecrets();
-        Assert.assertEquals(1, allSecrets.length);
-        Assert.assertArrayEquals(secretBytes, allSecrets[0]);
+        Assertions.assertEquals(1, allSecrets.length);
+        Assertions.assertArrayEquals(secretBytes, allSecrets[0]);
     }
 }

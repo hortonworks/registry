@@ -26,8 +26,8 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -35,10 +35,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -50,7 +50,7 @@ public class BulkUploadServiceTest {
     private ISchemaRegistry schemaRegistry;
     private BulkUploadService bulkUploadService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         schemaRegistry = mock(ISchemaRegistry.class);
         bulkUploadService = new BulkUploadService(schemaRegistry);
@@ -70,8 +70,8 @@ public class BulkUploadServiceTest {
         boolean valid1 = bulkUploadService.validateSchemaMetadata(createMetadata(existingSchemaId, existingSchema));
         boolean valid2 = bulkUploadService.validateSchemaMetadata(createMetadata(notFoundSchemaId, notFoundSchema));
 
-        assertFalse("Expected schema to be valid.", valid1);
-        assertTrue("Expected schema to be not valid.", valid2);
+        assertFalse(valid1, "Expected schema to be valid.");
+        assertTrue(valid2, "Expected schema to be not valid.");
     }
 
     @Test

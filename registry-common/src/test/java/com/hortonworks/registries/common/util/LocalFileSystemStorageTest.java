@@ -23,13 +23,14 @@ import io.dropwizard.jersey.validation.Validators;
 import io.dropwizard.util.Resources;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import javax.validation.Validator;
 import java.io.File;
 import java.nio.file.Files;
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
 
@@ -48,7 +49,7 @@ public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         FileUtils.deleteQuietly(new File(uploadDir));
         FileUtils.deleteQuietly(new File(FileStorage.DEFAULT_DIR));

@@ -20,19 +20,22 @@ import com.hortonworks.registries.auth.KerberosTestUtils;
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.auth.server.PseudoAuthenticationHandler;
 import com.hortonworks.registries.auth.server.KerberosAuthenticationHandler;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         // create keytab
         File keytabFile = new File(KerberosTestUtils.getKeytabFile());
@@ -40,7 +43,13 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         clientPrincipal = clientPrincipal.substring(0, clientPrincipal.lastIndexOf("@"));
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
+        startMiniKdc();
         getKdc().createPrincipal(keytabFile, clientPrincipal, serverPrincipal);
+    }
+    
+    @AfterEach
+    public void tearDown() {
+        stopMiniKdc();
     }
 
     private Properties getAuthenticationHandlerConfiguration() {
@@ -53,7 +62,8 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         return props;
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testFallbacktoPseudoAuthenticator() throws Exception {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         Properties props = new Properties();
@@ -63,7 +73,8 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         auth.testAuthentication(new KerberosAuthenticator(), false);
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testFallbacktoPseudoAuthenticatorAnonymous() throws Exception {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         Properties props = new Properties();
@@ -73,7 +84,8 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         auth.testAuthentication(new KerberosAuthenticator(), false);
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testNotAuthenticated() throws Exception {
         AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(getAuthenticationHandlerConfiguration());
@@ -82,14 +94,15 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
             URL url = new URL(auth.getBaseURL());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
-            Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, conn.getResponseCode());
-            Assert.assertTrue(conn.getHeaderField(KerberosAuthenticator.WWW_AUTHENTICATE) != null);
+            Assertions.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, conn.getResponseCode());
+            Assertions.assertTrue(conn.getHeaderField(KerberosAuthenticator.WWW_AUTHENTICATE) != null);
         } finally {
             auth.stop();
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testAuthentication() throws Exception {
         final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
@@ -103,7 +116,8 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         });
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testAuthenticationPost() throws Exception {
         final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
@@ -117,7 +131,8 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         });
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testAuthenticationHttpClient() throws Exception {
         final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(
@@ -131,7 +146,8 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         });
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testAuthenticationHttpClientPost() throws Exception {
         final AuthenticatorTestCase auth = new AuthenticatorTestCase();
         AuthenticatorTestCase.setAuthenticationHandlerConfig(

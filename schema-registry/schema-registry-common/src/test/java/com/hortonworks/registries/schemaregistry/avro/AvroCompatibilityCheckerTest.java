@@ -18,8 +18,8 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -36,7 +36,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.NONE);
 
-        Assert.assertTrue(compatibilityResult.isCompatible());
+        Assertions.assertTrue(compatibilityResult.isCompatible());
     }
 
     private String fetchResourceText(String resourceName) throws IOException {
@@ -54,7 +54,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.BACKWARD);
 
-        Assert.assertTrue(compatibilityResult.isCompatible());
+        Assertions.assertTrue(compatibilityResult.isCompatible());
     }
 
     @Test
@@ -64,7 +64,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.FORWARD);
 
-        Assert.assertTrue(compatibilityResult.isCompatible());
+        Assertions.assertTrue(compatibilityResult.isCompatible());
     }
 
     @Test
@@ -74,7 +74,7 @@ public class AvroCompatibilityCheckerTest {
                                                             initialVersionSchema(),
                                                             SchemaCompatibility.BOTH);
 
-        Assert.assertTrue(compatibilityResult.isCompatible());
+        Assertions.assertTrue(compatibilityResult.isCompatible());
     }
 
     @Test
@@ -88,7 +88,7 @@ public class AvroCompatibilityCheckerTest {
                                                                 initialVersionSchema(),
                                                                 compatibility);
 
-            Assert.assertFalse(compatibilityResult.isCompatible());
+            Assertions.assertFalse(compatibilityResult.isCompatible());
         }
     }
 

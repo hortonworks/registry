@@ -16,18 +16,17 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.mysql;
 
-import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManagerIntegrationTest;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.config.HikariBasicConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.HikariCPConnectionBuilder;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.factory.MySqlExecutor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 
-@Category(IntegrationTest.class)
+@Tag("IntegrationTest")
 public abstract class AbstractMySqlStorageManagerNoCacheIntegrationTest extends JdbcStorageManagerIntegrationTest {
 
     public AbstractMySqlStorageManagerNoCacheIntegrationTest() {
@@ -37,12 +36,12 @@ public abstract class AbstractMySqlStorageManagerNoCacheIntegrationTest extends 
         setFields(new HikariCPConnectionBuilder(HikariBasicConfig.getH2HikariConfig()), Database.H2);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         super.tearDown();
     }

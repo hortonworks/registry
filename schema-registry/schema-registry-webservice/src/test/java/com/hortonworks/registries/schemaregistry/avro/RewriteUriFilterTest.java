@@ -16,8 +16,8 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,9 +78,9 @@ public class RewriteUriFilterTest {
             rewriteUriFilter.doFilter(servletRequest, servletResponse, filterChain);
 
             if (filterChainShouldBeInvoked) {
-                Assert.assertTrue("Filter chain should have been invoked", filterChain.isFilterChainInvoked());
+                Assertions.assertTrue(filterChain.isFilterChainInvoked(), "Filter chain should have been invoked");
             } else {
-                Assert.assertFalse("Filter chain should not have been invoked", filterChain.isFilterChainInvoked());
+                Assertions.assertFalse(filterChain.isFilterChainInvoked(), "Filter chain should not have been invoked");
             }
         }
     }

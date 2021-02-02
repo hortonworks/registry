@@ -23,6 +23,7 @@ import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.common.hadoop.KerberosKeytabCheck;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
@@ -47,9 +48,8 @@ import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
-import com.hortonworks.registries.common.hadoop.KerberosKeytabCheck;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.ws.rs.NotSupportedException;
@@ -61,12 +61,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.core.CombinableMatcher.either;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class DefaultAuthorizationAgentTest {
 
@@ -80,7 +78,7 @@ public class DefaultAuthorizationAgentTest {
     private static SchemaBranch branch3;
     private static Map<String, Long> schemaNameToIdMap;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws SchemaNotFoundException,
             InvalidSchemaException,
             IncompatibleSchemaException,
@@ -298,7 +296,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [delete] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -314,7 +312,7 @@ public class DefaultAuthorizationAgentTest {
             String expectedMsg2 = "User 'user33' does not have [delete] permission on " +
                     "SchemaBranch{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch3' }";
             // The result depends on the order in which the branches were added
-            assertThat(e.getMessage(), either(is(expectedMsg1)).or(is(expectedMsg2)));
+            assertTrue(expectedMsg1.equals(e.getMessage()) || expectedMsg2.equals(e.getMessage()));
         }
 
         // NOT_FOUND test cases
@@ -324,7 +322,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
     }
@@ -426,7 +424,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an DefaultAuthorizationAgent.AlreadyConfiguredException to be thrown");
         } catch (DefaultAuthorizationAgent.AlreadyConfiguredException e) {
             String expectedMsg = "DefaultAuthorizationAgent is already configured";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND TEST CASES do not exist
@@ -504,7 +502,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [read] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -513,7 +511,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user100' does not have [read] permission on " +
                     "SchemaBranch{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -522,7 +520,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user101",
                     "read", "Group3", "Schema3", "Branch3");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -530,7 +528,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeGetAggregatedSchemaInfo(authorizationUtils.getUserAndGroups(sc101), asmi);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user102' does not have [read] permission on SerDe{ serDeName='*' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND TEST CASES do not exist
@@ -556,7 +554,7 @@ public class DefaultAuthorizationAgentTest {
         List<SchemaVersionKey> expected = new ArrayList<>(versions);
         // Authorized by p7
         res = authorizationAgent.authorizeFindSchemasByFields(authorizationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
-        assertThat(res, is(expected));
+        assertEquals(expected, res);
 
         SchemaVersionKey svi4 = new SchemaVersionKey("Schema4", siv4.getVersion());
         versions.add(svi4);
@@ -566,7 +564,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         // Authorized by p11
         res = authorizationAgent.authorizeFindSchemasByFields(authorizationUtils.getUserAndGroups(sc4), schemaRegistry, versions);
-        assertThat(res, is(expected));
+        assertEquals(expected, res);
 
         // NOT_FOUND TEST CASES do not exist
     }
@@ -575,7 +573,6 @@ public class DefaultAuthorizationAgentTest {
 // problem is: javax/ws/rs/WebApplicationException
 // its coming from ranger-shaded and also from our own lib
 // we need to exclude it from ranger-shaded OR rewrite our code to not throw NotSupportedException
-@org.junit.Ignore
     @Test
     public void authorizeSchemaMetadata()
             throws AuthorizationException, SchemaNotFoundException {
@@ -613,7 +610,7 @@ public class DefaultAuthorizationAgentTest {
                     smi3, Authorizer.AccessType.DELETE);
         } catch (NotSupportedException e) {
             String expectedMsg = "AccessType.DELETE is not supported for authorizeSchemaMetadata method";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         } catch (Throwable e2) {
             fail("Unexpected exception: " + ExceptionUtils.getStackTrace(e2));
         }
@@ -626,7 +623,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user4' does not have [update] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
         try {
             authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(sc3), smi3, Authorizer.AccessType.CREATE);
@@ -634,7 +631,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [create] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
         try {
             authorizationAgent.authorizeSchemaMetadata(
@@ -646,7 +643,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [create] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // No policy that matches the resource
@@ -662,7 +659,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [read] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group4', schemaMetadataName='Schema4' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
         try {
             authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(sc3), smi4, Authorizer.AccessType.READ);
@@ -670,7 +667,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [read] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group4', schemaMetadataName='Schema4' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
         try {
             authorizationAgent.authorizeSchemaMetadata(
@@ -679,10 +676,9 @@ public class DefaultAuthorizationAgentTest {
                     sm4.getName(),
                     Authorizer.AccessType.DELETE);
             fail("Expected an AuthorizationException to be thrown");
-        } catch (AuthorizationException e) {
-            String expectedMsg = "User 'user3' does not have [delete] permission on " +
-                    "SchemaMetadata{ schemaGroupName='Group4', schemaMetadataName='Schema4' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+        } catch (NotSupportedException e) {
+            String expectedMsg = "AccessType.DELETE is not supported for authorizeSchemaMetadata method";
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND test cases
@@ -692,7 +688,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
     }
@@ -731,7 +727,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [create] permission on " +
                     "SchemaBranch{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch4' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         String user4 = "user4";
@@ -746,7 +742,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
                     "read", "Group3", "Schema3", "Branch3");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND test cases
@@ -758,7 +754,7 @@ public class DefaultAuthorizationAgentTest {
                     "Branch3");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "Schema version with id : -9999 not found";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -769,7 +765,7 @@ public class DefaultAuthorizationAgentTest {
                     "BranchX");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "Could not find schema with ID 99999999999999";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
     }
 
@@ -796,7 +792,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [delete] permission on " +
                     "SchemaBranch{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         String user88 = "user88";
@@ -811,7 +807,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user88",
                     "delete", "Group3", "Schema3", "Branch3");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND test cases
@@ -821,7 +817,7 @@ public class DefaultAuthorizationAgentTest {
                     new Long(-9999));
         } catch (SchemaBranchNotFoundException e) {
             String expectedMsg = "Schema branch with id : '-9999' not found";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
     }
 
@@ -846,14 +842,14 @@ public class DefaultAuthorizationAgentTest {
         // Filter by p8, p9
         res = authorizationAgent.authorizeGetAllBranches(authorizationUtils.getUserAndGroups(sc6), schemaRegistry,
                 "Schema3", branches);
-        assertThat(res, is(expected));
+        assertEquals(expected, res);
 
         expected = new ArrayList<>(branches);
         branches.add(branch4);
         // Filter by p8, p9
         res = authorizationAgent.authorizeGetAllBranches(authorizationUtils.getUserAndGroups(sc6), schemaRegistry,
                 "Schema3", branches);
-        assertThat(res, is(expected));
+        assertEquals(expected, res);
 
         // NOT_FOUND test cases
         try {
@@ -861,7 +857,7 @@ public class DefaultAuthorizationAgentTest {
                     "SchemaNotFound", branches);
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
     }
@@ -906,7 +902,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
                     "create", "Group3", "Schema3", "MASTER");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -915,7 +911,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
                     "update", "Group3", "Schema3", "MASTER");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -924,7 +920,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
                     "create", "Group3", "Schema3", "MASTER");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -933,7 +929,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
                     "create", "Group3", "Schema3", "Branch3");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -943,7 +939,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
                     "update", "Group3", "Schema3", "Branch3");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND test cases
@@ -957,7 +953,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -966,7 +962,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -975,7 +971,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with name Schema3 and version -99999";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -985,7 +981,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with id -9999";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         try {
@@ -994,7 +990,7 @@ public class DefaultAuthorizationAgentTest {
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with id -9999";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
     }
@@ -1034,7 +1030,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user5' does not have [read] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         String user1 = "user1";
@@ -1051,7 +1047,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user1' does not have [read] permission on " +
                     "SerDe{ serDeName='*' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUD test cases do not exist
@@ -1071,7 +1067,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(sc999), Authorizer.AccessType.READ);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [read] permission on SerDe{ serDeName='*' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUD test cases do not exist
@@ -1095,7 +1091,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeMapSchemaWithSerDes(authorizationUtils.getUserAndGroups(sc5), schemaRegistry, "Schema3");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user5' does not have [read] permission on SerDe{ serDeName='*' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         String user4 = "user4";
@@ -1106,7 +1102,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user4' does not have [update] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND test cases
@@ -1114,7 +1110,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeMapSchemaWithSerDes(authorizationUtils.getUserAndGroups(sc4), schemaRegistry, "SchemaNotFound");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
     }
 
@@ -1137,7 +1133,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user999",
                     "read", "Group3", "Schema3", "Branch3");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         String user33 = "user33";
@@ -1148,7 +1144,7 @@ public class DefaultAuthorizationAgentTest {
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user33",
                     "create", "Group3", "Schema3", "MASTER");
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
 
         // NOT_FOUND test cases
@@ -1156,7 +1152,7 @@ public class DefaultAuthorizationAgentTest {
             authorizationAgent.authorizeMergeSchemaVersion(authorizationUtils.getUserAndGroups(sc33), schemaRegistry, -9999L);
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with id -9999";
-            assertThat(e.getMessage(), is(expectedMsg));
+            assertEquals(expectedMsg, e.getMessage());
         }
     }
 
@@ -1179,7 +1175,7 @@ public class DefaultAuthorizationAgentTest {
         List<SchemaVersionInfo> expected = new ArrayList<>(versions);
         // Authorized by p7
         res = authorizationAgent.authorizeGetAllVersions(authorizationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
-        assertThat(res, is(expected));
+        assertEquals(expected, res);
 
         SchemaVersionInfo svi4 = schemaRegistry.getSchemaVersionInfo(siv4);
         versions.add(svi4);
@@ -1189,7 +1185,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         // Authorized by p11
         res = authorizationAgent.authorizeGetAllVersions(authorizationUtils.getUserAndGroups(sc4), schemaRegistry, versions);
-        assertThat(res, is(expected));
+        assertEquals(expected, res);
 
         // NOT_FOUND test cases do not exist
     }

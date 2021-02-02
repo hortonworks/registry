@@ -16,12 +16,12 @@ package com.hortonworks.registries.schemaregistry.validator;
 
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,7 +43,7 @@ public class SchemaMetadataTypeValidatorTest {
 
         //then
         verify(mockSchemaRegistryServiceMock).getSupportedSchemaProviders();
-        assertThat(actual, is(true));
+        assertTrue(actual);
     }
 
     @Test
@@ -59,6 +59,6 @@ public class SchemaMetadataTypeValidatorTest {
 
         //then
         verify(mockSchemaRegistryServiceMock).getSupportedSchemaProviders();
-        assertThat(actual, is(false));
+        assertFalse(actual);
     }
 }

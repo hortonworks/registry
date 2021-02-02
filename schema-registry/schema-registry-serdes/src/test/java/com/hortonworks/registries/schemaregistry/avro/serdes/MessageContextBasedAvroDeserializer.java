@@ -21,6 +21,7 @@ package com.hortonworks.registries.schemaregistry.avro.serdes;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
 
@@ -28,6 +29,10 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapsho
  *
  */
 public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDeserializer<MessageContext> {
+
+    public MessageContextBasedAvroDeserializer(SchemaRegistryClient mockSchemaRegistryClient) {
+        super(mockSchemaRegistryClient);
+    }
 
     @Override
     protected Object doDeserialize(MessageContext input,

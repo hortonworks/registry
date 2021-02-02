@@ -24,7 +24,9 @@ dependencies {
     compile libraries.spring.kerberos
     compile libraries.spring.security_core
     testCompile libraries.spring.core
-    testCompile libraries.hadoop.minikdc
+    testCompile(libraries.hadoop.minikdc) {
+        exclude group: 'junit'
+    }
     testCompile libraries.httpclient
     testCompile libraries.junit
     testCompile libraries.mockito

@@ -16,8 +16,8 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.collect.Lists;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -55,6 +55,6 @@ public abstract class AbstractFileStorageTest {
         while ((nextLine = bufferedReader.readLine()) != null) {
             actual.add(nextLine);
         }
-        Assert.assertEquals(lines, actual);
+        Assertions.assertEquals(lines, actual);
     }
 }

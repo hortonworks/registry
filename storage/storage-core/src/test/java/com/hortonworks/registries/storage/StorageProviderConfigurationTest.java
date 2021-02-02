@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,20 @@ import io.dropwizard.configuration.YamlConfigurationFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.validation.Validators;
 import io.dropwizard.util.Resources;
-import org.junit.ComparisonFailure;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.validation.Validator;
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StorageProviderConfigurationTest {
     private final ObjectMapper objectMapper = Jackson.newObjectMapper();
     private final Validator validator = Validators.newValidator();
     private final YamlConfigurationFactory<StorageProviderConfiguration> factory =
-            new YamlConfigurationFactory(StorageProviderConfiguration.class, validator, objectMapper, "");
+            new YamlConfigurationFactory<>(StorageProviderConfiguration.class, validator, objectMapper, "");
 
 
     @Test
@@ -72,7 +72,7 @@ public class StorageProviderConfigurationTest {
         assertEquals("SSO", keyStoreType);
     }
 
-    @Test(expected = ComparisonFailure.class)
+    @Test
     public void testReadNullYaml() throws Exception {
         final File yml = new File(Resources.getResource("storageconfigbadtest.yaml").toURI());
         final StorageProviderConfiguration wid = factory.build(yml);
@@ -97,13 +97,9 @@ public class StorageProviderConfigurationTest {
         
     }
 
-    @Test(expected = ConfigurationParsingException.class)
+    @Test
     public void testReadIncorrectYaml() throws Exception {
         final File yml = new File(Resources.getResource("storageconfiginvalidtest.yaml").toURI());
-        final StorageProviderConfiguration wid = factory.build(yml);
-        String providerClass = wid.getProviderClass();
-        StorageProviderProperties storageProviderProperties = wid.getProperties();
-        String dbType = storageProviderProperties.getDbtype();
-        int queryTimeoutInSecs = storageProviderProperties.getQueryTimeoutInSecs();
+        assertThrows(ConfigurationParsingException.class, () -> factory.build(yml));
     }
 }

@@ -16,7 +16,6 @@
 
 package com.hortonworks.registries.storage.impl.jdbc;
 
-import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableTest;
@@ -27,12 +26,12 @@ import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
 import org.h2.tools.RunScript;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,7 +40,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 
-@Category(IntegrationTest.class)
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@Tag("IntegrationTest")
 public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreManagerTest {
     protected static StorageManager jdbcStorageManager;
     protected static Database database;
@@ -52,12 +53,12 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     // ===== Tests Setup ====
     // Class level initialization is done in the implementing subclasses
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         createTables();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         jdbcStorageManager.cleanup();
         dropTables();
@@ -71,15 +72,15 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
 
     // =============== TEST METHODS ===============
 
-    @Test(expected = Exception.class)
+    @Test
     public void testAddUnequalExistingStorableAlreadyExistsException() {
         for (StorableTest test : storableTests) {
             Storable storable1 = test.getStorableList().get(0);
             Storable storable2 = test.getStorableList().get(1);
-            Assert.assertEquals(storable1.getStorableKey(), storable2.getStorableKey());
-            Assert.assertNotEquals(storable1, storable2);
+            Assertions.assertEquals(storable1.getStorableKey(), storable2.getStorableKey());
+            Assertions.assertNotEquals(storable1, storable2);
             getStorageManager().add(storable1);
-            getStorageManager().add(storable2);     // should throw exception
+            assertThrows(Exception.class, () -> getStorageManager().add(storable2));     // should throw exception
         }
     }
 
@@ -87,8 +88,8 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     public void testListEmptyDbEmptyCollection() {
         for (StorableTest test : storableTests) {
             Collection<Storable> found = getStorageManager().list(test.getStorableList().get(0).getStorableKey().getNameSpace());
-            Assert.assertNotNull(found);
-            Assert.assertTrue(found.isEmpty());
+            Assertions.assertNotNull(found);
+            Assertions.assertTrue(found.isEmpty());
         }
     }
 
@@ -109,13 +110,13 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
             Collection<Storable> storablesWithIdGt1 = getStorageManager().search(searchQuery);
             System.out.println("storablesWithIdGt1 = " + storablesWithIdGt1);
             for (Storable storable : storablesWithIdGt1) {
-                Assert.assertTrue(storable.getId() > 1L);
+                Assertions.assertTrue(storable.getId() > 1L);
             }
 
             Collection<Storable> allStorables = getStorageManager().list(searchQuery.getNameSpace());
             System.out.println("list = " + allStorables);
 
-            Assert.assertEquals(allStorables.size() - 1, storablesWithIdGt1.size());
+            Assertions.assertEquals(allStorables.size() - 1, storablesWithIdGt1.size());
         }
     }
 
@@ -125,7 +126,7 @@ public abstract class JdbcStorageManagerIntegrationTest extends AbstractStoreMan
     }
     
     @Test
-    @Ignore
+    @Disabled
     public void testNextIdAutoincrementColumnIdPlusOne() throws Exception {
 
         for (StorableTest test : storableTests) {

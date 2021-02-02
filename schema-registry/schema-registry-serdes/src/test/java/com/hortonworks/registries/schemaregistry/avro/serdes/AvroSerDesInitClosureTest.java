@@ -18,7 +18,8 @@ package com.hortonworks.registries.schemaregistry.avro.serdes;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
@@ -34,53 +35,57 @@ public class AvroSerDesInitClosureTest {
                     .evolve(true)
                     .build();
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSerWihtoutInit() throws Exception {
         AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
-        serializer.serialize(new Object(), schemaMetadata);
+        Assertions.assertThrows(IllegalStateException.class, () -> serializer.serialize(new Object(), schemaMetadata));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSerClosedInit() throws Exception {
         AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
         serializer.init(Collections.emptyMap());
         serializer.close();
-
-        serializer.init(Collections.emptyMap());
+        
+        Assertions.assertThrows(IllegalStateException.class, () -> serializer.init(Collections.emptyMap()));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSerClosedSer() throws Exception {
         AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
         serializer.init(Collections.emptyMap());
         serializer.close();
 
-        serializer.serialize(new Object(), schemaMetadata);
+        
+        Assertions.assertThrows(IllegalStateException.class, () -> serializer.serialize(new Object(), schemaMetadata));
     }
 
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testDeserWihtoutInit() throws Exception {
         AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer();
-        deserializer.deserialize(new ByteArrayInputStream(new byte[]{}), 1);
+        
+        Assertions.assertThrows(IllegalStateException.class, () -> deserializer.deserialize(new ByteArrayInputStream(new byte[]{}), 1));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testDeserClosedInit() throws Exception {
         AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer();
         deserializer.init(Collections.emptyMap());
         deserializer.close();
 
-        deserializer.init(Collections.emptyMap());
+        
+        Assertions.assertThrows(IllegalStateException.class, () -> deserializer.init(Collections.emptyMap()));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testDeserClosedSer() throws Exception {
         AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer();
         deserializer.init(Collections.emptyMap());
         deserializer.close();
 
-        deserializer.deserialize(new ByteArrayInputStream(new byte[]{}), 1);
+        
+        Assertions.assertThrows(IllegalStateException.class, () -> deserializer.deserialize(new ByteArrayInputStream(new byte[]{}), 1));
     }
 
 }

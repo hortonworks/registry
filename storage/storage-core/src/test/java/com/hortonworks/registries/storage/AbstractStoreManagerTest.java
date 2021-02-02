@@ -20,13 +20,10 @@ import com.google.common.collect.Lists;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,24 +34,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@Disabled
 public abstract class AbstractStoreManagerTest {
     protected static final Logger log = LoggerFactory.getLogger(AbstractStoreManagerTest.class);
-
-    @Rule
-    public TestName testName = new TestName();
-
-    @Rule
-    public TestWatcher watchman = new TestWatcher() {
-        @Override
-        public void starting(final Description method) {
-            log.info("RUNNING TEST [{}] ", method.getMethodName());
-        }
-    };
 
     // To test a new Storable entity type, add it to this list in the implementation of the method setStorableTests
     protected List<StorableTest> storableTests;
 
-    @Before
+    @BeforeEach
     public void setup() {
         setStorableTests();
         for (StorableTest test : storableTests) {
@@ -89,15 +76,16 @@ public abstract class AbstractStoreManagerTest {
     }
 
     // UnequalExistingStorable => Storable that has the same StorableKey but does NOT verify .equals()
-    @Test(expected = AlreadyExistsException.class)
+    @Test
     public void testAddUnequalExistingStorableAlreadyExistsException() {
         for (StorableTest test : storableTests) {
             Storable storable1 = test.getStorableList().get(0);
             Storable storable2 = test.getStorableList().get(1);
-            Assert.assertEquals(storable1.getStorableKey(), storable2.getStorableKey());
-            Assert.assertNotEquals(storable1, storable2);
+            Assertions.assertEquals(storable1.getStorableKey(), storable2.getStorableKey());
+            Assertions.assertNotEquals(storable1, storable2);
             getStorageManager().add(storable1);
-            getStorageManager().add(storable2);     // should throw exception
+            // should throw exception
+            Assertions.assertThrows(AlreadyExistsException.class, () -> getStorageManager().add(storable2));
         }
     }
 
@@ -108,7 +96,7 @@ public abstract class AbstractStoreManagerTest {
             Storable storable1 = test.getStorableList().get(0);
             getStorageManager().add(storable1);
             getStorageManager().addOrUpdate(storable1);
-            Assert.assertEquals(storable1, getStorageManager().get(storable1.getStorableKey()));
+            Assertions.assertEquals(storable1, getStorageManager().get(storable1.getStorableKey()));
         }
     }
 
@@ -116,13 +104,13 @@ public abstract class AbstractStoreManagerTest {
     public void testRemoveNonExistentStorableNull() {
         for (StorableTest test : storableTests) {
             Storable removed = getStorageManager().remove(test.getStorableList().get(0).getStorableKey());
-            Assert.assertNull(removed);
+            Assertions.assertNull(removed);
         }
     }
 
-    @Test(expected = StorageException.class)
+    @Test
     public void testListNonexistentNameSpaceStorageException() {
-        Assert.assertTrue(getStorageManager().list("NONEXISTENT_NAME_SPACE").isEmpty());
+        Assertions.assertThrows(StorageException.class, () -> Assertions.assertTrue(getStorageManager().list("NONEXISTENT_NAME_SPACE").isEmpty()));
     }
 
     @Test
@@ -136,7 +124,7 @@ public abstract class AbstractStoreManagerTest {
     }
 
     public void assertIterators(Collection collection1, Collection collection2) {
-        Assert.assertTrue(Iterators.elementsEqual(collection1.iterator(), collection2.iterator()));
+        Assertions.assertTrue(Iterators.elementsEqual(collection1.iterator(), collection2.iterator()));
     }
 
     @Test
@@ -186,7 +174,7 @@ public abstract class AbstractStoreManagerTest {
     protected void doTestNextIdAutoincrementColumnIdPlusOne(StorableTest test) throws SQLException {
         Long actualNextId = getStorageManager().nextId(test.getNameSpace());
         Long expectedNextId = actualNextId;
-        Assert.assertEquals(expectedNextId, actualNextId);
+        Assertions.assertEquals(expectedNextId, actualNextId);
         addAndAssertNextId(test, 0, ++expectedNextId);
         addAndAssertNextId(test, 2, ++expectedNextId);
         addAndAssertNextId(test, 2, expectedNextId);
@@ -196,6 +184,6 @@ public abstract class AbstractStoreManagerTest {
     protected void addAndAssertNextId(StorableTest test, int idx, Long expectedId) throws SQLException {
         getStorageManager().addOrUpdate(test.getStorableList().get(idx));
         Long nextId = getStorageManager().nextId(test.getNameSpace());
-        Assert.assertEquals(expectedId, nextId);
+        Assertions.assertEquals(expectedId, nextId);
     }
 }

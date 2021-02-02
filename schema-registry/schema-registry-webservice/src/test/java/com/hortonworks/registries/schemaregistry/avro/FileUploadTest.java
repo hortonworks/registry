@@ -21,26 +21,23 @@ import java.io.InputStream;
 
 import com.hortonworks.registries.shaded.javax.ws.rs.BadRequestException;
 
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import com.hortonworks.registries.common.test.IntegrationTest;
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
 import com.hortonworks.registries.schemaregistry.avro.helper.JarFileFactory;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.util.SchemaRegistryTestName;
 
-@Category(IntegrationTest.class)
+@Tag("IntegrationTest")
 public class FileUploadTest {
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
     private static SchemaRegistryClient SCHEMA_REGISTRY_CLIENT;
-    @Rule
-    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
+    
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(
                 SchemaRegistryTestProfileType.DEFAULT);
@@ -66,9 +63,9 @@ public class FileUploadTest {
         // then no exception is thrown
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void uploadInvalidFileResultsBadRequest() throws Exception {
         // when
-        uploadInvalidFile();
+        Assertions.assertThrows(BadRequestException.class, () -> uploadInvalidFile());
     }
 }

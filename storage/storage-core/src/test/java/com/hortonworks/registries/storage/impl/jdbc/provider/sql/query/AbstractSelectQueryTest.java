@@ -18,13 +18,11 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.sql.query;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class AbstractSelectQueryTest {
     
@@ -45,6 +43,6 @@ public class AbstractSelectQueryTest {
         underTest.buildSqlWithSearchQuery(searchQuery, schema);
         
         //then
-        assertThat(underTest.getColumns(), is(expected));
+        Assertions.assertIterableEquals(expected, underTest.getColumns());
     }
 }

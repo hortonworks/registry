@@ -24,13 +24,11 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.hamcrest.core.Is.is;
 
 public class AbstractSnapshotDeserializerTest {
 
@@ -45,7 +43,7 @@ public class AbstractSnapshotDeserializerTest {
         Boolean actual = underTest.getBooleanValue(config, "some key", false);
         
         //then
-        Assert.assertThat(actual, is(true));
+        Assertions.assertTrue(actual);
     }
 
     @Test
@@ -59,7 +57,7 @@ public class AbstractSnapshotDeserializerTest {
         Boolean actual = underTest.getBooleanValue(config, "some key", false);
 
         //then
-        Assert.assertThat(actual, is(true));
+        Assertions.assertTrue(actual);
     }
 
     @Test
@@ -73,7 +71,7 @@ public class AbstractSnapshotDeserializerTest {
         Boolean actual = underTest.getBooleanValue(config, "some key", false);
 
         //then
-        Assert.assertThat(actual, is(false));
+        Assertions.assertFalse(actual);
     }
 
     @Test
@@ -87,7 +85,7 @@ public class AbstractSnapshotDeserializerTest {
         Integer actual = underTest.getIntegerValue(config, "some key", 99);
 
         //then
-        Assert.assertThat(actual, is(4));
+        Assertions.assertEquals(4, actual);
     }
 
     @Test
@@ -101,7 +99,7 @@ public class AbstractSnapshotDeserializerTest {
         Integer actual = underTest.getIntegerValue(config, "some key", 99);
 
         //then
-        Assert.assertThat(actual, is(4));
+        Assertions.assertEquals(4, actual);
     }
 
     @Test
@@ -115,7 +113,7 @@ public class AbstractSnapshotDeserializerTest {
         Integer actual = underTest.getIntegerValue(config, "some key", 99);
 
         //then
-        Assert.assertThat(actual, is(99));
+        Assertions.assertEquals(99, actual);
     }
 
     @Test
@@ -129,7 +127,7 @@ public class AbstractSnapshotDeserializerTest {
         Long actual = underTest.getLongValue(config, "some key", 99L);
 
         //then
-        Assert.assertThat(actual, is(673L));
+        Assertions.assertEquals(673L, actual);
     }
 
     @Test
@@ -143,7 +141,7 @@ public class AbstractSnapshotDeserializerTest {
         Long actual = underTest.getLongValue(config, "some key", 99L);
 
         //then
-        Assert.assertThat(actual, is(673L));
+        Assertions.assertEquals(673L, actual);
     }
 
     @Test
@@ -157,7 +155,7 @@ public class AbstractSnapshotDeserializerTest {
         Long actual = underTest.getLongValue(config, "some key", 99L);
 
         //then
-        Assert.assertThat(actual, is(99L));
+        Assertions.assertEquals(99L, actual);
     }
     
     class SnapshotDeserializer extends AbstractSnapshotDeserializer {
@@ -168,8 +166,7 @@ public class AbstractSnapshotDeserializerTest {
         }
 
         @Override
-        protected Object doDeserialize(Object input, byte protocolId, SchemaMetadata schemaMetadata, 
-                                       Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
+        protected Object doDeserialize(Object input, byte protocolId, SchemaMetadata schemaMetadata, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
             return null;
         }
 

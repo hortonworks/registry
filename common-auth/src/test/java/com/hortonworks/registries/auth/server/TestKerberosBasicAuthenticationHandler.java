@@ -25,10 +25,11 @@ import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.times;
 
@@ -64,7 +66,7 @@ public class TestKerberosBasicAuthenticationHandler
         return props;
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         // create keytab
         File keytabFile = new File(KerberosTestUtils.getKeytabFile());
@@ -74,6 +76,7 @@ public class TestKerberosBasicAuthenticationHandler
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
         clientPrincipal = clientPrincipal.substring(0, clientPrincipal.lastIndexOf("@"));
         clientPrincipal1 = clientPrincipal1.substring(0, clientPrincipal1.lastIndexOf("@"));
+        startMiniKdc();
         getKdc().createPrincipal(keytabFile, serverPrincipal, clientPrincipal);
         getKdc().createPrincipal(clientPrincipal1, "client123");
         // handler
@@ -87,13 +90,15 @@ public class TestKerberosBasicAuthenticationHandler
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testType() throws Exception {
-        Assert.assertEquals(getExpectedType(), handler.getType());
+        Assertions.assertEquals(getExpectedType(), handler.getType());
     }
 
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithoutAuthorization() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         request = new HttpServletRequestWrapper(request) {
@@ -108,7 +113,7 @@ public class TestKerberosBasicAuthenticationHandler
         };
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
-        Assert.assertNull(handler.authenticate(request, response));
+        Assertions.assertNull(handler.authenticate(request, response));
         Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
         Mockito.verify(response, times(2)).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
@@ -120,7 +125,7 @@ public class TestKerberosBasicAuthenticationHandler
         Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("invalid");
         Mockito.when(request.getMethod()).thenReturn("POST");
 
-        Assert.assertNull(handler.authenticate(request, response));
+        Assertions.assertNull(handler.authenticate(request, response));
         Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
         Mockito.verify(response, times(2)).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
@@ -132,12 +137,13 @@ public class TestKerberosBasicAuthenticationHandler
         Mockito.when(request.getHeader(KerberosBasicAuthenticationHandler.AUTHORIZATION_HEADER)).thenReturn("Basic invalid");
         Mockito.when(request.getMethod()).thenReturn("POST");
 
-        Assert.assertNull(handler.authenticate(request, response));
+        Assertions.assertNull(handler.authenticate(request, response));
         Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
         Mockito.verify(response, times(2)).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithValidCredentials() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -149,15 +155,16 @@ public class TestKerberosBasicAuthenticationHandler
         if (authToken != null) {
             Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
 
-            Assert.assertEquals(KerberosTestUtils.getClientPrincipal1(), authToken.getName());
-            Assert.assertTrue(KerberosTestUtils.getClientPrincipal1().startsWith(authToken.getUserName()));
-            Assert.assertEquals(getExpectedType(), authToken.getType());
+            Assertions.assertEquals(KerberosTestUtils.getClientPrincipal1(), authToken.getName());
+            Assertions.assertTrue(KerberosTestUtils.getClientPrincipal1().startsWith(authToken.getUserName()));
+            Assertions.assertEquals(getExpectedType(), authToken.getType());
         } else {
-            Assert.fail("AuthToken should not have been null.");
+            Assertions.fail("AuthToken should not have been null.");
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithValidCredentialsInvalidMethod() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -167,14 +174,15 @@ public class TestKerberosBasicAuthenticationHandler
 
         AuthToken authToken = handler.authenticate(request, response);
         if (authToken != null) {
-            Assert.fail("AuthToken should have been null if the HTTP method is not POST.");
+            Assertions.fail("AuthToken should have been null if the HTTP method is not POST.");
         } else {
             Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
             Mockito.verify(response, times(2)).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithValidCredentialsNonSecure() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
@@ -184,7 +192,7 @@ public class TestKerberosBasicAuthenticationHandler
 
         AuthToken authToken = handler.authenticate(request, response);
         if (authToken != null) {
-            Assert.fail("AuthToken should have been null if the request is not secure.");
+            Assertions.fail("AuthToken should have been null if the request is not secure.");
         } else {
             Mockito.verify(response).setHeader(KerberosAuthenticator.WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
             Mockito.verify(response, times(2)).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -192,7 +200,8 @@ public class TestKerberosBasicAuthenticationHandler
     }
 
     //Attempt SPNEGO Auth when Basic authentication preconditions are not met.
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithKerberosAuthorization() throws Exception {
         String token = KerberosTestUtils.doAsClient(new Callable<String>() {
             @Override
@@ -238,9 +247,9 @@ public class TestKerberosBasicAuthenticationHandler
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
             Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
 
-            Assert.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
-            Assert.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
-            Assert.assertEquals(getExpectedType(), authToken.getType());
+            Assertions.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
+            Assertions.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
+            Assertions.assertEquals(getExpectedType(), authToken.getType());
         } else {
             Mockito.verify(response).setHeader(Mockito.eq(KerberosAuthenticator.WWW_AUTHENTICATE),
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
@@ -249,7 +258,8 @@ public class TestKerberosBasicAuthenticationHandler
     }
 
     //Attempt SPNEGO Auth even when Basic authentication preconditions are met but the Authorization header is for Negotiate mechanism.
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithKerberosAuthorizationWithPostAndSecure() throws Exception {
         String token = KerberosTestUtils.doAsClient(new Callable<String>() {
             @Override
@@ -296,9 +306,9 @@ public class TestKerberosBasicAuthenticationHandler
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
             Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
 
-            Assert.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
-            Assert.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
-            Assert.assertEquals(getExpectedType(), authToken.getType());
+            Assertions.assertEquals(KerberosTestUtils.getClientPrincipal(), authToken.getName());
+            Assertions.assertTrue(KerberosTestUtils.getClientPrincipal().startsWith(authToken.getUserName()));
+            Assertions.assertEquals(getExpectedType(), authToken.getType());
         } else {
             Mockito.verify(response).setHeader(Mockito.eq(KerberosAuthenticator.WWW_AUTHENTICATE),
                     Mockito.matches(KerberosAuthenticator.NEGOTIATE + " .*"));
@@ -306,7 +316,8 @@ public class TestKerberosBasicAuthenticationHandler
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRequestWithSPNEGODisabled() throws Exception {
         AuthenticationHandler handler = getNewAuthenticationHandler();
         Properties props = getDefaultProperties();
@@ -358,18 +369,19 @@ public class TestKerberosBasicAuthenticationHandler
         AuthenticationToken authToken = handler.authenticate(request, response);
 
         if (authToken != null) {
-            Assert.fail("AuthToken should have been null if the SPNEGO is disabled in KerberosBasicAuthenticationHandler.");
+            Assertions.fail("AuthToken should have been null if the SPNEGO is disabled in KerberosBasicAuthenticationHandler.");
         } else {
             Mockito.verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (handler != null) {
             handler.destroy();
             handler = null;
         }
+        stopMiniKdc();
     }
 }
 

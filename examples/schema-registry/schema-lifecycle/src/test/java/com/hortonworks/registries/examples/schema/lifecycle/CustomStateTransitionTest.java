@@ -33,10 +33,10 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class CustomStateTransitionTest {
     private SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper;
     private SchemaRegistryClient schemaRegistryClient;
 
-    @Before
+    @BeforeEach
     public void startUp() throws Exception {
         String serverYAMLPath = CustomStateTransitionTest.class.getClassLoader().getResource("registry-lifecycle-test-example.yaml").getPath();
         String clientYAMLPath = CustomStateTransitionTest.class.getClassLoader().getResource("registry-lifecycle-client.yaml").getPath();
@@ -60,7 +60,7 @@ public class CustomStateTransitionTest {
         schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         schemaRegistryTestServerClientWrapper.stopTestServer();
     }
@@ -93,7 +93,7 @@ public class CustomStateTransitionTest {
         SchemaVersionInfo schemaVersionInfoAtReviewState = schemaRegistryClient
                 .getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));
         LOG.info("1) Second version's state is now: {}", schemaVersionInfoAtReviewState);
-        Assert.assertEquals(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), schemaVersionInfoAtReviewState.getStateId());
+        Assertions.assertEquals(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), schemaVersionInfoAtReviewState.getStateId());
 
         LOG.info("Transitioning second version into REJECTED ({}) state.", CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId());
         schemaRegistryClient.transitionState(schemaIdVersion2.getSchemaVersionId(), 
@@ -101,7 +101,7 @@ public class CustomStateTransitionTest {
         SchemaVersionInfo schemaVersionInfoAtRejectedState = schemaRegistryClient
                 .getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));
         LOG.info("2) Second version's state is now: {}", schemaVersionInfoAtRejectedState);
-        Assert.assertEquals(CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), schemaVersionInfoAtRejectedState.getStateId());
+        Assertions.assertEquals(CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), schemaVersionInfoAtRejectedState.getStateId());
 
     }
 

@@ -24,10 +24,10 @@ dependencies {
     compile libraries.commons.io
     
     testCompile libraries.h2
-    testCompile libraries.jmockit
     testCompile libraries.junit
     testCompile libraries.spring.context
     testCompile libraries.dropwizard.core
+    testCompile libraries.mockito_junit5
 
 }
 

@@ -15,18 +15,18 @@
  */
 package com.hortonworks.registries.auth.server;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestAuthenticationToken {
 
     @Test
     public void testAnonymous() {
-        Assert.assertNotNull(AuthenticationToken.ANONYMOUS);
-        Assert.assertEquals(null, AuthenticationToken.ANONYMOUS.getUserName());
-        Assert.assertEquals(null, AuthenticationToken.ANONYMOUS.getName());
-        Assert.assertEquals(null, AuthenticationToken.ANONYMOUS.getType());
-        Assert.assertEquals(-1, AuthenticationToken.ANONYMOUS.getExpires());
-        Assert.assertFalse(AuthenticationToken.ANONYMOUS.isExpired());
+        Assertions.assertNotNull(AuthenticationToken.ANONYMOUS);
+        Assertions.assertEquals(null, AuthenticationToken.ANONYMOUS.getUserName());
+        Assertions.assertEquals(null, AuthenticationToken.ANONYMOUS.getName());
+        Assertions.assertEquals(null, AuthenticationToken.ANONYMOUS.getType());
+        Assertions.assertEquals(-1, AuthenticationToken.ANONYMOUS.getExpires());
+        Assertions.assertFalse(AuthenticationToken.ANONYMOUS.isExpired());
     }
 }

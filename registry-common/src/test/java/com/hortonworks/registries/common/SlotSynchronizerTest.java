@@ -15,8 +15,8 @@
  **/
 package com.hortonworks.registries.common;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,11 +50,11 @@ public class SlotSynchronizerTest {
             thread.join();
         }
 
-        Assert.assertEquals(limit * size, aggregatedCount.get());
+        Assertions.assertEquals(limit * size, aggregatedCount.get());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testIllegalUnlock() throws Exception {
+    @Test
+    public void testIllegalUnlock() {
         SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
         int key = new Random().nextInt();
 
@@ -63,18 +63,18 @@ public class SlotSynchronizerTest {
         lock.unlock();
 
         // call again unlock which should throw an Exception
-        lock.unlock();
-    }
-
-    @Test(expected = Exception.class)
-    public void testNullKey() throws Exception {
-        SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
-
-        slotSynchronizer.lockSlot(null);
+        Assertions.assertThrows(IllegalStateException.class, () -> lock.unlock());
     }
 
     @Test
-    public void testCountSlots() throws Exception {
+    public void testNullKey() {
+        SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
+
+        Assertions.assertThrows(Exception.class, () -> slotSynchronizer.lockSlot(null));
+    }
+
+    @Test
+    public void testCountSlots() {
         SlotSynchronizer<Integer> slotSynchronizer = new SlotSynchronizer<>();
         int count = new Random().nextInt(1000) + 1;
 
@@ -82,10 +82,10 @@ public class SlotSynchronizerTest {
         IntStream keysStream = IntStream.range(0, count);
         keysStream.forEach(value -> locks.add(slotSynchronizer.lockSlot(value)));
 
-        Assert.assertEquals(count, slotSynchronizer.occupiedSlots());
+        Assertions.assertEquals(count, slotSynchronizer.occupiedSlots());
 
         locks.forEach(lock -> lock.unlock());
-        Assert.assertEquals(0, slotSynchronizer.occupiedSlots());
+        Assertions.assertEquals(0, slotSynchronizer.occupiedSlots());
 
     }
 

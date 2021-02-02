@@ -23,9 +23,9 @@ import com.hortonworks.registries.tag.TaggedEntity;
 import com.hortonworks.registries.tag.client.TagClient;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.Collections;
@@ -50,47 +50,47 @@ public class TagRestServiceTest {
 
         //create a "parent-tag"
         Tag parent = createTag(parentTagId, "parent-tag");
-        Assert.assertTrue(tagClient.addTag(parent).getId() == parentTagId);
+        Assertions.assertTrue(tagClient.addTag(parent).getId() == parentTagId);
 
         //create a "child-tag" which is tagged under "parent-tag"
         Tag child = createTag(childTagId, "child-tag", ImmutableList.<Tag>of(parent));
-        Assert.assertTrue(tagClient.addTag(child).getId() == childTagId);
+        Assertions.assertTrue(tagClient.addTag(child).getId() == childTagId);
 
         //update parent-tag
         parent = createTag(parentTagId, "parent-update-tag");
-        Assert.assertTrue(tagClient.addOrUpdateTag(parent).getId() == parentTagId);
+        Assertions.assertTrue(tagClient.addOrUpdateTag(parent).getId() == parentTagId);
 
         //get a Tag by Id
         Tag tag= tagClient.getTag(parentTagId);
-        Assert.assertTrue("Tag Id is different" , tag.getId() == parentTagId);
+        Assertions.assertTrue("Tag Id is different" , tag.getId() == parentTagId);
 
         long unknownTagId = 100L;
         //get an unknown tag by Id
         try {
             tag = tagClient.getTag(unknownTagId);
-            Assert.fail("This should have thrown an error as entity" + unknownTagId + " does not exist");
+            Assertions.fail("This should have thrown an error as entity" + unknownTagId + " does not exist");
         } catch (Exception e) {
         }
 
         //add another tag
         Tag testTag = createTag(12L, "to-delete-tag");
-        Assert.assertTrue(tagClient.addTag(testTag).getId() ==  12L);
+        Assertions.assertTrue(tagClient.addTag(testTag).getId() ==  12L);
 
         //list all tags
         List<Tag> allTags = tagClient.listTags();
-        Assert.assertTrue("tag count mismatch", allTags.size() == 3);
+        Assertions.assertTrue("tag count mismatch", allTags.size() == 3);
 
         //list tags with queryParams
         Map<String, Object>  queryParams = new HashMap<>();
         queryParams.put("name", "child-tag");
         queryParams.put("description", "child-tag");
         allTags = tagClient.listTags(queryParams);
-        Assert.assertTrue("tag count mismatch", allTags.size() == 1);
+        Assertions.assertTrue("tag count mismatch", allTags.size() == 1);
 
         //delete a tag
         tagClient.removeTag(12L);
         allTags = tagClient.listTags();
-        Assert.assertTrue("count mismatch", allTags.size() == 2);
+        Assertions.assertTrue("count mismatch", allTags.size() == 2);
 
         //add Tag for Entity
         tagClient.addTagForEntity(new TaggedEntity("Device", 1L), parentTagId);
@@ -99,33 +99,33 @@ public class TagRestServiceTest {
 
         //get All Entities For Tag
         List<TaggedEntity>  allEntities = tagClient.getTaggedEntities(parentTagId);
-        Assert.assertTrue("entity count mismatch", allEntities.size() == 3);
+        Assertions.assertTrue("entity count mismatch", allEntities.size() == 3);
 
         //remove Tag for Entity
         tagClient.removeTagForEntity(new TaggedEntity("Device", 1L), parentTagId);
         allEntities = tagClient.getTaggedEntities(parentTagId);
-        Assert.assertTrue("entity count mismatch", allEntities.size() == 2);
+        Assertions.assertTrue("entity count mismatch", allEntities.size() == 2);
 
         //add new Tag to existing entity
         Tag newTag = createTag(13L, "new-tag");
-        Assert.assertTrue(tagClient.addTag(newTag).getId() == 13L);
+        Assertions.assertTrue(tagClient.addTag(newTag).getId() == 13L);
         tagClient.addTagForEntity(new TaggedEntity("Device", 2L), 13L);
 
         //get All Tags For a given Entity
         allTags = tagClient.getTags(new TaggedEntity("Device", 2L));
-        Assert.assertTrue("tag count mismatch", allTags.size() == 2);
+        Assertions.assertTrue("tag count mismatch", allTags.size() == 2);
 
         //try adding unknown tag for a Entity
         try {
             tagClient.addTagForEntity(new TaggedEntity("Device", 1L), unknownTagId);
-            Assert.fail("should have thrown error");
+            Assertions.fail("should have thrown error");
         } catch (RuntimeException e) {
         }
 
         //try removing unknown tag for a Entity
         try {
             tagClient.removeTagForEntity(new TaggedEntity("Device", 1L), unknownTagId);
-            Assert.fail("should have thrown error");
+            Assertions.fail("should have thrown error");
         } catch (RuntimeException e) {
         }
     }

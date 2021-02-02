@@ -17,8 +17,8 @@ package com.hortonworks.registries.schemaregistry.streams;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class StreamsSchemaProviderTest {
         try (InputStream trucksSchemaStream = StreamsSchemaProviderTest.class.getResourceAsStream("/streams/trucks.stsc");) {
             List<SchemaFieldInfo> schemaFieldInfos = streamsSchemaProvider.generateFields(IOUtils.toString(trucksSchemaStream));
             LOG.info("schemaFieldInfos = " + schemaFieldInfos);
-            Assert.assertEquals(11, schemaFieldInfos.size());
+            Assertions.assertEquals(11, schemaFieldInfos.size());
         }
     }
 }

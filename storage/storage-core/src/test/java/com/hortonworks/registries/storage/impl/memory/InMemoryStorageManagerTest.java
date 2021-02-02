@@ -19,8 +19,8 @@ package com.hortonworks.registries.storage.impl.memory;
 import com.hortonworks.registries.storage.AbstractStoreManagerTest;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
@@ -35,7 +35,7 @@ public abstract class InMemoryStorageManagerTest extends AbstractStoreManagerTes
     @Test
     public void testListNonexistentNameSpaceStorageException() {
         Collection<Storable> found = getStorageManager().list("NONEXISTENT_NAME_SPACE");
-        Assert.assertTrue(found.isEmpty());
+        Assertions.assertTrue(found.isEmpty());
     }
 
 }

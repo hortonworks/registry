@@ -16,28 +16,25 @@
 package com.hortonworks.registries.schemaregistry.authorizer.ranger;
 
 import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.UserAndGroups;
 
-@RunWith(BlockJUnit4ClassRunner.class)
 public class RangerSchemaRegistryAuthorizerImplTest {
 
     private static Authorizer authorizer = new RangerSchemaRegistryAuthorizerImpl();
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         // For now configuration is empty.
         HashMap<String, Object> props = new HashMap<>();

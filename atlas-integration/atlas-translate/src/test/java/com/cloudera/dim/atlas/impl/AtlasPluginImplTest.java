@@ -14,17 +14,17 @@
  **/
 package com.cloudera.dim.atlas.impl;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AtlasPluginImplTest {
 
     private AtlasPluginImpl atlasPlugin;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         atlasPlugin = new AtlasPluginImpl();
     }
@@ -35,10 +35,11 @@ public class AtlasPluginImplTest {
         assertEquals(1, num);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testWithRetryError() {
-        atlasPlugin.withRetry(randomize -> 2, id -> getIfOddNumber(id));
-        fail("Test should have failed in the previous step.");
+        assertThrows(IllegalArgumentException.class, () ->
+            atlasPlugin.withRetry(randomize -> 2, id -> getIfOddNumber(id)),
+                "Test should have failed in the previous step.");
     }
 
     private int getIfOddNumber(int number) {

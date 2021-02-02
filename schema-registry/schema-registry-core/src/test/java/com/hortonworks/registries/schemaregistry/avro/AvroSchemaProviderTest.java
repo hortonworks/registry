@@ -17,20 +17,16 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.util.List;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNot.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-/**
- *
- */
 public class AvroSchemaProviderTest {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaProviderTest.class);
 
@@ -40,7 +36,7 @@ public class AvroSchemaProviderTest {
         try (InputStream schemaStream = AvroSchemaProviderTest.class.getResourceAsStream("/avro/trucks.avsc");) {
             List<SchemaFieldInfo> schemaFieldInfos = avroSchemaProvider.generateFields(IOUtils.toString(schemaStream));
             LOG.info("generated schema fields [{}]", schemaFieldInfos);
-            Assert.assertEquals(11, schemaFieldInfos.size());
+            assertEquals(11, schemaFieldInfos.size());
         }
     }
 
@@ -82,9 +78,9 @@ public class AvroSchemaProviderTest {
         byte[] schemaWithDefaultsFingerprint = avroSchemaProvider.getFingerprint(schemaWithDefaults);
         byte[] schemaWithAliasesFingerprint = avroSchemaProvider.getFingerprint(schemaWithAliases);
 
-        Assert.assertThat(schemaFingerprint, not(equalTo(schemaWithAliasesFingerprint)));
-        Assert.assertThat(schemaFingerprint, not(equalTo(schemaWithDefaultsFingerprint)));
-        Assert.assertThat(schemaWithDefaultsFingerprint, not(equalTo(schemaWithAliasesFingerprint)));
+        assertNotEquals(schemaWithAliasesFingerprint, schemaFingerprint);
+        assertNotEquals(schemaWithDefaultsFingerprint, schemaFingerprint);
+        assertNotEquals(schemaWithAliasesFingerprint, schemaWithDefaultsFingerprint);
     }
 
 }

@@ -24,9 +24,9 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.cache.impl.GuavaCache;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +35,7 @@ public class GuavaCacheTest {
     private static Cache<StorableKey, Storable> cache;
     private static StorableKey storableKey;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         setCache();
         setStorableKey();
@@ -56,7 +56,7 @@ public class GuavaCacheTest {
     @Test
     public void testGetUnexistingKeyNullExpected() {
         Storable val = cache.get(storableKey);
-        Assert.assertNull(val);
+        Assertions.assertNull(val);
     }
 
     /**
@@ -65,16 +65,16 @@ public class GuavaCacheTest {
     @Test
     public void testPutGetExistingRemoveKey() {
         try {
-            Assert.assertNull(cache.get(storableKey));
+            Assertions.assertNull(cache.get(storableKey));
 
             final Storable putVal = new TestStorable();
             cache.put(storableKey, putVal);
             Storable retrievedVal = cache.get(storableKey);
 
-            Assert.assertEquals(putVal, retrievedVal);
+            Assertions.assertEquals(putVal, retrievedVal);
         } finally {
             cache.remove(storableKey);
-            Assert.assertNull(cache.get(storableKey));
+            Assertions.assertNull(cache.get(storableKey));
         }
     }
 

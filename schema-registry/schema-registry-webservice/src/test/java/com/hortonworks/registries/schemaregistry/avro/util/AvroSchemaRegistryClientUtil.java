@@ -22,7 +22,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -39,11 +39,11 @@ public final class AvroSchemaRegistryClientUtil {
 
     public static void assertAvroObjs(Object expected, Object given) {
         if (expected instanceof byte[]) {
-            Assert.assertArrayEquals((byte[]) expected, (byte[]) given);
+            Assertions.assertArrayEquals((byte[]) expected, (byte[]) given);
         } else if (expected instanceof SpecificRecord) {
-            Assert.assertTrue(SpecificData.get().compare(expected, given, ((SpecificRecord) expected).getSchema()) == 0);
+            Assertions.assertTrue(SpecificData.get().compare(expected, given, ((SpecificRecord) expected).getSchema()) == 0);
         } else {
-            Assert.assertEquals(expected, given);
+            Assertions.assertEquals(expected, given);
         }
     }
 

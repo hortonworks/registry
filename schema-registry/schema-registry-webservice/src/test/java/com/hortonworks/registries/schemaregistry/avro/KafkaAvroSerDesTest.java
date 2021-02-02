@@ -16,60 +16,59 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestProfileType;
-import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
-import com.hortonworks.registries.serdes.Device;
-import com.hortonworks.registries.common.test.IntegrationTest;
+import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
-import com.hortonworks.registries.schemaregistry.util.CustomParameterizedRunner;
-import com.hortonworks.registries.util.SchemaRegistryTestName;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+import com.hortonworks.registries.serdes.Device;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  *
  */
 
-@RunWith(CustomParameterizedRunner.class)
-@Category(IntegrationTest.class)
+@Tag("IntegrationTest")
 public class KafkaAvroSerDesTest {
 
     private static SchemaRegistryTestServerClientWrapper SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER;
 
-    @Rule
-    public SchemaRegistryTestName testNameRule = new SchemaRegistryTestName();
+    private String testName;
 
-    @CustomParameterizedRunner.Parameters
-    public static Iterable<SchemaRegistryTestProfileType> profiles() {
-        return Arrays.asList(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    @BeforeEach
+    void init(TestInfo testInfo) {
+        testName = testInfo.getTestMethod().get().getName();
     }
 
-    @CustomParameterizedRunner.BeforeParam
-    public static void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
+
+    public static Stream<SchemaRegistryTestProfileType> profiles() {
+        return Stream.of(SchemaRegistryTestProfileType.DEFAULT, SchemaRegistryTestProfileType.SSL);
+    }
+    
+    public void beforeParam(SchemaRegistryTestProfileType schemaRegistryTestProfileType) throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER = new SchemaRegistryTestServerClientWrapper(schemaRegistryTestProfileType);
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.startTestServer();
     }
 
-    @CustomParameterizedRunner.AfterParam
-    public static void afterParam() throws Exception {
+    @AfterEach
+    public void afterParam() throws Exception {
         SCHEMA_REGISTRY_TEST_SERVER_CLIENT_WRAPPER.stopTestServer();
     }
+    
 
-
-    public KafkaAvroSerDesTest(SchemaRegistryTestProfileType schemaRegistryTestProfileType) {
-
-    }
-
-    @Test
-    public void testPrimitiveSerDes() {
-        String topicPrefix = testNameRule.getMethodName() + "-" + System.currentTimeMillis();
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testPrimitiveSerDes(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        String topicPrefix = testName + "-" + System.currentTimeMillis();
 
         testPrimitiveSerDes(topicPrefix);
     }
@@ -94,15 +93,17 @@ public class KafkaAvroSerDesTest {
         byte[] serializedData = avroSerializer.serialize(topic, payload);
         Object deserializedObj = avroDeserializer.deserialize(topic, serializedData);
         if (payload instanceof byte[]) {
-            Assert.assertArrayEquals((byte[]) payload, (byte[]) deserializedObj);
+            Assertions.assertArrayEquals((byte[]) payload, (byte[]) deserializedObj);
         } else {
             AvroSchemaRegistryClientUtil.assertAvroObjs(payload, deserializedObj);
         }
     }
 
-    @Test
-    public void testAvroRecordsSerDes() throws Exception {
-        String topicPrefix = testNameRule.getMethodName() + "-" + System.currentTimeMillis();
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testAvroRecordsSerDes(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        String topicPrefix = testName + "-" + System.currentTimeMillis();
 
         String genericRecordTopic = topicPrefix + "-generic";
         Object genericRecordForDevice = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
@@ -115,9 +116,11 @@ public class KafkaAvroSerDesTest {
         testKafkaSerDes(specificRecordTopic, false, specificRecord);
     }
 
-    @Test
-    public void testIncompatibleSchemas() throws Exception {
-        String topic = testNameRule.getMethodName() + "-" + System.currentTimeMillis();
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testIncompatibleSchemas(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        String topic = testName + "-" + System.currentTimeMillis();
 
         // send initial message
         Object initialMsg = AvroSchemaRegistryClientUtil.createGenericRecordForDevice();
@@ -128,7 +131,7 @@ public class KafkaAvroSerDesTest {
         Object incompatMsg = AvroSchemaRegistryClientUtil.createGenericRecordForIncompatDevice();
         try {
             testKafkaSerDes(topic, true, incompatMsg);
-            Assert.fail("An error should have been received here because of incompatible schemas");
+            Assertions.fail("An error should have been received here because of incompatible schemas");
         } catch (Exception e) {
             // should have received an error.
         }

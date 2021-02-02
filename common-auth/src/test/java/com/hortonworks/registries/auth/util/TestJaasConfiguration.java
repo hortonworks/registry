@@ -15,8 +15,8 @@
  */
 package com.hortonworks.registries.auth.util;
 
-import org.junit.Test;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import java.util.Map;
@@ -29,68 +29,62 @@ public class TestJaasConfiguration {
                 "service = kafka useTicketCache=false principal=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true " +
                 "keyTab=\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true;");
 
-        Assert.assertNotNull(conf.getAppConfigurationEntry("RegistryClient"));
-        Assert.assertNull(conf.getAppConfigurationEntry("RegistryCl"));
-        Assert.assertEquals(conf.getAppConfigurationEntry("RegistryClient").length, 1);
-        Assert.assertEquals(conf.getAppConfigurationEntry("RegistryClient")[0].getLoginModuleName(), "com.sun.security.auth.module.Krb5LoginModule");
-        Assert.assertEquals(conf.getAppConfigurationEntry("RegistryClient")[0].getControlFlag(), 
-                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED);
+        Assertions.assertNotNull(conf.getAppConfigurationEntry("RegistryClient"));
+        Assertions.assertNull(conf.getAppConfigurationEntry("RegistryCl"));
+        Assertions.assertEquals(1, conf.getAppConfigurationEntry("RegistryClient").length);
+        Assertions.assertEquals("com.sun.security.auth.module.Krb5LoginModule", conf.getAppConfigurationEntry("RegistryClient")[0].getLoginModuleName());
+        Assertions.assertEquals(AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, conf.getAppConfigurationEntry("RegistryClient")[0].getControlFlag());
 
         Map<String, ?> options = conf.getAppConfigurationEntry("RegistryClient")[0].getOptions();
-        Assert.assertEquals(options.get("principal"), "HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE");
-        Assert.assertEquals(options.get("useKeyTab"), "true");
-        Assert.assertEquals(options.get("doNotPrompt"), "true");
-        Assert.assertEquals(options.get("useTicketCache"), "false");
-        Assert.assertEquals(options.get("keyTab"),
-                "/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab");
-        Assert.assertEquals(options.get("debug"), "true");
-        Assert.assertEquals(options.get("service"), "kafka");
+        Assertions.assertEquals("HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE", options.get("principal"));
+        Assertions.assertEquals("true", options.get("useKeyTab"));
+        Assertions.assertEquals("true", options.get("doNotPrompt"));
+        Assertions.assertEquals("false", options.get("useTicketCache"));
+        Assertions.assertEquals("/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab", options.get("keyTab"));
+        Assertions.assertEquals("true", options.get("debug"));
+        Assertions.assertEquals("kafka", options.get("service"));
     }
 
     @Test
     public void testJaasConfigurationFail() {
         //; missing at the end.
         try {
-            new JaasConfiguration("RegistryClient", 
-                    "com.sun.security.auth.module.Krb5LoginModule required doNotPrompt=true useTicketCache=false principal" +
-                            "=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true keyTab=" +
-                    "\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true");
-            Assert.fail("Jaas Configuration should have failed.");
+            new JaasConfiguration("RegistryClient",
+                    "com.sun.security.auth.module.Krb5LoginModule required doNotPrompt=true useTicketCache=false " +
+                            "principal=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true keyTab=\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true");
+            Assertions.fail("Jaas Configuration should have failed.");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(IllegalArgumentException.class, ex.getClass());
         }
 
         //controlFlag missing
         try {
-            new JaasConfiguration("RegistryClient", "com.sun.security.auth.module.Krb5LoginModule " +
-                    "doNotPrompt=true useTicketCache=false principal=" +
-                    "\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true keyTab=" +
-                    "\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true;");
-            Assert.fail("Jaas Configuration should have failed.");
+            new JaasConfiguration("RegistryClient",
+                    "com.sun.security.auth.module.Krb5LoginModule " +
+                            "doNotPrompt=true useTicketCache=false principal=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" " +
+                            "useKeyTab=true keyTab=\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true;");
+            Assertions.fail("Jaas Configuration should have failed.");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(IllegalArgumentException.class, ex.getClass());
         }
 
         //loginModuleClass missing
         try {
-            new JaasConfiguration("RegistryClient", 
-                    " required doNotPrompt=true useTicketCache=false principal=" +
-                    "\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true keyTab=" +
-                    "\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true;");
-            Assert.fail("Jaas Configuration should have failed.");
+            new JaasConfiguration("RegistryClient",
+                    " required doNotPrompt=true useTicketCache=false principal=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" " +
+                            "useKeyTab=true keyTab=\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true;");
+            Assertions.fail("Jaas Configuration should have failed.");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(IllegalArgumentException.class, ex.getClass());
         }
 
         //= replaced with : for some of the options.
         try {
-            new JaasConfiguration("RegistryClient", 
-                    "com.sun.security.auth.module.Krb5LoginModule required doNotPrompt:true useTicketCache:false " +
-                    "principal=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true keyTab=" + 
-                    "\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true");
-            Assert.fail("Jaas Configuration should have failed.");
+            new JaasConfiguration("RegistryClient", "com.sun.security.auth.module.Krb5LoginModule required doNotPrompt:true useTicketCache:false " +
+                    "principal=\"HTTP/ip-10-97-81-205.cloudera.site@CLOUDERA.SITE\" useKeyTab=true keyTab=\"/var/run/cloudera-scm-agent/process/1546331895-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab\" debug=true");
+            Assertions.fail("Jaas Configuration should have failed.");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(IllegalArgumentException.class, ex.getClass());
         }
     }
 }

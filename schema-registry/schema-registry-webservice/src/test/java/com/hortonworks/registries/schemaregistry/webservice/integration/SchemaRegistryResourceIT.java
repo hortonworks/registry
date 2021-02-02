@@ -30,13 +30,13 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.util.Authorizat
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import io.dropwizard.testing.junit.ResourceTestRule;
-
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.dropwizard.testing.junit5.ResourceExtension;
 import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.client.Client;
@@ -53,9 +53,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -65,27 +65,22 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class SchemaRegistryResourceIT {
 
     private static ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
     private static AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
     private static AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
     private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock = mock(SchemaMetadataTypeValidator.class);
+    private static ResourceExtension RESOURCE = ResourceExtension.builder()
+            .addResource(new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null))
+            .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
+            .build();
     private Client testClient = RESOURCE.client();
-
+    
     @BeanParam
     public InputStream getInputStream() {
         return new ByteArrayInputStream("test".getBytes());
-    }
-
-    @ClassRule
-    public static final ResourceTestRule RESOURCE = ResourceTestRule.builder()
-            .addResource(instantiateResource())
-            .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
-            .build();
-
-    private static SchemaRegistryResource instantiateResource() {
-        return new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null);
     }
 
     @Test
@@ -140,14 +135,7 @@ public class SchemaRegistryResourceIT {
     @Test
     public void findSchemasCanDelegate() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata
-                .Builder("magnesium")
-                .type("avro")
-                .schemaGroup("eyebrow")
-                .compatibility(SchemaCompatibility.BACKWARD)
-                .validationLevel(SchemaValidationLevel.LATEST)
-                .description("b6")
-                .build();
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
         when(authorizationAgentMock.authorizeFindSchemas(any(), eq(schemaversions))).thenReturn(schemaversions);
@@ -190,19 +178,11 @@ public class SchemaRegistryResourceIT {
     @Test
     public void findAggregatedSchemasCanDelegate() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata
-                .Builder("magnesium")
-                .type("avro")
-                .schemaGroup("eyebrow")
-                .compatibility(SchemaCompatibility.BACKWARD)
-                .validationLevel(SchemaValidationLevel.LATEST)
-                .description("b6")
-                .build();
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
         Collection<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
-        AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(schemaMetadata, 
-                null, null, Collections.emptyList(), Collections.emptyList());
+        AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(schemaMetadata, null, null, Collections.emptyList(), Collections.emptyList());
         aggregatedSchemaMetadataInfos.add(aggregatedSchemaMetadataInfo);
         MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
         queryParameters.add("name", "magnesium");
@@ -248,11 +228,7 @@ public class SchemaRegistryResourceIT {
     @Test
     public void updateSchemaInfoBadType() {
         //given
-        SchemaMetadata updatedSchemaMetadata = new SchemaMetadata
-                .Builder("updated")
-                .description("SchemaMetadata with bad type")
-                .type("cat")
-                .build();
+        SchemaMetadata updatedSchemaMetadata = new SchemaMetadata.Builder("updated").description("SchemaMetadata with bad type").type("cat").build();
         when(schemaMetadataTypeValidatorMock.isValid("cat")).thenReturn(false);
 
         //when
@@ -354,14 +330,7 @@ public class SchemaRegistryResourceIT {
     @Test
     public void querySchemasThrowRangerException() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata
-                .Builder("foo")
-                .type("avro")
-                .schemaGroup("foundation")
-                .compatibility(SchemaCompatibility.BACKWARD)
-                .validationLevel(SchemaValidationLevel.LATEST)
-                .description("b6")
-                .build();
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("foo").type("avro").schemaGroup("foundation").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
         Collection<SchemaMetadataInfo> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaMetadataInfo(schemaMetadata));
         MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
@@ -386,16 +355,8 @@ public class SchemaRegistryResourceIT {
     @Test
     public void postSchemaThrowRangerException() throws Exception {
         //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata
-                .Builder("magnesium")
-                .type("avro")
-                .schemaGroup("eyebrow")
-                .compatibility(SchemaCompatibility.BACKWARD)
-                .validationLevel(SchemaValidationLevel.LATEST)
-                .description("b6")
-                .build();
-        doThrow(new RangerException("Ranger Exception"))
-                .when(authorizationAgentMock).authorizeSchemaMetadata(any(), any(SchemaMetadata.class), any());
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        doThrow(new RangerException("Ranger Exception")).when(authorizationAgentMock).authorizeSchemaMetadata(any(), any(SchemaMetadata.class), any());
         when(schemaRegistryMock.addSchemaMetadata(schemaMetadata, true)).thenReturn(1L);
 
         //when

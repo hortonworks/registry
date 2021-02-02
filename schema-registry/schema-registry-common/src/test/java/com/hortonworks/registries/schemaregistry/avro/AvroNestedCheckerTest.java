@@ -16,9 +16,9 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import org.apache.avro.Schema;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -27,7 +27,7 @@ public class AvroNestedCheckerTest {
     private static Schema simpleNestedSchema;
     private static Schema complexNestedSchema;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         Schema.Parser schemaParser = new Schema.Parser();
         simpleNestedSchema = schemaParser.parse(AvroNestedCheckerTest.class.getResourceAsStream("/avro/nested/nested-simple.avsc"));
@@ -42,7 +42,7 @@ public class AvroNestedCheckerTest {
             - SimpleRecord.value : string
             - SimpleRecord.parent : Union(null, Record(Record_B))
          */
-        Assert.assertEquals(3, new AvroFieldsGenerator().generateFields(simpleNestedSchema).size());
+        Assertions.assertEquals(3, new AvroFieldsGenerator().generateFields(simpleNestedSchema).size());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class AvroNestedCheckerTest {
             - Record_A.arrayTest : array(Record_A)
             - Record_A.mapTest : map(Record_A)
          */
-        Assert.assertEquals(8, new AvroFieldsGenerator().generateFields(complexNestedSchema).size());
+        Assertions.assertEquals(8, new AvroFieldsGenerator().generateFields(complexNestedSchema).size());
     }
 
     @Test

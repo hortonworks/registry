@@ -64,7 +64,9 @@ ext.libraries = [
       jersey         : "io.dropwizard:dropwizard-jersey:$versions_dropwizard",
       util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
       metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
-      testing        : "io.dropwizard:dropwizard-testing:$versions_dropwizard_testing",
+      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard_testing") {
+          exclude group: 'junit'
+      },
       swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
       guicey         : "ru.vyarus:dropwizard-guicey:$versions_dropwizard_guicey"
    ],
@@ -103,19 +105,17 @@ ext.libraries = [
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
 
    json_schema_validator : "com.github.fge:json-schema-validator:$versions_json_schema_validator",
-   junit             : "junit:junit:$versions_junit",
-   junit5            : "junit:junit:$versions_junit",
-   jmockit           : "org.jmockit:jmockit:$versions_jmockit",
+   junit             : "org.junit.jupiter:junit-jupiter:$versions_junit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
-   powermock_api     : "org.powermock:powermock-api-mockito2:$versions_powermock",
-   powermock_module  : "org.powermock:powermock-module-junit4:$versions_powermock",
+   mockito_junit5    : "org.mockito:mockito-junit-jupiter:$versions_mockito",
+   mockito_inline    : "org.mockito:mockito-inline:$versions_mockito",
    cucumber: [
        core: "io.cucumber:cucumber-java:$versions_cucumber",
        junit: "io.cucumber:cucumber-junit:$versions_cucumber",
        junit_platform: "io.cucumber:cucumber-junit-platform-engine:$versions_cucumber",
        picocontainer: "io.cucumber:cucumber-picocontainer:$versions_cucumber"
    ],
-        
+
    logging: [
       logback        : "ch.qos.logback:logback-classic:$versions_logback",
       log4j          : "log4j:log4j:$versions_log4j",

@@ -15,39 +15,35 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.core;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(BlockJUnit4ClassRunner.class)
 public class AuthorizerTest {
 
     @Test
     public void authorizerResourcesTests() {
         Authorizer.Resource resource = new Authorizer.SerdeResource();
         String res = "SerDe{ serDeName='*' }";
-        assertThat(resource.toString(), is(res));
-        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SERDE));
+        assertEquals(res, resource.toString());
+        assertEquals(Authorizer.ResourceType.SERDE, resource.getResourceType());
 
         resource = new Authorizer.SchemaMetadataResource("Group", "Schema");
         res = "SchemaMetadata{ schemaGroupName='Group', schemaMetadataName='Schema' }";
-        assertThat(resource.toString(), is(res));
-        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SCHEMA_METADATA));
+        assertEquals(res, resource.toString());
+        assertEquals(Authorizer.ResourceType.SCHEMA_METADATA, resource.getResourceType());
 
         resource = new Authorizer.SchemaBranchResource("Group", "Schema", "Branch");
         res = "SchemaBranch{ schemaGroupName='Group', schemaMetadataName='Schema'" +
                 ", schemaBranchName='Branch' }";
-        assertThat(resource.toString(), is(res));
-        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SCHEMA_BRANCH));
+        assertEquals(res, resource.toString());
+        assertEquals(Authorizer.ResourceType.SCHEMA_BRANCH, resource.getResourceType());
 
         resource = new Authorizer.SchemaVersionResource("Group", "Schema", "Branch");
         res = "SchemaVersion{ schemaGroupName='Group', schemaMetadataName='Schema'" +
                 ", schemaBranchName='Branch', schemaVersionName='*' }";
-        assertThat(resource.toString(), is(res));
-        assertThat(resource.getResourceType(), is(Authorizer.ResourceType.SCHEMA_VERSION));
+        assertEquals(res, resource.toString());
+        assertEquals(Authorizer.ResourceType.SCHEMA_VERSION, resource.getResourceType());
     }
 
 }

@@ -17,8 +17,8 @@ package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.schemaregistry.serde.pull.PullEventContext;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class SampleNestedPullDeserializerTest {
                 }
             }
 
-            Assert.assertTrue(events.size() == 2);
+            Assertions.assertTrue(events.size() == 2);
         }
     }
 

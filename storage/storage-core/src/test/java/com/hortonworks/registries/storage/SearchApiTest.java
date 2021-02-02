@@ -1,6 +1,5 @@
- /*
- * Copyright 2017-2021 Cloudera, Inc.
- *
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,18 +22,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-/**
- *
- */
 public class SearchApiTest {
+
     private static final Logger LOG = LoggerFactory.getLogger(SearchApiTest.class);
+
     private static SearchQuery complexQuery;
     private static SearchQuery simpleQuery;
     private static String complexQueryMySql;
@@ -42,7 +39,7 @@ public class SearchApiTest {
     private static String simpleQueryPostgreSql;
     private static String complexQueryPostgreSql;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         simpleQuery =
                 SearchQuery
@@ -96,7 +93,7 @@ public class SearchApiTest {
             SearchQuery returnedQuery = objectMapper.readValue(queryAsJson, SearchQuery.class);
             LOG.info("returnedQuery [{}] ", returnedQuery);
 
-            Assert.assertEquals(query, returnedQuery);
+            Assertions.assertEquals(query, returnedQuery);
         }
     }
 }

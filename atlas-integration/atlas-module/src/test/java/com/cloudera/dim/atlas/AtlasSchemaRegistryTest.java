@@ -42,8 +42,10 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionService;
 import com.hortonworks.registries.schemaregistry.state.details.MergeInfo;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -60,7 +62,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -76,7 +79,7 @@ public class AtlasSchemaRegistryTest {
     private FileStorage fileStorage;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
 
-    @Before
+    @BeforeEach
     public void setup() {
         atlasPlugin = Mockito.mock(AtlasPlugin.class);
         fileStorage = Mockito.mock(FileStorage.class);
@@ -101,7 +104,7 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).createMeta(schemaMetadata);
     }
     
-    @Test(expected = RuntimeException.class)
+    @Test
     public void addSchemaMetadataExistingMeta() {
         //given
         String schemaName = "existing";
@@ -110,7 +113,7 @@ public class AtlasSchemaRegistryTest {
         when(atlasPlugin.getSchemaMetadataInfo(schemaName)).thenReturn(Optional.of(schemaMetadataInfo));
         
         //when
-        underTest.addSchemaMetadata(existingschemaMetadata, true);
+        assertThrows(RuntimeException.class, () -> underTest.addSchemaMetadata(existingschemaMetadata, true));
         
         //then
         verify(atlasPlugin).getSchemaMetadataInfo("existing");
@@ -267,19 +270,19 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).updateMeta(schemaMetadata);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void updateSchemaMetadataThrowsIllegalArgumentExceptionTest() {
         //given
         String schemaName = "Tetris";
         SchemaMetadata schemaMetadata = schemaMetadataCreator("not Tetris", Optional.of("Tetrimino"));
         
         //when
-        underTest.updateSchemaMetadata(schemaName, schemaMetadata);
+        assertThrows(IllegalArgumentException.class, () -> underTest.updateSchemaMetadata(schemaName, schemaMetadata));
         
         //then
     }
 
-    @Test(expected = AtlasUncheckedException.class)
+    @Test
     public void updateSchemaMetadataThrowsAtlasUncheckedExceptionTest() throws Exception {
         //given
         String schemaName = "Tetris";
@@ -287,7 +290,7 @@ public class AtlasSchemaRegistryTest {
         when(atlasPlugin.updateMeta(schemaMetadata)).thenThrow(new SchemaNotFoundException());
         
         //when
-        underTest.updateSchemaMetadata(schemaName, schemaMetadata);
+        assertThrows(AtlasUncheckedException.class, () -> underTest.updateSchemaMetadata(schemaName, schemaMetadata));
         
         //then
         verify(atlasPlugin).updateMeta(schemaMetadata);
@@ -345,7 +348,7 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).getSchemaVersion("Juice", 5);
     }
 
-    @Test(expected = SchemaNotFoundException.class)
+    @Test
     public void retrieveSchemaVersionThrowsExceptionTest() throws Exception {
         //given
         String schemaName = "Juice";
@@ -353,7 +356,7 @@ public class AtlasSchemaRegistryTest {
         when(atlasPlugin.getSchemaMetadataInfo(schemaName)).thenReturn(Optional.empty());
         
         //when
-        underTest.retrieveSchemaVersion(schemaVersionKey);
+        assertThrows(SchemaNotFoundException.class, () -> underTest.retrieveSchemaVersion(schemaVersionKey));
         
         //then
         verify(atlasPlugin).getSchemaMetadataInfo("Juice");
@@ -428,7 +431,7 @@ public class AtlasSchemaRegistryTest {
         verify(schemaVersionLifecycleManager).addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void addSchemaVersionBranchNameVersionThrowsExceptionTest() throws Exception {
         //given
         String schemaBranchName = "branchName";
@@ -437,13 +440,13 @@ public class AtlasSchemaRegistryTest {
         when(schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false)).thenThrow(new SchemaNotFoundException());
         
         //when
-        underTest.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false);
+        assertThrows(RuntimeException.class, () -> underTest.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false));
         
         //then
         verify(schemaVersionLifecycleManager).addSchemaVersion("branchName", "schemaName", schemaVersion, false);
     }
 
-    @Test(expected = Error.class)
+    @Test
     public void addSchemaVersionBranchNameVersionThrowsError() throws Exception {
         //given
         String schemaBranchName = "branchName";
@@ -452,7 +455,7 @@ public class AtlasSchemaRegistryTest {
         when(schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false)).thenReturn(null);
         
         //when
-        underTest.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false);
+        assertThrows(Error.class, () -> underTest.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, false));
         
         //then
         verify(schemaVersionLifecycleManager).addSchemaVersion("branchName", "schemaName", schemaVersion, false);
@@ -630,7 +633,7 @@ public class AtlasSchemaRegistryTest {
         verify(schemaVersionLifecycleManager).createSchemaVersionLifeCycleContext(26L, SchemaVersionLifecycleStates.INITIATED);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void getAggregatedSchemaBranchThrowsExceptionTest() throws Exception {
         //given
         String schemaName = "sunshine";
@@ -653,10 +656,9 @@ public class AtlasSchemaRegistryTest {
                 .createSchemaVersionLifeCycleContext(id, SchemaVersionLifecycleStates.INITIATED)).thenReturn(context);
 
         //when
-        Collection<AggregatedSchemaBranch> actual = underTest.getAggregatedSchemaBranch(schemaName);
+        Assertions.assertThrows(RuntimeException.class, () -> underTest.getAggregatedSchemaBranch(schemaName));
 
         //then
-        assertEquals(aggregatedSchemaBranches, actual);
         verify(schemaVersionLifecycleManager).getAllVersions("sunshine");
         verify(schemaVersionLifecycleManager).getAllVersions("notMASTER", "sunshine");
         verify(schemaVersionLifecycleManager).getSchemaBranches(26L);
@@ -680,14 +682,14 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).getSchemaBranchById(43L);
     }
     
-    @Test(expected = SchemaBranchNotFoundException.class)
+    @Test
     public void getSchemaBranchIdThrowsSchemaBranchNotFoundExceptionTest() {
         //given
         Long schemaBranchId = 43L;
         when(atlasPlugin.getSchemaBranchById(schemaBranchId)).thenReturn(Optional.empty());
         
         //when
-        underTest.getSchemaBranch(schemaBranchId);
+        assertThrows(SchemaBranchNotFoundException.class, () -> underTest.getSchemaBranch(schemaBranchId));
         
         //then
         verify(atlasPlugin).getSchemaBranchById(43L);
@@ -948,7 +950,7 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).mapSchemaWithSerdes(schemaName, serDesId);
     }
 
-    @Test(expected = AtlasUncheckedException.class)
+    @Test
     public void mapSchemaWithSerDesThrowsExceptionTest() throws Exception {
         //given
         String schemaName = "cucumber";
@@ -956,7 +958,7 @@ public class AtlasSchemaRegistryTest {
         doThrow(new SchemaNotFoundException()).when(atlasPlugin).mapSchemaWithSerdes(schemaName, serDesId);
         
         //when
-        underTest.mapSchemaWithSerDes(schemaName, serDesId);
+        assertThrows(AtlasUncheckedException.class, () -> underTest.mapSchemaWithSerDes(schemaName, serDesId));
         
         //then
         verify(atlasPlugin).mapSchemaWithSerdes(schemaName, serDesId);
@@ -978,14 +980,14 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).getAllSchemaSerdes("thyme");
     }
 
-    @Test(expected = AtlasUncheckedException.class)
+    @Test
     public void getSerDesSchemaNameThrowsExceptionTest() throws Exception {
         //given
         String schemaName = "thyme";
         when(atlasPlugin.getAllSchemaSerdes(schemaName)).thenThrow(new SchemaNotFoundException());
         
         //when
-        underTest.getSerDes(schemaName);
+        assertThrows(AtlasUncheckedException.class, () -> underTest.getSerDes(schemaName));
         
         //then
         verify(atlasPlugin).getAllSchemaSerdes("thyme");
@@ -1115,7 +1117,7 @@ public class AtlasSchemaRegistryTest {
         verify(atlasPlugin).createBranch(schemaVersionInfo, "padawan");
     }
 
-    @Test(expected = SchemaBranchAlreadyExistsException.class)
+    @Test
     public void createSchemaBranchThrowBranchExistsExceptionTest() throws Exception {
         //given
         Long schemaVersionId = 29L;
@@ -1126,14 +1128,14 @@ public class AtlasSchemaRegistryTest {
         when(atlasPlugin.getSchemaBranch("obivan", "padawan")).thenReturn(Optional.of(schemaBranch));
         
         //when
-        underTest.createSchemaBranch(schemaVersionId, schemaBranch);
+        assertThrows(SchemaBranchAlreadyExistsException.class, () -> underTest.createSchemaBranch(schemaVersionId, schemaBranch));
         
         //then
         verify(schemaVersionLifecycleManager).getSchemaVersionInfo(schemaIdVersion);
         verify(atlasPlugin).getSchemaBranch("obivan", "padawan");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void createSchemaBranchThrowRuntimeExceptionTest() throws Exception {
         //given
         Long schemaVersionId = 29L;
@@ -1144,7 +1146,7 @@ public class AtlasSchemaRegistryTest {
         when(atlasPlugin.createBranch(schemaVersionInfo, "padawan")).thenThrow(SchemaNotFoundException.class);
         
         //when
-        underTest.createSchemaBranch(schemaVersionId, schemaBranch);
+        assertThrows(RuntimeException.class, () -> underTest.createSchemaBranch(schemaVersionId, schemaBranch));
         
         //then
         verify(schemaVersionLifecycleManager).getSchemaVersionInfo(schemaIdVersion);
@@ -1171,7 +1173,7 @@ public class AtlasSchemaRegistryTest {
         verify(schemaVersionLifecycleManager).getSchemaBranches(30L);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void getSchemaBranchesThrowsExceptionTest() throws Exception {
         //given
         String schemaName = "binks";
@@ -1181,7 +1183,7 @@ public class AtlasSchemaRegistryTest {
         when(schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId())).thenThrow(SchemaBranchNotFoundException.class);
         
         //when
-        underTest.getSchemaBranches(schemaName);
+        assertThrows(RuntimeException.class, () -> underTest.getSchemaBranches(schemaName));
         
         //then
         verify(schemaVersionLifecycleManager).getAllVersions("binks");
