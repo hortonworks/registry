@@ -183,4 +183,8 @@ public interface AuthorizationAgent {
                                                           Collection<SchemaVersionInfo> versions)
             throws SchemaNotFoundException, RangerException;
 
+    void authorizeBulkExport(Authorizer.UserAndGroups userAndGroups) throws AuthorizationException, RangerException;
+
+    void authorizeBulkImport(Authorizer.UserAndGroups userAndGroups) throws AuthorizationException, RangerException;
+
 }

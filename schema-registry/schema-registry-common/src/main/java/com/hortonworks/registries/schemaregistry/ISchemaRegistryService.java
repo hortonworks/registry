@@ -86,6 +86,7 @@ public interface ISchemaRegistryService {
      *
      * @return information about given schema identified by {@code schemaMetadataId}
      */
+    @Nullable
     SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId);
 
     /**

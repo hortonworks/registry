@@ -23,6 +23,8 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.util.Authorizat
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadInputFormat;
+import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
@@ -60,6 +62,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -1661,6 +1664,57 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         } catch (Exception e) {
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, e.getMessage());
         }
+    }
+
+    @POST
+    @Path("/import")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation(value = "Bulk import schemas from a file",
+            notes = "Upload a file containing multiple schemas. The schemas will be processed and added to Schema Registry. " +
+                    "In case there is already existing data in Schema Registry, there might be ID collisions. You should " +
+                    "define what to do in case of collisions (fail or ignore). To avoid issues, it is recommended to import " +
+                    "schemas when the database is empty.",
+            response = UploadResult.class, tags = OPERATION_GROUP_EXPORT_IMPORT)
+    @Timed
+    @UnitOfWork
+    public Response uploadSchemaVersion(@ApiParam(value = "Imported file format. Can be 0 (Cloudera) or 1 (Confluent)", required = true)
+                                        @QueryParam("format") @DefaultValue("0") String fileFormat,
+                                        @ApiParam(value = "In case of errors, should the operation fail or should we continue processing the remaining rows")
+                                        @QueryParam("failOnError") @DefaultValue("true") boolean failOnError,
+                                        @ApiParam(value = "File to upload. Please make sure the file contains valid data.", required = true)
+                                        @FormDataParam("file") final InputStream inputStream,
+                                        @Context SecurityContext securityContext) {
+        Response response;
+        try {
+            BulkUploadInputFormat format;
+            if (StringUtils.isBlank(fileFormat)) {
+                format = BulkUploadInputFormat.CLOUDERA;
+            } else if ("0".equals(fileFormat) || "CLOUDERA".equalsIgnoreCase(fileFormat)) {
+                format = BulkUploadInputFormat.CLOUDERA;
+            } else if ("1".equals(fileFormat) || "CONFLUENT".equalsIgnoreCase(fileFormat)) {
+                format = BulkUploadInputFormat.CONFLUENT;
+            } else {
+                return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, "Invalid file format.");
+            }
+
+            authorizationAgent.authorizeBulkImport(AuthorizationUtils.getUserAndGroups(securityContext));
+
+            UploadResult uploadResult = schemaRegistry.bulkUploadSchemas(inputStream, failOnError, format);
+            response = WSUtils.respondEntity(uploadResult, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            if (ex instanceof UndeclaredThrowableException) {
+                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
+            }
+            LOG.error("Encountered error while importing schemas", ex);
+            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+        }
+
+        return response;
     }
 
 }

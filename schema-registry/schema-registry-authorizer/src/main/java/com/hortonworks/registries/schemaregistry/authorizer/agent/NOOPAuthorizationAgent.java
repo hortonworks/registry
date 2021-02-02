@@ -24,6 +24,7 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -156,5 +157,11 @@ public class NOOPAuthorizationAgent implements AuthorizationAgent {
     public void authorizeMapSchemaWithSerDes(Authorizer.UserAndGroups userAndGroups,
                                              ISchemaRegistry schemaRegistry,
                                              String schemaMetadataName) { }
+
+    @Override
+    public void authorizeBulkExport(Authorizer.UserAndGroups userAndGroups) { }
+
+    @Override
+    public void authorizeBulkImport(Authorizer.UserAndGroups userAndGroups) { }
 
 }

@@ -27,6 +27,9 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExist
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadInputFormat;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadService;
+import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
 import com.hortonworks.registries.schemaregistry.locks.Lock;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
@@ -62,6 +65,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -86,6 +90,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
     private SchemaBranchCache schemaBranchCache;
     private SchemaLockManager schemaLockManager;
+    private final BulkUploadService bulkUploadService;
 
     public DefaultSchemaRegistry(StorageManager storageManager,
                                  FileStorage fileStorage,
@@ -95,6 +100,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         this.fileStorage = fileStorage;
         this.schemaProvidersConfig = schemaProvidersConfig;
         this.schemaLockManager = schemaLockManager;
+        this.bulkUploadService = new BulkUploadService(this);
     }
 
     @Override
@@ -241,7 +247,18 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata,
                                   boolean throwErrorIfExists) throws UnsupportedSchemaTypeException {
-        SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata));
+        return addSchemaMetadata(() -> storageManager.nextId(SchemaBranchStorable.NAME_SPACE),
+                schemaMetadata, throwErrorIfExists);
+    }
+
+    @Override
+    public Long addSchemaMetadata(Long id, SchemaMetadata schemaMetadata) {
+        return addSchemaMetadata(() -> id, schemaMetadata, true);
+    }
+
+    private Long addSchemaMetadata(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+        SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(
+                new SchemaMetadataInfo(schemaMetadata));
         String type = schemaMetadata.getType();
 
         if (schemaTypeWithProviders.get(type) == null) {
@@ -263,7 +280,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // Add a schema branch for this metadata
         SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
                 schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
-        schemaBranchStorable.setId(storageManager.nextId(SchemaBranchStorable.NAME_SPACE));
+        schemaBranchStorable.setId(id.get());
         storageManager.add(schemaBranchStorable);
 
         storageManager.add(new SchemaLockStorable(givenSchemaMetadataStorable.getNameSpace(),
@@ -285,7 +302,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             if (schemaMetadataStorables.size() > 1) {
                 LOG.warn("No unique entry with schemaMetatadataId: [{}]", schemaMetadataId);
             }
-            LOG.info("SchemaMetadata entries with id [{}] is [{}]", schemaMetadataStorables);
+            LOG.info("SchemaMetadata entries with id [{}] is [{}]", schemaMetadataId, schemaMetadataStorables);
         }
 
         return schemaMetadataInfo;
@@ -529,6 +546,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         return schemaVersionLifecycleManager.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
     }
 
+    @Override
+    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, Long versionId, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        lockSchemaMetadata(schemaMetadata.getName());
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata,
+                versionId, schemaVersion, this::registerSchemaMetadata, false);
+    }
+
     private void lockSchemaMetadata(String schemaName) {
         String lockName = new SchemaLockStorable(SchemaMetadataStorable.NAME_SPACE, schemaName).getName();
         Lock writeLock = schemaLockManager.getWriteLock(lockName);
@@ -642,6 +666,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             aggregatedSchemaBranches.add(new AggregatedSchemaBranch(schemaBranch, rootVersion, schemaVersionInfos));
         }
         return aggregatedSchemaBranches;
+    }
+
+    @Override
+    public UploadResult bulkUploadSchemas(InputStream file, boolean failOnError, BulkUploadInputFormat format) throws IOException {
+        return bulkUploadService.bulkUploadSchemas(file, failOnError, format);
     }
 
     @Override

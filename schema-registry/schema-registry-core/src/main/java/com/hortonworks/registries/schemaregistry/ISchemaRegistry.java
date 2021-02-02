@@ -19,8 +19,13 @@ import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaExcept
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exportimport.AddSchemaWithId;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadInputFormat;
+import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
 
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +34,7 @@ import java.util.Optional;
 /**
  *
  */
-public interface ISchemaRegistry extends ISchemaRegistryService {
+public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId {
 
     String SCHEMA_PROVIDERS = "schemaProviders";
 
@@ -216,6 +221,16 @@ public interface ISchemaRegistry extends ISchemaRegistryService {
      * @param keyAsString serialized version of the key of the cache
      */
     void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString);
+
+    /**
+     * Parse the input file and upload the schemas to the currently running Schema Registry's database.
+     *
+     * @param file          file containing exported schemas
+     * @param failOnError   fail or ignore errors
+     * @param format        file format
+     * @return  information about how many schemas were added, how many failed
+     */
+    UploadResult bulkUploadSchemas(InputStream file, boolean failOnError, BulkUploadInputFormat format) throws IOException;
 
     class Options {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties

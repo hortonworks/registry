@@ -25,10 +25,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.UserAndGroups;
@@ -708,39 +707,44 @@ public class RangerSchemaRegistryAuthorizerImplTest {
         Authorizer.Resource serde = new Authorizer.SerdeResource();
         RangerAccessResourceImpl rangerAccessResource =
                 rangerSchemaRegistryAuthorizer.registryResource2RangerResource(serde);
-        assertThat(rangerAccessResource.getKeys().size(), is(1));
+        assertEquals(1, rangerAccessResource.getKeys().size());
         assertTrue(rangerAccessResource.exists("serde"));
+
+        Authorizer.Resource exportImport = new Authorizer.ExportImportResource();
+        rangerAccessResource = rangerSchemaRegistryAuthorizer.registryResource2RangerResource(exportImport);
+        assertEquals(1, rangerAccessResource.getKeys().size());
+        assertTrue(rangerAccessResource.exists("export-import"));
 
         Authorizer.Resource schema =
                 new Authorizer.SchemaMetadataResource("Group", "Schema");
         rangerAccessResource = rangerSchemaRegistryAuthorizer.registryResource2RangerResource(schema);
-        assertThat(rangerAccessResource.getKeys().size(), is(2));
+        assertEquals(2, rangerAccessResource.getKeys().size());
         assertTrue(rangerAccessResource.exists("schema-group"));
-        assertThat(rangerAccessResource.getValue("schema-group"), is("Group"));
+        assertEquals("Group", rangerAccessResource.getValue("schema-group"));
         assertTrue(rangerAccessResource.exists("schema-metadata"));
-        assertThat(rangerAccessResource.getValue("schema-metadata"), is("Schema"));
+        assertEquals("Schema", rangerAccessResource.getValue("schema-metadata"));
 
         Authorizer.Resource branch =
                 new Authorizer.SchemaBranchResource("Group", "Schema", "Branch");
         rangerAccessResource = rangerSchemaRegistryAuthorizer.registryResource2RangerResource(branch);
-        assertThat(rangerAccessResource.getKeys().size(), is(3));
+        assertEquals(3, rangerAccessResource.getKeys().size());
         assertTrue(rangerAccessResource.exists("schema-group"));
-        assertThat(rangerAccessResource.getValue("schema-group"), is("Group"));
+        assertEquals("Group", rangerAccessResource.getValue("schema-group"));
         assertTrue(rangerAccessResource.exists("schema-metadata"));
-        assertThat(rangerAccessResource.getValue("schema-metadata"), is("Schema"));
+        assertEquals("Schema", rangerAccessResource.getValue("schema-metadata"));
         assertTrue(rangerAccessResource.exists("schema-branch"));
-        assertThat(rangerAccessResource.getValue("schema-branch"), is("Branch"));
+        assertEquals("Branch", rangerAccessResource.getValue("schema-branch"));
 
         Authorizer.Resource version =
                 new Authorizer.SchemaVersionResource("Group", "Schema", "Branch");
         rangerAccessResource = rangerSchemaRegistryAuthorizer.registryResource2RangerResource(version);
-        assertThat(rangerAccessResource.getKeys().size(), is(4));
+        assertEquals(4, rangerAccessResource.getKeys().size());
         assertTrue(rangerAccessResource.exists("schema-group"));
-        assertThat(rangerAccessResource.getValue("schema-group"), is("Group"));
+        assertEquals("Group", rangerAccessResource.getValue("schema-group"));
         assertTrue(rangerAccessResource.exists("schema-metadata"));
-        assertThat(rangerAccessResource.getValue("schema-metadata"), is("Schema"));
+        assertEquals("Schema", rangerAccessResource.getValue("schema-metadata"));
         assertTrue(rangerAccessResource.exists("schema-branch"));
-        assertThat(rangerAccessResource.getValue("schema-branch"), is("Branch"));
+        assertEquals("Branch", rangerAccessResource.getValue("schema-branch"));
         assertTrue(rangerAccessResource.exists("schema-version"));
 
     }

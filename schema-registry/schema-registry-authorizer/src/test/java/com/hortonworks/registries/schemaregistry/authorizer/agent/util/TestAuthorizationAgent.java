@@ -187,4 +187,13 @@ public class TestAuthorizationAgent implements AuthorizationAgent {
         throw new RuntimeException("Not implemented");
     }
 
+    @Override
+    public void authorizeBulkExport(Authorizer.UserAndGroups userAndGroups) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void authorizeBulkImport(Authorizer.UserAndGroups userAndGroups) {
+        throw new RuntimeException("Not implemented");
+    }
 }

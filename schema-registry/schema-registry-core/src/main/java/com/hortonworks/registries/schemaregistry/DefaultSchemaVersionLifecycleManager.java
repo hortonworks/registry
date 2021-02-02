@@ -56,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -83,6 +84,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
     protected SchemaVersionInfo createSchemaVersion(String schemaBranchName,
                                                   SchemaMetadata schemaMetadata,
                                                   Long schemaMetadataId,
+                                                  Supplier<Long> versionId,
                                                   SchemaVersion schemaVersion)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
@@ -102,7 +104,8 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
         final String schemaName = schemaMetadata.getName();
 
         SchemaVersionStorable schemaVersionStorable = new SchemaVersionStorable();
-        final Long schemaVersionStorableId = storageManager.nextId(schemaVersionStorable.getNameSpace());
+        final Long schemaVersionStorableId = versionId.get() != null ? versionId.get() :
+                storageManager.nextId(SchemaVersionStorable.NAME_SPACE);
         schemaVersionStorable.setId(schemaVersionStorableId);
         schemaVersionStorable.setSchemaMetadataId(schemaMetadataId);
 
@@ -344,6 +347,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
                 createdSchemaVersionInfo = createSchemaVersion(SchemaBranch.MASTER_BRANCH,
                                                                schemaMetadataInfo.getSchemaMetadata(),
                                                                schemaMetadataInfo.getId(),
+                                                               () -> storageManager.nextId(SchemaVersionStorable.NAME_SPACE),
                                                                new SchemaVersion(schemaVersionInfo.getSchemaText(),
                                                                                  schemaVersionInfo.getDescription(),
                                                                                  SchemaVersionLifecycleStates.INITIATED.getId(),

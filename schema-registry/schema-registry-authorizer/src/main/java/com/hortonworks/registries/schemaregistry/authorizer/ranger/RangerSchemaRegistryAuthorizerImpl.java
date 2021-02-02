@@ -39,6 +39,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
     private static final String RANGER_RESOURCE_SCHEMA_METADATA = "schema-metadata";
     private static final String RANGER_RESOURCE_SCHEMA_BRANCH = "schema-branch";
     private static final String RANGER_RESOURCE_SCHEMA_VERSION = "schema-version";
+    private static final String RANGER_RESOURCE_EXPORT_IMPORT = "export-import";
 
     private final RangerBasePlugin plg;
 
@@ -91,6 +92,10 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         switch (registryResource.getResourceType()) {
             case SERDE: {
                 rangerResource.setValue(RANGER_RESOURCE_SERDE, "ANY_VALUE");
+                return rangerResource;
+            }
+            case EXPORT_IMPORT: {
+                rangerResource.setValue(RANGER_RESOURCE_EXPORT_IMPORT, "ANY_VALUE");
                 return rangerResource;
             }
             case SCHEMA_VERSION: {

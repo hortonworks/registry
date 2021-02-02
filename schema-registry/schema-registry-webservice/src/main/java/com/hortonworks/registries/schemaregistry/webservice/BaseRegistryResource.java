@@ -24,7 +24,8 @@ abstract class BaseRegistryResource {
     // Hack: Adding number in front of sections to get the ordering in generated swagger documentation correct
     static final String OPERATION_GROUP_SCHEMA = "1. Schema";
     static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
-    static final String OPERATION_GROUP_OTHER = "3. Other";
+    static final String OPERATION_GROUP_EXPORT_IMPORT = "3. Export/Import";
+    static final String OPERATION_GROUP_OTHER = "4. Other";
 
 
 

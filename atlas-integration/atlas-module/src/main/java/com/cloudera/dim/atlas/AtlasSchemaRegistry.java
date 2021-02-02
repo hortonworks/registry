@@ -46,6 +46,9 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadInputFormat;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadService;
+import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleContext;
@@ -87,10 +90,12 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     private Map<String, SchemaProvider> schemaTypeWithProviders;
     private List<SchemaProviderInfo> schemaProviderInfos;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
+    private final BulkUploadService bulkUploadService;
 
     public AtlasSchemaRegistry(FileStorage fileStorage, Collection<Map<String, Object>> schemaProvidersConfig) {
         this.fileStorage = fileStorage;
         this.schemaProvidersConfig = schemaProvidersConfig;
+        this.bulkUploadService = new BulkUploadService(this);
     }
 
     @Override
@@ -198,6 +203,11 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
         }
 
         return atlasClient.createMeta(schemaMetadata);
+    }
+
+    @Override
+    public Long addSchemaMetadata(Long id, SchemaMetadata schemaMetadata) {
+        return null;  // TODO id is provided
     }
 
     @Override
@@ -353,7 +363,15 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
         // TODO
         //lockSchemaMetadata(schemaMetadata.getName());  // ??
         return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, 
-                schemaMetadata, schemaVersion, x -> registerSchemaMetadata(x), disableCanonicalCheck);
+                schemaMetadata, schemaVersion, this::registerSchemaMetadata, disableCanonicalCheck);
+    }
+
+    @Override
+    public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, Long versionId, SchemaVersion schemaVersion)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH,
+                schemaMetadata, versionId, schemaVersion, this::registerSchemaMetadata, false);
     }
 
     @Override
@@ -546,6 +564,11 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     public Collection<SchemaBranch> getSchemaBranchesForVersion(Long versionId) throws SchemaBranchNotFoundException {
         LOG.info("--------------- getSchemaBranchesForVersion {}", versionId);
         return schemaVersionLifecycleManager.getSchemaBranches(versionId);
+    }
+
+    @Override
+    public UploadResult bulkUploadSchemas(InputStream file, boolean failOnError, BulkUploadInputFormat format) throws IOException {
+        return bulkUploadService.bulkUploadSchemas(file, failOnError, format);
     }
 
     @Override

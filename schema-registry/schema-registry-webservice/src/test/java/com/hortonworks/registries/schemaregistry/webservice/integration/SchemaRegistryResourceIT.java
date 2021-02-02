@@ -28,8 +28,11 @@ import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationA
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import io.dropwizard.testing.junit.ResourceTestRule;
 
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -49,12 +52,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,7 +78,7 @@ public class SchemaRegistryResourceIT {
     @ClassRule
     public static final ResourceTestRule RESOURCE = ResourceTestRule.builder()
             .addResource(instantiateResource())
-            .addProperty("jersey.config.server.provider.classnames", "org.glassfish.jersey.media.multipart.MultiPartFeature")
+            .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
             .build();
 
     private static SchemaRegistryResource instantiateResource() {
@@ -103,8 +107,8 @@ public class SchemaRegistryResourceIT {
         verify(schemaRegistryMock).findSchemasByFields(expectedQuery);
         verify(authorizationAgentMock).authorizeFindSchemasByFields(null, schemaRegistryMock, schemaversions);
         TestResponseForSchemaVersionKey actual = response.readEntity(TestResponseForSchemaVersionKey.class);
-        assertThat(actual.getEntities(), is(schemaversions));
-        assertThat(response.getStatus(), is(200));
+        assertEquals(schemaversions, actual.getEntities());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -126,8 +130,8 @@ public class SchemaRegistryResourceIT {
         verify(schemaRegistryMock).findSchemasByFields(expectedQuery);
         verify(authorizationAgentMock).authorizeFindSchemasByFields(null, schemaRegistryMock, schemaversions);
         TestResponseForSchemaVersionKey actual = response.readEntity(TestResponseForSchemaVersionKey.class);
-        assertThat(actual.getEntities(), is(schemaversions));
-        assertThat(response.getStatus(), is(200));
+        assertEquals(schemaversions, actual.getEntities());
+        assertEquals(200, response.getStatus());
     }
     
     @Test
@@ -158,8 +162,8 @@ public class SchemaRegistryResourceIT {
         verify(authorizationAgentMock).authorizeFindSchemas(null, schemaversions);
         verify(schemaRegistryMock, atLeastOnce()).searchSchemas(any(MultivaluedMap.class), any(Optional.class));
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        assertThat(actual.getEntities(), is(schemaversions));
-        assertThat(response.getStatus(), is(200));
+        assertEquals(schemaversions, actual.getEntities());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -174,9 +178,9 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        String[] errors = {"query param name must not be null", "query param _orderByFields must not be null"};
-        assertThat(actual.getErrors(), hasItems(errors));
-        assertThat(response.getStatus(), is(400));
+        assertTrue(actual.getErrors().contains("query param name must not be null"));
+        assertTrue(actual.getErrors().contains("query param _orderByFields must not be null"));
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -214,7 +218,8 @@ public class SchemaRegistryResourceIT {
         verify(authorizationAgentMock).authorizeGetAggregatedSchemaList(null, aggregatedSchemaMetadataInfos);
         verify(schemaRegistryMock).searchSchemas(queryParameters, Optional.of("timestamp,d"));
         TestResponseForAggregatedSchemaMetadataInfo actual = response.readEntity(TestResponseForAggregatedSchemaMetadataInfo.class);
-        assertThat(response.getStatus(), is(200));
+        assertEquals(200, response.getStatus());
+        assertNotNull(actual);
     }
     
 
@@ -230,9 +235,9 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        String[] errors = {"query param name must not be null", "query param _orderByFields must not be null"};
-        assertThat(actual.getErrors(), hasItems(errors));
-        assertThat(response.getStatus(), is(400));
+        assertTrue(actual.getErrors().contains("query param name must not be null"));
+        assertTrue(actual.getErrors().contains("query param _orderByFields must not be null"));
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -252,7 +257,7 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(updatedSchemaMetadata), Response.class);
 
         //then
-        assertThat(response.getStatus(), is(400));
+        assertEquals(400, response.getStatus());
 
     }
 
@@ -269,7 +274,7 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(serDesPair), Response.class);
 
         //then
-        assertThat(response.getStatus(), is(200));
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -286,9 +291,11 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSerDesInfo responseFor = response.readEntity(TestResponseForSerDesInfo.class);
-        String[] errors = {"name must not be null", 
-                "deserializerClassName must not be null", "serializerClassName must not be null", "fileId must not be null"};
-        assertThat(responseFor.getErrors(), hasItems(errors));
+
+        assertTrue(responseFor.getErrors().contains("name must not be null"));
+        assertTrue(responseFor.getErrors().contains("deserializerClassName must not be null"));
+        assertTrue(responseFor.getErrors().contains("serializerClassName must not be null"));
+        assertTrue(responseFor.getErrors().contains("fileId must not be null"));
     }
 
     @Test
@@ -306,7 +313,7 @@ public class SchemaRegistryResourceIT {
 
         //then
         SerDesInfo actual = response.readEntity(SerDesInfo.class);
-        assertThat(actual.getId(), is(1L));
+        assertEquals(Long.valueOf(1L), actual.getId());
     }
 
     @Test
@@ -321,7 +328,7 @@ public class SchemaRegistryResourceIT {
                 .get();
 
         //then
-        assertThat(response.getStatus(), is(404));
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -336,7 +343,7 @@ public class SchemaRegistryResourceIT {
                 .get();
 
         //then
-        assertThat(response.getStatus(), is(500));
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -368,7 +375,7 @@ public class SchemaRegistryResourceIT {
                 .get();
 
         //then
-        assertThat(response.getStatus(), is(502));
+        assertEquals(502, response.getStatus());
     }
 
     @Test
@@ -393,7 +400,33 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(schemaMetadata), Response.class);
 
         //then
-        assertThat(response.getStatus(), is(502));
+        assertEquals(502, response.getStatus());
+    }
+
+    @Test
+    public void bulkImportSchema() {
+        // given
+        doNothing().when(authorizationAgentMock).authorizeBulkImport(any());
+
+        MultiPart multiPart = new MultiPart();
+        multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
+
+        StreamDataBodyPart fileDataBodyPart = new StreamDataBodyPart("file",
+                getClass().getResourceAsStream("/exportimport/confluent1.txt"),
+                "bulk.txt");
+        multiPart.bodyPart(fileDataBodyPart);
+
+        // when
+        Response response = testClient.target("/api/v1/schemaregistry/import")
+                .register(MultiPartFeature.class)
+                .queryParam("format", "CONFLUENT")
+                .queryParam("failOnError", "true")
+                .request()
+                .post(Entity.entity(multiPart, multiPart.getMediaType()), Response.class);
+
+        // then
+        assertEquals(200, response.getStatus());
+        assertNotNull(response.getEntity());
     }
 
 }

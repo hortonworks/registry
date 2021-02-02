@@ -104,7 +104,8 @@ public interface Authorizer {
         SERDE,
         SCHEMA_METADATA,
         SCHEMA_BRANCH,
-        SCHEMA_VERSION;
+        SCHEMA_VERSION,
+        EXPORT_IMPORT;
     }
 
     /**
@@ -133,6 +134,20 @@ public interface Authorizer {
         @Override
         public String toString() {
             return "SerDe{ serDeName='*' }";
+        }
+    }
+
+    /**
+     * Class that is used to represent permission to perform Export/Import
+     */
+    class ExportImportResource extends Resource {
+        public ExportImportResource() {
+            super(ResourceType.EXPORT_IMPORT);
+        }
+
+        @Override
+        public String toString() {
+            return "ExportImport{ exportImport='*' }";
         }
     }
 

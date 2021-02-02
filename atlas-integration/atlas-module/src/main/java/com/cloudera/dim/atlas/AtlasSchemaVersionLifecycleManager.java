@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -66,7 +67,8 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     @Override @Nonnull
     protected SchemaVersionInfo createSchemaVersion(String schemaBranchName, 
                                                     SchemaMetadata schemaMetadata, 
-                                                    Long schemaMetadataId, 
+                                                    Long schemaMetadataId,
+                                                    Supplier<Long> versionId,
                                                     SchemaVersion schemaVersion) 
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         checkNotNull(schemaBranchName, "schemaBranchName must not be null");
@@ -94,6 +96,7 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
         checkEvolvability(schemaMetadata, schemaVersion, schemaBranchName);
 
         schemaVersion.setState(DEFAULT_VERSION_STATE.getId());
+        // TODO if versionId.get() != null then we need to use the provided id instead of generating it
         SchemaIdVersion schemaIdVersion = atlasClient.addSchemaVersion(schemaName, schemaVersion, fingerprint, schemaBranch);
         final Long vid = schemaIdVersion.getSchemaVersionId();
 

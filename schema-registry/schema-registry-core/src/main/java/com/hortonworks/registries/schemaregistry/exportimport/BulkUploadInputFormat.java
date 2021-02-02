@@ -1,31 +1,36 @@
-/*
- * Copyright 2018-2020 Cloudera, Inc.
- *
+/**
+ * Copyright 2016-2021 Cloudera, Inc.
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ **/
 
-dependencies {
+package com.hortonworks.registries.schemaregistry.exportimport;
 
-    compile project(':schema-registry:schema-registry-common')
-    compile project(':storage:storage-core')
-    compile libraries.jersey.media_json
-    compile libraries.guava
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.14'
+/**
+ * Accepted formats of bulk uploading schemas.
+ */
+public enum BulkUploadInputFormat {
 
-    testCompile libraries.logging.logback
+    CLOUDERA(0),
+    CONFLUENT(1);
 
-    testCompile libraries.jmockit
-    testCompile libraries.junit
-    testCompile libraries.mockito
+    private final int id;
 
+    BulkUploadInputFormat(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
 }

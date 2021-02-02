@@ -462,6 +462,16 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
     }
 
+    @Override
+    public void authorizeBulkExport(UserAndGroups userAndGroups) throws AuthorizationException, RangerException {
+        authorize(new Authorizer.ExportImportResource(), AccessType.READ, userAndGroups);
+    }
+
+    @Override
+    public void authorizeBulkImport(UserAndGroups userAndGroups) throws AuthorizationException, RangerException {
+        authorize(new Authorizer.ExportImportResource(), AccessType.CREATE, userAndGroups);
+    }
+
     public static class AlreadyConfiguredException extends RuntimeException {
         public AlreadyConfiguredException(String message) {
             super(message);

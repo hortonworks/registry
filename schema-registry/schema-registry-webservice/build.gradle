@@ -43,6 +43,7 @@ dependencies {
 
     testCompile project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests')
     testCompile project(path: ':schema-registry:schema-registry-common', configuration: 'tests')
+    testCompile project(path: ':schema-registry:schema-registry-core', configuration: 'tests')
     testCompile project(path: ':registry-common', configuration: 'tests')
     
     testCompile group: 'org.slf4j', name: 'jul-to-slf4j', version: versions_slf4j
