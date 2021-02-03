@@ -671,6 +671,12 @@ public class AvroSchemaRegistryClientTest {
         Assert.assertEquals(1, result2.size());
         Assert.assertEquals(id2, result2.get(0).getId());
 
+        List<AggregatedSchemaMetadataInfo> result3 = SCHEMA_REGISTRY_CLIENT.findAggregatedSchemas(schema1, schemaMetadata.getDescription(), null);
+        Assert.assertNotNull(result3);
+        Assert.assertFalse(result3.isEmpty());
+        Assert.assertTrue(result3.size() == 1);
+        Assert.assertTrue(result3.stream().anyMatch(s -> s.getId().equals(id)));
+
         List<AggregatedSchemaMetadataInfo> bothSchemas = SCHEMA_REGISTRY_CLIENT.findAggregatedSchemas(null, null, null);
         Assert.assertNotNull(bothSchemas);
         Assert.assertFalse(bothSchemas.isEmpty());

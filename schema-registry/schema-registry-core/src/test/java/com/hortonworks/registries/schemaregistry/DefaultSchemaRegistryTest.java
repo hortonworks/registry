@@ -27,21 +27,27 @@ public class DefaultSchemaRegistryTest {
 
     private MultivaluedMap<String, String> queryParametersWithNameAndDesc;
     private MultivaluedMap<String, String> queryParametersWithoutDesc;
+    private MultivaluedMap<String, String> queryParametersWithoutName;
     private DefaultSchemaRegistry underTest;
 
     @Before
     public void setup() {
         queryParametersWithNameAndDesc = new MultivaluedHashMap<>();
         queryParametersWithoutDesc = new MultivaluedHashMap<>();
+        queryParametersWithoutName = new MultivaluedHashMap<>();
 
         queryParametersWithNameAndDesc.putSingle(NAME, "some name");
         queryParametersWithNameAndDesc.putSingle(DESCRIPTION, "some desc");
         queryParametersWithNameAndDesc.putSingle(ORDER, "foo,a,bar,d");
+
         queryParametersWithoutDesc.putSingle(NAME, "only name");
         queryParametersWithoutDesc.putSingle(ORDER, "foo,a,bar,d");
 
+        queryParametersWithoutName.putSingle(DESCRIPTION, "only desc");
+        queryParametersWithoutDesc.putSingle(ORDER, "foo,a,bar,d");
+
         StorageManager storageManager = new InMemoryStorageManager();
-        Collection<Map<String, Object>> schemaProvidersConfig = 
+        Collection<Map<String, Object>> schemaProvidersConfig =
                 Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
         underTest = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
     }
@@ -61,7 +67,7 @@ public class DefaultSchemaRegistryTest {
     @Test
     public void getWhereClauseTestNameDescriptionPresent() {
         //given
-        WhereClause expected = WhereClause.begin().contains(NAME, "some name").or().contains(DESCRIPTION, "some desc").combine();
+        WhereClause expected = WhereClause.begin().contains(NAME, "some name").and().contains(DESCRIPTION, "some desc").combine();
 
         //when
         WhereClause actual = underTest.getWhereClause(queryParametersWithNameAndDesc);
@@ -70,4 +76,15 @@ public class DefaultSchemaRegistryTest {
         assertThat(actual, is(expected));
     }
 
+    @Test
+    public void getWhereClauseTest_DescriptionPresent() {
+        //given
+        WhereClause expected = WhereClause.begin().contains(DESCRIPTION, "only desc").combine();
+
+        //when
+        WhereClause actual = underTest.getWhereClause(queryParametersWithoutName);
+
+        //then
+        assertThat(actual, is(expected));
+    }
 }

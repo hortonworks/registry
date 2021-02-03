@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -205,7 +206,7 @@ public class InMemoryStorageManager implements StorageManager {
             pairs.put(storable, storable.toMap());
         }
 
-        Collection<T> result = new ArrayList<>(list.size());
+        Collection<T> result = new HashSet<>(list.size());
         for (PredicateCombinerPair predicateCombinerPair : searchQuery.getWhereClause().getPredicateCombinerPairs()) {
             for (T storable : list) {
                 Map<String, Object> map = pairs.get(storable);
@@ -218,7 +219,7 @@ public class InMemoryStorageManager implements StorageManager {
                                 continue;
                             } else if (op == Predicate.Operation.EQ && Objects.equals(value, predicateCombinerPair.getPredicate().getValue())) {
                                 result.add(storable);
-                            } else if (op == Predicate.Operation.CONTAINS && value.toString().toLowerCase().contains(predicateCombinerPair.getPredicate().getValue().toString())) {
+                            } else if (op == Predicate.Operation.CONTAINS && value.toString().toLowerCase().contains(predicateCombinerPair.getPredicate().getValue().toString().toLowerCase())) {
                                 result.add(storable);
                             }
                         }
