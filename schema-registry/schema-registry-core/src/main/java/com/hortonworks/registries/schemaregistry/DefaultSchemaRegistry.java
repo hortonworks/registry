@@ -44,7 +44,6 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
-import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

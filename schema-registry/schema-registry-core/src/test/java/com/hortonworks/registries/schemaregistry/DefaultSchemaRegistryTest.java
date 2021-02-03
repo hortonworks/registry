@@ -92,7 +92,7 @@ public class DefaultSchemaRegistryTest {
     }
 
     @Test
-    public void getWhereClauseTest_DescriptionPresent() {
+    public void getWhereClauseTestDescriptionPresent() {
         //given
         WhereClause expected = WhereClause.begin().contains(DESCRIPTION, "only desc").combine();
 
