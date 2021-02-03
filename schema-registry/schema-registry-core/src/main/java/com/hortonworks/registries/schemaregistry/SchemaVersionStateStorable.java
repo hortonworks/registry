@@ -25,9 +25,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- */
 public class SchemaVersionStateStorable extends AbstractStorable {
     public static final String NAME_SPACE = "schema_version_state";
 
@@ -130,7 +127,7 @@ public class SchemaVersionStateStorable extends AbstractStorable {
 
     @Override
     public PrimaryKey getPrimaryKey() {
-        Map<Schema.Field, Object> fields = new HashMap<Schema.Field, Object>(){ {
+        Map<Schema.Field, Object> fields = new HashMap<Schema.Field, Object>() { {
             put(SCHEMA_VERSION_ID_FIELD, schemaVersionId);
             put(STATE_FIELD, stateId);
             put(SEQUENCE_FIELD, sequence);

@@ -157,6 +157,7 @@ public class Schema implements Serializable {
                     break;
                 default:
                     javaType = TypeFactory.defaultInstance().constructType(Field.class);
+                    break;
             }
             return javaType;
         }
@@ -598,10 +599,6 @@ public class Schema implements Serializable {
 
     /**
      * Constructs a schema object from a map of sample data.
-     *
-     * @param parsedData
-     * @return
-     * @throws ParserException
      */
     public static Schema fromMapData(Map<String, Object> parsedData) throws ParserException {
         List<Field> fields = parseFields(parsedData);

@@ -1,4 +1,7 @@
-/**     JUnit
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
+ *
+ JUnit
 
  Eclipse Public License - v 1.0
 
@@ -334,7 +337,7 @@ import java.util.List;
  * <pre>
  * &#064;Parameters
  * public static Object[][] data() {
- * 	return new Object[][] { { 0, 0, 0 }, { 1, 1, 2 }, { 3, 2, 5 }, { 4, 3, 7 } } };
+ *  return new Object[][] { { 0, 0, 0 }, { 1, 1, 2 }, { 3, 2, 5 }, { 4, 3, 7 } } };
  * }
  * </pre>
  *
@@ -346,7 +349,7 @@ import java.util.List;
  * <pre>
  * &#064;Parameters
  * public static Iterable&lt;? extends Object&gt; data() {
- * 	return Arrays.asList(&quot;first test&quot;, &quot;second test&quot;);
+ *  return Arrays.asList(&quot;first test&quot;, &quot;second test&quot;);
  * }
  * </pre>
  * <p>
@@ -354,7 +357,7 @@ import java.util.List;
  * <pre>
  * &#064;Parameters
  * public static Object[] data() {
- * 	return new Object[] { &quot;first test&quot;, &quot;second test&quot; };
+ *  return new Object[] { &quot;first test&quot;, &quot;second test&quot; };
  * }
  * </pre>
  *

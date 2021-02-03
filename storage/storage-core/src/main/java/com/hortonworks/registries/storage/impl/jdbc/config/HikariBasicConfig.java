@@ -39,11 +39,9 @@ public class HikariBasicConfig {
     }
 
     private static HikariConfig getHikariConfig(final Map<String, Object> config, boolean autoCommit) {
-        HikariConfig hikariConfig = new HikariConfig(new Properties(){
-            {
-                putAll(config);
-            }
-        });
+        HikariConfig hikariConfig = new HikariConfig(new Properties() { {
+            putAll(config);
+        } });
         // need to do this because of a bug in Hikari that does not allow the override of the
         // property dataSource.autoCommit
         hikariConfig.setAutoCommit(autoCommit);
@@ -66,4 +64,6 @@ public class HikariBasicConfig {
         Map<String, Object> config = getH2HikariConfig();
         return getHikariConfig(config, false);
     }
+
+    private HikariBasicConfig() { }
 }

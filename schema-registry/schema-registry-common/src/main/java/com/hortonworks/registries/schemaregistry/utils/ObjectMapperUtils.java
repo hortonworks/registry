@@ -40,4 +40,6 @@ public class ObjectMapperUtils {
     public static <T> String serializeToString(Object obj) throws JsonProcessingException {
         return OBJECT_MAPPER.writeValueAsString(obj);
     }
+
+    private ObjectMapperUtils() { }
 }

@@ -404,6 +404,8 @@ public abstract class SchemaVersionLifecycleManager {
                     }
                 }
                 break;
+            default:
+                throw new Error("Unsupported validation level: " + validationLevel);
         }
         return compatibilityResult != null ? compatibilityResult : CompatibilityResult.createCompatibleResult(toSchema);
     }

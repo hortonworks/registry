@@ -90,7 +90,8 @@ public final class MLModelRegistryResource {
     @Timed
     public Response addModelInfo(@FormDataParam("modelInfo") final MLModel modelInfo,
                                  @FormDataParam("pmmlFile") final InputStream pmmlInputStream,
-                                 @FormDataParam("pmmlFile") final FormDataContentDisposition fileDisposition) throws IOException, SAXException, JAXBException {
+                                 @FormDataParam("pmmlFile") final FormDataContentDisposition fileDisposition)
+            throws IOException, SAXException, JAXBException {
         if (pmmlInputStream == null) {
             throw BadRequestException.missingParameter("pmmlFile");
         }

@@ -39,8 +39,9 @@ public enum DatabaseType {
 
     public static DatabaseType fromValue(String otherValue) {
         for (DatabaseType databaseType : values()) {
-            if (databaseType.value.equals(otherValue))
+            if (databaseType.value.equals(otherValue)) {
                 return databaseType;
+            }
         }
         throw new IllegalArgumentException("Unknown Database Type : " + otherValue);
     }

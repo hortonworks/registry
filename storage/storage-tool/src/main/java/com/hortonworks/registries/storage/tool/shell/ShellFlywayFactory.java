@@ -56,4 +56,5 @@ public class ShellFlywayFactory {
         return flyway;
     }
 
+    private ShellFlywayFactory() { }
 }

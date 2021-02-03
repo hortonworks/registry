@@ -82,6 +82,8 @@ public class DefaultStorageDataTypeContext implements StorageDataTypeContext {
             case ARRAY:
                 preparedStatement.setObject(index, val);    //TODO check this
                 break;
+            default:
+                break;
         }
     }
 

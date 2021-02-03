@@ -28,6 +28,8 @@ import java.util.Properties;
 
 public class HikariConfigFactory {
 
+    private HikariConfigFactory() { }
+
     public static HikariConfig get(DatabaseType type, Map<String, Object> dbProperties) {
 
         switch (type) {

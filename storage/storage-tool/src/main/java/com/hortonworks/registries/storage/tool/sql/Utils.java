@@ -30,4 +30,6 @@ public class Utils {
         ObjectMapper objectMapper = new YAMLMapper();
         return objectMapper.readValue(new File(configFilePath), Map.class);
     }
+
+    private Utils() { }
 }

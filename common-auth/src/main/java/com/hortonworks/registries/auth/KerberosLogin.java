@@ -131,7 +131,7 @@ public class KerberosLogin extends AbstractLogin {
     /**
      * Method called once initially to login. It also starts the thread used
      * to periodically re-login to the Kerberos Authentication Server.
-     * @return
+     * @return  the login context
      * @throws LoginException if login fails
      */
     @Override

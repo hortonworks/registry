@@ -109,4 +109,6 @@ public class ReflectionHelper {
         return classes;
     }
 
+    private ReflectionHelper() { }
+
 }

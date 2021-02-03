@@ -71,7 +71,7 @@ subprojects {
     
     checkstyle {
         toolVersion = '8.1'
-        ignoreFailures = true
+        ignoreFailures = false
         configFile = rootProject.file('checkstyle/checkstyle.xml')
     }
     test.dependsOn('checkstyleMain', 'checkstyleTest')

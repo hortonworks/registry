@@ -143,4 +143,7 @@ public class ShellMigrationInitializer {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("ShellMigrationInitializer [options]", options);
     }
+
+    private ShellMigrationInitializer() { }
+
 }

@@ -44,4 +44,6 @@ public class SchemaTextStore {
             throw new RuntimeException(e);
         }
     }
+
+    private SchemaTextStore() { }
 }

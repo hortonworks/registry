@@ -34,6 +34,8 @@ public class RedisCacheTestMain {
     private static RedisConnection<String, String> connection;
     private static RedisConnection<String, String> connection1;
     private static Executor executor;
+    
+    private RedisCacheTestMain() { }
 
     public static void main(String[] args) throws InterruptedException {
 //        RedisClients redisClient = RedisClients.create("127.0.0.1:6379");

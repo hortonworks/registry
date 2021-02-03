@@ -1,4 +1,8 @@
-/**     JUnit
+/**
+ * Copyright 2016-2021 Cloudera, Inc.
+ *
+
+ JUnit
 
  Eclipse Public License - v 1.0
 

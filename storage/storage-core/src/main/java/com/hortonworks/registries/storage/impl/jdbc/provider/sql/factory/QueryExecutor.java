@@ -65,13 +65,6 @@ public interface QueryExecutor {
      */
     <T extends Storable> Collection<T> select(String namespace);
 
-    /**
-     *
-     * @param namespace
-     * @param orderByFields
-     * @param <T>
-     * @return
-     */
     <T extends Storable> Collection<T> select(String namespace, List<OrderByField> orderByFields);
 
     /**
@@ -79,13 +72,6 @@ public interface QueryExecutor {
      */
     <T extends Storable> Collection<T> select(StorableKey storableKey);
 
-    /**
-     *
-     * @param storableKey
-     * @param orderByFields
-     * @param <T>
-     * @return
-     */
     <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields);
 
 

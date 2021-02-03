@@ -40,4 +40,6 @@ public class PropertiesReader {
             System.exit(2);
         }
     }
+
+    private PropertiesReader() { }
 }

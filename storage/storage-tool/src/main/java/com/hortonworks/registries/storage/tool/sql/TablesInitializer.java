@@ -206,4 +206,6 @@ public class TablesInitializer {
             }
         };
     }
+
+    private TablesInitializer() { }
 }

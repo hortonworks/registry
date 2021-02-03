@@ -482,4 +482,6 @@ public final class SchemaVersionLifecycleStates {
         context.setState(ENABLED);
         context.updateSchemaVersionState();
     }
+
+    private SchemaVersionLifecycleStates() { }
 }

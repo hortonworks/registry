@@ -32,4 +32,6 @@ public class SchemaLifecycleApp {
         LOCAL_SCHEMA_REGISTRY_SERVER.start();
     }
 
+    private SchemaLifecycleApp() { }
+
 }

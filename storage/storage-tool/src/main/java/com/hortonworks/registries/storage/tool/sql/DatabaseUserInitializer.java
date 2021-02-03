@@ -325,4 +325,6 @@ public class DatabaseUserInitializer {
                     cli.getOptionValue(OPTION_TARGET_PASSWORD), cli.getOptionValue(OPTION_TARGET_DATABASE)));
         }
     }
+
+    private DatabaseUserInitializer() { }
 }

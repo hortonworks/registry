@@ -102,4 +102,6 @@ public class SchemaFlywayFactory {
 
         return flyway;
     }
+
+    private SchemaFlywayFactory() { }
 }

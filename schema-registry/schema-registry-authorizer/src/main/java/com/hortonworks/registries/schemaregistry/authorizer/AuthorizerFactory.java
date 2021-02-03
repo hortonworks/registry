@@ -64,4 +64,7 @@ public class AuthorizerFactory {
             throw new RuntimeException("Could not initialize authorizer.", e);
         }
     }
+
+    private AuthorizerFactory() { }
+
 }

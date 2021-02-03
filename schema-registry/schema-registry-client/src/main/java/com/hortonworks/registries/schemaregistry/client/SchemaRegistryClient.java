@@ -774,6 +774,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 throw new SchemaLifecycleException(msg);
             case INTERNAL_SERVER_ERROR:
                 throw new RuntimeException(msg);
+            default:
+                break;
         }
     }
 
@@ -1161,7 +1163,9 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return runRetryableBlock((SchemaRegistryTargets targets) -> {
             WebTarget target = targets.findAggregatedSchemasTarget;
             target = target.queryParam("name", schemaNameParam);
-            if (schemaDescriptionParam != null) target = target.queryParam("description", schemaDescriptionParam);
+            if (schemaDescriptionParam != null) {
+                target = target.queryParam("description", schemaDescriptionParam);
+            }
             target = target.queryParam("_orderByFields", orderByFieldsParam);
 
             return getEntities(target, AggregatedSchemaMetadataInfo.class);
