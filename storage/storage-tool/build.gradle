@@ -16,10 +16,12 @@
 
 dependencies {
     
+    testCompile libraries.junit
     compile project(':storage:storage-common')
 
     compile libraries.commons.lang3
     compile libraries.commons.cli
+    compile libraries.commons.text
     compile libraries.jackson.core
     compile libraries.jackson.databind
     compile libraries.jackson.dataformat_yaml

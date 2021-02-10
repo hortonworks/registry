@@ -33,6 +33,8 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -135,6 +137,11 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     @Override
     public void initialize(Bootstrap<RegistryConfiguration> bootstrap) {
+        bootstrap.setConfigurationSourceProvider(
+                new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                        new EnvironmentVariableSubstitutor(false)
+                )
+        );
         // always deploy UI on /ui. If there is no other filter like Confluent etc, redirect / to /ui
         bootstrap.addBundle(new AssetsBundle("/assets", "/ui", "index.html", "static"));
         bootstrap.addBundle(new SwaggerBundle<RegistryConfiguration>() {

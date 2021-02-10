@@ -18,6 +18,8 @@ package com.hortonworks.registries.storage.tool.sql;
 
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.common.util.Constants;
+import org.apache.commons.text.StringSubstitutor;
+import org.apache.commons.text.lookup.StringLookupFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -27,7 +29,9 @@ public class StorageProviderConfigurationReader {
     private static final String PROPERTIES = "properties";
     private static final String DB_TYPE = "db.type";
     private static final String DB_PROPERTIES = "db.properties";
+    private static final StringSubstitutor STRING_SUBSTITUTOR = new StringSubstitutor(StringLookupFactory.INSTANCE.environmentVariableStringLookup());
 
+    @SuppressWarnings("unchecked")
     public StorageProviderConfiguration readStorageConfig(Map<String, Object> conf) {
         Map<String, Object> storageConf = (Map<String, Object>) conf.get(
                 STORAGE_PROVIDER_CONFIGURATION);
@@ -50,14 +54,16 @@ public class StorageProviderConfigurationReader {
         return readDatabaseProperties(dbProps, DatabaseType.fromValue(dbType));
     }
 
+    @SuppressWarnings("unchecked")
     private static StorageProviderConfiguration readDatabaseProperties(Map<String, Object> dbProperties, DatabaseType databaseType) {
         String jdbcUrl = (String) dbProperties.get(Constants.DataSource.URL);
         String user = (String) dbProperties.getOrDefault(Constants.DataSource.USER, "");
-        String password = (String) dbProperties.getOrDefault(Constants.DataSource.PASSWORD, "");
+        String password = STRING_SUBSTITUTOR.replace((String) dbProperties.getOrDefault(Constants.DataSource.PASSWORD, ""));
 
         Map<String, Object> connectionProperties = (Map<String, Object>)
                 dbProperties.getOrDefault(Constants.DataSource.CONNECTION_PROPERTIES, Collections.emptyMap());
 
         return StorageProviderConfiguration.get(databaseType, jdbcUrl, user, password, connectionProperties);
     }
+    
 }

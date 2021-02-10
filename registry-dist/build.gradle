@@ -37,8 +37,8 @@ distributions {
             }
             into('bootstrap/lib') {
                 from("$rootDir/storage/storage-tool/build/libs") {
-                    exclude '*javadoc*jar'
-                    exclude '*sources*jar'
+                    exclude '*javadoc*jar*'
+                    exclude '*sources*jar*'
                 }
             }
             into('libs/') {
