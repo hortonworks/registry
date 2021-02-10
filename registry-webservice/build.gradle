@@ -35,6 +35,14 @@ sourceSets {
 
 dependencies {
 
+    compile project(':schema-registry:schema-registry-core')
+    compile project(':storage:storage-core')
+    compile project(':cache')
+    compile project(':schema-registry:schema-registry-common')
+    compile(project(':common-auth')) {
+        exclude group: 'javax.servlet', module: 'servlet-api'
+    }
+
     compile libraries.hadoop.aws
     compile libraries.hadoop.azure
     compile libraries.hadoop.azure_datalake
@@ -48,12 +56,7 @@ dependencies {
     compile libraries.nimbus
     compile libraries.json_smart
     compile libraries.jersey.media_multipart
-    compile project(':storage:storage-core')
-    compile project(':cache')
-    compile project(':schema-registry:schema-registry-common')
-    compile(project(':common-auth')) {
-        exclude group: 'javax.servlet', module: 'servlet-api'
-    }
+
     compile libraries.dropwizard.core
     compile libraries.dropwizard.swagger
     compile libraries.dropwizard.assets
@@ -63,9 +66,10 @@ dependencies {
     compile libraries.curator.framework
     compile libraries.curator.client
     compile libraries.curator.recipes
+    compile libraries.swagger
+
     testCompile libraries.curator.test
     testCompile libraries.junit
-    compile project(':schema-registry:schema-registry-core')
 
 }
 

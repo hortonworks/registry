@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResource {
     private static final Logger LOG = LoggerFactory.getLogger(ConfluentSchemaRegistryCompatibleResource.class);
 
-    private static final String OPERATION_GROUP_CONFLUENT_SR = "4. Confluent Schema Registry compatible API";
+    private static final String OPERATION_GROUP_CONFLUENT_SR = "5. Confluent Schema Registry compatible API";
 
     private final AuthorizationAgent authorizationAgent;
 

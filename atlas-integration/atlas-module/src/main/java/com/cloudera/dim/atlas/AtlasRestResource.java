@@ -17,6 +17,8 @@ package com.cloudera.dim.atlas;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.util.WSUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -33,12 +35,17 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class AtlasRestResource {
 
-    static final String OPERATION_GROUP_ATLAS = "5. Atlas";
+    static final String OPERATION_GROUP_ATLAS = "6. Atlas";
 
     private final AtlasSchemaRegistry schemaRegistry;
+    private final AuthorizationAgent authorizationAgent;
+    private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
 
-    public AtlasRestResource(AtlasSchemaRegistry schemaRegistry) {
+    public AtlasRestResource(AtlasSchemaRegistry schemaRegistry, AuthorizationAgent authorizationAgent,
+                             SchemaMetadataTypeValidator schemaMetadataTypeValidator) {
         this.schemaRegistry = schemaRegistry;
+        this.authorizationAgent = authorizationAgent;
+        this.schemaMetadataTypeValidator = schemaMetadataTypeValidator;
     }
 
     @POST

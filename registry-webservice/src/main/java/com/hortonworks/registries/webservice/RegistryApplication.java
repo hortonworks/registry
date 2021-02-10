@@ -22,11 +22,11 @@ import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
-import com.hortonworks.registries.webservice.healthchecks.DummyHealthCheck;
 import com.hortonworks.registries.storage.TransactionManagerAware;
 import com.hortonworks.registries.storage.transaction.TransactionEventListener;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.TransactionManager;
+import com.hortonworks.registries.webservice.healthchecks.ModulesHealthCheck;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
@@ -35,14 +35,12 @@ import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
-import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -51,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -73,19 +70,16 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         registerResources(environment, registryConfiguration);
 
         environment.jersey().register(GenericExceptionMapper.class);
-        environment.healthChecks().register("dummy", new DummyHealthCheck());
+        environment.healthChecks().register("modulesHealthCheck", new ModulesHealthCheck(registryConfiguration));
 
         if (registryConfiguration.isEnableCors()) {
             enableCORS(environment);
         }
 
         addServletFilters(registryConfiguration, environment);
-
-        registerModules(registryConfiguration, environment);
-
     }
 
-    private void initializeUGI(RegistryConfiguration conf) throws IOException {
+    private void initializeUGI(RegistryConfiguration conf) {
         if (conf.getServiceAuthenticationConfiguration() != null) {
             String authenticationType = conf.getServiceAuthenticationConfiguration().getType();
             if (authenticationType != null && authenticationType.equals("kerberos")) {
@@ -115,19 +109,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         } else {
             LOG.debug("No service authentication is configured");
         }
-    }
-
-    private void registerModules(RegistryConfiguration configuration, Environment environment) {
-        environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
-            @Override
-            public void serverStarted(Server server) {
-                if (configuration.getModules().isEmpty() ||
-                        configuration.getModules().stream().noneMatch(ModuleConfiguration::isEnabled)) {
-                    throw new RuntimeException("There are no enabled modules!");
-                }
-            }
-        });
-
     }
 
     @Override
@@ -179,7 +160,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             LOG.info("Registering module [{}] with class [{}]", moduleName, moduleClassName);
             ModuleRegistration moduleRegistration = (ModuleRegistration) Class.forName(moduleClassName).newInstance();
             if (moduleConfiguration.getConfig() == null) {
-                moduleConfiguration.setConfig(new HashMap<String, Object>());
+                moduleConfiguration.setConfig(new HashMap<>());
             }
             moduleRegistration.init(moduleConfiguration.getConfig(), fileStorage);
 
@@ -247,6 +228,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         return storageManager;
     }
 
+    @SuppressWarnings("unchecked")
     private void addServletFilters(RegistryConfiguration registryConfiguration, Environment environment) {
         List<ServletFilterConfiguration> servletFilterConfigurations = registryConfiguration.getServletFilters();
         if (servletFilterConfigurations != null && !servletFilterConfigurations.isEmpty()) {
@@ -254,7 +236,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 try {
                     String className = servletFilterConfig.getClassName();
                     Map<String, String> params = servletFilterConfig.getParams();
-                    String typeSuffix = params.get("type") != null ? ("-" + params.get("type").toString()) : "";
+                    String typeSuffix = params.get("type") != null ? ("-" + params.get("type")) : "";
                     LOG.info("Registering servlet filter [{}]", servletFilterConfig);
                     Class<? extends Filter> filterClass = (Class<? extends Filter>) Class.forName(className);
                     FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(className + typeSuffix, filterClass);

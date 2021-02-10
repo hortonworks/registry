@@ -1,17 +1,21 @@
 # registries configuration
 modules:
-#  - name: atlas-module
-#    className: com.cloudera.dim.atlas.AtlasModule
-#    enabled: true
-#    config:
-#      urls:
-#        - http://kevincostner-1.kevincostner.root.hwx.site:31000
-#      schemaProviders:
-#        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
-#          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
-#          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
-#          hashFunction: "MD5"
-#
+  - name: atlas-module
+    className: com.cloudera.dim.atlas.AtlasModule
+    enabled: false
+    config:
+      urls:
+        # list of Atlas URLs
+        - http://<cluster url>:31000
+      schemaProviders:
+        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
+          hashFunction: "MD5"
+      # authorization properties
+      #authorization:
+      #  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
+
   - name: schema-registry
     className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
     enabled: true
@@ -30,13 +34,7 @@ modules:
       #  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
       # schema cache properties
       cache:
-        enableCaching : true
-#       Define caching properties below
-        properties:
-#          # inmemory schema versions cache size
-          schemaCacheSize: 10000
-#          # inmemory schema version cache entry expiry interval after access
-          schemaCacheExpiryInterval: 3600
+        enableCaching : false
 
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"

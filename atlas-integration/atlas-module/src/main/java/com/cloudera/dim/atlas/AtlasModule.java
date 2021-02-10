@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2020 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,20 +15,20 @@
 package com.cloudera.dim.atlas;
 
 import com.hortonworks.registries.common.ModuleRegistration;
-import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
-import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
-import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource;
-import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
-import com.hortonworks.registries.schemaregistry.webservice.validator.JarInputStreamValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.AUTHORIZATION;
@@ -38,9 +38,11 @@ import static com.hortonworks.registries.schemaregistry.ISchemaRegistry.SCHEMA_P
  * The Atlas module is plugged into the application via the Dropwizard framework.
  * Adding this module to the application enables persistence via Atlas.
  *
- * @see registry.yaml
+ * @see "registry.yaml"
  */
 public class AtlasModule implements ModuleRegistration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AtlasModule.class);
 
     private Map<String, Object> config;
     private FileStorage fileStorage;
@@ -52,37 +54,43 @@ public class AtlasModule implements ModuleRegistration {
 
         // fail fast if the config file is bad
         checkNotNull(config.get(AtlasPlugin.ATLAS_HOSTS_PARAM), "List of Atlas hosts was not provided in the configuration file.");
+
+        if (System.getProperty("atlas.conf") == null) {
+            final Optional<String> fallbackAtlasConf = findAtlasConf();
+            if (fallbackAtlasConf.isPresent()) {
+                LOG.warn("Environment variable \"atlas.conf\" was not defined, trying to fallback to {}", fallbackAtlasConf.get());
+                System.setProperty("atlas.conf", fallbackAtlasConf.get());
+            } else {
+                LOG.error("Environment variable \"atlas.conf\" was not defined and we couldn't find an Atlas configuration path on the classpath.");
+            }
+        }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<Object> getResources() {
         Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
-        /*
-        DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager,
-                                                                         fileStorage,
-                                                                         schemaProviders,
-                                                                         haServerNotificationManager,
-                                                                         new SchemaLockManager(transactionManager));
-         */
         AtlasSchemaRegistry schemaRegistry = new AtlasSchemaRegistry(fileStorage, schemaProviders);
         schemaRegistry.init(config);
-        SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
 
         Map<String, Object> authorizationProps = (Map<String, Object>) config.get(AUTHORIZATION);
         AuthorizationAgent authorizationAgent = AuthorizationAgentFactory.getAuthorizationAgent(authorizationProps);
         SchemaMetadataTypeValidator schemaMetadataTypeValidator = new SchemaMetadataTypeValidator(schemaRegistry);
 
-        SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry,
-                schemaRegistryVersion,
-                authorizationAgent,
-                new JarInputStreamValidator(),
-                schemaMetadataTypeValidator);
-        ConfluentSchemaRegistryCompatibleResource
-                confluentSchemaRegistryResource = new ConfluentSchemaRegistryCompatibleResource(schemaRegistry,
-                authorizationAgent);
-        AtlasRestResource atlasRestResource = new AtlasRestResource(schemaRegistry);
+        AtlasRestResource atlasRestResource = new AtlasRestResource(schemaRegistry, authorizationAgent, schemaMetadataTypeValidator);
 
-        return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource, atlasRestResource);
+        return Collections.singletonList(atlasRestResource);
+    }
+
+    private Optional<String> findAtlasConf() {
+        for (String attempt : Arrays.asList("./conf", "../conf", "build/conf", "./atlas", ".")) {
+            File dir = new File(attempt);
+            if (dir.exists() && dir.isDirectory() && new File(dir, "atlas-application.properties").exists()) {
+                return Optional.of(dir.getAbsolutePath());
+            }
+        }
+
+        return Optional.empty();
     }
 
 }

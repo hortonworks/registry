@@ -26,6 +26,7 @@ dependencies {
         exclude group: 'com.hortonworks.registries', module: 'ranger-plugin'
     }
     compile project(':schema-registry:schema-registry-core')
+    compile project(':atlas-integration:atlas-module')
 
     compile libraries.hibernate_validator
     compile libraries.el_api

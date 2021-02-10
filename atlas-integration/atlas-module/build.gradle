@@ -19,10 +19,11 @@ dependencies {
     compile project(':schema-registry:schema-registry-core')
     compile project(':schema-registry:schema-registry-common')
     compile project(':schema-registry:schema-registry-authorizer')
-    compile project(':schema-registry:schema-registry-webservice')
     compile(project(':registry-common')) { transitive = false }
     compile project(':registry-common-client')
     compile project(':atlas-integration:atlas-common')
     compile project(':atlas-integration:atlas-shim')
+
+    compile libraries.dropwizard.metrics
 
 }

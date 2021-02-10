@@ -21,6 +21,7 @@ dependencies {
     compile libraries.jersey.media_json
     compile libraries.guava
     compile group: 'commons-codec', name: 'commons-codec', version: '1.14'
+    compile libraries.swagger
 
     testCompile libraries.logging.logback
 
