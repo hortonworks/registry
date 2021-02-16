@@ -15,7 +15,9 @@
 const path = require('path');
 const merge = require('webpack-merge');
 const webpack = require('webpack');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const config = require('./webpack.config.base');
 
@@ -27,7 +29,10 @@ const GLOBALS = {
 };
 
 module.exports = merge(config, {
-  debug: false,
+  mode: 'production',
+  optimization: {
+    minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})]
+  },
   devtool: 'cheap-module-source-map',
   entry: {
     application: 'main.js',
@@ -38,32 +43,18 @@ module.exports = merge(config, {
       from: path.join(__dirname, '../app/styles/img'),
       to: 'styles/img'
     }]),
-    // Avoid publishing files when compilation fails
-    new webpack.NoErrorsPlugin(),
     new webpack.DefinePlugin(GLOBALS),
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false,
-        'screw_ie8': true
-      },
-      output: {
-        comments: false
-      },
-      sourceMap: false
-    }),
     new webpack.LoaderOptionsPlugin({
       minimize: true,
       debug: false
     }),
-    new ExtractTextPlugin({
-      filename: 'styles/css/style.css',
-      allChunks: true
+    new MiniCssExtractPlugin({
+      filename: 'styles/css/style.css'
     })
   ],
   module: {
     noParse: /\.min\.js$/,
-    loaders: [
+    rules: [
       // Sass
       {
         test: /\.scss$/,
@@ -72,52 +63,58 @@ module.exports = merge(config, {
           /src\/client\/assets\/styles/,
           /src\/client\/scripts/
         ],
-        loader: ExtractTextPlugin.extract({
-          fallbackLoader: 'style',
-          loader: [{
-              loader: 'css',
-              query: {
-                sourceMap: true
-              }
-            },
-            'postcss',
-            {
-              loader: 'sass',
-              query: {
-                outputStyle: 'compressed'
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: true,
+              url: (url) => {
+                if (url.includes("fontawesome")) {
+                  return false;
+                }
+
+                return true;
               }
             }
-          ]
-        })
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: [
+                require('autoprefixer')()
+              ]
+            }
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              outputStyle: 'compressed'
+            }
+          }
+        ]
       },
-      // Sass + CSS Modules
-      // {
-      //   test: /\.scss$/,
-      //   include: /src\/client\/assets\/javascripts/,
-      //   loader: ExtractTextPlugin.extract({
-      //     fallbackLoader: 'style',
-      //     loader: [
-      //       {
-      //         loader: 'css',
-      //         query: {
-      //           modules: true,
-      //           importLoaders: 1,
-      //           localIdentName: '[path][name]__[local]--[hash:base64:5]'
-      //         }
-      //       },
-      //       'postcss',
-      //       { loader: 'sass', query: { outputStyle: 'compressed' } }
-      //     ]
-      //   })
-      // },
-      // CSS
       {
         test: /\.css$/,
-        loader: ExtractTextPlugin.extract({
-          fallbackLoader: 'style',
-          loader: ['css', 'postcss'],
-          publicPath: '../../'
-        })
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: '../../'
+            }
+          },
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: [
+                require('autoprefixer')()
+              ]
+            }
+          }
+        ]
       }
     ]
   },

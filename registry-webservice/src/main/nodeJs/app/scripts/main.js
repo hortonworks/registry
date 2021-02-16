@@ -12,8 +12,6 @@
   * limitations under the License.
 **/
 
-require('file?name=[name].[ext]!../../index.html'); //for production build
-
 import React, {Component} from 'react';
 import {render} from 'react-dom';
 import debug from 'debug';
@@ -40,7 +38,7 @@ render(
 
 if (module.hot) {
   module.hot.accept('./app', () => {
-    const NextApp = require('./app').default;
+    const NextApp = require('./app');
     render(
       <AppContainer>
         <NextApp/>

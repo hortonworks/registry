@@ -55,7 +55,7 @@ app.use("/ui", express.static(__dirname + '/app'));
 
 //-------------------proxy-------------------
 
-const proxyMiddleware = require('http-proxy-middleware');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const restTarget = 'http://localhost:9090';
 
 const proxyTable = {}; // when request.headers.host == 'dev.localhost:3000',
@@ -83,7 +83,7 @@ const options = {
 };
 
 const context = ['/api']; // requests with this path will be proxied
-const proxy = proxyMiddleware(context, options);
+const proxy = createProxyMiddleware(context, options);
 
 app.use(proxy);
 //-------------------proxy-------------------

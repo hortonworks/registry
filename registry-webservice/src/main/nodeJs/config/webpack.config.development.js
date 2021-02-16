@@ -16,8 +16,6 @@ const merge = require('webpack-merge');
 const webpack = require('webpack');
 const config = require('./webpack.config.base');
 const path = require('path');
-const extractTextPlugin = require("extract-text-webpack-plugin");
-
 
 const GLOBALS = {
   'process.env': {
@@ -27,9 +25,8 @@ const GLOBALS = {
 };
 
 module.exports = merge(config, {
-  debug: true,
+  mode: 'development',
   cache: true,
-  //devtool: 'cheap-module-eval-source-map',
   devtool: 'inline-source-map',
   output: {
     filename: 'ui/js/[name].js',
@@ -45,26 +42,30 @@ module.exports = merge(config, {
     vendor: ['react', 'react-dom', 'react-router']
   },
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      filename: 'ui/js/vendor.bundle.js',
-      minChunks: Infinity
-    }),
-    new extractTextPlugin("[name].css"),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.DefinePlugin(GLOBALS)
+    new webpack.DefinePlugin(GLOBALS),
+    new webpack.LoaderOptionsPlugin({
+      debug: true
+    })
   ],
   module: {
-    loaders: [{
-      test: /\.css$/,
-      loader: 'style-loader'
-    }, {
-      test: /\.css$/,
-      loader: 'css-loader',
-      query: {
-        //modules: true,
-        localIdentName: '[name]__[local]___[hash:base64:5]'
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: [
+                require('autoprefixer')()
+              ]
+            }
+          }
+        ]
       }
-    }, ]
+    ]
   }
 });

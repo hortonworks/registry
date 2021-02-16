@@ -16,10 +16,9 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const autoprefixer = require('autoprefixer');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  // target: 'node',
   node: {
     fs: "empty"
   },
@@ -36,64 +35,69 @@ module.exports = {
     alias: {
       //models: path.join(__dirname, '../src/client/assets/javascripts/models')
     },
-    extensions: ['.js', '.jsx', '.json', '.scss','.css']
+    extensions: ['.js', '.jsx', '.json', '.scss', '.css']
   },
   plugins: [
-    /*new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'  // fetch API
-    }),*/
-    // Shared code
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      filename: 'js/vendor.bundle.js',
-      minChunks: Infinity
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, '../index.ejs'),
+      inject: false,
+      filename: 'index.html'
+    }),
+    new webpack.LoaderOptionsPlugin({
+      options: {
+        context: __dirname
+      }
     })
   ],
   module: {
-    preLoaders: [
+    rules: [
       // Javascript
       {
         test: /\.jsx?$/,
-        loader: 'eslint'
-      }
-    ],
-    loaders: [
+        enforce: 'pre',
+        use: [
+          {
+            loader: 'eslint-loader',
+            options: {
+              failOnWarning: false,
+              failOnError: true
+            }
+          }
+        ]
+      },
       // JavaScript / ES6
       {
         test: /\.jsx?$/,
         include: path.join(__dirname, '../app'),
-        loader: 'babel'
+        use: [{ loader: 'babel-loader' }]
       },
       // Images
       // Inline base64 URLs for <=8k images, direct URLs for the rest
       {
         test: /\.(png|jpg|jpeg|gif|svg)$/,
-        loader: 'url',
-        query: {
-          limit: 8192,
-          name: 'images/[name].[ext]?[hash]'
-        }
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: 'images/[name].[ext]?[hash]'
+            }
+          }
+        ]
       },
       // Fonts
       {
         test: /\.(woff|woff2|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url',
-        query: {
-          limit: 8192,
-          name: 'fonts/[name].[ext]?[hash]'
-        }
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: 'fonts/[name].[ext]?[hash]'
+            }
+          }
+        ]
       }
     ]
-  },
-  postcss: function() {
-    return [
-      autoprefixer({
-        browsers: ['last 2 versions']
-      })
-    ];
-  },
-  eslint: {
-    failOnWarning: false,
-    failOnError: true
   }
 };
