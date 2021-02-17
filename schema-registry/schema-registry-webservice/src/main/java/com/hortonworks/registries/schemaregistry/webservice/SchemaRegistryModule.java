@@ -15,14 +15,11 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaProvider;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
@@ -35,7 +32,6 @@ import com.hortonworks.registries.storage.TransactionManagerAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -90,35 +86,6 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
                 authorizationAgent);
 
         return Arrays.asList(schemaRegistryResource, confluentSchemaRegistryResource);
-    }
-
-    private Collection<? extends SchemaProvider> getSchemaProviders() {
-        Collection<Map<String, Object>> schemaProviders = (Collection<Map<String, Object>>) config.get(SCHEMA_PROVIDERS);
-        if (schemaProviders == null || schemaProviders.isEmpty()) {
-            throw new IllegalArgumentException("No [" + SCHEMA_PROVIDERS + "] property is configured in schema registry configuration file.");
-        }
-
-        return Collections2.transform(schemaProviders, new Function<Map<String, Object>, SchemaProvider>() {
-            @Nullable
-            @Override
-            public SchemaProvider apply(@Nullable Map<String, Object> schemaProviderConfig) {
-                String className = (String) schemaProviderConfig.get("providerClass");
-                if (className == null || className.isEmpty()) {
-                    throw new IllegalArgumentException("Schema provider class name must be non empty, Invalid provider class name [" + 
-                            className + "]");
-                }
-                try {
-                    SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, 
-                            true, 
-                            Thread.currentThread().getContextClassLoader()).newInstance();
-                    schemaProvider.init(schemaProviderConfig);
-                    return schemaProvider;
-                } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                    LOG.error("Error encountered while loading SchemaProvider [{}] ", className, e);
-                    throw new IllegalArgumentException(e);
-                }
-            }
-        });
     }
 
     @Override

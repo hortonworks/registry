@@ -14,6 +14,14 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'application'
+}
+
+application {
+    mainClassName = 'com.hortonworks.registries.webservice.RegistryApplication'
+}
+
 dependencies {
 
     compile(project(':registry-common')) { transitive = false }
@@ -27,13 +35,42 @@ dependencies {
     }
     compile project(':schema-registry:schema-registry-core')
     compile project(':atlas-integration:atlas-module')
+    compile project(':storage:storage-core')
+    compile project(':cache')
+    compile(project(':common-auth')) {
+        exclude group: 'javax.servlet', module: 'servlet-api'
+    }
 
     compile libraries.hibernate_validator
     compile libraries.el_api
     compile libraries.jetty
     compile libraries.guice
+
     compile libraries.dropwizard.core
+    compile libraries.dropwizard.swagger
+    compile libraries.dropwizard.assets
+    compile libraries.dropwizard.auth
+    compile libraries.dropwizard.metrics
+
+    compile libraries.swagger
+
+    compile libraries.hadoop.aws
+    compile libraries.hadoop.azure
+    compile libraries.hadoop.azure_datalake
+    compile libraries.hadoop.cloud
+    compile libraries.hadoop.client
     compile libraries.hadoop.common
+
+    compile libraries.guava
+    compile libraries.logging.slf4j_api
+    compile libraries.commons.lang3
+    compile libraries.nimbus
+    compile libraries.json_smart
+    compile libraries.jersey.media_multipart
+
+    compile libraries.curator.framework
+    compile libraries.curator.client
+    compile libraries.curator.recipes
     
     testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
     
@@ -64,4 +101,16 @@ dependencies {
     testCompile libraries.logging.log4j
     testCompile libraries.httpclient
 
+    runtime group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
+
+}
+
+jar {
+    manifest {
+        attributes(
+                "Main-Class": application.mainClassName,
+                "Implementation-Title": project.name,
+                "Implementation-Version": project.version
+        )
+    }
 }

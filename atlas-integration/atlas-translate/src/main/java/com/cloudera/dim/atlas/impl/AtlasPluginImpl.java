@@ -99,7 +99,11 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public void initialize(Map<String, Object> config) {
         LOG.debug("Initializing the Atlas plugin");
         try {
-            atlasClient = new AtlasClientV2(getAtlasHosts(config));
+
+            String[] hostUrls = getAtlasHosts(config);
+            String[] unamePwd = getBasicAuth(config);
+
+            atlasClient = new AtlasClientV2(hostUrls, unamePwd);
 
             idGenerators.put(MetadataEntityDef.SCHEMA_METADATA_INFO, new IdGenerator());
             idGenerators.put(VersionEntityDef.SCHEMA_VERSION_INFO, new IdGenerator());
@@ -149,6 +153,20 @@ public class AtlasPluginImpl implements AtlasPlugin {
         }
 
         return result;
+    }
+
+    /** This method is only invoked if Kerberos is disabled and Atlas falls back to basic authentication. */
+    @SuppressWarnings("unchecked")
+    @Nullable
+    private String[] getBasicAuth(Map<String, Object> config) {
+        if (config.get(ATLAS_BASIC_AUTH) != null) {
+            Map<String, String> basicAuth = (Map<String, String>) config.get(ATLAS_BASIC_AUTH);
+            if (!basicAuth.containsKey("username")) {
+                return null;
+            }
+            return new String[] { basicAuth.get("username"), basicAuth.get("password") };
+        }
+        return null;
     }
 
     @Override

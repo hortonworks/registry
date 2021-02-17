@@ -16,11 +16,6 @@
 
 plugins {
     id "com.github.node-gradle.node" version "2.2.4"
-    id 'application'
-}
-
-application {
-    mainClassName = 'com.hortonworks.registries.webservice.RegistryApplication'
 }
 
 def nodeJsSrc = 'src/main/nodeJs'
@@ -31,46 +26,6 @@ sourceSets {
             srcDir nodeJsSrc
         }
     }
-}
-
-dependencies {
-
-    compile project(':schema-registry:schema-registry-core')
-    compile project(':storage:storage-core')
-    compile project(':cache')
-    compile project(':schema-registry:schema-registry-common')
-    compile(project(':common-auth')) {
-        exclude group: 'javax.servlet', module: 'servlet-api'
-    }
-
-    compile libraries.hadoop.aws
-    compile libraries.hadoop.azure
-    compile libraries.hadoop.azure_datalake
-    compile libraries.hadoop.cloud
-    compile libraries.hadoop.client
-    compile libraries.hadoop.common
-    
-    compile libraries.guava
-    compile libraries.logging.slf4j_api
-    compile libraries.commons.lang3
-    compile libraries.nimbus
-    compile libraries.json_smart
-    compile libraries.jersey.media_multipart
-
-    compile libraries.dropwizard.core
-    compile libraries.dropwizard.swagger
-    compile libraries.dropwizard.assets
-    compile libraries.dropwizard.auth
-    compile libraries.dropwizard.metrics
-    compile libraries.hibernate_validator
-    compile libraries.curator.framework
-    compile libraries.curator.client
-    compile libraries.curator.recipes
-    compile libraries.swagger
-
-    testCompile libraries.curator.test
-    testCompile libraries.junit
-
 }
 
 def parseNpmSettings(String settingsStr) {
@@ -171,13 +126,6 @@ copyLegal2.dependsOn(copyWebsiteAssets)
 classes.dependsOn(copyLegal2)
 
 jar {
-    manifest {
-        attributes(
-            "Main-Class": application.mainClassName,
-            "Implementation-Title": project.name,
-            "Implementation-Version": project.version
-        )
-    }
 
     from(reactWebsite) {
         include "assets/**"

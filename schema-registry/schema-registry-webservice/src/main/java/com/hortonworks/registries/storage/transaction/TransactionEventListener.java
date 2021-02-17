@@ -34,16 +34,6 @@ public class TransactionEventListener implements ApplicationEventListener {
     private final boolean runWithTxnIfNotConfigured;
     private TransactionIsolation defaultTransactionIsolation;
 
-    /**
-     * Creates instance by taking the below arguments and webservice methods are not run in transaction unless they use
-     * {@link UnitOfWork} on respective webservice resource methods.
-     *
-     * @param transactionManager transactionManager to be used for txn lifecycle invocations.
-     */
-    public TransactionEventListener(TransactionManager transactionManager) {
-        this(transactionManager, false);
-    }
-
     public TransactionEventListener(TransactionManager transactionManager,
                                     TransactionIsolation defaultTransactionIsolation) {
         this(transactionManager, false);
@@ -61,14 +51,6 @@ public class TransactionEventListener implements ApplicationEventListener {
                                     boolean runWithTxnIfNotConfigured) {
         this.transactionManager = transactionManager;
         this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
-    }
-
-    public TransactionEventListener(TransactionManager transactionManager,
-                                    boolean runWithTxnIfNotConfigured,
-                                    TransactionIsolation defaultTransactionIsolation) {
-        this.transactionManager = transactionManager;
-        this.runWithTxnIfNotConfigured = runWithTxnIfNotConfigured;
-        this.defaultTransactionIsolation = defaultTransactionIsolation;
     }
 
     private static class UnitOfWorkEventListener implements RequestEventListener {

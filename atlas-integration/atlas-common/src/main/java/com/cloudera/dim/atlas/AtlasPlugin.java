@@ -42,7 +42,9 @@ import java.util.Optional;
 public interface AtlasPlugin {
 
     /** Configuration parameter used in <pre>registry.yaml</pre> */
-    String ATLAS_HOSTS_PARAM = "urls";
+    String ATLAS_HOSTS_PARAM = "atlasUrls";
+
+    String ATLAS_BASIC_AUTH = "basicAuth";
 
     /** Initialize the plugin. This method should be called by the plugin factory or any other
      * place where the plugin instance is created. */

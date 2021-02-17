@@ -24,6 +24,7 @@ dependencies {
     compile project(':atlas-integration:atlas-common')
     compile project(':atlas-integration:atlas-shim')
 
+    compile libraries.dropwizard.core
     compile libraries.dropwizard.metrics
 
 }

@@ -17,5 +17,6 @@
 dependencies {
 
     compile(project(':schema-registry:schema-registry-common')) { transitive = false }
+    compile(project(':schema-registry:schema-registry-core')) { transitive = false }
 
 }

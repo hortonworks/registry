@@ -4,9 +4,12 @@ modules:
     className: com.cloudera.dim.atlas.AtlasModule
     enabled: false
     config:
-      urls:
+      atlasUrls:
         # list of Atlas URLs
         - http://<cluster url>:31000
+      basicAuth:
+        - username: "kafka"
+        - password: "cloudera"
       schemaProviders:
         - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
           defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
