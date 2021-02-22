@@ -1,6 +1,6 @@
 # Registry
 
-Registry is a framework to build metadata repositories. As part of Registry, we currently have SchemaRegistry and MLRegistry repositories.
+Registry is a framework to build metadata repositories. As part of Registry, we currently have SchemaRegistry repositories.
 
 Follow [@schemaregistry](https://twitter.com/schemaregistry) on Twitter for updates on the project.
 
@@ -17,7 +17,7 @@ Registry users or devs should send a message to [Registry Google Group](https://
 
 ## License
 
-Copyright 2016-2019 Cloudera.
+Copyright 2016-2021 Cloudera.
  
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
