@@ -14,7 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.validator;
 
-import com.hortonworks.registries.schemaregistry.ISchemaRegistryService;
+import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 import org.junit.Test;
 
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SchemaMetadataTypeValidatorTest {
-    private ISchemaRegistryService mockSchemaRegistryServiceMock = mock(ISchemaRegistryService.class);
+    private ISchemaRegistry mockSchemaRegistryServiceMock = mock(ISchemaRegistry.class);
 
 
     @Test

@@ -16,6 +16,7 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -37,7 +38,6 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -72,7 +72,6 @@ public class HfsFileStorageKerberosTest {
     public void setup() throws Exception {
         userGroupInformation = PowerMockito.mock(UserGroupInformation.class);
         fileSystem = new MockFileSystem();
-        testSubject = new HdfsFileStorage();
 
         PowerMockito.mockStatic(UserGroupInformation.class);
         when(UserGroupInformation.getLoginUser()).thenReturn(userGroupInformation);
@@ -96,11 +95,11 @@ public class HfsFileStorageKerberosTest {
         thrown.expectMessage("hdfs.kerberos.keytab is needed when hdfs.kerberos.principal (== " + LOGIN_PRINCIPAL + ") is specified.");
 
         // given
-        Map<String, String> config = baseConfig();
-        config.put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
+        FileStorageConfiguration config = baseConfig();
+        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
 
         // when
-        testSubject.init(config);
+        testSubject = new HdfsFileStorage(config);
     }
 
     @Test
@@ -110,20 +109,20 @@ public class HfsFileStorageKerberosTest {
         thrown.expectMessage("hdfs.kerberos.principal is needed when hdfs.kerberos.keytab (== " + LOGIN_KEYTAB + ") is specified.");
 
         // given
-        Map<String, String> config = baseConfig();
-        config.put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
+        FileStorageConfiguration config = baseConfig();
+        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
 
         // when
-        testSubject.init(config);
+        testSubject = new HdfsFileStorage(config);
     }    
     
     @Test
     public void testWithKerberos() throws Exception {
         // given
-        Map<String, String> config = baseConfig();
-        config.put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
-        config.put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
-        testSubject.init(config);
+        FileStorageConfiguration config = baseConfig();
+        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
+        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
+        testSubject = new HdfsFileStorage(config);
 
         // when
         doIo();
@@ -136,8 +135,8 @@ public class HfsFileStorageKerberosTest {
     @Test
     public void testWithoutKerberos() throws Exception {
         // given
-        Map<String, String> config = baseConfig();
-        testSubject.init(config);
+        FileStorageConfiguration config = baseConfig();
+        testSubject = new HdfsFileStorage(config);
 
         // when
         doIo();
@@ -184,10 +183,11 @@ public class HfsFileStorageKerberosTest {
         testSubject.delete(JAR_FILE);
     }
 
-    private Map<String, String> baseConfig() {
-        Map<String, String> config = new HashMap<>();
-        config.put(HdfsFileStorage.CONFIG_FSURL, FS_URL);
-        config.put(HdfsFileStorage.CONFIG_DIRECTORY, DIRECTORY);
+    private FileStorageConfiguration baseConfig() {
+        FileStorageConfiguration config = new FileStorageConfiguration();
+        config.setProperties(new HashMap<>());
+        config.getProperties().put(HdfsFileStorage.CONFIG_FSURL, FS_URL);
+        config.getProperties().put(HdfsFileStorage.CONFIG_DIRECTORY, DIRECTORY);
         return config;
     }
 

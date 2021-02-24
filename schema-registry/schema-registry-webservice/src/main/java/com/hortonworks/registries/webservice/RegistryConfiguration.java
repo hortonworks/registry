@@ -16,9 +16,9 @@
 
 package com.hortonworks.registries.webservice;
 
+import com.cloudera.dim.atlas.conf.AtlasConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.HAConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
@@ -40,12 +40,12 @@ public class RegistryConfiguration extends Configuration {
     @NotNull
     private FileStorageConfiguration fileStorageConfiguration;
 
+    @JsonProperty("atlas")
+    private AtlasConfiguration atlasConfiguration;
+
     @NotNull
     @JsonProperty
     private List<ModuleConfiguration> modules;
-
-    @JsonProperty
-    private HAConfiguration haConfig;
 
     @JsonProperty
     private boolean enableCors;
@@ -122,14 +122,6 @@ public class RegistryConfiguration extends Configuration {
         return swaggerBundleConfiguration;
     }
 
-    public HAConfiguration getHaConfig() {
-        return haConfig;
-    }
-
-    public void setHaConfig(HAConfiguration haConfig) {
-        this.haConfig = haConfig;
-    }
-
     public List<ServletFilterConfiguration> getServletFilters() {
         return servletFilters;
     }
@@ -146,4 +138,11 @@ public class RegistryConfiguration extends Configuration {
         this.serviceAuthenticationConfiguration = serviceAuthenticationConfiguration;
     }
 
+    public AtlasConfiguration getAtlasConfiguration() {
+        return atlasConfiguration;
+    }
+
+    public void setAtlasConfiguration(AtlasConfiguration atlasConfiguration) {
+        this.atlasConfiguration = atlasConfiguration;
+    }
 }

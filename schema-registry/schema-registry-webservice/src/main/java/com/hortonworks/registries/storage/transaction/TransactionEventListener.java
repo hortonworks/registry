@@ -23,6 +23,7 @@ import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
+import javax.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,6 +34,11 @@ public class TransactionEventListener implements ApplicationEventListener {
     private final TransactionManager transactionManager;
     private final boolean runWithTxnIfNotConfigured;
     private TransactionIsolation defaultTransactionIsolation;
+
+    @Inject
+    public TransactionEventListener(TransactionManager transactionManager) {
+        this(transactionManager, TransactionIsolation.READ_COMMITTED);
+    }
 
     public TransactionEventListener(TransactionManager transactionManager,
                                     TransactionIsolation defaultTransactionIsolation) {

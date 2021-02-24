@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.hortonworks.registries.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 /**
  * Interface abstracting the storage of files within the application.
@@ -25,13 +24,6 @@ import java.util.Map;
 public interface FileStorage {
 
     String DEFAULT_DIR = "/tmp/uploaded-files";
-
-    /**
-     * The file storage can be initialized with a set of key/value pairs.
-     *
-     * @param config the config specific to implementation
-     */
-    void init(Map<String, String> config) throws IOException;
 
     /**
      * Uploads the content from given {@code InputStream} to the configured storage with the given {@code name } as identifier which can

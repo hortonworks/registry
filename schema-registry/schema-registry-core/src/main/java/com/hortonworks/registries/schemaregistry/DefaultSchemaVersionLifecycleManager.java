@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
 import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
@@ -71,7 +72,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
     private DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher;
 
     public DefaultSchemaVersionLifecycleManager(StorageManager storageManager,
-                                         Map<String, Object> props,
+                                         ModuleDetailsConfiguration props,
                                          DefaultSchemaRegistry.SchemaMetadataFetcher schemaMetadataFetcher,
                                          SchemaBranchCache schemaBranchCache) {
         super(props, schemaBranchCache);

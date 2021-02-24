@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -56,17 +57,16 @@ public class HdfsFileStorage implements FileStorage {
     private URI fsUri;
     private boolean kerberosEnabled = false;
 
-    @Override
-    public void init(Map<String, String> config) throws IOException {
-        String fsUrl = config.get(CONFIG_FSURL);
-        String kerberosPrincipal = config.get(CONFIG_KERBEROS_PRINCIPAL);
-        String keytabLocation = config.get(CONFIG_KERBEROS_KEYTAB);
-        directory = config.getOrDefault(CONFIG_DIRECTORY, DEFAULT_DIR);
+    public HdfsFileStorage(FileStorageConfiguration config) throws IOException {
+        final Map<String, String> props = config.getProperties();
+        String fsUrl = props.get(CONFIG_FSURL);
+        String kerberosPrincipal = props.get(CONFIG_KERBEROS_PRINCIPAL);
+        String keytabLocation = props.get(CONFIG_KERBEROS_KEYTAB);
+        directory = props.getOrDefault(CONFIG_DIRECTORY, DEFAULT_DIR);
 
         hdfsConfig = new Configuration();
 
-        for (Map.Entry<String, String> entry:
-                Sets.filter(config.entrySet(), e -> !OWN_CONFIGS.contains(e.getKey()))) {
+        for (Map.Entry<String, String> entry: Sets.filter(props.entrySet(), e -> !OWN_CONFIGS.contains(e.getKey()))) {
             hdfsConfig.set(entry.getKey(), entry.getValue());
         }
 

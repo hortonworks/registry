@@ -16,6 +16,7 @@ package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
@@ -68,6 +69,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -122,13 +124,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final JarInputStreamValidator jarInputStreamValidator;
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
 
+    @Inject
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
-                                  SchemaRegistryVersion schemaRegistryVersion,
                                   AuthorizationAgent authorizationAgent,
                                   JarInputStreamValidator jarInputStreamValidator,
                                   SchemaMetadataTypeValidator schemaMetadataTypeValidator) {
         super(schemaRegistry);
-        this.schemaRegistryVersion = schemaRegistryVersion;
+        this.schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
 
         this.authorizationAgent = authorizationAgent;
         this.jarInputStreamValidator = jarInputStreamValidator;

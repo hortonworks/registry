@@ -15,6 +15,7 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
@@ -50,6 +51,7 @@ import com.hortonworks.registries.storage.search.WhereClause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,28 +85,24 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     private final StorageManager storageManager;
     private final FileStorage fileStorage;
-    private final Collection<Map<String, Object>> schemaProvidersConfig;
 
-    private Map<String, SchemaProvider> schemaTypeWithProviders;
-    private List<SchemaProviderInfo> schemaProviderInfos;
-    private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
-    private SchemaBranchCache schemaBranchCache;
-    private SchemaLockManager schemaLockManager;
+    private final Map<String, SchemaProvider> schemaTypeWithProviders;
+    private final List<SchemaProviderInfo> schemaProviderInfos;
+    private final SchemaVersionLifecycleManager schemaVersionLifecycleManager;
+    private final SchemaBranchCache schemaBranchCache;
+    private final SchemaLockManager schemaLockManager;
     private final BulkUploadService bulkUploadService;
 
-    public DefaultSchemaRegistry(StorageManager storageManager,
+    @Inject
+    public DefaultSchemaRegistry(ModuleDetailsConfiguration configuration,
+                                 StorageManager storageManager,
                                  FileStorage fileStorage,
                                  Collection<Map<String, Object>> schemaProvidersConfig,
                                  SchemaLockManager schemaLockManager) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
-        this.schemaProvidersConfig = schemaProvidersConfig;
         this.schemaLockManager = schemaLockManager;
         this.bulkUploadService = new BulkUploadService(this);
-    }
-
-    @Override
-    public void init(Map<String, Object> props) {
 
         storageManager.registerStorables(
                 Arrays.asList(
@@ -118,38 +116,26 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaBranchVersionMapping.class,
                         SchemaLockStorable.class));
 
-        Options options = new Options(props);
+        Options options = new Options(configuration);
         schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),
                                                   options.getSchemaExpiryInSecs(),
                                                   createSchemaBranchFetcher());
 
         SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
-        schemaVersionLifecycleManager = new DefaultSchemaVersionLifecycleManager(storageManager,
-                                                                          props,
-                                                                          schemaMetadataFetcher,
-                                                                          schemaBranchCache);
+        this.schemaVersionLifecycleManager = new DefaultSchemaVersionLifecycleManager(storageManager,
+                configuration, schemaMetadataFetcher, schemaBranchCache);
 
         Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig,
-                                                                                   schemaVersionLifecycleManager.getSchemaVersionRetriever());
+                schemaVersionLifecycleManager.getSchemaVersionRetriever());
 
-        this.schemaTypeWithProviders = schemaProviders.stream()
-                                                      .collect(Collectors.toMap(SchemaProvider::getType,
-                                                                                Function.identity()));
+        this.schemaTypeWithProviders = schemaProviders.stream().collect(Collectors.toMap(SchemaProvider::getType, Function.identity()));
 
-        schemaProviderInfos = Collections.unmodifiableList(
-                schemaProviders.stream()
-                               .map(schemaProvider
-                                            -> new SchemaProviderInfo(schemaProvider
-                                                                              .getType(),
-                                                                      schemaProvider
-                                                                              .getName(),
-                                                                      schemaProvider
-                                                                              .getDescription(),
-                                                                      schemaProvider
-                                                                              .getDefaultSerializerClassName(),
-                                                                      schemaProvider
-                                                                              .getDefaultDeserializerClassName()))
-                               .collect(Collectors.toList()));
+        this.schemaProviderInfos = Collections.unmodifiableList(
+                schemaProviders.stream().map(schemaProvider ->
+                        new SchemaProviderInfo(schemaProvider.getType(), schemaProvider.getName(),
+                                schemaProvider.getDescription(), schemaProvider.getDefaultSerializerClassName(),
+                                schemaProvider.getDefaultDeserializerClassName()))
+                        .collect(Collectors.toList()));
     }
 
 

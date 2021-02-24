@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2016-2019 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
+
 package com.hortonworks.registries.common;
 
-import java.util.Map;
+import io.dropwizard.Configuration;
 
-public class HAConfiguration {
+/**
+ * A class representing information for a module to be registered with web service
+ */
+public class ModuleConfiguration extends Configuration {
+
+    private String name;
     private String className;
-    private Map<String, Object> config;
+    private ModuleDetailsConfiguration config;
 
     public String getClassName() {
+
         return className;
     }
 
@@ -29,19 +36,20 @@ public class HAConfiguration {
         this.className = className;
     }
 
-    public Map<String, Object> getConfig() {
+    public ModuleDetailsConfiguration getConfig() {
         return config;
     }
 
-    public void setConfig(Map<String, Object> config) {
+    public void setConfig(ModuleDetailsConfiguration config) {
         this.config = config;
     }
 
-    @Override
-    public String toString() {
-        return "HAConfiguration{" +
-                "className='" + className + '\'' +
-                ", config=" + config +
-                '}';
+    public String getName() {
+        return name;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
 }

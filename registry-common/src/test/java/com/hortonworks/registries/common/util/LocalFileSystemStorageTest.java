@@ -15,13 +15,13 @@
  **/
 package com.hortonworks.registries.common.util;
 
+import com.google.common.collect.ImmutableMap;
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 
 public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
 
@@ -43,11 +43,9 @@ public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
 
     @Override
     public FileStorage getFileStorage() {
-        Map<String, String> config = new HashMap<>();
-        config.put(LocalFileSystemStorage.CONFIG_DIRECTORY, uploadDir);
+        FileStorageConfiguration config = new FileStorageConfiguration();
+        config.setProperties(ImmutableMap.of(LocalFileSystemStorage.CONFIG_DIRECTORY, uploadDir));
 
-        LocalFileSystemStorage localFileSystemStorage = new LocalFileSystemStorage();
-        localFileSystemStorage.init(config);
-        return localFileSystemStorage;
+        return new LocalFileSystemStorage(config);
     }
 }

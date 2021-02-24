@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,25 +14,15 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.GenericExceptionMapper;
-import com.hortonworks.registries.common.ModuleConfiguration;
-import com.hortonworks.registries.common.ModuleRegistration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
-import com.hortonworks.registries.storage.transaction.TransactionIsolation;
-import com.hortonworks.registries.storage.TransactionManagerAware;
-import com.hortonworks.registries.storage.transaction.TransactionEventListener;
-import com.hortonworks.registries.storage.NOOPTransactionManager;
-import com.hortonworks.registries.storage.TransactionManager;
+import com.hortonworks.registries.schemaregistry.webservice.CoreModule;
+import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule;
 import com.hortonworks.registries.webservice.healthchecks.ModulesHealthCheck;
-import io.dropwizard.assets.AssetsBundle;
-import com.hortonworks.registries.common.util.FileStorage;
-import com.hortonworks.registries.storage.StorageManager;
-import com.hortonworks.registries.storage.StorageManagerAware;
-import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.setup.Bootstrap;
@@ -45,30 +35,30 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.vyarus.dropwizard.guice.GuiceBundle;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Application entry point.
  */
 public class RegistryApplication extends Application<RegistryConfiguration> {
+
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
-    protected StorageManager storageManager;
-    protected TransactionManager transactionManager;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
         initializeUGI(registryConfiguration);
 
-        registerResources(environment, registryConfiguration);
+        SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
+        LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
 
+        environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(GenericExceptionMapper.class);
         environment.healthChecks().register("modulesHealthCheck", new ModulesHealthCheck(registryConfiguration));
 
@@ -118,11 +108,18 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     @Override
     public void initialize(Bootstrap<RegistryConfiguration> bootstrap) {
+        LOG.debug("Initializing Registry ...");
         bootstrap.setConfigurationSourceProvider(
                 new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
                         new EnvironmentVariableSubstitutor(false)
                 )
         );
+
+        bootstrap.addBundle(GuiceBundle.builder()
+                .modules(new CoreModule())
+                .modules(new SchemaRegistryModule())
+                .build());
+
         // always deploy UI on /ui. If there is no other filter like Confluent etc, redirect / to /ui
         bootstrap.addBundle(new AssetsBundle("/assets", "/ui", "index.html", "static"));
         bootstrap.addBundle(new SwaggerBundle<RegistryConfiguration>() {
@@ -132,61 +129,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
             }
         });
         super.initialize(bootstrap);
-    }
-
-    private void registerResources(Environment environment, RegistryConfiguration registryConfiguration)
-            throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        storageManager = getStorageManager(registryConfiguration.getStorageProviderConfiguration());
-        if (storageManager instanceof TransactionManager) {
-            transactionManager = (TransactionManager) storageManager;
-        } else {
-            transactionManager = new NOOPTransactionManager();
-        }
-        FileStorage fileStorage = getJarStorage(registryConfiguration.getFileStorageConfiguration());
-
-        List<ModuleConfiguration> modules = registryConfiguration.getModules();
-        List<Object> resourcesToRegister = new ArrayList<>();
-        SchemaRegistryVersion schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
-        LOG.info("SchemaRegistry is starting with {}", schemaRegistryVersion);
-        for (ModuleConfiguration moduleConfiguration : modules) {
-            String moduleName = moduleConfiguration.getName();
-            String moduleClassName = moduleConfiguration.getClassName();
-
-            if (!moduleConfiguration.isEnabled()) {
-                LOG.info("Module [{}] is disabled, skipping initialization", moduleClassName);
-                continue;
-            }
-
-            LOG.info("Registering module [{}] with class [{}]", moduleName, moduleClassName);
-            ModuleRegistration moduleRegistration = (ModuleRegistration) Class.forName(moduleClassName).newInstance();
-            if (moduleConfiguration.getConfig() == null) {
-                moduleConfiguration.setConfig(new HashMap<>());
-            }
-            moduleRegistration.init(moduleConfiguration.getConfig(), fileStorage);
-
-            if (moduleRegistration instanceof StorageManagerAware) {
-                LOG.info("Module [{}] is StorageManagerAware and setting StorageManager.", moduleName);
-                StorageManagerAware storageManagerAware = (StorageManagerAware) moduleRegistration;
-                storageManagerAware.setStorageManager(storageManager);
-            }
-
-            if (moduleRegistration instanceof TransactionManagerAware) {
-                LOG.info("Module [{}] is TransactionManagerAware and setting TransactionManager.", moduleName);
-                TransactionManagerAware transactionManagerAware = (TransactionManagerAware) moduleRegistration;
-                transactionManagerAware.setTransactionManager(transactionManager);
-            }
-
-            resourcesToRegister.addAll(moduleRegistration.getResources());
-        }
-
-        LOG.info("Registering resources to Jersey environment: [{}]", resourcesToRegister);
-        for (Object resource : resourcesToRegister) {
-            environment.jersey().register(resource);
-        }
-
-        environment.jersey().register(MultiPartFeature.class);
-        environment.jersey().register(new TransactionEventListener(transactionManager, TransactionIsolation.READ_COMMITTED));
-
     }
 
     private void enableCORS(Environment environment) {
@@ -200,32 +142,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         // Add URL mapping
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-    }
-
-    private FileStorage getJarStorage(FileStorageConfiguration fileStorageConfiguration) {
-        FileStorage fileStorage = null;
-        if (fileStorageConfiguration.getClassName() != null) {
-            try {
-                fileStorage = (FileStorage) Class.forName(fileStorageConfiguration.getClassName(), true,
-                        Thread.currentThread().getContextClassLoader()).newInstance();
-                fileStorage.init(fileStorageConfiguration.getProperties());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-            return fileStorage;
-    }
-
-    private StorageManager getStorageManager(StorageProviderConfiguration storageProviderConfiguration) {
-        final String providerClass = storageProviderConfiguration.getProviderClass();
-        StorageManager storageManager;
-        try {
-            storageManager = (StorageManager) Class.forName(providerClass).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        storageManager.init(storageProviderConfiguration.getProperties());
-        return storageManager;
     }
 
     @SuppressWarnings("unchecked")

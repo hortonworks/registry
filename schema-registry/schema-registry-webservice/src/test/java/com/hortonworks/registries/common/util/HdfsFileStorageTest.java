@@ -15,10 +15,11 @@
  **/
 package com.hortonworks.registries.common.util;
 
+import com.google.common.collect.ImmutableMap;
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,15 +28,12 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public class HdfsFileStorageTest {
     private final String hdfsDir;
-    private HdfsFileStorage fileStorage;
 
     public HdfsFileStorageTest() {
         try {
@@ -43,11 +41,6 @@ public class HdfsFileStorageTest {
         } catch (Exception ex) {
             throw new RuntimeException("Could not create temporary directory for uploading files. ", ex);
         }
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        fileStorage = new HdfsFileStorage();
     }
 
     @After
@@ -58,15 +51,17 @@ public class HdfsFileStorageTest {
 
     @Test(expected = RuntimeException.class)
     public void testInitWithoutFsUrl() throws Exception {
-        fileStorage.init(new HashMap<>());
+        new HdfsFileStorage(new FileStorageConfiguration());
     }
 
     @Test
     public void testUploadJarWithDir() throws Exception {
-        Map<String, String> config = new HashMap<>();
-        config.put(HdfsFileStorage.CONFIG_FSURL, "file:///");
-        config.put(HdfsFileStorage.CONFIG_DIRECTORY, hdfsDir);
-        fileStorage.init(config);
+        FileStorageConfiguration config = new FileStorageConfiguration();
+        config.setProperties(ImmutableMap.of(
+                HdfsFileStorage.CONFIG_FSURL, "file:///",
+                HdfsFileStorage.CONFIG_DIRECTORY, hdfsDir
+        ));
+        FileStorage fileStorage = new HdfsFileStorage(config);
 
         File file = File.createTempFile("test", ".tmp");
         file.deleteOnExit();

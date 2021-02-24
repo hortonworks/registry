@@ -54,7 +54,7 @@ public class SchemaRegistryResourceTest {
     @Before
     public void setup() {
         ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null);
+        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null);
     }
     
     @Test
@@ -243,8 +243,7 @@ public class SchemaRegistryResourceTest {
         String type = "type";
         SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, 
-                null, authorizationAgentMock, null, null) {
+        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, null, null) {
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();

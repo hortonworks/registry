@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
 import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
@@ -60,7 +61,7 @@ public abstract class SchemaVersionLifecycleManager {
     protected final SchemaVersionInfoCache schemaVersionInfoCache;
     protected final CustomSchemaStateExecutor customSchemaStateExecutor;
 
-    public SchemaVersionLifecycleManager(Map<String, Object> props, SchemaBranchCache schemaBranchCache) {
+    public SchemaVersionLifecycleManager(ModuleDetailsConfiguration props, SchemaBranchCache schemaBranchCache) {
         this.schemaBranchCache = schemaBranchCache;
         schemaVersionRetriever = createSchemaVersionRetriever();
         ISchemaRegistry.Options options = new ISchemaRegistry.Options(props);
@@ -592,10 +593,9 @@ public abstract class SchemaVersionLifecycleManager {
     }
 
     @SuppressWarnings("unchecked")
-    protected CustomSchemaStateExecutor createSchemaReviewExecutor(Map<String, Object> props,
+    protected CustomSchemaStateExecutor createSchemaReviewExecutor(ModuleDetailsConfiguration props,
                                                                  SchemaVersionLifecycleStateMachine.Builder builder) {
-        Map<String, Object> schemaReviewExecConfig = (Map<String, Object>) props.getOrDefault("customSchemaStateExecutor",
-                Collections.emptyMap());
+        Map<String, Object> schemaReviewExecConfig = props.getSchemaReviewExecConfig() != null ? props.getSchemaReviewExecConfig() : Collections.emptyMap();
         String className = (String) schemaReviewExecConfig.getOrDefault("className", DEFAULT_SCHEMA_REVIEW_EXECUTOR_CLASS);
         Map<String, ?> executorProps = (Map<String, ?>) schemaReviewExecConfig.getOrDefault("props", Collections.emptyMap());
         CustomSchemaStateExecutor customSchemaStateExecutor;

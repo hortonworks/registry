@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2020 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,18 +14,21 @@
  **/
 package com.hortonworks.registries.schemaregistry.validator;
 
-import com.hortonworks.registries.schemaregistry.ISchemaRegistryService;
+import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaProviderInfo;
 
-public class SchemaMetadataTypeValidator {
-    private ISchemaRegistryService schemaRegistryService;
+import javax.inject.Inject;
 
-    public SchemaMetadataTypeValidator(ISchemaRegistryService schemaRegistryService) {
-        this.schemaRegistryService = schemaRegistryService;
+public class SchemaMetadataTypeValidator {
+    private final ISchemaRegistry schemaRegistry;
+
+    @Inject
+    public SchemaMetadataTypeValidator(ISchemaRegistry schemaRegistry) {
+        this.schemaRegistry = schemaRegistry;
     }
 
     public boolean isValid(String s) {
-        return schemaRegistryService.getSupportedSchemaProviders()
+        return schemaRegistry.getSupportedSchemaProviders()
                 .stream()
                 .map(SchemaProviderInfo::getType)
                 .anyMatch(t -> t.equals(s));

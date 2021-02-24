@@ -12,11 +12,15 @@ modules:
         className: "com.hortonworks.registries.examples.schema.lifecycle.executor.CustomReviewCycleExecutor"
         props:
            review.service.url: "http://localhost:7070"
-      # schema cache properties
-      # inmemory schema versions cache size
-      schemaCacheSize: 10000
-      # inmemory schema version cache entry expiry interval after access
-      schemaCacheExpiryInterval: 3600
+      cache:
+        enableCaching: true
+        # Define caching properties below
+        properties:
+          # schema cache properties
+          # inmemory schema versions cache size
+          schemaCacheSize: 10000
+          # inmemory schema version cache entry expiry interval after access
+          schemaCacheExpiryInterval: 3600
 
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"

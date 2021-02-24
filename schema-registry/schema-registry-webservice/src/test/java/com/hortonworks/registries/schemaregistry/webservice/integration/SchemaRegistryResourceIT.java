@@ -82,7 +82,7 @@ public class SchemaRegistryResourceIT {
             .build();
 
     private static SchemaRegistryResource instantiateResource() {
-        return new SchemaRegistryResource(schemaRegistryMock, null, authorizationAgentMock, null, schemaMetadataTypeValidatorMock);
+        return new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, null, schemaMetadataTypeValidatorMock);
     }
 
     @Test

@@ -19,10 +19,13 @@ package com.hortonworks.registries.schemaregistry.locks;
 import com.google.common.base.Preconditions;
 import com.hortonworks.registries.storage.TransactionManager;
 
+import javax.inject.Inject;
+
 public class SchemaLockManager {
 
     private TransactionManager transactionManager;
 
+    @Inject
     public SchemaLockManager(TransactionManager transactionManager) {
         Preconditions.checkNotNull(transactionManager, "Transaction manager can't be null");
         this.transactionManager = transactionManager;

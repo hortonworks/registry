@@ -14,7 +14,10 @@
  **/
 package com.cloudera.dim.atlas;
 
+import com.cloudera.dim.atlas.conf.AtlasConfiguration;
 import com.cloudera.dim.atlas.shim.AtlasPluginFactory;
+import com.google.common.annotations.VisibleForTesting;
+import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
@@ -61,6 +64,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,26 +89,32 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
     private static final Logger LOG = LoggerFactory.getLogger(AtlasSchemaRegistry.class);
 
     private AtlasPlugin atlasClient;
+    private final AtlasConfiguration config;
     private final FileStorage fileStorage;
-    private final Collection<Map<String, Object>> schemaProvidersConfig;
     private Map<String, SchemaProvider> schemaTypeWithProviders;
     private List<SchemaProviderInfo> schemaProviderInfos;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
-    private final BulkUploadService bulkUploadService;
+    private final BulkUploadService bulkUploadService = new BulkUploadService(this);
 
-    public AtlasSchemaRegistry(FileStorage fileStorage, Collection<Map<String, Object>> schemaProvidersConfig) {
+    @VisibleForTesting
+    AtlasSchemaRegistry(FileStorage fileStorage, AtlasPlugin atlasClient, SchemaVersionLifecycleManager schemaVersionLifecycleManager) {
+        this.atlasClient = atlasClient;
+        this.schemaVersionLifecycleManager = schemaVersionLifecycleManager;
+        this.config = new AtlasConfiguration();
         this.fileStorage = fileStorage;
-        this.schemaProvidersConfig = schemaProvidersConfig;
-        this.bulkUploadService = new BulkUploadService(this);
     }
 
-    @Override
-    public void init(Map<String, Object> config) {
+    @Inject
+    public AtlasSchemaRegistry(ModuleDetailsConfiguration moduleConfig, AtlasConfiguration atlasConfig, FileStorage fileStorage) {
+        this.config = checkNotNull(atlasConfig, "atlasConfig");
+        this.fileStorage = fileStorage;
+
         LOG.info("Initializing the Atlas integration module");
 
         // config contains "urls" parameter which tells the client where to connect
-        atlasClient = AtlasPluginFactory.create(config);
+        atlasClient = AtlasPluginFactory.create(config.asMap());
 
+        Collection<Map<String, Object>> schemaProvidersConfig = moduleConfig.getSchemaProviders();
         Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig, this);
 
         this.schemaTypeWithProviders = schemaProviders.stream().collect(Collectors.toMap(SchemaProvider::getType, Function.identity()));
@@ -187,11 +197,6 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
 
     public void setupAtlasModel() {
         atlasClient.setupAtlasModel();
-    }
-
-    void setAtlasClient(AtlasPlugin atlasClient, SchemaVersionLifecycleManager schemaVersionLifecycleManager) {
-        this.atlasClient = atlasClient;
-        this.schemaVersionLifecycleManager = schemaVersionLifecycleManager;
     }
 
     @Override

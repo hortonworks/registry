@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -38,16 +39,7 @@ public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId
 
     String SCHEMA_PROVIDERS = "schemaProviders";
 
-    String AUTHORIZATION = "authorization";
-
     String DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY = "OPTIMISTIC";
-
-    /**
-     * initializes it with the given properties
-     *
-     * @param props properties to be initialized with.
-     */
-    void init(Map<String, Object> props);
 
     /**
      * Registers information about a schema if it is not yet and returns it's identifier.
@@ -236,7 +228,6 @@ public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
         public static final String ENABLE_CACHING = "enableCaching";
-        public static final String CACHE = "cache";
         public static final String SCHEMA_CACHE_SIZE = "schemaCacheSize";
         public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schemaCacheExpiryInterval";
         public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
@@ -244,8 +235,8 @@ public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId
 
         private final Map<String, ?> config;
 
-        public Options(Map<String, ?> config) {
-            this.config = (Map<String, ?>) getValue(config, CACHE, new HashMap<>());
+        public Options(ModuleDetailsConfiguration config) {
+            this.config = config.getCache() != null ? config.getCache() : new HashMap<>();
         }
 
         private Object getValue(Map<String, ?> properties, String propertyKey, Object defaultValue) {

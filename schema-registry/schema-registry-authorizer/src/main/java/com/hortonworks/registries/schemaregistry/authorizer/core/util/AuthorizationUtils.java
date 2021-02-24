@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthorizationUtils {
 
-    private static Map<String, Authorizer.UserAndGroups> userGroupsStore = new ConcurrentHashMap<>();
+    private static final Map<String, Authorizer.UserAndGroups> USER_GROUPS_STORE = new ConcurrentHashMap<>();
 
     public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 
@@ -42,17 +42,16 @@ public class AuthorizationUtils {
 
         try {
             String user = kerberosName.getShortName();
-            Authorizer.UserAndGroups res = userGroupsStore.get(user);
+            Authorizer.UserAndGroups res = USER_GROUPS_STORE.get(user);
             if (res != null) {
                 return res;
             }
             List<String> groupsList = UserGroupInformation.createRemoteUser(user).getGroups();
-            Set<String> groupsSet = new HashSet<>();
-            groupsSet.addAll(groupsList);
+            Set<String> groupsSet = new HashSet<>(groupsList);
 
             res = new Authorizer.UserAndGroups(user, groupsSet);
 
-            userGroupsStore.put(user, res);
+            USER_GROUPS_STORE.put(user, res);
 
             return res;
         } catch (IOException e) {

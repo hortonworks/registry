@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
@@ -64,7 +65,8 @@ public class DefaultSchemaRegistryTest {
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig =
                 Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
-        underTest = new DefaultSchemaRegistry(storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+        ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
+        underTest = new DefaultSchemaRegistry(configuration, storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
     }
 
     @Test

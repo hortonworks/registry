@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.storage.filestorage;
 
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageManagerAware;
@@ -23,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -33,9 +33,7 @@ public class DbFileStorage implements FileStorage, StorageManagerAware {
     private static final Logger LOG = LoggerFactory.getLogger(DbFileStorage.class);
     private StorageManager dao;
 
-    @Override
-    public void init(Map<String, String> config) {
-    }
+    public DbFileStorage(FileStorageConfiguration conf) { }
 
     @Override
     public String upload(InputStream inputStream, String name) throws IOException {

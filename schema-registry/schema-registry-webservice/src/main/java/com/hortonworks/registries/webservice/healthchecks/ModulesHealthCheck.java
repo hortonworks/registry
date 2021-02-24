@@ -16,7 +16,6 @@
 package com.hortonworks.registries.webservice.healthchecks;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.webservice.RegistryConfiguration;
 
 /**
@@ -33,8 +32,7 @@ public class ModulesHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        if (configuration.getModules().isEmpty() ||
-                configuration.getModules().stream().noneMatch(ModuleConfiguration::isEnabled)) {
+        if (configuration.getModules().isEmpty()) {
             return Result.unhealthy("There are no enabled modules!");
         }
         return Result.healthy();

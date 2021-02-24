@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.hortonworks.registries.common.util;
 
 import com.google.common.io.ByteStreams;
+import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,6 @@ import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 /**
  * Implementation of JarStorage interface backed by local file system
@@ -42,10 +42,9 @@ public class LocalFileSystemStorage implements FileStorage {
 
     private String directory = DEFAULT_DIR;
 
-    @Override
-    public void init(Map<String, String> config) {
+    public LocalFileSystemStorage(FileStorageConfiguration config) {
         String dir;
-        if ((dir = config.get(CONFIG_DIRECTORY)) != null) {
+        if ((dir = config.getProperties().get(CONFIG_DIRECTORY)) != null) {
             directory = dir;
         }
 

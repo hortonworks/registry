@@ -1,27 +1,18 @@
+# Atlas configuration only applies if enabled is true
+atlas:
+  enabled: false
+  atlasUrls:
+    # list of Atlas URLs
+    - http://<atlas host url>:31000
+  basicAuth:
+    username: "kafka"
+    password: "cloudera"
+
+
 # registries configuration
 modules:
-  - name: atlas-module
-    className: com.cloudera.dim.atlas.AtlasModule
-    enabled: false
-    config:
-      atlasUrls:
-        # list of Atlas URLs
-        - http://<cluster url>:31000
-      basicAuth:
-        - username: "kafka"
-        - password: "cloudera"
-      schemaProviders:
-        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
-          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
-          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
-          hashFunction: "MD5"
-      # authorization properties
-      #authorization:
-      #  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
-
   - name: schema-registry
     className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
-    enabled: true
     config:
       schemaProviders:
         - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"

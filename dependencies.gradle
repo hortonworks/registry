@@ -64,7 +64,8 @@ ext.libraries = [
       util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
       metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
       testing        : "io.dropwizard:dropwizard-testing:$versions_dropwizard_testing",
-      swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger"
+      swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
+      guicey         : "ru.vyarus:dropwizard-guicey:$versions_dropwizard_guicey"
    ],
    swagger           : "io.swagger:swagger-annotations:$versions_swagger",
 

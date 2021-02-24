@@ -45,6 +45,7 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -75,6 +76,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     private final AuthorizationAgent authorizationAgent;
 
+    @Inject
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
                                                      AuthorizationAgent authorizationAgent) {
         super(schemaRegistry);

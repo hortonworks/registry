@@ -52,7 +52,7 @@ public class TransactionTest {
         StorageManager jdbcStorageManager = new JdbcStorageManager(queryExecutor);
         transactionManager = (TransactionManager) jdbcStorageManager;
         jdbcStorageManager.registerStorables(StorageUtils.getStorableEntities());
-        dbFileStorage = new DbFileStorage();
+        dbFileStorage = new DbFileStorage(null);
         dbFileStorage.setStorageManager(jdbcStorageManager);
         runScript("create_fileblob.sql");
     }

@@ -68,20 +68,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AtlasSchemaRegistryTest {
-    
+
+    private static final Long TIMESTAMP = System.currentTimeMillis();
+
     private AtlasSchemaRegistry underTest;
     private AtlasPlugin atlasPlugin;
     private FileStorage fileStorage;
     private SchemaVersionLifecycleManager schemaVersionLifecycleManager;
-    private static final Long TIMESTAMP = System.currentTimeMillis();
 
     @Before
     public void setup() {
         atlasPlugin = Mockito.mock(AtlasPlugin.class);
         fileStorage = Mockito.mock(FileStorage.class);
         schemaVersionLifecycleManager = Mockito.mock(SchemaVersionLifecycleManager.class);
-        underTest = new AtlasSchemaRegistry(fileStorage, null);
-        underTest.setAtlasClient(atlasPlugin, schemaVersionLifecycleManager);
+
+        underTest = new AtlasSchemaRegistry(fileStorage, atlasPlugin, schemaVersionLifecycleManager);
     }
     
     @Test
