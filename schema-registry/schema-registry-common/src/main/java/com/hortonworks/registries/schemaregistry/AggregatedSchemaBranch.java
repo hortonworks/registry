@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  *   This class represents the aggregated information about the schema branch which includes all the schema versions tied
@@ -55,6 +56,23 @@ public class AggregatedSchemaBranch implements Serializable {
 
     public Collection<SchemaVersionInfo> getSchemaVersionInfos() {
         return schemaVersionInfos;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        AggregatedSchemaBranch that = (AggregatedSchemaBranch) o;
+        return Objects.equals(schemaBranch, that.schemaBranch) && Objects.equals(rootSchemaVersion, that.rootSchemaVersion) && Objects.equals(schemaVersionInfos, that.schemaVersionInfos);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(schemaBranch, rootSchemaVersion, schemaVersionInfos);
     }
 
     @Override

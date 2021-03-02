@@ -27,4 +27,7 @@ dependencies {
     compile libraries.dropwizard.core
     compile libraries.dropwizard.metrics
 
+    testCompile libraries.mockito
+    testCompile libraries.junit
+
 }

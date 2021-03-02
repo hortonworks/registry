@@ -189,6 +189,11 @@ public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetrie
         atlasClient.setupAtlasModel();
     }
 
+    void setAtlasClient(AtlasPlugin atlasClient, SchemaVersionLifecycleManager schemaVersionLifecycleManager) {
+        this.atlasClient = atlasClient;
+        this.schemaVersionLifecycleManager = schemaVersionLifecycleManager;
+    }
+
     @Override
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
         LOG.info("--------------- addSchemaMetadata {}", schemaMetadata);
