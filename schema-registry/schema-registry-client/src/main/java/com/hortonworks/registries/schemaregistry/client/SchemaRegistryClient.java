@@ -1518,12 +1518,12 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         /**
          * Default value for classloader cache size.
          */
-        public static final long DEFAULT_CLASSLOADER_CACHE_SIZE = 1024L;
+        public static final long DEFAULT_CLASSLOADER_CACHE_SIZE = 1024;
 
         /**
          * Default value for cache expiry interval in seconds.
          */
-        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
+        public static final long DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60;
 
         /**
          * Maximum size of classloader cache. Default value is {@link #DEFAULT_CLASSLOADER_CACHE_SIZE}
@@ -1550,7 +1550,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                                      ConfigEntry.PositiveNumberValidator.get());
 
         public static final long DEFAULT_SCHEMA_CACHE_SIZE = 1024;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60L;
+        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 5 * 60;
 
         /**
          * Maximum size of schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_SIZE}

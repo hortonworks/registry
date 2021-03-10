@@ -3,7 +3,7 @@
 
     <properties>
         <hwqe.tools.version>0.4.91</hwqe.tools.version>
-        <registry.version>0.8.1.3.0.1.0-4</registry.version>
+        <registry.version>0.9.1</registry.version>
         <surefire.version>3.0.0-M3</surefire.version>
         <jackson.version>2.10.5</jackson.version>
         <lombok.version>1.18.6</lombok.version>

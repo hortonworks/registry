@@ -65,11 +65,11 @@ public final class SchemaRegistryClientFactory {
       case SCHEMA_REGISTRY_CLIENT:
         HashMap<String, Serializable> config = new HashMap<>();
         config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), activeURL.toString());
-        config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 10L);
-        config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 5000L);
-        config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000L);
+        config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 10);
+        config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 5000);
+        config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000);
         config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(),
-            60 * 60 * 1000L);
+            60 * 60 * 1000);
         if (!Strings.isNullOrEmpty(customSecurity)){
           HashMap<String, String> sslMap = new HashMap<>();
           sslMap.put("protocol", Config.getClientSSLProtocol());

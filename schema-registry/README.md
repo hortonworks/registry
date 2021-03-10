@@ -118,10 +118,10 @@ Bellow code snippet is an example of creating an API client. Configuraiton sampl
 ```java
 HashMap<String, Serializable> config = new HashMap<>();
 config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), "https://my-hostname.com/cdp-proxy-api/schema-registrregistry/schemas");
-config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 1024L);
-config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 3600L);
-config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000L);
-config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(), 300L);
+config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 1024);
+config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 3600);
+config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000);
+config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(), 300);
 HashMap<String, String> sslMap = new HashMap<>();
 sslMap.put("protocol", "SSL");
 sslMap.put("trustStoreType", "JKS");
