@@ -23,8 +23,7 @@ roadmap.
 | | REST API for              ||  Yes                   | Yes                       |
 | | Schema Management         |                         |                           |
 +-----------------------------+-------------------------+---------------------------+
-| | Supported Schema Types    | | AVRO (0.3), PROTOBUF, | AVRO only                 |
-|                             | | JSON, extensible...   |                           |
+| | Supported Schema Types    | | AVRO (1.9.1)          | AVRO, PROTOBUF, JSON      |
 +-----------------------------+-------------------------+---------------------------+
 | | Pluggable                 | | Yes                   | No, uses Avro parser      |
 | | Serializer/Deserializer   |                         |                           |
@@ -32,9 +31,9 @@ roadmap.
 | | Storage                   | | Pluggable Storage     | Uses Kafka as storage     |
 |                             | | (Mysql, Postgres)     |                           |
 +-----------------------------+-------------------------+---------------------------+
-| | Registry Client to support| | Registry client to    | No. Developed for Kafka   |
-| | multi platform(Storm,Kafka| | interact with schema  | producer/consumer APIs    |
-| | , Nifi etc..)             | | registry              | only                      |
+| | Registry Client to support| | Registry client to    | | Registry client to      |
+| | multi platform(Storm,Kafka| | interact with schema  | | interact with schema    |
+| | , Nifi etc..)             | | registry              | | registry                |
 +-----------------------------+-------------------------+---------------------------+
 | | HA                        | | No Master,Multi       | Single Master Architecture|
 |                             | | Webserver deployment  | Depends on zookeeper      |

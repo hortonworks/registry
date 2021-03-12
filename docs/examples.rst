@@ -40,7 +40,7 @@ Running Kafka Producer with AvroSerializer
 
   java -jar avro-examples-0.*.jar -d data/truck_events_json -p data/kafka-producer.props -sm -s data/truck_events.avsc
 
-(java is installed in ``/usr/java/jdk1.8.0_232-cloudera/bin/java``)
+(java is installed in ``/usr/java/default/bin/java``)
 
 
 To run the producer in Secure cluster:
