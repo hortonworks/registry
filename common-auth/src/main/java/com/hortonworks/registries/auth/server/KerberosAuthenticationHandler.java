@@ -362,8 +362,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
             if (authorization == null) {
                 LOG.trace("SPNEGO starting");
             } else {
-                LOG.warn("'" + KerberosAuthenticator.AUTHORIZATION + "' does not start with '" +
-                        KerberosAuthenticator.NEGOTIATE + "' :  {}", authorization);
+                LOG.warn("{} does not start with {}", KerberosAuthenticator.AUTHORIZATION, KerberosAuthenticator.NEGOTIATE);
             }
         } else {
             authorization = authorization.substring(KerberosAuthenticator.NEGOTIATE.length()).trim();
