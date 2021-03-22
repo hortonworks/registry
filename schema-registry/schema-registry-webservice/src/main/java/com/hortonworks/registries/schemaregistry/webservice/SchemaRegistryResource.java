@@ -59,6 +59,8 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 import com.hortonworks.registries.schemaregistry.webservice.validator.JarInputStreamValidator;
 import com.hortonworks.registries.schemaregistry.webservice.validator.exception.InvalidJarFileException;
 import com.hortonworks.registries.storage.exception.StorageException;
+import com.hortonworks.registries.webservice.RegistryConfiguration;
+import io.dropwizard.server.AbstractServerFactory;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -70,12 +72,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -102,6 +106,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
 import static com.hortonworks.registries.schemaregistry.SchemaBranch.MASTER_BRANCH;
@@ -123,13 +128,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final AuthorizationAgent authorizationAgent;
     private final JarInputStreamValidator jarInputStreamValidator;
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
+    private final RegistryConfiguration registryConfiguration;
 
     @Inject
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AuthorizationAgent authorizationAgent,
                                   JarInputStreamValidator jarInputStreamValidator,
-                                  SchemaMetadataTypeValidator schemaMetadataTypeValidator) {
+                                  SchemaMetadataTypeValidator schemaMetadataTypeValidator,
+                                  RegistryConfiguration registryConfiguration) {
         super(schemaRegistry);
+        this.registryConfiguration = registryConfiguration;
         this.schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
 
         this.authorizationAgent = authorizationAgent;
@@ -210,6 +218,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             LOG.error("Encountered error while listing schemas", ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
+    }
+
+    @OPTIONS
+    public Response options(@Context HttpServletResponse response) {
+        AbstractServerFactory serverFactory = (AbstractServerFactory) registryConfiguration.getServerFactory();
+        Set<String> allowedMethods = serverFactory.getAllowedMethods();
+        if (allowedMethods == null || allowedMethods.isEmpty()) {
+            response.setHeader("Allow", "GET");
+        } else {
+            response.setHeader("Allow", String.join(", ", allowedMethods));
+        }
+        return Response.ok().build();
     }
 
     @GET

@@ -103,6 +103,13 @@ enableCors: true
 #httpProxyPassword: "password"
 
 server:
+  allowedMethods: 
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - HEAD
+    - OPTIONS
   applicationConnectors:
     - type: http
       port: 9090
