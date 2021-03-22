@@ -22,6 +22,8 @@ import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeVal
 import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -35,6 +37,8 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class AtlasRestResource {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AtlasRestResource.class);
+
     static final String OPERATION_GROUP_ATLAS = "6. Atlas";
 
     private final AtlasSchemaRegistry schemaRegistry;
@@ -46,6 +50,8 @@ public class AtlasRestResource {
         this.schemaRegistry = schemaRegistry;
         this.authorizationAgent = authorizationAgent;
         this.schemaMetadataTypeValidator = schemaMetadataTypeValidator;
+
+        LOG.info("Initializing Atlas REST endpoint.");
     }
 
     @POST
