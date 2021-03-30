@@ -41,15 +41,15 @@ public class LocalFileSystemStorage implements FileStorage {
     public static final String CONFIG_DIRECTORY = "directory";
 
     private String directory = DEFAULT_DIR;
-
+    
     public LocalFileSystemStorage(FileStorageConfiguration config) {
         String dir;
-        if ((dir = config.getProperties().get(CONFIG_DIRECTORY)) != null) {
+        if ((dir = config.getProperties().getDirectory()) != null) {
             directory = dir;
         }
-
         ensureDirExists();
     }
+    
 
     protected void ensureDirExists() {
         final File dirFile = FileSystems.getDefault().getPath(directory).toFile();

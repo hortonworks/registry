@@ -52,6 +52,9 @@ dependencies {
     testCompile libraries.mockito
     testCompile libraries.powermock_api
     testCompile libraries.powermock_module
+    testCompile libraries.dropwizard.jersey
+    testCompile libraries.dropwizard.core
+    testCompile libraries.junit
     
     
 

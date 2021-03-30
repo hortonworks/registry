@@ -38,7 +38,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -66,7 +65,7 @@ public class HfsFileStorageKerberosTest {
     public ExpectedException thrown = ExpectedException.none();
 
     private static final String FS_URL = "mock://mybucket/mydatalake/myenv";
-    private static final String DIRECTORY = "/registry";
+    private static final String DIRECTORY = "/tmp/uploaded-files";
     private static final String ADJUSTED_DIRECTORY = HdfsFileStorage.adjustDirectory(FS_URL, DIRECTORY);
     private static final String LOGIN_PRINCIPAL = "schemaregistry/hostname@DOMAIN";
     private static final String LOGIN_KEYTAB = 
@@ -109,7 +108,7 @@ public class HfsFileStorageKerberosTest {
 
         // given
         FileStorageConfiguration config = baseConfig();
-        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
+        config.getProperties().setKerberosPrincipal(LOGIN_PRINCIPAL);
 
         // when
         testSubject = new HdfsFileStorage(config);
@@ -124,7 +123,7 @@ public class HfsFileStorageKerberosTest {
 
         // given
         FileStorageConfiguration config = baseConfig();
-        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
+        config.getProperties().setKeytabLocation(LOGIN_KEYTAB);
 
         // when
         testSubject = new HdfsFileStorage(config);
@@ -135,8 +134,8 @@ public class HfsFileStorageKerberosTest {
     public void testWithKerberos() throws Exception {
         // given
         FileStorageConfiguration config = baseConfig();
-        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL, LOGIN_PRINCIPAL);
-        config.getProperties().put(HdfsFileStorage.CONFIG_KERBEROS_KEYTAB, LOGIN_KEYTAB);
+        config.getProperties().setKerberosPrincipal(LOGIN_PRINCIPAL);
+        config.getProperties().setKeytabLocation(LOGIN_KEYTAB);
         testSubject = new HdfsFileStorage(config);
 
         // when
@@ -197,12 +196,12 @@ public class HfsFileStorageKerberosTest {
         testSubject.exists(JAR_FILE);
         testSubject.delete(JAR_FILE);
     }
-
+    
     private FileStorageConfiguration baseConfig() {
         FileStorageConfiguration config = new FileStorageConfiguration();
-        config.setProperties(new HashMap<>());
-        config.getProperties().put(HdfsFileStorage.CONFIG_FSURL, FS_URL);
-        config.getProperties().put(HdfsFileStorage.CONFIG_DIRECTORY, DIRECTORY);
+        config.getProperties().setFsUrl(FS_URL);
+        config.getProperties().setDirectory(DIRECTORY);
+
         return config;
     }
 

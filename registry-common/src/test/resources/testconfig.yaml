@@ -1,0 +1,3 @@
+  className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
+  properties:
+    directory: "/tmp/schema-registry/test/directory"

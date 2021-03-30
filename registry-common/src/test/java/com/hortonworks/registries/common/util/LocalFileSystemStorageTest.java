@@ -15,17 +15,30 @@
  **/
 package com.hortonworks.registries.common.util;
 
-import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.common.FileStorageConfiguration;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.configuration.YamlConfigurationFactory;
+import io.dropwizard.jackson.Jackson;
+import io.dropwizard.jersey.validation.Validators;
+import io.dropwizard.util.Resources;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
+import org.junit.Test;
 
+import javax.validation.Validator;
 import java.io.File;
 import java.nio.file.Files;
+import static org.junit.Assert.assertEquals;
 
 public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
 
     private final String uploadDir;
+
+    private final ObjectMapper objectMapper = Jackson.newObjectMapper();
+    private final Validator validator = Validators.newValidator();
+    private final YamlConfigurationFactory<FileStorageConfiguration> factory =
+            new YamlConfigurationFactory(FileStorageConfiguration.class, validator, objectMapper, "");
 
     public LocalFileSystemStorageTest() {
         try {
@@ -44,8 +57,17 @@ public class LocalFileSystemStorageTest extends AbstractFileStorageTest {
     @Override
     public FileStorage getFileStorage() {
         FileStorageConfiguration config = new FileStorageConfiguration();
-        config.setProperties(ImmutableMap.of(LocalFileSystemStorage.CONFIG_DIRECTORY, uploadDir));
-
+        config.getProperties().setDirectory(uploadDir);
         return new LocalFileSystemStorage(config);
+    }
+    
+    @Test
+    public void testReadYaml() throws Exception {
+        final File yml = new File(Resources.getResource("testconfig.yaml").toURI());
+        final FileStorageConfiguration wid = factory.build(yml);
+        String directory = wid.getProperties().getDirectory();
+        String className = wid.getClassName();
+        assertEquals("/tmp/schema-registry/test/directory", directory);
+        assertEquals("com.hortonworks.registries.common.util.LocalFileSystemStorage", className);
     }
 }

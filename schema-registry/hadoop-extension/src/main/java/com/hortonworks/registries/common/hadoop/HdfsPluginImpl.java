@@ -16,11 +16,12 @@
 package com.hortonworks.registries.common.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.common.util.HdfsFileStorage;
+import com.hortonworks.registries.common.FileStorageProperties;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,14 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.hortonworks.registries.common.util.HdfsFileStorage.CONFIG_DIRECTORY;
-import static com.hortonworks.registries.common.util.HdfsFileStorage.CONFIG_FSURL;
-import static com.hortonworks.registries.common.util.HdfsFileStorage.CONFIG_KERBEROS_KEYTAB;
-import static com.hortonworks.registries.common.util.HdfsFileStorage.CONFIG_KERBEROS_PRINCIPAL;
-import static com.hortonworks.registries.common.util.HdfsFileStorage.OWN_CONFIGS;
 
 /** This class is the implementation of the HDFS FileStorage plugin. It uses Hadoop classes
  * and therefore needs to be loaded on a separate classpath in order to not interfere with
@@ -49,27 +44,27 @@ import static com.hortonworks.registries.common.util.HdfsFileStorage.OWN_CONFIGS
 public class HdfsPluginImpl extends AbstractHadoopPlugin {
 
     private static final Logger LOG = LoggerFactory.getLogger(HdfsFileStorage.class);
+    
+    // the configuration keys
+
+    private static final String CONFIG_KERBEROS_PRINCIPAL = "hdfs.kerberos.principal";
+    private static final String CONFIG_KERBEROS_KEYTAB = "hdfs.kerberos.keytab";
 
     private String directory;
     private Configuration hdfsConfig;
     private URI fsUri;
     private boolean kerberosEnabled = false;
-
-    public HdfsPluginImpl() { }
+    
 
     @Override
     public void initialize(FileStorageConfiguration config) throws IOException {
-        final Map<String, String> props = config.getProperties();
-        String fsUrl = props.get(CONFIG_FSURL);
-        String kerberosPrincipal = props.get(CONFIG_KERBEROS_PRINCIPAL);
-        String keytabLocation = props.get(CONFIG_KERBEROS_KEYTAB);
-        directory = props.getOrDefault(CONFIG_DIRECTORY, FileStorage.DEFAULT_DIR);
+        final FileStorageProperties props = config.getProperties();
+        String fsUrl = props.getFsUrl();
+        String kerberosPrincipal = props.getKerberosPrincipal();
+        String keytabLocation = props.getKeytabLocation();
+        directory = StringUtils.defaultIfBlank(props.getDirectory(), FileStorage.DEFAULT_DIR);
 
         hdfsConfig = new Configuration();
-
-        for (Map.Entry<String, String> entry: Sets.filter(props.entrySet(), e -> !OWN_CONFIGS.contains(e.getKey()))) {
-            hdfsConfig.set(entry.getKey(), entry.getValue());
-        }
 
         // make sure fsUrl is set
         checkArgument(fsUrl != null, "fsUrl must be specified for HdfsFileStorage.");

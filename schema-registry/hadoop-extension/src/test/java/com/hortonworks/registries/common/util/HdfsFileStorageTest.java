@@ -15,7 +15,6 @@
  **/
 package com.hortonworks.registries.common.util;
 
-import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -58,10 +57,8 @@ public class HdfsFileStorageTest {
     @Test
     public void testUploadJarWithDir() throws Exception {
         FileStorageConfiguration config = new FileStorageConfiguration();
-        config.setProperties(ImmutableMap.of(
-                HdfsFileStorage.CONFIG_FSURL, "file:///",
-                HdfsFileStorage.CONFIG_DIRECTORY, hdfsDir
-        ));
+        config.getProperties().setFsUrl("file:///");
+        config.getProperties().setDirectory(hdfsDir);
         FileStorage fileStorage = new HdfsFileStorage(config);
 
         File file = File.createTempFile("test", ".tmp");

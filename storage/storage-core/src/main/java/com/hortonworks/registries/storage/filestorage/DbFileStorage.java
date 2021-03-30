@@ -32,7 +32,7 @@ import java.util.Optional;
 public class DbFileStorage implements FileStorage, StorageManagerAware {
     private static final Logger LOG = LoggerFactory.getLogger(DbFileStorage.class);
     private StorageManager dao;
-
+    
     public DbFileStorage(FileStorageConfiguration conf) { }
 
     @Override

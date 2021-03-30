@@ -16,33 +16,39 @@
 
 package com.hortonworks.registries.common;
 
-import org.hibernate.validator.constraints.NotEmpty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Map;
+
+import javax.validation.constraints.NotEmpty;
 
 /**
  * The configuration for jar storage.
  */
+
 public class FileStorageConfiguration {
 
     @NotEmpty
     private String className;
-
-    private Map<String, String> properties;
-
+    
+    private FileStorageProperties properties = new FileStorageProperties();
+    
+    @JsonProperty
     public String getClassName() {
         return className;
     }
 
+    @JsonProperty
     public void setClassName(String className) {
         this.className = className;
     }
 
-    public Map<String, String> getProperties() {
+    @JsonProperty
+    public FileStorageProperties getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, String> config) {
+    @JsonProperty
+    public void setProperties(FileStorageProperties config) {
         this.properties = config;
     }
 }
