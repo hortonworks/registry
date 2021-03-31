@@ -50,6 +50,7 @@ fi
 CLASSPATH=$CLASSPATH:$base_dir/atlas-plugin/*
 CLASSPATH=$CLASSPATH:$base_dir/ranger-plugin/*
 CLASSPATH=$CLASSPATH:$base_dir/ranger-plugin/conf/
+CLASSPATH=$CLASSPATH:$base_dir/hadoop-plugin/*
 
 if [ ! -z "$HADOOP_CONF_DIR" ]; then
  CLASSPATH=$CLASSPATH:$HADOOP_CONF_DIR;

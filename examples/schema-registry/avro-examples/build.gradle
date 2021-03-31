@@ -24,12 +24,6 @@ dependencies {
     compile group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
     
     compile project(':schema-registry:schema-registry-serdes')
-    testCompile(project(':registry-webservice')) {
-        exclude group: 'org.apache.hadoop'
-    }
-    testCompile(project(':schema-registry:schema-registry-webservice')) {
-        exclude group: 'org.apache.hadoop'
-    }
 
     compile libraries.commons.cli
     compile libraries.dropwizard.testing
@@ -47,6 +41,16 @@ dependencies {
     
     testCompile libraries.junit
     testCompile project(':examples:schema-registry:serdes-examples')
+
+    testCompile(project(':registry-webservice')) {
+        exclude group: 'org.apache.hadoop'
+    }
+    testCompile(project(':schema-registry:schema-registry-webservice')) {
+        exclude group: 'org.apache.hadoop'
+    }
+    testCompile(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
+        transitive = false
+    }
 
 }
 

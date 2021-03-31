@@ -24,9 +24,15 @@ dependencies {
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
+    compile(project(path: ':schema-registry:hadoop-extension', configuration: 'shim')) {
+        transitive = false
+    }
     
     testCompile project(':ranger-plugin')
     testCompile libraries.junit
+    testCompile(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
+        transitive = false
+    }
     
 }
 

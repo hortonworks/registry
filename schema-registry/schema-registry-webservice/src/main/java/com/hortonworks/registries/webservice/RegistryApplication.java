@@ -19,6 +19,8 @@ import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
+import com.hortonworks.registries.common.util.HadoopPlugin;
+import com.hortonworks.registries.common.util.HadoopPluginFactory;
 import com.hortonworks.registries.schemaregistry.webservice.CoreModule;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule;
 import com.hortonworks.registries.webservice.healthchecks.ModulesHealthCheck;
@@ -30,8 +32,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -72,31 +72,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     private void initializeUGI(RegistryConfiguration conf) {
         if (conf.getServiceAuthenticationConfiguration() != null) {
-            String authenticationType = conf.getServiceAuthenticationConfiguration().getType();
-            if (authenticationType != null && authenticationType.equals("kerberos")) {
-                Map<String, String> serviceAuthenticationProperties = conf.getServiceAuthenticationConfiguration().getProperties();
-                if (serviceAuthenticationProperties != null) {
-                    String principal = serviceAuthenticationProperties.get("principal");
-                    String keytab = serviceAuthenticationProperties.get("keytab");
-
-                    if (StringUtils.isNotEmpty(principal) && StringUtils.isNotEmpty(keytab)) {
-                        LOG.debug("Login with principal = '" + principal + "' and keyTab = '" + keytab + "'");
-                        try {
-                            UserGroupInformation.loginUserFromKeytab(principal, keytab);
-                            LOG.debug("Successfully logged in");
-                        } catch (Exception e) {
-                            LOG.error("Failed to log in", e);
-                        }
-                    } else {
-                        LOG.error("Invalid service authentication configuration for 'kerberos' principal = '" + 
-                                principal + "' and keytab = '" + keytab + "'");
-                    }
-                } else {
-                    LOG.error("No service authentication properties were configured for 'kerberos'");
-                }
-            } else {
-                LOG.error("Invalid service authentication type : " + authenticationType);
-            }
+            HadoopPlugin keytabCheck = HadoopPluginFactory.createKeytabCheck();
+            keytabCheck.loadKerberosUser(conf.getServiceAuthenticationConfiguration());
         } else {
             LOG.debug("No service authentication is configured");
         }

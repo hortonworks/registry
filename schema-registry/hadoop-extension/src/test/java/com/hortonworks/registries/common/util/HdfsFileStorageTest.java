@@ -51,7 +51,8 @@ public class HdfsFileStorageTest {
 
     @Test(expected = RuntimeException.class)
     public void testInitWithoutFsUrl() throws Exception {
-        new HdfsFileStorage(new FileStorageConfiguration());
+        HdfsFileStorage fileStorage = new HdfsFileStorage(new FileStorageConfiguration());
+        fileStorage.exists("");
     }
 
     @Test

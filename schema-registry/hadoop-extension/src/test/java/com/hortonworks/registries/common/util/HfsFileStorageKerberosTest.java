@@ -29,6 +29,8 @@ import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -48,10 +51,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-
+// TODO This test currently fails on java 11 due to Powermock
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({FileSystem.class, UserGroupInformation.class})
 public class HfsFileStorageKerberosTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HfsFileStorageKerberosTest.class);
 
     private MockFileSystem fileSystem;
     private UserGroupInformation userGroupInformation;
@@ -68,24 +73,32 @@ public class HfsFileStorageKerberosTest {
             "/var/run/cloudera-scm-agent/process/1546340168-schemaregistry-SCHEMA_REGISTRY_SERVER/schemaregistry.keytab";
     private static final String JAR_FILE = "serdes.jar";
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setup() throws Exception {
-        userGroupInformation = PowerMockito.mock(UserGroupInformation.class);
-        fileSystem = new MockFileSystem();
+        LOG.debug("Initializing the Hdfs test");
+        try {
+            userGroupInformation = PowerMockito.mock(UserGroupInformation.class);
+            fileSystem = new MockFileSystem();
 
-        PowerMockito.mockStatic(UserGroupInformation.class);
-        when(UserGroupInformation.getLoginUser()).thenReturn(userGroupInformation);
-        when(userGroupInformation.doAs(any(PrivilegedAction.class))).thenAnswer(invocation -> {
-           return invocation.getArgument(0, PrivilegedAction.class).run();
-        });
-        when(userGroupInformation.doAs(any(PrivilegedExceptionAction.class))).thenAnswer(invocation -> {
-            return invocation.getArgument(0, PrivilegedExceptionAction.class).run();
-        });
-        PowerMockito.mockStatic(FileSystem.class);
-        when(FileSystem.get(any(URI.class), any(Configuration.class))).thenAnswer(invocaton -> {
-            fileSystem.initialize(invocaton.getArgument(0, URI.class), invocaton.getArgument(1, Configuration.class));
-            return fileSystem;
-        });
+            PowerMockito.mockStatic(UserGroupInformation.class);
+            when(UserGroupInformation.getLoginUser()).thenReturn(userGroupInformation);
+            when(userGroupInformation.doAs(any(PrivilegedAction.class))).thenAnswer(invocation ->
+                    invocation.getArgument(0, PrivilegedAction.class).run());
+            when(userGroupInformation.doAs(any(PrivilegedExceptionAction.class))).thenAnswer(invocation ->
+                    invocation.getArgument(0, PrivilegedExceptionAction.class).run());
+            PowerMockito.mockStatic(FileSystem.class);
+            when(FileSystem.get(any(URI.class), any(Configuration.class))).thenAnswer(invocaton -> {
+                fileSystem.initialize(invocaton.getArgument(0, URI.class), invocaton.getArgument(1, Configuration.class));
+                return fileSystem;
+            });
+
+        } catch (Throwable t) {
+            // Powermock can throw a NoClassDefFoundError which kills the test without logging out the error
+            // so we explicitly catch all errors here and print them out
+            LOG.error("Failed to initialize the test.", t);
+            fail(t.getMessage());
+        }
     }
 
     @Test
@@ -100,6 +113,7 @@ public class HfsFileStorageKerberosTest {
 
         // when
         testSubject = new HdfsFileStorage(config);
+        testSubject.exists("");
     }
 
     @Test
@@ -114,6 +128,7 @@ public class HfsFileStorageKerberosTest {
 
         // when
         testSubject = new HdfsFileStorage(config);
+        testSubject.exists("");
     }    
     
     @Test

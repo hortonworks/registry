@@ -15,15 +15,16 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.hortonworks.registries.common.CollectionResponse;
+import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -37,13 +38,16 @@ import java.util.Optional;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SchemaRegistryResourceTest {
 
     private SchemaRegistryResource underTest;
-    private ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
-    private AuthorizationAgent authorizationAgentMock = Mockito.mock(AuthorizationAgent.class);
+    private ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
+    private AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
+    private AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";
     private static final String ORDER = "_orderByFields";
@@ -53,8 +57,8 @@ public class SchemaRegistryResourceTest {
 
     @Before
     public void setup() {
-        ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null);
+        ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
+        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null, null);
     }
     
     @Test
@@ -236,14 +240,14 @@ public class SchemaRegistryResourceTest {
         //given
         Collection<SchemaVersionKey> schemaversions = new ArrayList<>();
         schemaversions.add(new SchemaVersionKey("test", 1));
-        Mockito.when(authorizationAgentMock.authorizeFindSchemasByFields(ArgumentMatchers.any(), 
+        when(authorizationAgentMock.authorizeFindSchemasByFields(ArgumentMatchers.any(),
                 ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(schemaversions);
         String name = "name";
         String namespace = "namespace";
         String type = "type";
-        SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, null, null, null) {
+        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, null, null) {
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();
@@ -254,14 +258,14 @@ public class SchemaRegistryResourceTest {
                 return schemaFieldQuery;
             }
         };
-        Mockito.when(schemaRegistryMock.findSchemasByFields(ArgumentMatchers.any())).thenReturn(schemaversions);
+        when(schemaRegistryMock.findSchemasByFields(ArgumentMatchers.any())).thenReturn(schemaversions);
         
         //when
         Response actual = underTest.findSchemasByFields(name, namespace, type, securityContext);
         
         //then
-        Mockito.verify(schemaRegistryMock).findSchemasByFields(schemaFieldQuery);
-        Mockito.verify(authorizationAgentMock).authorizeFindSchemasByFields(null, schemaRegistryMock, schemaversions);
+        verify(schemaRegistryMock).findSchemasByFields(schemaFieldQuery);
+        verify(authorizationAgentMock).authorizeFindSchemasByFields(null, schemaRegistryMock, schemaversions);
         CollectionResponse expectedEntity = CollectionResponse.newResponse().entities(schemaversions).build();
         assertThat(actual.getStatus(), is(200));
         assertThat(((CollectionResponse) (actual.getEntity())).getEntities(), is(expectedEntity.getEntities()));

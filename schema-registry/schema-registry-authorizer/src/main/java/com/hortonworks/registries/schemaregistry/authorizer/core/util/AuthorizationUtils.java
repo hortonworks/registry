@@ -16,23 +16,33 @@
 package com.hortonworks.registries.schemaregistry.authorizer.core.util;
 
 import com.hortonworks.registries.auth.util.KerberosName;
+import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import org.apache.hadoop.security.UserGroupInformation;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+@Singleton
 public class AuthorizationUtils {
 
     private static final Map<String, Authorizer.UserAndGroups> USER_GROUPS_STORE = new ConcurrentHashMap<>();
 
-    public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
+    private final HadoopPlugin hadoopPlugin;
+
+    @Inject
+    public AuthorizationUtils(HadoopPlugin hadoopPlugin) {
+        this.hadoopPlugin = checkNotNull(hadoopPlugin, "hadoopPlugin");
+    }
+
+    public Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 
         Principal p = sc.getUserPrincipal();
         if (p == null) {
@@ -46,8 +56,8 @@ public class AuthorizationUtils {
             if (res != null) {
                 return res;
             }
-            List<String> groupsList = UserGroupInformation.createRemoteUser(user).getGroups();
-            Set<String> groupsSet = new HashSet<>(groupsList);
+
+            Set<String> groupsSet = hadoopPlugin.getGroupsForUser(user);
 
             res = new Authorizer.UserAndGroups(user, groupsSet);
 
@@ -58,7 +68,5 @@ public class AuthorizationUtils {
             throw new RuntimeException(e);
         }
     }
-
-    private AuthorizationUtils() { }
 
 }

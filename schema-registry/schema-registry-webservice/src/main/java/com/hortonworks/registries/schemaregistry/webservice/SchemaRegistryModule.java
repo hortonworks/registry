@@ -18,7 +18,10 @@ package com.hortonworks.registries.schemaregistry.webservice;
 import com.cloudera.dim.atlas.AtlasRestResource;
 import com.google.inject.AbstractModule;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
+import com.hortonworks.registries.common.util.HadoopPlugin;
+import com.hortonworks.registries.common.util.HadoopPluginFactory;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.providers.AtlasRestResourceProvider;
 import com.hortonworks.registries.schemaregistry.providers.ModuleDetailsConfigurationProvider;
 import com.hortonworks.registries.schemaregistry.providers.SchemaRegistryProvider;
@@ -39,7 +42,9 @@ public class SchemaRegistryModule extends AbstractModule {
     protected void configure() {
         LOG.debug("Configuring SchemaRegistry module ...");
 
+        bind(HadoopPlugin.class).toProvider(HadoopPluginFactory.class).in(Singleton.class);
         bind(AuthorizationAgent.class).toProvider(AuthorizationAgentFactory.class).in(Singleton.class);
+        bind(AuthorizationUtils.class).in(Singleton.class);
         bind(ISchemaRegistry.class).toProvider(SchemaRegistryProvider.class).in(Singleton.class);
         bind(ModuleDetailsConfiguration.class).toProvider(ModuleDetailsConfigurationProvider.class).in(Singleton.class);
 

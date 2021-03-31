@@ -14,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice.integration;
 
+import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -25,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
@@ -35,7 +37,6 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.client.Client;
@@ -57,17 +58,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SchemaRegistryResourceIT {
 
-    private static ISchemaRegistry schemaRegistryMock = Mockito.mock(ISchemaRegistry.class);
-    private static AuthorizationAgent authorizationAgentMock = Mockito.mock(AuthorizationAgent.class);
-    private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock = Mockito.mock(SchemaMetadataTypeValidator.class);
+    private static ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
+    private static AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
+    private static AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
+    private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock = mock(SchemaMetadataTypeValidator.class);
     private Client testClient = RESOURCE.client();
 
     @BeanParam
@@ -82,7 +86,7 @@ public class SchemaRegistryResourceIT {
             .build();
 
     private static SchemaRegistryResource instantiateResource() {
-        return new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, null, schemaMetadataTypeValidatorMock, null);
+        return new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null);
     }
 
     @Test

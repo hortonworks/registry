@@ -42,10 +42,12 @@ public class AuthorizerFactory {
         try {
             // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer is used by default
             if (props == null || !props.containsKey(Authorizer.AUTHORIZER_CONFIG)) {
+                LOG.info("Authorizer was not specified in the config so we're using {} by default", RangerSchemaRegistryAuthorizer.class);
                 authorizerClass = RangerSchemaRegistryAuthorizer.class;
             } else {
                 String authorizerClassName = (String) props.get(Authorizer.AUTHORIZER_CONFIG);
                 checkNotNull(authorizerClassName, "Authorizer class not defined for %s", Authorizer.AUTHORIZER_CONFIG);
+                LOG.debug("Authorizer to use: {}", authorizerClassName);
                 authorizerClass = Class.forName(authorizerClassName);
                 checkState(Authorizer.class.isAssignableFrom(authorizerClass),
                         "Class %s does not implement Authorizer, please check the value of your %s property.",

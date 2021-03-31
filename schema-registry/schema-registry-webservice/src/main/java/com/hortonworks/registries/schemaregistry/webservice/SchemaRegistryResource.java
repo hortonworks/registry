@@ -65,7 +65,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -128,11 +128,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final AuthorizationAgent authorizationAgent;
     private final JarInputStreamValidator jarInputStreamValidator;
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
+    private final AuthorizationUtils authorizationUtils;
     private final RegistryConfiguration registryConfiguration;
 
     @Inject
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AuthorizationAgent authorizationAgent,
+                                  AuthorizationUtils authorizationUtils,
                                   JarInputStreamValidator jarInputStreamValidator,
                                   SchemaMetadataTypeValidator schemaMetadataTypeValidator,
                                   RegistryConfiguration registryConfiguration) {
@@ -141,6 +143,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         this.schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
 
         this.authorizationAgent = authorizationAgent;
+        this.authorizationUtils = authorizationUtils;
         this.jarInputStreamValidator = jarInputStreamValidator;
         this.schemaMetadataTypeValidator = schemaMetadataTypeValidator;
     }
@@ -202,7 +205,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), 
                     Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
             Collection<AggregatedSchemaMetadataInfo> schemaMetadatas = authorizationAgent
-                    .authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext), 
+                    .authorizeGetAggregatedSchemaList(authorizationUtils.getUserAndGroups(securityContext),
                             schemaRegistry.findAggregatedSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
@@ -245,7 +248,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
                 schemaMetadataInfo = authorizationAgent
-                        .authorizeGetAggregatedSchemaInfo(AuthorizationUtils.getUserAndGroups(securityContext),
+                        .authorizeGetAggregatedSchemaInfo(authorizationUtils.getUserAndGroups(securityContext),
                                 schemaMetadataInfo);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
@@ -295,7 +298,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     Optional.ofNullable(compatibility), Optional.ofNullable(evolve));
 
             Collection<SchemaMetadataInfo> schemaMetadatas = authorizationAgent
-                    .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findSchemaMetadata(filters));
+                    .authorizeFindSchemas(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
         } catch (RangerException rex) {
@@ -367,7 +370,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
         try {
             Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
-                    .authorizeFindSchemas(AuthorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
+                    .authorizeFindSchemas(authorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
             return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
         } catch (RangerException rex) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
@@ -434,7 +437,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                          serDesInfos));
             }
 
-            return WSUtils.respondEntities(authorizationAgent.authorizeGetAggregatedSchemaList(AuthorizationUtils.getUserAndGroups(securityContext),
+            return WSUtils.respondEntities(authorizationAgent.authorizeGetAggregatedSchemaList(authorizationUtils.getUserAndGroups(securityContext),
                     aggregatedSchemaMetadataInfos),
                     Response.Status.OK);
         } catch (SchemaBranchNotFoundException e) {
@@ -470,7 +473,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
         try {
             Collection<SchemaVersionKey> schemaVersionKeys = authorizationAgent
-                    .authorizeFindSchemasByFields(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    .authorizeFindSchemasByFields(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                             schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
 
             return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
@@ -528,7 +531,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 checkValidNames(schemaMetadata.getName());
 
                 boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
-                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
                         schemaMetadata,
                         Authorizer.AccessType.CREATE);
                 Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
@@ -581,7 +584,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+            authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry,
                     schemaName,
                     Authorizer.AccessType.UPDATE);
@@ -638,7 +641,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
                         schemaMetadataInfo, Authorizer.AccessType.READ);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
@@ -672,7 +675,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaId);
             if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext), 
+                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
                         schemaMetadataInfo, Authorizer.AccessType.READ);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
@@ -702,7 +705,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @Context UriInfo uriInfo,
                                         @Context SecurityContext securityContext) {
         try {
-            authorizationAgent.authorizeDeleteSchemaMetadata(AuthorizationUtils.getUserAndGroups(securityContext),
+            authorizationAgent.authorizeDeleteSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry,
                     schemaName);
             schemaRegistry.deleteSchema(schemaName);
@@ -748,7 +751,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Response response;
             SchemaVersion schemaVersion = null;
             try {
-                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaName, schemaBranchName, Authorizer.AccessType.CREATE);
                 schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, StandardCharsets.UTF_8), description);
                 response = addSchemaVersion(schemaBranchName,
@@ -794,7 +797,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
-                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaName,
                         schemaBranchName,
                         Authorizer.AccessType.CREATE);
@@ -841,7 +844,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
             if (schemaVersionInfo != null) {
-                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext),
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext),
                         schemaRegistry,
                         schemaName,
                         schemaBranchName,
@@ -885,7 +888,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
             if (schemaVersionInfos != null) {
-                authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext),
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext),
                         schemaRegistry,
                         schemaName,
                         schemaBranchName,
@@ -927,7 +930,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     schemaVersionInfo, Authorizer.AccessType.READ);
 
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
@@ -963,7 +966,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         Response response;
         try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     schemaIdVersion, Authorizer.AccessType.READ);
             response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -996,7 +999,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                   @Context SecurityContext securityContext) {
         try {
             final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     schemaVersionInfo, Authorizer.AccessType.READ);
 
             return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
@@ -1049,7 +1052,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.enableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
@@ -1089,7 +1092,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.disableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
@@ -1126,7 +1129,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.archiveSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
@@ -1164,7 +1167,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     versionId, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
@@ -1201,7 +1204,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.startSchemaVersionReview(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
@@ -1242,7 +1245,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
@@ -1284,7 +1287,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                  @Context SecurityContext securityContext) {
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName,
                     schemaBranchName, Authorizer.AccessType.READ);
             CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
@@ -1322,7 +1325,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
             if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeGetSerializers(AuthorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo);
+                authorizationAgent.authorizeGetSerializers(authorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo);
                 Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfo.getSchemaMetadata().getName());
                 response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
             } else {
@@ -1357,7 +1360,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         Response response;
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
-            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.UPDATE);
+            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.UPDATE);
             InputStream validatedStream = jarInputStreamValidator.validate(inputStream);
             String uploadedFileId = schemaRegistry.uploadFile(validatedStream);
             response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
@@ -1391,7 +1394,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                  @Context SecurityContext securityContext) {
         Response response;
         try {
-            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
+            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
             StreamingOutput streamOutput = WSUtils.wrapWithStreamingOutput(schemaRegistry.downloadFile(fileId));
             response = Response.ok(streamOutput).build();
             return response;
@@ -1434,7 +1437,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                               @Context SecurityContext securityContext) {
         Response response;
         try {
-            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
+            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
             SerDesInfo serializerInfo = schemaRegistry.getSerDes(serializerId);
             if (serializerInfo != null) {
                 response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
@@ -1454,7 +1457,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private Response addSerDesInfo(SerDesPair serDesInfo, SecurityContext securityContext) {
         Response response;
         try {
-            authorizationAgent.authorizeSerDes(AuthorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.CREATE);
+            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.CREATE);
             Long serializerId = schemaRegistry.addSerDes(serDesInfo);
             response = WSUtils.respondEntity(serializerId, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -1485,7 +1488,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
             Response response;
             try {
-                authorizationAgent.authorizeMapSchemaWithSerDes(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName);
+                authorizationAgent.authorizeMapSchemaWithSerDes(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName);
                 schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
                 response = WSUtils.respondEntity(true, Response.Status.OK);
             } catch (AuthorizationException e) {
@@ -1514,7 +1517,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         SchemaVersionKey schemaVersionKey = null;
         try {
             schemaVersionKey = new SchemaVersionKey(schemaName, versionNumber);
-            authorizationAgent.authorizeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     schemaVersionKey, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(schemaVersionKey);
             return WSUtils.respond(Response.Status.OK);
@@ -1549,7 +1552,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
         try {
-            Collection<SchemaBranch> schemaBranches = authorizationAgent.authorizeGetAllBranches(AuthorizationUtils.getUserAndGroups(securityContext),
+            Collection<SchemaBranch> schemaBranches = authorizationAgent.authorizeGetAllBranches(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry, schemaName, schemaRegistry.getSchemaBranches(schemaName));
             return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
         }  catch (SchemaNotFoundException e) {
@@ -1579,7 +1582,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             LOG.debug("Create branch \"{}\" for version with id {}", schemaBranch.getName(), schemaVersionId);
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.fetchSchemaVersionInfo(schemaVersionId);
 
-            authorizationAgent.authorizeCreateSchemaBranch(AuthorizationUtils.getUserAndGroups(securityContext),
+            authorizationAgent.authorizeCreateSchemaBranch(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry,
                     schemaVersionInfo.getSchemaMetadataId(),
                     schemaVersionId,
@@ -1615,7 +1618,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                        @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                        @Context SecurityContext securityContext) {
         try {
-            authorizationAgent.authorizeMergeSchemaVersion(AuthorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaVersionId);
+            authorizationAgent.authorizeMergeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaVersionId);
             SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (AuthorizationException e) {
@@ -1644,7 +1647,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     public Response deleteSchemaBranch(@ApiParam(value = "ID of the Schema Branch", required = true) @PathParam("branchId") Long schemaBranchId,
                                        @Context SecurityContext securityContext) {
         try {
-            authorizationAgent.authorizeDeleteSchemaBranch(AuthorizationUtils.getUserAndGroups(securityContext),
+            authorizationAgent.authorizeDeleteSchemaBranch(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry, schemaBranchId);
             schemaRegistry.deleteSchemaBranch(schemaBranchId);
             return WSUtils.respond(Response.Status.OK);
@@ -1719,7 +1722,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, "Invalid file format.");
             }
 
-            authorizationAgent.authorizeBulkImport(AuthorizationUtils.getUserAndGroups(securityContext));
+            authorizationAgent.authorizeBulkImport(authorizationUtils.getUserAndGroups(securityContext));
 
             UploadResult uploadResult = schemaRegistry.bulkUploadSchemas(inputStream, failOnError, format);
             response = WSUtils.respondEntity(uploadResult, Response.Status.OK);

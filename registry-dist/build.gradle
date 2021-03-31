@@ -46,7 +46,7 @@ distributions {
                     exclude '*shim*'
                 }
             }
-            
+
             // Ranger plugin
             into('ranger-plugin/ranger-schema-registry-plugin-impl/') {
                 from("$rootDir/schema-registry/schema-registry-authorizer/build/libs") {
@@ -55,6 +55,9 @@ distributions {
                 from("$rootDir/ranger-plugin/build/dependency") {
                     include '*jar'
                     exclude 'ranger-plugin-classloader*jar'
+                    exclude '*slf4j*jar'
+                    exclude '*commons-logging*jar'
+                    exclude '*log4j*jar'
                 }
             }
             into('ranger-plugin/conf/') {
@@ -65,7 +68,7 @@ distributions {
                     include '*shim*jar'
                 }
             }
-            
+
             // Atlas plugin
             into('atlas-plugin/atlas-schema-registry-plugin-impl/') {
                 from("$rootDir/atlas-integration/atlas-translate/build/libs") {
@@ -74,6 +77,9 @@ distributions {
                 }
                 from("$rootDir/atlas-integration/atlas-translate/build/dependency") {
                     include '*jar'
+                    exclude '*slf4j*jar'
+                    exclude '*commons-logging*jar'
+                    exclude '*log4j*jar'
                 }
             }
             into('atlas-plugin/') {
@@ -82,7 +88,25 @@ distributions {
                     exclude '*sources*jar'
                 }
             }
-            
+
+            // Hadoop plugin
+            into('hadoop-plugin/hadoop-schema-registry-plugin-impl/') {
+                from("$rootDir/schema-registry/hadoop-extension/build/libs") {
+                    include '*plugin*jar'
+                }
+                from("$rootDir/schema-registry/hadoop-extension/build/dependency") {
+                    include '*jar'
+                    exclude '*slf4j*jar'
+                    exclude '*commons-logging*jar'
+                    exclude '*log4j*jar'
+                }
+            }
+            into('hadoop-plugin/') {
+                from("$rootDir/schema-registry/hadoop-extension/build/libs") {
+                    include '*shim*jar'
+                }
+            }
+
             // examples 
             into('examples/schema-registry/avro') {
                 from("$rootDir/examples/schema-registry/avro-examples/build/libs") {
@@ -152,6 +176,8 @@ dependencies {
     distTar.dependsOn(':schema-registry:schema-registry-core:build')
     distTar.dependsOn(':schema-registry:schema-registry-authorizer:build')
     distTar.dependsOn(':schema-registry:schema-registry-authorizer:copyDependencies')
+    distTar.dependsOn(':schema-registry:hadoop-extension:build')
+    distTar.dependsOn(':schema-registry:hadoop-extension:copyDependencies')
     distTar.dependsOn(':examples:schema-registry:serdes-examples:build')
     distTar.dependsOn(':examples:schema-registry:avro-examples:build')
     distTar.dependsOn(':examples:schema-registry:schema-lifecycle:build')
