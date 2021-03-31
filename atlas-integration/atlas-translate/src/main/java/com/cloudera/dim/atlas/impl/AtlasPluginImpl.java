@@ -50,11 +50,11 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundExce
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.atlas.AtlasBaseClient;
 import org.apache.atlas.AtlasClientV2;
 import org.apache.atlas.AtlasServiceException;
+import org.apache.atlas.SortOrder;
 import org.apache.atlas.model.discovery.AtlasSearchResult;
+import org.apache.atlas.model.discovery.SearchParameters;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.atlas.model.instance.AtlasObjectId;
@@ -72,7 +72,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -285,7 +284,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
                     randomize -> generateUniqueId(VersionEntityDef.SCHEMA_VERSION_INFO, randomize),
                     versionId -> {
                         try {
-                            AtlasEntity versionEntity = schemaVersionTranslator.toAtlas(versionId, schemaVersion, schemaMetadataInfo, schemaName, existingCount + 1, fingerprint);
+                            AtlasEntity versionEntity = schemaVersionTranslator
+                                    .toAtlas(versionId, schemaVersion, schemaMetadataInfo, schemaName, existingCount + 1, fingerprint);
                             AtlasEntity.AtlasEntitiesWithExtInfo entitiesWithExtInfo = new AtlasEntity.AtlasEntitiesWithExtInfo();
                             entitiesWithExtInfo.addEntity(versionEntity);
                             EntityMutationResponse entities = atlasClient.createEntities(entitiesWithExtInfo);
@@ -693,7 +693,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public List<SchemaVersionInfo> getSchemaVersionsByBranchId(Long branchId) throws SchemaBranchNotFoundException {
         checkNotNull(branchId, "branchId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(BranchEntityDef.SCHEMA_BRANCH, ImmutableMap.of(BranchEntityDef.ID, String.valueOf(branchId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
+                    .getEntityByAttribute(BranchEntityDef.SCHEMA_BRANCH, ImmutableMap.of(BranchEntityDef.ID, String.valueOf(branchId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 throw new SchemaBranchNotFoundException("Did not find branch with id " + branchId);
             }
@@ -725,7 +726,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
     public Collection<SchemaBranch> getSchemaBranchesByVersionId(Long versionId) throws SchemaBranchNotFoundException {
         checkNotNull(versionId, "versionId");
         try {
-            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient.getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
+            AtlasEntity.AtlasEntityWithExtInfo atlasEntity = atlasClient
+                    .getEntityByAttribute(VersionEntityDef.SCHEMA_VERSION_INFO, ImmutableMap.of(VersionEntityDef.ID, String.valueOf(versionId)));
             if (atlasEntity == null || atlasEntity.getEntity() == null) {
                 throw new SchemaBranchNotFoundException("Did not find schema version with ID " + versionId);
             }
@@ -874,7 +876,31 @@ public class AtlasPluginImpl implements AtlasPlugin {
                     .collect(Collectors.toList());
 
         } catch (AtlasServiceException asex) {
-            throw new AtlasUncheckedException("Exception while searching for schemas by name " + nameOpt, asex);
+            throw new AtlasUncheckedException("Exception while searching for schemas by name " + nameOpt.orElse(""), asex);
+        }
+    }
+
+    @Override
+    public Collection<SchemaVersionInfo> searchVersions(String fingerprint) throws SchemaNotFoundException {
+        checkNotNull(fingerprint, "fingerprint");
+
+        try {
+            // when querying by fingerprint, we only want to retrieve the first one
+            // however, when there are multiple matches, we want to log this...
+            // so there's no need to query for more than 2 matches
+            final int limit = 2;
+            AtlasSearchResult result = atlasClient.attributeSearch(VersionEntityDef.SCHEMA_VERSION_INFO,
+                    VersionEntityDef.FINGERPRINT, fingerprint, limit, 0);
+
+            if (result == null || result.getEntities() == null) {
+                return ImmutableList.of();
+            }
+
+            return result.getEntities().stream()
+                    .map(schemaVersionInfoTranslator::fromAtlas)
+                    .collect(Collectors.toList());
+        } catch (AtlasServiceException asex) {
+            throw new AtlasUncheckedException("Could not search for schema with version fingerprint " + fingerprint, asex);
         }
     }
 
@@ -912,15 +938,15 @@ public class AtlasPluginImpl implements AtlasPlugin {
             descending = orderByFields.getRight();
         }
 
-        MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-        queryParams.add("typeName", type);
-        queryParams.add("classification", null);
-        queryParams.add(AtlasBaseClient.QUERY, query);
-        queryParams.add("excludeDeletedEntities", String.valueOf(true));
-        queryParams.add(AtlasBaseClient.LIMIT, String.valueOf(0));
-        queryParams.add(AtlasBaseClient.OFFSET, String.valueOf(0));
-        queryParams.add("sortBy", sortBy == null ? null : String.join(",", sortBy));
-        queryParams.add("sortOrder", descending == null ? null : descending ? "DESCENDING" : "ASCENDING");
+        SearchParameters queryParams = new SearchParameters();
+        queryParams.setTypeName(type);
+        queryParams.setClassification(null);
+        queryParams.setQuery(query);
+        queryParams.setExcludeDeletedEntities(true);
+        queryParams.setLimit(0);
+        queryParams.setOffset(0);
+        queryParams.setSortBy(sortBy == null ? null : String.join(",", sortBy));
+        queryParams.setSortOrder(descending == null ? null : descending ? SortOrder.DESCENDING : SortOrder.ASCENDING);
 
         return atlasClient.callAPI(AtlasClientV2.API_V2.BASIC_SEARCH, AtlasSearchResult.class, queryParams);
     }

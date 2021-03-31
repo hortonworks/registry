@@ -61,6 +61,8 @@ public class HadoopPluginClassLoaderUtil {
     private URL[] getPluginFiles(File libDir) {
         final List<URL> result = new ArrayList<>();
 
+        LOG.info("Hadoop plugin will load files from: {}", libDir.getAbsolutePath());
+
         File[] dirFiles = libDir.listFiles();
         if (dirFiles != null) {
             for (File dirFile : dirFiles) {

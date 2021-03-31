@@ -43,6 +43,9 @@ dependencies {
     compile(project(path: ':schema-registry:hadoop-extension', configuration: 'shim')) {
         transitive = false
     }
+    runtimeOnly(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
+        transitive = false
+    }
 
     compile libraries.hibernate_validator
     compile libraries.el_api

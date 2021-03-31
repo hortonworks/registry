@@ -44,7 +44,7 @@ dependencies {
 }
 
 task copyDependencies(type: Sync) {
-    into "$buildDir/dependency"
+    into "$buildDir/libs/hadoop-schema-registry-plugin-impl"
     from configurations.runtime
 }
 assemble.dependsOn(copyDependencies)

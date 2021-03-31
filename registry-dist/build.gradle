@@ -94,7 +94,7 @@ distributions {
                 from("$rootDir/schema-registry/hadoop-extension/build/libs") {
                     include '*plugin*jar'
                 }
-                from("$rootDir/schema-registry/hadoop-extension/build/dependency") {
+                from("$rootDir/schema-registry/hadoop-extension/build/libs/hadoop-schema-registry-plugin-impl") {
                     include '*jar'
                     exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'

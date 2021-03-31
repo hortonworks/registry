@@ -36,6 +36,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleContext;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleState;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStates;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,13 +199,37 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
     @Override
     protected SchemaVersionInfo fetchSchemaVersionInfo(String schemaName, Integer version) throws SchemaNotFoundException {
         LOG.info("++++++++++++ fetchSchemaVersionInfo {} {}", schemaName, version);
-        return null;
+
+        SchemaVersionInfo schemaVersionInfo;
+        if (SchemaVersionKey.LATEST_VERSION.equals(version)) {
+            schemaVersionInfo = getLatestSchemaVersionInfo(schemaName);
+        } else {
+            Optional<SchemaVersionInfo> schemaVersion = atlasClient.getSchemaVersion(schemaName, version);
+            if (schemaVersion.isPresent()) {
+                schemaVersionInfo = schemaVersion.get();
+            } else {
+                throw new SchemaNotFoundException("No Schema version exists with name " + schemaName + " and version " + version);
+            }
+        }
+
+        LOG.info("##### fetched schema version info [{}]", schemaVersionInfo);
+        return schemaVersionInfo;
     }
 
     @Override
     public SchemaVersionInfo findSchemaVersionInfoByFingerprint(String fingerprint) throws SchemaNotFoundException {
         LOG.info("++++++++++++ findSchemaVersionInfoByFingerprint {}", fingerprint);
-        return null;
+
+        Collection<SchemaVersionInfo> schemas = atlasClient.searchVersions(fingerprint);
+        if (schemas.isEmpty()) {
+            throw new SchemaNotFoundException(String.format("No schema found for fingerprint: %s", fingerprint));
+        } else {
+            if (schemas.size() > 1) {
+                LOG.warn(String.format("Multiple schemas found for the same fingerprint: %s", fingerprint));
+            }
+
+            return schemas.iterator().next();
+        }
     }
 
     @Override
@@ -320,6 +345,5 @@ public abstract class AtlasSchemaVersionLifecycleManager extends SchemaVersionLi
 
         return Collections.unmodifiableList(versions);
     }
-
 
 }

@@ -88,11 +88,12 @@ public class HadoopPluginClassLoader extends URLClassLoader {
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         Class<?> result = null;
         try {
+            LOG.info("Loading on the plugin classpath {} ", name);
             result = super.loadClass(name);
         } catch (Throwable e) {
             MyClassLoader savedClassLoader = getPrimaryClassloader();
             if (savedClassLoader != null) {
-                result = savedClassLoader.loadClass(name);
+                    result = savedClassLoader.loadClass(name);
             }
         }
         return result;
@@ -129,7 +130,7 @@ public class HadoopPluginClassLoader extends URLClassLoader {
     }
 
     public void activate() {
-        LOG.debug("Activate HDFS plugin");
+        LOG.debug("Activate Hadoop plugin");
         preActivateClassLoader.set(Thread.currentThread().getContextClassLoader());
         Thread.currentThread().setContextClassLoader(this);
     }
@@ -148,10 +149,10 @@ public class HadoopPluginClassLoader extends URLClassLoader {
         if (classLoader != null) {
             Thread.currentThread().setContextClassLoader(classLoader);
         } else {
-            LOG.warn("HdfsPluginClassLoader.deactivate() was not successful. Couldn't get the saved classLoader...");
+            LOG.warn("HadoopPluginClassLoader.deactivate() was not successful. Couldn't get the saved classLoader...");
         }
 
-        LOG.debug("Deactivate HDFS plugin");
+        LOG.info("Deactivate Hadoop plugin");
     }
 
     private MyClassLoader getPrimaryClassloader() {

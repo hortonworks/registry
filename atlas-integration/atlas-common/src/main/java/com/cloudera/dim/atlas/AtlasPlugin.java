@@ -107,6 +107,17 @@ public interface AtlasPlugin {
     Collection<SchemaMetadataInfo> search(Optional<String> name, Optional<String> desc, Optional<String> orderBy);
 
     /**
+     * Find schema versions by the fingerprint only. It is possible for multiple versions to
+     * have the same fingerprint (eg. in version 1 and 3 have the same text), which is why this method
+     * returns a collection.
+     *
+     * @param fingerprint       hash of the schema text
+     * @return      collection of versions (can be empty)
+     * @throws SchemaNotFoundException  If there is no schema with the given name.
+     */
+    Collection<SchemaVersionInfo> searchVersions(String fingerprint) throws SchemaNotFoundException;
+
+    /**
      * Find schema versions by the schema name and the fingerprint. It is possible for multiple versions to
      * have the same fingerprint (eg. in version 1 and 3 have the same text), which is why this method
      * returns a collection.
