@@ -116,7 +116,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         super.doInit(config);
         SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
         avroSchemaResolver = new AvroSchemaResolver(schemaVersionRetriever);
-        useSpecificAvroReader = (boolean) getValue(config, SPECIFIC_AVRO_READER, false);
+        useSpecificAvroReader = Boolean.valueOf(getValue(config, SPECIFIC_AVRO_READER, false).toString());
     }
 
     private SchemaVersionRetriever createSchemaVersionRetriever() {
