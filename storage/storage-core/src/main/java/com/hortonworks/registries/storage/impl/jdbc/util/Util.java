@@ -15,6 +15,10 @@
  **/
 package com.hortonworks.registries.storage.impl.jdbc.util;
 
+import com.hortonworks.registries.storage.DbProperties;
+import com.hortonworks.registries.storage.common.util.Constants;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.sql.Date;
@@ -22,7 +26,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.List;
-import java.util.Map;
+
 
 public class Util {
     private static String getSqlTypeName(int sqlType) {
@@ -88,13 +92,16 @@ public class Util {
         }
     }
 
-    public static void validateJDBCProperties(Map<String, Object> jdbcProps, List<String> propertyNames) {
+    public static void validateJDBCProperties(DbProperties jdbcProps, List<String> propertyNames) {
         if (jdbcProps == null || jdbcProps.isEmpty()) {
             throw new IllegalArgumentException("jdbc properties can neither be null nor empty");
         }
 
         for (String property : propertyNames) {
-            if (!jdbcProps.containsKey(property)) {
+            if (property.equals(Constants.DataSource.CLASS_NAME) && StringUtils.isBlank(jdbcProps.getDataSourceClassName())) {
+                throw new IllegalArgumentException("jdbc properties should contain " + property);
+            }
+            if (property.equals(Constants.DataSource.URL) && StringUtils.isBlank(jdbcProps.getDataSourceUrl())) {
                 throw new IllegalArgumentException("jdbc properties should contain " + property);
             }
         }

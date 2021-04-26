@@ -21,7 +21,6 @@ import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * TODO: All the methods are very restrictive and needs heavy synchronization to get right but my assumption is that
@@ -36,7 +35,7 @@ public interface StorageManager {
      *
      * @param properties the properties
      */
-    void init(Map<String, Object> properties);
+    void init(StorageProviderConfiguration properties);
     
     /**
      * TODO: update this javadoc

@@ -27,6 +27,7 @@ dependencies {
     testCompile libraries.jmockit
     testCompile libraries.junit
     testCompile libraries.spring.context
+    testCompile libraries.dropwizard.core
 
 }
 
