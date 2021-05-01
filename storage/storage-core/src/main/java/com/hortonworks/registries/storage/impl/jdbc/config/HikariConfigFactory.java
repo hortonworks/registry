@@ -15,25 +15,22 @@
  **/
 
 package com.hortonworks.registries.storage.impl.jdbc.config;
-import com.hortonworks.registries.storage.ConnectionProperties;
-import com.hortonworks.registries.storage.DbProperties;
+
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.common.util.Constants;
 import com.zaxxer.hikari.HikariConfig;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.hortonworks.registries.storage.impl.jdbc.config.HikariConfigFactory.putDbProperties;
 
 public class HikariConfigFactory {
 
     private HikariConfigFactory() { }
 
-    public static HikariConfig get(DatabaseType type, DbProperties dbProperties) {
+    public static HikariConfig get(DatabaseType type, Map<String, Object> dbProperties) {
 
         switch (type) {
             case MYSQL:
@@ -47,13 +44,6 @@ public class HikariConfigFactory {
         }
     }
 
-    public static void putDbProperties(Properties hikariProperties, DbProperties dbProperties) {
-        hikariProperties.put("dataSourceClassName", dbProperties.getDataSourceClassName());
-        hikariProperties.put("dataSource.url", dbProperties.getDataSourceUrl());
-        hikariProperties.put("dataSource.user", dbProperties.getDataSourceUser());
-        hikariProperties.put("dataSource.password", dbProperties.getDataSourcePassword());
-    }
-
 }
 
 class MySqlConfig extends HikariConfig {
@@ -65,20 +55,16 @@ class MySqlConfig extends HikariConfig {
     // mysql connector v8.0.22
     static final String DRIVER_8 = "com.mysql.cj.jdbc.MysqlDataSource";
 
-    public MySqlConfig(DbProperties dbProperties) {
+    public MySqlConfig(Map<String, Object> dbProperties) {
         super(sanitizeConfig(dbProperties));
     }
 
-    private static Properties sanitizeConfig(DbProperties dbProperties) {
+    private static Properties sanitizeConfig(Map<String, Object> dbProperties) {
         Properties hikariProperties = new Properties();
-        checkNotNull(dbProperties);
-        putDbProperties(hikariProperties, dbProperties);
+        hikariProperties.putAll(dbProperties);
 
         // check if driver class is found on the classpath
-        String className = dbProperties.getDataSourceClassName();
-        if (StringUtils.isEmpty(className)) {
-            className = DRIVER_5;
-        }
+        String className = (String) dbProperties.getOrDefault(Constants.DataSource.CLASS_NAME, DRIVER_5);
         try {
             Class.forName(className);
         } catch (ClassNotFoundException cnfex) {
@@ -96,9 +82,9 @@ class MySqlConfig extends HikariConfig {
             }
         }
         hikariProperties.setProperty(Constants.DataSource.CLASS_NAME, className);
-        if (!className.equals(dbProperties.getDataSourceClassName())) {
+        if (!className.equals(dbProperties.get(Constants.DataSource.CLASS_NAME))) {
             LOG.warn("JDBC connector {} was not found on the classpath, falling back to {}. Please fix your configuration.",
-                    dbProperties.getDataSourceClassName(), className);
+                    dbProperties.get(Constants.DataSource.CLASS_NAME), className);
         }
 
         return hikariProperties;
@@ -107,44 +93,34 @@ class MySqlConfig extends HikariConfig {
 
 class PostgresConfig extends HikariConfig {
 
-    public PostgresConfig(DbProperties dbProperties) {
+    public PostgresConfig(Map<String, Object> dbProperties) {
         super(sanitizeConfig(dbProperties));
     }
 
-    private static Properties sanitizeConfig(DbProperties dbProperties) {
+    private static Properties sanitizeConfig(Map<String, Object> dbProperties) {
         Properties hikariProperties = new Properties();
-        checkNotNull(dbProperties);
-        putDbProperties(hikariProperties, dbProperties);
+        hikariProperties.putAll(dbProperties);
         return hikariProperties;
     }
 }
 
 class OracleConfig extends HikariConfig {
 
-    public OracleConfig(DbProperties dbProperties) {
+    public OracleConfig(Map<String, Object> dbProperties) {
         super(sanitizeConfig(dbProperties));
-        checkNotNull(dbProperties.getConnectionProperties());
-        Properties properties = new Properties();
-        putConnectionProperties(properties, dbProperties.getConnectionProperties());
-        this.addDataSourceProperty("connectionProperties", properties);
+
+        if (dbProperties.containsKey(Constants.DataSource.CONNECTION_PROPERTIES)) {
+            Properties properties = new Properties();
+            properties.putAll((Map<?, ?>) dbProperties.get(Constants.DataSource.CONNECTION_PROPERTIES));
+            this.addDataSourceProperty("connectionProperties", properties);
+        }
     }
 
-
-    private void putConnectionProperties(Properties properties, ConnectionProperties connectionProperties) {
-        checkNotNull(connectionProperties);
-        properties.put("oracle.net.ssl_version", connectionProperties.getOracleNetSslVersion());
-        properties.put("oracle.net.ssl_server_dn_match", connectionProperties.getOracleNetSslServerDnMatch());
-        properties.put("javax.net.ssl.trustStore", connectionProperties.getTrustStore());
-        properties.put("javax.net.ssl.trustStoreType", connectionProperties.getTrustStoreType());
-        properties.put("javax.net.ssl.keyStore", connectionProperties.getKeyStore());
-        properties.put("javax.net.ssl.keyStoreType", connectionProperties.getKeyStoreType());
-    }
-
-    private static Properties sanitizeConfig(DbProperties dbProperties) {
-        checkNotNull(dbProperties);
-        DbProperties propsCopy = dbProperties.createCopyWithoutConnectionProperties(dbProperties);
+    private static Properties sanitizeConfig(Map<String, Object> dbProperties) {
+        Map<String, Object> propsCopy = new HashMap<>(dbProperties);
+        propsCopy.remove(Constants.DataSource.CONNECTION_PROPERTIES);
         Properties hikariProperties = new Properties();
-        putDbProperties(hikariProperties, propsCopy);
+        hikariProperties.putAll(propsCopy);
         return hikariProperties;
     }
 }

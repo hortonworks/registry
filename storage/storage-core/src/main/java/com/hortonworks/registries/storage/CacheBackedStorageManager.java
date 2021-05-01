@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 
 public class CacheBackedStorageManager implements StorageManager {
@@ -46,7 +47,7 @@ public class CacheBackedStorageManager implements StorageManager {
     }
 
     @Override
-    public void init(StorageProviderConfiguration properties) {
+    public void init(Map<String, Object> properties) {
 
     }
 

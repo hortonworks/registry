@@ -15,7 +15,7 @@
  **/
 package com.hortonworks.registries.storage;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
 
 /**
  * This class represents storage provider configuration.
@@ -23,28 +23,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class StorageProviderConfiguration {
     private String providerClass;
 
-    private StorageProviderProperties properties;
+    private Map<String, Object> properties;
 
     public StorageProviderConfiguration() {
     }
 
-    @JsonProperty
     public String getProviderClass() {
         return providerClass;
     }
 
-    @JsonProperty
     public void setProviderClass(String providerClass) {
         this.providerClass = providerClass;
     }
 
-    @JsonProperty
-    public StorageProviderProperties getProperties() {
+    public Map<String, Object> getProperties() {
         return properties;
     }
 
-    @JsonProperty
-    public void setProperties(StorageProviderProperties properties) {
+    public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
     }
 }

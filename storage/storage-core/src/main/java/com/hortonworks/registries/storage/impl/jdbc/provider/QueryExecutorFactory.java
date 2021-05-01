@@ -17,8 +17,6 @@
 package com.hortonworks.registries.storage.impl.jdbc.provider;
 
 import com.google.common.collect.Lists;
-import com.hortonworks.registries.storage.DbProperties;
-import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.common.util.Constants;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
@@ -33,7 +31,7 @@ import com.zaxxer.hikari.HikariConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Map;
 
 public class QueryExecutorFactory {
 
@@ -43,10 +41,10 @@ public class QueryExecutorFactory {
 
     }
 
-    public static QueryExecutor get(DatabaseType type, StorageProviderConfiguration storageConfig) {
+    public static QueryExecutor get(DatabaseType type, Map<String, Object> dbProperties) {
 
-        HikariCPConnectionBuilder connectionBuilder = getHikariCPConnnectionBuilder(type, storageConfig);
-        ExecutionConfig executionConfig = getExecutionConfig(type, storageConfig);
+        HikariCPConnectionBuilder connectionBuilder = getHikariCPConnnectionBuilder(type, dbProperties);
+        ExecutionConfig executionConfig = getExecutionConfig(type, dbProperties);
 
         QueryExecutor queryExecutor = null;
         switch (type) {
@@ -66,16 +64,14 @@ public class QueryExecutorFactory {
         return queryExecutor;
     }
 
-    private static HikariCPConnectionBuilder getHikariCPConnnectionBuilder(DatabaseType type, StorageProviderConfiguration storageConfig) {
-        checkNotNull(storageConfig.getProperties().getProperties());
-        DbProperties dbProperties = storageConfig.getProperties().getProperties();
+    private static HikariCPConnectionBuilder getHikariCPConnnectionBuilder(DatabaseType type, Map<String, Object> dbProperties) {
         Util.validateJDBCProperties(dbProperties, Lists.newArrayList(Constants.DataSource.CLASS_NAME, Constants.DataSource.URL));
 
         if (LOG.isDebugEnabled()) {
-            String dataSourceClassName = dbProperties.getDataSourceClassName();
+            String dataSourceClassName = (String) dbProperties.get(Constants.DataSource.CLASS_NAME);
             LOG.debug("data source class: [{}]", dataSourceClassName);
 
-            String jdbcUrl = dbProperties.getDataSourceUrl();
+            String jdbcUrl = (String) dbProperties.get(Constants.DataSource.URL);
             LOG.debug("dataSource.url is: [{}] ", jdbcUrl);
         }
 
@@ -84,10 +80,10 @@ public class QueryExecutorFactory {
         return new HikariCPConnectionBuilder(hikariConfig);
     }
 
-    private static ExecutionConfig getExecutionConfig(DatabaseType type, StorageProviderConfiguration storageConfig) {
+    private static ExecutionConfig getExecutionConfig(DatabaseType type, Map<String, Object> dbProperties) {
         int queryTimeOutInSecs = -1;
-        if (storageConfig.getProperties().getQueryTimeoutInSecs() != null) {
-            queryTimeOutInSecs =  storageConfig.getProperties().getQueryTimeoutInSecs();
+        if (dbProperties.containsKey("queryTimeoutInSecs")) {
+            queryTimeOutInSecs = (Integer) dbProperties.get("queryTimeoutInSecs");
             if (queryTimeOutInSecs < 0) {
                 throw new IllegalArgumentException("queryTimeoutInSecs property can not be negative");
             }

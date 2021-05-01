@@ -18,7 +18,6 @@ package com.hortonworks.registries.storage.impl.jdbc;
 
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
@@ -36,7 +35,6 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryEx
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -269,19 +267,20 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
      * Initializes this instance with {@link QueryExecutor} created from the given {@code properties}.
      * Some of these properties are jdbcDriverClass, jdbcUrl, queryTimeoutInSecs.
      *
-     * @param configuration properties with name/value pairs
+     * @param properties properties with name/value pairs
      */
     @Override
-    public void init(StorageProviderConfiguration configuration) {
+    public void init(Map<String, Object> properties) {
 
-        if (StringUtils.isBlank(configuration.getProperties().getDbtype())) {
+        if (!properties.containsKey(DB_TYPE)) {
             throw new IllegalArgumentException("db.type should be set on jdbc properties");
         }
 
-        DatabaseType type = DatabaseType.fromValue(configuration.getProperties().getDbtype());
+        DatabaseType type = DatabaseType.fromValue((String) properties.get(DB_TYPE));
         log.info("jdbc provider type: [{}]", type);
+        Map<String, Object> dbProperties = (Map<String, Object>) properties.get("db.properties");
 
-        QueryExecutor queryExecutor = QueryExecutorFactory.get(type, configuration);
+        QueryExecutor queryExecutor = QueryExecutorFactory.get(type, dbProperties);
 
         this.queryExecutor = queryExecutor;
         this.queryExecutor.setStorableFactory(storableFactory);

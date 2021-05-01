@@ -20,13 +20,13 @@ import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
-import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This internally uses a single instance in a JVM, which can be used across multiple in-JVM local registry instances
@@ -38,7 +38,7 @@ public class SingletonInmemoryStore implements StorageManager {
     private static final InMemoryStorageManager IN_MEMORY_STORAGE_MANAGER = new InMemoryStorageManager();
 
     @Override
-    public void init(StorageProviderConfiguration properties) {
+    public void init(Map<String, Object> properties) {
         IN_MEMORY_STORAGE_MANAGER.init(properties);
     }
 
