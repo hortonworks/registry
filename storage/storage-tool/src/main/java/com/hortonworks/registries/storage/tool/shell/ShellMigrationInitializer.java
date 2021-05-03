@@ -127,7 +127,6 @@ public class ShellMigrationInitializer {
             throw new IllegalStateException("Shouldn't reach here");
         }
 
-
         ShellMigrationHelper schemaMigrationHelper = new ShellMigrationHelper(ShellFlywayFactory.get(storageProperties, scriptRootPath));
         try {
             schemaMigrationHelper.execute(shellMigrationOptionSpecified);

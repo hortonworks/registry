@@ -1,12 +1,12 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2017-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
+
+ *   http://www.apache.org/licenses/LICENSE-2.0
+
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,34 +17,38 @@ package com.hortonworks.registries.storage;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * This class represents storage provider configuration.
- */
-public class StorageProviderConfiguration {
-    private String providerClass;
+public class StorageProviderProperties {
+    private String dbtype;
+    private Integer queryTimeoutInSecs;
+    private DbProperties properties;
 
-    private StorageProviderProperties properties;
-
-    public StorageProviderConfiguration() {
+    @JsonProperty("db.type")
+    public String getDbtype() {
+        return dbtype;
     }
 
     @JsonProperty
-    public String getProviderClass() {
-        return providerClass;
+    public void setDbtype(String dbtype) {
+        this.dbtype = dbtype;
     }
 
     @JsonProperty
-    public void setProviderClass(String providerClass) {
-        this.providerClass = providerClass;
+    public Integer getQueryTimeoutInSecs() {
+        return queryTimeoutInSecs;
     }
 
     @JsonProperty
-    public StorageProviderProperties getProperties() {
+    public void setQueryTimeoutInSecs(Integer queryTimeoutInSecs) {
+        this.queryTimeoutInSecs = queryTimeoutInSecs;
+    }
+
+    @JsonProperty("db.properties")
+    public DbProperties getProperties() {
         return properties;
     }
 
     @JsonProperty
-    public void setProperties(StorageProviderProperties properties) {
+    public void setProperties(DbProperties properties) {
         this.properties = properties;
     }
 }

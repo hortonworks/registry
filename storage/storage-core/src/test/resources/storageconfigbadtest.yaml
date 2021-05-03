@@ -1,0 +1,8 @@
+providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+properties:
+  db.type: "mysql"
+  queryTimeoutInSecs: 30
+  db.properties:
+    dataSourceClassName: "com.mysql.jdbc.jdbc2.optional.MysqlDataSource"
+    dataSource.url: "jdbc:mysql://localhost/schema_registry"
+    dataSource.password: "registry_password"

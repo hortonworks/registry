@@ -24,6 +24,7 @@ import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.search.Predicate;
@@ -54,7 +55,7 @@ public class InMemoryStorageManager implements StorageManager {
     private final ConcurrentHashMap<String, Class<?>> nameSpaceClassMap = new ConcurrentHashMap<String, Class<?>>();
 
     @Override
-    public void init(Map<String, Object> properties) {
+    public void init(StorageProviderConfiguration properties) {
 
     }
 

@@ -41,7 +41,7 @@ public class StorageManagerProvider implements Provider<StorageManager> {
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        storageManager.init(storageProviderConfiguration.getProperties());
+        storageManager.init(storageProviderConfiguration);
         return storageManager;
     }
 }
