@@ -74,7 +74,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -353,19 +352,19 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findSchemas(@ApiParam(required = true) @NotNull @QueryParam("name") String schemaName,
+    public Response findSchemas(@ApiParam(required = true) @QueryParam("name") String schemaName,
                                 @QueryParam("description") String schemaDescription,
                                 @ApiParam(value = "_orderByFields=[<field-name>,<a/d>,]*\na = ascending, d = descending\n" +
                                         "Ordering can be by id, type, schemaGroup, name, compatibility, validationLevel, timestamp, description," +
                                         "evolve\nRecommended value is: timestamp,d", required = true) 
-                                    @NotNull @QueryParam("_orderByFields") String orderByFields,
+                                @QueryParam("_orderByFields") String orderByFields,
                                 @Context SecurityContext securityContext) {
         
         MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
         for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), 
-                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(null), 
-                Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), 
-                Optional.ofNullable(null)).entrySet()) {
+                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.empty(),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty()).entrySet()) {
             queryParameters.add(entry.getKey(), entry.getValue());
         }
         try {
@@ -408,17 +407,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
-    public Response findAggregatedSchemas(@ApiParam(value = "name of the schema", required = true) @NotNull 
-                                              @QueryParam("name") @DefaultValue("") String schemaName, 
-                                          @QueryParam("description") String schemaDescription, 
-                                          @QueryParam("_orderByFields") @ApiParam(required = true) @NotNull 
-                                              @DefaultValue("timestamp,d") String orderByFields,
-                                          @Context SecurityContext securityContext) {
+    public Response findAggregatedSchemas(
+            @ApiParam(value = "name of the schema", required = true) @QueryParam("name") String schemaName,
+            @QueryParam("description") String schemaDescription,
+            @ApiParam(required = true) @QueryParam("_orderByFields") @DefaultValue("timestamp,d") String orderByFields,
+            @Context SecurityContext securityContext) {
         MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
         for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), 
-                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(null), 
-                Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), Optional.ofNullable(null), 
-                Optional.ofNullable(null)).entrySet()) {
+                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.empty(),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty()).entrySet()) {
             queryParameters.add(entry.getKey(), entry.getValue());
         }
         try {

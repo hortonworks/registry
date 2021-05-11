@@ -58,7 +58,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -182,9 +181,10 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        assertTrue(actual.getErrors().contains("query param name must not be null"));
-        assertTrue(actual.getErrors().contains("query param _orderByFields must not be null"));
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
+        assertNotNull(actual);
+        assertNotNull(actual.getEntities());
+        assertEquals(0, actual.getEntities().size());
     }
 
     @Test
@@ -239,9 +239,10 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        assertTrue(actual.getErrors().contains("query param name must not be null"));
-        assertTrue(actual.getErrors().contains("query param _orderByFields must not be null"));
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
+        assertNotNull(actual);
+        assertNotNull(actual.getEntities());
+        assertEquals(0, actual.getEntities().size());
     }
 
     @Test
