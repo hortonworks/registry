@@ -178,9 +178,10 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        assertTrue(actual.getErrors().contains("query param name must not be null"));
-        assertTrue(actual.getErrors().contains("query param _orderByFields must not be null"));
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
+        assertNotNull(actual);
+        assertNotNull(actual.getEntities());
+        assertEquals(0, actual.getEntities().size());
     }
 
     @Test
@@ -235,9 +236,10 @@ public class SchemaRegistryResourceIT {
 
         //then
         TestResponseForSchemaMetadataInfo actual = response.readEntity(TestResponseForSchemaMetadataInfo.class);
-        assertTrue(actual.getErrors().contains("query param name must not be null"));
-        assertTrue(actual.getErrors().contains("query param _orderByFields must not be null"));
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
+        assertNotNull(actual);
+        assertNotNull(actual.getEntities());
+        assertEquals(0, actual.getEntities().size());
     }
 
     @Test
