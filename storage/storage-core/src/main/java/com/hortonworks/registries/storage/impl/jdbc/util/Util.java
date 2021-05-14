@@ -54,6 +54,7 @@ public class Util {
             case Types.VARBINARY:
                 return byte[].class;
             case Types.BIT:
+            case Types.BOOLEAN:
                 return Boolean.class;
             case Types.TINYINT:
             case Types.SMALLINT:

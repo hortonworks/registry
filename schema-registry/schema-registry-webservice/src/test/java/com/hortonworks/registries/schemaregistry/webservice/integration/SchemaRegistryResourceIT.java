@@ -436,63 +436,30 @@ public class SchemaRegistryResourceIT {
 
 }
 
-class TestResponseForSerDesInfo {
-    private List<SerDesInfo> entities;
+abstract class TestResponse<T> {
+    private List<T> entities;
     private List<String> errors;
 
-    public TestResponseForSerDesInfo() {
-    }
-
-    public List<SerDesInfo> getEntities() {
+    public List<T> getEntities() {
         return entities;
     }
 
-    public List<String> getErrors() {
-        return errors;
-    }
-
-    public void setEntities(List<SerDesInfo> entities) {
+    public void setEntities(List<T> entities) {
         this.entities = entities;
     }
-}
-
-class TestResponseForSchemaVersionKey {
-    private List<SchemaVersionKey> entities;
-
-    public TestResponseForSchemaVersionKey() {
-    }
-
-    public List<SchemaVersionKey> getEntities() {
-        return entities;
-    }
-
-    public void setEntities(List<SchemaVersionKey> entities) {
-        this.entities = entities;
-    }
-}
-
-class TestResponseForSchemaMetadataInfo {
-    private List<SchemaMetadataInfo> entities;
-    private List<String> errors;
-
-    public List<SchemaMetadataInfo> getEntities() {
-        return entities;
-    }
 
     public List<String> getErrors() {
         return errors;
     }
-}
 
-class TestResponseForAggregatedSchemaMetadataInfo {
-    private List<AggregatedSchemaMetadataInfo> entities;
-    private List<String> errors;
-
-    public List<AggregatedSchemaMetadataInfo> getEntities() {
-        return entities;
-    }
-
-    public List<String> getErrors() {
-        return errors;
+    public void setErrors(List<String> errors) {
+        this.errors = errors;
     }
 }
+class TestResponseForSerDesInfo extends TestResponse<SerDesInfo> { }
+
+class TestResponseForSchemaVersionKey extends TestResponse<SchemaVersionKey> { }
+
+class TestResponseForSchemaMetadataInfo extends TestResponse<SchemaMetadataInfo> { }
+
+class TestResponseForAggregatedSchemaMetadataInfo extends TestResponse<AggregatedSchemaMetadataInfo> { }

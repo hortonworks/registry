@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="LocalSchemaRegistryServer" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer" />
+    <module name="registry.schema-registry.schema-registry-webservice.main" />
+    <option name="VM_PARAMETERS" value="-Djava.security.krb5.realm=ROOT.HWX.SITE -Djava.security.krb5.kdc=clock-1.clock.root.hwx.site:88 -Djava.security.krb5.conf=C:/ProgramData/mit/Kerberos5/krb5.ini" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.hortonworks.registries.schemaregistry.webservice.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2" />
+  </configuration>
+</component>

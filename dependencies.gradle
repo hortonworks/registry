@@ -73,6 +73,7 @@ ext.libraries = [
    el_api            : "javax.el:javax.el-api:$versions_el_api",
 
    flyway            : "org.flywaydb:flyway-gradle-plugin:$versions_flyway",
+   freemarker        : "org.freemarker:freemarker:$versions_freemarker",
 
    jackson: [
       annotations    : "com.fasterxml.jackson.core:jackson-annotations:$versions_jackson2",
@@ -103,10 +104,17 @@ ext.libraries = [
 
    json_schema_validator : "com.github.fge:json-schema-validator:$versions_json_schema_validator",
    junit             : "junit:junit:$versions_junit",
+   junit5            : "junit:junit:$versions_junit",
    jmockit           : "org.jmockit:jmockit:$versions_jmockit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
    powermock_api     : "org.powermock:powermock-api-mockito2:$versions_powermock",
    powermock_module  : "org.powermock:powermock-module-junit4:$versions_powermock",
+   cucumber: [
+       core: "io.cucumber:cucumber-java:$versions_cucumber",
+       junit: "io.cucumber:cucumber-junit:$versions_cucumber",
+       junit_platform: "io.cucumber:cucumber-junit-platform-engine:$versions_cucumber",
+       picocontainer: "io.cucumber:cucumber-picocontainer:$versions_cucumber"
+   ],
 
    lettuce           : "biz.paluch.redis:lettuce:$versions_lettuce",
 
@@ -233,6 +241,7 @@ ext.libraries = [
      },
    ],
 
-   validation_api     : "javax.validation:validation-api:$versions_validation_api"
+   validation_api     : "javax.validation:validation-api:$versions_validation_api",
+   validation_api2    : "jakarta.validation:jakarta.validation-api:$versions_validation_api2"
 
 ]
