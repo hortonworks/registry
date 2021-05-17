@@ -23,6 +23,19 @@ public class FileStorageProperties {
     private String fsUrl;
     private String kerberosPrincipal;
     private String keytabLocation;
+    private String abfsImpl;
+    private String abfssImpl;
+
+    public FileStorageProperties() { }
+
+    public FileStorageProperties(String directory, String fsUrl, String kerberosPrincipal, String keytabLocation, String abfsImpl, String abfssImpl) {
+        this.directory = directory;
+        this.fsUrl = fsUrl;
+        this.kerberosPrincipal = kerberosPrincipal;
+        this.keytabLocation = keytabLocation;
+        this.abfsImpl = abfsImpl;
+        this.abfssImpl = abfssImpl;
+    }
 
     @JsonProperty
     public String getDirectory() {
@@ -62,5 +75,25 @@ public class FileStorageProperties {
     @JsonProperty
     public void setKeytabLocation(String keytabLocation) {
         this.keytabLocation = keytabLocation;
+    }
+
+    @JsonProperty("fs.abfs.impl")
+    public String getAbfsImpl() {
+        return abfsImpl;
+    }
+
+    @JsonProperty
+    public void setAbfsImpl(String abfsImpl) {
+        this.abfsImpl = abfsImpl;
+    }
+
+    @JsonProperty("fs.abfss.impl")
+    public String getAbfssImpl() {
+        return abfssImpl;
+    }
+
+    @JsonProperty
+    public void setAbfssImpl(String abfssImpl) {
+        this.abfssImpl = abfssImpl;
     }
 }

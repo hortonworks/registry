@@ -62,9 +62,9 @@ public class HdfsPluginImpl extends AbstractHadoopPlugin {
         String fsUrl = props.getFsUrl();
         String kerberosPrincipal = props.getKerberosPrincipal();
         String keytabLocation = props.getKeytabLocation();
-        directory = StringUtils.defaultIfBlank(props.getDirectory(), FileStorage.DEFAULT_DIR);
+        this.directory = StringUtils.defaultIfBlank(props.getDirectory(), FileStorage.DEFAULT_DIR);
 
-        hdfsConfig = new Configuration();
+        this.hdfsConfig = new Configuration();
 
         // make sure fsUrl is set
         checkArgument(fsUrl != null, "fsUrl must be specified for HdfsFileStorage.");
@@ -81,6 +81,13 @@ public class HdfsPluginImpl extends AbstractHadoopPlugin {
             LOG.info("Logging in as kerberos principal {}", kerberosPrincipal);
             UserGroupInformation.loginUserFromKeytab(kerberosPrincipal, keytabLocation);
             kerberosEnabled = true;
+        }
+
+        if (StringUtils.isNotBlank(props.getAbfsImpl())) {
+            hdfsConfig.set("fs.abfs.impl", props.getAbfsImpl());
+        }
+        if (StringUtils.isNotBlank(props.getAbfssImpl())) {
+            hdfsConfig.set("fs.abfss.impl", props.getAbfssImpl());
         }
 
         directory = adjustDirectory(fsUrl, directory);
