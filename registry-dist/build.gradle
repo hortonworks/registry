@@ -55,6 +55,7 @@ distributions {
                 from("$rootDir/ranger-plugin/build/dependency") {
                     include '*jar'
                     exclude 'ranger-plugin-classloader*jar'
+                    exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
                 }

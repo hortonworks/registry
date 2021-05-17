@@ -28,27 +28,6 @@ dependencies {
     compile libraries.hadoop.common
     compile libraries.guava
     compile libraries.gson
-	
-	/*
-	 In Cloudera we need to use jackson-mapper-asl-1.9.13-cloudera.1.jar due to CVE. Unfortunately Ranger 
-	 pulls in the incorrect version so we are forced to override it.
-	 */
-	compile(libraries.jackson.mapper) {
-		version {
-            strictly versions_jackson1
-        }
-	}
-	
-	/*
-	 What should you know about logging?
-	 Ranger by default uses slf4j-api and log4j-over-slf4j. Schema Registry uses slf4j-api and slf4j-simple. It is
-	 not possible for both log4j-over-slf4j and slf4j-simple to exist on the same classpath - Slf4j will throw an Exception.
-	 Technically this shouldn't be a problem because Ranger is loaded as a plugin and it lives on a separate classpath.
-	 However, the classpath loader also uses slf4j - Schema Registry's slf4j. Which is incompatible with Ranger's slf4j.
-	 So as Ranger's classpath is loaded, slf4j will notice there are two incompatible libraries on the classpath and will 
-	 throw an exception. To prevent this, we need to force Ranger to use slf4j-simple.
-	 */
-	runtime libraries.logging.slf4j_simple
     
 }
 
