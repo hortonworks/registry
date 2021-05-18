@@ -75,6 +75,7 @@ subprojects {
         configFile = rootProject.file('checkstyle/checkstyle.xml')
     }
     test.dependsOn('checkstyleMain', 'checkstyleTest')
+    test.finalizedBy(check)
 
     // include license files into every jar
     task copyLegal(type: Copy) {
