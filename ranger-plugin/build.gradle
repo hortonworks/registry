@@ -18,17 +18,26 @@ dependencies {
 
     compileOnly group: 'org.scala-lang', name: 'scala-library', version: scala_version
     compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
-    
+
     compile libraries.ranger.common
     compile libraries.ranger.audit
     compile libraries.ranger.classloader
-    
+
     compile libraries.jna
     compile libraries.httpclient
     compile libraries.hadoop.common
     compile libraries.guava
     compile libraries.gson
-    
+
+    /*
+    In Cloudera we need to use jackson-mapper-asl-1.9.13-cloudera.1.jar due to CVE. Unfortunately Ranger
+    pulls in the incorrect version so we are forced to override it.
+    */
+    compile(libraries.jackson.mapper) {
+        version {
+            strictly versions_jackson1
+        }
+    }
 }
 
 task copyDependencies(type: Sync) {
