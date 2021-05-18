@@ -23,6 +23,7 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
@@ -258,4 +259,13 @@ public class WhenSteps extends AbstractSteps {
         sow.setValue(HTTP_RESPONSE, response);
     }
 
+    @When("we delete the schema {string}")
+    public void weDeleteTheSchema(String schemaName) throws SchemaNotFoundException {
+        schemaRegistryClient.deleteSchema(schemaName);
+    }
+
+    @When("we initialize a new schema registry client")
+    public void weInitializeANewSchemaRegistryClient() {
+        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
+    }
 }
