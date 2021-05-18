@@ -95,13 +95,25 @@ public class SchemaMetadataCache {
 
     public void invalidateSchemaMetadata(SchemaMetadataCache.Key key) {
         LOG.info("Invalidating cache entry for key [{}]", key);
+        if (loadingCache.size() == 0) {
+            return;
+        }
 
         // If the cache doesn't have entry for the key, then no need to invalidate the cache
         if (loadingCache.getIfPresent(key) != null) {
             loadingCache.invalidate(key);
         }
 
-        Key otherKey = key.id == null ? Key.of(schemaNameToIdMap.get(key.name)) : Key.of(schemaNameToIdMap.inverse().get(key.id));
+        final Key otherKey;
+        final Object id = key.id == null ? schemaNameToIdMap.get(key.name) : schemaNameToIdMap.inverse().get(key.id);
+        if (id == null) {
+            return;
+        } else if (id instanceof Long) {
+            otherKey = Key.of((Long) id);
+        } else {
+            otherKey = Key.of((String) id);
+        }
+
         if (loadingCache.getIfPresent(otherKey) != null) {
             loadingCache.invalidate(otherKey);
         }
