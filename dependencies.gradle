@@ -237,42 +237,9 @@ ext.libraries = [
    postgresql        : "org.postgresql:postgresql:$versions_postgresql",
 
    ranger: [
-     common: dependencies.create("org.apache.ranger:ranger-plugins-common:$versions_ranger") {
-         exclude group: 'com.google.cloud.bigdataoss', module: 'gcs-connector'
-         exclude group: 'org.apache.hadoop', module: 'hadoop-common'
-         exclude group: 'org.slf4j'
-         exclude group: 'log4j'
-         exclude group: 'org.apache.curator', module: 'curator-client'
-         exclude group: 'org.apache.curator', module: 'curator-recipes'
-         exclude group: 'org.apache.curator', module: 'curator-framework'
-         exclude group: 'org.apache.kafka', module: 'kafka_2.12'
-         exclude group: 'org.javassist', module: 'javassist'
-         exclude group: 'net.java.dev.jna', module: 'jna'
-         exclude group: 'net.java.dev.jna', module: 'jna-platform'
-         exclude group: 'org.apache.httpcomponents', module: 'httpcore'
-         exclude group: 'org.codehaus.jackson', module: 'jackson-core-asl'
-         exclude group: 'org.codehaus.jackson', module: 'jackson-mapper-asl'
-         exclude group: 'com.google.code.findbugs', module: 'jsr305'
-     },
-     audit: dependencies.create("org.apache.ranger:ranger-plugins-audit:$versions_ranger") {
-         exclude group: 'com.google.cloud.bigdataoss', module: 'gcs-connector'
-         exclude group: 'org.apache.hadoop', module: 'hadoop-common'
-         exclude group: 'org.slf4j'
-         exclude group: 'log4j'
-         exclude group: 'org.apache.kafka', module: 'kafka_2.12'
-         exclude group: 'org.javassist', module: 'javassist'
-         exclude group: 'org.scala-lang', module: 'scala-library'
-         exclude group: 'org.scala-lang', module: 'scala-reflect'
-         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
-         exclude group: 'org.apache.httpcomponents', module: 'httpcore'
-         exclude group: 'org.apache.commons', module: 'commons-math3'
-         exclude group: 'commons-io', module: 'commons-io'
-         exclude group: 'org.cloudera.logredactor', module: 'logredactor'
-     },
-     classloader: dependencies.create("org.apache.ranger:ranger-plugin-classloader:$versions_ranger") {
-         exclude group: 'org.slf4j'
-         exclude group: 'log4j'
-     }
+     common          : "org.apache.ranger:ranger-plugins-common:$versions_ranger",
+     audit           : "org.apache.ranger:ranger-plugins-audit:$versions_ranger",
+     classloader     : "org.apache.ranger:ranger-plugin-classloader:$versions_ranger"
    ],
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",

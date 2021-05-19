@@ -134,7 +134,9 @@ dependencies {
     compile project(':schema-registry:schema-registry-serdes')
     
     compile libraries.jackson.scala_module
-    compile libraries.ranger.classloader
+    compile(libraries.ranger.classloader) {
+        exclude group: 'org.slf4j'
+    }
     
     // this will force Gradle to build the tar and zip file only after every other project was built
     distTar.dependsOn(':schema-registry:schema-registry-webservice:build')

@@ -22,6 +22,8 @@ dependencies {
     compile libraries.ranger.common
     compile libraries.ranger.audit
     compile libraries.ranger.classloader
+    compile libraries.hadoop.client  // for storing audit logs on hdfs
+    compile libraries.hadoop.cloud   // for storing audit logs in the cloud
 
     compile libraries.jna
     compile libraries.httpclient
