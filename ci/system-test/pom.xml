@@ -22,7 +22,7 @@
         <maven.javadoc.plugin.version>3.1.0</maven.javadoc.plugin.version>
         <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
         <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
-        <checkstyle.version>8.19</checkstyle.version>
+        <checkstyle.version>8.29</checkstyle.version>
         <awaitility.version>1.7.0</awaitility.version>
         <apache.rat.plugin.version>0.13</apache.rat.plugin.version>
         <hwx.repo>https://nexus-private.hortonworks.com/nexus/content/groups/public/</hwx.repo>
