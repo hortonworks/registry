@@ -237,9 +237,15 @@ ext.libraries = [
    postgresql        : "org.postgresql:postgresql:$versions_postgresql",
 
    ranger: [
-     common          : "org.apache.ranger:ranger-plugins-common:$versions_ranger",
-     audit           : "org.apache.ranger:ranger-plugins-audit:$versions_ranger",
-     classloader     : "org.apache.ranger:ranger-plugin-classloader:$versions_ranger"
+     common: dependencies.create("org.apache.ranger:ranger-plugins-common:$versions_ranger") {
+         exclude group: 'org.slf4j'
+     },
+     audit: dependencies.create("org.apache.ranger:ranger-plugins-audit:$versions_ranger") {
+         exclude group: 'org.slf4j'
+     },
+     classloader: dependencies.create("org.apache.ranger:ranger-plugin-classloader:$versions_ranger") {
+         exclude group: 'org.slf4j'
+     }
    ],
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
