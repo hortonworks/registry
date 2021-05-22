@@ -218,7 +218,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         initializeSecurityContext();   // configure kerberos
 
         ClientConfig config = createClientConfig(conf);
-        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
+
+        ClientBuilder clientBuilder = new JerseyClientBuilder()
                                                    .withConfig(config)
                                                    .property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
 
