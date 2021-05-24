@@ -15,6 +15,7 @@
 package com.cloudera.dim.atlas;
 
 import com.cloudera.dim.atlas.conf.AtlasConfiguration;
+import com.cloudera.dim.atlas.conf.IAtlasSchemaRegistry;
 import com.cloudera.dim.atlas.shim.AtlasPluginFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
@@ -22,7 +23,6 @@ import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
-import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaBranchKey;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -84,7 +84,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Implementation of Schema Registry which relies on Atlas for persistence.
  */
-public class AtlasSchemaRegistry implements ISchemaRegistry, SchemaVersionRetriever {
+public class AtlasSchemaRegistry implements IAtlasSchemaRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(AtlasSchemaRegistry.class);
 

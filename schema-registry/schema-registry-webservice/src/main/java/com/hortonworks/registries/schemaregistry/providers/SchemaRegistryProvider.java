@@ -15,7 +15,6 @@
  **/
 package com.hortonworks.registries.schemaregistry.providers;
 
-import com.cloudera.dim.atlas.AtlasSchemaRegistry;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
@@ -28,9 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
 
 public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
 
@@ -57,39 +53,9 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
 
     @Override
     public ISchemaRegistry get() {
-        if (configuration.getAtlasConfiguration() != null && configuration.getAtlasConfiguration().isEnabled()) {
-            return atlasSchemaRegistry();
-        } else {
             return defaultSchemaRegistry();
-        }
     }
-
-    private AtlasSchemaRegistry atlasSchemaRegistry() {
-        LOG.info("Configuring {}", AtlasSchemaRegistry.class);
-
-        if (System.getProperty("atlas.conf") == null) {
-            final Optional<String> fallbackAtlasConf = findAtlasConf();
-            if (fallbackAtlasConf.isPresent()) {
-                LOG.warn("Environment variable \"atlas.conf\" was not defined, trying to fallback to {}", fallbackAtlasConf.get());
-                System.setProperty("atlas.conf", fallbackAtlasConf.get());
-            } else {
-                LOG.error("Environment variable \"atlas.conf\" was not defined and we couldn't find an Atlas configuration path on the classpath.");
-            }
-        }
-
-        return new AtlasSchemaRegistry(moduleDetailsConfiguration, configuration.getAtlasConfiguration(), fileStorage);
-    }
-
-    private Optional<String> findAtlasConf() {
-        for (String attempt : Arrays.asList("./conf", "../conf", "build/conf", "./atlas", ".")) {
-            File dir = new File(attempt);
-            if (dir.exists() && dir.isDirectory() && new File(dir, "atlas-application.properties").exists()) {
-                return Optional.of(dir.getAbsolutePath());
-            }
-        }
-
-        return Optional.empty();
-    }
+    
 
     private DefaultSchemaRegistry defaultSchemaRegistry() {
         LOG.info("Configuring {}", DefaultSchemaRegistry.class);

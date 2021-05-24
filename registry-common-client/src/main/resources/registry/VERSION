@@ -1,0 +1,12 @@
+#Created by build system. Do not modify
+#"2021-05-25T07:59:46Z"
+version="0.10.0.7.2.11.0-SNAPSHOT"
+revision=1110
+name="registry-common-client"
+timestamp=1621929586269
+group="com.hortonworks.registries"
+sha="e3d8ae4dcbcc20ac0f28f426f4465f59a4e3997d"
+git_date="2021-05-24T20:31:14Z"
+git_branch="cdpd-master"
+build_date="2021-05-25T07:59:46Z"
+dirty=1

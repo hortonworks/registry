@@ -15,6 +15,7 @@
 package com.hortonworks.registries.webservice;
 
 import com.cloudera.dim.atlas.AtlasRestResource;
+import com.cloudera.dim.atlas.conf.AtlasSchemaRegistryModule;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
@@ -96,6 +97,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         bootstrap.addBundle(GuiceBundle.builder()
                 .modules(new CoreModule())
                 .modules(new SchemaRegistryModule())
+                .modules(new AtlasSchemaRegistryModule())
                 .build());
 
         // always deploy UI on /ui. If there is no other filter like Confluent etc, redirect / to /ui
