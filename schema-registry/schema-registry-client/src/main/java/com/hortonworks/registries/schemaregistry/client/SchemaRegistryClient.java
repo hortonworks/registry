@@ -1324,8 +1324,20 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return createInstance(serDesInfo, false);
     }
 
+    /**
+     * <p>Closes the client and all open connections.</p>
+     * If Kerberos was enabled this will also close the Kerberos ticket management thread. We will wait up to 1 second
+     * for the thread to close. In case the thread doesn't shut down in time, you will see a warning in the logs.
+     */
     @Override
     public void close() {
+        if (login != null) {
+            try {
+                login.close();
+            } catch (Exception ex) {
+                LOG.debug("Exception thrown while closing the kerberos login.", ex);
+            }
+        }
         client.close();
     }
 

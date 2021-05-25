@@ -48,7 +48,7 @@ public class KerberosLogin extends AbstractLogin {
     public static final String TICKET_RENEW_JITTER = "ticket.renew.jitter";
     public static final String MIN_TIME_BEFORE_RELOGIN = "min.time.before.relogin";
 
-    private Thread t;
+    private Thread tgtRefreshThread;
     private boolean isKrbTicket;
     private boolean isUsingTicketCache;
     private String principal;
@@ -140,7 +140,7 @@ public class KerberosLogin extends AbstractLogin {
         isKrbTicket = !loginContext.getSubject().getPrivateCredentials(KerberosTicket.class).isEmpty();
         if (!isKrbTicket) {
             log.info("It is not a Kerberos ticket");
-            t = null;
+            tgtRefreshThread = null;
             // if no TGT, do not bother with ticket management.
             return loginContext;
         }
@@ -168,7 +168,7 @@ public class KerberosLogin extends AbstractLogin {
         KerberosTicket tgt = getTGT();
         if (tgt != null) {
             if (isUsingTicketCache && tgt.getRenewTill() != null && tgt.getRenewTill().getTime() < tgt.getEndTime().getTime()) {
-                log.warn("The TGT cannot be renewed beyond the next expiry date: {}. This process will not be able to authenticate" + 
+                log.warn("The TGT cannot be renewed beyond the next expiry date: {}. This process will not be able to authenticate " +
                         "new clients after that time. Ask your system administrator to either increase the 'renew until' time " +
                         "by doing : 'modprinc -maxrenewlife {} ' within kadmin, or instead, to generate a keytab for {}. " +
                         "Because the TGT's expiry cannot be further extended by refreshing, exiting refresh thread now.",
@@ -184,25 +184,28 @@ public class KerberosLogin extends AbstractLogin {
 
     @Override
     public void close() {
-        if ((t != null) && (t.isAlive())) {
-            t.interrupt();
+        if ((tgtRefreshThread != null) && (tgtRefreshThread.isAlive())) {
+            tgtRefreshThread.interrupt();
             try {
-                t.join();
+                tgtRefreshThread.join(1000L);
             } catch (InterruptedException e) {
-                log.warn("Error while waiting for Login thread to shutdown: " + e, e);
+                log.warn("Error while waiting for Login thread to shutdown.", e);
             }
         }
     }
 
     private void spawnReloginThread() {
+        if (tgtRefreshThread != null) {
+            tgtRefreshThread.interrupt();
+        }
         // Refresh the Ticket Granting Ticket (TGT) periodically. How often to refresh is determined by the
         // TGT's existing expiry date and the configured minTimeBeforeRelogin. For testing and development,
         // you can decrease the interval of expiration of tickets (for example, to 3 minutes) by running:
         //  "modprinc -maxlife 3mins <principal>" in kadmin.
-        t = Utils.newThread("kerberos-refresh-thread", new Runnable() {
+        tgtRefreshThread = Utils.newThread("kerberos-refresh-thread", new Runnable() {
             public void run() {
                 log.info("TGT refresh thread started.");
-                while (true) {  // renewal thread's main loop. if it exits from here, thread will exit.
+                while (!Thread.interrupted()) {  // renewal thread's main loop. if it exits from here, thread will exit.
                     KerberosTicket tgt = getTGT();
                     Date nextRefreshDate;
                     long now = System.currentTimeMillis();
@@ -263,7 +266,7 @@ public class KerberosLogin extends AbstractLogin {
                 }
             }
         }, true);
-        t.start();
+        tgtRefreshThread.start();
     }
 
     private long getRefreshTime(KerberosTicket tgt) {
