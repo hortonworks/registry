@@ -196,6 +196,7 @@ public class AtlasSchemaRegistry implements IAtlasSchemaRegistry {
         };
     }
 
+    @Override
     public void setupAtlasModel() {
         atlasClient.setupAtlasModel();
     }

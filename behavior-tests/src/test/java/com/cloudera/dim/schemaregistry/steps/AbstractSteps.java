@@ -16,6 +16,7 @@
 package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.schemaregistry.GlobalState;
+import com.cloudera.dim.schemaregistry.TestAtlasServer;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
@@ -29,13 +30,15 @@ import java.util.Map;
 abstract class AbstractSteps {
 
     protected final TestSchemaRegistryServer testServer;
+    protected final TestAtlasServer testAtlasServer;
     protected final GlobalState sow;
     protected SchemaRegistryClient schemaRegistryClient;
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
-    protected AbstractSteps(TestSchemaRegistryServer testServer, GlobalState sow) {
+    protected AbstractSteps(TestSchemaRegistryServer testServer, GlobalState sow, TestAtlasServer testAtlasServer) {
         this.testServer = testServer;
         this.sow = sow;
+        this.testAtlasServer = testAtlasServer;
     }
 
     protected String getBaseUrl(int port) {

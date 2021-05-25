@@ -15,6 +15,7 @@
  */
 package com.cloudera.dim.atlas;
 
+import com.cloudera.dim.atlas.conf.IAtlasSchemaRegistry;
 import com.codahale.metrics.annotation.Timed;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
@@ -41,11 +42,11 @@ public class AtlasRestResource {
 
     static final String OPERATION_GROUP_ATLAS = "6. Atlas";
 
-    private final AtlasSchemaRegistry schemaRegistry;
+    private final IAtlasSchemaRegistry schemaRegistry;
     private final AuthorizationAgent authorizationAgent;
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
 
-    public AtlasRestResource(AtlasSchemaRegistry schemaRegistry, AuthorizationAgent authorizationAgent,
+    public AtlasRestResource(IAtlasSchemaRegistry schemaRegistry, AuthorizationAgent authorizationAgent,
                              SchemaMetadataTypeValidator schemaMetadataTypeValidator) {
         this.schemaRegistry = schemaRegistry;
         this.authorizationAgent = authorizationAgent;

@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.cloudera.dim.atlas.conf;
+package com.cloudera.dim.schemaregistry.atlas;
 
-import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
+import io.dropwizard.Configuration;
 
-
-public interface IAtlasSchemaRegistry extends ISchemaRegistry, SchemaVersionRetriever {
-
-    /** Generate the type defs in the Atlas database. */
-    void setupAtlasModel();
-
+public class TestAtlasConfiguration extends Configuration {
 }

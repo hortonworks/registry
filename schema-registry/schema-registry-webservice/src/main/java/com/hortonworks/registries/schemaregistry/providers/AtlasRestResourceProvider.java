@@ -16,8 +16,7 @@
 package com.hortonworks.registries.schemaregistry.providers;
 
 import com.cloudera.dim.atlas.AtlasRestResource;
-import com.cloudera.dim.atlas.AtlasSchemaRegistry;
-import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.cloudera.dim.atlas.conf.IAtlasSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.webservice.RegistryConfiguration;
@@ -34,12 +33,12 @@ import javax.inject.Provider;
 public class AtlasRestResourceProvider implements Provider<AtlasRestResource> {
 
     private final RegistryConfiguration configuration;
-    private final ISchemaRegistry schemaRegistry;
+    private final IAtlasSchemaRegistry schemaRegistry;
     private final AuthorizationAgent authorizationAgent;
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
 
     @Inject
-    public AtlasRestResourceProvider(RegistryConfiguration configuration, ISchemaRegistry schemaRegistry,
+    public AtlasRestResourceProvider(RegistryConfiguration configuration, IAtlasSchemaRegistry schemaRegistry,
                                      AuthorizationAgent authorizationAgent,
                                      SchemaMetadataTypeValidator schemaMetadataTypeValidator) {
 
@@ -52,8 +51,7 @@ public class AtlasRestResourceProvider implements Provider<AtlasRestResource> {
     @Override
     public AtlasRestResource get() {
         if (configuration.getAtlasConfiguration() != null && configuration.getAtlasConfiguration().isEnabled()) {
-            AtlasSchemaRegistry atlasSchemaRegistry = (AtlasSchemaRegistry) schemaRegistry;
-            return new AtlasRestResource(atlasSchemaRegistry, authorizationAgent, schemaMetadataTypeValidator);
+            return new AtlasRestResource(schemaRegistry, authorizationAgent, schemaMetadataTypeValidator);
         } else {
             return null;
         }

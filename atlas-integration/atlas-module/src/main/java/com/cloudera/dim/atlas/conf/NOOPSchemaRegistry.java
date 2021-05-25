@@ -54,6 +54,10 @@ import java.util.Map;
 import java.util.Optional;
 
 public class NOOPSchemaRegistry implements IAtlasSchemaRegistry {
+
+    @Override
+    public void setupAtlasModel() { }
+
     @Override
     public Collection<SchemaProviderInfo> getSupportedSchemaProviders() {
         return null;

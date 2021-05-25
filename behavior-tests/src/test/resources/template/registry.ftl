@@ -3,7 +3,9 @@ atlas:
   enabled: ${config.atlasConfiguration.enabled?c}
   atlasUrls:
     # list of Atlas URLs
-    - http://<atlas host url>:31000
+<#list config.atlasConfiguration.atlasUrls as url>
+    - ${url}
+</#list>
   basicAuth:
     username: "${config.atlasConfiguration.basicAuth.username}"
     password: "${config.atlasConfiguration.basicAuth.password}"

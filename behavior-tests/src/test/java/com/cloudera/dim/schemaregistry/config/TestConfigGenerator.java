@@ -62,6 +62,13 @@ public class TestConfigGenerator {
         return generate("registry.ftl", model);
     }
 
+    public String generateAtlasYaml(int atlasPort) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("port", String.valueOf(atlasPort));
+
+        return generate("atlas.ftl", model);
+    }
+
     @SuppressWarnings({"unchecked", "rawtype"})
     private String generate(String templateName, Map model) {
         try {

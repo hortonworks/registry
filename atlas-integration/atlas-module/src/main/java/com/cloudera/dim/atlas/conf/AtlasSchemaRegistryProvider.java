@@ -18,8 +18,6 @@ package com.cloudera.dim.atlas.conf;
 import com.cloudera.dim.atlas.AtlasSchemaRegistry;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
-import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
-import com.hortonworks.registries.storage.StorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,21 +33,15 @@ public class AtlasSchemaRegistryProvider implements Provider<IAtlasSchemaRegistr
 
     private final AtlasConfiguration configuration;
     private final ModuleDetailsConfiguration moduleDetailsConfiguration;
-    private final StorageManager storageManager;
     private final FileStorage fileStorage;
-    private final SchemaLockManager schemaLockManager;
 
     @Inject
     public AtlasSchemaRegistryProvider(AtlasConfiguration configuration,
                                   ModuleDetailsConfiguration moduleDetailsConfiguration,
-                                  StorageManager storageManager,
-                                  FileStorage fileStorage,
-                                  SchemaLockManager schemaLockManager) {
+                                  FileStorage fileStorage) {
         this.configuration = configuration;
         this.moduleDetailsConfiguration = moduleDetailsConfiguration;
-        this.storageManager = storageManager;
         this.fileStorage = fileStorage;
-        this.schemaLockManager = schemaLockManager;
     }
 
     @Override

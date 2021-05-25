@@ -16,6 +16,7 @@
 package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.schemaregistry.GlobalState;
+import com.cloudera.dim.schemaregistry.TestAtlasServer;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -65,8 +66,8 @@ public class WhenSteps extends AbstractSteps {
 
     private static final Logger LOG = LoggerFactory.getLogger(WhenSteps.class);
 
-    public WhenSteps(TestSchemaRegistryServer testServer, GlobalState sow) {
-        super(testServer, sow);
+    public WhenSteps(TestSchemaRegistryServer testServer, GlobalState sow, TestAtlasServer testAtlasServer) {
+        super(testServer, sow, testAtlasServer);
     }
 
     @Given("that Schema Registry is running")
@@ -77,6 +78,37 @@ public class WhenSteps extends AbstractSteps {
         }
         testServer.cleanupDb();
         schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
+    }
+
+    @Given("that Atlas is running")
+    public void thatAtlasIsRunning() throws Exception {
+        if (!testAtlasServer.isRunning()) {
+            testAtlasServer.start();
+        }
+    }
+
+    /** Enable Atlas integration. If SR is already running, then stop it, so it can be restarted. */
+    @Given("Atlas integration is enabled")
+    public void atlasIntegrationIsEnabled() throws Exception {
+        if (!testServer.isRunning()) {
+            testServer.setAtlasEnabled(true);
+        } else if (!testServer.isAtlasEnabled()) {
+            testServer.stop();
+            testServer.setAtlasEnabled(true);
+        }
+        testServer.setAtlasPort(testAtlasServer.getAtlasPort());
+    }
+
+    /** Disable Atlas integration. If SR is already running, then stop it, so it can be restarted. */
+    @Given("Atlas integration is disabled")
+    public void atlasIntegrationIsDisabled() throws Exception {
+        if (!testServer.isRunning()) {
+            testServer.setAtlasEnabled(false);
+        } else if (testServer.isAtlasEnabled()) {
+            testServer.stop();
+            testServer.setAtlasEnabled(false);
+        }
+        testServer.setAtlasPort(-1);
     }
 
     @When("we create a new schema meta {string} with the following parameters:")
@@ -268,4 +300,5 @@ public class WhenSteps extends AbstractSteps {
     public void weInitializeANewSchemaRegistryClient() {
         schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
     }
+
 }

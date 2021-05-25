@@ -16,7 +16,6 @@
 package com.cloudera.dim.schemaregistry;
 
 import com.cloudera.dim.atlas.conf.AtlasConfiguration;
-import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.FileStorageProperties;
@@ -45,22 +44,21 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TestSchemaRegistryServer {
+public class TestSchemaRegistryServer extends AbstractTestServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestSchemaRegistryServer.class);
 
-    // we'll simulate a pgsql database with H2
+    // we'll simulate a mysql database with H2
     private static final String DB_TYPE = "mysql";
 
     private static final String CONNECTION_URL_TEMPLATE = "jdbc:h2:%s:test;MODE=MYSQL;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=%s";
@@ -71,8 +69,8 @@ public class TestSchemaRegistryServer {
     private int schemaRegistryPort;
     private Flyway flyway;
     private LocalSchemaRegistryServer localSchemaRegistry;
-    private final AtomicBoolean running = new AtomicBoolean(false);
-    private final AtomicBoolean started = new AtomicBoolean(false);
+    private boolean atlasEnabled = false;
+    private int atlasPort = -1;
 
     private static TestSchemaRegistryServer instance;
 
@@ -87,10 +85,7 @@ public class TestSchemaRegistryServer {
         return instance;
     }
 
-    public boolean isRunning() {
-        return running.get();
-    }
-
+    @Override
     public void start() throws Exception {
         boolean alreadyStarted = started.getAndSet(true);
         if (alreadyStarted) {
@@ -101,14 +96,12 @@ public class TestSchemaRegistryServer {
         this.flyway = populateDatabase(dbProperties);
 
         // now we can start Schema Registry and have it connect to our H2 database
-        RegistryConfiguration config = prepareConfig(dbProperties);
+        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort);
 
         this.schemaRegistryPort = findFreePort();
-        TestConfigGenerator configGenerator = new TestConfigGenerator();
         String registryYamlTxt = configGenerator.generateRegistryYaml(config, schemaRegistryPort);
 
-        File registryYaml = File.createTempFile("registry", ".yaml");
-        Files.write(registryYaml.toPath(), registryYamlTxt.getBytes(StandardCharsets.UTF_8));
+        File registryYaml = writeYamlFile("registry", registryYamlTxt);
         LOG.debug("registry.yaml file generated at {}", registryYaml.getAbsolutePath());
 
         this.localSchemaRegistry = new LocalSchemaRegistryServer(registryYaml.getAbsolutePath());
@@ -134,6 +127,7 @@ public class TestSchemaRegistryServer {
         try {
             threadPool.shutdown();
         } catch (Exception ex) { }
+        super.stop();
     }
 
     /** Clean the H2 database. */
@@ -301,17 +295,8 @@ public class TestSchemaRegistryServer {
         return flyway;
     }
 
-    private int findFreePort() {
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
-            return serverSocket.getLocalPort();
-        } catch (Exception ex) {
-            LOG.warn("Could not find free port.", ex);
-            return 0;
-        }
-    }
-
     /** Prepare a configuration which will be passed to Schema Registry. */
-    public RegistryConfiguration prepareConfig(DbProperties h2DbProps) throws IOException {
+    public RegistryConfiguration prepareConfig(DbProperties h2DbProps, boolean atlasEnabled, int atlasPort) throws IOException {
         RegistryConfiguration configuration = new RegistryConfiguration();
         if (configuration.getAtlasConfiguration() == null) {
             AtlasConfiguration atlasConfiguration = new AtlasConfiguration();
@@ -319,6 +304,12 @@ public class TestSchemaRegistryServer {
             basicAuth.setUsername("kafka");
             basicAuth.setPassword("cloudera");
             atlasConfiguration.setBasicAuth(basicAuth);
+
+            if (atlasEnabled) {
+                atlasConfiguration.setEnabled(true);
+                atlasConfiguration.setAtlasUrls(Collections.singletonList("http://localhost:" + atlasPort));
+            }
+
             configuration.setAtlasConfiguration(atlasConfiguration);
         }
         if (configuration.getStorageProviderConfiguration() == null) {
@@ -349,4 +340,19 @@ public class TestSchemaRegistryServer {
         return configuration;
     }
 
+    public boolean isAtlasEnabled() {
+        return atlasEnabled;
+    }
+
+    public void setAtlasEnabled(boolean atlasEnabled) {
+        this.atlasEnabled = atlasEnabled;
+    }
+
+    public int getAtlasPort() {
+        return atlasPort;
+    }
+
+    public void setAtlasPort(int atlasPort) {
+        this.atlasPort = atlasPort;
+    }
 }

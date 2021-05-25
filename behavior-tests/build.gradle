@@ -20,6 +20,18 @@ dependencies {
     testCompile project(':schema-registry:schema-registry-client')
     testCompile project(':schema-registry:schema-registry-serdes')
     testCompile project(':schema-registry:schema-registry-webservice')
+    testCompile(project(':atlas-integration:atlas-translate')) {
+        exclude group: 'commons-collections'
+        exclude group: 'commons-validator'
+        exclude group: 'org.apache.hadoop'
+        exclude group: 'org.springframework'
+        exclude group: 'com.google.guava'
+        exclude group: 'com.sun.jersey.contribs'
+        exclude group: 'com.sun.jersey'
+        exclude group: 'com.fasterxml.jackson.jaxrs'
+        exclude group: 'org.slf4j'
+        exclude group: 'cglib'
+    }
 
     testCompile libraries.flyway
     testCompile libraries.freemarker

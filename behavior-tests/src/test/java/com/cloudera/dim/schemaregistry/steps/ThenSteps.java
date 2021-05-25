@@ -16,6 +16,7 @@
 package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.schemaregistry.GlobalState;
+import com.cloudera.dim.schemaregistry.TestAtlasServer;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
@@ -48,8 +49,8 @@ public class ThenSteps extends AbstractSteps {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThenSteps.class);
 
-    public ThenSteps(TestSchemaRegistryServer testServer, GlobalState sow) {
-        super(testServer, sow);
+    public ThenSteps(TestSchemaRegistryServer testServer, GlobalState sow, TestAtlasServer testAtlasServer) {
+        super(testServer, sow, testAtlasServer);
     }
 
     @Then("the schema is successfully created")
