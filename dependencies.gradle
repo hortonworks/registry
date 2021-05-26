@@ -205,7 +205,15 @@ ext.libraries = [
          exclude group: 'org.springframework', module: 'spring-aop'
          exclude group: 'org.springframework', module: 'spring-beans'
          exclude group: 'org.springframework', module: 'spring-expression'
+         exclude group: 'org.springframework.security', module: 'spring-security-core'
      },
+     security_core: dependencies.create("org.springframework.security:spring-security-core:$versions_spring_security_core") {
+         exclude group: 'org.springframework', module: 'spring-context'
+         exclude group: 'org.springframework', module: 'spring-core'
+         exclude group: 'org.springframework', module: 'spring-aop'
+         exclude group: 'org.springframework', module: 'spring-beans'
+         exclude group: 'org.springframework', module: 'spring-expression'
+     }
    ],
 
    validation_api     : "javax.validation:validation-api:$versions_validation_api",

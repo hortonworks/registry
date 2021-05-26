@@ -22,6 +22,7 @@ dependencies {
     compile libraries.nimbus
     compile libraries.json_smart
     compile libraries.spring.kerberos
+    compile libraries.spring.security_core
     testCompile libraries.spring.core
     testCompile libraries.hadoop.minikdc
     testCompile libraries.httpclient
