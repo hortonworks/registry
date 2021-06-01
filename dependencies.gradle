@@ -115,9 +115,7 @@ ext.libraries = [
        junit_platform: "io.cucumber:cucumber-junit-platform-engine:$versions_cucumber",
        picocontainer: "io.cucumber:cucumber-picocontainer:$versions_cucumber"
    ],
-
-   lettuce           : "biz.paluch.redis:lettuce:$versions_lettuce",
-
+        
    logging: [
       logback        : "ch.qos.logback:logback-classic:$versions_logback",
       log4j          : "log4j:log4j:$versions_log4j",

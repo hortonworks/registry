@@ -18,10 +18,7 @@ dependencies {
 
     compile(project(':registry-common')) { transitive = false }
     compile project(':registry-common-client')
-    compile libraries.lettuce
-    compile libraries.netty.common
-    compile libraries.netty.transport
-    compile libraries.netty.handler
     testCompile libraries.junit
+    compile libraries.guava
 
 }
