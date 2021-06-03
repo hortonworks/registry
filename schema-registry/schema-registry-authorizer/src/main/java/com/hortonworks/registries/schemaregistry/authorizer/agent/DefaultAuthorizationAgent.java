@@ -39,13 +39,15 @@ import java.util.Map;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.AccessType;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer.UserAndGroups;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotSupportedException;
 
 public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
     private Authorizer authorizer;
-
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationAgent.class);
 
 
     @Override
@@ -516,6 +518,10 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
                 T newElem = filterFunc.filter(elem);
                 if (newElem != null) {
                     res.add(newElem);
+                } else {
+                    if (elem != null) {
+                        LOG.debug("Filtering out: {}", elem);
+                    }
                 }
             } catch (AuthorizationException e) { }
         }
