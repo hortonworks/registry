@@ -52,6 +52,7 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
     private List<String> atlasUrls = new ArrayList<>();
     private BasicAuth basicAuth;
     private boolean enabled = false;
+    private long waitBetweenAuditProcessing = 60000L;
 
     public List<String> getAtlasUrls() {
         return atlasUrls;
@@ -77,10 +78,19 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.enabled = enabled;
     }
 
+    public long getWaitBetweenAuditProcessing() {
+        return waitBetweenAuditProcessing;
+    }
+
+    public void setWaitBetweenAuditProcessing(long waitBetweenAuditProcessing) {
+        this.waitBetweenAuditProcessing = waitBetweenAuditProcessing;
+    }
+
     public Map<String, Object> asMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("atlasUrls", atlasUrls);
         result.put("enabled", enabled);
+        result.put("waitBetweenAuditProcessing", waitBetweenAuditProcessing);
         result.put("basicAuth", basicAuth == null ? null : ImmutableMap.of(
                 "username", basicAuth.username,
                 "password", basicAuth.password

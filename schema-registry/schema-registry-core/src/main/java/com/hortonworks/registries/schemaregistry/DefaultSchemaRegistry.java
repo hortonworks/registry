@@ -114,7 +114,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaSerDesMapping.class,
                         SchemaBranchStorable.class,
                         SchemaBranchVersionMapping.class,
-                        SchemaLockStorable.class));
+                        SchemaLockStorable.class,
+                        RegistryAuditStorable.class));
 
         Options options = new Options(configuration);
         schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),

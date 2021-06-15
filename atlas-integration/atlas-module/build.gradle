@@ -28,5 +28,6 @@ dependencies {
 
     testCompile libraries.mockito
     testCompile libraries.junit
+    testCompile libraries.h2
 
 }

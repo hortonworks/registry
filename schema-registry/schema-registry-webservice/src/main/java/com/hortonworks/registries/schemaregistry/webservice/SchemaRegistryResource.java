@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
+import com.hortonworks.registries.schemaregistry.authorizer.audit.AuditLogger;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
@@ -129,6 +130,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
     private final AuthorizationUtils authorizationUtils;
     private final RegistryConfiguration registryConfiguration;
+    private final AuditLogger auditLogger;
 
     @Inject
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
@@ -136,11 +138,12 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                   AuthorizationUtils authorizationUtils,
                                   JarInputStreamValidator jarInputStreamValidator,
                                   SchemaMetadataTypeValidator schemaMetadataTypeValidator,
-                                  RegistryConfiguration registryConfiguration) {
+                                  RegistryConfiguration registryConfiguration,
+                                  AuditLogger auditLogger) {
         super(schemaRegistry);
         this.registryConfiguration = registryConfiguration;
         this.schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
-
+        this.auditLogger = auditLogger;
         this.authorizationAgent = authorizationAgent;
         this.authorizationUtils = authorizationUtils;
         this.jarInputStreamValidator = jarInputStreamValidator;
@@ -529,10 +532,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 checkValidNames(schemaMetadata.getName());
 
                 boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
-                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
-                        schemaMetadata,
-                        Authorizer.AccessType.CREATE);
+                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+                authorizationAgent.authorizeSchemaMetadata(auth, schemaMetadata, Authorizer.AccessType.CREATE);
                 Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
+                auditLogger.withAuth(auth).addSchemaMetadata(schemaMetadata, throwErrorIfExists);
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
@@ -582,12 +585,14 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaMetadata(auth,
                     schemaRegistry,
                     schemaName,
                     Authorizer.AccessType.UPDATE);
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
             if (schemaMetadataInfo != null) {
+                auditLogger.withAuth(auth).updateSchemaMetadata(schemaName, schemaMetadata);
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -795,11 +800,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             Response response;
             try {
                 LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
-                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+                authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                         schemaName,
                         schemaBranchName,
                         Authorizer.AccessType.CREATE);
                 SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
+                auditLogger.withAuth(auth).addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
                 response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
@@ -1050,9 +1057,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.enableSchemaVersion(versionId);
+            auditLogger.withAuth(auth).enableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1090,9 +1099,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.disableSchemaVersion(versionId);
+            auditLogger.withAuth(auth).disableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1127,9 +1138,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.archiveSchemaVersion(versionId);
+            auditLogger.withAuth(auth).archiveSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1165,9 +1178,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(versionId);
+            auditLogger.withAuth(auth).deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1202,9 +1217,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.startSchemaVersionReview(versionId);
+            auditLogger.withAuth(auth).startSchemaVersionReview(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1243,9 +1260,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.transitionState(versionId, stateId, transitionDetails);
+            auditLogger.withAuth(auth).transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1285,9 +1304,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                                  @Context SecurityContext securityContext) {
         Response response;
         try {
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName,
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry, schemaName,
                     schemaBranchName, Authorizer.AccessType.READ);
             CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
+            auditLogger.withAuth(auth).checkCompatibility(schemaBranchName, schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1358,7 +1379,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         Response response;
         try {
             LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
-            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.UPDATE);
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.UPDATE);
             InputStream validatedStream = jarInputStreamValidator.validate(inputStream);
             String uploadedFileId = schemaRegistry.uploadFile(validatedStream);
             response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
@@ -1455,8 +1477,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private Response addSerDesInfo(SerDesPair serDesInfo, SecurityContext securityContext) {
         Response response;
         try {
-            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.CREATE);
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.CREATE);
             Long serializerId = schemaRegistry.addSerDes(serDesInfo);
+            auditLogger.withAuth(auth).addSerDes(serDesInfo);
             response = WSUtils.respondEntity(serializerId, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1486,8 +1510,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
             Response response;
             try {
-                authorizationAgent.authorizeMapSchemaWithSerDes(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaName);
+                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+                authorizationAgent.authorizeMapSchemaWithSerDes(auth, schemaRegistry, schemaName);
                 schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
+                auditLogger.withAuth(auth).mapSchemaWithSerDes(schemaName, serDesId);
                 response = WSUtils.respondEntity(true, Response.Status.OK);
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
@@ -1580,12 +1606,14 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             LOG.debug("Create branch \"{}\" for version with id {}", schemaBranch.getName(), schemaVersionId);
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.fetchSchemaVersionInfo(schemaVersionId);
 
-            authorizationAgent.authorizeCreateSchemaBranch(authorizationUtils.getUserAndGroups(securityContext),
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeCreateSchemaBranch(auth,
                     schemaRegistry,
                     schemaVersionInfo.getSchemaMetadataId(),
                     schemaVersionId,
                     schemaBranch.getName());
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
+            auditLogger.withAuth(auth).createSchemaBranch(schemaVersionId, schemaBranch);
             return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1616,8 +1644,10 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                        @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
                                        @Context SecurityContext securityContext) {
         try {
-            authorizationAgent.authorizeMergeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry, schemaVersionId);
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeMergeSchemaVersion(auth, schemaRegistry, schemaVersionId);
             SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
+            auditLogger.withAuth(auth).mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1720,9 +1750,11 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, "Invalid file format.");
             }
 
-            authorizationAgent.authorizeBulkImport(authorizationUtils.getUserAndGroups(securityContext));
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeBulkImport(auth);
 
             UploadResult uploadResult = schemaRegistry.bulkUploadSchemas(inputStream, failOnError, format);
+            auditLogger.withAuth(auth).bulkUploadSchemas(inputStream, failOnError, format); //TODO inputstream
             response = WSUtils.respondEntity(uploadResult, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
