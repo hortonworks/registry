@@ -44,6 +44,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -365,6 +366,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     protected QueryExecution getQueryExecution(SqlQuery sqlQuery) {
         return new QueryExecution(sqlQuery);
+    }
+    
+    protected void executeStatement(String query) throws SQLException {
+        try (Statement statement = getConnection().createStatement()) {
+            statement.execute(query);
+        }
     }
 
     protected class QueryExecution {

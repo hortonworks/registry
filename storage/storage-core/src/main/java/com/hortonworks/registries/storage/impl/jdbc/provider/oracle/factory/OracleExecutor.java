@@ -122,6 +122,16 @@ public class OracleExecutor extends AbstractQueryExecutor {
     }
 
     @Override
+    public void lockTable(String nameSpace) throws SQLException {
+        executeStatement("LOCK TABLES " + nameSpace + " IN EXCLUSIVE MODE;");
+    }
+
+    @Override
+    public void unlockTable(String namespace) throws SQLException {
+        executeStatement("UNLOCK TABLES " + namespace + ";");
+    }
+
+    @Override
     public Long nextId(String namespace) {
         OracleSequenceIdQuery oracleSequenceIdQuery = new OracleSequenceIdQuery(namespace, queryTimeoutSecs, ORACLE_DATA_TYPE_CONTEXT);
         Connection connection = null;

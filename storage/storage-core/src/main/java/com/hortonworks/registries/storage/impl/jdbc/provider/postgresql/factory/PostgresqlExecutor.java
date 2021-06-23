@@ -39,6 +39,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.Prepa
 import com.hortonworks.registries.storage.search.SearchQuery;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -149,6 +150,16 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new PostgresqlSelectForUpdateQuery(storableKey));
+    }
+
+    @Override
+    public void lockTable(String nameSpace) throws SQLException {
+        executeStatement("LOCK TABLE " + nameSpace + " IN EXCLUSIVE MODE;");
+    }
+
+    @Override
+    public void unlockTable(String namespace) throws SQLException {
+        log.trace("There is no UNLOCK TABLE command in Postresql.");
     }
 
     // this is required since the Id type in Storable is long and Postgres supports Int type for SERIAL (auto increment) field

@@ -17,6 +17,7 @@
 package com.hortonworks.registries.storage;
 
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
+import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 public interface TransactionManager {
@@ -58,5 +59,15 @@ public interface TransactionManager {
      * @return true if able to obtain a write lock on a row with {@link StorableKey} within the specified time
      */
     boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit);
+
+    /**
+     *  Locks a table for a transaction
+     */
+    void lockTable(String namespace) throws SQLException;
+
+    /**
+     *  Releases a table from a lock
+     */
+    void unlockTable(String namespace) throws SQLException;
 
 }

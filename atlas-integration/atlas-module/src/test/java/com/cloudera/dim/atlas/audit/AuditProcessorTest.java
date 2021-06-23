@@ -30,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -78,11 +79,7 @@ public class AuditProcessorTest {
     @Test
     public void testMethodInvocation() throws Exception {
         // given we log an entry for schemaRegistry.addSerDes(serdes)
-        RegistryAuditStorable auditStorable = new RegistryAuditStorable();
-        auditStorable.setId(1L);
-        auditStorable.setFailed(false);
-        auditStorable.setProcessed(false);
-        auditStorable.setTimestamp(System.currentTimeMillis());
+        RegistryAuditStorable auditStorable = createAuditStorableWithId(1L);
         AuditEntry auditEntry = new AuditEntry();
         auditEntry.setMethodName("addSerDes");
         auditEntry.setParamTypes(Arrays.asList(SerDesPair.class.getName()));
@@ -98,6 +95,8 @@ public class AuditProcessorTest {
         // then
         verify(transactionManager).beginTransaction(TransactionIsolation.SERIALIZABLE);
         verify(transactionManager).commitTransaction();
+        verify(transactionManager).lockTable(RegistryAuditStorable.NAME_SPACE);
+        verify(transactionManager).unlockTable(RegistryAuditStorable.NAME_SPACE);
         verify(storageManager).find(eq(RegistryAuditStorable.NAME_SPACE), anyList());
         ArgumentCaptor<SerDesPair> captor = ArgumentCaptor.forClass(SerDesPair.class);
         verify(schemaRegistry).addSerDes(captor.capture());
@@ -109,16 +108,63 @@ public class AuditProcessorTest {
 
         verify(storageManager).update(any(RegistryAuditStorable.class));
     }
+    
+    @Test
+    public void testEmptyAuditList() throws Exception {
+        //given
+        audits = Collections.EMPTY_LIST;
+        
+        //when
+        auditProcessor.processAuditEntries();
+        
+        //then
+        verify(transactionManager).beginTransaction(TransactionIsolation.SERIALIZABLE);
+        verify(transactionManager).commitTransaction();
+        verify(transactionManager).lockTable(RegistryAuditStorable.NAME_SPACE);
+        verify(transactionManager).unlockTable(RegistryAuditStorable.NAME_SPACE);
+        verify(storageManager).find(eq(RegistryAuditStorable.NAME_SPACE), anyList());
+    }
 
     @Test
     public void testInvalidJson() {
+        //given
+        RegistryAuditStorable auditStorable = createAuditStorableWithId(2L);
+        auditStorable.setProcessedData("invalid json data");
+        
+        //when
+        assertThrows(JsonParseException.class, () -> auditProcessor.processAuditEntry(auditStorable));
+
+    }
+
+    @Test
+    public void testProcessAuditEntryException() throws Exception {
+        //given
+        RegistryAuditStorable auditStorable = createAuditStorableWithId(4L);
+        AuditEntry auditEntry = new AuditEntry();
+        auditEntry.setMethodName("checkCompatibility");
+        auditEntry.setParamTypes(Arrays.asList(String.class.getName(), String.class.getName(), String.class.getName()));
+        String name = "test";
+        auditEntry.setParamValues(Arrays.asList(name, name, name));
+        auditStorable.setProcessedData(objectMapper.writeValueAsString(auditEntry));
+
+        audits.add(auditStorable);
+        
+        //when
+        auditProcessor.processAuditEntries();
+
+        //then
+        verify(transactionManager).beginTransaction(TransactionIsolation.SERIALIZABLE);
+        verify(transactionManager).commitTransaction();
+        verify(transactionManager).lockTable(RegistryAuditStorable.NAME_SPACE);
+        verify(transactionManager).unlockTable(RegistryAuditStorable.NAME_SPACE);
+    }
+    
+    private RegistryAuditStorable createAuditStorableWithId(Long id) {
         RegistryAuditStorable auditStorable = new RegistryAuditStorable();
-        auditStorable.setId(2L);
+        auditStorable.setId(id);
         auditStorable.setFailed(false);
         auditStorable.setProcessed(false);
         auditStorable.setTimestamp(System.currentTimeMillis());
-        auditStorable.setProcessedData("invalid json data");
-
-        assertThrows(JsonParseException.class, () -> auditProcessor.processAuditEntry(auditStorable));
+        return auditStorable;
     }
 }

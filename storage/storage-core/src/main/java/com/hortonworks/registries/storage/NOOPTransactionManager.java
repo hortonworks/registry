@@ -21,6 +21,7 @@ import com.hortonworks.registries.storage.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 public class NOOPTransactionManager implements TransactionManager {
@@ -50,6 +51,16 @@ public class NOOPTransactionManager implements TransactionManager {
     @Override
     public boolean writeLock(StorableKey key, Long time, TimeUnit timeUnit) throws StorageException {
         return true;
+    }
+
+    @Override
+    public void lockTable(String namespace) throws SQLException {
+        LOG.debug("--- Ignore call to commit transaction for thread id : {} ---", Thread.currentThread().getId());
+    }
+
+    @Override
+    public void unlockTable(String namespace) throws SQLException {
+        LOG.debug("--- Ignore call to commit transaction for thread id : {} ---", Thread.currentThread().getId());
     }
 
 }

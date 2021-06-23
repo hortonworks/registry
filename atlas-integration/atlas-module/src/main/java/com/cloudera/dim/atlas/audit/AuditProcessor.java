@@ -89,23 +89,28 @@ public class AuditProcessor implements Runnable {
                 new QueryParam(RegistryAuditStorable.FAILED, "false"));
 
         managedTransaction.executeFunction((ManagedTransactionFunction.Arg0<Object>) () -> {
-
-            // TODO CDPD-27215 lock table before running find()
+            
+            transactionManager.lockTable(RegistryAuditStorable.NAME_SPACE);
 
             Collection<RegistryAuditStorable> audits = storageManager.find(RegistryAuditStorable.NAME_SPACE, queryParams);
-            if (audits == null || audits.isEmpty()) {
-                return false;
-            }
-
-            LOG.info("Processing {} audit entries.", audits.size());
-
-            for (RegistryAuditStorable auditStorable : audits) {
-                try {
-                    processAuditEntry(auditStorable);
-                } catch (Exception ex) {
-                    LOG.error("Could not process audit entry. Setting it to failed state: {}", auditStorable, ex);
-                    setAuditEntryToFailed(auditStorable);
+            
+            try {
+                if (audits == null || audits.isEmpty()) {
+                    return false;
                 }
+
+                LOG.info("Processing {} audit entries.", audits.size());
+    
+                for (RegistryAuditStorable auditStorable : audits) {
+                    try {
+                        processAuditEntry(auditStorable);
+                    } catch (Exception ex) {
+                        LOG.error("Could not process audit entry. Setting it to failed state: {}", auditStorable, ex);
+                        setAuditEntryToFailed(auditStorable);
+                    }
+                }
+            } finally {
+                transactionManager.unlockTable(RegistryAuditStorable.NAME_SPACE);
             }
 
             return true;

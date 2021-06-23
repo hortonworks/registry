@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -131,6 +132,20 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         } catch (InterruptedException e) {
             throw new StorageException("Failed to obtain a write lock for storable key : " + key);
         }
+    }
+
+    @Override
+    public void lockTable(String namespace) throws SQLException {
+        log.debug("Locking table: {}", namespace);
+         
+        queryExecutor.lockTable(namespace);
+    }
+
+    @Override
+    public void unlockTable(String namespace) throws SQLException {
+        log.debug("Unocking table: {}", namespace);
+
+        queryExecutor.unlockTable(namespace);
     }
 
     private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
