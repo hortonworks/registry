@@ -138,7 +138,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
 
                 //when
                 Response response = testClient.target(
-                        String.format("/api/v1/confluent/subjects/complatest/versions/latest"))
+                        String.format("/api/v1/confluent/compatibility/subjects/complatest/versions/latest"))
                         .request()
                         .post(Entity.json(schemaText), Response.class);
 
@@ -169,7 +169,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
 
                 //when
                 Response response = testClient.target(
-                        String.format("/api/v1/confluent/subjects/compvetest/versions/4"))
+                        String.format("/api/v1/confluent/compatibility/subjects/compvetest/versions/4"))
                         .request()
                         .post(Entity.json(schemaText), Response.class);
 
@@ -199,7 +199,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
 
                 //when
                 Response response = testClient.target(
-                        String.format("/api/v1/confluent/subjects/incompatible/versions/4"))
+                        String.format("/api/v1/confluent/compatibility/subjects/incompatible/versions/4"))
                         .request()
                         .post(Entity.json(schemaText), Response.class);
 
@@ -230,7 +230,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
 
                 //when
                 Response response = testClient.target(
-                        String.format("/api/v1/confluent/subjects/incompatible-latest/versions/4"))
+                        String.format("/api/v1/confluent/compatibility/subjects/incompatible-latest/versions/4"))
                         .request()
                         .post(Entity.json(schemaText), Response.class);
 

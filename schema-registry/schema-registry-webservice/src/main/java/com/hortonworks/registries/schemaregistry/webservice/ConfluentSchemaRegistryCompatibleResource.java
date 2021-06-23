@@ -412,10 +412,10 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     }
 
     @POST
-    @Path("/subjects/{schema}/versions/{version}")
+    @Path("/compatibility/subjects/{schema}/versions/{version}")
     @ApiOperation(value = "Checks if the given schema text is compatible with the specified " +
                 "(\"latest\" or versionID) version of the schema identified by the name",
-            response = CompatibilityResult.class, tags = OPERATION_GROUP_SCHEMA)
+            response = CompatibilityResult.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
     public Response checkCompatibilityWithSchema(@PathParam("schema") @NotNull String subject,
