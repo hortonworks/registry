@@ -22,10 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AvroSchemaProviderTest {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaProviderTest.class);
@@ -75,12 +77,14 @@ public class AvroSchemaProviderTest {
     public void testFingerPrints() throws Exception {
         AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
         byte[] schemaFingerprint = avroSchemaProvider.getFingerprint(schema);
+        byte[] schemaFingerprint2 = avroSchemaProvider.getFingerprint(schema);
         byte[] schemaWithDefaultsFingerprint = avroSchemaProvider.getFingerprint(schemaWithDefaults);
         byte[] schemaWithAliasesFingerprint = avroSchemaProvider.getFingerprint(schemaWithAliases);
 
-        assertNotEquals(schemaWithAliasesFingerprint, schemaFingerprint);
-        assertNotEquals(schemaWithDefaultsFingerprint, schemaFingerprint);
-        assertNotEquals(schemaWithAliasesFingerprint, schemaWithDefaultsFingerprint);
+        assertArrayEquals(schemaFingerprint, schemaFingerprint2);
+        assertFalse(Arrays.equals(schemaWithAliasesFingerprint, schemaFingerprint));
+        assertFalse(Arrays.equals(schemaWithDefaultsFingerprint, schemaFingerprint));
+        assertFalse(Arrays.equals(schemaWithAliasesFingerprint, schemaWithDefaultsFingerprint));
     }
 
 }
