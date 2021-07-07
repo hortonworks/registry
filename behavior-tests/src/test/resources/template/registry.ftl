@@ -9,7 +9,11 @@ atlas:
   basicAuth:
     username: "${config.atlasConfiguration.basicAuth.username}"
     password: "${config.atlasConfiguration.basicAuth.password}"
-
+  waitBetweenAuditProcessing: 100
+<#if config.atlasConfiguration.customClasspathLoader?has_content>
+  customClasspathLoader: "${config.atlasConfiguration.customClasspathLoader}"
+  customClasspath: "${config.atlasConfiguration.customClasspath}"
+</#if>
 
 # registries configuration
 modules:
@@ -120,9 +124,13 @@ server:
 # Logging settings.
 logging:
   level: INFO
+  appenders:
+    - type: console
+      logFormat: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   loggers:
     com.hortonworks.registries: DEBUG
     com.cloudera.dim: DEBUG
+    org.apache.atlas.plugin.classloader: DEBUG
 
 # Config for schema registry kerberos principle
 #serviceAuthenticationConfiguration:

@@ -13,13 +13,14 @@
 -- limitations under the License.;
 -- ;
 
-CREATE TABLE "registry_audit" (
+CREATE TABLE "atlas_events" (
   "id"              SERIAL PRIMARY KEY,
   "username"        VARCHAR(255)       NOT NULL,
-  "processedData"  TEXT,
+  "processedId"     BIGINT             NOT NULL,
+  "type"            INT                NOT NULL,
   "processed"       BOOLEAN            NOT NULL,
   "failed"          BOOLEAN            NOT NULL,
   "timestamp"       BIGINT             NOT NULL
 );
 
-CREATE INDEX registry_audit_processed ON "registry_audit"("processed");
+CREATE INDEX atlas_events_processed ON "atlas_events"("processed");

@@ -13,13 +13,14 @@
 -- limitations under the License.;
 -- ;
 
-CREATE TABLE IF NOT EXISTS registry_audit (
+CREATE TABLE IF NOT EXISTS atlas_events (
   id              BIGINT AUTO_INCREMENT NOT NULL,
   username        VARCHAR(255)          NOT NULL,
-  processedData  TEXT,
+  processedId     BIGINT                NOT NULL,
+  type            INT                   NOT NULL,
   processed       BOOLEAN               NOT NULL,
   failed          BOOLEAN               NOT NULL,
   timestamp       BIGINT                NOT NULL,
   UNIQUE KEY (id)
 );
-CREATE INDEX registry_audit_processed ON registry_audit(processed);
+CREATE INDEX atlas_events_processed ON atlas_events(processed);

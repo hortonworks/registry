@@ -13,15 +13,16 @@
 -- limitations under the License.;
 -- ;
 
-CREATE TABLE "registry_audit" (
+CREATE TABLE "atlas_events" (
   "id"              NUMBER(19,0)        NOT NULL,
   "username"        VARCHAR2(255)       NOT NULL,
-  "processedData"  VARCHAR2(4000),
+  "processedId"     NUMBER(19,0)        NOT NULL,
+  "type"            NUMBER(8,0)         NOT NULL,
   "processed"       NUMBER(1)           NOT NULL,
   "failed"          NUMBER(1)           NOT NULL,
   "timestamp"       NUMBER(19,0)        NOT NULL,
-  CONSTRAINT registry_audit_pk PRIMARY KEY ("id")
+  CONSTRAINT atlas_events_pk PRIMARY KEY ("id")
 );
 
-CREATE SEQUENCE "REGISTRY_AUDIT" START WITH 1 INCREMENT BY 1 MAXVALUE 10000000000000000000;
-CREATE INDEX registry_audit_processed ON registry_audit("processed");
+CREATE SEQUENCE "ATLAS_EVENTS" START WITH 1 INCREMENT BY 1 MAXVALUE 10000000000000000000;
+CREATE INDEX atlas_events_processed ON atlas_events("processed");

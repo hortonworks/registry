@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+configurations {
+    atlasJars
+}
 
 dependencies {
 
@@ -24,6 +27,7 @@ dependencies {
     
     testCompile libraries.junit
 
+    atlasJars libraries.atlas.client
 }
 
 task copyDependencies(type: Copy) {
@@ -31,3 +35,15 @@ task copyDependencies(type: Copy) {
     from configurations.runtime
 }
 assemble.dependsOn(copyDependencies)
+
+task atlasDeps(type: Jar) {
+    archiveBaseName = 'atlasDeps'
+    archiveVersion = ''
+    from { configurations.atlasJars.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+assemble.dependsOn(atlasDeps)
+
+artifacts {
+    atlasJars atlasDeps
+}

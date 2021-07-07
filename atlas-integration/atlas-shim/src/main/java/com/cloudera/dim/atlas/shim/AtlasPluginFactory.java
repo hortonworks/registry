@@ -39,11 +39,11 @@ public class AtlasPluginFactory {
         private final AtlasPluginClassLoader atlasPluginClassLoader;
         private final AtlasPlugin atlasPluginImpl;
 
-        Proxy(Map<String, Object> config) {
+        Proxy(Map<String, Object> config, AtlasPluginClassLoader atlasPluginClassLoader) {
             LOG.debug("==> Initialize AtlasPlugin");
 
             try {
-                atlasPluginClassLoader = AtlasPluginClassLoader.getInstance(SERVICE_NAME, this.getClass());
+                this.atlasPluginClassLoader = atlasPluginClassLoader;
 
                 @SuppressWarnings("unchecked")
                 Class<? extends AtlasPlugin> cls = (Class<? extends AtlasPlugin>) Class.forName(ATLAS_PLUGIN_IMPL_CLASS,
@@ -103,10 +103,23 @@ public class AtlasPluginFactory {
 
     /** Create an AtlasPlugin which will load the Atlas classpath for each method execution. */
     public static AtlasPlugin create(Map<String, Object> config) {
-        Proxy atlasPlugin = new Proxy(config);
+        return create(config, getDefaultClassLoader());
+    }
+
+    /** Create an AtlasPlugin instance. Use a custom class loader for this. */
+    public static AtlasPlugin create(Map<String, Object> config, AtlasPluginClassLoader customClassLoader) {
+        Proxy atlasPlugin = new Proxy(config, customClassLoader);
 
         return (AtlasPlugin) java.lang.reflect.Proxy.newProxyInstance(AtlasPluginFactory.class.getClassLoader(),
                 new Class[] { AtlasPlugin.class }, atlasPlugin);
+    }
+
+    private static AtlasPluginClassLoader getDefaultClassLoader() {
+        try {
+            return AtlasPluginClassLoader.getInstance(SERVICE_NAME, Proxy.class);
+        } catch (Throwable t) {
+            throw new RuntimeException("Could not instantiate default Atlas class loader.", t);
+        }
     }
 
     private AtlasPluginFactory() { }

@@ -21,7 +21,7 @@ import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.StorageManager;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

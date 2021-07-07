@@ -22,7 +22,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class MetadataEntityDef extends AtlasEntityDef implements SchemaRegistryServiceType {
 
-    public static final String SCHEMA_METADATA_INFO = "schema_metadata_info" + TODORemoveThis.COUNTER;
+    public static final String SCHEMA_METADATA_INFO = "schema_metadata_info";
 
     public static final String SCHEMA_METADATA_ID = "schemaMetadataId";
     public static final String NAME = "name";

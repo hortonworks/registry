@@ -18,14 +18,13 @@ import org.apache.atlas.model.typedef.AtlasRelationshipDef;
 import org.apache.atlas.model.typedef.AtlasRelationshipEndDef;
 import org.apache.atlas.model.typedef.AtlasStructDef.AtlasAttributeDef.Cardinality;
 
-import static com.cloudera.dim.atlas.types.VersionEntityDef.FINGERPRINT;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.ID;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.VERSION;
 import static com.google.common.collect.Lists.newArrayList;
 
 public class SchemaVersionRelationshipDef extends AtlasRelationshipDef implements SchemaRegistryServiceType {
 
-    public static final String RELATIONSHIP_NAME = "schema_version" + TODORemoveThis.COUNTER;
+    public static final String RELATIONSHIP_NAME = "schema_version";
     public static final String RELATIONSHIP_LABEL = "meta.version";
 
     public static final String REL_ONE = "versions";  // rel.name from the PoV of one
@@ -53,7 +52,6 @@ public class SchemaVersionRelationshipDef extends AtlasRelationshipDef implement
         AtlasAttributeDef schemaMetadataId = new AtlasAttributeDef(ID, ATLAS_TYPE_LONG, false, Cardinality.SINGLE);
         schemaMetadataId.setIsUnique(true);
         AtlasAttributeDef version = new AtlasAttributeDef(VERSION, ATLAS_TYPE_INT, false, Cardinality.SINGLE);
-        AtlasAttributeDef fingerprint = new AtlasAttributeDef(FINGERPRINT, ATLAS_TYPE_STRING, false, Cardinality.SINGLE);
-        setAttributeDefs(newArrayList(schemaMetadataId, version, fingerprint));
+        setAttributeDefs(newArrayList(schemaMetadataId, version));
     }
 }

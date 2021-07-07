@@ -16,7 +16,7 @@
 package com.hortonworks.registries.webservice.healthchecks;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 
 /**
  * The application can have one or more modules, which may be enabled/disabled. We need

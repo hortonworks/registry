@@ -115,7 +115,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaBranchStorable.class,
                         SchemaBranchVersionMapping.class,
                         SchemaLockStorable.class,
-                        RegistryAuditStorable.class));
+                        AtlasEventStorable.class));
 
         Options options = new Options(configuration);
         schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),

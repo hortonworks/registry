@@ -14,9 +14,9 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.common.util.HadoopPlugin;
-import com.hortonworks.registries.schemaregistry.authorizer.audit.AuditLogger;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
@@ -47,7 +47,7 @@ public class SchemaRegistryResourceTest {
     private ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
     private AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
     private AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
-    private AuditLogger auditLogger;
+    private AtlasEventLogger atlasEventLogger;
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";
     private static final String ORDER = "_orderByFields";
@@ -57,9 +57,9 @@ public class SchemaRegistryResourceTest {
 
     @BeforeEach
     public void setup() {
-        auditLogger = mock(AuditLogger.class);
+        atlasEventLogger = mock(AtlasEventLogger.class);
         ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null, null, auditLogger);
+        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null, null, atlasEventLogger, null);
     }
     
     @Test
@@ -245,7 +245,7 @@ public class SchemaRegistryResourceTest {
         String type = "type";
         SecurityContext securityContext = mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, null, null, auditLogger) {
+        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, null, null, atlasEventLogger, null) {
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();

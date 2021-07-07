@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.hortonworks.registries.schemaregistry.providers;
+package com.cloudera.dim.atlas.conf;
 
-import com.cloudera.dim.atlas.conf.AtlasConfiguration;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.AtlasConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -29,8 +30,9 @@ public class AtlasConfigurationProvider implements Provider<AtlasConfiguration> 
         this.configuration = registryConfiguration;
     }
 
+    @Nullable
     @Override
     public AtlasConfiguration get() {
-            return configuration.getAtlasConfiguration();
+        return configuration.getAtlasConfiguration();
     }
 }

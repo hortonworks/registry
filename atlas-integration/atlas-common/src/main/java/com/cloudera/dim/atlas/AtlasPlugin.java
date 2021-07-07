@@ -14,20 +14,11 @@
  **/
 package com.cloudera.dim.atlas;
 
-import com.hortonworks.registries.schemaregistry.SchemaBranch;
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
-import com.hortonworks.registries.schemaregistry.SerDesInfo;
-import com.hortonworks.registries.schemaregistry.SerDesPair;
-import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,9 +57,8 @@ public interface AtlasPlugin {
      * Create a schema meta entity and immediately assign a MASTER branch to it.
      *
      * @param meta  object containing information for creating the schema meta
-     * @return  the unique ID of the newly created meta
      */
-    Long createMeta(SchemaMetadata meta);
+    void createMeta(SchemaMetadataInfo meta);
 
     /**
      * Update an existing schema meta.
@@ -83,178 +73,9 @@ public interface AtlasPlugin {
      * Add a new version to an existing schema.
      * @param schemaName        name of the existing schema
      * @param schemaVersion     object containing information about the version
-     * @param fingerprint       the schema text hash
-     * @param schemaBranch      each version must belong to a branch (default: MASTER)
      * @return  the unique ID of the new version
      * @throws SchemaNotFoundException  If there is no schema with the given name.
      */
-    SchemaIdVersion addSchemaVersion(String schemaName, SchemaVersion schemaVersion, String fingerprint, SchemaBranch schemaBranch) 
-            throws SchemaNotFoundException;
-
-    /**
-     * Get schema by its unique name. If it's not found then none will be returned.
-     */
-    Optional<SchemaMetadataInfo> getSchemaMetadataInfo(String schemaName);
-
-    /**
-     * Get schema by its unique ID. If it's not found then none will be returned.
-     */
-    Optional<SchemaMetadataInfo> getSchemaMetadataInfo(Long metaId);
-
-    /**
-     * Search for schemas. If no parameters are provided then it will return all schemas in the database.
-     */
-    Collection<SchemaMetadataInfo> search(Optional<String> name, Optional<String> desc, Optional<String> orderBy);
-
-    /**
-     * Find schema versions by the fingerprint only. It is possible for multiple versions to
-     * have the same fingerprint (eg. in version 1 and 3 have the same text), which is why this method
-     * returns a collection.
-     *
-     * @param fingerprint       hash of the schema text
-     * @return      collection of versions (can be empty)
-     * @throws SchemaNotFoundException  If there is no schema with the given name.
-     */
-    Collection<SchemaVersionInfo> searchVersions(String fingerprint) throws SchemaNotFoundException;
-
-    /**
-     * Find schema versions by the schema name and the fingerprint. It is possible for multiple versions to
-     * have the same fingerprint (eg. in version 1 and 3 have the same text), which is why this method
-     * returns a collection.
-     *
-     * @param schemaName        unique name of the schema
-     * @param fingerprint       hash of the schema text
-     * @return      collection of versions (can be empty)
-     * @throws SchemaNotFoundException  If there is no schema with the given name.
-     */
-    Collection<SchemaVersionInfo> searchVersions(String schemaName, String fingerprint) throws SchemaNotFoundException;
-
-    /** TODO This method has not been implemented yet. */
-    Collection<SerDesInfo> getSerDesMappingsForSchema(String schemaName) throws SchemaNotFoundException;
-
-    /**
-     * Get a schema version identified by the schema name and the version number.
-     *
-     * @param schemaName    unique name of the schema
-     * @param version       version number (eg. 1, 2, 3)
-     * @return  schema version if it exists, otherwise none
-     * @throws SchemaNotFoundException  If there is no schema with the given name.
-     */
-    Optional<SchemaVersionInfo> getSchemaVersion(String schemaName, Integer version) throws SchemaNotFoundException;
-
-    /**
-     * Get a schema version identified by its unique ID.
-     * <p>A version has a version number (1,2,3) and a unique ID. While the version numbers are only
-     * unique per each schema, the IDs are unique globally.</p>
-     *
-     * @param versionId     version id
-     * @return  schema version if it exists, otherwise none
-     */
-    Optional<SchemaVersionInfo> getSchemaVersionById(Long versionId);
-
-    /**
-     * Get all the schema versions for the particular schema.
-     * @param schemaName    unique name of the schema
-     * @return      collection of versions
-     * @throws SchemaNotFoundException  If there is no schema with the given name.
-     */
-    Collection<SchemaVersionInfo> getAllSchemaVersions(String schemaName) throws SchemaNotFoundException;
-
-    /**
-     * Get schema versions by the unique branch ID.
-     *
-     * @param branchId      unique ID of the branch
-     * @return  list of versions belonging to a branch (can be empty)
-     * @throws SchemaBranchNotFoundException    If the branch with the given ID does not exist.
-     */
-    List<SchemaVersionInfo> getSchemaVersionsByBranchId(Long branchId) throws SchemaBranchNotFoundException;
-
-    /**
-     * A schema version can have multiple branches. This method retrieves all the branches belonging to
-     * the version with the provided id.
-     *
-     * @param versionId     unique ID of the schema version
-     * @return      list of branches (can be empty)
-     * @throws SchemaBranchNotFoundException    If there is no schema version with the given ID.
-     */
-    Collection<SchemaBranch> getSchemaBranchesByVersionId(Long versionId) throws SchemaBranchNotFoundException;
-
-    /**
-     * Create a new branch for the schema version.
-     *
-     * @param schemaVersion     Object containing information about the schema version. Note that the schema name must exist.
-     * @param branchName        Name of the new branch.
-     * @return      Information about the new branch as it was persisted in the database.
-     * @throws SchemaNotFoundException  If there is no schema with the given name.
-     */
-    SchemaBranch createBranch(SchemaVersionInfo schemaVersion, String branchName) throws SchemaNotFoundException;
-
-    /**
-     * Get a schema branch identified by the schema name and the branch name.
-     *
-     * @param schemaName    unique name of the schema
-     * @param branchName    unique name of the branch
-     * @return      returns the branch if it exists, otherwise none
-     * @throws SchemaNotFoundException  If there is no schema with the given name.
-     */
-    Optional<SchemaBranch> getSchemaBranch(String schemaName, String branchName) throws SchemaNotFoundException;
-
-    /**
-     * Get a schema branch identified by its unique branch ID.
-     * @param branchId      unique id of the branch
-     * @return  returns the branch if it exists, otherwise none
-     */
-    Optional<SchemaBranch> getSchemaBranchById(Long branchId);
-
-    /** Create a new SerDes in the database. The return value is the ID of the newly created entity. */
-    Long addSerdes(SerDesPair serializerInfo);
-
-    /** Get SerDes by its unique ID. */
-    Optional<SerDesInfo> getSerdesById(Long serDesId);
-
-    /**
-     * Map an existing SerDes to an existing schema.
-     *
-     * @param schemaName    unique name of the schema
-     * @param serDesId      unique id of the SerDes
-     * @throws SchemaNotFoundException      If there is no schema with the given name.
-     */
-    void mapSchemaWithSerdes(String schemaName, Long serDesId) throws SchemaNotFoundException;
-
-    /**
-     * Get all the existing SerDes entitied mapped to a particular schema.
-     *
-     * @param schemaName        unique name of the schema
-     * @return      collection of SerDes entities mapped to the schema
-     * @throws SchemaNotFoundException      If there is no schema with the given name.
-     */
-    Collection<SerDesInfo> getAllSchemaSerdes(String schemaName) throws SchemaNotFoundException;
-
-    /**
-     * Delete a whole schema with Metadata, Versions and Branches
-     * @param schemaName        unique name of the schema
-     */
-    void deleteSchema(String schemaName) throws SchemaNotFoundException;
-
-    /**
-     * Delete a specific Schema Branch
-     * @param branchId      unique id of Schema Branch
-     * @throws SchemaBranchNotFoundException    if there is no schema branch with the given id.
-     */
-    void deleteSchemaBranch(Long branchId) throws SchemaBranchNotFoundException;
-
-    /**
-     * Delete a specific Schema Version
-     * @param id        unique id of Schema Version
-     */
-    void deleteSchemaVersion(Long id);
-
-
-    /**
-     * Delete a specific Schema Version with given SchemaVersionKey
-     * @param schemaVersionKey      unique identifier of Schema Version
-     * @throws SchemaNotFoundException  if there is no schema for given SchemaVersionKey
-     */
-    void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException;
+    void addSchemaVersion(String schemaName, SchemaVersionInfo schemaVersion) throws SchemaNotFoundException;
 
 }

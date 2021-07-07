@@ -24,6 +24,7 @@ dependencies {
     compile libraries.swagger
     compile libraries.dropwizard.core
     compile libraries.dropwizard.guicey
+    compile libraries.dropwizard.swagger
 
     testCompile libraries.logging.logback
     

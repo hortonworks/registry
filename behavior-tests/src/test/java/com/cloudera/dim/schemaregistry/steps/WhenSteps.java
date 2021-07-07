@@ -19,9 +19,11 @@ import com.cloudera.dim.schemaregistry.GlobalState;
 import com.cloudera.dim.schemaregistry.TestAtlasServer;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -52,13 +54,16 @@ import java.util.List;
 import java.util.Map;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
+import static com.cloudera.dim.schemaregistry.GlobalState.COMPATIBILITY;
 import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_ID;
+import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_META_INFO;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_NAME;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_ID;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_NO;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.http.protocol.HttpCoreContext.HTTP_RESPONSE;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -113,8 +118,26 @@ public class WhenSteps extends AbstractSteps {
 
     @When("we create a new schema meta {string} with the following parameters:")
     public void weCreateANewSchemaMetaWithTheFollowingParameters(String schemaName, DataTable table) {
-        SchemaMetadata.Builder builder = new SchemaMetadata.Builder(schemaName);
+        SchemaMetadata meta = dataTableToSchemaMetadata(schemaName, table);
+        Long id = schemaRegistryClient.addSchemaMetadata(meta);
+        sow.setValue(SCHEMA_NAME, schemaName);
+        sow.setValue(SCHEMA_ID, id);
 
+        LOG.info("New schema [{}] was created with id {}", schemaName, id);
+    }
+
+    @When("we update the schema {string} with the following parameters:")
+    public void weUpdateTheSchemaWithTheFollowingParameters(String schemaName, DataTable table) {
+        SchemaMetadata meta = dataTableToSchemaMetadata(schemaName, table);
+        SchemaMetadataInfo info = schemaRegistryClient.updateSchemaMetadata(schemaName, meta);
+
+        assertNotNull(info, "No response was received from SchemaRegistry.");
+
+        sow.setValue(SCHEMA_META_INFO, info);
+    }
+
+    private SchemaMetadata dataTableToSchemaMetadata(String schemaName, DataTable table) {
+        SchemaMetadata.Builder builder = new SchemaMetadata.Builder(schemaName);
 
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
         for (Map<String, String> columns : rows) {
@@ -150,12 +173,7 @@ public class WhenSteps extends AbstractSteps {
             }
         }
 
-        SchemaMetadata meta = builder.build();
-        Long id = schemaRegistryClient.addSchemaMetadata(meta);
-        sow.setValue(SCHEMA_NAME, schemaName);
-        sow.setValue(SCHEMA_ID, id);
-
-        LOG.info("New schema [{}] was created with id {}", schemaName, id);
+        return builder.build();
     }
 
     @When("we create a new version for schema {string} with the following schema:")
@@ -301,4 +319,17 @@ public class WhenSteps extends AbstractSteps {
         schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
     }
 
+    @When("we check the compatibility of schema {string} with the following Avro test:")
+    public void weCheckTheCompatibilityOfSchemaWithTheFollowingAvroTest(String schemaName, String avroText) throws Exception {
+        CompatibilityResult result = schemaRegistryClient.checkCompatibility(schemaName, avroText);
+        sow.setValue(COMPATIBILITY, result.isCompatible());
+    }
+
+    @When("we delete the last version of schema {string}")
+    public void weDeleteTheSecondVersionOfSchema(String schemaName) throws Exception {
+        Long versionId = (Long) sow.getValue(SCHEMA_VERSION_ID);
+        assertNotNull(versionId);
+
+        schemaRegistryClient.deleteSchemaVersion(versionId);
+    }
 }

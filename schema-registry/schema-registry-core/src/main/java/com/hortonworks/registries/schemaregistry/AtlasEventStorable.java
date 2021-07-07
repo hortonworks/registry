@@ -19,31 +19,61 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class RegistryAuditStorable extends AbstractStorable {
+public class AtlasEventStorable extends AbstractStorable {
 
-    public static final String NAME_SPACE = "registry_audit";
+    public enum EventType {
+        CREATE_META(1),
+        UPDATE_META(2),
+        CREATE_VERSION(3);
+
+        final int numValue;
+
+        EventType(int numValue) {
+            this.numValue = numValue;
+        }
+
+        public int getNumValue() {
+            return numValue;
+        }
+
+        @Nonnull
+        public static EventType forNumValue(int value) {
+            for (EventType et : EventType.values()) {
+                if (et.getNumValue() == value) {
+                    return et;
+                }
+            }
+            throw new IllegalArgumentException("Unsupported numeric value for event type: " + value);
+        }
+    }
+
+    public static final String NAME_SPACE = "atlas_events";
 
     public static final String ID = "id";
     public static final String USERNAME = "username";
-    public static final String PROCESSED_DATA = "processed_data";
+    public static final String PROCESSED_ID = "processedId";
+    public static final String TYPE = "type";
     public static final String PROCESSED = "processed";
     public static final String FAILED = "failed";
     public static final String TIMESTAMP = "timestamp";
 
     private Long id;
     private String username;
-    private String processedData;
+    private Long processedId;
+    private Integer type;
     private boolean processed;
     private boolean failed;
     private Long timestamp;
 
-    public RegistryAuditStorable() { }
+    public AtlasEventStorable() { }
 
-    public RegistryAuditStorable(Long id) {
+    public AtlasEventStorable(Long id) {
         this.id = id;
     }
 
@@ -77,12 +107,12 @@ public class RegistryAuditStorable extends AbstractStorable {
         this.username = username;
     }
 
-    public String getProcessedData() {
-        return processedData;
+    public Long getProcessedId() {
+        return processedId;
     }
 
-    public void setProcessedData(String processedData) {
-        this.processedData = processedData;
+    public void setProcessedId(Long processedId) {
+        this.processedId = processedId;
     }
 
     public boolean isProcessed() {
@@ -97,6 +127,26 @@ public class RegistryAuditStorable extends AbstractStorable {
         this.processed = processed;
     }
 
+    public void setProcessed(Boolean processed) {
+        this.processed = processed;
+    }
+
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public void setType(@Nullable EventType et) {
+        if (et == null) {
+            this.type = null;
+        } else {
+            this.type = et.getNumValue();
+        }
+    }
+
     public boolean isFailed() {
         return failed;
     }
@@ -106,6 +156,10 @@ public class RegistryAuditStorable extends AbstractStorable {
     }
 
     public void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+
+    public void setFailed(Boolean failed) {
         this.failed = failed;
     }
 
@@ -119,10 +173,11 @@ public class RegistryAuditStorable extends AbstractStorable {
 
     @Override
     public String toString() {
-        return "RegistryAuditStorable{" +
+        return "AtlasEventStorable{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
-                ", processedData='" + processedData + '\'' +
+                ", processedId='" + processedId + '\'' +
+                ", type=" + type +
                 ", processed=" + processed +
                 ", failed=" + failed +
                 ", timestamp=" + timestamp +
@@ -137,17 +192,18 @@ public class RegistryAuditStorable extends AbstractStorable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RegistryAuditStorable that = (RegistryAuditStorable) o;
+        AtlasEventStorable that = (AtlasEventStorable) o;
         return processed == that.processed &&
                 failed == that.failed &&
                 Objects.equals(id, that.id) &&
                 Objects.equals(username, that.username) &&
-                Objects.equals(processedData, that.processedData) &&
+                Objects.equals(processedId, that.processedId) &&
+                Objects.equals(type, that.type) &&
                 Objects.equals(timestamp, that.timestamp);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, processedData, processed, failed, timestamp);
+        return Objects.hash(id, username, processedId, type, processed, failed, timestamp);
     }
 }

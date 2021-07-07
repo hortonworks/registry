@@ -15,19 +15,17 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
-import com.cloudera.dim.atlas.AtlasRestResource;
 import com.google.inject.AbstractModule;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.common.util.HadoopPluginFactory;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
-import com.hortonworks.registries.schemaregistry.providers.AtlasRestResourceProvider;
-import com.hortonworks.registries.schemaregistry.providers.ModuleDetailsConfigurationProvider;
-import com.hortonworks.registries.schemaregistry.providers.SchemaRegistryProvider;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
+import com.hortonworks.registries.schemaregistry.providers.ModuleDetailsConfigurationProvider;
+import com.hortonworks.registries.schemaregistry.providers.SchemaRegistryProvider;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +51,6 @@ public class SchemaRegistryModule extends AbstractModule {
 
         bind(SchemaRegistryResource.class).in(Singleton.class);
         bind(ConfluentSchemaRegistryCompatibleResource.class).in(Singleton.class);
-        bind(AtlasRestResource.class).toProvider(AtlasRestResourceProvider.class).in(Singleton.class);
     }
 
 }

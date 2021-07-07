@@ -15,7 +15,7 @@
  **/
 package com.cloudera.dim.schemaregistry;
 
-import com.cloudera.dim.atlas.conf.AtlasConfiguration;
+import com.hortonworks.registries.common.AtlasConfiguration;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.FileStorageProperties;
@@ -25,9 +25,10 @@ import com.hortonworks.registries.storage.DbProperties;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.apache.atlas.plugin.classloader.AtlasCustomPathClassLoader;
 import org.apache.commons.io.FileUtils;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
@@ -47,6 +48,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -101,7 +103,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         this.schemaRegistryPort = findFreePort();
         String registryYamlTxt = configGenerator.generateRegistryYaml(config, schemaRegistryPort);
 
-        File registryYaml = writeYamlFile("registry", registryYamlTxt);
+        File registryYaml = writeFile("registry", ".yaml", registryYamlTxt);
         LOG.debug("registry.yaml file generated at {}", registryYaml.getAbsolutePath());
 
         this.localSchemaRegistry = new LocalSchemaRegistryServer(registryYaml.getAbsolutePath());
@@ -290,7 +292,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         flyway.setCleanOnValidationError(false);
         flyway.setLocations("filesystem:" + location);
         flyway.setSqlMigrationPrefix("v");
-        flyway.setDataSource(conf.getDataSourceUrl(), conf.getDataSourceUser(), conf.getDataSourcePassword(), null);
+        flyway.setDataSource(conf.getDataSourceUrl(), conf.getDataSourceUser(), conf.getDataSourcePassword());
 
         return flyway;
     }
@@ -308,6 +310,23 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             if (atlasEnabled) {
                 atlasConfiguration.setEnabled(true);
                 atlasConfiguration.setAtlasUrls(Collections.singletonList("http://localhost:" + atlasPort));
+                atlasConfiguration.setCustomClasspathLoader(AtlasCustomPathClassLoader.class.getName());
+
+                // $root/behavior-tests/build/classes/java/test/
+                File atlasJarsDir = null;
+                for (String subdir : Arrays.asList("../../../atlasJars", "../../atlasJars", "../atlasJars")) {
+                    File f = new File(getClass().getResource("/").getFile(), subdir);
+                    if (f.exists() && f.isDirectory()) {
+                        atlasJarsDir = f;
+                        break;
+                    }
+                }
+
+                String customClasspath = atlasJarsDir.toPath().normalize().toAbsolutePath().toString();
+                if (File.separatorChar == '\\') {
+                    customClasspath = customClasspath.replaceAll("\\\\", "/");
+                }
+                atlasConfiguration.setCustomClasspath(customClasspath);
             }
 
             configuration.setAtlasConfiguration(atlasConfiguration);

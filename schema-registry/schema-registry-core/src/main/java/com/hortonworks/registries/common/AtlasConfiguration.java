@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.cloudera.dim.atlas.conf;
+package com.hortonworks.registries.common;
 
 import com.google.common.collect.ImmutableMap;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +52,8 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
     private BasicAuth basicAuth;
     private boolean enabled = false;
     private long waitBetweenAuditProcessing = 60000L;
+    private String customClasspathLoader;
+    private String customClasspath;
 
     public List<String> getAtlasUrls() {
         return atlasUrls;
@@ -86,11 +87,29 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.waitBetweenAuditProcessing = waitBetweenAuditProcessing;
     }
 
+    public String getCustomClasspathLoader() {
+        return customClasspathLoader;
+    }
+
+    public void setCustomClasspathLoader(String customClasspathLoader) {
+        this.customClasspathLoader = customClasspathLoader;
+    }
+
+    public String getCustomClasspath() {
+        return customClasspath;
+    }
+
+    public void setCustomClasspath(String customClasspath) {
+        this.customClasspath = customClasspath;
+    }
+
     public Map<String, Object> asMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("atlasUrls", atlasUrls);
         result.put("enabled", enabled);
         result.put("waitBetweenAuditProcessing", waitBetweenAuditProcessing);
+        result.put("customClasspathLoader", customClasspathLoader);
+        result.put("customClasspath", customClasspath);
         result.put("basicAuth", basicAuth == null ? null : ImmutableMap.of(
                 "username", basicAuth.username,
                 "password", basicAuth.password

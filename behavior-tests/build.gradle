@@ -14,13 +14,16 @@
  * limitations under the License.
 */
 
+configurations {
+    atlasJars
+}
 
 dependencies {
 
     testCompile project(':schema-registry:schema-registry-client')
     testCompile project(':schema-registry:schema-registry-serdes')
     testCompile project(':schema-registry:schema-registry-webservice')
-    testCompile(project(':atlas-integration:atlas-translate')) {
+    testCompile(project(path: ':atlas-integration:atlas-translate', configuration: 'runtime')) {
         exclude group: 'commons-collections'
         exclude group: 'commons-validator'
         exclude group: 'org.apache.hadoop'
@@ -32,6 +35,13 @@ dependencies {
         exclude group: 'org.slf4j'
         exclude group: 'cglib'
     }
+    // Atlas dependencies which will be copied to a separate location, to
+    // be loaded by the custom classpathloader
+    atlasJars(project(path: ':atlas-integration:atlas-translate', configuration: 'atlasJars')) {
+        transitive = false
+    }
+    // we need this to use Atlas types, but we don't import any transitive dependencies
+    testCompile libraries.atlas.intg
 
     testCompile libraries.flyway
     testCompile libraries.freemarker
@@ -44,6 +54,7 @@ dependencies {
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.mockito_junit5
+    testCompile libraries.mockserver
 
     testCompile libraries.cucumber.core
     testCompile libraries.cucumber.junit
@@ -65,3 +76,9 @@ task cucumber() {
 }
 
 check.dependsOn(cucumber)
+
+task copyAtlasDependencies(type: Copy) {
+    into "$buildDir/atlasJars"
+    from configurations.atlasJars
+}
+testClasses.dependsOn(copyAtlasDependencies)

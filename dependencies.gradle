@@ -19,16 +19,20 @@ ext.java_version = JavaVersion.VERSION_1_8
 ext.libraries = [
 
    atlas: [
-      classloader    : dependencies.create("org.apache.atlas:atlas-plugin-classloader:$versions_atlas") {
+      classloader: dependencies.create("org.apache.atlas:atlas-plugin-classloader:$versions_atlas") {
           exclude group: 'org.slf4j', module: 'slf4j-log4j12'
       },
-      client         : dependencies.create("org.apache.atlas:atlas-client-v2:$versions_atlas") {
+      client: dependencies.create("org.apache.atlas:atlas-client-v2:$versions_atlas") {
           exclude group: 'com.google.code.findbugs', module: 'jsr305'
           exclude group: 'com.nimbusds', module: 'nimbus-jose-jwt'
           exclude group: 'org.codehaus.jackson', module: 'jackson-core-asl'
           exclude group: 'org.apache.avro', module: 'avro'
           exclude group: 'jdk.tools', module: 'jdk.tools'
           exclude group: 'org.apache.curator'
+          exclude group: 'org.slf4j'
+      },
+      intg: dependencies.create("org.apache.atlas:atlas-intg:$versions_atlas") {
+          transitive = false
       }
    ],
    avro              : "org.apache.avro:avro:$versions_avro",
@@ -109,6 +113,7 @@ ext.libraries = [
    mockito           : "org.mockito:mockito-core:$versions_mockito",
    mockito_junit5    : "org.mockito:mockito-junit-jupiter:$versions_mockito",
    mockito_inline    : "org.mockito:mockito-inline:$versions_mockito",
+   mockserver        : "org.mock-server:mockserver-netty:$versions_mockserver",
    cucumber: [
        core: "io.cucumber:cucumber-java:$versions_cucumber",
        junit: "io.cucumber:cucumber-junit:$versions_cucumber",

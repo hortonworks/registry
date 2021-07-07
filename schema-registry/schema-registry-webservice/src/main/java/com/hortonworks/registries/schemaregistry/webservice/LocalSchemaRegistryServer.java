@@ -18,7 +18,7 @@ package com.hortonworks.registries.schemaregistry.webservice;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import io.dropwizard.setup.Environment;
 import com.hortonworks.registries.webservice.RegistryApplication;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.slf4j.Logger;
@@ -141,4 +141,12 @@ public class LocalSchemaRegistryServer {
         }
 
     }
+
+/*
+    // uncomment if you'd like to run SR from your IDE
+    public static void main(String[] args) throws Exception {
+        LocalSchemaRegistryServer server = new LocalSchemaRegistryServer("D:\\gerrit_registry\\conf\\registry.yaml");
+        server.start();
+    }
+*/
 }

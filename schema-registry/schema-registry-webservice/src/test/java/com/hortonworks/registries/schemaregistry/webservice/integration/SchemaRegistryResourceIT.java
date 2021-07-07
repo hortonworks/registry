@@ -14,9 +14,9 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice.integration;
 
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.authorizer.audit.AuditLogger;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
@@ -27,7 +27,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
@@ -61,14 +60,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -78,7 +76,7 @@ public class SchemaRegistryResourceIT {
     private static AuthorizationAgent authorizationAgentMock;
     private static AuthorizationUtils authorizationUtils;
     private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock;
-    private static AuditLogger auditLogger;
+    private static AtlasEventLogger atlasEventLogger;
     private static ResourceExtension RESOURCE = beforeAll();
     private Client testClient = RESOURCE.client();
     
@@ -87,18 +85,16 @@ public class SchemaRegistryResourceIT {
         authorizationAgentMock = mock(AuthorizationAgent.class);
         authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
         schemaMetadataTypeValidatorMock = mock(SchemaMetadataTypeValidator.class);
-        auditLogger = mock(AuditLogger.class);
+        atlasEventLogger = mock(AtlasEventLogger.class);
         return ResourceExtension.builder()
-                .addResource(new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null, auditLogger))
+                .addResource(new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null, atlasEventLogger, null))
                 .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
                 .build();
     }
     
     @BeforeEach
     public void setup() {
-        reset(auditLogger);
-        when(auditLogger.withAuth(any(Authorizer.UserAndGroups.class))).thenReturn(mock(ISchemaRegistry.class));
-        when(auditLogger.withAuth(nullable(Authorizer.UserAndGroups.class))).thenReturn(mock(ISchemaRegistry.class));
+        reset(atlasEventLogger);
     }
     
     @BeanParam
@@ -261,7 +257,7 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(updatedSchemaMetadata), Response.class);
 
         //then
-        verify(auditLogger, never()).withAuth(nullable(Authorizer.UserAndGroups.class));
+        verifyNoInteractions(atlasEventLogger);
         assertEquals(400, response.getStatus());
 
     }
@@ -279,7 +275,7 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(serDesPair), Response.class);
 
         //then
-        verify(auditLogger).withAuth(nullable(Authorizer.UserAndGroups.class));
+        verifyNoInteractions(atlasEventLogger);
         assertEquals(200, response.getStatus());
     }
 
@@ -296,7 +292,7 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(serDesPair), Response.class);
 
         //then
-        verify(auditLogger, never()).withAuth(nullable(Authorizer.UserAndGroups.class));
+        verifyNoInteractions(atlasEventLogger);
         TestResponseForSerDesInfo responseFor = response.readEntity(TestResponseForSerDesInfo.class);
 
         assertTrue(responseFor.getErrors().contains("name must not be null"));
@@ -392,8 +388,8 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.json(schemaMetadata), Response.class);
 
         //then
-        verify(auditLogger, never()).withAuth(nullable(Authorizer.UserAndGroups.class));
         assertEquals(502, response.getStatus());
+        verifyNoInteractions(atlasEventLogger);
     }
 
     @Test
@@ -418,9 +414,9 @@ public class SchemaRegistryResourceIT {
                 .post(Entity.entity(multiPart, multiPart.getMediaType()), Response.class);
 
         // then
-        verify(auditLogger).withAuth(nullable(Authorizer.UserAndGroups.class));
         assertEquals(200, response.getStatus());
         assertNotNull(response.getEntity());
+        verifyNoInteractions(atlasEventLogger);
     }
 
 }

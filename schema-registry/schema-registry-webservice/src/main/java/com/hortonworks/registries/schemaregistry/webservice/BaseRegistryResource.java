@@ -26,7 +26,7 @@ abstract class BaseRegistryResource {
     static final String OPERATION_GROUP_SERDE = "2. Serializer/Deserializer";
     static final String OPERATION_GROUP_EXPORT_IMPORT = "3. Export/Import";
     static final String OPERATION_GROUP_OTHER = "4. Other";
-
+    static final String OPERATION_GROUP_ATLAS = "6. Atlas";
 
 
     BaseRegistryResource(ISchemaRegistry schemaRegistry) {

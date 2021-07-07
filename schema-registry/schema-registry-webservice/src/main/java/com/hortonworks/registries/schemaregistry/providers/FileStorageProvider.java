@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.providers;
 
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

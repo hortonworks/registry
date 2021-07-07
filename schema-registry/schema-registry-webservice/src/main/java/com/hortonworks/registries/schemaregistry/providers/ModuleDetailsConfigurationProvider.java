@@ -18,7 +18,7 @@ package com.hortonworks.registries.schemaregistry.providers;
 import com.hortonworks.registries.common.ModuleConfiguration;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

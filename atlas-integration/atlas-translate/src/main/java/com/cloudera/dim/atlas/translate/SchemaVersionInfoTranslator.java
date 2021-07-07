@@ -14,31 +14,34 @@
  **/
 package com.cloudera.dim.atlas.translate;
 
+import com.cloudera.dim.atlas.types.MetadataEntityDef;
+import com.cloudera.dim.atlas.types.SchemaVersionRelationshipDef;
+import com.cloudera.dim.atlas.types.VersionEntityDef;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import org.apache.atlas.model.instance.AtlasEntity;
+import org.apache.atlas.model.instance.AtlasRelationship;
 import org.apache.atlas.model.instance.AtlasStruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.cloudera.dim.atlas.types.VersionEntityDef.DESCRIPTION;
-import static com.cloudera.dim.atlas.types.VersionEntityDef.FINGERPRINT;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.ID;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.NAME;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.SCHEMA_TEXT;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.SCHEMA_VERSION_INFO;
-import static com.cloudera.dim.atlas.types.VersionEntityDef.STATE;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.TIMESTAMP;
 import static com.cloudera.dim.atlas.types.VersionEntityDef.VERSION;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SchemaVersionInfoTranslator implements AtlasTranslator<SchemaVersionInfo> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SchemaVersionInfoTranslator.class);
+
     @Override
     public AtlasEntity toAtlas(SchemaVersionInfo svi) {
-        return this.toAtlas(svi, null);
-    }
-
-    public AtlasEntity toAtlas(SchemaVersionInfo svi, String fingerprint) {
         AtlasEntity atlasEntity = new AtlasEntity();
         atlasEntity.setTypeName(SCHEMA_VERSION_INFO);
         atlasEntity.setGuid(atlasEntity.getGuid());
@@ -50,11 +53,9 @@ public class SchemaVersionInfoTranslator implements AtlasTranslator<SchemaVersio
         atlasEntity.setAttributes(attributes);
         attributes.put(ID, svi.getId());
         attributes.put(NAME, svi.getName());
-        attributes.put(FINGERPRINT, fingerprint);
         attributes.put(VERSION, svi.getVersion());
         attributes.put(DESCRIPTION, svi.getDescription());
         attributes.put(SCHEMA_TEXT, svi.getSchemaText());
-        attributes.put(STATE, svi.getStateId());
         attributes.put(TIMESTAMP, svi.getTimestamp());
 
         return atlasEntity;
@@ -62,19 +63,19 @@ public class SchemaVersionInfoTranslator implements AtlasTranslator<SchemaVersio
 
     @Override
     public SchemaVersionInfo fromAtlas(AtlasStruct atlasEntity) {
-        return this.fromAtlas(atlasEntity, null);
+        return null;
     }
 
-    public SchemaVersionInfo fromAtlas(AtlasStruct atlasEntity, Long metaId) {
-        return new SchemaVersionInfo(
-                ((Number) atlasEntity.getAttribute(ID)).longValue(),
-                (String) atlasEntity.getAttribute(NAME),
-                (Integer) atlasEntity.getAttribute(VERSION),
-                metaId,
-                (String) atlasEntity.getAttribute(SCHEMA_TEXT),
-                ((Number) atlasEntity.getAttribute(TIMESTAMP)).longValue(),
-                (String) atlasEntity.getAttribute(DESCRIPTION),
-                (Byte) atlasEntity.getAttribute(STATE)
-        );
+    public AtlasRelationship createRelationship(AtlasEntity meta, AtlasEntity versionInfo) {
+        checkNotNull(meta, "meta");
+        checkNotNull(versionInfo, "versionInfo");
+
+        LOG.debug("Creating relationship between meta \"{}\" and version {}",
+                meta.getAttribute(MetadataEntityDef.NAME), versionInfo.getAttribute(VersionEntityDef.VERSION));
+
+        AtlasRelationship relationship = RelationshipHelper.createRelationship(meta, versionInfo, SchemaVersionRelationshipDef.RELATIONSHIP_NAME);
+        relationship.setAttribute(ID, versionInfo.getAttribute(ID));
+        relationship.setAttribute(VERSION, versionInfo.getAttribute(VERSION));
+        return relationship;
     }
 }

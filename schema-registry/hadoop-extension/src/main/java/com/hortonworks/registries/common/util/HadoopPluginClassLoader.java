@@ -88,7 +88,7 @@ public class HadoopPluginClassLoader extends URLClassLoader {
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         Class<?> result = null;
         try {
-            LOG.info("Loading on the plugin classpath {} ", name);
+            LOG.debug("Loading on the plugin classpath {} ", name);
             result = super.loadClass(name);
         } catch (Throwable e) {
             MyClassLoader savedClassLoader = getPrimaryClassloader();

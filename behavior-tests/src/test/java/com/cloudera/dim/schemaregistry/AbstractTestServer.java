@@ -16,6 +16,8 @@
 package com.cloudera.dim.schemaregistry;
 
 import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,10 +55,16 @@ abstract class AbstractTestServer {
         }
     }
 
-    protected File writeYamlFile(String prefix, String content) throws IOException {
-        File yamlFile = File.createTempFile(prefix, ".yaml");
-        Files.write(yamlFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
-        return yamlFile;
+    protected File writeFile(String prefix, String suffix, String content) throws IOException {
+        File tmpDir;
+        do {
+            tmpDir = new File(FileUtils.getTempDirectory(), RandomStringUtils.randomAlphabetic(8));
+        } while (tmpDir.exists());
+        tmpDir.mkdirs();
+
+        File tmpFile = new File(tmpDir, prefix + suffix);
+        Files.write(tmpFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
+        return tmpFile;
     }
 
 }

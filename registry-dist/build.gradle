@@ -74,12 +74,14 @@ distributions {
                 from("$rootDir/atlas-integration/atlas-translate/build/libs") {
                     exclude '*javadoc*jar'
                     exclude '*sources*jar'
+                    exclude '*atlasDeps*jar'
                 }
                 from("$rootDir/atlas-integration/atlas-translate/build/dependency") {
                     include '*jar'
                     exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
+                    exclude '*atlas-common*jar'
                 }
             }
             into('atlas-plugin/') {

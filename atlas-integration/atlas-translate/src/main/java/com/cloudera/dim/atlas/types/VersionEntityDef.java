@@ -21,15 +21,13 @@ import static com.google.common.collect.Lists.newArrayList;
 
 public class VersionEntityDef extends AtlasEntityDef implements SchemaRegistryServiceType {
 
-    public static final String SCHEMA_VERSION_INFO = "schema_version_info" + TODORemoveThis.COUNTER;
+    public static final String SCHEMA_VERSION_INFO = "schema_version_info";
 
     public static final String ID = "id";
     public static final String NAME = "name";
     public static final String DESCRIPTION = "description";
     public static final String SCHEMA_TEXT = "schemaText";
-    public static final String FINGERPRINT = "fingerprint";
     public static final String VERSION = "version";
-    public static final String STATE = "state";
     public static final String TIMESTAMP = "timestamp";
 
     VersionEntityDef() {
@@ -43,13 +41,11 @@ public class VersionEntityDef extends AtlasEntityDef implements SchemaRegistrySe
         name.setIsIndexable(true);
         AtlasAttributeDef description = new AtlasAttributeDef(DESCRIPTION, ATLAS_TYPE_STRING, true, Cardinality.SINGLE);
         AtlasAttributeDef schemaText = new AtlasAttributeDef(SCHEMA_TEXT, ATLAS_TYPE_STRING, false, Cardinality.SINGLE);
-        AtlasAttributeDef fingerprint = new AtlasAttributeDef(FINGERPRINT, ATLAS_TYPE_STRING, false, Cardinality.SINGLE);
-        fingerprint.setIsIndexable(true);
         AtlasAttributeDef version = new AtlasAttributeDef(VERSION, ATLAS_TYPE_INT, false, Cardinality.SINGLE);
         AtlasAttributeDef timestamp = new AtlasAttributeDef(TIMESTAMP, ATLAS_TYPE_LONG, false, Cardinality.SINGLE);
 
         setAttributeDefs(newArrayList(
-                schemaMetadataId, name, description, schemaText, fingerprint, version, timestamp
+                schemaMetadataId, name, description, schemaText, version, timestamp
         ));
     }
 }

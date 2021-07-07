@@ -29,19 +29,10 @@ public class Model extends AtlasTypesDef {
     public Model() {
         setEntityDefs(newArrayList(
                 new MetadataEntityDef(),
-                new VersionEntityDef(),
-                new FieldEntityDef(),
-                new SerdesEntityDef(),
-                new VersionStateEntityDef(),
-                new BranchEntityDef()
+                new VersionEntityDef()
         ));
         setRelationshipDefs(newArrayList(
-                new SchemaVersionRelationshipDef(),
-                new SerdesMappingRelationshipDef(),
-                new SchemaFieldsRelationshipDef(),
-                new VersionStateRelationshipDef(),
-                new VersionBranchRelationshipDef(),
-                new MetaBranchRelationshipDef()
+                new SchemaVersionRelationshipDef()
         ));
     }
 

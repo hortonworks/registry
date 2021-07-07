@@ -14,14 +14,9 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.webservice;
+package com.hortonworks.registries.common;
 
-import com.cloudera.dim.atlas.conf.AtlasConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hortonworks.registries.common.FileStorageConfiguration;
-import com.hortonworks.registries.common.ModuleConfiguration;
-import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
-import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;

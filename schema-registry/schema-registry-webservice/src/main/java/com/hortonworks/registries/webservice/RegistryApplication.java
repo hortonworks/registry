@@ -14,9 +14,9 @@
  **/
 package com.hortonworks.registries.webservice;
 
-import com.cloudera.dim.atlas.AtlasRestResource;
 import com.cloudera.dim.atlas.conf.AtlasSchemaRegistryModule;
 import com.hortonworks.registries.common.GenericExceptionMapper;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
@@ -111,12 +111,6 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 if (swaggerConfig == null) {
                     this.swaggerConfig = registryConfiguration.getSwaggerBundleConfiguration();
                     String resourcePackage = swaggerConfig.getResourcePackage();
-                    if (registryConfiguration.getAtlasConfiguration() != null &&
-                            registryConfiguration.getAtlasConfiguration().isEnabled()) {
-                        // if Atlas is enabled then add REST endpoint to Swagger
-                        LOG.debug("Adding Atlas REST endpoint to Swagger");
-                        resourcePackage += "," + AtlasRestResource.class.getPackage().getName();
-                    }
                     swaggerConfig.setResourcePackage(resourcePackage);
                 }
                 return swaggerConfig;

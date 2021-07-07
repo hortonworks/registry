@@ -132,14 +132,5 @@ public interface QueryExecutor {
      * @return all entries that match the specified {@link StorableKey} with update lock
      */
     <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey);
-    
-    /**
-     *  Locks a table for a transaction
-     */
-    void lockTable(String nameSpace) throws SQLException;
 
-    /**
-     *  Releases a table from a lock
-     */
-    void unlockTable(String namespace) throws SQLException;
 }

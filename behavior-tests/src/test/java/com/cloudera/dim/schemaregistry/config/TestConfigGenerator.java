@@ -15,7 +15,7 @@
  **/
 package com.cloudera.dim.schemaregistry.config;
 
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -62,11 +62,10 @@ public class TestConfigGenerator {
         return generate("registry.ftl", model);
     }
 
-    public String generateAtlasYaml(int atlasPort) {
+    public String generateAtlasProperties() {
         Map<String, Object> model = new HashMap<>();
-        model.put("port", String.valueOf(atlasPort));
 
-        return generate("atlas.ftl", model);
+        return generate("atlas-application.properties", model);
     }
 
     @SuppressWarnings({"unchecked", "rawtype"})

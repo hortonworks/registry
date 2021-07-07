@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.providers;
 
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

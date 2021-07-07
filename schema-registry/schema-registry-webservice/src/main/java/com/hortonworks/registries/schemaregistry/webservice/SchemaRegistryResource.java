@@ -14,12 +14,13 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
+import com.cloudera.dim.atlas.AtlasPlugin;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
-import com.hortonworks.registries.schemaregistry.authorizer.audit.AuditLogger;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
@@ -60,7 +61,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleSta
 import com.hortonworks.registries.schemaregistry.webservice.validator.JarInputStreamValidator;
 import com.hortonworks.registries.schemaregistry.webservice.validator.exception.InvalidJarFileException;
 import com.hortonworks.registries.storage.exception.StorageException;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import io.dropwizard.server.AbstractServerFactory;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -130,7 +131,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
     private final AuthorizationUtils authorizationUtils;
     private final RegistryConfiguration registryConfiguration;
-    private final AuditLogger auditLogger;
+    private final AtlasEventLogger atlasEventLogger;
+    private final AtlasPlugin atlasPlugin;
 
     @Inject
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
@@ -139,15 +141,17 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                   JarInputStreamValidator jarInputStreamValidator,
                                   SchemaMetadataTypeValidator schemaMetadataTypeValidator,
                                   RegistryConfiguration registryConfiguration,
-                                  AuditLogger auditLogger) {
+                                  AtlasEventLogger atlasEventLogger,
+                                  AtlasPlugin atlasPlugin) {
         super(schemaRegistry);
         this.registryConfiguration = registryConfiguration;
         this.schemaRegistryVersion = SchemaRegistryServiceInfo.get().version();
-        this.auditLogger = auditLogger;
+        this.atlasEventLogger = atlasEventLogger;
         this.authorizationAgent = authorizationAgent;
         this.authorizationUtils = authorizationUtils;
         this.jarInputStreamValidator = jarInputStreamValidator;
         this.schemaMetadataTypeValidator = schemaMetadataTypeValidator;
+        this.atlasPlugin = atlasPlugin;
     }
 
     @GET
@@ -534,8 +538,19 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
                 final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
                 authorizationAgent.authorizeSchemaMetadata(auth, schemaMetadata, Authorizer.AccessType.CREATE);
-                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
-                auditLogger.withAuth(auth).addSchemaMetadata(schemaMetadata, throwErrorIfExists);
+
+                final Long schemaId;
+
+                // first we check if the schema metadata already exists
+                SchemaMetadataInfo existingMeta = schemaRegistry.getSchemaMetadataInfo(schemaMetadata.getName());
+                if (existingMeta != null) {
+                    // if it does then we return its id
+                    schemaId = existingMeta.getId();
+                } else {
+                    // otherwise the schema meta is created
+                    schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
+                    atlasEventLogger.withAuth(auth).createMeta(schemaId);
+                }
                 response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
@@ -592,7 +607,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     Authorizer.AccessType.UPDATE);
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
             if (schemaMetadataInfo != null) {
-                auditLogger.withAuth(auth).updateSchemaMetadata(schemaName, schemaMetadata);
+                atlasEventLogger.withAuth(auth).updateMeta(schemaMetadataInfo.getId());
                 response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
             } else {
                 response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
@@ -805,8 +820,9 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                         schemaName,
                         schemaBranchName,
                         Authorizer.AccessType.CREATE);
+
                 SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
-                auditLogger.withAuth(auth).addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
+                atlasEventLogger.withAuth(auth).createVersion(version.getSchemaVersionId());
                 response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
@@ -1061,7 +1077,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.enableSchemaVersion(versionId);
-            auditLogger.withAuth(auth).enableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1103,7 +1118,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.disableSchemaVersion(versionId);
-            auditLogger.withAuth(auth).disableSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1142,7 +1156,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.archiveSchemaVersion(versionId);
-            auditLogger.withAuth(auth).archiveSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1182,7 +1195,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.DELETE);
             schemaRegistry.deleteSchemaVersion(versionId);
-            auditLogger.withAuth(auth).deleteSchemaVersion(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1221,7 +1233,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.startSchemaVersionReview(versionId);
-            auditLogger.withAuth(auth).startSchemaVersionReview(versionId);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1264,7 +1275,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     versionId, Authorizer.AccessType.UPDATE);
             schemaRegistry.transitionState(versionId, stateId, transitionDetails);
-            auditLogger.withAuth(auth).transitionState(versionId, stateId, transitionDetails);
             response = WSUtils.respondEntity(true, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1308,7 +1318,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry, schemaName,
                     schemaBranchName, Authorizer.AccessType.READ);
             CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
-            auditLogger.withAuth(auth).checkCompatibility(schemaBranchName, schemaName, schemaText);
             response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1480,7 +1489,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
             authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.CREATE);
             Long serializerId = schemaRegistry.addSerDes(serDesInfo);
-            auditLogger.withAuth(auth).addSerDes(serDesInfo);
             response = WSUtils.respondEntity(serializerId, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1513,7 +1521,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                 final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
                 authorizationAgent.authorizeMapSchemaWithSerDes(auth, schemaRegistry, schemaName);
                 schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
-                auditLogger.withAuth(auth).mapSchemaWithSerDes(schemaName, serDesId);
                 response = WSUtils.respondEntity(true, Response.Status.OK);
             } catch (AuthorizationException e) {
                 LOG.debug("Access denied. ", e);
@@ -1613,7 +1620,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     schemaVersionId,
                     schemaBranch.getName());
             SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
-            auditLogger.withAuth(auth).createSchemaBranch(schemaVersionId, schemaBranch);
             return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1647,7 +1653,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
             authorizationAgent.authorizeMergeSchemaVersion(auth, schemaRegistry, schemaVersionId);
             SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
-            auditLogger.withAuth(auth).mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
             return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1754,7 +1759,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeBulkImport(auth);
 
             UploadResult uploadResult = schemaRegistry.bulkUploadSchemas(inputStream, failOnError, format);
-            auditLogger.withAuth(auth).bulkUploadSchemas(inputStream, failOnError, format); //TODO inputstream
             response = WSUtils.respondEntity(uploadResult, Response.Status.OK);
         } catch (AuthorizationException e) {
             LOG.debug("Access denied. ", e);
@@ -1770,6 +1774,18 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         }
 
         return response;
+    }
+
+    @POST
+    @Path("/setupAtlasModel")
+    @ApiOperation(value = "Setup SchemaRegistry model in Atlas",
+            notes = "This method should only be called once, during system initialization.",
+            response = Long.class, tags = OPERATION_GROUP_ATLAS)
+    @Timed
+    @UnitOfWork
+    public Response setupAtlasModel() {
+        atlasPlugin.setupAtlasModel();
+        return WSUtils.respondEntity("Success", Response.Status.OK);
     }
 
 }

@@ -16,7 +16,7 @@
 package com.hortonworks.registries.schemaregistry.examples.avro;
 
 import com.hortonworks.registries.webservice.RegistryApplication;
-import com.hortonworks.registries.webservice.RegistryConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;

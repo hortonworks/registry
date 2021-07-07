@@ -1,5 +1,6 @@
 /**
- * Copyright 2016-2020 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.cloudera.dim.atlas.types;
+package com.cloudera.dim.atlas;
 
-/** Obviously this needs to be deleted before the final release. */
-// TODO CDPD-18845 jira for deleting this
-interface TODORemoveThis {
+import org.apache.atlas.plugin.classloader.AtlasPluginClassLoader;
 
-    // increment if you've changed your model, it's easier than deleting the model in Atlas
-    int COUNTER = 1;
+import java.util.Map;
+
+public interface AtlasClasspathLoaderFactory {
+
+    void configure(Map<String, Object> config);
+    AtlasPluginClassLoader create();
 }

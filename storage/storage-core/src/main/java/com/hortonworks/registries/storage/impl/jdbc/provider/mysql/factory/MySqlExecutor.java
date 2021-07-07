@@ -33,7 +33,6 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.search.SearchQuery;
 
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
@@ -123,16 +122,6 @@ public class MySqlExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new MySqlSelectForUpdateQuery(storableKey));
-    }
-
-    @Override
-    public void lockTable(String namespace) throws SQLException {
-        executeStatement("LOCK TABLES " + namespace + " WRITE, " + namespace + " READ;");
-    }
-
-    @Override
-    public void unlockTable(String namespace) throws SQLException {
-        executeStatement("UNLOCK TABLES " + namespace + ";");
     }
 
     private void insertOrUpdateWithUniqueId(final Storable storable, final SqlQuery sqlQuery) {
