@@ -66,6 +66,7 @@ public class SchemaMetadata implements Serializable {
     /**
      * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
      */
+    @ApiModelProperty(example = "true")
     @JsonProperty("evolve")
     public boolean evolve = true;
 
@@ -116,7 +117,7 @@ public class SchemaMetadata implements Serializable {
     /**
      * @return type of the schema. For ex: AVRO, JSON
      */
-    @ApiModelProperty(required = true, value = "Type must not be null")
+    @ApiModelProperty(required = true, value = "Type must not be null", example = "avro")
     @Nonnull
     public String getType() {
         return type;
@@ -132,6 +133,7 @@ public class SchemaMetadata implements Serializable {
     /**
      * @return compatibility supported by this schema
      */
+    @ApiModelProperty(example = "BACKWARD")
     public SchemaCompatibility getCompatibility() {
         return compatibility != null ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
     }

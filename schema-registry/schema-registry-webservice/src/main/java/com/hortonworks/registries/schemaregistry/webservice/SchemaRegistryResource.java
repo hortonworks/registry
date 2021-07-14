@@ -281,7 +281,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/schemas")
-    @ApiOperation(value = "Get list of schemas by filtering with the given query parameters",
+    @ApiOperation(value = "Get list of schema metadata by filtering with the given query parameters",
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -354,8 +354,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/search/schemas")
-    @ApiOperation(value = "Search for schemas containing the given name and description",
-            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
+    @ApiOperation(value = "Search for schema metadata containing the given name and description",
+            notes = "Search the schema metadata for given name and description, return a list of schema metadata that contain the field.",
             response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
@@ -516,8 +516,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @POST
     @Path("/schemas")
-    @ApiOperation(value = "Create a schema if it does not already exist",
-            notes = "Creates a schema with the given schema information if it does not already exist." +
+    @ApiOperation(value = "Create a schema metadata if it does not already exist",
+            notes = "Creates a schema metadata with the given schema information if it does not already exist." +
                     " A unique schema identifier is returned.",
             response = Long.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed

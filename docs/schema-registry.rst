@@ -306,6 +306,26 @@ serializer/deserializer for a given schema
    schemaRegistryClient.deleteSchema(schemaName);
 
 
+Create new schema with API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a new schema is created, actually 3 objects are created: a ``SchemaMetadata``, a ``SchemaBranch`` and a ``SchemaVersion``. With API, two endpoints are needed in order to create all of them:
+
+1. Create a new ``SchemaMetadata``
+
+ The SchemaMetadata has meta information about the schema. It can be created with REST API endpoint ``POST /api/v1/schemaregistry/schemas``. In swagger documentation there is an example body and curl command that have more information about the usage:
+```
+curl -X POST "http://HOSTNAME:PORT/api/v1/schemaregistry/schemas" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"type\": \"avro\", \"schemaGroup\": \"kafka\", \"name\": \"meta\", \"description\": \"metadata description\", \"compatibility\": \"NONE\", \"validationLevel\": \"LATEST\"}"
+```
+This endpoint returns an id if the SchemaMetadata creation is successful.
+
+2. Create a new ``SchemaVersion``
+
+ Endpoint ``POST /api/v1/schemaregistry/schemas/{name}/versions`` where {name} is the name of formerly created SchemaMetadata, creates a new SchemaBranch (MASTER) and a new SchemaVersion, both linked to the given SchemaMetadata. In swagger documentation there is an example body and curl command that have more information about the usage:
+```
+curl -X POST "http://HOSTNAME:PORT/api/v1/schemaregistry/schemas/meta/versions?branch=MASTER&disableCanonicalCheck=false" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"description\": \"string\", \"schemaText\": \"{\\\"type\\\": \\\"record\\\",\\\"namespace\\\": \\\"com.example\\\",\\\"name\\\": \\\"FullName\\\",\\\"fields\\\": [{ \\\"name\\\": \\\"first\\\", \\\"type\\\": \\\"string\\\" },{ \\\"name\\\": \\\"last\\\", \\\"type\\\": \\\"string\\\" }]}\", \"initialState\": \"5\", \"stateDetails\": [ \"null\" ]}"
+```
+
 Default serializer and deserializer APIs.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

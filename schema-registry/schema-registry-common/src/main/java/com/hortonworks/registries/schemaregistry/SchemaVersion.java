@@ -74,10 +74,12 @@ public class SchemaVersion implements Serializable {
         return schemaText;
     }
 
+    @ApiModelProperty(example = "5")
     public Byte getInitialState() {
         return initialState;
     }
 
+    @ApiModelProperty(example = "null")
     public byte [] getStateDetails() {
         return stateDetails;
     }
