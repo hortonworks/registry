@@ -26,6 +26,8 @@ import java.util.Map;
 public interface SchemaProvider {
 
     String SCHEMA_VERSION_RETRIEVER_CONFIG = "schemaVersionRetriever";
+    /** Which hashing algorithm should be used for generating the schema fingerprint. */
+    String HASH_FUNCTION_CONFIG = "hashFunction";
 
     /**
      * Initializes with the given {@code config}.
