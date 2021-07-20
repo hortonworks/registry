@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.webservice;
 
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,15 +80,18 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
     private final AuthorizationAgent authorizationAgent;
     private final AuthorizationUtils authorizationUtils;
+    private final AtlasEventLogger atlasEventLogger;
 
     @Inject
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
                                                      AuthorizationAgent authorizationAgent,
-                                                     AuthorizationUtils authorizationUtils) {
+                                                     AuthorizationUtils authorizationUtils,
+                                                     AtlasEventLogger atlasEventLogger) {
         super(schemaRegistry);
 
         this.authorizationAgent = authorizationAgent;
         this.authorizationUtils = authorizationUtils;
+        this.atlasEventLogger = atlasEventLogger;
     }
 
     @GET
@@ -367,23 +371,27 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
         Response response;
         try {
-            LOG.info("registerSchema for [{}] is [{}]", subject);
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
+            Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
             if (schemaMetadataInfo == null) {
                 SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject)
                         .type(AvroSchemaProvider.TYPE)
                         .schemaGroup("Kafka")
                         .build();
-                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
-                        schemaMetadata, Authorizer.AccessType.CREATE);
-                schemaRegistry.addSchemaMetadata(schemaMetadata);
+
+                authorizationAgent.authorizeSchemaMetadata(auth, schemaMetadata, Authorizer.AccessType.CREATE);
+
+                Long schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata);
+                atlasEventLogger.withAuth(auth).createMeta(schemaId);
+
                 schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
             }
 
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                     subject, SchemaBranch.MASTER_BRANCH, Authorizer.AccessType.CREATE);
             SchemaIdVersion schemaVersionInfo = schemaRegistry.addSchemaVersion(schemaMetadataInfo.getSchemaMetadata(),
                                                                                 new SchemaVersion(schemaStringFromJson(schema).getSchema(), null));
+            atlasEventLogger.withAuth(auth).createVersion(schemaVersionInfo.getSchemaVersionId());
 
             Id id = new Id();
             id.setId(schemaVersionInfo.getSchemaVersionId());

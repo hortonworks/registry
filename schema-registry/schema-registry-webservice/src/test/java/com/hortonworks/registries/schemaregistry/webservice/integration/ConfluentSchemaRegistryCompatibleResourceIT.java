@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.webservice.integration;
 
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.when;
 public class ConfluentSchemaRegistryCompatibleResourceIT {
         private static ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
         private static AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
+        private static AtlasEventLogger atlasEventLogger = getAtlasEventLogger();
         private static AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
         private static ResourceExtension RESOURCE = ResourceExtension.builder()
                 .addResource(instantiateResource())
@@ -71,7 +73,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         }
 
         private static ConfluentSchemaRegistryCompatibleResource instantiateResource() {
-            return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils);
+            return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, atlasEventLogger);
         }
         @Test
         public void getSubjectById() throws Exception {
@@ -264,6 +266,12 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         
         private SchemaVersionInfo schemaVersionInfoCreator(String name, Long id) {
                 return new SchemaVersionInfo(id, name, 1, "text", TIMESTAMP, "desc");
+        }
+
+        private static AtlasEventLogger getAtlasEventLogger() {
+                AtlasEventLogger atlasEventLogger = mock(AtlasEventLogger.class);
+                when(atlasEventLogger.withAuth(any())).thenReturn(atlasEventLogger);
+                return atlasEventLogger;
         }
         
 }
