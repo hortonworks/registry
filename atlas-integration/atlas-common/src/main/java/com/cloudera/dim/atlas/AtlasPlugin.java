@@ -54,11 +54,30 @@ public interface AtlasPlugin {
     void setupAtlasModel();
 
     /**
+     * Create a relationship between the kafka_topic entity and schema_metadata_info. This only works if
+     * the kafka_topic type exists. If it doesn't, the <tt>false</tt> is returned.
+     */
+    boolean setupKafkaSchemaModel();
+
+    /**
+     * Have we set up a relationship between kafka_topic and schema_metadata_info entity types?
+     */
+    boolean isKafkaSchemaModelInitialized();
+
+    /**
+     * Connect schema metadata with kafka topic
+     * @param metaGuid              the GUID of the metadata Atlas entity
+     * @param schemaMetadataInfo    additional informaiton about the schema
+     */
+    void connectSchemaWithTopic(String metaGuid, SchemaMetadataInfo schemaMetadataInfo);
+
+    /**
      * Create a schema meta entity and immediately assign a MASTER branch to it.
      *
      * @param meta  object containing information for creating the schema meta
+     * @return the GUID of the new Atlas entity
      */
-    void createMeta(SchemaMetadataInfo meta);
+    String createMeta(SchemaMetadataInfo meta);
 
     /**
      * Update an existing schema meta.

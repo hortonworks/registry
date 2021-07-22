@@ -17,6 +17,7 @@ package com.cloudera.dim.atlas.conf;
 
 import com.cloudera.dim.atlas.AtlasPlugin;
 import com.cloudera.dim.atlas.AtlasPluginProvider;
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.google.inject.AbstractModule;
 import com.hortonworks.registries.common.AtlasConfiguration;
 import org.slf4j.Logger;
@@ -32,5 +33,6 @@ public class AtlasSchemaRegistryModule extends AbstractModule {
         LOG.debug("Configuring AtlasSchemaRegistry module ...");
         bind(AtlasConfiguration.class).toProvider(AtlasConfigurationProvider.class).in(Singleton.class);
         bind(AtlasPlugin.class).toProvider(AtlasPluginProvider.class).in(Singleton.class);;
+        bind(AtlasEventLogger.class).in(Singleton.class);;
     }
 }

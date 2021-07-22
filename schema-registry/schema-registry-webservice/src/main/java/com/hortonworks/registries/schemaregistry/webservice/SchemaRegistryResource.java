@@ -109,6 +109,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.hortonworks.registries.common.catalog.CatalogResponse.ResponseMessage.SUCCESS;
 import static com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry.ORDER_BY_FIELDS_PARAM_NAME;
 import static com.hortonworks.registries.schemaregistry.SchemaBranch.MASTER_BRANCH;
 
@@ -1780,12 +1781,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Path("/setupAtlasModel")
     @ApiOperation(value = "Setup SchemaRegistry model in Atlas",
             notes = "This method should only be called once, during system initialization.",
-            response = Long.class, tags = OPERATION_GROUP_ATLAS)
+            response = String.class, tags = OPERATION_GROUP_ATLAS)
     @Timed
     @UnitOfWork
     public Response setupAtlasModel() {
         atlasPlugin.setupAtlasModel();
-        return WSUtils.respondEntity("Success", Response.Status.OK);
+        atlasPlugin.setupKafkaSchemaModel();
+        return WSUtils.respondString(Response.Status.OK, SUCCESS);
     }
 
 }

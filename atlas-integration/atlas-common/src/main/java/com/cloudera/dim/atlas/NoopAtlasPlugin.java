@@ -32,7 +32,22 @@ public class NoopAtlasPlugin implements AtlasPlugin {
     public void setupAtlasModel() { }
 
     @Override
-    public void createMeta(SchemaMetadataInfo meta) { }
+    public boolean setupKafkaSchemaModel() {
+        return true;
+    }
+
+    @Override
+    public boolean isKafkaSchemaModelInitialized() {
+        return true;
+    }
+
+    @Override
+    public void connectSchemaWithTopic(String metaGuid, SchemaMetadataInfo schemaMetadataInfo) { }
+
+    @Override
+    public String createMeta(SchemaMetadataInfo meta) {
+        return null;
+    }
 
     @Override
     public Optional<SchemaMetadataInfo> updateMeta(SchemaMetadata schemaMetadata) throws SchemaNotFoundException {

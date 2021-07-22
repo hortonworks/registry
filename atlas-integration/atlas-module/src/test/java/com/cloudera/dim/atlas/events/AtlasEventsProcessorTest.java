@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -61,10 +62,12 @@ public class AtlasEventsProcessorTest {
         schemaRegistry = mock(AtlasPlugin.class);
         storageManager = mock(StorageManager.class);
         transactionManager = mock(TransactionManager.class);
-        atlasEventsProcessor = new AtlasEventsProcessor(schemaRegistry, storageManager, transactionManager, 1000L);
+        atlasEventsProcessor = new AtlasEventsProcessor(schemaRegistry, storageManager, transactionManager, 1000L, true);
 
         persistedEvents = new ArrayList<>();
         when(storageManager.<AtlasEventStorable>find(eq(AtlasEventStorable.NAME_SPACE), anyList())).thenReturn(persistedEvents);
+        when(schemaRegistry.isKafkaSchemaModelInitialized()).thenReturn(true);
+        when(schemaRegistry.createMeta(any())).thenReturn(RandomStringUtils.randomAlphabetic(10));
     }
 
     @Test
@@ -122,6 +125,7 @@ public class AtlasEventsProcessorTest {
         assertEquals(metadataStorable.getDescription(), actualValue.getSchemaMetadata().getDescription());
 
         verify(storageManager).update(any(AtlasEventStorable.class));
+        verify(schemaRegistry).connectSchemaWithTopic(anyString(), any());
     }
     
     @Test

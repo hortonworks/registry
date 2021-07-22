@@ -54,7 +54,9 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
     private long waitBetweenAuditProcessing = 60000L;
     private String customClasspathLoader;
     private String customClasspath;
+    private boolean connectWithKafka = true;
 
+    /** List of Atlas REST URLs. */
     public List<String> getAtlasUrls() {
         return atlasUrls;
     }
@@ -63,6 +65,7 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.atlasUrls = atlasUrls;
     }
 
+    /** When connecting to Atlas via Basic authentication, a username and password needs to be provided. */
     public BasicAuth getBasicAuth() {
         return basicAuth;
     }
@@ -71,6 +74,7 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.basicAuth = basicAuth;
     }
 
+    /** Is Atlas integration enabled? If this is false, all other properties are ignored. */
     public boolean isEnabled() {
         return enabled;
     }
@@ -79,6 +83,8 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.enabled = enabled;
     }
 
+    /** The AtlasEventProcessor runs a loop and checks the database for new events. By default, it does
+     * the check every 1 minute. This value is given in ms. */
     public long getWaitBetweenAuditProcessing() {
         return waitBetweenAuditProcessing;
     }
@@ -87,6 +93,7 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.waitBetweenAuditProcessing = waitBetweenAuditProcessing;
     }
 
+    /** Atlas is running on a separate classpath. We can provide a custom classpath loader if we want to load it differently. */
     public String getCustomClasspathLoader() {
         return customClasspathLoader;
     }
@@ -95,6 +102,7 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.customClasspathLoader = customClasspathLoader;
     }
 
+    /** The custom path to the Atlas JARs. */
     public String getCustomClasspath() {
         return customClasspath;
     }
@@ -103,6 +111,16 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         this.customClasspath = customClasspath;
     }
 
+    /** Connect schema with a Kafka topic */
+    public boolean isConnectWithKafka() {
+        return connectWithKafka;
+    }
+
+    public void setConnectWithKafka(boolean connectWithKafka) {
+        this.connectWithKafka = connectWithKafka;
+    }
+
+    /** Convert this Java object to a Map. */
     public Map<String, Object> asMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("atlasUrls", atlasUrls);
@@ -110,6 +128,7 @@ public class AtlasConfiguration extends ModuleDetailsConfiguration {
         result.put("waitBetweenAuditProcessing", waitBetweenAuditProcessing);
         result.put("customClasspathLoader", customClasspathLoader);
         result.put("customClasspath", customClasspath);
+        result.put("connectWithKafka", connectWithKafka);
         result.put("basicAuth", basicAuth == null ? null : ImmutableMap.of(
                 "username", basicAuth.username,
                 "password", basicAuth.password

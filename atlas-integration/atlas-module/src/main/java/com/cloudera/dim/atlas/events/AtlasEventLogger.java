@@ -42,7 +42,8 @@ public class AtlasEventLogger {
         this.storageManager = storageManager;
 
         if (atlasConfiguration != null && atlasConfiguration.isEnabled()) {
-            threadPool.submit(new AtlasEventsProcessor(atlasPlugin, storageManager, transactionManager, atlasConfiguration.getWaitBetweenAuditProcessing()));
+            threadPool.submit(new AtlasEventsProcessor(atlasPlugin, storageManager, transactionManager,
+                    atlasConfiguration.getWaitBetweenAuditProcessing(), atlasConfiguration.isConnectWithKafka()));
         }
     }
 

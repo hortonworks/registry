@@ -20,26 +20,40 @@ import com.cloudera.dim.atlas.translate.SchemaMetadataTranslator;
 import com.cloudera.dim.atlas.translate.SchemaVersionInfoTranslator;
 import com.cloudera.dim.atlas.types.MetadataEntityDef;
 import com.cloudera.dim.atlas.types.Model;
+import com.cloudera.dim.atlas.types.kafka.KafkaExtendedModel;
+import com.cloudera.dim.atlas.types.kafka.KafkaTopicEntityDef;
+import com.cloudera.dim.atlas.types.kafka.KafkaTopicSchemaRelationshipDef;
 import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.atlas.AtlasBaseClient;
 import org.apache.atlas.AtlasClientV2;
 import org.apache.atlas.AtlasServiceException;
+import org.apache.atlas.model.SearchFilter;
+import org.apache.atlas.model.discovery.AtlasSearchResult;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasEntityHeader;
+import org.apache.atlas.model.instance.AtlasObjectId;
 import org.apache.atlas.model.instance.AtlasRelationship;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.model.instance.EntityMutations;
+import org.apache.atlas.model.typedef.AtlasEntityDef;
+import org.apache.atlas.model.typedef.AtlasRelationshipDef;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ws.rs.HttpMethod;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,6 +93,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
     @Override
     public void setupAtlasModel() {
         try {
+            LOG.info("Creating Atlas model for Schema Registry");
             Model model = new Model();
             AtlasTypesDef createdTypeDefs = atlasClient.createAtlasTypeDefs(model);
 
@@ -90,6 +105,125 @@ public class AtlasPluginImpl implements AtlasPlugin {
         } catch (AtlasServiceException asex) {
             throw new AtlasUncheckedException("Error while creating the SchemaRegistry model in Atlas.", asex);
         }
+    }
+
+    @Override
+    public boolean setupKafkaSchemaModel() {
+        try {
+            boolean kafkaTypeExists = findTypeDefByName(KafkaTopicEntityDef.KAFKA_TOPIC).isPresent();
+            if (!kafkaTypeExists) {
+                LOG.warn("Atlas type {} does not exist so we can't connect the schema to it.", KafkaTopicEntityDef.KAFKA_TOPIC);
+                return false;
+            }
+
+            LOG.info("Creating model for connecting Schema with Kafka topic");
+            KafkaExtendedModel model = new KafkaExtendedModel();
+            AtlasTypesDef createdTypeDefs = atlasClient.createAtlasTypeDefs(model);
+
+            return createdTypeDefs != null;
+        } catch (AtlasServiceException asex) {
+            throw new AtlasUncheckedException("Error while creating the SchemaRegistry/Kafka model in Atlas.", asex);
+        }
+    }
+
+    @Override
+    public boolean isKafkaSchemaModelInitialized() {
+        try {
+            return findTypeDefByName(KafkaTopicEntityDef.KAFKA_TOPIC).isPresent() &&
+                    findRelationshipDefByName(KafkaTopicSchemaRelationshipDef.RELATIONSHIP_NAME).isPresent();
+        } catch (AtlasServiceException asex) {
+            throw new AtlasUncheckedException("Error while querying Atlas about the type model.", asex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void connectSchemaWithTopic(String metaGuid, SchemaMetadataInfo schemaMetadataInfo) {
+        try {
+            checkNotNull(schemaMetadataInfo, "Schema metadata info was null.");
+            checkNotNull(schemaMetadataInfo.getSchemaMetadata(), "Schema metadata was null.");
+
+            AtlasEntity.AtlasEntityWithExtInfo metaEntityInfo = atlasClient.getEntityByGuid(metaGuid);
+            checkNotNull(metaEntityInfo, "Did not find schema_metadata_info with GUID " + metaGuid);
+            checkNotNull(metaEntityInfo.getEntity(), "Did not find schema_metadata_info with GUID " + metaGuid);
+
+            AtlasEntity metaEntity = metaEntityInfo.getEntity();
+            boolean relationshipAlreadyExists = false;
+
+            if (metaEntity.getRelationshipAttributes() != null) {
+                Object kafkaTopicColl = metaEntity.getRelationshipAttributes().get(KafkaTopicSchemaRelationshipDef.REL_MANY);
+                if (kafkaTopicColl instanceof Collection) {
+                    Collection<Map<String, ?>> headers = (Collection<Map<String, ?>>) kafkaTopicColl;
+                    if (!headers.isEmpty()) {
+                        Map<String, ?> header = (Map<String, ?>) CollectionUtils.get(headers, 0);
+                        if (null != header.get(AtlasObjectId.KEY_GUID)) {
+                            relationshipAlreadyExists = true;
+                        }
+                    }
+                }
+            }
+
+            if (relationshipAlreadyExists) {
+                LOG.debug("Schema {} is already connected to a topic.", schemaMetadataInfo.getId());
+                return;
+            }
+
+            final String schemaName = schemaMetadataInfo.getSchemaMetadata().getName();
+            Optional<AtlasEntityHeader> kafkaTopicEntity = findKafkaTopicEntityByName(schemaName);
+            if (!kafkaTopicEntity.isPresent()) {
+                LOG.info("Did not find Kafka topic with the name \"{}\"", schemaName);
+                return;
+            }
+
+            AtlasRelationship relationship = new AtlasRelationship(KafkaTopicSchemaRelationshipDef.RELATIONSHIP_NAME,
+                    new AtlasObjectId(kafkaTopicEntity.get().getGuid()), new AtlasObjectId(metaEntity.getGuid()));
+
+            if (null != atlasClient.createRelationship(relationship)) {
+                LOG.info("Successfully connected schema [{}] with its Kafka topic.", schemaName);
+            }
+
+        } catch (AtlasServiceException asex) {
+            throw new AtlasUncheckedException("Error while querying Atlas about the type model.", asex);
+        }
+    }
+
+    private Optional<AtlasEntityHeader> findKafkaTopicEntityByName(@Nonnull String topicName) throws AtlasServiceException {
+        if (StringUtils.isBlank(topicName)) {
+            throw new IllegalArgumentException("Kafka topic name was null.");
+        }
+
+        AtlasSearchResult result = atlasClient.dslSearch(String.format("from %s where %s = '%s'",
+                KafkaTopicEntityDef.KAFKA_TOPIC, KafkaTopicEntityDef.NAME, topicName));
+        if (result == null || CollectionUtils.isEmpty(result.getEntities())) {
+            return Optional.empty();
+        }
+
+        for (AtlasEntityHeader aeh : result.getEntities()) {
+            if (KafkaTopicEntityDef.KAFKA_TOPIC.equals(aeh.getTypeName()) && topicName.equals(aeh.getAttribute(KafkaTopicEntityDef.NAME))) {
+                return Optional.of(aeh);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<AtlasEntityDef> findTypeDefByName(String name) throws AtlasServiceException {
+        SearchFilter searchFilter = new SearchFilter();
+        searchFilter.setParam("name", name);
+        AtlasTypesDef existingKafkaTopicTypes = atlasClient.getAllTypeDefs(searchFilter);
+        if (existingKafkaTopicTypes != null && CollectionUtils.isNotEmpty(existingKafkaTopicTypes.getEntityDefs())) {
+            AtlasEntityDef entityDef = existingKafkaTopicTypes.getEntityDefs().get(0);
+            if (name.equals(entityDef.getName())) {
+                return Optional.of(entityDef);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<AtlasRelationshipDef> findRelationshipDefByName(String name) throws AtlasServiceException {
+        // TODO querying relationship typedefs doesn't work, remove this code after CDPD-28408 is fixed
+        AtlasBaseClient.API api = new AtlasBaseClient.API(AtlasClientV2.TYPES_API + "relationshipdef/name/" + name, HttpMethod.GET, Response.Status.OK);
+        return Optional.ofNullable(atlasClient.callAPI(api, AtlasRelationshipDef.class, null));
     }
 
     /** AtlasClient requires an array of host names to connect to. */
@@ -131,7 +265,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
     }
 
     @Override
-    public void createMeta(SchemaMetadataInfo schemaMetadata) {
+    public String createMeta(SchemaMetadataInfo schemaMetadata) {
         checkNotNull(schemaMetadata);
 
         LOG.debug("Create new meta for {}", schemaMetadata.getSchemaMetadata().getName());
@@ -154,6 +288,8 @@ public class AtlasPluginImpl implements AtlasPlugin {
 
             // update guids with newly assigned values (needed for creating the relationship)
             metaEntity.setGuid(metaGuid);
+
+            return metaGuid;
         } catch (AtlasServiceException asex) {
             throw new AtlasUncheckedException("Error creating new schema meta with id " + metaId, asex);
         }

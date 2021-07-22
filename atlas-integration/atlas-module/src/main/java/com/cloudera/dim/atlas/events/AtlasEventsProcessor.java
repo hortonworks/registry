@@ -57,18 +57,21 @@ public class AtlasEventsProcessor implements Runnable {
 
     private final AtlasPlugin atlasPlugin;
     private final StorageManager storageManager;
-    private final TransactionManager transactionManager;
     private final long waitBetweenProcessing;
+    private final boolean connectWithKafka;
     private final ManagedTransaction managedTransaction;
 
     public AtlasEventsProcessor(AtlasPlugin atlasPlugin, StorageManager storageManager, TransactionManager transactionManager,
-                                long waitBetweenProcessing) {
+                                long waitBetweenProcessing, boolean connectWithKafka) {
         this.atlasPlugin = checkNotNull(atlasPlugin, "atlasPlugin");
         this.storageManager = checkNotNull(storageManager, "storageManager");
-        this.transactionManager = checkNotNull(transactionManager, "transactionManager");
+        checkNotNull(transactionManager, "transactionManager");
+        this.connectWithKafka = connectWithKafka;
         this.waitBetweenProcessing = waitBetweenProcessing;
         checkState(waitBetweenProcessing > 0L, "Wait period must be greater than 0");
         this.managedTransaction = new ManagedTransaction(transactionManager, TransactionIsolation.SERIALIZABLE);
+
+        LOG.info("Connecting schemas with kafka topics is {}", connectWithKafka ? "ENABLED" : "DISABLED");
     }
 
     @Override
@@ -152,7 +155,17 @@ public class AtlasEventsProcessor implements Runnable {
             throw new SchemaNotFoundException("Did not find schema with ID " + schemaMetadataId);
         }
 
-        atlasPlugin.createMeta(schemaMetadataInfo);
+        String metaGuid = atlasPlugin.createMeta(schemaMetadataInfo);
+        if (metaGuid != null && isConnectWithKafka()) {
+            connectSchemaWithTopic(metaGuid, schemaMetadataInfo);
+        }
+    }
+
+    private void connectSchemaWithTopic(String metaGuid, SchemaMetadataInfo schemaMetadataInfo) {
+        LOG.debug("Connect schema with Kafka topic");
+        if (atlasPlugin.isKafkaSchemaModelInitialized()) {
+            atlasPlugin.connectSchemaWithTopic(metaGuid, schemaMetadataInfo);
+        }
     }
 
     private void updateMeta(Long schemaMetadataId) throws SchemaNotFoundException {
@@ -221,4 +234,7 @@ public class AtlasEventsProcessor implements Runnable {
         return null;
     }
 
+    private boolean isConnectWithKafka() {
+        return connectWithKafka;
+    }
 }
