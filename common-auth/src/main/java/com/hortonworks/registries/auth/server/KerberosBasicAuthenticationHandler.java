@@ -20,17 +20,8 @@ import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.auth.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.kerberos.authentication.KerberosAuthenticationProvider;
-import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosClient;
 
+import javax.security.auth.login.CredentialException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,7 +52,7 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
     private static final Logger LOG = LoggerFactory.getLogger(KerberosBasicAuthenticationHandler.class);
     private static final String HTTP_LOGIN_METHOD = "POST";
 
-    private KerberosAuthenticationProvider provider;
+    private SunJaasKerberosClient kerberosClient;
     private boolean spnegoEnabled;
 
     KerberosBasicAuthenticationHandler() {
@@ -80,13 +71,10 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         }
 
         try {
-            provider = new KerberosAuthenticationProvider();
-            SunJaasKerberosClient client = new SunJaasKerberosClient();
+            kerberosClient = new SunJaasKerberosClient();
             if (LOG.isDebugEnabled()) {
-                client.setDebug(true);
+                kerberosClient.setDebug(true);
             }
-            provider.setKerberosClient(client);
-            provider.setUserDetailsService(new KerberosUserDetailsService());
         } catch (Exception ex) {
             LOG.error("Failed to initialize the Kerberos Login Authentication Handler.", ex);
             throw new ServletException(ex);
@@ -128,18 +116,16 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
      * @throws IOException
      */
     private AuthenticationToken kerberosLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (provider == null) {
+        if (kerberosClient == null) {
             LOG.error("The Kerberos authentication provider is not initialized.");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return null;
         }
-        String authorization =  request.getHeader(AUTHORIZATION_HEADER);
-        if (!request.getMethod().equals(HTTP_LOGIN_METHOD) || !request.isSecure() || authorization == null ||
-                !authorization.startsWith(BASIC_AUTHENTICATION)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Kerberos Login is not attempted because method: {}, secure: {}, authorization is empty: {}", request.getMethod(),
-                        request.isSecure(), (authorization == null || authorization.isEmpty()));
-            }
+        String authorization = request.getHeader(AUTHORIZATION_HEADER);
+        if (!(request.getMethod().equals(HTTP_LOGIN_METHOD) && request.isSecure() && authorization != null &&
+                authorization.startsWith(BASIC_AUTHENTICATION))) {
+            LOG.debug("Kerberos Login is not attempted because method: {}, secure: {}, authorization is empty: {}", request.getMethod(),
+                    request.isSecure(), (authorization == null || authorization.isEmpty()));
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return null;
         }
@@ -157,33 +143,22 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         final KerberosName kerberosName = new KerberosName(rawPrincipal);
         String identity = getUserIdentity(kerberosName, rawPrincipal);
 
-        // Perform the authentication
-        final UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(identity, password);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Created authentication token for principal {} with name {} and is authenticated {}", token.getPrincipal(),
-                    token.getName(), token.isAuthenticated());
-        }
 
-        Authentication authentication = null;
-
+        String validatedIdentity = null;
         try {
-            authentication = provider.authenticate(token);
-        } catch (BadCredentialsException ex) {
-            LOG.debug("Bad credentials provided", ex);
-        } catch (final org.springframework.security.core.AuthenticationException ex) {
-            LOG.error("Kerberos login failed.", ex);
+            validatedIdentity = kerberosClient.login(identity, password);
+        } catch (CredentialException e) {
+            LOG.error("Kerberos login failed.", e);
         }
 
-        if (authentication == null) {
+        if (validatedIdentity == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return null;
         } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Ran provider.authenticate() and returned authentication for principal {} with name {} and is authenticated {}",
-                        authentication.getPrincipal(), authentication.getName(), authentication.isAuthenticated());
-            }
+            LOG.debug("Ran kerberosClient.authenticate() and returned authentication for principal {} with name {} and is authenticated.",
+                    identity, validatedIdentity);
             response.setStatus(HttpServletResponse.SC_OK);
-            return new AuthenticationToken(kerberosName.getShortName(), authentication.getName(), getType());
+            return new AuthenticationToken(kerberosName.getShortName(), validatedIdentity, getType());
         }
     }
 
@@ -212,14 +187,5 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         }
 
         return identity;
-    }
-
-    class KerberosUserDetailsService implements UserDetailsService {
-
-        @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            return new User(username, "notUsed", true, true, true, true,
-                    AuthorityUtils.createAuthorityList("ROLE_USER"));
-        }
     }
 }
