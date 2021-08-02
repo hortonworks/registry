@@ -332,4 +332,9 @@ public class WhenSteps extends AbstractSteps {
 
         schemaRegistryClient.deleteSchemaVersion(versionId);
     }
+
+    @When("we create the model in Atlas")
+    public void weCreateTheModelInAtlas() {
+
+    }
 }

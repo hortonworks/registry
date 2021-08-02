@@ -1,4 +1,4 @@
-Feature: Schema Registry Client
+Feature: Delete schema
 
   Background: Schema Registry is running
     Given that Schema Registry is running

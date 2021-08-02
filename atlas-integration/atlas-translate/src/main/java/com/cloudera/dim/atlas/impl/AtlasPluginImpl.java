@@ -20,6 +20,8 @@ import com.cloudera.dim.atlas.translate.SchemaMetadataTranslator;
 import com.cloudera.dim.atlas.translate.SchemaVersionInfoTranslator;
 import com.cloudera.dim.atlas.types.MetadataEntityDef;
 import com.cloudera.dim.atlas.types.Model;
+import com.cloudera.dim.atlas.types.SchemaVersionRelationshipDef;
+import com.cloudera.dim.atlas.types.VersionEntityDef;
 import com.cloudera.dim.atlas.types.kafka.KafkaExtendedModel;
 import com.cloudera.dim.atlas.types.kafka.KafkaTopicEntityDef;
 import com.cloudera.dim.atlas.types.kafka.KafkaTopicSchemaRelationshipDef;
@@ -92,18 +94,48 @@ public class AtlasPluginImpl implements AtlasPlugin {
 
     @Override
     public void setupAtlasModel() {
-        try {
-            LOG.info("Creating Atlas model for Schema Registry");
-            Model model = new Model();
-            AtlasTypesDef createdTypeDefs = atlasClient.createAtlasTypeDefs(model);
+        Model model = new Model();
+        createOrUpdateAtlasModel(model, false);
+    }
 
-            checkNotNull(createdTypeDefs, "No type defs have been created or Atlas failed to respond.");
+    // First we try to create the model and if that fails (due to some types existing) then we retry with an update
+    private void createOrUpdateAtlasModel(Model model, boolean update) {
+        try {
+            AtlasTypesDef createdTypeDefs;
+
+            if (!update) {
+                createdTypeDefs = atlasClient.createAtlasTypeDefs(model);
+            } else {
+                createdTypeDefs = atlasClient.updateAtlasTypeDefs(model);
+            }
+
+            if (!update) {
+                checkNotNull(createdTypeDefs, "No type defs have been created or Atlas failed to respond.");
+            }
 
             // The response contains the entity and relationship defs which have been created. We need
             // to compare the expected with the actual to see if everything was created.
             checkState(model.equals(createdTypeDefs), "Not all type definitions were created successfully.");
         } catch (AtlasServiceException asex) {
-            throw new AtlasUncheckedException("Error while creating the SchemaRegistry model in Atlas.", asex);
+            if (!update && asex.getStatus() == ClientResponse.Status.CONFLICT) {
+                createOrUpdateAtlasModel(model, true);
+            } else {
+                throw new AtlasUncheckedException("Error while creating the SchemaRegistry model in Atlas.", asex);
+            }
+        }
+    }
+
+    @Override
+    public boolean isAtlasModelInitialized() {
+        try {
+            return findTypeDefByName(MetadataEntityDef.SCHEMA_METADATA_INFO).isPresent() &&
+                    findTypeDefByName(VersionEntityDef.SCHEMA_VERSION_INFO).isPresent() &&
+                    findRelationshipDefByName(SchemaVersionRelationshipDef.RELATIONSHIP_NAME).isPresent();
+        } catch (AtlasServiceException asex) {
+            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                return false;
+            }
+            throw new AtlasUncheckedException("Error while querying Atlas about the type model.", asex);
         }
     }
 
@@ -132,6 +164,9 @@ public class AtlasPluginImpl implements AtlasPlugin {
             return findTypeDefByName(KafkaTopicEntityDef.KAFKA_TOPIC).isPresent() &&
                     findRelationshipDefByName(KafkaTopicSchemaRelationshipDef.RELATIONSHIP_NAME).isPresent();
         } catch (AtlasServiceException asex) {
+            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+                return false;
+            }
             throw new AtlasUncheckedException("Error while querying Atlas about the type model.", asex);
         }
     }

@@ -70,6 +70,7 @@ public class TestAtlasServer extends AbstractTestServer {
     private Expectation createRelationshipExpectation;
     private Expectation queryByGuidExpectation;
     private Expectation updateMetaExpectation;
+    private Expectation createModelExpectation;
 
     public TestAtlasServer(GlobalState sow) {
         this.sow = sow;
@@ -94,6 +95,7 @@ public class TestAtlasServer extends AbstractTestServer {
         queryMetaByName();
         queryByGuidExpectation = queryByGuid();
         createRelationshipExpectation = createOneToManyRelationship();
+        createModelExpectation = createAtlasModel();
 
         // we need to set the -Datlas.conf property for AtlasClient to work
         String atlasProps = configGenerator.generateAtlasProperties();
@@ -352,6 +354,23 @@ public class TestAtlasServer extends AbstractTestServer {
         return expectations[0];
     }
 
+    private Expectation createAtlasModel() {
+        HttpRequest expectedRequest = request()
+                .withMethod("POST")
+                .withPath("/api/atlas/v2/types/typedefs/")
+                .withContentType(MediaType.APPLICATION_JSON_UTF_8);
+
+        Expectation[] expectations = mockWebServer
+                .when(expectedRequest)
+                .respond(request -> {
+                    checkNotNull(request.getBodyAsString(), "Empty request.");
+
+                    return response().withBody(request.getBodyAsString(), MediaType.JSON_UTF_8);
+                });
+
+        return expectations[0];
+    }
+
     @SuppressWarnings("unchecked")
     public boolean verifyCreateMetaRequest(String schemaName) {
         try {
@@ -434,6 +453,16 @@ public class TestAtlasServer extends AbstractTestServer {
             }
 
             return false;
+        } catch (AssertionError aex) {
+            LOG.error("Mock expectation failed.", aex);
+            return false;
+        }
+    }
+
+    public boolean verifyCreateModelRequest() {
+        try {
+            mockWebServer.verify(new ExpectationId().withId(createModelExpectation.getId()));
+            return true;
         } catch (AssertionError aex) {
             LOG.error("Mock expectation failed.", aex);
             return false;

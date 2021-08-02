@@ -54,6 +54,11 @@ public interface AtlasPlugin {
     void setupAtlasModel();
 
     /**
+     * Have we created the Schema Registry model in Atlas?
+     */
+    boolean isAtlasModelInitialized();
+
+    /**
      * Create a relationship between the kafka_topic entity and schema_metadata_info. This only works if
      * the kafka_topic type exists. If it doesn't, the <tt>false</tt> is returned.
      */

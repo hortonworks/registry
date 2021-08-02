@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 
 public class AtlasEventLogger {
 
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).setNameFormat("audit-processor-%d").build());
+    private final ExecutorService threadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("audit-processor-%d").build());
     private final StorageManager storageManager;
     private String username = System.getProperty("user.name");
 

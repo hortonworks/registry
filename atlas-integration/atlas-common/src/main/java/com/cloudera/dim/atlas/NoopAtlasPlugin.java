@@ -32,6 +32,11 @@ public class NoopAtlasPlugin implements AtlasPlugin {
     public void setupAtlasModel() { }
 
     @Override
+    public boolean isAtlasModelInitialized() {
+        return true;
+    }
+
+    @Override
     public boolean setupKafkaSchemaModel() {
         return true;
     }

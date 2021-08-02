@@ -129,27 +129,6 @@ public class ThenSteps extends AbstractSteps {
         assertTrue((Boolean) sow.getValue(COMPATIBILITY));
     }
 
-    @SuppressWarnings("unchecked")
-    @Then("after waiting for no more than {int} seconds, a request is sent to Atlas to query existing schemas")
-    public void afterWaitingForNoMoreThanSecondsARequestIsSentToAtlasToQueryExistingSchemas(int maxTimeout) throws Exception {
-        pollSow(maxTimeout, sow -> {
-            /*
-            List<HttpRequest> requests = (List<HttpRequest>) sow.getValue(ATLAS_REQUESTS_SENT);
-            if (CollectionUtils.isEmpty(requests)) {
-                return false;
-            }
-            for (HttpRequest req : requests) {
-                if ("GET".equals(req.getMethod().getValue()) && ("/api/atlas/v2/entity/uniqueAttribute/type/" + SCHEMA_META_TYPE_NAME).equals(req.getPath().getValue())) {
-                    // success
-                    return true;
-                }
-            }
-
-             */
-            return false;
-        });
-    }
-
     @Then("after waiting for no more than {int} seconds, a request is sent to Atlas to create a new schema {string}")
     public void afterWaitingARequestIsSentToAtlasToCreateANewSchemaAndBranch(int maxWait, String schemaName) throws Exception {
         pollSow(maxWait, sow -> testAtlasServer.verifyCreateMetaRequest(schemaName));
@@ -163,6 +142,11 @@ public class ThenSteps extends AbstractSteps {
     @Then("after waiting for no more than {int} seconds, a request is sent to Atlas to update schema {string}")
     public void afterWaitingARequestIsSentToAtlasToUpdateSchema(int maxWait, String schemaName) throws Exception {
         pollSow(maxWait, sow -> testAtlasServer.verifyUpdateMetaRequest(schemaName));
+    }
+
+    @Then("the model should be created in Atlas")
+    public void theModelShouldBeCreatedInAtlas() throws Exception {
+        pollSow(10, sow -> testAtlasServer.verifyCreateModelRequest());
     }
 
     /** Poll the StateOfTheWorld every 100ms. If the condition doesn't happen for maxTimeoutSec, an exception is thrown. */
