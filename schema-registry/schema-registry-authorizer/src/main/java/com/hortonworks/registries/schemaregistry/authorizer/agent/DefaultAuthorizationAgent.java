@@ -163,7 +163,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if (smi == null) {
-            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName);
+            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName, schemaMetadataName);
         }
 
         Authorizer.SchemaMetadataResource schemaMetadataResource = new Authorizer.SchemaMetadataResource(
@@ -188,7 +188,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if (smi == null) {
-            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName);
+            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName, schemaMetadataName);
         }
         authorizeSchemaMetadata(userAndGroups,
                 smi,
@@ -233,7 +233,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         SchemaMetadataInfo schemaMeta = schemaRegistry.getSchemaMetadataInfo(schemaMetadataId);
         if (schemaMeta == null) {
-            throw new SchemaNotFoundException("Could not find schema with ID " + schemaMetadataId);
+            throw new SchemaNotFoundException("Could not find schema with ID " + schemaMetadataId, String.valueOf(schemaMetadataId));
         }
         SchemaMetadata sM = schemaMeta.getSchemaMetadata();
         String sGroup = sM.getSchemaGroup();
@@ -245,7 +245,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         Collection<SchemaBranch> branchSet = schemaRegistry.getSchemaBranchesForVersion(schemaVersionId);
         if (branchSet.isEmpty()) {
-            throw new SchemaNotFoundException("Schema version with id : " + schemaVersionId + " not found");
+            throw new SchemaNotFoundException("Schema version with id : " + schemaVersionId + " not found", String.valueOf(schemaVersionId));
         }
         String branch = getPrimaryBranch(branchSet);
         Authorizer.SchemaVersionResource schemaVersionResource =
@@ -298,7 +298,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if (smi == null) {
-            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName);
+            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName, schemaMetadataName);
         }
         SchemaMetadata sm = smi.getSchemaMetadata();
         String sGroup = sm.getSchemaGroup();
@@ -370,7 +370,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName);
+            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName, schemaMetadataName);
         }
         authorizeSchemaVersion(userAndGroups, schemaMetadataInfo, schemaBranch, accessType);
     }
@@ -416,7 +416,7 @@ public class DefaultAuthorizationAgent implements AuthorizationAgent {
 
         SchemaMetadataInfo smi = schemaRegistry.getSchemaMetadataInfo(schemaMetadataName);
         if (smi == null) {
-            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName);
+            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaMetadataName, schemaMetadataName);
         }
 
         authorizeSerDes(userAndGroups, AccessType.READ);

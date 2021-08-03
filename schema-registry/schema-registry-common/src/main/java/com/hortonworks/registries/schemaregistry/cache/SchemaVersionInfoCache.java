@@ -106,7 +106,12 @@ public class SchemaVersionInfoCache implements AbstractCache {
             return schemaVersionInfo;
         } catch (ExecutionException e) {
             if (e.getCause().getClass() == SchemaNotFoundException.class) {
-                throw (SchemaNotFoundException) e.getCause();
+                SchemaNotFoundException exception = (SchemaNotFoundException) e.getCause();
+                if (key.schemaVersionKey != null) {
+                    throw new SchemaNotFoundException(exception.getMessage(), key.schemaVersionKey.toString());
+                } else {
+                    throw exception;
+                }
             }
             throw new RuntimeException(e);
         }

@@ -152,7 +152,7 @@ public class AtlasEventsProcessor implements Runnable {
     private void createMeta(Long schemaMetadataId) throws SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getMetaById(schemaMetadataId);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("Did not find schema with ID " + schemaMetadataId);
+            throw new SchemaNotFoundException("Did not find schema with ID " + schemaMetadataId, String.valueOf(schemaMetadataId));
         }
 
         String metaGuid = atlasPlugin.createMeta(schemaMetadataInfo);
@@ -171,7 +171,7 @@ public class AtlasEventsProcessor implements Runnable {
     private void updateMeta(Long schemaMetadataId) throws SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getMetaById(schemaMetadataId);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("Did not find schema with ID " + schemaMetadataId);
+            throw new SchemaNotFoundException("Did not find schema with ID " + schemaMetadataId, String.valueOf(schemaMetadataId));
         }
 
         atlasPlugin.updateMeta(schemaMetadataInfo.getSchemaMetadata());
@@ -180,12 +180,12 @@ public class AtlasEventsProcessor implements Runnable {
     private void createVersion(Long versionId) throws SchemaNotFoundException {
         SchemaVersionInfo persistedVersion = getVersionById(versionId);
         if (persistedVersion == null) {
-            throw new SchemaNotFoundException("Did not find schema version with ID " + versionId);
+            throw new SchemaNotFoundException("Did not find schema version with ID " + versionId, String.valueOf(versionId));
         }
 
         SchemaMetadataInfo persistedMeta = getMetaById(persistedVersion.getSchemaMetadataId());
         if (persistedMeta == null) {
-            throw new SchemaNotFoundException("Did not find schema with ID " + persistedVersion.getSchemaMetadataId() + " for version with ID " + versionId);
+            throw new SchemaNotFoundException("Did not find schema with ID " + persistedVersion.getSchemaMetadataId() + " for version with ID " + versionId, String.valueOf(versionId));
         }
 
         atlasPlugin.addSchemaVersion(persistedMeta.getSchemaMetadata().getName(), persistedVersion);

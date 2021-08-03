@@ -401,7 +401,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
         AtlasEntity.AtlasEntityWithExtInfo metaEntityInfo = atlasClient.getEntityByAttribute(
                 MetadataEntityDef.SCHEMA_METADATA_INFO, ImmutableMap.of(MetadataEntityDef.NAME, schemaName));
         if (metaEntityInfo == null || metaEntityInfo.getEntity() == null) {
-            throw new SchemaNotFoundException("Schema meta entity for name \"" + schemaName + "\" was null");
+            throw new SchemaNotFoundException("Schema meta entity for name \"" + schemaName + "\" was null", schemaName);
         }
         return metaEntityInfo.getEntity();
     }

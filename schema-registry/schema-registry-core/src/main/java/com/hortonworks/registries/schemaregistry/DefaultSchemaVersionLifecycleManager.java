@@ -165,7 +165,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
 
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("Schema not found with name " + schemaName);
+            throw new SchemaNotFoundException("Schema not found with name " + schemaName, schemaName);
         }
 
         Collection<SchemaVersionStorable> storables = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams,
@@ -199,7 +199,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
 
         SchemaVersionStorable versionedSchema = storageManager.get(storableKey);
         if (versionedSchema == null) {
-            throw new SchemaNotFoundException("No Schema version exists with id " + id);
+            throw new SchemaNotFoundException("No Schema version exists with id " + id, String.valueOf(id));
         }
         return versionedSchema.toSchemaVersionInfo();
     }
@@ -257,7 +257,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
         final Collection<SchemaVersionStorable> schemas = storageManager.find(SchemaVersionStorable.NAME_SPACE, queryParams, orderParams);
 
         if (schemas.isEmpty()) {
-            throw new SchemaNotFoundException(String.format("No schema found for fingerprint: %s", fingerprint));
+            throw new SchemaNotFoundException(String.format("No schema found for fingerprint: %s", fingerprint), fingerprint);
         } else {
             if (schemas.size() > 1) {
                 LOG.warn(String.format("Multiple schemas found for the same fingerprint: %s", fingerprint));
@@ -398,7 +398,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
                                                                              schemaVersionId.toString())),
                                     Collections.singletonList(OrderByField.of(SchemaVersionStateStorable.SEQUENCE, true)));
         if (schemaVersionStates.isEmpty()) {
-            throw new SchemaNotFoundException("No schema versions found with id " + schemaVersionId);
+            throw new SchemaNotFoundException("No schema versions found with id " + schemaVersionId, String.valueOf(schemaVersionId));
         }
         SchemaVersionStateStorable stateStorable = schemaVersionStates.iterator().next();
 
@@ -430,7 +430,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
                                     queryParams,
                                     Collections.singletonList(OrderByField.of(SchemaVersionStateStorable.SEQUENCE, true)));
         if (schemaVersionStates.isEmpty()) {
-            throw new SchemaNotFoundException("No schema versions found with id " + schemaVersionId);
+            throw new SchemaNotFoundException("No schema versions found with id " + schemaVersionId, String.valueOf(schemaVersionId));
         }
         SchemaVersionStateStorable stateStorable = schemaVersionStates.iterator().next();
 
@@ -464,7 +464,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
         StorableKey storableKey = new StorableKey(SchemaVersionStorable.NAME_SPACE, SchemaVersionStorable.getPrimaryKey(schemaVersionId));
         SchemaVersionStorable versionedSchema = storageManager.get(storableKey);
         if (versionedSchema == null) {
-            throw new SchemaNotFoundException("No Schema version exists with id " + schemaVersionId);
+            throw new SchemaNotFoundException("No Schema version exists with id " + schemaVersionId, String.valueOf(schemaVersionId));
         }
         versionedSchema.setState(state.getId());
         LOG.debug("New state for version {}: {}", versionedSchema.getVersion(), state.getName());
@@ -598,7 +598,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
                 }
                 schemaVersionInfo = versionedSchemas.iterator().next().toSchemaVersionInfo();
             } else {
-                throw new SchemaNotFoundException("No Schema version exists with name " + schemaName + " and version " + version);
+                throw new SchemaNotFoundException("No Schema version exists with name " + schemaName + " and version " + version, schemaName);
             }
         }
         LOG.info("##### fetched schema version info [{}]", schemaVersionInfo);

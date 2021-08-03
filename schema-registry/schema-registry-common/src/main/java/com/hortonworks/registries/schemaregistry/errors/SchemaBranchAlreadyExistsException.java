@@ -17,11 +17,18 @@
 package com.hortonworks.registries.schemaregistry.errors;
 
 public class SchemaBranchAlreadyExistsException extends Exception {
+
+    private String entity;
     public SchemaBranchAlreadyExistsException() {
     }
 
     public SchemaBranchAlreadyExistsException(String message) {
         super(message);
+    }
+
+    public SchemaBranchAlreadyExistsException(String message, String entity) {
+        super(message);
+        this.entity = entity;
     }
 
     public SchemaBranchAlreadyExistsException(String message, Throwable cause) {
@@ -34,5 +41,8 @@ public class SchemaBranchAlreadyExistsException extends Exception {
 
     public SchemaBranchAlreadyExistsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+    }
+    public String getEntity() {
+        return entity;
     }
 }
