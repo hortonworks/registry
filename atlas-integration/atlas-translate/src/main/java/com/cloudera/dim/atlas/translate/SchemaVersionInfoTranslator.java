@@ -52,7 +52,7 @@ public class SchemaVersionInfoTranslator implements AtlasTranslator<SchemaVersio
         Map<String, Object> attributes = new LinkedHashMap<>();
         atlasEntity.setAttributes(attributes);
         attributes.put(ID, svi.getId());
-        attributes.put(NAME, svi.getName());
+        attributes.put(NAME, String.format("%s v%d", svi.getName(), svi.getVersion()));
         attributes.put(VERSION, svi.getVersion());
         attributes.put(DESCRIPTION, svi.getDescription());
         attributes.put(SCHEMA_TEXT, svi.getSchemaText());

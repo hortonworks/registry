@@ -32,7 +32,7 @@ Feature: Integration with Atlas
     }
     """
     Then the version is successfully created
-    And after waiting for no more than 10 seconds, a request is sent to Atlas to create a new version of schema "Car"
+    And after waiting for no more than 10 seconds, a request is sent to Atlas to create a new version of schema "Car v1"
     
     When we create a new version for schema "Car" with the following schema:
     """
@@ -47,7 +47,7 @@ Feature: Integration with Atlas
     }
     """
     Then the version is successfully created
-    And after waiting for no more than 10 seconds, a request is sent to Atlas to create a new version of schema "Car"
+    And after waiting for no more than 10 seconds, a request is sent to Atlas to create a new version of schema "Car v2"
 
 
     When we create a new version for schema "Car" with the following schema:
@@ -60,7 +60,7 @@ Feature: Integration with Atlas
     }
     """
     Then the version is successfully created
-    And after waiting for no more than 10 seconds, a request is sent to Atlas to create a new version of schema "Car"
+    And after waiting for no more than 10 seconds, a request is sent to Atlas to create a new version of schema "Car v3"
 
 
     When we update the schema "Car" with the following parameters:
