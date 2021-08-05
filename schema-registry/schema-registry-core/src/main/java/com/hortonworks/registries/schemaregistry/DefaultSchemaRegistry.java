@@ -15,6 +15,7 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.FileStorage;
@@ -126,8 +127,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         this.schemaVersionLifecycleManager = new DefaultSchemaVersionLifecycleManager(storageManager,
                 configuration, schemaMetadataFetcher, schemaBranchCache);
 
-        Collection<? extends SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig,
-                schemaVersionLifecycleManager.getSchemaVersionRetriever());
+        Collection<SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig, schemaVersionLifecycleManager.getSchemaVersionRetriever());
 
         this.schemaTypeWithProviders = schemaProviders.stream().collect(Collectors.toMap(SchemaProvider::getType, Function.identity()));
 
@@ -184,38 +184,33 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaProvider getSchemaProvider(String providerType);
     }
 
-    private Collection<? extends SchemaProvider> initSchemaProviders(final Collection<Map<String, Object>> schemaProvidersConfig,
+    private Collection<SchemaProvider> initSchemaProviders(final Collection<Map<String, Object>> schemaProvidersConfig,
                                                                      final SchemaVersionRetriever schemaVersionRetriever) {
         if (schemaProvidersConfig == null || schemaProvidersConfig.isEmpty()) {
             throw new IllegalArgumentException("No [" + SCHEMA_PROVIDERS + "] property is configured in schema registry configuration file.");
         }
 
-        return schemaProvidersConfig.stream()
-                                    .map(schemaProviderConfig -> {
-                                        String className = (String) schemaProviderConfig.get("providerClass");
-                                        if (className == null || className.isEmpty()) {
-                                            throw new IllegalArgumentException("Schema provider class name must be non empty, " +
-                                                    "Invalid provider class name [" + className + "]");
-                                        }
+        final ImmutableList.Builder<SchemaProvider> result = ImmutableList.builder();
+        for (Map<String, Object> schemaProviderConfig : schemaProvidersConfig) {
+            String className = (String) schemaProviderConfig.get("providerClass");
+            if (className == null || className.isEmpty()) {
+                throw new IllegalArgumentException("Schema provider class name must be non empty, Invalid provider class name [" + className + "]");
+            }
 
-                                        try {
-                                            SchemaProvider schemaProvider =
-                                                    (SchemaProvider) Class.forName(className,
-                                                                                   true,
-                                                                                   Thread.currentThread()
-                                                                                         .getContextClassLoader())
-                                                                          .newInstance();
-                                            HashMap<String, Object> config = new HashMap<>(schemaProviderConfig);
-                                            config.put(SchemaProvider.SCHEMA_VERSION_RETRIEVER_CONFIG, schemaVersionRetriever);
-                                            schemaProvider.init(Collections.unmodifiableMap(config));
+            try {
+                SchemaProvider schemaProvider = (SchemaProvider) Class.forName(className, true, Thread.currentThread().getContextClassLoader()).newInstance();
+                HashMap<String, Object> config = new HashMap<>(schemaProviderConfig);
+                config.put(SchemaProvider.SCHEMA_VERSION_RETRIEVER_CONFIG, schemaVersionRetriever);
+                schemaProvider.init(Collections.unmodifiableMap(config));
 
-                                            return schemaProvider;
-                                        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                                            LOG.error("Error encountered while loading SchemaProvider [{}] ", className, e);
-                                            throw new IllegalArgumentException(e);
-                                        }
-                                    })
-                                    .collect(Collectors.toList());
+                result.add(schemaProvider);
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                LOG.error("Error encountered while loading SchemaProvider [{}] ", className, e);
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        return result.build();
     }
 
     @Override

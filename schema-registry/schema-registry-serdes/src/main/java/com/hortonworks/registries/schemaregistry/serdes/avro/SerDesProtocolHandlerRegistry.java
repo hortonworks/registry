@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
+import com.hortonworks.registries.schemaregistry.serdes.json.JsonSerDesProtocolHandler;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,6 +34,7 @@ public final class SerDesProtocolHandlerRegistry {
     public static final byte VERSION_ID_AS_LONG_PROTOCOL = 0x2;
     public static final byte VERSION_ID_AS_INT_PROTOCOL = 0x3;
     public static final byte CURRENT_PROTOCOL = VERSION_ID_AS_INT_PROTOCOL;
+    public static final byte JSON_PROTOCOL = 0x4;
 
     private static final SerDesProtocolHandlerRegistry INSTANCE = new SerDesProtocolHandlerRegistry();
 
@@ -54,7 +56,8 @@ public final class SerDesProtocolHandlerRegistry {
         List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new ConfluentProtocolHandler(), 
                 new SchemaMetadataIdProtocolHandler(),
                 new SchemaVersionIdAsIntProtocolHandler(), 
-                new SchemaVersionIdAsLongProtocolHandler());
+                new SchemaVersionIdAsLongProtocolHandler(),
+                new JsonSerDesProtocolHandler());
         for (SerDesProtocolHandler inbuiltHandler : inbuiltHandlers) {
             registerSerDesProtocolHandler(inbuiltHandler);
         }

@@ -88,11 +88,18 @@ ext.libraries = [
       dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
       dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:$versions_jackson2",
       dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
+      datatype_json_org : "com.fasterxml.jackson.datatype:jackson-datatype-json-org:$versions_jackson2",
+      datatype_guava : "com.fasterxml.jackson.datatype:jackson-datatype-guava:$versions_jackson2",
+      datatype_jsk8  : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$versions_jackson2",
+      datatype_joda  : "com.fasterxml.jackson.datatype:jackson-datatype-joda:$versions_jackson2",
+      datatype_jsr310: "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$versions_jackson2",
+      parameter_names: "com.fasterxml.jackson.module:jackson-module-parameter-names:$versions_jackson2",
       jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson2",
       mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
-      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_2.12:$versions_jackson_scala",
+      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version:$versions_jackson_scala",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
+   json_kjetland     : "com.kjetland:mbknor-jackson-jsonschema_$kafka_scala_version:$versions_json_kjetland",
 
    jersey: [
       client: dependencies.create("org.glassfish.jersey.core:jersey-client:$versions_jersey") {
@@ -108,7 +115,7 @@ ext.libraries = [
    joda_time         : "joda-time:joda-time:$versions_joda_time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
 
-   json_schema_validator : "com.github.fge:json-schema-validator:$versions_json_schema_validator",
+   json_schema_validator : "com.github.everit-org.json-schema:org.everit.json.schema:$versions_json_schema_validator",
    junit             : "org.junit.jupiter:junit-jupiter:$versions_junit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
    mockito_junit5    : "org.mockito:mockito-junit-jupiter:$versions_mockito",
@@ -152,7 +159,7 @@ ext.libraries = [
 
    kafka: [
      avro_serializer : "io.confluent:kafka-avro-serializer:$versions_kafka_avro",
-     core : dependencies.create("org.apache.kafka:kafka_2.12:$versions_kafka") {
+     core : dependencies.create("org.apache.kafka:kafka_$kafka_scala_version:$versions_kafka") {
          exclude group: 'org.apache.zookeeper', module: 'zookeeper'
          exclude group: 'log4j', module: 'log4j'
      },
@@ -160,7 +167,7 @@ ext.libraries = [
      streams         : "org.apache.kafka:kafka-streams:$versions_kafka",
      streams_test_utils: "org.apache.kafka:kafka-streams-test-utils:$versions_kafka",
      test: [
-         core         : "org.apache.kafka:kafka_2.12:$versions_kafka:test",
+         core         : "org.apache.kafka:kafka_$kafka_scala_version:$versions_kafka:test",
          clients      : "org.apache.kafka:kafka-clients:$versions_kafka:test",
          streams      : "org.apache.kafka:kafka-streams:$versions_kafka:test",
          streams_test_utils: "org.apache.kafka:kafka-streams-test-utils:$versions_kafka:test"

@@ -23,6 +23,7 @@ dependencies {
     
     compile libraries.jackson.jaxrs
     compile libraries.jersey.media_json
+    compile libraries.json_kjetland
 
     compile libraries.avro
     compile libraries.commons.io

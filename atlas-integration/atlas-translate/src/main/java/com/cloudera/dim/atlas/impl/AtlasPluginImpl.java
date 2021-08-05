@@ -233,7 +233,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
 
         List<AtlasEntityHeader> headers = new ArrayList<>();
         
-        if (result != null) {
+        if (result != null && result.getEntities() != null) {
             for (AtlasEntityHeader aeh : result.getEntities()) {
                 if (KafkaTopicEntityDef.KAFKA_TOPIC.equals(aeh.getTypeName()) && topicName.equals(aeh.getAttribute(KafkaTopicEntityDef.NAME))) {
                     headers.add(aeh);
