@@ -726,7 +726,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
 
         if (existingSchemaBranch != null) {
-            throw new SchemaBranchAlreadyExistsException(String.format("A schema branch with name : '%s' already exists", schemaBranch.getName()), schemaBranch.getName());
+            throw new SchemaBranchAlreadyExistsException(String.format("A schema branch with name : '%s' already exists", schemaBranch.getName()));
         }
         SchemaBranchStorable schemaBranchStorable = SchemaBranchStorable.from(schemaBranch);
         schemaBranchStorable.setSchemaMetadataName(schemaVersionInfo.getName());

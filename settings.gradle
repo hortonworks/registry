@@ -40,7 +40,7 @@ include ':atlas-integration:atlas-module'
 include ':examples:schema-registry:serdes-examples'
 include ':examples:schema-registry:avro-examples'
 include ':examples:schema-registry:schema-lifecycle'
-//include ':behavior-tests'
+include ':behavior-tests'
 include ':registry-dist'
 include ':docker'
 

@@ -20,9 +20,12 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
-import com.hortonworks.registries.common.exception.ErrorCallback;
-import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
+import com.hortonworks.registries.storage.transaction.UnitOfWork;
+import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -33,15 +36,11 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
-import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
-import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
-import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -61,6 +60,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -102,18 +102,28 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @UnitOfWork
     public Response getSchemaById(@ApiParam(value = "schema version id", required = true) @PathParam("id") Long id,
                                   @Context SecurityContext securityContext) {
-        return wrapper(() -> {
+        Response response;
+        try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(new SchemaIdVersion(id));
-            if (schemaVersionInfo == null) {
-                return schemaNotFoundError();
-            }
             authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     schemaVersionInfo, Authorizer.AccessType.READ);
 
             SchemaString schema = new SchemaString();
             schema.setSchema(schemaVersionInfo.getSchemaText());
-            return WSUtils.respondEntity(schema, Response.Status.OK);
-        });
+            response = WSUtils.respondEntity(schema, Response.Status.OK);
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema version found with id [{}]", id, ex);
+            response = schemaNotFoundError();
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving Schema with id: [{}]", id, ex);
+            response = serverError();
+        }
+        return response;
     }
 
     @GET
@@ -123,15 +133,22 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @Timed
     @UnitOfWork
     public Response getSubjects(@Context SecurityContext securityContext) {
-        return wrapper(() -> {
+        Response response;
+        try {
             List<String> registeredSubjects = authorizationAgent.authorizeFindSchemas(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry.findSchemaMetadata(Collections.emptyMap()))
                     .stream()
                     .map(x -> x.getSchemaMetadata().getName())
                     .collect(Collectors.toList());
 
-            return WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
-        });
+            response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
+        }
+        return response;
     }
 
     public static class ErrorMessage {
@@ -199,7 +216,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                    @PathParam("subject")
                                            String subject,
                                    @Context SecurityContext securityContext) {
-        return wrapper(() -> {
+        Response response;
+        try {
             List<Integer> registeredSubjects = authorizationAgent.authorizeGetAllVersions(authorizationUtils.getUserAndGroups(securityContext),
                     schemaRegistry,
                     schemaRegistry.getAllVersions(subject))
@@ -207,36 +225,17 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                     .map(SchemaVersionInfo::getVersion)
                     .collect(Collectors.toList());
 
-            return WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
-        });
+            response = WSUtils.respondEntity(registeredSubjects, Response.Status.OK);
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema found with subject [{}]", subject, ex);
+            response = subjectNotFoundError();
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
         }
-
-    private Response wrapper(ErrorCallback method) {
-    try {
-        return method.call();
-    } catch (Exception e) {
-        if (e instanceof AuthorizationException) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.confluentRespond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } else if (e instanceof InvalidSchemaException) {
-            LOG.error("Given schema is invalid", e);
-            return invalidSchemaError();
-        } else if (e instanceof IncompatibleSchemaException) {
-            LOG.error("Incompatible schema error encountered while adding subject. ", e);
-            return incompatibleSchemaError();
-        } else if (e instanceof UnsupportedSchemaTypeException) {
-            LOG.error("Unsupported schema type encountered while adding subject. ", e);
-            return incompatibleSchemaError();
-        } else if (e instanceof SchemaNotFoundException) {
-            LOG.error("No schema found. ", e);
-            return subjectNotFoundError();
-        } else if (e instanceof RangerException) {
-            return WSUtils.confluentRespond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, e.getMessage());
-        } else {
-            LOG.error("Encountered error while retrieving all subjects", e);
-            return serverError();
-    }
-    }
+        return response;
     }
 
     @GET
@@ -252,14 +251,15 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                      @PathParam("versionId")
                                              String versionId,
                                      @Context SecurityContext securityContext) {
-        return wrapper(() -> {
+        Response response;
+        try {
             SchemaVersionInfo schemaVersionInfo = null;
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
             if ("latest".equals(versionId)) {
                 schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(subject);
             } else {
                 if (schemaMetadataInfo == null) {
-                    throw new SchemaNotFoundException(subject);
+                    throw new SchemaNotFoundException();
                 }
                 SchemaVersionInfo fetchedSchemaVersionInfo = null;
                 try {
@@ -286,7 +286,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             }
 
             if (schemaVersionInfo == null) {
-                return versionNotFoundError();
+                response = versionNotFoundError();
             } else {
                 authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaVersionInfo, Authorizer.AccessType.READ);
@@ -294,9 +294,21 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                                                                schemaVersionInfo.getVersion(),
                                                                                schemaVersionInfo.getId(),
                                                                                schemaVersionInfo.getSchemaText());
-                return WSUtils.respondEntity(schema, Response.Status.OK);
+                response = WSUtils.respondEntity(schema, Response.Status.OK);
             }
-        });
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema found with subject [{}]", subject, ex);
+            response = subjectNotFoundError();
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
+        }
+        return response;
     }
 
     @POST
@@ -310,19 +322,35 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                          @ApiParam(value = "Confluent Schema Registry compatible schema text in one line", required = true) 
                                                  String schema,
                                          @Context SecurityContext securityContext) {
-        return wrapper(() -> {
+        Response response;
+        try {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(subject, schemaStringFromJson(schema).getSchema());
 
             if (schemaVersionInfo != null) {
                 authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaVersionInfo, Authorizer.AccessType.READ);
-                return WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), 
+                response = WSUtils.respondEntity(new Schema(schemaVersionInfo.getName(), 
                         schemaVersionInfo.getVersion(), schemaVersionInfo.getId(), schemaVersionInfo.getSchemaText()), Response.Status.OK);
             } else {
-                return schemaNotFoundError();
+                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, subject);
             }
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (InvalidSchemaException ex) {
+            LOG.error("Given schema is invalid", ex);
+            response = invalidSchemaError();
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema found with subject [{}]", subject, ex);
+            response = subjectNotFoundError();
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving schema version with subject: [{}]", subject, ex);
+            response = serverError();
         }
-        );
+
+        return response;
     }
 
     @POST
@@ -341,7 +369,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
 
-        return wrapper(() -> {
+        Response response;
+        try {
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
             Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
             if (schemaMetadataInfo == null) {
@@ -366,9 +395,28 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
 
             Id id = new Id();
             id.setId(schemaVersionInfo.getSchemaVersionId());
-            return WSUtils.respondEntity(id, Response.Status.OK);
+            response = WSUtils.respondEntity(id, Response.Status.OK);
 
-        });
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (InvalidSchemaException ex) {
+            LOG.error("Invalid schema error encountered while adding subject [{}]", subject, ex);
+            response = invalidSchemaError();
+        } catch (IncompatibleSchemaException ex) {
+            LOG.error("Incompatible schema error encountered while adding subject [{}]", subject, ex);
+            response = incompatibleSchemaError();
+        } catch (UnsupportedSchemaTypeException ex) {
+            LOG.error("Unsupported schema type encountered while adding subject [{}]", subject, ex);
+            response = incompatibleSchemaError();
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while adding subject [{}]", subject, ex);
+            response = serverError();
+        }
+
+        return response;
     }
 
     @POST
@@ -382,11 +430,12 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                                                  @PathParam("version") @NotNull String versionId,
                                                  @ApiParam(value = "schema text to be checked for compatibility", required = true) String schemaText,
                                                  @Context SecurityContext securityContext) {
-        return wrapper(() -> {
+        Response response;
+        try {
             SchemaVersionInfo schemaVersionInfo = null;
             SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(subject);
             if (schemaMetadataInfo == null) {
-                throw new SchemaNotFoundException(subject);
+                throw new SchemaNotFoundException();
             }
             if ("latest".equals(versionId)) {
                 schemaVersionInfo = schemaRegistry.getLatestSchemaVersionInfo(subject);
@@ -407,14 +456,26 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 }
             }
             if (schemaVersionInfo == null) {
-                return versionNotFoundError();
+                response = versionNotFoundError();
             } else {
                 authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaVersionInfo, Authorizer.AccessType.READ);
                 CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(subject, schemaStringFromJson(schemaText).getSchema());
-                return WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
+                response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
             }
-        });
+        } catch (AuthorizationException e) {
+            LOG.debug("Access denied. ", e);
+            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
+        } catch (SchemaNotFoundException ex) {
+            LOG.error("No schema found with subject [{}]", subject, ex);
+            response = subjectNotFoundError();
+        } catch (RangerException rex) {
+            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
+        } catch (Exception ex) {
+            LOG.error("Encountered error while retrieving all subjects", ex);
+            response = serverError();
+        }
+        return response;
     }
 
     public static Response serverError() {

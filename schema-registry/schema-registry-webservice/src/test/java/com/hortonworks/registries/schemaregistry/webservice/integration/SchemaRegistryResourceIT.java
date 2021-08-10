@@ -15,7 +15,6 @@
 package com.hortonworks.registries.schemaregistry.webservice.integration;
 
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
-import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -30,7 +29,6 @@ import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
-import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -90,7 +88,6 @@ public class SchemaRegistryResourceIT {
         atlasEventLogger = mock(AtlasEventLogger.class);
         return ResourceExtension.builder()
                 .addResource(new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null, atlasEventLogger, null))
-                .addProvider(GenericExceptionMapper.class)
                 .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
                 .build();
     }
@@ -393,22 +390,6 @@ public class SchemaRegistryResourceIT {
         //then
         assertEquals(502, response.getStatus());
         verifyNoInteractions(atlasEventLogger);
-    }
-    
-    @Test
-    public void throwUnsupportedSchemaTypeExceptionAddSchemaInfo() {
-        //given
-        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
-        doThrow(new UnsupportedSchemaTypeException("UnsupportedSchemaTypeException")).when(schemaRegistryMock).addSchemaMetadata(schemaMetadata, false);
-
-        //when
-        Response response = testClient.target(
-                String.format("/api/v1/schemaregistry/schemas"))
-                .request(MediaType.APPLICATION_JSON)
-                .post(Entity.json(schemaMetadata), Response.class);
-
-        //then
-        assertEquals(400, response.getStatus());
     }
 
     @Test

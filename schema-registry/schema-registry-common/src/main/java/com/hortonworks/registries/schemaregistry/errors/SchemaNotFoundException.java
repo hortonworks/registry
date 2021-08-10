@@ -19,31 +19,23 @@ package com.hortonworks.registries.schemaregistry.errors;
  * Indicates that schema information (which can be metadata or a specific version) is not found in the repository.
  */
 public class SchemaNotFoundException extends Exception {
-    private String entity;
-    
-    public SchemaNotFoundException(String entity) {
-        this.entity = entity;
+
+    public SchemaNotFoundException() {
     }
 
-    public SchemaNotFoundException(String message, String entity) {
+    public SchemaNotFoundException(String message) {
         super(message);
-        this.entity = entity;
     }
 
     public SchemaNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public SchemaNotFoundException(Throwable cause, String entity) {
+    public SchemaNotFoundException(Throwable cause) {
         super(cause);
-        this.entity = entity;
     }
 
     public SchemaNotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-    }
-
-    public String getEntity() {
-        return entity;
     }
 }

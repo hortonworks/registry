@@ -491,7 +491,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         return getEntity(targets.schemasTarget.path(name), SchemaMetadataInfo.class);
                     });
                 } catch (NotFoundException e) {
-                    throw new SchemaNotFoundException(e, name);
+                    throw new SchemaNotFoundException(e);
                 }
             }
 
@@ -502,7 +502,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         return getEntity(targets.schemasByIdTarget.path(id.toString()), SchemaMetadataInfo.class);
                     });
                 } catch (NotFoundException e) {
-                    throw new SchemaNotFoundException(e, String.valueOf(id));
+                    throw new SchemaNotFoundException(e);
                 }
             }
         };
@@ -613,7 +613,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         int status = response.getStatus();
         if (status == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new SchemaNotFoundException(response.readEntity(String.class), schemaName);
+            throw new SchemaNotFoundException(response.readEntity(String.class));
         } else if (status == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
             throw new RuntimeException(response.readEntity(String.class));
         }
@@ -664,7 +664,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("Schema with name " + schemaName + " not found", schemaName);
+            throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
         }
 
         StreamDataBodyPart streamDataBodyPart = new StreamDataBodyPart("file", schemaVersionInputStream);
@@ -784,7 +784,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("Schema with name " + schemaName + " not found", schemaName);
+            throw new SchemaNotFoundException("Schema with name " + schemaName + " not found");
         }
 
 
@@ -971,7 +971,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             String msg = response.readEntity(String.class);
             return readEntity(msg, SchemaVersionMergeResult.class);
         } else if (status == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new SchemaNotFoundException(response.readEntity(String.class), String.valueOf(schemaVersionId));
+            throw new SchemaNotFoundException(response.readEntity(String.class));
         } else if (status == Response.Status.BAD_REQUEST.getStatusCode()) {
             throw new IncompatibleSchemaException(response.readEntity(String.class));
         } else {
@@ -1016,7 +1016,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             String msg = response.readEntity(String.class);
             SchemaBranch returnedSchemaBranch = readEntity(msg, SchemaBranch.class);
             return returnedSchemaBranch;
-        } else if (status == Response.Status.NOT_FOUND.getStatusCode()) {
+        } else if (status == Response.Status.BAD_REQUEST.getStatusCode()) {
             throw new SchemaNotFoundException(response.readEntity(String.class));
         } else if (status == Response.Status.CONFLICT.getStatusCode()) {
             throw new SchemaBranchAlreadyExistsException(response.readEntity(String.class));
@@ -1043,7 +1043,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         int status = response.getStatus();
         if (status == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new SchemaNotFoundException(response.readEntity(String.class), schemaName);
+            throw new SchemaNotFoundException(response.readEntity(String.class));
         } else if (status != Response.Status.OK.getStatusCode()) {
             throw new RuntimeException(response.readEntity(String.class));
         }

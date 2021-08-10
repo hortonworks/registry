@@ -294,7 +294,7 @@ public abstract class SchemaVersionLifecycleManager {
         if (schemaMetadataInfo != null) {
             return addSchemaVersion(schemaBranchName, schemaMetadataInfo, schemaVersion, disableCanonicalCheck);
         } else {
-            throw new SchemaNotFoundException("SchemaMetadata not found with the schemaName: " + schemaName, schemaName);
+            throw new SchemaNotFoundException("SchemaMetadata not found with the schemaName: " + schemaName);
         }
     }
 
@@ -487,7 +487,7 @@ public abstract class SchemaVersionLifecycleManager {
                                                   boolean disableCanonicalCheck) throws SchemaNotFoundException, InvalidSchemaException, SchemaBranchNotFoundException {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName, schemaName);
+            throw new SchemaNotFoundException("No schema found for schema metadata key: " + schemaName);
         }
 
         return findSchemaVersion(SchemaBranch.MASTER_BRANCH,
@@ -558,7 +558,7 @@ public abstract class SchemaVersionLifecycleManager {
 
         if (schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH)) {
             throw new SchemaNotFoundException(String.format("There is no root schema version attached to the schema branch '%s'",
-                    schemaBranch.getName()), schemaBranch.getName());
+                    schemaBranch.getName()));
         }
 
         List<SchemaVersionInfo> sortedVersionInfo;
@@ -570,7 +570,7 @@ public abstract class SchemaVersionLifecycleManager {
 
         if (sortedVersionInfo == null || sortedVersionInfo.isEmpty()) {
             throw new SchemaNotFoundException(String.format("There were no schema versions attached to schema branch '%s'",
-                    schemaBranch.getName()), schemaBranch.getName());
+                    schemaBranch.getName()));
         }
         return sortedVersionInfo.iterator().next();
     }
@@ -629,7 +629,7 @@ public abstract class SchemaVersionLifecycleManager {
         SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(schemaName);
 
         if (schemaMetadataInfo == null) {
-            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaName, schemaName);
+            throw new SchemaNotFoundException("No SchemaMetadata exists with key: " + schemaName);
         }
 
         return fetchSchemaVersionInfo(schemaVersionKey.getSchemaName(), version);
