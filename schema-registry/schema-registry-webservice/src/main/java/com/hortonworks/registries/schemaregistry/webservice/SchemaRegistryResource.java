@@ -14,22 +14,14 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
-import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.cloudera.dim.atlas.AtlasPlugin;
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
-import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
-import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
-import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
-import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadInputFormat;
-import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
-import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
-import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -48,20 +40,23 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionMergeResult;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
+import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
-import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchAlreadyExistsException;
-import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
-import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
+import com.hortonworks.registries.schemaregistry.exportimport.BulkUploadInputFormat;
+import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
+import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.validator.JarInputStreamValidator;
 import com.hortonworks.registries.schemaregistry.webservice.validator.exception.InvalidJarFileException;
-import com.hortonworks.registries.storage.exception.StorageException;
-import com.hortonworks.registries.common.RegistryConfiguration;
+import com.hortonworks.registries.storage.transaction.UnitOfWork;
 import io.dropwizard.server.AbstractServerFactory;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -95,10 +90,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -176,13 +169,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             tags = OPERATION_GROUP_OTHER)
     @Timed
     public Response getRegisteredSchemaProviderInfos(@Context UriInfo uriInfo) {
-        try {
             Collection<SchemaProviderInfo> schemaProviderInfos = schemaRegistry.getSupportedSchemaProviders();
             return WSUtils.respondEntities(schemaProviderInfos, Response.Status.OK);
-        } catch (Exception ex) {
-            LOG.error("Encountered error while listing schemas", ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
     }
 
     //TODO : Get all the versions across all the branches
@@ -205,8 +193,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                           @QueryParam("validationLevel") String validationLevel,
                                           @QueryParam("compatibility") String compatibility,
                                           @QueryParam("evolve") String evolve,
-                                          @Context SecurityContext securityContext) {
-        try {
+                                          @Context SecurityContext securityContext) throws Exception {
             Map<String, String> filters = createFilterForSchema(Optional.ofNullable(schemaName), 
                     Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(id), 
                     Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), 
@@ -216,18 +203,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                             schemaRegistry.findAggregatedSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.BAD_REQUEST, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while listing schemas", ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
     }
 
     @OPTIONS
@@ -249,35 +224,16 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Timed
     @UnitOfWork
     public Response getAggregatedSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                            @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
-            if (schemaMetadataInfo != null) {
-                schemaMetadataInfo = authorizationAgent
-                        .authorizeGetAggregatedSchemaInfo(authorizationUtils.getUserAndGroups(securityContext),
-                                schemaMetadataInfo);
-                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
-            } else {
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            }
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.BAD_REQUEST, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
+                                            @Context SecurityContext securityContext) throws Exception {
+        AggregatedSchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getAggregatedSchemaMetadataInfo(schemaName);
+        if (schemaMetadataInfo != null) {
+            schemaMetadataInfo = authorizationAgent
+                    .authorizeGetAggregatedSchemaInfo(authorizationUtils.getUserAndGroups(securityContext),
+                            schemaMetadataInfo);
+            return WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
+        } else {
+            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
         }
-
-        return response;
     }
 
     @GET
@@ -297,8 +253,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                 @QueryParam("validationLevel") String validationLevel,
                                 @QueryParam("compatibility") String compatibility,
                                 @QueryParam("evolve") String evolve,
-                                @Context SecurityContext securityContext) {
-        try {
+                                @Context SecurityContext securityContext) throws Exception {
             Map<String, String> filters = createFilterForSchema(Optional.ofNullable(schemaName), 
                     Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.ofNullable(id), 
                     Optional.ofNullable(type), Optional.ofNullable(schemaGroup), Optional.ofNullable(validationLevel), 
@@ -308,27 +263,761 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                     .authorizeFindSchemas(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry.findSchemaMetadata(filters));
 
             return WSUtils.respondEntities(schemaMetadatas, Response.Status.OK);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.BAD_REQUEST, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while listing schemas", ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
     }
-    
+
+    @GET
+    @Path("/search/schemas")
+    @ApiOperation(value = "Search for schema metadata containing the given name and description",
+            notes = "Search the schema metadata for given name and description, return a list of schema metadata that contain the field.",
+            response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response findSchemas(@ApiParam(required = true) @QueryParam("name") String schemaName,
+                                @QueryParam("description") String schemaDescription,
+                                @ApiParam(value = "_orderByFields=[<field-name>,<a/d>,]*\na = ascending, d = descending\n" +
+                                        "Ordering can be by id, type, schemaGroup, name, compatibility, validationLevel, timestamp, description," +
+                                        "evolve\nRecommended value is: timestamp,d", required = true) 
+                                @QueryParam("_orderByFields") String orderByFields,
+                                @Context SecurityContext securityContext) throws Exception {
+        
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), 
+                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.empty(),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty()).entrySet()) {
+            queryParameters.add(entry.getKey(), entry.getValue());
+        }
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
+                    .authorizeFindSchemas(authorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
+            return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/search/schemas/aggregated")
+    @ApiOperation(value = "Search for schemas containing the given name and description",
+            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
+            response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response findAggregatedSchemas(
+            @ApiParam(value = "name of the schema", required = true) @QueryParam("name") String schemaName,
+            @QueryParam("description") String schemaDescription,
+            @ApiParam(required = true) @QueryParam("_orderByFields") @DefaultValue("timestamp,d") String orderByFields,
+            @Context SecurityContext securityContext) throws Exception {
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), 
+                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.empty(),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty()).entrySet()) {
+            queryParameters.add(entry.getKey(), entry.getValue());
+        }
+            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
+            List<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
+            for (SchemaMetadataInfo schemaMetadataInfo : schemaMetadataInfos) {
+                SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+                List<SerDesInfo> serDesInfos = new ArrayList<>(schemaRegistry.getSerDes(schemaMetadataInfo
+                                                                                                .getSchemaMetadata()
+                                                                                                .getName()));
+                aggregatedSchemaMetadataInfos.add(
+                        new AggregatedSchemaMetadataInfo(schemaMetadata,
+                                                         schemaMetadataInfo.getId(),
+                                                         schemaMetadataInfo.getTimestamp(),
+                                                         schemaRegistry.getAggregatedSchemaBranch(schemaMetadata.getName()),
+                                                         serDesInfos));
+            }
+
+            return WSUtils.respondEntities(authorizationAgent.authorizeGetAggregatedSchemaList(authorizationUtils.getUserAndGroups(securityContext),
+                    aggregatedSchemaMetadataInfos),
+                    Response.Status.OK);
+    }
+
+    @GET
+    @Path("/search/schemas/fields")
+    @ApiOperation(value = "Search for schemas containing the given field names",
+            notes = "Search the schemas for given field names and return a list of schemas that contain the field.\n" +
+                    "If no parameter added, returns all schemas as many times as they have fields.",
+            response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response findSchemasByFields(@QueryParam("name") String name,
+                                        @QueryParam("fieldNamespace") String nameSpace,
+                                        @QueryParam("type") String type,
+                                        @Context SecurityContext securityContext) throws Exception {
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+        for (Map.Entry<String, String> entry : createFilterForNamespace(Optional.ofNullable(name), 
+                Optional.ofNullable(nameSpace), Optional.ofNullable(type)).entrySet()) {
+            queryParameters.add(entry.getKey(), entry.getValue());
+        }
+            Collection<SchemaVersionKey> schemaVersionKeys = authorizationAgent
+                    .authorizeFindSchemasByFields(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                            schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
+
+            return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas")
+    @ApiOperation(value = "Create a schema metadata if it does not already exist",
+            notes = "Creates a schema metadata with the given schema information if it does not already exist." +
+                    " A unique schema identifier is returned.",
+            response = Long.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
+                                          SchemaMetadata schemaMetadata,
+                                  @Context UriInfo uriInfo,
+                                  @Context HttpHeaders httpHeaders,
+                                  @Context SecurityContext securityContext) throws AuthorizationException {
+        
+                schemaMetadata.trim();
+                checkValueAsNullOrEmpty("Schema name", schemaMetadata.getName());
+                checkValueAsNullOrEmpty("Schema type", schemaMetadata.getType());
+                checkValidNames(schemaMetadata.getName());
+
+                boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
+                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+                authorizationAgent.authorizeSchemaMetadata(auth, schemaMetadata, Authorizer.AccessType.CREATE);
+
+                final Long schemaId;
+
+                // first we check if the schema metadata already exists
+                SchemaMetadataInfo existingMeta = schemaRegistry.getSchemaMetadataInfo(schemaMetadata.getName());
+                if (existingMeta != null) {
+                    // if it does then we return its id
+                    schemaId = existingMeta.getId();
+                } else {
+                    // otherwise the schema meta is created
+                    schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
+                    atlasEventLogger.withAuth(auth).createMeta(schemaId);
+                }
+                return WSUtils.respondEntity(schemaId, Response.Status.CREATED);
+    }
+
+    @POST
+    @Path("/schemas/{name}")
+    @ApiOperation(value = "Updates schema information for the given schema name",
+        response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
+                                     @ApiParam(value = "Schema to be added to the registry\nType of schema can be e.g. AVRO, JSON\n" +
+                                             "Name should be the same as in body\nGroup of schema can be e.g. kafka, hive", required = true)
+                                         SchemaMetadata schemaMetadata,
+                                     @Context UriInfo uriInfo,
+                                     @Context SecurityContext securityContext) throws Exception {
+        if (!schemaMetadataTypeValidator.isValid(schemaMetadata.getType())) {
+            LOG.error("SchemaMetadata type is invalid: {}", schemaMetadata);
+            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, 
+                    "SchemaMetadata type is invalid");
+        }
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaMetadata(auth,
+                    schemaRegistry,
+                    schemaName,
+                    Authorizer.AccessType.UPDATE);
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
+            if (schemaMetadataInfo != null) {
+                atlasEventLogger.withAuth(auth).updateMeta(schemaMetadataInfo.getId());
+                return WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
+            } else {
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+    }
+
+    @GET
+    @Path("/schemas/{name}")
+    @ApiOperation(value = "Get schema information for the given schema name",
+            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                  @Context SecurityContext securityContext) throws Exception {
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
+            if (schemaMetadataInfo != null) {
+                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
+                        schemaMetadataInfo, Authorizer.AccessType.READ);
+                return WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
+            } else {
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+    }
+
+    @GET
+    @Path("/schemasById/{schemaId}")
+    @ApiOperation(value = "Get schema information for a given schema identifier",
+            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId,
+                                  @Context SecurityContext securityContext) throws Exception {
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaId);
+            if (schemaMetadataInfo != null) {
+                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
+                        schemaMetadataInfo, Authorizer.AccessType.READ);
+                return WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
+            } else {
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
+            }
+    }
+
+    @DELETE
+    @Path("/schemas/{name}")
+    @ApiOperation(value = "Delete a schema metadata and all related data", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response deleteSchemaMetadata(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) throws Exception {
+            authorizationAgent.authorizeDeleteSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry,
+                    schemaName);
+            schemaRegistry.deleteSchema(schemaName);
+            return WSUtils.respond(Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/{name}/versions/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation(value = "Register a new version of an existing schema by uploading schema version text",
+            notes = "Registers the given schema version to schema with name if the given file content is not registered as a version for this " + 
+                    "schema, and returns respective version number." + 
+                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
+            response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response uploadSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
+                                                String schemaName,
+                                        @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                        @ApiParam(value = "Schema version text file to be uploaded", required = true)
+                                        @FormDataParam("file") final InputStream inputStream,
+                                        @ApiParam(value = "Description about the schema version to be uploaded", required = true)
+                                        @FormDataParam("description") final String description,
+                                        @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) throws Exception {
+            SchemaVersion schemaVersion = null;
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                        schemaName, schemaBranchName, Authorizer.AccessType.CREATE);
+                schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, StandardCharsets.UTF_8), description);
+                return addSchemaVersion(schemaBranchName,
+                        schemaName,
+                        schemaVersion,
+                        disableCanonicalCheck,
+                        uriInfo,
+                        securityContext);
+    }
+
+    @POST
+    @Path("/schemas/{name}/versions")
+    @ApiOperation(value = "Register a new version of the schema",
+            notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this " + 
+                    "schema, and returns respective version number." +
+                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
+            response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response addSchemaVersion(@ApiParam(required = true) @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                     @ApiParam(value = "Schema name", required = true) @PathParam("name")
+                                      String schemaName,
+                                     @ApiParam(value = "Details about the schema, schemaText in one line", required = true)
+                                      SchemaVersion schemaVersion,
+                                     @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
+                                     @Context UriInfo uriInfo,
+                                     @Context SecurityContext securityContext) throws Exception {
+
+                LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
+                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+                authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.CREATE);
+
+                SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
+                atlasEventLogger.withAuth(auth).createVersion(version.getSchemaVersionId());
+                return WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
+    }
+
+    @GET
+    @Path("/schemas/{name}/versions/latest")
+    @ApiOperation(value = "Get the latest version of the schema for the given schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                           @Context SecurityContext securityContext) throws Exception {
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
+            if (schemaVersionInfo != null) {
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext),
+                        schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.READ);
+                return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+            } else {
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+    }
+
+    @GET
+    @Path("/schemas/{name}/versions")
+    @ApiOperation(value = "Get all the versions of the schema for the given schema name)",
+            response = SchemaVersionInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                         @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                         @QueryParam("states") List<Byte> stateIds,
+                                         @Context SecurityContext securityContext) throws Exception {
+            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
+            if (schemaVersionInfos != null) {
+                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext),
+                        schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.READ);
+                return WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
+            } else {
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+    }
+
+    @GET
+    @Path("/schemas/{name}/versions/{version}")
+    @ApiOperation(value = "Get a version of the schema identified by the schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
+                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                     @Context SecurityContext securityContext) throws Exception {
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaVersionInfo, Authorizer.AccessType.READ);
+
+            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/versionsById/{id}")
+    @ApiOperation(value = "Get a version of the schema identified by the given version id",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                         @Context SecurityContext securityContext) throws Exception {
+        SchemaIdVersion schemaIdVersion = new SchemaIdVersion(versionId);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaIdVersion, Authorizer.AccessType.READ);
+            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/versionsByFingerprint/{fingerprint}")
+    @ApiOperation(value = "Get a version of the schema with the given fingerprint",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaVersionByFingerprint(@ApiParam(value = "fingerprint of the schema text", required = true) 
+                                                      @PathParam("fingerprint") String fingerprint,
+                                                  @Context SecurityContext securityContext) throws Exception {
+            final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaVersionInfo, Authorizer.AccessType.READ);
+
+            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/versions/statemachine")
+    @ApiOperation(value = "Get schema version life cycle states",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    public Response getSchemaVersionLifeCycleStates() {
+            SchemaVersionLifecycleStateMachineInfo states = schemaRegistry.getSchemaVersionLifecycleStateMachineInfo();
+            return WSUtils.respondEntity(states, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/versions/{id}/state/enable")
+    @ApiOperation(value = "Enables version of the schema identified by the given version id",
+            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response enableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                 @Context SecurityContext securityContext) throws Exception {
+        
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
+            schemaRegistry.enableSchemaVersion(versionId);
+            return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/versions/{id}/state/disable")
+    @ApiOperation(value = "Disables version of the schema identified by the given version id",
+            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response disableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                  @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaLifecycleException {
+        
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
+            schemaRegistry.disableSchemaVersion(versionId);
+            return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/versions/{id}/state/archive")
+    @ApiOperation(value = "Archives version of the schema identified by the given version id",
+            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response archiveSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                  @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaLifecycleException {
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
+            schemaRegistry.archiveSchemaVersion(versionId);
+            return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+
+    @POST
+    @Path("/schemas/versions/{id}/state/delete")
+    @ApiOperation(value = "Deletes version of the schema identified by the given version id",
+            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response deleteSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                 @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaLifecycleException {
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                    versionId, Authorizer.AccessType.DELETE);
+            schemaRegistry.deleteSchemaVersion(versionId);
+            return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/versions/{id}/state/startReview")
+    @ApiOperation(value = "Starts review version of the schema identified by the given version id",
+            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response startReviewSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                      @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaLifecycleException {
+
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
+            schemaRegistry.startSchemaVersionReview(versionId);
+            return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/versions/{id}/state/{stateId}")
+    @ApiOperation(value = "Runs the state execution for schema version identified by the given version id " +
+            "and executes action associated with target state id", response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response executeState(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                 @ApiParam(value = "stateId can be the name or id of the target state of the schema\nMore information about the " +
+                                         "states can be accessed at /api/v1/schemaregistry/schemas/versions/statemachine", required = true) 
+                                 @PathParam("stateId") Byte stateId,
+                                 byte [] transitionDetails,
+                                 @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaLifecycleException {
+        
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
+                    versionId, Authorizer.AccessType.UPDATE);
+            schemaRegistry.transitionState(versionId, stateId, transitionDetails);
+            return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/{name}/compatibility")
+    @ApiOperation(value = "Checks if the given schema text is compatible with all the versions of the schema identified by the name",
+            response = CompatibilityResult.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response checkCompatibilityWithSchema(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                                 @ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                                 @ApiParam(value = "schema text to be checked for compatibility", required = true) String schemaText,
+                                                 @Context SecurityContext securityContext) throws SchemaNotFoundException {
+
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry, schemaName,
+                    schemaBranchName, Authorizer.AccessType.READ);
+            CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
+            return WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/{name}/serdes")
+    @ApiOperation(value = "Get list of Serializers registered for the given schema name",
+            response = SerDesInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SERDE)
+    @Timed
+    @UnitOfWork
+    public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                   @Context SecurityContext securityContext) {
+            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
+            if (schemaMetadataInfo != null) {
+                authorizationAgent.authorizeGetSerializers(authorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo);
+                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfo.getSchemaMetadata().getName());
+                return WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
+            } else {
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+    }
+
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Path("/files")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
+    @Timed
+    public Response uploadFile(@FormDataParam("file") final InputStream inputStream,
+                               @FormDataParam("file") final FormDataContentDisposition contentDispositionHeader,
+                               @Context SecurityContext securityContext) throws InvalidJarFileException, IOException {
+            LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.UPDATE);
+            InputStream validatedStream = jarInputStreamValidator.validate(inputStream);
+            String uploadedFileId = schemaRegistry.uploadFile(validatedStream);
+            return WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
+    }
+
+    @GET
+    @Produces({"application/octet-stream", "application/json"})
+    @Path("/files/download/{fileId}")
+    @ApiOperation(value = "Downloads the respective for the given fileId if it exists", 
+            response = StreamingOutput.class, tags = OPERATION_GROUP_OTHER)
+    @Timed
+    public Response downloadFile(@ApiParam(value = "Identifier of the file (with extension) to be downloaded", required = true) 
+                                     @PathParam("fileId") String fileId,
+                                 @Context SecurityContext securityContext) throws IOException {
+
+            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
+            StreamingOutput streamOutput = WSUtils.wrapWithStreamingOutput(schemaRegistry.downloadFile(fileId));
+        return Response.ok(streamOutput).build();
+             
+    }
+
+    @POST
+    @Path("/serdes")
+    @ApiOperation(value = "Add a Serializer/Deserializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
+    @Timed
+    @UnitOfWork
+    public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) @Valid SerDesPair serDesPair,
+                              @Context UriInfo uriInfo,
+                              @Context SecurityContext securityContext) {
+        return addSerDesInfo(serDesPair, securityContext);
+    }
+
+    @GET
+    @Path("/serdes/{id}")
+    @ApiOperation(value = "Get a Serializer for the given serializer id", response = SerDesInfo.class, tags = OPERATION_GROUP_SERDE)
+    @Timed
+    @UnitOfWork
+    public Response getSerDes(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId,
+                              @Context SecurityContext securityContext) {
+            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
+            SerDesInfo serializerInfo = schemaRegistry.getSerDes(serializerId);
+            if (serializerInfo != null) {
+                return WSUtils.respondEntity(serializerInfo, Response.Status.OK);
+            } else {
+                LOG.error("Ser/Des not found with id: " + serializerId);
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, serializerId.toString());
+            }
+    }
+
+    private Response addSerDesInfo(SerDesPair serDesInfo, SecurityContext securityContext) {
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.CREATE);
+            Long serializerId = schemaRegistry.addSerDes(serDesInfo);
+            return WSUtils.respondEntity(serializerId, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/{name}/mapping/{serDesId}")
+    @ApiOperation(value = "Bind the given Serializer/Deserializer to the schema identified by the schema name", tags = OPERATION_GROUP_SERDE)
+    @Timed
+    @UnitOfWork
+    public Response mapSchemaWithSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                        @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId,
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) throws SchemaNotFoundException {
+                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+                authorizationAgent.authorizeMapSchemaWithSerDes(auth, schemaRegistry, schemaName);
+                schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
+                return WSUtils.respondEntity(true, Response.Status.OK);
+    }
+
+    @DELETE
+    @Path("/schemas/{name}/versions/{version}")
+    @ApiOperation(value = "Delete a schema version given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response deleteSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                        @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                        @Context UriInfo uriInfo,
+                                        @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaLifecycleException {
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaName, versionNumber);
+            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                    schemaVersionKey, Authorizer.AccessType.DELETE);
+            schemaRegistry.deleteSchemaVersion(schemaVersionKey);
+            return WSUtils.respond(Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/{name}/branches")
+    @ApiOperation(value = "Get list of registered schema branches",
+            response = SchemaBranch.class, responseContainer = "List",
+            tags = OPERATION_GROUP_OTHER)
+    @Timed
+    @UnitOfWork
+    public Response getAllBranches(@ApiParam(value = "Details about schema name", required = true) @PathParam("name") String schemaName,
+                                   @Context UriInfo uriInfo,
+                                   @Context SecurityContext securityContext) throws SchemaNotFoundException {
+            Collection<SchemaBranch> schemaBranches = authorizationAgent.authorizeGetAllBranches(authorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry, schemaName, schemaRegistry.getSchemaBranches(schemaName));
+            return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/versionsById/{versionId}/branch")
+    @ApiOperation(value = "Fork a new schema branch given its schema name and version id",
+            response = SchemaBranch.class,
+            tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response createSchemaBranch(@ApiParam(value = "Details about schema version", required = true) 
+                                           @PathParam("versionId") Long schemaVersionId,
+                                        @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch,
+                                        @Context SecurityContext securityContext) throws SchemaNotFoundException, SchemaBranchAlreadyExistsException {
+            LOG.debug("Create branch \"{}\" for version with id {}", schemaBranch.getName(), schemaVersionId);
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.fetchSchemaVersionInfo(schemaVersionId);
+
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeCreateSchemaBranch(auth,
+                    schemaRegistry,
+                    schemaVersionInfo.getSchemaMetadataId(),
+                    schemaVersionId,
+                    schemaBranch.getName());
+            SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
+            return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/schemas/{versionId}/merge")
+    @ApiOperation(value = "Merge a schema version to master given its version id",
+            response = SchemaVersionMergeResult.class,
+            tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version", required = true) 
+                                           @PathParam("versionId") Long schemaVersionId,
+                                       @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
+                                       @Context SecurityContext securityContext) throws SchemaNotFoundException, IncompatibleSchemaException {
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeMergeSchemaVersion(auth, schemaRegistry, schemaVersionId);
+            SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
+            return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
+    }
+
+    @DELETE
+    @Path("/schemas/branch/{branchId}")
+    @ApiOperation(value = "Delete a branch given its branch id", tags = OPERATION_GROUP_SCHEMA)
+    @UnitOfWork
+    public Response deleteSchemaBranch(@ApiParam(value = "ID of the Schema Branch", required = true) @PathParam("branchId") Long schemaBranchId,
+                                       @Context SecurityContext securityContext) throws InvalidSchemaBranchDeletionException {
+            authorizationAgent.authorizeDeleteSchemaBranch(authorizationUtils.getUserAndGroups(securityContext),
+                    schemaRegistry, schemaBranchId);
+            schemaRegistry.deleteSchemaBranch(schemaBranchId);
+            return WSUtils.respond(Response.Status.OK);
+    }
+
+
+    // When ever SCHEMA_BRANCH or SCHEMA_VERSION is updated in one of the node in the cluster, 
+    // then it will use this API to notify rest of the node in the
+    // cluster to update their corresponding cache.
+    // TODO: This API was introduced as a temporary solution to address HA requirements with cache synchronization. 
+    //  A more permanent and stable fix should be incorporated.
+    @POST
+    @Path("/cache/{cacheType}/invalidate")
+    @ApiOperation(value = "Address HA requirements with cache synchronization.")
+    @UnitOfWork
+    public Response invalidateCache(@ApiParam(value = "Cache Id to be invalidated", required = true) 
+                                        @PathParam("cacheType") SchemaRegistryCacheType cacheType, 
+                                    @ApiParam(value = "key") String keyString) {
+            LOG.debug("RetryableBlock to invalidate cache : {} with key : {} accepted", cacheType.name(), keyString);
+            schemaRegistry.invalidateCache(cacheType, keyString);
+            return WSUtils.respond(Response.Status.OK);
+    }
+
+    @POST
+    @Path("/import")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation(value = "Bulk import schemas from a file",
+            notes = "Upload a file containing multiple schemas. The schemas will be processed and added to Schema Registry. " +
+                    "In case there is already existing data in Schema Registry, there might be ID collisions. You should " +
+                    "define what to do in case of collisions (fail or ignore). To avoid issues, it is recommended to import " +
+                    "schemas when the database is empty.",
+            response = UploadResult.class, tags = OPERATION_GROUP_EXPORT_IMPORT)
+    @Timed
+    @UnitOfWork
+    public Response uploadSchemaVersion(@ApiParam(value = "Imported file format. Can be 0 (Cloudera) or 1 (Confluent)", required = true)
+                                        @QueryParam("format") @DefaultValue("0") String fileFormat,
+                                        @ApiParam(value = "In case of errors, should the operation fail or should we continue processing the remaining rows")
+                                        @QueryParam("failOnError") @DefaultValue("true") boolean failOnError,
+                                        @ApiParam(value = "File to upload. Please make sure the file contains valid data.", required = true)
+                                        @FormDataParam("file") final InputStream inputStream,
+                                        @Context SecurityContext securityContext) throws IOException {
+
+            BulkUploadInputFormat format;
+            if (StringUtils.isBlank(fileFormat)) {
+                format = BulkUploadInputFormat.CLOUDERA;
+            } else if ("0".equals(fileFormat) || "CLOUDERA".equalsIgnoreCase(fileFormat)) {
+                format = BulkUploadInputFormat.CLOUDERA;
+            } else if ("1".equals(fileFormat) || "CONFLUENT".equalsIgnoreCase(fileFormat)) {
+                format = BulkUploadInputFormat.CONFLUENT;
+            } else {
+                return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, "Invalid file format.");
+            }
+
+            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
+            authorizationAgent.authorizeBulkImport(auth);
+
+            UploadResult uploadResult = schemaRegistry.bulkUploadSchemas(inputStream, failOnError, format);
+            return WSUtils.respondEntity(uploadResult, Response.Status.OK);
+    }
+
+    @POST
+    @Path("/setupAtlasModel")
+    @ApiOperation(value = "Setup SchemaRegistry model in Atlas",
+            notes = "This method should only be called once, during system initialization.",
+            response = String.class, tags = OPERATION_GROUP_ATLAS)
+    @Timed
+    @UnitOfWork
+    public Response setupAtlasModel() {
+        atlasPlugin.setupAtlasModel();
+        atlasPlugin.setupKafkaSchemaModel();
+        return WSUtils.respondString(Response.Status.OK, SUCCESS);
+    }
+
     @VisibleForTesting
-    Map<String, String> createFilterForSchema(Optional<String> name, 
-                                              Optional<String> description, 
-                                              Optional<String> orderByFields, 
+    Map<String, String> createFilterForSchema(Optional<String> name,
+                                              Optional<String> description,
+                                              Optional<String> orderByFields,
                                               Optional<String> id,
                                               Optional<String> type,
-                                              Optional<String> schemaGroup, 
-                                              Optional<String> validationLevel, 
-                                              Optional<String> compatibility, 
+                                              Optional<String> schemaGroup,
+                                              Optional<String> validationLevel,
+                                              Optional<String> compatibility,
                                               Optional<String> evolve) {
         Map<String, String> filters = new HashMap<>();
         name.ifPresent(n -> filters.put("name", n));
@@ -353,44 +1042,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         return filters;
     }
 
-    @GET
-    @Path("/search/schemas")
-    @ApiOperation(value = "Search for schema metadata containing the given name and description",
-            notes = "Search the schema metadata for given name and description, return a list of schema metadata that contain the field.",
-            response = SchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response findSchemas(@ApiParam(required = true) @QueryParam("name") String schemaName,
-                                @QueryParam("description") String schemaDescription,
-                                @ApiParam(value = "_orderByFields=[<field-name>,<a/d>,]*\na = ascending, d = descending\n" +
-                                        "Ordering can be by id, type, schemaGroup, name, compatibility, validationLevel, timestamp, description," +
-                                        "evolve\nRecommended value is: timestamp,d", required = true) 
-                                @QueryParam("_orderByFields") String orderByFields,
-                                @Context SecurityContext securityContext) {
-        
-        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
-        for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), 
-                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.empty(),
-                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                Optional.empty()).entrySet()) {
-            queryParameters.add(entry.getKey(), entry.getValue());
-        }
-        try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos = authorizationAgent
-                    .authorizeFindSchemas(authorizationUtils.getUserAndGroups(securityContext), findSchemaMetadataInfos(queryParameters));
-            return WSUtils.respondEntities(schemaMetadataInfos, Response.Status.OK);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
     @VisibleForTesting
     Collection<SchemaMetadataInfo> findSchemaMetadataInfos(MultivaluedMap<String, String> queryParameters) {
         Collection<SchemaMetadataInfo> schemaMetadataInfos;
@@ -406,93 +1057,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             schemaMetadataInfos = Collections.emptyList();
         }
         return schemaMetadataInfos;
-    }
-
-    @GET
-    @Path("/search/schemas/aggregated")
-    @ApiOperation(value = "Search for schemas containing the given name and description",
-            notes = "Search the schemas for given name and description, return a list of schemas that contain the field.",
-            response = AggregatedSchemaMetadataInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response findAggregatedSchemas(
-            @ApiParam(value = "name of the schema", required = true) @QueryParam("name") String schemaName,
-            @QueryParam("description") String schemaDescription,
-            @ApiParam(required = true) @QueryParam("_orderByFields") @DefaultValue("timestamp,d") String orderByFields,
-            @Context SecurityContext securityContext) {
-        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
-        for (Map.Entry<String, String> entry : createFilterForSchema(Optional.ofNullable(schemaName), 
-                Optional.ofNullable(schemaDescription), Optional.ofNullable(orderByFields), Optional.empty(),
-                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                Optional.empty()).entrySet()) {
-            queryParameters.add(entry.getKey(), entry.getValue());
-        }
-        try {
-            Collection<SchemaMetadataInfo> schemaMetadataInfos = findSchemaMetadataInfos(queryParameters);
-            List<AggregatedSchemaMetadataInfo> aggregatedSchemaMetadataInfos = new ArrayList<>();
-            for (SchemaMetadataInfo schemaMetadataInfo : schemaMetadataInfos) {
-                SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-                List<SerDesInfo> serDesInfos = new ArrayList<>(schemaRegistry.getSerDes(schemaMetadataInfo
-                                                                                                .getSchemaMetadata()
-                                                                                                .getName()));
-                aggregatedSchemaMetadataInfos.add(
-                        new AggregatedSchemaMetadataInfo(schemaMetadata,
-                                                         schemaMetadataInfo.getId(),
-                                                         schemaMetadataInfo.getTimestamp(),
-                                                         schemaRegistry.getAggregatedSchemaBranch(schemaMetadata.getName()),
-                                                         serDesInfos));
-            }
-
-            return WSUtils.respondEntities(authorizationAgent.authorizeGetAggregatedSchemaList(authorizationUtils.getUserAndGroups(securityContext),
-                    aggregatedSchemaMetadataInfos),
-                    Response.Status.OK);
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @GET
-    @Path("/search/schemas/fields")
-    @ApiOperation(value = "Search for schemas containing the given field names",
-            notes = "Search the schemas for given field names and return a list of schemas that contain the field.\n" +
-                    "If no parameter added, returns all schemas as many times as they have fields.",
-            response = SchemaVersionKey.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response findSchemasByFields(@QueryParam("name") String name,
-                                        @QueryParam("fieldNamespace") String nameSpace,
-                                        @QueryParam("type") String type,
-                                        @Context SecurityContext securityContext) {
-        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
-        for (Map.Entry<String, String> entry : createFilterForNamespace(Optional.ofNullable(name), 
-                Optional.ofNullable(nameSpace), Optional.ofNullable(type)).entrySet()) {
-            queryParameters.add(entry.getKey(), entry.getValue());
-        }
-        try {
-            Collection<SchemaVersionKey> schemaVersionKeys = authorizationAgent
-                    .authorizeFindSchemasByFields(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                            schemaRegistry.findSchemasByFields(buildSchemaFieldQuery(queryParameters)));
-
-            return WSUtils.respondEntities(schemaVersionKeys, Response.Status.OK);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while finding schemas for given fields [{}]", queryParameters, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
     }
 
     @VisibleForTesting
@@ -515,123 +1079,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
         return builder.build();
     }
 
-    @POST
-    @Path("/schemas")
-    @ApiOperation(value = "Create a schema metadata if it does not already exist",
-            notes = "Creates a schema metadata with the given schema information if it does not already exist." +
-                    " A unique schema identifier is returned.",
-            response = Long.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response addSchemaInfo(@ApiParam(value = "Schema to be added to the registry", required = true)
-                                          SchemaMetadata schemaMetadata,
-                                  @Context UriInfo uriInfo,
-                                  @Context HttpHeaders httpHeaders,
-                                  @Context SecurityContext securityContext) {
-
-            Response response;
-            try {
-                schemaMetadata.trim();
-                checkValueAsNullOrEmpty("Schema name", schemaMetadata.getName());
-                checkValueAsNullOrEmpty("Schema type", schemaMetadata.getType());
-                checkValidNames(schemaMetadata.getName());
-
-                boolean throwErrorIfExists = isThrowErrorIfExists(httpHeaders);
-                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-                authorizationAgent.authorizeSchemaMetadata(auth, schemaMetadata, Authorizer.AccessType.CREATE);
-
-                final Long schemaId;
-
-                // first we check if the schema metadata already exists
-                SchemaMetadataInfo existingMeta = schemaRegistry.getSchemaMetadataInfo(schemaMetadata.getName());
-                if (existingMeta != null) {
-                    // if it does then we return its id
-                    schemaId = existingMeta.getId();
-                } else {
-                    // otherwise the schema meta is created
-                    schemaId = schemaRegistry.addSchemaMetadata(schemaMetadata, throwErrorIfExists);
-                    atlasEventLogger.withAuth(auth).createMeta(schemaId);
-                }
-                response = WSUtils.respondEntity(schemaId, Response.Status.CREATED);
-            } catch (AuthorizationException e) {
-                LOG.debug("Access denied. ", e);
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-            } catch (IllegalArgumentException ex) {
-                LOG.error("Expected parameter is invalid: {}", schemaMetadata, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
-            } catch (UnsupportedSchemaTypeException ex) {
-                LOG.error("Unsupported schema type encountered while adding schema metadata [{}]", schemaMetadata, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
-            } catch (StorageException ex) {
-                LOG.error("Unable to add schema metadata [{}]", schemaMetadata, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_CONFLICT, ex.getMessage());
-            } catch (RangerException rex) {
-                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-            } catch (Exception ex) {
-                // TODO CDPD-14184 Refactor exception handling
-                if (ex instanceof UndeclaredThrowableException) {
-                    ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-                }
-                LOG.error("Error encountered while adding schema info [{}] ", schemaMetadata, ex);
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR,
-                                           CatalogResponse.ResponseMessage.EXCEPTION,
-                                           String.format("Storing the given SchemaMetadata [%s] is failed", schemaMetadata.toString()));
-            }
-
-            return response;
-    }
-
-    @POST
-    @Path("/schemas/{name}")
-    @ApiOperation(value = "Updates schema information for the given schema name",
-        response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response updateSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName, 
-                                     @ApiParam(value = "Schema to be added to the registry\nType of schema can be e.g. AVRO, JSON\n" +
-                                             "Name should be the same as in body\nGroup of schema can be e.g. kafka, hive", required = true)
-                                         SchemaMetadata schemaMetadata,
-                                     @Context UriInfo uriInfo,
-                                     @Context SecurityContext securityContext) {
-        if (!schemaMetadataTypeValidator.isValid(schemaMetadata.getType())) {
-            LOG.error("SchemaMetadata type is invalid: {}", schemaMetadata);
-            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, 
-                    "SchemaMetadata type is invalid");
-        }
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaMetadata(auth,
-                    schemaRegistry,
-                    schemaName,
-                    Authorizer.AccessType.UPDATE);
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.updateSchemaMetadata(schemaName, schemaMetadata);
-            if (schemaMetadataInfo != null) {
-                atlasEventLogger.withAuth(auth).updateMeta(schemaMetadataInfo.getId());
-                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
-            } else {
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            }
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (IllegalArgumentException ex) {
-            LOG.error("Expected parameter is invalid for schema \"{}\": {}", schemaName, schemaMetadata, ex);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_PARAM_MISSING, ex.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            // TODO CDPD-14184 Refactor exception handling
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-        return response;
-    }
-
     private void checkValidNames(String name) {
         for (String reservedName : RESERVED_NAMES) {
             if (reservedName.equalsIgnoreCase(name)) {
@@ -646,1148 +1093,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             values = httpHeaders.getRequestHeader(THROW_ERROR_IF_EXISTS_LOWER_CASE);
         }
         return values != null && !values.isEmpty() && Boolean.parseBoolean(values.get(0));
-    }
-
-    @GET
-    @Path("/schemas/{name}")
-    @ApiOperation(value = "Get schema information for the given schema name",
-            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getSchemaInfo(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                  @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
-            if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
-                        schemaMetadataInfo, Authorizer.AccessType.READ);
-                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
-            } else {
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            }
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while retrieving SchemaInfo with name: [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Path("/schemasById/{schemaId}")
-    @ApiOperation(value = "Get schema information for a given schema identifier",
-            response = SchemaMetadataInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getSchemaInfo(@ApiParam(value = "Schema identifier", required = true) @PathParam("schemaId") Long schemaId,
-                                  @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaId);
-            if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
-                        schemaMetadataInfo, Authorizer.AccessType.READ);
-                response = WSUtils.respondEntity(schemaMetadataInfo, Response.Status.OK);
-            } else {
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaId.toString());
-            }
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while retrieving SchemaInfo with schemaId: [{}]", schemaId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @DELETE
-    @Path("/schemas/{name}")
-    @ApiOperation(value = "Delete a schema metadata and all related data", tags = OPERATION_GROUP_SCHEMA)
-    @UnitOfWork
-    public Response deleteSchemaMetadata(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                        @Context UriInfo uriInfo,
-                                        @Context SecurityContext securityContext) {
-        try {
-            authorizationAgent.authorizeDeleteSchemaMetadata(authorizationUtils.getUserAndGroups(securityContext),
-                    schemaRegistry,
-                    schemaName);
-            schemaRegistry.deleteSchema(schemaName);
-            return WSUtils.respond(Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.error("No schema metadata found with name: [{}]", schemaName);
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while deleting schema with name: [{}]", schemaName, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @POST
-    @Path("/schemas/{name}/versions/upload")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation(value = "Register a new version of an existing schema by uploading schema version text",
-            notes = "Registers the given schema version to schema with name if the given file content is not registered as a version for this " + 
-                    "schema, and returns respective version number." + 
-                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
-            response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response uploadSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name")
-                                                String schemaName,
-                                        @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                        @ApiParam(value = "Schema version text file to be uploaded", required = true)
-                                        @FormDataParam("file") final InputStream inputStream,
-                                        @ApiParam(value = "Description about the schema version to be uploaded", required = true)
-                                        @FormDataParam("description") final String description,
-                                        @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
-                                        @Context UriInfo uriInfo,
-                                        @Context SecurityContext securityContext) {
-
-            Response response;
-            SchemaVersion schemaVersion = null;
-            try {
-                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                        schemaName, schemaBranchName, Authorizer.AccessType.CREATE);
-                schemaVersion = new SchemaVersion(IOUtils.toString(inputStream, StandardCharsets.UTF_8), description);
-                response = addSchemaVersion(schemaBranchName,
-                        schemaName,
-                        schemaVersion,
-                        disableCanonicalCheck,
-                        uriInfo,
-                        securityContext);
-            } catch (SchemaNotFoundException e) {
-                LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            } catch (AuthorizationException e) {
-                LOG.debug("Access denied. ", e);
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-            } catch (RangerException rex) {
-                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-            } catch (IOException ex) {
-                LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-            }
-
-            return response;
-    }
-
-    @POST
-    @Path("/schemas/{name}/versions")
-    @ApiOperation(value = "Register a new version of the schema",
-            notes = "Registers the given schema version to schema with name if the given schemaText is not registered as a version for this " + 
-                    "schema, and returns respective version number." +
-                    "In case of incompatible schema errors, it throws error message like 'Unable to read schema: <> using schema <>' ",
-            response = Integer.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response addSchemaVersion(@ApiParam(required = true) @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                     @ApiParam(value = "Schema name", required = true) @PathParam("name")
-                                      String schemaName,
-                                     @ApiParam(value = "Details about the schema, schemaText in one line", required = true)
-                                      SchemaVersion schemaVersion,
-                                     @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
-                                     @Context UriInfo uriInfo,
-                                     @Context SecurityContext securityContext) {
-
-            Response response;
-            try {
-                LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
-                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-                authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                        schemaName,
-                        schemaBranchName,
-                        Authorizer.AccessType.CREATE);
-
-                SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
-                atlasEventLogger.withAuth(auth).createVersion(version.getSchemaVersionId());
-                response = WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
-            } catch (AuthorizationException e) {
-                LOG.debug("Access denied. ", e);
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-            } catch (InvalidSchemaException ex) {
-                LOG.error("Invalid schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
-            } catch (IncompatibleSchemaException ex) {
-                LOG.error("Incompatible schema error encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, ex.getMessage());
-            } catch (UnsupportedSchemaTypeException ex) {
-                LOG.error("Unsupported schema type encountered while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-                response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.UNSUPPORTED_SCHEMA_TYPE, ex.getMessage());
-            } catch (SchemaBranchNotFoundException e) {
-                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
-            } catch (RangerException rex) {
-                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-            } catch (Exception ex) {
-                if (ex instanceof UndeclaredThrowableException) {
-                    ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-                }
-                LOG.error("Encountered error while adding schema [{}] with key [{}]", schemaVersion, schemaName, ex);
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-            }
-
-            return response;
-    }
-
-    @GET
-    @Path("/schemas/{name}/versions/latest")
-    @ApiOperation(value = "Get the latest version of the schema for the given schema name",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getLatestSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                           @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
-            if (schemaVersionInfo != null) {
-                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext),
-                        schemaRegistry,
-                        schemaName,
-                        schemaBranchName,
-                        Authorizer.AccessType.READ);
-                response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
-            } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaName);
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            }
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting latest schema version for schemakey [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-
-    }
-
-    @GET
-    @Path("/schemas/{name}/versions")
-    @ApiOperation(value = "Get all the versions of the schema for the given schema name)",
-            response = SchemaVersionInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getAllSchemaVersions(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                         @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                         @QueryParam("states") List<Byte> stateIds,
-                                         @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            Collection<SchemaVersionInfo> schemaVersionInfos = schemaRegistry.getAllVersions(schemaBranchName, schemaName, stateIds);
-            if (schemaVersionInfos != null) {
-                authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext),
-                        schemaRegistry,
-                        schemaName,
-                        schemaBranchName,
-                        Authorizer.AccessType.READ);
-                response = WSUtils.respondEntities(schemaVersionInfos, Response.Status.OK);
-            } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaName);
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            }
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Path("/schemas/{name}/versions/{version}")
-    @ApiOperation(value = "Get a version of the schema identified by the schema name",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
-                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
-                                     @Context SecurityContext securityContext) {
-        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
-
-        Response response;
-        try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                    schemaVersionInfo, Authorizer.AccessType.READ);
-
-            response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schemas found with schemaVersionKey: [{}]", schemaVersionKey);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting all schema versions for schemakey [{}]", schemaMetadata, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Path("/schemas/versionsById/{id}")
-    @ApiOperation(value = "Get a version of the schema identified by the given version id",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getSchemaVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                         @Context SecurityContext securityContext) {
-        SchemaIdVersion schemaIdVersion = new SchemaIdVersion(versionId);
-
-        Response response;
-        try {
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                    schemaIdVersion, Authorizer.AccessType.READ);
-            response = WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Path("/schemas/versionsByFingerprint/{fingerprint}")
-    @ApiOperation(value = "Get a version of the schema with the given fingerprint",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response getSchemaVersionByFingerprint(@ApiParam(value = "fingerprint of the schema text", required = true) 
-                                                      @PathParam("fingerprint") String fingerprint,
-                                                  @Context SecurityContext securityContext) {
-        try {
-            final SchemaVersionInfo schemaVersionInfo = schemaRegistry.findSchemaVersionByFingerprint(fingerprint);
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                    schemaVersionInfo, Authorizer.AccessType.READ);
-
-            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with fingerprint : [{}]", fingerprint);
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, fingerprint);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with fingerprint [{}]", fingerprint, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @GET
-    @Path("/schemas/versions/statemachine")
-    @ApiOperation(value = "Get schema version life cycle states",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    public Response getSchemaVersionLifeCycleStates() {
-        Response response;
-        try {
-            SchemaVersionLifecycleStateMachineInfo states = schemaRegistry.getSchemaVersionLifecycleStateMachineInfo();
-            response = WSUtils.respondEntity(states, Response.Status.OK);
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version lifecycle states", ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/versions/{id}/state/enable")
-    @ApiOperation(value = "Enables version of the schema identified by the given version id",
-            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response enableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                 @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                    versionId, Authorizer.AccessType.UPDATE);
-            schemaRegistry.enableSchemaVersion(versionId);
-            response = WSUtils.respondEntity(true, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (IncompatibleSchemaException e) {
-            LOG.error("Encountered error while enabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, e.getMessage());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Encountered error while enabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/versions/{id}/state/disable")
-    @ApiOperation(value = "Disables version of the schema identified by the given version id",
-            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response disableSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                  @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                    versionId, Authorizer.AccessType.UPDATE);
-            schemaRegistry.disableSchemaVersion(versionId);
-            response = WSUtils.respondEntity(true, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/versions/{id}/state/archive")
-    @ApiOperation(value = "Archives version of the schema identified by the given version id",
-            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response archiveSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                  @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                    versionId, Authorizer.AccessType.UPDATE);
-            schemaRegistry.archiveSchemaVersion(versionId);
-            response = WSUtils.respondEntity(true, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-
-    @POST
-    @Path("/schemas/versions/{id}/state/delete")
-    @ApiOperation(value = "Deletes version of the schema identified by the given version id",
-            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response deleteSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                 @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                    versionId, Authorizer.AccessType.DELETE);
-            schemaRegistry.deleteSchemaVersion(versionId);
-            response = WSUtils.respondEntity(true, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/versions/{id}/state/startReview")
-    @ApiOperation(value = "Starts review version of the schema identified by the given version id",
-            response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response startReviewSchema(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                      @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                    versionId, Authorizer.AccessType.UPDATE);
-            schemaRegistry.startSchemaVersionReview(versionId);
-            response = WSUtils.respondEntity(true, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/versions/{id}/state/{stateId}")
-    @ApiOperation(value = "Runs the state execution for schema version identified by the given version id " +
-            "and executes action associated with target state id", response = Boolean.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response executeState(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
-                                 @ApiParam(value = "stateId can be the name or id of the target state of the schema\nMore information about the " +
-                                         "states can be accessed at /api/v1/schemaregistry/schemas/versions/statemachine", required = true) 
-                                 @PathParam("stateId") Byte stateId,
-                                 byte [] transitionDetails,
-                                 @Context SecurityContext securityContext) {
-
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
-                    versionId, Authorizer.AccessType.UPDATE);
-            schemaRegistry.transitionState(versionId, stateId, transitionDetails);
-            response = WSUtils.respondEntity(true, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.info("No schema version is found with schema version id : [{}]", versionId);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, versionId.toString());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Encountered error while disabling schema version with id [{}]", versionId, e);
-            CatalogResponse.ResponseMessage badRequestResponse =
-                    e.getCause() != null && e.getCause() instanceof IncompatibleSchemaException
-                    ? CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA
-                    : CatalogResponse.ResponseMessage.BAD_REQUEST;
-            response = WSUtils.respond(Response.Status.BAD_REQUEST, badRequestResponse, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting schema version with id [{}]", versionId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/{name}/compatibility")
-    @ApiOperation(value = "Checks if the given schema text is compatible with all the versions of the schema identified by the name",
-            response = CompatibilityResult.class, tags = OPERATION_GROUP_SCHEMA)
-    @Timed
-    @UnitOfWork
-    public Response checkCompatibilityWithSchema(@QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                                 @ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                                 @ApiParam(value = "schema text to be checked for compatibility", required = true) String schemaText,
-                                                 @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry, schemaName,
-                    schemaBranchName, Authorizer.AccessType.READ);
-            CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(schemaBranchName, schemaName, schemaText);
-            response = WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.error("No schemas found with schemakey: [{}]", schemaName, e);
-            response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while checking compatibility with versions of schema with [{}] for given schema text [{}]", 
-                    schemaName, schemaText, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Path("/schemas/{name}/serdes")
-    @ApiOperation(value = "Get list of Serializers registered for the given schema name",
-            response = SerDesInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SERDE)
-    @Timed
-    @UnitOfWork
-    public Response getSerializers(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                   @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            SchemaMetadataInfo schemaMetadataInfo = schemaRegistry.getSchemaMetadataInfo(schemaName);
-            if (schemaMetadataInfo != null) {
-                authorizationAgent.authorizeGetSerializers(authorizationUtils.getUserAndGroups(securityContext), schemaMetadataInfo);
-                Collection<SerDesInfo> schemaSerializers = schemaRegistry.getSerDes(schemaMetadataInfo.getSchemaMetadata().getName());
-                response = WSUtils.respondEntities(schemaSerializers, Response.Status.OK);
-            } else {
-                LOG.info("No schemas found with schemakey: [{}]", schemaName);
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-            }
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while getting serializers for schemaKey [{}]", schemaName, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Path("/files")
-    @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Upload the given file and returns respective identifier.", response = String.class, tags = OPERATION_GROUP_OTHER)
-    @Timed
-    public Response uploadFile(@FormDataParam("file") final InputStream inputStream,
-                               @FormDataParam("file") final FormDataContentDisposition contentDispositionHeader,
-                               @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            LOG.info("Received contentDispositionHeader: [{}]", contentDispositionHeader);
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.UPDATE);
-            InputStream validatedStream = jarInputStreamValidator.validate(inputStream);
-            String uploadedFileId = schemaRegistry.uploadFile(validatedStream);
-            response = WSUtils.respondEntity(uploadedFileId, Response.Status.OK);
-        } catch (InvalidJarFileException e) {
-            LOG.debug("Invalid JAR file. ", e);
-            response = WSUtils.respondString(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            response = WSUtils.respondString(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while uploading file", ex);
-            response = WSUtils.respondString(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @GET
-    @Produces({"application/octet-stream", "application/json"})
-    @Path("/files/download/{fileId}")
-    @ApiOperation(value = "Downloads the respective for the given fileId if it exists", 
-            response = StreamingOutput.class, tags = OPERATION_GROUP_OTHER)
-    @Timed
-    public Response downloadFile(@ApiParam(value = "Identifier of the file (with extension) to be downloaded", required = true) 
-                                     @PathParam("fileId") String fileId,
-                                 @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
-            StreamingOutput streamOutput = WSUtils.wrapWithStreamingOutput(schemaRegistry.downloadFile(fileId));
-            response = Response.ok(streamOutput).build();
-            return response;
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (FileNotFoundException e) {
-            LOG.error("No file found for fileId [{}]", fileId, e);
-            response = WSUtils.respondEntity(fileId, Response.Status.NOT_FOUND);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while downloading file [{}]", fileId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/serdes")
-    @ApiOperation(value = "Add a Serializer/Deserializer into the Schema Registry", response = Long.class, tags = OPERATION_GROUP_SERDE)
-    @Timed
-    @UnitOfWork
-    public Response addSerDes(@ApiParam(value = "Serializer/Deserializer information to be registered", required = true) @Valid SerDesPair serDesPair,
-                              @Context UriInfo uriInfo,
-                              @Context SecurityContext securityContext) {
-        return addSerDesInfo(serDesPair, securityContext);
-    }
-
-    @GET
-    @Path("/serdes/{id}")
-    @ApiOperation(value = "Get a Serializer for the given serializer id", response = SerDesInfo.class, tags = OPERATION_GROUP_SERDE)
-    @Timed
-    @UnitOfWork
-    public Response getSerDes(@ApiParam(value = "Serializer identifier", required = true) @PathParam("id") Long serializerId,
-                              @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            authorizationAgent.authorizeSerDes(authorizationUtils.getUserAndGroups(securityContext), Authorizer.AccessType.READ);
-            SerDesInfo serializerInfo = schemaRegistry.getSerDes(serializerId);
-            if (serializerInfo != null) {
-                response = WSUtils.respondEntity(serializerInfo, Response.Status.OK);
-            } else {
-                LOG.error("Ser/Des not found with id: " + serializerId);
-                response = WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, serializerId.toString());
-            }
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            LOG.error("Encountered error while getting serializer/deserializer [{}]", serializerId, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-        return response;
-    }
-
-    private Response addSerDesInfo(SerDesPair serDesInfo, SecurityContext securityContext) {
-        Response response;
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeSerDes(auth, Authorizer.AccessType.CREATE);
-            Long serializerId = schemaRegistry.addSerDes(serDesInfo);
-            response = WSUtils.respondEntity(serializerId, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while adding serializer/deserializer  [{}]", serDesInfo, ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/schemas/{name}/mapping/{serDesId}")
-    @ApiOperation(value = "Bind the given Serializer/Deserializer to the schema identified by the schema name", tags = OPERATION_GROUP_SERDE)
-    @Timed
-    @UnitOfWork
-    public Response mapSchemaWithSerDes(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                        @ApiParam(value = "Serializer/deserializer identifier", required = true) @PathParam("serDesId") Long serDesId,
-                                        @Context UriInfo uriInfo,
-                                        @Context SecurityContext securityContext) {
-
-            Response response;
-            try {
-                final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-                authorizationAgent.authorizeMapSchemaWithSerDes(auth, schemaRegistry, schemaName);
-                schemaRegistry.mapSchemaWithSerDes(schemaName, serDesId);
-                response = WSUtils.respondEntity(true, Response.Status.OK);
-            } catch (AuthorizationException e) {
-                LOG.debug("Access denied. ", e);
-                return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-            } catch (RangerException rex) {
-                return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-            } catch (Exception ex) {
-                if (ex instanceof UndeclaredThrowableException) {
-                    ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-                }
-                response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-            }
-
-            return response;
-    }
-
-    @DELETE
-    @Path("/schemas/{name}/versions/{version}")
-    @ApiOperation(value = "Delete a schema version given its schema name and version id", tags = OPERATION_GROUP_SCHEMA)
-    @UnitOfWork
-    public Response deleteSchemaVersion(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                        @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
-                                        @Context UriInfo uriInfo,
-                                        @Context SecurityContext securityContext) {
-        SchemaVersionKey schemaVersionKey = null;
-        try {
-            schemaVersionKey = new SchemaVersionKey(schemaName, versionNumber);
-            authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                    schemaVersionKey, Authorizer.AccessType.DELETE);
-            schemaRegistry.deleteSchemaVersion(schemaVersionKey);
-            return WSUtils.respond(Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            LOG.error("No schemaVersion found with name: [{}], version : [{}]", schemaName, versionNumber);
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaVersionKey.toString());
-        } catch (SchemaLifecycleException e) {
-            LOG.error("Failed to delete schema name: [{}], version : [{}]", schemaName, versionNumber, e);
-            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while deleting schemaVersion with name: [{}], version : [{}]", schemaName, versionNumber, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @GET
-    @Path("/schemas/{name}/branches")
-    @ApiOperation(value = "Get list of registered schema branches",
-            response = SchemaBranch.class, responseContainer = "List",
-            tags = OPERATION_GROUP_OTHER)
-    @Timed
-    @UnitOfWork
-    public Response getAllBranches(@ApiParam(value = "Details about schema name", required = true) @PathParam("name") String schemaName,
-                                   @Context UriInfo uriInfo,
-                                   @Context SecurityContext securityContext) {
-        try {
-            Collection<SchemaBranch> schemaBranches = authorizationAgent.authorizeGetAllBranches(authorizationUtils.getUserAndGroups(securityContext),
-                    schemaRegistry, schemaName, schemaRegistry.getSchemaBranches(schemaName));
-            return WSUtils.respondEntities(schemaBranches, Response.Status.OK);
-        }  catch (SchemaNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while listing schema branches", ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @POST
-    @Path("/schemas/versionsById/{versionId}/branch")
-    @ApiOperation(value = "Fork a new schema branch given its schema name and version id",
-            response = SchemaBranch.class,
-            tags = OPERATION_GROUP_SCHEMA)
-    @UnitOfWork
-    public Response createSchemaBranch(@ApiParam(value = "Details about schema version", required = true) 
-                                           @PathParam("versionId") Long schemaVersionId,
-                                        @ApiParam(value = "Schema Branch Name", required = true) SchemaBranch schemaBranch,
-                                        @Context SecurityContext securityContext) {
-        try {
-            LOG.debug("Create branch \"{}\" for version with id {}", schemaBranch.getName(), schemaVersionId);
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.fetchSchemaVersionInfo(schemaVersionId);
-
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeCreateSchemaBranch(auth,
-                    schemaRegistry,
-                    schemaVersionInfo.getSchemaMetadataId(),
-                    schemaVersionId,
-                    schemaBranch.getName());
-            SchemaBranch createdSchemaBranch = schemaRegistry.createSchemaBranch(schemaVersionId, schemaBranch);
-            return WSUtils.respondEntity(createdSchemaBranch, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaBranchAlreadyExistsException e) {
-            return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.ENTITY_CONFLICT,  schemaBranch.getName());
-        } catch (SchemaNotFoundException e) {
-            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while creating a new branch with name: [{}], version : [{}]", schemaBranch.getName(), schemaVersionId, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @POST
-    @Path("/schemas/{versionId}/merge")
-    @ApiOperation(value = "Merge a schema version to master given its version id",
-            response = SchemaVersionMergeResult.class,
-            tags = OPERATION_GROUP_SCHEMA)
-    @UnitOfWork
-    public Response mergeSchemaVersion(@ApiParam(value = "Details about schema version", required = true) 
-                                           @PathParam("versionId") Long schemaVersionId,
-                                       @QueryParam("disableCanonicalCheck") @DefaultValue("false") Boolean disableCanonicalCheck,
-                                       @Context SecurityContext securityContext) {
-        try {
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeMergeSchemaVersion(auth, schemaRegistry, schemaVersionId);
-            SchemaVersionMergeResult schemaVersionMergeResult = schemaRegistry.mergeSchemaVersion(schemaVersionId, disableCanonicalCheck);
-            return WSUtils.respondEntity(schemaVersionMergeResult, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaVersionId.toString());
-        } catch (IncompatibleSchemaException e) {
-            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INCOMPATIBLE_SCHEMA, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while merging a schema version to {} branch with version : [{}]", 
-                    SchemaBranch.MASTER_BRANCH, schemaVersionId, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-    @DELETE
-    @Path("/schemas/branch/{branchId}")
-    @ApiOperation(value = "Delete a branch given its branch id", tags = OPERATION_GROUP_SCHEMA)
-    @UnitOfWork
-    public Response deleteSchemaBranch(@ApiParam(value = "ID of the Schema Branch", required = true) @PathParam("branchId") Long schemaBranchId,
-                                       @Context SecurityContext securityContext) {
-        try {
-            authorizationAgent.authorizeDeleteSchemaBranch(authorizationUtils.getUserAndGroups(securityContext),
-                    schemaRegistry, schemaBranchId);
-            schemaRegistry.deleteSchemaBranch(schemaBranchId);
-            return WSUtils.respond(Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (SchemaBranchNotFoundException e) {
-            return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND,  schemaBranchId.toString());
-        } catch (InvalidSchemaBranchDeletionException e) {
-            return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while deleting a branch with name: [{}]", schemaBranchId, ex);
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-    }
-
-
-    // When ever SCHEMA_BRANCH or SCHEMA_VERSION is updated in one of the node in the cluster, 
-    // then it will use this API to notify rest of the node in the
-    // cluster to update their corresponding cache.
-    // TODO: This API was introduced as a temporary solution to address HA requirements with cache synchronization. 
-    //  A more permanent and stable fix should be incorporated.
-    @POST
-    @Path("/cache/{cacheType}/invalidate")
-    @ApiOperation(value = "Address HA requirements with cache synchronization.")
-    @UnitOfWork
-    public Response invalidateCache(@ApiParam(value = "Cache Id to be invalidated", required = true) 
-                                        @PathParam("cacheType") SchemaRegistryCacheType cacheType, 
-                                    @ApiParam(value = "key") String keyString) {
-        try {
-            LOG.debug("RetryableBlock to invalidate cache : {} with key : {} accepted", cacheType.name(), keyString);
-            schemaRegistry.invalidateCache(cacheType, keyString);
-            return WSUtils.respond(Response.Status.OK);
-        } catch (Exception e) {
-            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, e.getMessage());
-        }
-    }
-
-    @POST
-    @Path("/import")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation(value = "Bulk import schemas from a file",
-            notes = "Upload a file containing multiple schemas. The schemas will be processed and added to Schema Registry. " +
-                    "In case there is already existing data in Schema Registry, there might be ID collisions. You should " +
-                    "define what to do in case of collisions (fail or ignore). To avoid issues, it is recommended to import " +
-                    "schemas when the database is empty.",
-            response = UploadResult.class, tags = OPERATION_GROUP_EXPORT_IMPORT)
-    @Timed
-    @UnitOfWork
-    public Response uploadSchemaVersion(@ApiParam(value = "Imported file format. Can be 0 (Cloudera) or 1 (Confluent)", required = true)
-                                        @QueryParam("format") @DefaultValue("0") String fileFormat,
-                                        @ApiParam(value = "In case of errors, should the operation fail or should we continue processing the remaining rows")
-                                        @QueryParam("failOnError") @DefaultValue("true") boolean failOnError,
-                                        @ApiParam(value = "File to upload. Please make sure the file contains valid data.", required = true)
-                                        @FormDataParam("file") final InputStream inputStream,
-                                        @Context SecurityContext securityContext) {
-        Response response;
-        try {
-            BulkUploadInputFormat format;
-            if (StringUtils.isBlank(fileFormat)) {
-                format = BulkUploadInputFormat.CLOUDERA;
-            } else if ("0".equals(fileFormat) || "CLOUDERA".equalsIgnoreCase(fileFormat)) {
-                format = BulkUploadInputFormat.CLOUDERA;
-            } else if ("1".equals(fileFormat) || "CONFLUENT".equalsIgnoreCase(fileFormat)) {
-                format = BulkUploadInputFormat.CONFLUENT;
-            } else {
-                return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST, "Invalid file format.");
-            }
-
-            final Authorizer.UserAndGroups auth = authorizationUtils.getUserAndGroups(securityContext);
-            authorizationAgent.authorizeBulkImport(auth);
-
-            UploadResult uploadResult = schemaRegistry.bulkUploadSchemas(inputStream, failOnError, format);
-            response = WSUtils.respondEntity(uploadResult, Response.Status.OK);
-        } catch (AuthorizationException e) {
-            LOG.debug("Access denied. ", e);
-            return WSUtils.respond(Response.Status.FORBIDDEN, CatalogResponse.ResponseMessage.ACCESS_DENIED, e.getMessage());
-        } catch (RangerException rex) {
-            return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, rex.getMessage());
-        } catch (Exception ex) {
-            if (ex instanceof UndeclaredThrowableException) {
-                ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
-            }
-            LOG.error("Encountered error while importing schemas", ex);
-            response = WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
-        }
-
-        return response;
-    }
-
-    @POST
-    @Path("/setupAtlasModel")
-    @ApiOperation(value = "Setup SchemaRegistry model in Atlas",
-            notes = "This method should only be called once, during system initialization.",
-            response = String.class, tags = OPERATION_GROUP_ATLAS)
-    @Timed
-    @UnitOfWork
-    public Response setupAtlasModel() {
-        atlasPlugin.setupAtlasModel();
-        atlasPlugin.setupKafkaSchemaModel();
-        return WSUtils.respondString(Response.Status.OK, SUCCESS);
     }
 
 }

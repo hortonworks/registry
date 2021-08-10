@@ -21,6 +21,7 @@ import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -57,6 +58,13 @@ public final class WSUtils {
     }
 
     public static Response respond(Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
+        return Response.status(status)
+                .entity(CatalogResponse.newResponse(msg).format(formatArgs))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    public static Response confluentRespond(Response.Status status, CatalogResponse.ResponseMessage msg, String... formatArgs) {
         return Response.status(status)
                 .entity(CatalogResponse.newResponse(msg).format(formatArgs))
                 .build();
