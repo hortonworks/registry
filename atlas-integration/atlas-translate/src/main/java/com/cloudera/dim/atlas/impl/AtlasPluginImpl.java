@@ -204,42 +204,43 @@ public class AtlasPluginImpl implements AtlasPlugin {
             }
 
             final String schemaName = schemaMetadataInfo.getSchemaMetadata().getName();
-            Optional<AtlasEntityHeader> kafkaTopicEntity = findKafkaTopicEntityByName(schemaName);
-            if (!kafkaTopicEntity.isPresent()) {
+            List<AtlasEntityHeader> kafkaTopicEntities = findKafkaTopicEntitiesByName(schemaName);
+            if (kafkaTopicEntities.isEmpty()) {
                 LOG.info("Did not find Kafka topic with the name \"{}\"", schemaName);
                 return;
             }
+            for (AtlasEntityHeader atlasEntityHeader : kafkaTopicEntities) {
+                AtlasRelationship relationship = new AtlasRelationship(KafkaTopicSchemaRelationshipDef.RELATIONSHIP_NAME,
+                    new AtlasObjectId(atlasEntityHeader.getGuid()), new AtlasObjectId(metaEntity.getGuid()));
 
-            AtlasRelationship relationship = new AtlasRelationship(KafkaTopicSchemaRelationshipDef.RELATIONSHIP_NAME,
-                    new AtlasObjectId(kafkaTopicEntity.get().getGuid()), new AtlasObjectId(metaEntity.getGuid()));
-
-            if (null != atlasClient.createRelationship(relationship)) {
-                LOG.info("Successfully connected schema [{}] with its Kafka topic.", schemaName);
+                if (null != atlasClient.createRelationship(relationship)) {
+                    LOG.info("Successfully connected schema [{}] with a Kafka topic.", schemaName);
+                }
             }
-
+            
         } catch (AtlasServiceException asex) {
             throw new AtlasUncheckedException("Error while querying Atlas about the type model.", asex);
         }
     }
 
-    private Optional<AtlasEntityHeader> findKafkaTopicEntityByName(@Nonnull String topicName) throws AtlasServiceException {
+    private List<AtlasEntityHeader> findKafkaTopicEntitiesByName(@Nonnull String topicName) throws AtlasServiceException {
         if (StringUtils.isBlank(topicName)) {
             throw new IllegalArgumentException("Kafka topic name was null.");
         }
 
         AtlasSearchResult result = atlasClient.dslSearch(String.format("from %s where %s = '%s'",
                 KafkaTopicEntityDef.KAFKA_TOPIC, KafkaTopicEntityDef.NAME, topicName));
-        if (result == null || CollectionUtils.isEmpty(result.getEntities())) {
-            return Optional.empty();
-        }
 
-        for (AtlasEntityHeader aeh : result.getEntities()) {
-            if (KafkaTopicEntityDef.KAFKA_TOPIC.equals(aeh.getTypeName()) && topicName.equals(aeh.getAttribute(KafkaTopicEntityDef.NAME))) {
-                return Optional.of(aeh);
+        List<AtlasEntityHeader> headers = new ArrayList<>();
+        
+        if (result != null) {
+            for (AtlasEntityHeader aeh : result.getEntities()) {
+                if (KafkaTopicEntityDef.KAFKA_TOPIC.equals(aeh.getTypeName()) && topicName.equals(aeh.getAttribute(KafkaTopicEntityDef.NAME))) {
+                    headers.add(aeh);
+                }
             }
         }
-
-        return Optional.empty();
+        return headers;
     }
 
     private Optional<AtlasEntityDef> findTypeDefByName(String name) throws AtlasServiceException {
