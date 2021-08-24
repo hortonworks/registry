@@ -1522,7 +1522,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final ConfigEntry<String> LOCAL_JAR_PATH =
                 ConfigEntry.optional("schema.registry.client.local.jars.path",
                                      String.class,
-                                     "URL of schema registry to which this client connects to. For ex: http://localhost:9090/api/v1",
+                                     "Local directory path to which downloaded jars should be copied to. For ex: /tmp/schema-registry/local-jars",
                                      DEFAULT_LOCAL_JARS_PATH,
                                      ConfigEntry.StringConverter.get(),
                                      ConfigEntry.NonEmptyStringValidator.get());
