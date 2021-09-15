@@ -375,7 +375,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     @Path("/compatibility/subjects/{schema}/versions/{version}")
     @ApiOperation(value = "Checks if the given schema text is compatible with the specified " +
                 "(\"latest\" or versionID) version of the schema identified by the name",
-            response = CompatibilityResult.class, tags = OPERATION_GROUP_CONFLUENT_SR)
+            response = ConfluentCompatibilityResult.class, tags = OPERATION_GROUP_CONFLUENT_SR)
     @Timed
     @UnitOfWork
     public Response checkCompatibilityWithSchema(@PathParam("schema") @NotNull String subject,
@@ -412,7 +412,7 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
                 authorizationAgent.authorizeSchemaVersion(authorizationUtils.getUserAndGroups(securityContext), schemaRegistry,
                         schemaVersionInfo, Authorizer.AccessType.READ);
                 CompatibilityResult compatibilityResult = schemaRegistry.checkCompatibility(subject, schemaStringFromJson(schemaText).getSchema());
-                return WSUtils.respondEntity(compatibilityResult, Response.Status.OK);
+                return WSUtils.respondEntity(new ConfluentCompatibilityResult(compatibilityResult), Response.Status.OK);
             }
         });
     }
