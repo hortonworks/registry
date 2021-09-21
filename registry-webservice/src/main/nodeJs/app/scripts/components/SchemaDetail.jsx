@@ -321,13 +321,18 @@ export default class SchemaDetail extends Component{
     var btnClass = this.getBtnClass(compatibility);
     var iconClass = this.getIconClass(compatibility);
     // var totalVersions = s.versions.length;
+    const showCompatibility = type.toLowerCase() === 'avro';
 
     var header = (
       <div>
         <span className={`hb ${btnClass} schema-status-icon`}><i className={iconClass}></i></span>
         <div className="panel-sections first fluid-width-15">
           <h4 ref="schemaName" className="schema-name" title={name}>{Utils.ellipses(name, this.schemaNameTagWidth)}</h4>
+          {showCompatibility ?
           <p className={`schema-status ${compatibility.toLowerCase()}`}>{compatibility}</p>
+          :
+          null
+          }
         </div>
         <div className="panel-sections">
           <h6 className="schema-th">Type</h6>

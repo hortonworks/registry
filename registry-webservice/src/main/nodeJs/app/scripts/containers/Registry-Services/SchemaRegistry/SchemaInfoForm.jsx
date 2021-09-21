@@ -214,6 +214,8 @@ export default class SchemaFormContainer extends Component {
       lint: this.state.type.toLowerCase() == 'avro'
     };
     let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror} = this.state;
+    const showCompatibility = this.state.type.toLowerCase() === 'avro';
+    const showEvolve = showCompatibility;
     return (
       <form>
       <div className="row">
@@ -248,12 +250,17 @@ export default class SchemaFormContainer extends Component {
                 : "form-control"} value={this.state.schemaGroup} required={true}/>
             </div>
           </div>
+          {showCompatibility ?
           <div className="form-group">
             <label>Compatibility</label>
             <div>
               <Select value={this.state.compatibility} options={this.state.compatibilityArr} onChange={this.handleCompatibilityChange.bind(this)} clearable={false}/>
             </div>
           </div>
+          :
+          null
+          }
+          {showEvolve ?
           <div className="form-group">
             <div className="checkbox">
             <label><input name="evolve" onChange={this.handleToggleEvolve.bind(this)} type="checkbox" value={evolve} checked={evolve}/> Evolve</label>
@@ -263,8 +270,11 @@ export default class SchemaFormContainer extends Component {
               :
               null
             }
+            </div>
           </div>
-        </div>
+          :
+          null
+          }
       </div>
       <div className={expandCodemirror ? "col-md-12" : "col-md-6"}>
         <div className="form-group">
