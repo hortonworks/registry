@@ -18,10 +18,13 @@ package com.cloudera.dim.schemaregistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import org.apache.atlas.model.discovery.AtlasSearchResult;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasObjectId;
 import org.apache.atlas.model.instance.AtlasRelationship;
 import org.apache.atlas.model.instance.EntityMutationResponse;
+import org.apache.atlas.model.typedef.AtlasEntityDef;
+import org.apache.atlas.model.typedef.AtlasTypesDef;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.mockserver.integration.ClientAndServer;
@@ -48,11 +51,14 @@ import static com.cloudera.dim.schemaregistry.GlobalState.ATLAS_ENTITY_UPDATE;
 import static com.cloudera.dim.schemaregistry.GlobalState.ATLAS_RELATIONSHIPS;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.JsonBody.json;
+import static org.mockserver.verify.VerificationTimes.exactly;
 
 public class TestAtlasServer extends AbstractTestServer {
 
@@ -61,6 +67,8 @@ public class TestAtlasServer extends AbstractTestServer {
     public static final String SCHEMA_META_TYPE_NAME = "schema_metadata_info";
     public static final String SCHEMA_VERSION_TYPE_NAME = "schema_version_info";
     public static final String META_VERSION_REL_TYPE_NAME = "schema_version";
+    public static final String TOPIC_SCHEMA_REL_TYPE_NAME = "topic_schema";
+    public static final String KAFKA_TOPIC_TYPEDEF_NAME = "kafka_topic";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final GlobalState sow;
@@ -221,13 +229,14 @@ public class TestAtlasServer extends AbstractTestServer {
                 .respond(request -> {
                     AtlasRelationship body = objectMapper.readValue(request.getBodyAsString(), AtlasRelationship.class);
 
-                    String relationshipType;
+                    String relationshipType = body.getTypeName();
                     String relationshipName;
-                    switch (body.getTypeName()) {
+                    switch (relationshipType) {
                         case META_VERSION_REL_TYPE_NAME:
-                            relationshipType = body.getTypeName();
                             relationshipName = "versions";
                             break;
+                        case TOPIC_SCHEMA_REL_TYPE_NAME:
+                            return jsonResponse(new AtlasRelationship());
                         default:
                             LOG.warn("Untested relationship type: {}", body.getTypeName());
                             return null;
@@ -354,6 +363,18 @@ public class TestAtlasServer extends AbstractTestServer {
         return expectations[0];
     }
 
+    public void dslSearch(AtlasSearchResult searchResult) {
+        dslSearch(serializeToJson(searchResult));
+    }
+
+    public void dslSearch(String response) {
+        mockWebServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/api/atlas/v2/search/dsl"))
+                .respond(request -> response().withBody(response, MediaType.JSON_UTF_8));
+    }
+
     private Expectation createAtlasModel() {
         HttpRequest expectedRequest = request()
                 .withMethod("POST")
@@ -369,6 +390,29 @@ public class TestAtlasServer extends AbstractTestServer {
                 });
 
         return expectations[0];
+    }
+
+    public void queryAtlasModel() {
+        mockWebServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/api/atlas/v2/types/typedefs/")
+                        .withContentType(MediaType.APPLICATION_JSON_UTF_8)
+                        .withQueryStringParameter("name", KAFKA_TOPIC_TYPEDEF_NAME)
+                )
+                .respond(request ->
+                        jsonResponse(
+                            new AtlasTypesDef(emptyList(), emptyList(), emptyList(), singletonList(new AtlasEntityDef(KAFKA_TOPIC_TYPEDEF_NAME)))
+                        )
+                );
+
+        mockWebServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/api/atlas/v2/types/relationshipdef/name/" + TOPIC_SCHEMA_REL_TYPE_NAME)
+                        .withContentType(MediaType.APPLICATION_JSON_UTF_8)
+                )
+                .respond(request -> response().withBody("{}", MediaType.JSON_UTF_8));
     }
 
     @SuppressWarnings("unchecked")
@@ -467,5 +511,16 @@ public class TestAtlasServer extends AbstractTestServer {
             LOG.error("Mock expectation failed.", aex);
             return false;
         }
+    }
+
+    public void verifyNoConnectionWasMadeWith(String topicName) {
+        mockWebServer.verify(
+                request().withMethod("POST").withPath("/api/atlas/v2/relationship/"),
+                exactly(0)
+        );
+    }
+
+    public void verifySchemaAndTopicGotConnected(String schemaName, String topicName) {
+        mockWebServer.verify(new ExpectationId().withId(createRelationshipExpectation.getId()));
     }
 }

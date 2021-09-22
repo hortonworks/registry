@@ -15,17 +15,17 @@
  **/
 package com.cloudera.dim.schemaregistry;
 
-import com.hortonworks.registries.common.AtlasConfiguration;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.hortonworks.registries.common.AtlasConfiguration;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.FileStorageProperties;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.util.LocalFileSystemStorage;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 import com.hortonworks.registries.storage.DbProperties;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
-import com.hortonworks.registries.common.RegistryConfiguration;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.atlas.plugin.classloader.AtlasCustomPathClassLoader;
@@ -47,6 +47,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,6 +75,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private LocalSchemaRegistryServer localSchemaRegistry;
     private boolean atlasEnabled = false;
     private int atlasPort = -1;
+    private DataSource dataSource;
 
     private static TestSchemaRegistryServer instance;
 
@@ -189,11 +192,11 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         h2Port = h2Server.getPort();
     }
 
-    private DbProperties startDatabase() throws SQLException, IOException {
+    private DbProperties startDatabase() throws SQLException {
         LOG.debug("Setting up H2 database ...");
 
         // start in-memory H2 database
-        DataSource ds = startInMemoryH2();
+        dataSource = startInMemoryH2();
 
         // open TCP port so external processes can access it
         openH2TcpPort();
@@ -373,5 +376,22 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
 
     public void setAtlasPort(int atlasPort) {
         this.atlasPort = atlasPort;
+    }
+
+    public int countFailedAtlasEvents() throws SQLException {
+        try (
+                PreparedStatement statement = dataSource
+                        .getConnection()
+                        .prepareStatement("select count(*) from atlas_events where processed=? and failed=?")
+        ) {
+            statement.setBoolean(1, false);
+            statement.setBoolean(2, true);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.first();
+                int failed = resultSet.getInt(1);
+                LOG.debug("there are {} failed atlas events", failed);
+                return failed;
+            }
+        }
     }
 }

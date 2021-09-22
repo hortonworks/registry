@@ -18,6 +18,7 @@ package com.cloudera.dim.schemaregistry.steps;
 import com.cloudera.dim.schemaregistry.GlobalState;
 import com.cloudera.dim.schemaregistry.TestAtlasServer;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
+import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -30,6 +31,8 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
+import org.apache.atlas.model.discovery.AtlasSearchResult;
+import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
@@ -61,7 +64,9 @@ import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_META_INFO;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_NAME;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_ID;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_NO;
+import static com.cloudera.dim.schemaregistry.TestAtlasServer.KAFKA_TOPIC_TYPEDEF_NAME;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static org.apache.http.protocol.HttpCoreContext.HTTP_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -114,6 +119,22 @@ public class WhenSteps extends AbstractSteps {
             testServer.setAtlasEnabled(false);
         }
         testServer.setAtlasPort(-1);
+    }
+
+    @Given("no {string} topic exists")
+    public void noTopicExistsWithName(String topicName) {
+        testAtlasServer.dslSearch("{}");
+    }
+
+    @Given("there is preexisting {string} topic")
+    public void thereIsPreexistingTopic(String topicName) {
+        AtlasSearchResult result = new AtlasSearchResult();
+        result.setEntities(
+                singletonList(
+                        new AtlasEntityHeader(KAFKA_TOPIC_TYPEDEF_NAME, "[guid]", ImmutableMap.of("name", topicName))
+                )
+        );
+        testAtlasServer.dslSearch(result);
     }
 
     @When("we create a new schema meta {string} with the following parameters:")

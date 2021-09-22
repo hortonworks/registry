@@ -24,6 +24,7 @@ import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.http.HttpResponse;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -147,6 +149,17 @@ public class ThenSteps extends AbstractSteps {
     @Then("the model should be created in Atlas")
     public void theModelShouldBeCreatedInAtlas() throws Exception {
         pollSow(10, sow -> testAtlasServer.verifyCreateModelRequest());
+        testAtlasServer.queryAtlasModel();
+    }
+
+    @Then("no request was made to Atlas to connect the {string} schema with any topic")
+    public void noConnectionRequestMade(String topicName) {
+        testAtlasServer.verifyNoConnectionWasMadeWith(topicName);
+    }
+
+    @Then("a new relationship was made in Atlas between the {string} schema and the {string} topic")
+    public void aNewRelationshipWasMadeInAtlasBetweenTheSchemaAndTheTopic(String schemaName, String topicName) {
+        testAtlasServer.verifySchemaAndTopicGotConnected(schemaName, topicName);
     }
 
     /** Poll the StateOfTheWorld every 100ms. If the condition doesn't happen for maxTimeoutSec, an exception is thrown. */
@@ -171,4 +184,8 @@ public class ThenSteps extends AbstractSteps {
         task.get(maxTimeoutSec, TimeUnit.SECONDS);
     }
 
+    @And("no failed Atlas events remain")
+    public void noFailedAtlasEventRemain() throws SQLException {
+        assertEquals(0, testServer.countFailedAtlasEvents());
+    }
 }

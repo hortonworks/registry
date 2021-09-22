@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2020 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -168,7 +168,6 @@ public class AtlasPluginImpl implements AtlasPlugin {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void connectSchemaWithTopic(String metaGuid, SchemaMetadataInfo schemaMetadataInfo) {
         try {
@@ -180,47 +179,49 @@ public class AtlasPluginImpl implements AtlasPlugin {
             checkNotNull(metaEntityInfo.getEntity(), "Did not find schema_metadata_info with GUID " + metaGuid);
 
             AtlasEntity metaEntity = metaEntityInfo.getEntity();
-            boolean relationshipAlreadyExists = false;
 
-            if (metaEntity.getRelationshipAttributes() != null) {
-                Object kafkaTopicColl = metaEntity.getRelationshipAttributes().get(KafkaTopicSchemaRelationshipDef.REL_MANY);
-                if (kafkaTopicColl instanceof Collection) {
-                    Collection<Map<String, ?>> headers = (Collection<Map<String, ?>>) kafkaTopicColl;
-                    if (!headers.isEmpty()) {
-                        Map<String, ?> header = (Map<String, ?>) CollectionUtils.get(headers, 0);
-                        if (null != header.get(AtlasObjectId.KEY_GUID)) {
-                            relationshipAlreadyExists = true;
-                        }
-                    }
-                }
-            }
-
-            if (relationshipAlreadyExists) {
+            if (isAlreadyConnected(metaEntity)) {
                 LOG.debug("Schema {} is already connected to a topic.", schemaMetadataInfo.getId());
                 return;
             }
 
             final String schemaName = schemaMetadataInfo.getSchemaMetadata().getName();
-            List<AtlasEntityHeader> kafkaTopicEntities = findKafkaTopicEntitiesByName(schemaName);
-            if (kafkaTopicEntities.isEmpty()) {
+            List<String> kafkaTopicGuids = findKafkaTopicEntitiesByName(schemaName);
+            if (kafkaTopicGuids.isEmpty()) {
                 LOG.info("Did not find Kafka topic with the name \"{}\"", schemaName);
                 return;
             }
-            for (AtlasEntityHeader atlasEntityHeader : kafkaTopicEntities) {
+
+            for (String atlasEntityGuid : kafkaTopicGuids) {
                 AtlasRelationship relationship = new AtlasRelationship(KafkaTopicSchemaRelationshipDef.RELATIONSHIP_NAME,
-                    new AtlasObjectId(atlasEntityHeader.getGuid()), new AtlasObjectId(metaEntity.getGuid()));
+                    new AtlasObjectId(atlasEntityGuid), new AtlasObjectId(metaEntity.getGuid()));
 
                 if (null != atlasClient.createRelationship(relationship)) {
                     LOG.info("Successfully connected schema [{}] with a Kafka topic.", schemaName);
                 }
             }
-            
         } catch (AtlasServiceException asex) {
             throw new AtlasUncheckedException("Error while querying Atlas about the type model.", asex);
         }
     }
 
-    private List<AtlasEntityHeader> findKafkaTopicEntitiesByName(@Nonnull String topicName) throws AtlasServiceException {
+    private boolean isAlreadyConnected(AtlasEntity metaEntity) {
+        if (metaEntity != null && metaEntity.getRelationshipAttributes() != null) {
+            Object kafkaTopicColl = metaEntity.getRelationshipAttributes().get(KafkaTopicSchemaRelationshipDef.REL_MANY);
+            if (kafkaTopicColl instanceof Collection) {
+                Collection<Map<String, ?>> headers = (Collection<Map<String, ?>>) kafkaTopicColl;
+                if (!headers.isEmpty()) {
+                    Map<String, ?> header = (Map<String, ?>) CollectionUtils.get(headers, 0);
+                    if (null != header.get(AtlasObjectId.KEY_GUID)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private List<String> findKafkaTopicEntitiesByName(@Nonnull String topicName) throws AtlasServiceException {
         if (StringUtils.isBlank(topicName)) {
             throw new IllegalArgumentException("Kafka topic name was null.");
         }
@@ -228,16 +229,17 @@ public class AtlasPluginImpl implements AtlasPlugin {
         AtlasSearchResult result = atlasClient.dslSearch(String.format("from %s where %s = '%s'",
                 KafkaTopicEntityDef.KAFKA_TOPIC, KafkaTopicEntityDef.NAME, topicName));
 
-        List<AtlasEntityHeader> headers = new ArrayList<>();
-        
+        List<String> guids = new ArrayList<>();
+
         if (result != null && result.getEntities() != null) {
             for (AtlasEntityHeader aeh : result.getEntities()) {
                 if (KafkaTopicEntityDef.KAFKA_TOPIC.equals(aeh.getTypeName()) && topicName.equals(aeh.getAttribute(KafkaTopicEntityDef.NAME))) {
-                    headers.add(aeh);
+                    guids.add(aeh.getGuid());
                 }
             }
         }
-        return headers;
+
+        return guids;
     }
 
     private Optional<AtlasEntityDef> findTypeDefByName(String name) throws AtlasServiceException {
@@ -361,7 +363,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
     }
 
     @Override
-    public void addSchemaVersion(String schemaName, SchemaVersionInfo schemaVersion) throws SchemaNotFoundException {
+    public void addSchemaVersion(String schemaName, SchemaVersionInfo schemaVersion) {
         checkNotNull(schemaName, "schemaName can't be null");
         checkNotNull(schemaVersion, "schemaVersion can't be null");
 
