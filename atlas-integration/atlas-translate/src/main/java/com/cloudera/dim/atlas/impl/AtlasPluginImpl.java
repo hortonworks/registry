@@ -31,7 +31,6 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.atlas.AtlasBaseClient;
 import org.apache.atlas.AtlasClientV2;
 import org.apache.atlas.AtlasServiceException;
 import org.apache.atlas.model.SearchFilter;
@@ -52,8 +51,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -257,9 +254,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
     }
 
     private Optional<AtlasRelationshipDef> findRelationshipDefByName(String name) throws AtlasServiceException {
-        // TODO querying relationship typedefs doesn't work, remove this code after CDPD-28408 is fixed
-        AtlasBaseClient.API api = new AtlasBaseClient.API(AtlasClientV2.TYPES_API + "relationshipdef/name/" + name, HttpMethod.GET, Response.Status.OK);
-        return Optional.ofNullable(atlasClient.callAPI(api, AtlasRelationshipDef.class, null));
+        return Optional.ofNullable(atlasClient.getRelationshipDefByName(name));
     }
 
     /** AtlasClient requires an array of host names to connect to. */
