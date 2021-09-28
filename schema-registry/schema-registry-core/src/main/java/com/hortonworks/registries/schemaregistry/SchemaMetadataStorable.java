@@ -92,7 +92,19 @@ public class SchemaMetadataStorable extends AbstractStorable {
      */
     private Boolean evolve;
 
-    public SchemaMetadataStorable() {
+    public SchemaMetadataStorable() { }
+
+    private SchemaMetadataStorable(Long id, String type, String schemaGroup, String name, String description, Long timestamp,
+                                   SchemaCompatibility compatibility, SchemaValidationLevel validationLevel, Boolean evolve) {
+        this.id = id;
+        this.type = type;
+        this.schemaGroup = schemaGroup;
+        this.name = name;
+        this.description = description;
+        this.timestamp = timestamp;
+        this.compatibility = compatibility;
+        this.validationLevel = validationLevel;
+        this.evolve = evolve;
     }
 
     @Override
@@ -219,21 +231,21 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     public static SchemaMetadataStorable fromSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {
         SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
-        SchemaMetadataStorable schemaMetadataStorable = updateSchemaMetadata(new SchemaMetadataStorable(), schemaMetadata);
+        SchemaMetadataStorable schemaMetadataStorable = new SchemaMetadataStorable().updateSchemaMetadata(schemaMetadata);
         schemaMetadataStorable.setId(schemaMetadataInfo.getId());
         schemaMetadataStorable.setTimestamp(schemaMetadataInfo.getTimestamp());
         return schemaMetadataStorable;
     }
 
-    public static SchemaMetadataStorable updateSchemaMetadata(SchemaMetadataStorable schemaMetadataStorable, SchemaMetadata schemaMetadata) {
-        schemaMetadataStorable.setType(schemaMetadata.getType());
-        schemaMetadataStorable.setSchemaGroup(schemaMetadata.getSchemaGroup());
-        schemaMetadataStorable.setName(schemaMetadata.getName());
-        schemaMetadataStorable.setDescription(schemaMetadata.getDescription());
-        schemaMetadataStorable.setCompatibility(schemaMetadata.getCompatibility());
-        schemaMetadataStorable.setValidationLevel(schemaMetadata.getValidationLevel());
-        schemaMetadataStorable.setEvolve(schemaMetadata.isEvolve());
-        return schemaMetadataStorable;
+    public SchemaMetadataStorable updateSchemaMetadata(SchemaMetadata schemaMetadata) {
+        this.setType(schemaMetadata.getType());
+        this.setSchemaGroup(schemaMetadata.getSchemaGroup());
+        this.setName(schemaMetadata.getName());
+        this.setDescription(schemaMetadata.getDescription());
+        this.setCompatibility(schemaMetadata.getCompatibility());
+        this.setValidationLevel(schemaMetadata.getValidationLevel());
+        this.setEvolve(schemaMetadata.isEvolve());
+        return this;
     }
 
     public SchemaMetadataInfo toSchemaMetadataInfo() {
@@ -251,6 +263,11 @@ public class SchemaMetadataStorable extends AbstractStorable {
                 .description(getDescription())
                 .evolve(getEvolve())
                 .build();
+    }
+
+    /** Create a copy and set the compatibility field. */
+    public SchemaMetadataStorable copy(SchemaCompatibility compatibility) {
+        return new SchemaMetadataStorable(id, type, schemaGroup, name, description, timestamp, compatibility, validationLevel, evolve);
     }
 
     @Override

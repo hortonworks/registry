@@ -115,7 +115,7 @@ public class InMemoryStorageManager implements StorageManager {
      * Uses reflection to query the field or the method. Assumes
      * a public getXXX method is available to get the field value.
      */
-    private boolean matches(Storable val, List<QueryParam> queryParams, Class<?> clazz) {
+    private boolean matches(Storable val, List<QueryParam> queryParams) {
         Object fieldValue;
         boolean res = true;
             for (QueryParam qp : queryParams) {
@@ -137,6 +137,7 @@ public class InMemoryStorageManager implements StorageManager {
         return find(namespace, queryParams, Collections.emptyList());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends Storable> Collection<T> find(final String namespace,
                                                    final List<QueryParam> queryParams,
@@ -152,7 +153,7 @@ public class InMemoryStorageManager implements StorageManager {
                 Map<PrimaryKey, Storable> storableMap = storageMap.get(namespace);
                 if (storableMap != null) {
                     for (Storable val : storableMap.values()) {
-                        if (matches(val, queryParams, clazz)) {
+                        if (matches(val, queryParams)) {
                             storables.add((T) val);
                         }
                     }

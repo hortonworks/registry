@@ -15,8 +15,10 @@
  */
 package com.hortonworks.registries.schemaregistry;
 
+import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
+import com.hortonworks.registries.schemaregistry.json.JsonSchemaProvider;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
@@ -33,6 +35,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class DefaultSchemaRegistryTest {
 
@@ -63,7 +66,9 @@ public class DefaultSchemaRegistryTest {
 
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig =
-                Collections.singleton(Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()));
+                ImmutableList.of(
+                        Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()),
+                        Collections.singletonMap("providerClass", JsonSchemaProvider.class.getName()));
         ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
         underTest = new DefaultSchemaRegistry(configuration, storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
     }
@@ -102,5 +107,39 @@ public class DefaultSchemaRegistryTest {
 
         //then
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testJsonSchemaCompatibility() {
+        SchemaMetadata meta = new SchemaMetadata.Builder("hello-world")
+                .type("json")
+                .description("json schema")
+                .evolve(true)
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .validationLevel(SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL)
+                .schemaGroup("kafka")
+                .build();
+        Long id = underTest.addSchemaMetadata(meta);
+
+        SchemaMetadataInfo persisted = underTest.getSchemaMetadataInfo(id);
+        assertNotNull(persisted);
+        assertEquals(SchemaCompatibility.NONE, persisted.getSchemaMetadata().getCompatibility());
+
+        SchemaMetadata meta2 = new SchemaMetadata.Builder(meta.getName())
+                .type("json")
+                .description("second version")
+                .evolve(true)
+                .compatibility(SchemaCompatibility.BACKWARD)
+                .validationLevel(SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL)
+                .schemaGroup("kafka")
+                .build();
+
+        SchemaMetadataInfo info = underTest.updateSchemaMetadata(meta.getName(), meta2);
+        assertNotNull(info);
+
+        SchemaMetadataInfo updated = underTest.getSchemaMetadataInfo(id);
+        assertNotNull(updated);
+        assertEquals(SchemaCompatibility.NONE, updated.getSchemaMetadata().getCompatibility());
+        assertEquals("second version", updated.getSchemaMetadata().getDescription());
     }
 }

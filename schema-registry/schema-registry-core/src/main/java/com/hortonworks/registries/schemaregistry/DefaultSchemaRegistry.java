@@ -49,9 +49,11 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
@@ -239,8 +241,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     private Long addSchemaMetadata(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
-        SchemaMetadataStorable givenSchemaMetadataStorable = SchemaMetadataStorable.fromSchemaMetadataInfo(
-                new SchemaMetadataInfo(schemaMetadata));
+        final SchemaMetadataStorable givenSchemaMetadataStorable = ensureJsonCompatibility(
+                SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata)));
         String type = schemaMetadata.getType();
 
         if (schemaTypeWithProviders.get(type) == null) {
@@ -361,12 +363,21 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaMetadataStorable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
         if (schemaMetadataStorable != null) {
-            schemaMetadataStorable = SchemaMetadataStorable.updateSchemaMetadata(schemaMetadataStorable, schemaMetadata);
+            schemaMetadataStorable = schemaMetadataStorable.updateSchemaMetadata(schemaMetadata);
+            schemaMetadataStorable = ensureJsonCompatibility(schemaMetadataStorable);
             storageManager.update(schemaMetadataStorable);
             return schemaMetadataStorable.toSchemaMetadataInfo();
         } else {
             return null;
         }
+    }
+
+    /** JSON schema compatibility is always NONE. */
+    private SchemaMetadataStorable ensureJsonCompatibility(@Nonnull SchemaMetadataStorable schemaMetadata) {
+        if (StringUtils.equalsIgnoreCase("json", schemaMetadata.getType())) {
+            return schemaMetadata.copy(SchemaCompatibility.NONE);
+        }
+        return schemaMetadata;
     }
 
     @Override
