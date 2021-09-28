@@ -43,7 +43,7 @@ dependencies {
     compile libraries.jersey.media_multipart
     
     compile libraries.hibernate_validator
-    compile libraries.spring.context
+    compile libraries.commons.beanutils
     
     testCompile libraries.commons.io
     testCompile libraries.junit

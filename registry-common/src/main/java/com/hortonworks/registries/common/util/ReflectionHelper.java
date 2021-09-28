@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,22 @@
  */
 package com.hortonworks.registries.common.util;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
+import org.apache.commons.beanutils.MethodUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,39 +38,31 @@ import java.util.Map;
 public class ReflectionHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ReflectionHelper.class);
 
+    @SuppressWarnings("unchecked")
     public static <T> T newInstance(String className) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         return (T) Class.forName(className).newInstance();
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T invokeGetter(String propertyName, Object object) 
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        String methodName = "get" + StringUtils.capitalize(propertyName);
-        Method method = object.getClass().getMethod(methodName);
-        return (T) method.invoke(object);
+        return (T) PropertyUtils.getProperty(object, propertyName);
     }
 
-    public static <T> T invokeSetter(String propertyName, Object object, Object valueToSet) 
+    public static void invokeSetter(String propertyName, Object object, Object valueToSet)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        String methodName = "set" + StringUtils.capitalize(propertyName);
-        Method method = null;
         try {
-            method = object.getClass().getMethod(methodName, valueToSet.getClass());
-        } catch (NoSuchMethodException ex) {
+            PropertyUtils.setProperty(object, propertyName, valueToSet);
+        } catch (IllegalArgumentException ex) {
             // try setters that accept super types
-            Method[] methods = object.getClass().getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                if (methods[i].getName().equals(methodName) && methods[i].getParameterCount() == 1) {
-                    if (methods[i].getParameters()[0].getType().isAssignableFrom(valueToSet.getClass())) {
-                        method = methods[i];
-                        break;
-                    }
-                }
-            }
-            if (method == null) {
+            Method method = MethodUtils.getMatchingAccessibleMethod(object.getClass(), "set" + StringUtils.capitalize(propertyName), new Class<?>[]{valueToSet.getClass()});
+            if (method != null && method.getParameterCount() == 1 && method.getParameters()[0].getType().isAssignableFrom(valueToSet.getClass())) {
+                method.invoke(object, valueToSet);
+            } else {
                 throw ex;
             }
         }
-        return (T) method.invoke(object, valueToSet);
+
     }
 
     /**
@@ -96,17 +91,23 @@ public class ReflectionHelper {
     }
 
     public static Collection<Class<?>> getAnnotatedClasses(String basePackage, Class<? extends Annotation> annotation) {
-        Collection<Class<?>> classes = new ArrayList<>();
-        ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);
-        provider.addIncludeFilter(new AnnotationTypeFilter(annotation));
-        for (BeanDefinition beanDef : provider.findCandidateComponents(basePackage)) {
-            try {
-                classes.add(Class.forName(beanDef.getBeanClassName()));
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
+        ImmutableCollection.Builder<Class<?>> result = ImmutableList.builder();
+        try {
+            ImmutableSet<ClassPath.ClassInfo> classes = ClassPath.from(ReflectionHelper.class.getClassLoader()).getTopLevelClassesRecursive(basePackage);
+            for (ClassPath.ClassInfo info : classes) {
+                Class<?> clazz = info.load();
+                for (Annotation actualAnnotation : clazz.getAnnotations()) {
+                    if (actualAnnotation.annotationType() == annotation) {
+                        result.add(clazz);
+                        break;
+                    }
+                }
             }
+        } catch (IOException iex) {
+            throw new RuntimeException("Could not find classes under package " + basePackage, iex);
         }
-        return classes;
+
+        return result.build();
     }
 
     private ReflectionHelper() { }

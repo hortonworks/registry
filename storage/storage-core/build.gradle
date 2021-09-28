@@ -25,7 +25,7 @@ dependencies {
     
     testCompile libraries.h2
     testCompile libraries.junit
-    testCompile libraries.spring.context
+    testCompile libraries.commons.beanutils
     testCompile libraries.dropwizard.core
     testCompile libraries.mockito_junit5
 

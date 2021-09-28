@@ -38,6 +38,7 @@ ext.libraries = [
    avro              : "org.apache.avro:avro:$versions_avro",
 
    commons: [
+      beanutils      : "commons-beanutils:commons-beanutils:$versions_commons_beanutils",
       cli            : "commons-cli:commons-cli:$versions_commons_cli",
       codec          : "commons-codec:commons-codec:$versions_commons_codec",
       collections    : "org.apache.commons:commons-collections4:$versions_commons_collections",
@@ -207,7 +208,6 @@ ext.libraries = [
    snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
 
    spring: [
-     context         : "org.springframework:spring-context:$versions_spring",
      core            : "org.springframework:spring-core:$versions_spring"
    ],
 

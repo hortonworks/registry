@@ -18,6 +18,7 @@ dependencies {
 
     compile project(':schema-registry:schema-registry-common')
     compile project(':storage:storage-core')
+    compile libraries.commons.beanutils
     compile libraries.jersey.media_json
     compile libraries.guava
     compile group: 'commons-codec', name: 'commons-codec', version: '1.14'
