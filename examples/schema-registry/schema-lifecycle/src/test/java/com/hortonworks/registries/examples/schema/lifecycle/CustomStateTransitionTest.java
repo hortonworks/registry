@@ -24,9 +24,6 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
-import com.hortonworks.registries.schemaregistry.avro.conf.SchemaRegistryTestConfiguration;
-import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestServerClientWrapper;
-import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -47,27 +44,26 @@ public class CustomStateTransitionTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomStateTransitionTest.class);
 
-    private SchemaRegistryTestServerClientWrapper schemaRegistryTestServerClientWrapper;
+    private SchemaLifecycleApp schemaRegistryTestServer;
     private SchemaRegistryClient schemaRegistryClient;
 
     @BeforeEach
     public void startUp() throws Exception {
         String serverYAMLPath = CustomStateTransitionTest.class.getClassLoader().getResource("registry-lifecycle-test-example.yaml").getPath();
         String clientYAMLPath = CustomStateTransitionTest.class.getClassLoader().getResource("registry-lifecycle-client.yaml").getPath();
-        schemaRegistryTestServerClientWrapper = new SchemaRegistryTestServerClientWrapper(new SchemaRegistryTestConfiguration(serverYAMLPath, 
-                clientYAMLPath));
-        schemaRegistryTestServerClientWrapper.startTestServer();
-        schemaRegistryClient = schemaRegistryTestServerClientWrapper.getClient();
+        schemaRegistryTestServer = new SchemaLifecycleApp(serverYAMLPath);
+        schemaRegistryTestServer.startUp();
+        schemaRegistryClient = schemaRegistryTestServer.getClient(clientYAMLPath);
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        schemaRegistryTestServerClientWrapper.stopTestServer();
+        schemaRegistryTestServer.stop();
     }
 
     @Test
-    public void testTransitionToRejectedState() 
-            throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException, 
+    public void testTransitionToRejectedState()
+            throws IOException, SchemaNotFoundException, InvalidSchemaException, IncompatibleSchemaException,
             SchemaBranchAlreadyExistsException, SchemaLifecycleException {
         SchemaMetadata schemaMetadata = createSchemaMetadata("test", SchemaCompatibility.NONE);
         SchemaBranch branch1 = new SchemaBranch("BRANCH1", schemaMetadata.getName());
@@ -81,13 +77,13 @@ public class CustomStateTransitionTest {
 
         schemaRegistryClient.createSchemaBranch(schemaIdVersion1.getSchemaVersionId(), branch1);
 
-        String schema2 = AvroSchemaRegistryClientUtil.getSchema("/device1.avsc");
+        String schema2 = getSchema("/device1.avsc");
         LOG.info("Creating second version for the schema \"{}\"", schemaMetadata.getName());
         SchemaIdVersion schemaIdVersion2 = schemaRegistryClient
                 .addSchemaVersion(branch1.getName(), schemaMetadata, new SchemaVersion(schema2, "modify version"));
         LOG.info("ID of the second version is {}", schemaIdVersion2);
 
-        LOG.info("Starting review of the second version with ID {} (new state: {})", 
+        LOG.info("Starting review of the second version with ID {} (new state: {})",
                 schemaIdVersion2.getSchemaVersionId(), CustomReviewCycleStates.PEER_REVIEW_STATE.getId());
         schemaRegistryClient.startSchemaVersionReview(schemaIdVersion2.getSchemaVersionId());
         SchemaVersionInfo schemaVersionInfoAtReviewState = schemaRegistryClient
@@ -96,7 +92,7 @@ public class CustomStateTransitionTest {
         Assertions.assertEquals(CustomReviewCycleStates.PEER_REVIEW_STATE.getId(), schemaVersionInfoAtReviewState.getStateId());
 
         LOG.info("Transitioning second version into REJECTED ({}) state.", CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId());
-        schemaRegistryClient.transitionState(schemaIdVersion2.getSchemaVersionId(), 
+        schemaRegistryClient.transitionState(schemaIdVersion2.getSchemaVersionId(),
                 CustomReviewCycleStates.REJECTED_REVIEW_STATE.getId(), "Rejected by X".getBytes());
         SchemaVersionInfo schemaVersionInfoAtRejectedState = schemaRegistryClient
                 .getSchemaVersionInfo(new SchemaIdVersion(schemaIdVersion2.getSchemaVersionId()));

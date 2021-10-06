@@ -108,15 +108,6 @@ subprojects {
     test.finalizedBy(jacocoTestReport)
     jacocoTestReport.dependsOn(test)
 
-    task testJar(type: Jar, dependsOn: testClasses) {
-       classifier = 'test'
-       from sourceSets.test.output
-    }
-
-    artifacts {
-        tests testJar
-    }
-    
     checkstyle {
         toolVersion = '9.3'
         ignoreFailures = false
@@ -155,15 +146,21 @@ subprojects {
         }
     }
 
-    if (it.name != 'jersey-shaded') {  // jersey-shaded has custom publication
+    configurations.matching { it.name.contains("tests") }.each {testConfiguration ->
+        try {
+            components.java.withVariantsFromConfiguration(testConfiguration) {
+                skip()
+            }
+        } catch(InvalidUserDataException e) {}
+    }
+
+    // jersey-shaded has custom publication and we don't publish any test artifacts
+    if (it.name != 'jersey-shaded' & it.name != 'behavior-tests') {
         publishing {
             publications {
                 mavenJava(MavenPublication) {
                     groupId = group
                     from components.java
-                    artifact(testJar) {
-                        classifier "tests"
-                    }
                 }
             }
         }
