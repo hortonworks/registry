@@ -65,9 +65,9 @@ export default class SchemaVersionDiff extends Component {
   }
   getSchemaDiff(){
     let {baseText, newText, baseTextVersion, newTextVersion, inlineView} = this.state;
-    // get the baseText and newText values and split them into lines
-    var base = difflib.stringAsLines(baseText);
-    var newtxt = difflib.stringAsLines(newText);
+    // get the baseText and newText values parsed as JSON object then strings and split them into lines
+    var base = difflib.stringAsLines(JSON.stringify(JSON.parse(baseText), null, ' '));
+    var newtxt = difflib.stringAsLines(JSON.stringify(JSON.parse(newText), null, ' '));
     // create a SequenceMatcher instance that diffs the two sets of lines
     var sm = new difflib.SequenceMatcher(base, newtxt);
     // get the opcodes from the SequenceMatcher instance
