@@ -63,6 +63,7 @@ ext.libraries = [
    },
 
    dropwizard: [
+      bom            : "io.dropwizard:dropwizard-bom:$versions_dropwizard",
       core           : "io.dropwizard:dropwizard-core:$versions_dropwizard",
       assets         : "io.dropwizard:dropwizard-assets:$versions_dropwizard",
       auth           : "io.dropwizard:dropwizard-auth:$versions_dropwizard",
@@ -75,7 +76,7 @@ ext.libraries = [
       swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
       guicey         : "ru.vyarus:dropwizard-guicey:$versions_dropwizard_guicey"
    ],
-   swagger           : "io.swagger:swagger-annotations:$versions_swagger",
+   swagger           : "io.swagger:swagger-annotations",
 
    el_api            : "javax.el:javax.el-api:$versions_el_api",
 
@@ -83,6 +84,7 @@ ext.libraries = [
    freemarker        : "org.freemarker:freemarker:$versions_freemarker",
 
    jackson: [
+      bom            : "com.fasterxml.jackson:jackson-bom:$versions_jackson2",
       annotations    : "com.fasterxml.jackson.core:jackson-annotations:$versions_jackson2",
       core           : "com.fasterxml.jackson.core:jackson-core:$versions_jackson2",
       databind       : "com.fasterxml.jackson.core:jackson-databind:$versions_jackson2",
@@ -97,12 +99,13 @@ ext.libraries = [
       parameter_names: "com.fasterxml.jackson.module:jackson-module-parameter-names:$versions_jackson2",
       jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson2",
       mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
-      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version:$versions_jackson_scala",
+      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version:$versions_jackson2",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
    json_kjetland     : "com.kjetland:mbknor-jackson-jsonschema_$kafka_scala_version:$versions_json_kjetland",
 
    jersey: [
+      bom            : "org.glassfish.jersey:jersey-bom:$versions_jersey",
       client: dependencies.create("org.glassfish.jersey.core:jersey-client:$versions_jersey") {
           exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
       },
@@ -112,6 +115,7 @@ ext.libraries = [
       media_multipart: "org.glassfish.jersey.media:jersey-media-multipart:$versions_jersey"
    ],
 
+   jetty_bom         : "org.eclipse.jetty:jetty-bom:$versions_jetty",
    jetty             : "org.eclipse.jetty:jetty-server:$versions_jetty",
    joda_time         : "joda-time:joda-time:$versions_joda_time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
@@ -130,11 +134,11 @@ ext.libraries = [
    ],
 
    logging: [
-      logback        : "ch.qos.logback:logback-classic:$versions_logback",
-      log4j          : "log4j:log4j:$versions_log4j",
-      slf4j_log4j    : "org.slf4j:log4j-over-slf4j:$versions_slf4j",
-      slf4j_api      : "org.slf4j:slf4j-api:$versions_slf4j",
-      slf4j_simple   : "org.slf4j:slf4j-simple:$versions_slf4j"
+      logback        : "ch.qos.logback:logback-classic",
+      log4j          : "log4j:log4j",
+      slf4j_log4j    : "org.slf4j:log4j-over-slf4j",
+      slf4j_api      : "org.slf4j:slf4j-api",
+      slf4j_simple   : "org.slf4j:slf4j-simple"
    ],
 
    gson              : "com.google.code.gson:gson:$versions_gson",
@@ -144,7 +148,7 @@ ext.libraries = [
 
    h2                : "com.h2database:h2:$versions_h2",
    hikari            : "com.zaxxer:HikariCP:$versions_hikari",
-   hibernate_validator: "org.hibernate:hibernate-validator:$versions_hibernate_validator",
+   hibernate_validator: "org.hibernate.validator:hibernate-validator",
    httpclient        : "org.apache.httpcomponents:httpclient:$versions_httpclient",
    jna               : "net.java.dev.jna:jna:$versions_jna_platform",
    jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
@@ -205,7 +209,7 @@ ext.libraries = [
    ],
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
-   snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
+   snakeyaml          : "org.yaml:snakeyaml",
 
    spring: [
      core            : "org.springframework:spring-core:$versions_spring"

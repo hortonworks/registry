@@ -51,6 +51,57 @@ subprojects {
         tests.extendsFrom testRuntime
     }
 
+    // dependency constraints only
+    dependencies {
+        compile enforcedPlatform(libraries.dropwizard.bom)
+        compile enforcedPlatform(libraries.jackson.bom)
+        compile enforcedPlatform(libraries.jersey.bom)
+        compile enforcedPlatform(libraries.jetty_bom)
+
+        constraints {
+            compile(libraries.hibernate_validator) {
+                version {
+                    strictly project.versions_hibernate_validator
+                }
+            }
+            compile(libraries.logging.logback) {
+                version {
+                    strictly project.versions_logback
+                }
+            }
+            compile(libraries.logging.log4j) {
+                version {
+                    strictly project.versions_log4j
+                }
+            }
+            compile(libraries.logging.slf4j_api) {
+                version {
+                    strictly project.versions_slf4j
+                }
+            }
+            compile(libraries.logging.slf4j_log4j) {
+                version {
+                    strictly project.versions_slf4j
+                }
+            }
+            testCompile(libraries.logging.slf4j_simple) {
+                version {
+                    strictly project.versions_slf4j
+                }
+            }
+            compile(libraries.snakeyaml) {
+                version {
+                    strictly project.versions_snakeyaml
+                }
+            }
+            compile(libraries.swagger) {
+                version {
+                    strictly project.versions_swagger
+                }
+            }
+        }
+    }
+
     java {
         sourceCompatibility = java_version
         targetCompatibility = java_version

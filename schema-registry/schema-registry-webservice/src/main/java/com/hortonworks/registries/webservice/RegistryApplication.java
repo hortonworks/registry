@@ -112,6 +112,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                     this.swaggerConfig = registryConfiguration.getSwaggerBundleConfiguration();
                     String resourcePackage = swaggerConfig.getResourcePackage();
                     swaggerConfig.setResourcePackage(resourcePackage);
+                    // dropwizard-swagger 2.0.12-1 has a bug in its template, hence the custom one
+                    swaggerConfig.getSwaggerViewConfiguration().setTemplateUrl("/swagger-index.ftl");
                 }
                 return swaggerConfig;
             }
