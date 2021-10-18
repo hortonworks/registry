@@ -1,0 +1,127 @@
+{
+  "entities": [
+    {
+      "schemaMetadata": {
+        "type": "json",
+        "schemaGroup": "Kafka",
+        "name": "SchemaVersionKey",
+        "description": "json-schema",
+        "compatibility": "NONE",
+        "validationLevel": "ALL",
+        "evolve": true
+      },
+      "id": 2,
+      "timestamp": 1635340913142,
+      "schemaBranches": [
+        {
+          "schemaBranch": {
+            "id": 2,
+            "name": "MASTER",
+            "schemaMetadataName": "SchemaVersionKey",
+            "description": "'MASTER' branch for schema metadata 'SchemaVersionKey'",
+            "timestamp": 1635340913143
+          },
+          "rootSchemaVersion": null,
+          "schemaVersionInfos": [
+            {
+              "id": 4,
+              "schemaMetadataId": 2,
+              "name": "SchemaVersionKey",
+              "description": "middle added",
+              "version": 2,
+              "schemaText": "{\n  \"$schema\": \"https://json-schema.org/draft-07/schema\",\n  \"title\": \"SchemaVersionKey\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"schemaName\": {\n      \"type\": \"string\",\n      \"description\": \"Name of the schema\"\n    },\n    \"version\": {\n      \"description\": \"Version of the schema\",\n      \"type\": \"integer\"\n    },\n    \"middle\": {\n      \"description\": \"Middle of the schema\",\n      \"type\": \"integer\"\n    }\n  },\n  \"required\": [ \"schemaName\" ]\n}",
+              "timestamp": 1635340934967,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 3,
+              "schemaMetadataId": 2,
+              "name": "SchemaVersionKey",
+              "description": "json-schema",
+              "version": 1,
+              "schemaText": "{\n  \"$schema\": \"https://json-schema.org/draft-07/schema\",\n  \"title\": \"SchemaVersionKey\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"schemaName\": {\n      \"type\": \"string\",\n      \"description\": \"Name of the schema\"\n    },\n    \"version\": {\n      \"description\": \"Version of the schema\",\n      \"type\": \"integer\"\n    }\n  },\n  \"required\": [ \"schemaName\" ]\n}",
+              "timestamp": 1635340913417,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        },
+        {
+          "schemaBranch": {
+            "id": 3,
+            "name": "another",
+            "schemaMetadataName": "SchemaVersionKey",
+            "description": "jsonbranch",
+            "timestamp": 1635340960485
+          },
+          "rootSchemaVersion": 4,
+          "schemaVersionInfos": [
+            {
+              "id": 4,
+              "schemaMetadataId": 2,
+              "name": "SchemaVersionKey",
+              "description": "middle added",
+              "version": 2,
+              "schemaText": "{\n  \"$schema\": \"https://json-schema.org/draft-07/schema\",\n  \"title\": \"SchemaVersionKey\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"schemaName\": {\n      \"type\": \"string\",\n      \"description\": \"Name of the schema\"\n    },\n    \"version\": {\n      \"description\": \"Version of the schema\",\n      \"type\": \"integer\"\n    },\n    \"middle\": {\n      \"description\": \"Middle of the schema\",\n      \"type\": \"integer\"\n    }\n  },\n  \"required\": [ \"schemaName\" ]\n}",
+              "timestamp": 1635340934967,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        }
+      ],
+      "serDesInfos": []
+    },
+    {
+      "schemaMetadata": {
+        "type": "avro",
+        "schemaGroup": "Kafka",
+        "name": "Avro",
+        "description": "avro-schema",
+        "compatibility": "BACKWARD",
+        "validationLevel": "ALL",
+        "evolve": true
+      },
+      "id": 1,
+      "timestamp": 1635340841371,
+      "schemaBranches": [
+        {
+          "schemaBranch": {
+            "id": 1,
+            "name": "MASTER",
+            "schemaMetadataName": "Avro",
+            "description": "'MASTER' branch for schema metadata 'Avro'",
+            "timestamp": 1635340841409
+          },
+          "rootSchemaVersion": null,
+          "schemaVersionInfos": [
+            {
+              "id": 2,
+              "schemaMetadataId": 1,
+              "name": "Avro",
+              "description": "middle added",
+              "version": 2,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Avro\",\n     \"fields\": [\n       { \"name\": \"first\", \"type\": \"string\" },\n       { \"name\": \"last\", \"type\": \"string\" },\n       { \"name\": \"middle\", \"type\": \"string\", \"default\": \"\" }\n     ]\n}",
+              "timestamp": 1635340865561,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 1,
+              "schemaMetadataId": 1,
+              "name": "Avro",
+              "description": "avro-schema",
+              "version": 1,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Avro\",\n     \"fields\": [\n       { \"name\": \"first\", \"type\": \"string\" },\n       { \"name\": \"last\", \"type\": \"string\" }\n     ]\n}",
+              "timestamp": 1635340841675,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        }
+      ],
+      "serDesInfos": []
+    }
+  ]
+}

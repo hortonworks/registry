@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.exportimport;
 
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
@@ -47,4 +48,31 @@ public interface AddSchemaWithId {
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException,
                 SchemaBranchNotFoundException;
 
+    /**
+     * Add a schema version to a specific branch on a specific schema metadata;
+     * 
+     * @param branchName        name of the branch where schema version should be added 
+     * @param schemaMetadata    schema metadata where there is an existing schema branch with branchName
+     * @param versionId         id of the new schema version
+     * @param schemaVersion     schema version to be added
+     * @return
+     * @throws InvalidSchemaException
+     * @throws IncompatibleSchemaException
+     * @throws SchemaNotFoundException
+     * @throws SchemaBranchNotFoundException
+     */
+    SchemaIdVersion addSchemaVersionWithBranchName(String branchName, SchemaMetadata schemaMetadata, Long versionId,
+                                     SchemaVersion schemaVersion)
+        throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException,
+        SchemaBranchNotFoundException;
+
+    /**
+     * Add MASTER branch with a specified ID to a specific meta
+     * 
+     * @param branchId      ID of the branch to be added
+     * @param metadataId    id of the meta where MASTER branch should be added
+     * @return
+     * @throws SchemaNotFoundException
+     */
+    SchemaBranch createMasterBranch(Long branchId, Long metadataId) throws SchemaNotFoundException;
 }

@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.exportimport;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -29,6 +30,25 @@ public class UploadResult {
     private int successCount;
     private int failedCount;
     private List<Long> failedIds;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        UploadResult that = (UploadResult) o;
+        Collections.sort(failedIds);
+        Collections.sort(that.failedIds);
+        return successCount == that.successCount && failedCount == that.failedCount && Objects.equals(failedIds, that.failedIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(successCount, failedCount, failedIds);
+    }
 
     public UploadResult() { }
 

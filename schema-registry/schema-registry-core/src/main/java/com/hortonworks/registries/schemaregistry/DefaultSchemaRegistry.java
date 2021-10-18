@@ -272,6 +272,34 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         return givenSchemaMetadataStorable.getId();
     }
+    
+    @Override
+    public Long addSchemaMetadataWithoutBranch(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+        final SchemaMetadataStorable givenSchemaMetadataStorable = ensureJsonCompatibility(
+            SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata)));
+        String type = schemaMetadata.getType();
+
+        if (schemaTypeWithProviders.get(type) == null) {
+            throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
+        }
+
+        if (!throwErrorIfExists) {
+            Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
+            if (schemaMetadataStorable != null) {
+                return schemaMetadataStorable.getId();
+            }
+        }
+        final Long nextId = id.get() != null ? id.get() :
+            storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
+        if (id.get() == null) {
+            LOG.debug("Given id is null, id is generated");
+        }
+        givenSchemaMetadataStorable.setId(nextId);
+        givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
+        storageManager.add(givenSchemaMetadataStorable);
+
+        return givenSchemaMetadataStorable.getId();
+    }
 
     @Override
     public SchemaMetadataInfo getSchemaMetadataInfo(Long schemaMetadataId) {
@@ -541,9 +569,38 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, Long versionId, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return addSchemaVersionWithBranchName(SchemaBranch.MASTER_BRANCH, schemaMetadata, versionId, schemaVersion);
+    }
+
+    @Override
+    public SchemaIdVersion addSchemaVersionWithBranchName(String branchName, SchemaMetadata schemaMetadata, Long versionId, SchemaVersion schemaVersion) 
+        throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaMetadata.getName());
-        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata,
-                versionId, schemaVersion, this::registerSchemaMetadata, false);
+        return schemaVersionLifecycleManager.addSchemaVersion(branchName, schemaMetadata,
+            versionId, schemaVersion, this::registerSchemaMetadata, false);
+    }
+
+    @Override
+    public SchemaBranch createMasterBranch(Long branchId, Long metadataId) throws SchemaNotFoundException {
+        Long timeMillis = System.currentTimeMillis();
+        SchemaMetadataInfo schemaMetadataInfo = getSchemaMetadataInfo(metadataId);
+        if (schemaMetadataInfo != null) {
+            SchemaMetadata schemaMetadata = schemaMetadataInfo.getSchemaMetadata();
+            SchemaBranch branch = new SchemaBranch(SchemaBranch.MASTER_BRANCH, schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), timeMillis);
+            SchemaMetadataStorable givenSchemaMetadataStorable = new SchemaMetadataStorable();
+            givenSchemaMetadataStorable.setName(schemaMetadata.getName());
+            SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
+                schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), timeMillis);
+            schemaBranchStorable.setId(branchId);
+            storageManager.add(schemaBranchStorable);
+
+            storageManager.add(new SchemaLockStorable(givenSchemaMetadataStorable.getNameSpace(),
+                givenSchemaMetadataStorable.getName(), timeMillis));
+            return branch;
+        } else {
+            throw new SchemaNotFoundException(String.format("SchemaMetadata with id {} is not found", metadataId));
+        }
+        
     }
 
     private void lockSchemaMetadata(String schemaName) {
@@ -736,7 +793,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         }
         SchemaBranchStorable schemaBranchStorable = SchemaBranchStorable.from(schemaBranch);
         schemaBranchStorable.setSchemaMetadataName(schemaVersionInfo.getName());
-        schemaBranchStorable.setId(storageManager.nextId(SchemaBranchStorable.NAME_SPACE));
+        Long id = schemaBranch.getId() != null ? schemaBranch.getId() :
+            storageManager.nextId(SchemaBranchStorable.NAME_SPACE);
+        if (schemaBranch.getId() == null) {
+            LOG.debug("Given id is null, id is generated");
+        }
+        schemaBranchStorable.setId(id);
         storageManager.add(schemaBranchStorable);
 
         SchemaBranch persistedSchemaBranch;

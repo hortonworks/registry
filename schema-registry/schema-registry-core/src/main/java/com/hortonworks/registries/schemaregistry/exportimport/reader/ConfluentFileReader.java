@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  * {"keytype":"SCHEMA","subject":"Kafka-key","version":1,"magic":1}        {"subject":"Kafka-key","version":1,"id":1,"schema":"\"string\"","deleted":true}
  * </code>
  */
-public class ConfluentFileReader implements UploadedFileReader {
+public class ConfluentFileReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfluentFileReader.class);
 
@@ -307,8 +307,7 @@ public class ConfluentFileReader implements UploadedFileReader {
 
         return -1;
     }
-
-    @Override
+    
     public RawSchema readSchema() {
         if (parsedRows.get().hasNext()) {
             return parsedRows.get().next().getValue();

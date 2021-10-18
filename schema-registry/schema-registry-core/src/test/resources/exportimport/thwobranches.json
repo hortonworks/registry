@@ -1,0 +1,127 @@
+{
+  "entities": [
+    {
+      "schemaMetadata": {
+        "type": "avro",
+        "schemaGroup": "Kafka",
+        "name": "Food",
+        "description": "omnomn",
+        "compatibility": "BACKWARD",
+        "validationLevel": "ALL",
+        "evolve": true
+      },
+      "id": 2,
+      "timestamp": 1634730549535,
+      "schemaBranches": [
+        {
+          "schemaBranch": {
+            "id": 2,
+            "name": "MASTER",
+            "schemaMetadataName": "Food",
+            "description": "'MASTER' branch for schema metadata 'Food'",
+            "timestamp": 1634730549536
+          },
+          "rootSchemaVersion": null,
+          "schemaVersionInfos": [
+            {
+              "id": 4,
+              "schemaMetadataId": 2,
+              "name": "Food",
+              "description": "type added",
+              "version": 2,
+              "schemaText": "{\n \"type\": \"record\",\n \"namespace\": \"com.example\",\n \"name\": \"Food\",\n \"fields\": [\n  {\n   \"name\": \"color\",\n   \"type\": \"string\"\n  },\n  {\n   \"name\": \"kg\",\n   \"type\": \"int\"\n  },\n   {\n   \"name\": \"type\",\n   \"type\": \"string\",\n     \"default\" : \"food\"\n  }\n ]\n}",
+              "timestamp": 1634730586711,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 3,
+              "schemaMetadataId": 2,
+              "name": "Food",
+              "description": "omnomn",
+              "version": 1,
+              "schemaText": "{\n \"type\": \"record\",\n \"namespace\": \"com.example\",\n \"name\": \"Food\",\n \"fields\": [\n  {\n   \"name\": \"color\",\n   \"type\": \"string\"\n  },\n  {\n   \"name\": \"kg\",\n   \"type\": \"int\"\n  }\n ]\n}",
+              "timestamp": 1634730549735,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        }
+      ],
+      "serDesInfos": []
+    },
+    {
+      "schemaMetadata": {
+        "type": "avro",
+        "schemaGroup": "Kafka",
+        "name": "rain",
+        "description": "schema of raining",
+        "compatibility": "BACKWARD",
+        "validationLevel": "ALL",
+        "evolve": true
+      },
+      "id": 1,
+      "timestamp": 1634720308388,
+      "schemaBranches": [
+        {
+          "schemaBranch": {
+            "id": 3,
+            "name": "another",
+            "schemaMetadataName": "rain",
+            "description": "another branch",
+            "timestamp": 1634740640228
+          },
+          "rootSchemaVersion": 1,
+          "schemaVersionInfos": [
+            {
+              "id": 1,
+              "schemaMetadataId": 1,
+              "name": "rain",
+              "description": "schema of raining",
+              "version": 1,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Rain\",\n     \"fields\": [\n       { \"name\": \"day\", \"type\": \"string\" },\n       { \"name\": \"temperature\", \"type\": \"int\" }\n     ]\n}",
+              "timestamp": 1634720308719,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        },
+        {
+          "schemaBranch": {
+            "id": 1,
+            "name": "MASTER",
+            "schemaMetadataName": "rain",
+            "description": "'MASTER' branch for schema metadata 'rain'",
+            "timestamp": 1634720308443
+          },
+          "rootSchemaVersion": null,
+          "schemaVersionInfos": [
+            {
+              "id": 2,
+              "schemaMetadataId": 1,
+              "name": "rain",
+              "description": "amount added",
+              "version": 2,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Rain\",\n     \"fields\": [\n       { \"name\": \"day\", \"type\": \"string\" },\n       { \"name\": \"temperature\", \"type\": \"int\" },\n       { \"name\": \"amount\", \"type\": \"long\", \"default\": 0 }\n     ]\n}",
+              "timestamp": 1634720393442,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 1,
+              "schemaMetadataId": 1,
+              "name": "rain",
+              "description": "schema of raining",
+              "version": 1,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Rain\",\n     \"fields\": [\n       { \"name\": \"day\", \"type\": \"string\" },\n       { \"name\": \"temperature\", \"type\": \"int\" }\n     ]\n}",
+              "timestamp": 1634720308719,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        }
+      ],
+      "serDesInfos": []
+    }
+  ]
+}

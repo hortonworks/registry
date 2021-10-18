@@ -47,3 +47,6 @@ public
 
 # Registry Kerberos SASL secrets directory
 secrets
+
+#jenv
+.java-version

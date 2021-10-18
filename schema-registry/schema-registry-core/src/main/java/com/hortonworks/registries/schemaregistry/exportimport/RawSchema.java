@@ -85,7 +85,7 @@ public class RawSchema {
     public static class Builder {
 
         private Builder() { }
-
+        
         private Long schemaId;
         private SchemaMetadata.Builder metadataBuilder;
         private String schemaText = "";
@@ -172,7 +172,7 @@ public class RawSchema {
             this.schemaText = schema;
             return this;
         }
-
+        
         /** Build a new raw schema */
         public RawSchema build() {
             checkState(metadataBuilder != null, "Schema fields have not been set.");

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  *
@@ -107,7 +108,17 @@ public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId
      */
     SchemaVersionInfo findSchemaVersionByFingerprint(String fingerprint) throws SchemaNotFoundException;
 
-    /**
+  /**
+   * Add a schema meta without creating a MASTER branch automatically.
+   *
+   * @param id  ID of schema metadata to be created
+   * @param schemaMetadata  schema metadata to be added
+   * @param throwErrorIfExists  if this is set to true, an error will be thrown is a schema metadata is already existing with the same ID
+   * @return the {@link SchemaVersionInfo} of the schema version with the given fingerprint.
+   */
+    Long addSchemaMetadataWithoutBranch(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists);
+
+  /**
      * @param props properties
      *
      * @return Collects aggregated schema metadata which contains the given properties.

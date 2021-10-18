@@ -1,0 +1,88 @@
+{
+  "entities": [
+    {
+      "schemaMetadata": {
+        "type": "avro",
+        "schemaGroup": "Kafka",
+        "name": "Tea",
+        "description": "Green tea",
+        "compatibility": "BACKWARD",
+        "validationLevel": "ALL",
+        "evolve": true
+      },
+      "id": 1,
+      "timestamp": 1634802883496,
+      "schemaBranches": [
+        {
+          "schemaBranch": {
+            "id": 2,
+            "name": "rooibos",
+            "schemaMetadataName": "Tea",
+            "description": "tea with bad taste",
+            "timestamp": 1634802972348
+          },
+          "rootSchemaVersion": 2,
+          "schemaVersionInfos": [
+            {
+              "id": 3,
+              "schemaMetadataId": 1,
+              "name": "Tea",
+              "description": "cooking time added",
+              "version": 3,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Tea\",\n     \"fields\": [\n       { \"name\": \"flavour\", \"type\": \"string\" },\n       { \"name\": \"color\", \"type\": \"string\" },\n       { \"name\": \"sweeteners\", \"type\": \"boolean\", \"default\": false },\n       { \"name\": \"cookingtime\", \"type\": \"long\", \"default\": 3 }\n     ]\n} \n",
+              "timestamp": 1634803104287,
+              "stateId": 1,
+              "mergeInfo": null
+            },
+            {
+              "id": 2,
+              "schemaMetadataId": 1,
+              "name": "Tea",
+              "description": "sweeteners",
+              "version": 2,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Tea\",\n     \"fields\": [\n       { \"name\": \"flavour\", \"type\": \"string\" },\n       { \"name\": \"color\", \"type\": \"string\" },\n       { \"name\": \"sweeteners\", \"type\": \"boolean\", \"default\": false }\n     ]\n} \n",
+              "timestamp": 1634802944417,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        },
+        {
+          "schemaBranch": {
+            "id": 1,
+            "name": "MASTER",
+            "schemaMetadataName": "Tea",
+            "description": "'MASTER' branch for schema metadata 'Tea'",
+            "timestamp": 1634802883568
+          },
+          "rootSchemaVersion": null,
+          "schemaVersionInfos": [
+            {
+              "id": 2,
+              "schemaMetadataId": 1,
+              "name": "Tea",
+              "description": "sweeteners",
+              "version": 2,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Tea\",\n     \"fields\": [\n       { \"name\": \"flavour\", \"type\": \"string\" },\n       { \"name\": \"color\", \"type\": \"string\" },\n       { \"name\": \"sweeteners\", \"type\": \"boolean\", \"default\": false }\n     ]\n} \n",
+              "timestamp": 1634802944417,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 1,
+              "schemaMetadataId": 1,
+              "name": "Tea",
+              "description": "Green tea",
+              "version": 1,
+              "schemaText": "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Tea\",\n     \"fields\": [\n       { \"name\": \"flavour\", \"type\": \"string\" },\n       { \"name\": \"color\", \"type\": \"string\" }\n     ]\n} \n",
+              "timestamp": 1634802883935,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        }
+      ],
+      "serDesInfos": []
+    }
+  ]
+}

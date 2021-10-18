@@ -19,6 +19,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -26,20 +27,28 @@ import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -49,6 +58,10 @@ public class BulkUploadServiceTest {
 
     private ISchemaRegistry schemaRegistry;
     private BulkUploadService bulkUploadService;
+    private static final SchemaIdVersion SCHEMA_ID_VERSION_1 = new SchemaIdVersion(1L);
+    private static final SchemaIdVersion SCHEMA_ID_VERSION_2 = new SchemaIdVersion(2L);
+    private static final SchemaIdVersion SCHEMA_ID_VERSION_3 = new SchemaIdVersion(3L);
+    private static final SchemaIdVersion SCHEMA_ID_VERSION_4 = new SchemaIdVersion(4L);
 
     @BeforeEach
     public void setUp() {
@@ -138,6 +151,332 @@ public class BulkUploadServiceTest {
         assertEquals(4, result.getSuccessCount());
         assertTrue(result.getFailedIds().contains(77L));
     }
+    
+    @Test
+    public void testUploadValidClouderaSchemaOneMetadataMasterBranchTwoVersions() throws Exception {
+        //given
+        InputStream is = getClass().getResourceAsStream("/exportimport/simplecloudera.json");
+        SchemaBranch masterBranch = createBranch(1L, "MASTER", "rain", "'MASTER' branch for schema metadata 'rain'");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch);
+        AtomicInteger callCount1L = new AtomicInteger();
+        when(schemaRegistry.getSchemaMetadataInfo(1L)).thenAnswer(ans -> {
+            if (callCount1L.get() == 0) {
+                callCount1L.getAndIncrement();
+                return null;
+            } else {
+                callCount1L.getAndIncrement();
+                return createMetadata(1L, "Rain");
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.addSchemaMetadata(any(), any())).thenReturn(1L);
+        when(schemaRegistry.addSchemaVersion(any(), matches("1L"), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersion(any(), matches("2L"), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        UploadResult expected = new UploadResult(2, 0, Collections.emptyList());
+        
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+        
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+    }
+
+    @Test
+    public void testUploadValidClouderaSchemaTwoMetadataTwoMasterBranchTwoVersions() throws Exception {
+        //given
+        InputStream is = getClass().getResourceAsStream("/exportimport/twometas.json");
+        SchemaBranch masterBranch1 = createBranch(1L, "MASTER", "rain", "'MASTER' branch for schema metadata 'rain'");
+        SchemaBranch masterBranch2 = createBranch(2L, "MASTER", "Food", "'MASTER' branch for schema metadata 'Food'");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch1);
+        when(schemaRegistry.getSchemaBranch(eq(2L))).thenReturn(masterBranch2);
+        AtomicInteger callCount1L = new AtomicInteger();
+        AtomicInteger callCount2L = new AtomicInteger();
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenAnswer(ans -> {
+            if (callCount1L.get() == 0) {
+                callCount1L.getAndIncrement();
+                return null;
+            }  else {
+                callCount1L.getAndIncrement();
+                return createMetadata(1L, "Rain");
+            }
+        });
+        when(schemaRegistry.getSchemaMetadataInfo(eq(2L))).thenAnswer(ans -> {
+            if (callCount2L.get() == 0) {
+                callCount2L.getAndIncrement();
+                return null;
+            } else {
+                callCount2L.getAndIncrement();
+                return createMetadata(2L, "Food");
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
+        when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
+        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        UploadResult expected = new UploadResult(4, 0, Collections.emptyList());
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+
+    }
+
+    @Test
+    public void testUploadValidClouderaSchemaOneMetadataOneMasterOneAnotherBranchTwoVersions() throws Exception {
+        //given
+        String schemaText = "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Tea\",\n     \"fields\": " +
+        "[\n       { \"name\": \"flavour\", \"type\": \"string\" },\n       { \"name\": \"color\", \"type\": \"string\" },\n       { \"name\": \"sweeteners\", \"type\": \"boolean\", \"default\": false }\n     ]\n} \n";
+        InputStream is = getClass().getResourceAsStream("/exportimport/twobranch.json");
+        SchemaBranch masterBranch = createBranch(1L, "MASTER", "Tea", "'MASTER' branch for schema metadata 'Tea'");
+        SchemaBranch anotherBranch = createBranch(2L, "rooibos", "Tea", "tea with bad taste");
+        AtomicInteger callCount1L = new AtomicInteger();
+        AtomicInteger callCount2L = new AtomicInteger();
+        AtomicInteger callCount2LBranch = new AtomicInteger();
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch);
+        when(schemaRegistry.createSchemaBranch(eq(2L), eq(anotherBranch))).thenReturn(anotherBranch);
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenAnswer(ans -> {
+            if (callCount1L.get() == 0) {
+                callCount1L.getAndIncrement();
+                return null;
+            } else {
+                callCount1L.getAndIncrement();
+                return createMetadata(1L, "Rain");
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenAnswer(ans -> {
+            if (callCount2L.get() == 0) {
+                callCount2L.getAndIncrement();
+                throw new SchemaNotFoundException("schema not found");
+            } else {
+                callCount2L.getAndIncrement();
+                return createVersion(2L, "Tea", 2, schemaText);
+            }
+        });
+        when(schemaRegistry.getSchemaBranch(eq(2L))).thenAnswer(ans -> {
+            if (callCount2LBranch.get() == 0) {
+                callCount2LBranch.getAndIncrement();
+                throw new SchemaBranchNotFoundException("schema branch not found");
+            } else {
+                callCount2LBranch.getAndIncrement();
+                return anotherBranch;
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_3))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
+        when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
+        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersion(any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
+        UploadResult expected = new UploadResult(3, 0, Collections.emptyList());
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+
+    }
+
+    @Test
+    public void testUploadValidClouderaSchemaTwoMetadataOneMasterOneAnotherBranchTwoVersions() throws Exception {
+        //given
+        String schemaText = "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Rain\",\n     \"fields\": [\n       " +
+            "{ \"name\": \"day\", \"type\": \"string\" },\n       { \"name\": \"temperature\", \"type\": \"int\" }\n     ]\n}";
+        InputStream is = getClass().getResourceAsStream("/exportimport/thwobranches.json");
+        SchemaBranch masterBranch1 = createBranch(1L, "MASTER", "rain", "'MASTER' branch for schema metadata 'rain'");
+        SchemaBranch masterBranch2 = createBranch(2L, "MASTER", "Food", "'MASTER' branch for schema metadata 'Food'");
+        SchemaBranch anotherBranch = createBranch(3L, "another", "rain", "another branch");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch1);
+        when(schemaRegistry.getSchemaBranch(eq(2L))).thenReturn(masterBranch2);
+        when(schemaRegistry.createSchemaBranch(eq(1L), eq(anotherBranch))).thenReturn(anotherBranch);
+        AtomicInteger callCount1L = new AtomicInteger();
+        AtomicInteger callCount1LVersion = new AtomicInteger();
+        AtomicInteger callCount2L = new AtomicInteger();
+        AtomicInteger callCount4L = new AtomicInteger();
+        AtomicInteger callCount3L = new AtomicInteger();
+        AtomicInteger callCount2LVersion = new AtomicInteger();
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenAnswer(ans -> {
+            if (callCount1L.get() == 0) {
+                callCount1L.getAndIncrement();
+                return null;
+            } else {
+                callCount1L.getAndIncrement();
+                return createMetadata(1L, "Rain");
+            }
+        });
+        when(schemaRegistry.getSchemaMetadataInfo(eq(2L))).thenAnswer(ans -> {
+            if (callCount2L.get() == 0) {
+                callCount2L.getAndIncrement();
+                return null;
+            } else {
+                callCount2L.getAndIncrement();
+                return createMetadata(1L, "Rain");
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenAnswer(ans -> {
+            if (callCount1LVersion.get() == 0) {
+                callCount1LVersion.getAndIncrement();
+                throw new SchemaNotFoundException("schema not found");
+            } else {
+                callCount1LVersion.getAndIncrement();
+                return createVersion(1L, "Tea", 2, schemaText);
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_4))).thenAnswer(ans -> {
+            if (callCount4L.get() == 0) {
+                callCount4L.getAndIncrement();
+                throw new SchemaNotFoundException("schema not found");
+            } else {
+                callCount4L.getAndIncrement();
+                return createVersion(4L, "Tea", 2, "text");
+            }
+        });
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenAnswer(ans -> {
+            if (callCount2LVersion.get() == 0) {
+                callCount2LVersion.getAndIncrement();
+                throw new SchemaNotFoundException("schema not found");
+            } else {
+                callCount2LVersion.getAndIncrement();
+                return createVersion(2L, "Tea", 2, "text");
+            }
+        });
+        when(schemaRegistry.getSchemaBranch(3L)).thenThrow(SchemaBranchNotFoundException.class);
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_3))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
+        when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
+        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersion(any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
+        when(schemaRegistry.addSchemaVersion(any(), eq(4L), any())).thenReturn(SCHEMA_ID_VERSION_4);
+        UploadResult expected = new UploadResult(4, 0, Collections.emptyList());
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+    }
+    
+    @Test
+    public void testUploadInvalidVersionValidVersion() throws Exception {
+        //given
+        InputStream is = getClass().getResourceAsStream("/exportimport/simplecloudera.json");
+        SchemaBranch masterBranch = createBranch(1L, "MASTER", "rain", "'MASTER' branch for schema metadata 'rain'");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch);
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenReturn(createMetadata(1L, "rain"));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenReturn(createVersion(1L, "invalid", 1, "text"));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenThrow(SchemaNotFoundException.class);
+        UploadResult expected = new UploadResult(1, 1, Lists.newArrayList(1L));
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+    }
+
+    @Test
+    public void testUploadValidMetadataInvalidVersion() throws Exception {
+        //given
+        String schemaText = "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Rain\",\n     \"fields\": [\n       " +
+            "{ \"name\": \"day\", \"type\": \"string\" },\n       { \"name\": \"temperature\", \"type\": \"int\" }\n     ]\n}";
+        InputStream is = getClass().getResourceAsStream("/exportimport/simplecloudera.json");
+        SchemaBranch masterBranch = createBranch(1L, "MASTER", "rain", "'MASTER' branch for schema metadata 'rain'");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch);
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenReturn(createMetadata(1L, "rain"));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenReturn(createVersion(1L, "rain", 1, schemaText));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenThrow(SchemaNotFoundException.class);
+        UploadResult expected = new UploadResult(1, 0, Collections.emptyList());
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+    }
+
+    @Test
+    public void testUploadValidMetadataInvalidJsonMetadata() throws Exception {
+        //given
+        InputStream is = getClass().getResourceAsStream("/exportimport/jsonschema.json");
+        AtomicInteger callCount1L = new AtomicInteger();
+        SchemaBranch masterBranch = createBranch(1L, "MASTER", "Avro", "'MASTER' branch for schema metadata 'Avro'");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch);
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenAnswer(ans -> {
+            if (callCount1L.get() == 0) {
+                callCount1L.getAndIncrement();
+                return null;
+            } else {
+                callCount1L.getAndIncrement();
+                return createMetadata(1L, "Rain");
+            }
+        });
+        when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
+        when(schemaRegistry.getSchemaMetadataInfo(eq(2L))).thenReturn(createMetadata(2L, "not-json"));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+
+
+        UploadResult expected = new UploadResult(2, 2, Lists.newArrayList(3L, 4L));
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+    }
+
+    @Test
+    public void testUploadValidMetadataValidVersionsValidMetadataInvalidVersion() throws Exception {
+        //given
+        InputStream is = getClass().getResourceAsStream("/exportimport/twometas.json");
+        SchemaBranch masterBranch1 = createBranch(1L, "MASTER", "rain", "'MASTER' branch for schema metadata 'rain'");
+        SchemaBranch masterBranch2 = createBranch(2L, "MASTER", "Food", "'MASTER' branch for schema metadata 'Food'");
+        when(schemaRegistry.getSchemaBranch(eq(1L))).thenReturn(masterBranch1);
+        when(schemaRegistry.getSchemaBranch(eq(2L))).thenReturn(masterBranch2);
+        when(schemaRegistry.getSchemaMetadataInfo(eq(1L))).thenReturn(createMetadata(1L, "rain"));
+        when(schemaRegistry.getSchemaMetadataInfo(eq(2L))).thenReturn(createMetadata(2L, "Food"));
+        String schemaText1 = "{\n     \"type\": \"record\",\n     \"namespace\": \"com.example\",\n     \"name\": \"Rain\",\n     \"fields\": " +
+        "[\n       { \"name\": \"day\", \"type\": \"string\" },\n       { \"name\": \"temperature\", \"type\": \"int\" }\n     ]\n}";
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenReturn(createVersion(1L, "rain", 1, schemaText1));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenThrow(SchemaNotFoundException.class);
+        String schemaText3 = "{\n \"type\": \"record\",\n \"namespace\": \"com.example\",\n \"name\": \"Food\",\n \"fields\": [\n  " +
+            "{\n   \"name\": \"color\",\n   \"type\": \"string\"\n  },\n  {\n   \"name\": \"kg\",\n   \"type\": \"int\"\n  }\n ]\n}";
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_3))).thenReturn(createVersion(3L, "rain", 1, schemaText3));
+        when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_4))).thenThrow(SchemaNotFoundException.class);
+        when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
+        when(schemaRegistry.addSchemaVersion(any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
+        when(schemaRegistry.addSchemaVersion(any(), eq(4L), any())).thenReturn(SCHEMA_ID_VERSION_4);
+        UploadResult expected = new UploadResult(2, 0, Collections.emptyList());
+
+        //when
+        UploadResult actual = bulkUploadService.bulkUploadSchemas(is, false, BulkUploadInputFormat.CLOUDERA);
+
+        //then
+        assertEquals(expected.getSuccessCount(), actual.getSuccessCount());
+        assertEquals(expected.getFailedCount(), actual.getFailedCount());
+        assertIterableEquals(expected.getFailedIds(), actual.getFailedIds());
+    }
 
     private SchemaVersionInfo createVersion(Long id, String schemaName, int version, String schemaText) {
         return new SchemaVersionInfo(id, schemaName, version, schemaText, System.currentTimeMillis(), "");
@@ -152,5 +491,9 @@ public class BulkUploadServiceTest {
                 .type("avro")
                 .build();
         return new SchemaMetadataInfo(meta, id, System.currentTimeMillis());
+    }
+    
+    private SchemaBranch createBranch(Long id, String name, String metadataName, String desc) {
+        return new SchemaBranch(id, name, metadataName, desc, System.currentTimeMillis());
     }
 }
