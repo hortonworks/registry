@@ -24,8 +24,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Objects.requireNonNull;
 
 abstract class AbstractSteps {
 
@@ -62,4 +69,15 @@ abstract class AbstractSteps {
                 .build();
     }
 
+    protected String loadTestData(String fileName) throws URISyntaxException, IOException {
+        URL url = requireNonNull(getClass().getClassLoader().getResource("testdata/" + fileName));
+        return String.join("\n", Files.readAllLines(Paths.get(url.toURI())));
+    }
+
+    protected SchemaRegistryClient getSchemaRegistryClient() {
+        if (schemaRegistryClient == null) {
+            schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
+        }
+        return schemaRegistryClient;
+    }
 }

@@ -1,0 +1,142 @@
+{
+  "entities": [
+    {
+      "schemaMetadata": {
+        "type": "avro",
+        "schemaGroup": "Kafka",
+        "name": "Car",
+        "description": "a car",
+        "compatibility": "BACKWARD",
+        "validationLevel": "ALL",
+        "evolve": true
+      },
+      "id": 10003,
+      "timestamp": 1636701517292,
+      "schemaBranches": [
+        {
+          "schemaBranch": {
+            "id": 10005,
+            "name": "pricebranch",
+            "schemaMetadataName": "Car",
+            "description": "introduce price",
+            "timestamp": 1636701623592
+          },
+          "rootSchemaVersion": 10005,
+          "schemaVersionInfos": [
+            {
+              "id": 10006,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "car with price",
+              "version": 4,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" },\n                { \"name\": \"color\", \"type\":  \"string\", \"default\": \"blue\" },\n                { \"name\": \"price\", \"type\":  \"string\", \"default\": \"0\" }\n      ]\n    }\n",
+              "timestamp": 1636701643272,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 10005,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "introduce color",
+              "version": 3,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" },\n                { \"name\": \"color\", \"type\":  \"string\", \"default\": \"blue\" }\n      ]\n    }\n",
+              "timestamp": 1636701585229,
+              "stateId": 5,
+              "mergeInfo": {
+                "schemaBranchName": "newfield",
+                "schemaVersionId": 10004
+              }
+            }
+          ]
+        },
+        {
+          "schemaBranch": {
+            "id": 10004,
+            "name": "newfield",
+            "schemaMetadataName": "Car",
+            "description": "new field",
+            "timestamp": 1636701539196
+          },
+          "rootSchemaVersion": 10003,
+          "schemaVersionInfos": [
+            {
+              "id": 10004,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "introduce color",
+              "version": 2,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" },\n                { \"name\": \"color\", \"type\":  \"string\", \"default\": \"blue\" }\n      ]\n    }\n",
+              "timestamp": 1636701564604,
+              "stateId": 5,
+              "mergeInfo": null
+            },
+            {
+              "id": 10003,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "a car",
+              "version": 1,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" }\n      ]\n    }\n",
+              "timestamp": 1636701517439,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        },
+        {
+          "schemaBranch": {
+            "id": 10003,
+            "name": "MASTER",
+            "schemaMetadataName": "Car",
+            "description": "'MASTER' branch for schema metadata 'Car'",
+            "timestamp": 1636701517329
+          },
+          "rootSchemaVersion": null,
+          "schemaVersionInfos": [
+            {
+              "id": 10007,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "car with price",
+              "version": 5,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" },\n                { \"name\": \"color\", \"type\":  \"string\", \"default\": \"blue\" },\n                { \"name\": \"price\", \"type\":  \"string\", \"default\": \"0\" }\n      ]\n    }\n",
+              "timestamp": 1636701660726,
+              "stateId": 5,
+              "mergeInfo": {
+                "schemaBranchName": "pricebranch",
+                "schemaVersionId": 10006
+              }
+            },
+            {
+              "id": 10005,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "introduce color",
+              "version": 3,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" },\n                { \"name\": \"color\", \"type\":  \"string\", \"default\": \"blue\" }\n      ]\n    }\n",
+              "timestamp": 1636701585229,
+              "stateId": 5,
+              "mergeInfo": {
+                "schemaBranchName": "newfield",
+                "schemaVersionId": 10004
+              }
+            },
+            {
+              "id": 10003,
+              "schemaMetadataId": 10003,
+              "name": "Car",
+              "description": "a car",
+              "version": 1,
+              "schemaText": "    {\n      \"type\": \"record\",\n      \"namespace\": \"com.cloudera\",\n      \"name\": \"Car\",\n      \"fields\": [\n                { \"name\": \"model\", \"type\":  \"string\" }\n      ]\n    }\n",
+              "timestamp": 1636701517439,
+              "stateId": 5,
+              "mergeInfo": null
+            }
+          ]
+        }
+      ],
+      "serDesInfos": []
+    }
+  ]
+}

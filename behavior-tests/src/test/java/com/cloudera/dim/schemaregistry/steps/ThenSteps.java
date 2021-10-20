@@ -23,11 +23,15 @@ import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +39,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -51,10 +56,14 @@ import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_ID;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_META_INFO;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_ID;
+import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_TEXT;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.http.protocol.HttpCoreContext.HTTP_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class ThenSteps extends AbstractSteps {
 
@@ -162,7 +171,9 @@ public class ThenSteps extends AbstractSteps {
         testAtlasServer.verifySchemaAndTopicGotConnected(schemaName, topicName);
     }
 
-    /** Poll the StateOfTheWorld every 100ms. If the condition doesn't happen for maxTimeoutSec, an exception is thrown. */
+    /**
+     * Poll the StateOfTheWorld every 100ms. If the condition doesn't happen for maxTimeoutSec, an exception is thrown.
+     */
     private void pollSow(int maxTimeoutSec, Predicate<GlobalState> condition) throws InterruptedException, ExecutionException, TimeoutException {
         Future<?> task = threadPool.submit(new Runnable() {
             @Override
@@ -187,5 +198,67 @@ public class ThenSteps extends AbstractSteps {
     @And("no failed Atlas events remain")
     public void noFailedAtlasEventRemain() throws SQLException {
         assertEquals(0, testServer.countFailedAtlasEvents());
+    }
+
+    @Then("we should see the {string} schema with id {long} and version {int} on the {string} branch in the export with the same schema text")
+    @SuppressWarnings("unchecked")
+    public void weShouldSeeTheSchemaWithTheVersionOnTheBranchInTheExport(String name, Long id, Integer versionNo, String branchName) {
+        List<AggregatedSchemaMetadataInfo> aggregatedSchemas = (List<AggregatedSchemaMetadataInfo>) sow.getValue(AGGREGATED_SCHEMAS);
+
+        Optional<AggregatedSchemaMetadataInfo> aggregated = aggregatedSchemas.stream()
+                .filter(s -> s.getSchemaMetadata().getName().equals(name)).findFirst();
+        assertTrue(aggregated.isPresent());
+        Optional<AggregatedSchemaBranch> branch = aggregated.get().getSchemaBranches().stream()
+                .filter(b -> b.getSchemaBranch().getName().equalsIgnoreCase(branchName)).findFirst();
+        assertTrue(branch.isPresent());
+        Optional<SchemaVersionInfo> version = branch.get().getSchemaVersionInfos().stream()
+                .filter(v -> v.getVersion().equals(versionNo) && v.getId().equals(id)).findFirst();
+        assertTrue(version.isPresent());
+        assertEquals(sow.getValue(SCHEMA_VERSION_TEXT), version.get().getSchemaText());
+    }
+
+    @Then("we should see {int} successfully imported versions in the response and {int} should have failed")
+    public void inTheResponseWeShouldSeeSuccessfullyImportedVersionAndShouldHaveFailed(Integer successful, Integer failed) throws IOException {
+        inTheResponseWeShouldSeeSuccessfullyImportedVersionAndShouldHaveFailedShowingTheIdAsFailing(successful, failed, null);
+    }
+
+    @Then("we should see {int} successfully imported versions in the response and {int} should have failed showing the id {long} as failing")
+    public void inTheResponseWeShouldSeeSuccessfullyImportedVersionAndShouldHaveFailedShowingTheIdAsFailing(Integer successful, Integer failed, Long failedId) throws IOException {
+        CloseableHttpResponse response = (CloseableHttpResponse) sow.getValue(HTTP_RESPONSE);
+        String responseBody = EntityUtils.toString(response.getEntity(), UTF_8);
+        UploadResult uploadResult = objectMapper.readValue(responseBody, UploadResult.class);
+        LOG.info("uploadresult was: {}", uploadResult);
+        assertEquals(successful, uploadResult.getSuccessCount());
+        assertEquals(failed, uploadResult.getFailedCount());
+        if (failedId != null) {
+            assertTrue(uploadResult.getFailedIds().stream().anyMatch(id -> id.equals(failedId)));
+        }
+    }
+
+    @Then("there should be a version with id {long} of the schema {string} on the {string} branch")
+    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranch(Long id, String name, String branch) throws SchemaNotFoundException {
+        theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(id, name, branch, null);
+    }
+
+    @Then("there should be a version with id {long} of the schema {string} on the {string} branch in the Registry with the same schema text")
+    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithTheSameSchemaText(Long id, String name, String branch) throws SchemaNotFoundException {
+        String schemaText = (String) sow.getValue(SCHEMA_VERSION_TEXT);
+        theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(id, name, branch, schemaText);
+    }
+
+    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(Long id, String name, String branch, String schemaText) throws SchemaNotFoundException {
+        Collection<SchemaVersionInfo> schemaVersionInfos = getSchemaRegistryClient().getAllVersions(branch, name);
+        List<Long> versionIds = schemaVersionInfos.stream().map(SchemaVersionInfo::getId).collect(Collectors.toList());
+        assertFalse(schemaVersionInfos.isEmpty(), "no version to schema " + name + " on branch " + branch);
+        assertTrue(
+                schemaVersionInfos.stream().anyMatch(svi -> svi.getId().equals(id)),
+                "no version with id " + id + " but only: " + versionIds
+        );
+        if (schemaText != null) {
+            assertTrue(
+                    schemaVersionInfos.stream().anyMatch(svi -> svi.getSchemaText().equals(schemaText)),
+                    "no version with the same schema text"
+            );
+        }
     }
 }

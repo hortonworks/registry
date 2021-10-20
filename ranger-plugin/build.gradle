@@ -26,7 +26,7 @@ dependencies {
     compile libraries.hadoop.cloud   // for storing audit logs in the cloud
 
     compile libraries.jna
-    compile libraries.httpclient
+    compile libraries.httpclient.client
     compile libraries.hadoop.common
     compile libraries.guava
     compile libraries.gson

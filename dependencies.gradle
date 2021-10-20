@@ -149,7 +149,10 @@ ext.libraries = [
    h2                : "com.h2database:h2:$versions_h2",
    hikari            : "com.zaxxer:HikariCP:$versions_hikari",
    hibernate_validator: "org.hibernate.validator:hibernate-validator",
-   httpclient        : "org.apache.httpcomponents:httpclient:$versions_httpclient",
+   httpclient        : [
+           "client" : "org.apache.httpcomponents:httpclient:$versions_httpclient",
+           "mime"   : "org.apache.httpcomponents:httpmime:$versions_httpclient",
+   ],
    jna               : "net.java.dev.jna:jna:$versions_jna_platform",
    jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
    netty: [

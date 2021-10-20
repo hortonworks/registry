@@ -50,6 +50,15 @@ public class UploadResult {
         return Objects.hash(successCount, failedCount, failedIds);
     }
 
+    @Override
+    public String toString() {
+        return "UploadResult{" +
+                "successCount=" + successCount +
+                ", failedCount=" + failedCount +
+                ", failedIds=" + failedIds +
+                '}';
+    }
+
     public UploadResult() { }
 
     public UploadResult(int successCount, int failedCount, List<Long> failedIds) {

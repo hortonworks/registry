@@ -25,18 +25,21 @@ public class GlobalState {
     public static final String SCHEMA_META_INFO = "schemaMetaInfo";
     public static final String SCHEMA_VERSION_ID = "schemaVersionId";
     public static final String SCHEMA_VERSION_NO = "schemaVersionNo";
+    public static final String SCHEMA_VERSION_TEXT = "schemaVersionText";
     public static final String AGGREGATED_SCHEMAS = "aggregatedSchemas";
     public static final String COMPATIBILITY = "compatibility";
     public static final String HTTP_RESPONSE_CODE = "httpResponseCode";
     public static final String ATLAS_ENTITIES = "atlasEntities";
     public static final String ATLAS_RELATIONSHIPS = "atlasRelationships";
     public static final String ATLAS_ENTITY_UPDATE = "atlasEntityUpdate";
+    public static final String SCHEMA_EXPORT = "schemaExport";
 
     private final Map<String, Object> sow = new ConcurrentHashMap<>();
 
     public Map<String, Object> getSow() {
         return sow;
     }
+
     public Object getValue(String key) {
         return sow.get(key);
     }

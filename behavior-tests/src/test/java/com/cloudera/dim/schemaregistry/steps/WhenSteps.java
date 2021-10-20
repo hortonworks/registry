@@ -18,15 +18,23 @@ package com.cloudera.dim.schemaregistry.steps;
 import com.cloudera.dim.schemaregistry.GlobalState;
 import com.cloudera.dim.schemaregistry.TestAtlasServer;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.common.collect.ImmutableMap;
+import com.hortonworks.registries.common.CollectionResponse;
+import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
+import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
@@ -42,6 +50,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
@@ -49,25 +58,43 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
 import static com.cloudera.dim.schemaregistry.GlobalState.COMPATIBILITY;
 import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
+import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_EXPORT;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_ID;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_META_INFO;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_NAME;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_ID;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_NO;
+import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_TEXT;
 import static com.cloudera.dim.schemaregistry.TestAtlasServer.KAFKA_TOPIC_TYPEDEF_NAME;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.hortonworks.registries.schemaregistry.SchemaCompatibility.BACKWARD;
+import static com.hortonworks.registries.schemaregistry.SchemaValidationLevel.ALL;
+import static java.lang.System.currentTimeMillis;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
+import static org.apache.http.HttpHeaders.ACCEPT_CHARSET;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.entity.ContentType.MULTIPART_FORM_DATA;
 import static org.apache.http.protocol.HttpCoreContext.HTTP_RESPONSE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -97,7 +124,9 @@ public class WhenSteps extends AbstractSteps {
         }
     }
 
-    /** Enable Atlas integration. If SR is already running, then stop it, so it can be restarted. */
+    /**
+     * Enable Atlas integration. If SR is already running, then stop it, so it can be restarted.
+     */
     @Given("Atlas integration is enabled")
     public void atlasIntegrationIsEnabled() throws Exception {
         if (!testServer.isRunning()) {
@@ -109,7 +138,9 @@ public class WhenSteps extends AbstractSteps {
         testServer.setAtlasPort(testAtlasServer.getAtlasPort());
     }
 
-    /** Disable Atlas integration. If SR is already running, then stop it, so it can be restarted. */
+    /**
+     * Disable Atlas integration. If SR is already running, then stop it, so it can be restarted.
+     */
     @Given("Atlas integration is disabled")
     public void atlasIntegrationIsDisabled() throws Exception {
         if (!testServer.isRunning()) {
@@ -137,6 +168,139 @@ public class WhenSteps extends AbstractSteps {
         testAtlasServer.dslSearch(result);
     }
 
+    @Given("an item exported from a Confluent registry:")
+    public void aSchemaDefinitionExportedFromAConfluentRegistry(String confluentExport) throws IOException {
+        TreeNode schemaTree = skipFirstObjectThenParse(confluentExport);
+        sow.setValue(SCHEMA_VERSION_TEXT, unquote(unescapeJava(schemaTree.get("schema").toString())));
+        sow.setValue(SCHEMA_EXPORT, confluentExport);
+    }
+
+    @Given("an export containing the schema {string} and version {int} on the {string} branch and schema text:")
+    public void aPreviouslyExportedSchemaFromSchemaRegistryWithNameWithTheVersionOnTheBranchAndSchemaText(String name, Integer version, String branch, String schemaText) {
+        SchemaVersionInfo versionInfo = new SchemaVersionInfo((long) version,
+                name,
+                version,
+                schemaText,
+                currentTimeMillis(),
+                "[version-description]"
+        );
+        AggregatedSchemaBranch schemaBranch =
+                new AggregatedSchemaBranch(
+                        new SchemaBranch(1L, branch, name, "[branch-description]", currentTimeMillis()),
+                        null,
+                        new LinkedList<>(singletonList(versionInfo))
+                );
+
+        AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(
+                new SchemaMetadata.Builder(name)
+                        .type("avro")
+                        .schemaGroup("Kafka")
+                        .description("[description]")
+                        .compatibility(BACKWARD)
+                        .validationLevel(ALL)
+                        .evolve(true)
+                        .build(),
+                1L,
+                currentTimeMillis(),
+                new LinkedList<>(singletonList(schemaBranch)),
+                emptyList()
+        );
+
+        sow.setValue(SCHEMA_VERSION_TEXT, schemaText);
+        sow.setValue(SCHEMA_EXPORT, aggregatedSchemaMetadataInfo);
+    }
+
+
+    @Given("we got an export containing the schema {string}")
+    public void aSchemaRegistryExportContainingASchemaWithTheName(String name) {
+        weGotASchemaRegistryExportContainingASchemaWithTheNameAndType("avro", name);
+    }
+
+    @Given("we got an export containing an {string} typed {string} schema")
+    public void weGotASchemaRegistryExportContainingASchemaWithTheNameAndType(String type, String name) {
+        AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(
+                new SchemaMetadata.Builder(name)
+                        .type(type)
+                        .schemaGroup("Kafka")
+                        .description("[description]")
+                        .compatibility(BACKWARD)
+                        .validationLevel(ALL)
+                        .evolve(true)
+                        .build(),
+                1L,
+                currentTimeMillis(),
+                new ArrayList<>(),
+                emptyList()
+        );
+        sow.setValue(SCHEMA_EXPORT, aggregatedSchemaMetadataInfo);
+    }
+
+    @Given("in the export there is a version {int} with id {long} on the {string} branch with the same schema text as the already existing one")
+    public void versionOnTheBranchIsWhatWeAlreadyHaveInSchemaRegistry(Integer version, Long id, String branchName) {
+        versionOnTheBranchIsWhatWeAlreadyHaveInSchemaRegistry(version, id, branchName, null);
+    }
+
+    @Given("in the export there is a version {int} with id {long} on the {string} branch forked from version {int} with the same schema text as the already existing one")
+    public void versionOnTheBranchIsWhatWeAlreadyHaveInSchemaRegistry(Integer version, Long id, String branchName, Integer forkedFromVersion) {
+        String schemaText = (String) sow.getValue(SCHEMA_VERSION_TEXT);
+        versionOnTheBranchWithSchemaText(version, id, branchName, forkedFromVersion, schemaText);
+    }
+
+    @Given("in the export there is a version {int} with id {long} on the {string} branch with schema text:")
+    public void versionOnTheBranchWithSchemaText(Integer version, Long id, String branchName, String schemaText) {
+        versionOnTheBranchWithSchemaText(version, id, branchName, null, schemaText);
+    }
+
+    @Given("in the export there is a version {int} with id {long} on the {string} branch forked from version {int} with schema text:")
+    public void versionOnTheBranchWithSchemaText(Integer version, Long id, String branchName, Integer forkedFromVersion, String schemaText) {
+        AggregatedSchemaMetadataInfo meta = (AggregatedSchemaMetadataInfo) sow.getValue(SCHEMA_EXPORT);
+        String name = meta.getSchemaMetadata().getName();
+        SchemaVersionInfo versionInfo = new SchemaVersionInfo(
+                id,
+                name,
+                version,
+                schemaText,
+                currentTimeMillis(),
+                "[version-description]"
+        );
+
+        Optional<AggregatedSchemaBranch> schemaBranch = meta.getSchemaBranches().stream()
+                .filter(b -> branchName.equalsIgnoreCase(b.getSchemaBranch().getName()))
+                .findFirst();
+        if (schemaBranch.isPresent()) {
+            schemaBranch.get().getSchemaVersionInfos().add(versionInfo);
+        } else {
+            AggregatedSchemaBranch branch = new AggregatedSchemaBranch(
+                    new SchemaBranch(nextBranchId(meta),
+                            branchName,
+                            name,
+                            "[branch-description]",
+                            currentTimeMillis()
+                    ),
+                    forkedFromVersion != null ? (long) forkedFromVersion : null,
+                    new LinkedList<>(singletonList(versionInfo))
+            );
+            meta.getSchemaBranches().add(branch);
+        }
+
+        sow.setValue(SCHEMA_EXPORT, meta);
+    }
+
+    private long nextBranchId(AggregatedSchemaMetadataInfo meta) {
+        if (meta.getSchemaBranches().isEmpty()) {
+            return 1L;
+        } else {
+            return new LinkedList<>(meta.getSchemaBranches()).getLast().getSchemaBranch().getId() + 1;
+        }
+    }
+
+    @Given("assuming it was created with the id {int} and version {int}")
+    public void assumingItWasCreatedWithTheIdAndVersion(Integer id, Integer version) {
+        assertEquals(id.toString(), sow.getValue(SCHEMA_VERSION_ID).toString());
+        assertEquals(version.toString(), sow.getValue(SCHEMA_VERSION_NO).toString());
+    }
+
+    @Given("the schema meta {string} exists with the following parameters:")
     @When("we create a new schema meta {string} with the following parameters:")
     public void weCreateANewSchemaMetaWithTheFollowingParameters(String schemaName, DataTable table) {
         SchemaMetadata meta = dataTableToSchemaMetadata(schemaName, table);
@@ -210,6 +374,7 @@ public class WhenSteps extends AbstractSteps {
         if (schemaIdVersion != null) {
             sow.setValue(SCHEMA_VERSION_ID, schemaIdVersion.getSchemaVersionId());
             sow.setValue(SCHEMA_VERSION_NO, schemaIdVersion.getVersion());
+            sow.setValue(SCHEMA_VERSION_TEXT, avroTxt);
         }
     }
 
@@ -253,8 +418,8 @@ public class WhenSteps extends AbstractSteps {
             HttpPost request = new HttpPost(getBaseUrl(testServer.getPort()) + url);
 
             request.setEntity(new UrlEncodedFormEntity(parameters));
-            request.setHeader("Accept-Charset", "UTF-8");
-            request.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.setHeader(ACCEPT_CHARSET, "UTF-8");
+            request.setHeader(CONTENT_TYPE, "application/x-www-form-urlencoded");
 
             CloseableHttpResponse response = httpClient.execute(request);
             storeHttpResponse(response);
@@ -283,7 +448,7 @@ public class WhenSteps extends AbstractSteps {
         try (CloseableHttpClient httpClient = getHttpClient()) {
             HttpPost request = new HttpPost(getBaseUrl(testServer.getPort()) + url);
             request.setEntity(new StringEntity(payload));
-            request.setHeader("Content-Type", "application/json");
+            request.setHeader(CONTENT_TYPE, "application/json");
 
             CloseableHttpResponse response = httpClient.execute(request);
             storeHttpResponse(response);
@@ -358,4 +523,81 @@ public class WhenSteps extends AbstractSteps {
     public void weCreateTheModelInAtlas() {
 
     }
+
+    @When("we export all schemas")
+    public void weExportAllSchemas() {
+        weSearchForAggregatedSchemas();
+    }
+
+    private String unquote(String quoted) {
+        return quoted.substring(1, quoted.length() - 1);
+    }
+
+    private TreeNode skipFirstObjectThenParse(String concatedJson) throws IOException {
+        ObjectReader reader = objectMapper.reader();
+        JsonParser parser = reader.createParser(new StringReader(concatedJson));
+        parser.readValueAsTree();
+        return parser.readValueAsTree();
+    }
+
+    @When("we import that into the Schema Registry as a {string} format schema")
+    public void weImportThatExportIntoTheSchemaRegistryAsASchema(String schemaType) {
+        String typeFlag = "0";
+        if (schemaType.toLowerCase().startsWith("confluent")) {
+            typeFlag = "1";
+        }
+
+        String url = "/api/v1/schemaregistry/import/";
+        Charset charset = UTF_8;
+
+        try (CloseableHttpClient httpClient = getHttpClient()) {
+
+            URIBuilder builder = new URIBuilder(getBaseUrl(testServer.getPort()));
+            builder
+                    .setPath(url)
+                    .setParameter("format", typeFlag)
+                    .setParameter("failOnError", "true");
+            HttpPost request = new HttpPost(builder.build());
+
+            MultipartEntityBuilder entityBuilder = MultipartEntityBuilder
+                    .create()
+                    .addBinaryBody(
+                            "file",
+                            new ByteArrayInputStream(getImportFile().getBytes(charset)),
+                            MULTIPART_FORM_DATA,
+                            "file"
+                    );
+            request.setEntity(entityBuilder.build());
+            request.setHeader(ACCEPT_CHARSET, charset.name());
+
+            CloseableHttpResponse response = httpClient.execute(request);
+            storeHttpResponse(response);
+        } catch (Exception ex) {
+            fail(ex);
+        }
+    }
+
+    private String getImportFile() throws JsonProcessingException {
+        String importFile;
+        Object schemaExport = sow.getValue(SCHEMA_EXPORT);
+        if (schemaExport instanceof String) {
+            importFile = (String) schemaExport;
+        } else if (schemaExport instanceof AggregatedSchemaMetadataInfo) {
+            importFile = objectMapper.writeValueAsString(
+                    CollectionResponse.newResponse()
+                            .entities(singletonList((AggregatedSchemaMetadataInfo) schemaExport))
+                            .build()
+            );
+        } else {
+            importFile = objectMapper.writeValueAsString(schemaExport);
+        }
+        return importFile;
+    }
+
+    @Given("an import file {string}")
+    public void givenAnImportFile(String fileName) throws URISyntaxException, IOException {
+        String export = loadTestData(fileName);
+        sow.setValue(SCHEMA_EXPORT, export);
+    }
+
 }
