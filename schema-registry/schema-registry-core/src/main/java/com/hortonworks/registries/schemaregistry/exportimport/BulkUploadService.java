@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
-import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -40,7 +39,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,11 +61,11 @@ public class BulkUploadService {
     public BulkUploadService(ISchemaRegistry schemaRegistry) {
         this.schemaRegistry = checkNotNull(schemaRegistry, "schemaRegistry");
     }
-    public UploadResult bulkUploadSchemas(InputStream file, boolean failOnError, BulkUploadInputFormat format) throws IOException {
+    public UploadResult bulkUploadSchemas(InputStream file, boolean failOnError, BulkUploadInputFormat format) {
         switch (format) {
             case CONFLUENT: return bulkUploadConfluentSchemas(file, failOnError);
             case CLOUDERA: return bulkUploadClouderaSchemas(file, failOnError);
-            default: throw new IllegalArgumentException(String.format("BulkUploadInputFormat is not supported for type {}", format));
+            default: throw new IllegalArgumentException("BulkUploadInputFormat is not supported for type " + format);
         }
     }
 
@@ -95,9 +93,7 @@ public class BulkUploadService {
             Collection<AggregatedSchemaBranch> schemaBranches = info.getSchemaBranches();
             schemaBranches.stream()
                 .sorted(Comparator.comparingLong(aggregatedSchemaBranch -> aggregatedSchemaBranch.getSchemaBranch().getId()))
-                .forEach(branch -> {
-                    importOneBranch(branch, info, failedIds, successCount);
-                });
+                .forEach(branch -> importOneBranch(branch, info, failedIds, successCount));
         });
         List<Long> failedIdsWithoutDuplicates = new ArrayList<>(new HashSet<>(failedIds));
         return new UploadResult(successCount.get(), failedIdsWithoutDuplicates.size(), failedIdsWithoutDuplicates);
@@ -168,7 +164,7 @@ public class BulkUploadService {
     /**
      * Parse the input file and upload the schemas to the currently running Schema Registry's database.
      */
-    public UploadResult bulkUploadConfluentSchemas(InputStream file, boolean failOnError) throws IOException {
+    public UploadResult bulkUploadConfluentSchemas(InputStream file, boolean failOnError) {
         
         Multimap<SchemaMetadataInfo, SchemaVersionInfo> schemasToUpload = ArrayListMultimap.create();
         int successCount = 0;
@@ -263,9 +259,12 @@ public class BulkUploadService {
             for (SchemaVersionInfo version : versions) {
                 try {
                     LOG.info("Adding version {} to schema {}", version.getVersion(), schemaMetadata.getName());
-                    SchemaIdVersion schemaIdVersion = schemaRegistry.addSchemaVersion(
-                            schemaMetadata, version.getId(),
-                            new SchemaVersion(version.getSchemaText(), version.getDescription()));
+                    SchemaIdVersion schemaIdVersion = schemaRegistry.addSchemaVersionWithBranchName(
+                            "MASTER",
+                            schemaMetadata,
+                            version.getId(),
+                            version
+                    );
                     checkState(schemaIdVersion.getVersion().equals(version.getVersion()),
                             "Version not same after upload: %s vs %s",
                             schemaIdVersion.getSchemaVersionId(), version.getId());

@@ -167,22 +167,22 @@ public class ConfluentFileReader {
     private void processSchemaNode(Map<Integer, RawSchema.Builder> result, String subject, JsonNode jsonValueNode) {
         // {"subject":"Kafka-key","version":1,"id":1,"schema":"\"string\"","deleted":false}
         int version = jsonValueNode.get("version").asInt(1);
-        int schemaId = jsonValueNode.get("id").asInt();
+        int id = jsonValueNode.get("id").asInt();
         String schemaText = jsonValueNode.get("schema").asText();
         boolean deleted = jsonValueNode.get("deleted").asBoolean(false);
 
         if (deleted) {
-            result.remove(schemaId);
+            result.remove(id);
         } else {
             RawSchema.Builder rawSchema;
-            if (result.containsKey(schemaId)) {
-                rawSchema = result.get(schemaId);
+            if (result.containsKey(id)) {
+                rawSchema = result.get(id);
             } else {
                 rawSchema = RawSchema.builder(subject);
-                result.put(schemaId, rawSchema);
+                result.put(id, rawSchema);
             }
 
-            rawSchema.version(version).schemaText(schemaText);
+            rawSchema.version(version).schemaText(schemaText).versionId(id);
         }
     }
 

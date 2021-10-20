@@ -212,7 +212,9 @@ public class ThenSteps extends AbstractSteps {
                 .filter(b -> b.getSchemaBranch().getName().equalsIgnoreCase(branchName)).findFirst();
         assertTrue(branch.isPresent());
         Optional<SchemaVersionInfo> version = branch.get().getSchemaVersionInfos().stream()
-                .filter(v -> v.getVersion().equals(versionNo) && v.getId().equals(id)).findFirst();
+                .filter(v ->
+                        equalsIgnoringPrecision(v.getVersion(), versionNo) && equalsIgnoringPrecision(v.getId(), id)
+                ).findFirst();
         assertTrue(version.isPresent());
         assertEquals(sow.getValue(SCHEMA_VERSION_TEXT), version.get().getSchemaText());
     }
@@ -235,23 +237,23 @@ public class ThenSteps extends AbstractSteps {
         }
     }
 
-    @Then("there should be a version with id {long} of the schema {string} on the {string} branch")
-    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranch(Long id, String name, String branch) throws SchemaNotFoundException {
-        theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(id, name, branch, null);
+    @Then("there should be a version {int} with id {long} of the schema {string} on the {string} branch")
+    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranch(Integer version, Long id, String name, String branch) throws SchemaNotFoundException {
+        theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(version, id, name, branch, null);
     }
 
-    @Then("there should be a version with id {long} of the schema {string} on the {string} branch in the Registry with the same schema text")
-    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithTheSameSchemaText(Long id, String name, String branch) throws SchemaNotFoundException {
+    @Then("there should be a version {int} with id {long} of the schema {string} on the {string} branch in the Registry with the same schema text")
+    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithTheSameSchemaText(Integer version, Long id, String name, String branch) throws SchemaNotFoundException {
         String schemaText = (String) sow.getValue(SCHEMA_VERSION_TEXT);
-        theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(id, name, branch, schemaText);
+        theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(version, id, name, branch, schemaText);
     }
 
-    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(Long id, String name, String branch, String schemaText) throws SchemaNotFoundException {
+    public void theThereShouldBeAVersionWithIdOfTheSchemaOnTheBranchInTheRegistryWithCertainText(Integer version, Long id, String name, String branch, String schemaText) throws SchemaNotFoundException {
         Collection<SchemaVersionInfo> schemaVersionInfos = getSchemaRegistryClient().getAllVersions(branch, name);
         List<Long> versionIds = schemaVersionInfos.stream().map(SchemaVersionInfo::getId).collect(Collectors.toList());
         assertFalse(schemaVersionInfos.isEmpty(), "no version to schema " + name + " on branch " + branch);
         assertTrue(
-                schemaVersionInfos.stream().anyMatch(svi -> svi.getId().equals(id)),
+                schemaVersionInfos.stream().anyMatch(svi -> equalsIgnoringPrecision(svi.getId(), id)),
                 "no version with id " + id + " but only: " + versionIds
         );
         if (schemaText != null) {
@@ -260,5 +262,9 @@ public class ThenSteps extends AbstractSteps {
                     "no version with the same schema text"
             );
         }
+    }
+
+    private boolean equalsIgnoringPrecision(Number n1, Number n2) {
+        return n1.toString().equals(n2.toString());
     }
 }

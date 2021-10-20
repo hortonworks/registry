@@ -24,14 +24,16 @@ Feature: Importing and exporting schemas
     When we export all schemas
     Then we should see the "Car" schema with id 1 and version 1 on the "MASTER" branch in the export with the same schema text
 
-  Scenario: importing schemas from a Confluent registry should produce mismatching ids until fix for CDPD-31003 is merged
+  Scenario: importing schemas from a Confluent registry
     Given an item exported from a Confluent registry:
     """
     {"keytype":"SCHEMA","subject":"Car","version":1,"magic":1}      {"subject":"Car","version":1,"id":2,"schema":"{\"type\":\"record\",\"name\":\"Car\",\"namespace\":\"com.cloudera\",\"fields\":[{\"name\":\"model\",\"type\":\"string\"}]}","deleted":false}
+    {"keytype":"SCHEMA","subject":"Car","version":2,"magic":1}      {"subject":"Car","version":2,"id":3,"schema":"{\"type\":\"record\",\"name\":\"Car\",\"namespace\":\"com.cloudera\",\"fields\":[{\"name\":\"model\",\"type\":\"string\"},{\"name\":\"color\",\"type\":\"string\",\"default\":\"blue\"},{\"name\":\"price\",\"type\":\"string\",\"default\":\"0\"}]}","deleted":false}
     """
     When we import that into the Schema Registry as a "confluent" format schema
-    Then we should see 1 successfully imported versions in the response and 0 should have failed
-    #And there should be a version with id 2 of the schema "Car" on the "MASTER" branch in the Registry with the same schema text
+    Then we should see 2 successfully imported versions in the response and 0 should have failed
+    And there should be a version 1 with id 2 of the schema "Car" on the "MASTER" branch
+    And there should be a version 2 with id 3 of the schema "Car" on the "MASTER" branch
 
   Scenario: importing new schemas
     Given an export containing the schema "Car" and version 1 on the "MASTER" branch and schema text:
@@ -45,7 +47,7 @@ Feature: Importing and exporting schemas
     """
     When we import that into the Schema Registry as a "cloudera" format schema
     Then we should see 1 successfully imported versions in the response and 0 should have failed
-    And there should be a version with id 1 of the schema "Car" on the "MASTER" branch in the Registry with the same schema text
+    And there should be a version 1 with id 1 of the schema "Car" on the "MASTER" branch in the Registry with the same schema text
 
   Scenario: importing new schemas with branches
     Given an export containing the schema "Car" and version 1 on the "MASTER" branch and schema text:
@@ -72,21 +74,21 @@ Feature: Importing and exporting schemas
     """
     When we import that into the Schema Registry as a "cloudera" format schema
     Then we should see 2 successfully imported versions in the response and 0 should have failed
-    And there should be a version with id 1 of the schema "Car" on the "MASTER" branch
-    And there should be a version with id 1 of the schema "Car" on the "newbranch" branch
-    And there should be a version with id 2 of the schema "Car" on the "newbranch" branch
+    And there should be a version 1 with id 1 of the schema "Car" on the "MASTER" branch
+    And there should be a version 1 with id 1 of the schema "Car" on the "newbranch" branch
+    And there should be a version 2 with id 2 of the schema "Car" on the "newbranch" branch
 
   Scenario: importing new schemas with more branches
     Given an import file "complex-export.json"
     When we import that into the Schema Registry as a "cloudera" format schema
     Then we should see 5 successfully imported versions in the response and 0 should have failed
-    And there should be a version with id 10007 of the schema "Car" on the "MASTER" branch
-    And there should be a version with id 10005 of the schema "Car" on the "MASTER" branch
-    And there should be a version with id 10003 of the schema "Car" on the "MASTER" branch
-    And there should be a version with id 10004 of the schema "Car" on the "newfield" branch
-    And there should be a version with id 10003 of the schema "Car" on the "newfield" branch
-    And there should be a version with id 10006 of the schema "Car" on the "pricebranch" branch
-    And there should be a version with id 10005 of the schema "Car" on the "pricebranch" branch
+    And there should be a version 5 with id 10007 of the schema "Car" on the "MASTER" branch
+    And there should be a version 3 with id 10005 of the schema "Car" on the "MASTER" branch
+    And there should be a version 1 with id 10003 of the schema "Car" on the "MASTER" branch
+    And there should be a version 2 with id 10004 of the schema "Car" on the "newfield" branch
+    And there should be a version 1 with id 10003 of the schema "Car" on the "newfield" branch
+    And there should be a version 4 with id 10006 of the schema "Car" on the "pricebranch" branch
+    And there should be a version 3 with id 10005 of the schema "Car" on the "pricebranch" branch
 
   Scenario: importing new versions when there is a preexisting one
     Given the schema meta "Car" exists with the following parameters:

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +25,11 @@ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
-import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
@@ -47,8 +45,8 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -104,31 +102,20 @@ public class BulkUploadServiceTest {
 
         final Map<Long, SchemaMetadata> mockDatabase = new HashMap<>();
         final Map<String, Integer> versionCount = new HashMap<>();
-        when(schemaRegistry.addSchemaMetadata(any(Long.class), any(SchemaMetadata.class))).thenAnswer(new Answer<Long>() {
-            @Override
-            public Long answer(InvocationOnMock invocation) throws Throwable {
-                Long id = invocation.getArgument(0, Long.class);
-                SchemaMetadata meta = invocation.getArgument(1, SchemaMetadata.class);
-                mockDatabase.put(id, meta);
-                return id;
-            }
+        when(schemaRegistry.addSchemaMetadata(any(Long.class), any(SchemaMetadata.class))).thenAnswer((Answer<Long>) invocation -> {
+            Long id = invocation.getArgument(0, Long.class);
+            SchemaMetadata meta = invocation.getArgument(1, SchemaMetadata.class);
+            mockDatabase.put(id, meta);
+            return id;
         });
-        when(schemaRegistry.getSchemaMetadataInfo(any(Long.class))).thenAnswer(new Answer<SchemaMetadataInfo>() {
-            @Override
-            public SchemaMetadataInfo answer(InvocationOnMock invocation) throws Throwable {
-                return new SchemaMetadataInfo(mockDatabase.get(invocation.getArgument(0, Long.class)),
-                        invocation.getArgument(0, Long.class), System.currentTimeMillis());
-            }
-        });
-        when(schemaRegistry.addSchemaVersion(any(SchemaMetadata.class), any(Long.class), any(SchemaVersion.class)))
-                .thenAnswer(new Answer<SchemaIdVersion>() {
-                    @Override
-                    public SchemaIdVersion answer(InvocationOnMock invocation) throws Throwable {
-                        SchemaMetadata schemaMetadata = invocation.getArgument(0, SchemaMetadata.class);
-                        int count = versionCount.getOrDefault(schemaMetadata.getName(), 0);
-                        versionCount.put(schemaMetadata.getName(), count + 1);
-                        return new SchemaIdVersion(invocation.getArgument(1, Long.class), count + 1);
-                    }
+        when(schemaRegistry.getSchemaMetadataInfo(any(Long.class))).thenAnswer((Answer<SchemaMetadataInfo>) invocation -> new SchemaMetadataInfo(mockDatabase.get(invocation.getArgument(0, Long.class)),
+                invocation.getArgument(0, Long.class), System.currentTimeMillis()));
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(SchemaMetadata.class), any(Long.class), any(SchemaVersionInfo.class)))
+                .thenAnswer((Answer<SchemaIdVersion>) invocation -> {
+                    SchemaMetadata schemaMetadata = invocation.getArgument(1, SchemaMetadata.class);
+                    int count = versionCount.getOrDefault(schemaMetadata.getName(), 0);
+                    versionCount.put(schemaMetadata.getName(), count + 1);
+                    return new SchemaIdVersion(invocation.getArgument(2, Long.class), count + 1);
                 });
 
         // test
@@ -144,7 +131,7 @@ public class BulkUploadServiceTest {
         // validate - 2 schemas and 4 versions
         verify(schemaRegistry, times(2)).addSchemaMetadata(any(Long.class), any(SchemaMetadata.class));
         verify(schemaRegistry, times(2)).getSchemaMetadataInfo(any(Long.class));
-        verify(schemaRegistry, times(4)).addSchemaVersion(any(SchemaMetadata.class), any(Long.class), any(SchemaVersion.class));
+        verify(schemaRegistry, times(4)).addSchemaVersionWithBranchName(anyString(), any(SchemaMetadata.class), any(Long.class), any(SchemaVersionInfo.class));
 
         assertNotNull(result);
         assertEquals(1, result.getFailedCount());  // 77L
@@ -170,8 +157,8 @@ public class BulkUploadServiceTest {
         });
         when(schemaRegistry.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenThrow(SchemaNotFoundException.class);
         when(schemaRegistry.addSchemaMetadata(any(), any())).thenReturn(1L);
-        when(schemaRegistry.addSchemaVersion(any(), matches("1L"), any())).thenReturn(SCHEMA_ID_VERSION_1);
-        when(schemaRegistry.addSchemaVersion(any(), matches("2L"), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
         UploadResult expected = new UploadResult(2, 0, Collections.emptyList());
         
         //when
@@ -214,8 +201,8 @@ public class BulkUploadServiceTest {
         when(schemaRegistry.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenThrow(SchemaNotFoundException.class);
         when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
         when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
-        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
-        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
         UploadResult expected = new UploadResult(4, 0, Collections.emptyList());
 
         //when
@@ -272,9 +259,9 @@ public class BulkUploadServiceTest {
         when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_3))).thenThrow(SchemaNotFoundException.class);
         when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
         when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
-        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
-        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
-        when(schemaRegistry.addSchemaVersion(any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
         UploadResult expected = new UploadResult(3, 0, Collections.emptyList());
 
         //when
@@ -354,10 +341,10 @@ public class BulkUploadServiceTest {
         when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_3))).thenThrow(SchemaNotFoundException.class);
         when(schemaRegistry.addSchemaMetadata(eq(1L), any())).thenReturn(1L);
         when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
-        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
-        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
-        when(schemaRegistry.addSchemaVersion(any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
-        when(schemaRegistry.addSchemaVersion(any(), eq(4L), any())).thenReturn(SCHEMA_ID_VERSION_4);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(4L), any())).thenReturn(SCHEMA_ID_VERSION_4);
         UploadResult expected = new UploadResult(4, 0, Collections.emptyList());
 
         //when
@@ -431,8 +418,8 @@ public class BulkUploadServiceTest {
         when(schemaRegistry.getSchemaMetadataInfo(eq(2L))).thenReturn(createMetadata(2L, "not-json"));
         when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_1))).thenThrow(SchemaNotFoundException.class);
         when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_2))).thenThrow(SchemaNotFoundException.class);
-        when(schemaRegistry.addSchemaVersion(any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
-        when(schemaRegistry.addSchemaVersion(any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(1L), any())).thenReturn(SCHEMA_ID_VERSION_1);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(2L), any())).thenReturn(SCHEMA_ID_VERSION_2);
 
 
         UploadResult expected = new UploadResult(2, 2, Lists.newArrayList(3L, 4L));
@@ -465,8 +452,8 @@ public class BulkUploadServiceTest {
         when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_3))).thenReturn(createVersion(3L, "rain", 1, schemaText3));
         when(schemaRegistry.getSchemaVersionInfo(eq(SCHEMA_ID_VERSION_4))).thenThrow(SchemaNotFoundException.class);
         when(schemaRegistry.addSchemaMetadata(eq(2L), any())).thenReturn(2L);
-        when(schemaRegistry.addSchemaVersion(any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
-        when(schemaRegistry.addSchemaVersion(any(), eq(4L), any())).thenReturn(SCHEMA_ID_VERSION_4);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(3L), any())).thenReturn(SCHEMA_ID_VERSION_3);
+        when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(), eq(4L), any())).thenReturn(SCHEMA_ID_VERSION_4);
         UploadResult expected = new UploadResult(2, 0, Collections.emptyList());
 
         //when

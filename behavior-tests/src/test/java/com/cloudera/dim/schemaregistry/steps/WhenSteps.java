@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -246,6 +246,7 @@ public class WhenSteps extends AbstractSteps {
         versionOnTheBranchWithSchemaText(version, id, branchName, forkedFromVersion, schemaText);
     }
 
+
     @Given("in the export there is a version {int} with id {long} on the {string} branch with schema text:")
     public void versionOnTheBranchWithSchemaText(Integer version, Long id, String branchName, String schemaText) {
         versionOnTheBranchWithSchemaText(version, id, branchName, null, schemaText);
@@ -293,6 +294,7 @@ public class WhenSteps extends AbstractSteps {
             return new LinkedList<>(meta.getSchemaBranches()).getLast().getSchemaBranch().getId() + 1;
         }
     }
+
 
     @Given("assuming it was created with the id {int} and version {int}")
     public void assumingItWasCreatedWithTheIdAndVersion(Integer id, Integer version) {
