@@ -199,7 +199,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void init(Properties config) throws ServletException {
         try {
-            nonBrowserUserAgents = Utils.getNonBrowserUserAgents(config.getProperty(
+            setNonBrowserUserAgents(config.getProperty(
                     NON_BROWSER_USER_AGENTS, NON_BROWSER_USER_AGENTS_DEFAULT));
             String principal = config.getProperty(PRINCIPAL);
             if (principal == null || principal.trim().length() == 0) {
@@ -465,6 +465,10 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
             }
         }
         return doAsUser.isEmpty() ? null : doAsUser;
+    }
+
+    protected void setNonBrowserUserAgents(String nonBrowserUserAgentsStr) {
+        nonBrowserUserAgents = Utils.getNonBrowserUserAgents(nonBrowserUserAgentsStr);
     }
 
     /**

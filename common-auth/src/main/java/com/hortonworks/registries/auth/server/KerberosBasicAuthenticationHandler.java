@@ -68,6 +68,9 @@ public class KerberosBasicAuthenticationHandler extends KerberosAuthenticationHa
         spnegoEnabled = Boolean.parseBoolean(config.getProperty(SPNEGO_ENABLED_CONFIG, Boolean.TRUE.toString()));
         if (spnegoEnabled) {
             super.init(config);
+        } else {
+            setNonBrowserUserAgents(config.getProperty(
+                    NON_BROWSER_USER_AGENTS, NON_BROWSER_USER_AGENTS_DEFAULT));
         }
 
         try {
