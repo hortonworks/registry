@@ -81,8 +81,8 @@ public class ConfluentFileReaderTest {
         ConfluentFileReader fileReader = new ConfluentFileReader(getClass().getResourceAsStream("/exportimport/confluent3.txt"));
         Set<RawSchema> allSchemas = parseAllSchemas(5, fileReader);
 
-        assertTrue("Did not find schema Car with version 1", findSchema(allSchemas, "Car", 1).isPresent());
-        assertTrue("Did not find schema Car with version 2", findSchema(allSchemas, "Car", 2).isPresent());
+        assertTrue("Did not find schema Car with version 1 and ID 2", findSchema(allSchemas, "Car", 1, 2L).isPresent());
+        assertTrue("Did not find schema Car with version 2 and ID 3", findSchema(allSchemas, "Car", 2, 3L).isPresent());
         assertTrue("Did not find schema Mas with version 1", findSchema(allSchemas, "Mas", 1).isPresent());
         assertTrue("Did not find schema Mas with version 2", findSchema(allSchemas, "Mas", 2).isPresent());
         assertTrue("Did not find schema Mas with version 3", findSchema(allSchemas, "Mas", 3).isPresent());
@@ -128,6 +128,15 @@ public class ConfluentFileReaderTest {
         return allSchemas.stream()
                 .filter(s -> s.getMetadata().getSchemaMetadata().getName().equals(schemaName) &&
                         version.equals(s.getVersion().getVersion()))
+                .findFirst();
+    }
+
+    private Optional<RawSchema> findSchema(Set<RawSchema> allSchemas, String schemaName, Integer version, Long id) {
+        return allSchemas.stream()
+                .filter(s -> s.getMetadata().getSchemaMetadata().getName().equals(schemaName) &&
+                        version.equals(s.getVersion().getVersion()) &&
+                        id.equals(s.getVersion().getId())
+                )
                 .findFirst();
     }
 

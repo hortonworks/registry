@@ -1,8 +1,20 @@
+- name: helm repo add bitnami
+  command: >
+    helm repo add bitnami https://charts.bitnami.com/bitnami --tiller-namespace={{ tiller_namespace }}
+  args:
+    chdir: "{{ srcdir }}"
+
+- name: helm repo update
+  command: >
+    helm repo update --tiller-namespace={{ tiller_namespace }}
+  args:
+    chdir: "{{ srcdir }}"
+
 - name: helm install mariadb
   command: >
     helm install bitnami/mariadb
         --name db
         --tiller-namespace={{ tiller_namespace }}
         --set "db.user={{ mysql_dbuser }},db.password={{ mysql_password }},db.name={{ mysql_dbname }},replication.enabled=false,master.persistence.enabled=false"
-        --version 7.3.14
+        --version 11.0.10
         --wait
