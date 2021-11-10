@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class AtlasEventLoggerTest {
 
     private static final String ATLAS_EVENTS = "atlas_events";
+    private static final String NAMESPACE_SEQUENCE = "namespace_sequence";
 
     private static final HikariConfig DB_CONFIG = getDbConnectionConfig();
 
@@ -114,6 +115,12 @@ public class AtlasEventLoggerTest {
                     "  timestamp       BIGINT                NOT NULL," +
                     "  UNIQUE KEY (id)" +
                     ")");
+            stmt.execute("CREATE TABLE IF NOT EXISTS " + NAMESPACE_SEQUENCE + " (" +
+                    "  id              BIGINT AUTO_INCREMENT NOT NULL, " +
+                    "  namespace       VARCHAR(255)          NOT NULL, " +
+                    "  nextId          BIGINT                NOT NULL," +
+                    "  UNIQUE KEY (id)" +
+                    ")");
             stmt.close();
         }
     }
@@ -148,7 +155,7 @@ public class AtlasEventLoggerTest {
     }
 
     @Test
-    public void testAddSchemaMetadata() throws Exception {
+    public void testAddSchemaMetadata() {
         // given
         Long id = RandomUtils.nextLong();
         Authorizer.UserAndGroups user = new Authorizer.UserAndGroups("user1", new HashSet<>());
@@ -162,7 +169,7 @@ public class AtlasEventLoggerTest {
     }
     
     @Test
-    public void testUpdateSchemaMetadata() throws Exception {
+    public void testUpdateSchemaMetadata() {
         // given
         Long id = RandomUtils.nextLong();
         Authorizer.UserAndGroups user = new Authorizer.UserAndGroups("martin", new HashSet<>());
@@ -175,7 +182,7 @@ public class AtlasEventLoggerTest {
     }
 
     @Test
-    public void testAddSchemaVersion() throws Exception {
+    public void testAddSchemaVersion() {
         // given
         Long id = RandomUtils.nextLong();
         Authorizer.UserAndGroups user = new Authorizer.UserAndGroups("abigail", new HashSet<>());

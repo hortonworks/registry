@@ -47,6 +47,7 @@ import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.impl.jdbc.sequences.NamespaceSequenceStorable;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
@@ -110,6 +111,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         storageManager.registerStorables(
                 Arrays.asList(
+                        NamespaceSequenceStorable.class,
                         SchemaMetadataStorable.class,
                         SchemaVersionStorable.class,
                         SchemaVersionStateStorable.class,
@@ -119,7 +121,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         SchemaBranchStorable.class,
                         SchemaBranchVersionMapping.class,
                         SchemaLockStorable.class,
-                        AtlasEventStorable.class));
+                        AtlasEventStorable.class
+                ));
 
         Options options = new Options(configuration);
         schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),

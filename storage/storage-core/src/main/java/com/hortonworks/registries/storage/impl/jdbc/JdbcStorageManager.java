@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2016-2019 Cloudera, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,30 +16,35 @@
 package com.hortonworks.registries.storage.impl.jdbc;
 
 
+import com.google.common.base.Stopwatch;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.storage.StorageProviderConfiguration;
-import com.hortonworks.registries.storage.common.DatabaseType;
-import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.TransactionManager;
+import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlSelectQuery;
+import com.hortonworks.registries.storage.impl.jdbc.sequences.NamespaceSequenceStorable;
 import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,20 +53,32 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static com.hortonworks.registries.storage.impl.jdbc.util.SchemaFields.needsSequence;
+import static java.lang.System.currentTimeMillis;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
 public class JdbcStorageManager implements TransactionManager, StorageManager {
     private static final Logger log = LoggerFactory.getLogger(StorageManager.class);
     public static final String DB_TYPE = "db.type";
 
-    private final StorableFactory storableFactory = new StorableFactory();
+    private final StorableFactory storableFactory;
     private QueryExecutor queryExecutor;
 
     public JdbcStorageManager() {
+        storableFactory = new StorableFactory();
     }
 
     public JdbcStorageManager(QueryExecutor queryExecutor) {
+        this(queryExecutor, new StorableFactory());
+    }
+
+    public JdbcStorageManager(QueryExecutor queryExecutor, StorableFactory storableFactory) {
+        this.storableFactory = storableFactory;
         this.queryExecutor = queryExecutor;
         queryExecutor.setStorableFactory(storableFactory);
+        registerStorables(Collections.singleton(NamespaceSequenceStorable.class));
     }
 
     @Override
@@ -134,13 +151,13 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     }
 
     private boolean getLock(Supplier<Collection<Storable>> supplier, Long time, TimeUnit timeUnit) throws InterruptedException {
-        long remainingTime = TimeUnit.MILLISECONDS.convert(time, timeUnit);
+        long remainingTime = MILLISECONDS.convert(time, timeUnit);
 
         if (remainingTime < 0) {
             throw new IllegalArgumentException("Wait time for obtaining the lock can't be negative");
         }
 
-        long startTime = System.currentTimeMillis();
+        long startTime = currentTimeMillis();
         do {
             Collection<Storable> storables = supplier.get();
             if (storables != null && !storables.isEmpty()) {
@@ -148,7 +165,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
             } else {
                 Thread.sleep(500);
             }
-        } while ((System.currentTimeMillis() - startTime) < remainingTime);
+        } while ((currentTimeMillis() - startTime) < remainingTime);
 
 
         return false;
@@ -211,16 +228,72 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     }
 
     @Override
-    public Long nextId(String namespace) {
+    public final Long nextId(String namespace) {
         log.debug("Finding nextId for table [{}]", namespace);
-        // This only works if the table has auto-increment. The TABLE_SCHEMA part is implicitly specified in the Connection object
-        // SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'temp' AND TABLE_SCHEMA = 'test'
-        return queryExecutor.nextId(namespace);
+        StorableKey keyForNamespace = new NamespaceSequenceStorable(namespace).getStorableKey();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        // tries to lock the row in the sequence table and updates with the sequence value incremented by 1
+        if (writeLock(keyForNamespace, 3L, SECONDS)) {
+            log.debug("locked sequence row for namespace {} in {}ms", namespace, stopwatch.elapsed(MILLISECONDS));
+            NamespaceSequenceStorable currentSequence = get(keyForNamespace);
+            if (currentSequence != null) {
+                update(currentSequence.increment());
+                return currentSequence.getNextId();
+            } else {
+                throw new IllegalStateException("could not get the sequence after being locked: " + keyForNamespace);
+            }
+        } else {
+            // Error when locking the sequence row is not successful unless it's not initialized yet, then initialize it.
+            // (we should not see uninitialized sequences since they are initialized in the #initializeSequences method)
+            if (get(keyForNamespace) == null) {
+                add(new NamespaceSequenceStorable(namespace, 2L));
+                log.debug("Added new sequence row for namespace {} in {}ms", namespace, stopwatch.elapsed(MILLISECONDS));
+                return 1L;
+            } else {
+                throw new IllegalStateException("could not lock sequence row for namespace: " + keyForNamespace);
+            }
+        }
     }
 
     @Override
     public void registerStorables(Collection<Class<? extends Storable>> classes) throws StorageException {
         storableFactory.addStorableClasses(classes);
+        initializeSequences(classes);
+    }
+
+    private void initializeSequences(Collection<Class<? extends Storable>> classes) {
+        for (Class<? extends Storable> storableClass : classes) {
+            try {
+                Storable storable = storableClass.newInstance();
+
+                if (!needsSequence(storable)) {
+                    continue;
+                }
+
+                NamespaceSequenceStorable sequence = new NamespaceSequenceStorable(storable.getNameSpace());
+                NamespaceSequenceStorable existingSequenceValue = get(sequence.getStorableKey());
+                if (existingSequenceValue != null) {
+                    log.debug("Existing sequence for namespace {} is {}", storable.getNameSpace(), existingSequenceValue.getNextId());
+                    continue;
+                }
+
+                SelectMaxIdQuery selectMaxIdQuery = new SelectMaxIdQuery(storable);
+                try (
+                        PreparedStatement selectMaxStatement = selectMaxIdQuery.prepareStatement(queryExecutor);
+                        ResultSet rs = selectMaxStatement.executeQuery()
+                ) {
+                    long initialValue = 1;
+                    if (rs.next()) {
+                        initialValue = rs.getLong(1) + 1;
+                    }
+                    log.debug("initializing sequence for namespace {} to {}", storable.getNameSpace(), initialValue);
+                    add(sequence.withNextId(initialValue));
+                }
+            } catch (InstantiationException | IllegalAccessException | SQLException e) {
+                log.error("cannot initialize sequence for storable " + storableClass.getSimpleName(), e);
+                throw new StorageException("Cannot initialize sequence for storable " + storableClass.getSimpleName(), e);
+            }
+        }
     }
 
     // private helper methods
@@ -233,7 +306,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
      * @return {@link StorableKey} with all query parameters that match database columns <br/>
      * null if none of the query parameters specified matches a column in the DB
      */
-    private StorableKey buildStorableKey(String namespace, List<QueryParam> queryParams) throws Exception {
+    private StorableKey buildStorableKey(String namespace, List<QueryParam> queryParams) {
         final Map<Schema.Field, Object> fieldsToVal = new HashMap<>();
         StorableKey storableKey = null;
 
@@ -281,9 +354,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         DatabaseType type = DatabaseType.fromValue(configuration.getProperties().getDbtype());
         log.info("jdbc provider type: [{}]", type);
 
-        QueryExecutor queryExecutor = QueryExecutorFactory.get(type, configuration);
-
-        this.queryExecutor = queryExecutor;
+        this.queryExecutor = QueryExecutorFactory.get(type, configuration);
         this.queryExecutor.setStorableFactory(storableFactory);
     }
 

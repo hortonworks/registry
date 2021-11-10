@@ -148,6 +148,11 @@ public interface StorageManager {
      */
     void cleanup() throws StorageException;
 
+    /**
+     * @param namespace
+     * @return next id value for inserting new rows into the corresponding table
+     * @throws StorageException
+     */
     Long nextId(String namespace) throws StorageException;
 
     /**
