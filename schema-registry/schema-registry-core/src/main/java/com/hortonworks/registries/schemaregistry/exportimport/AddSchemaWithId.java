@@ -19,6 +19,7 @@ import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
@@ -62,7 +63,7 @@ public interface AddSchemaWithId {
      * @throws SchemaBranchNotFoundException
      */
     SchemaIdVersion addSchemaVersionWithBranchName(String branchName, SchemaMetadata schemaMetadata, Long versionId,
-                                     SchemaVersion schemaVersion)
+                                     SchemaVersionInfo schemaVersion)
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException,
         SchemaBranchNotFoundException;
 

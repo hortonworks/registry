@@ -156,7 +156,7 @@ public class BulkUploadService {
         LOG.debug("SchemaVersionInfo with id {} does not exist yet", schemaVersionInfo.getId());
         try {
             schemaRegistry.addSchemaVersionWithBranchName(finalExistingBranch.getName(), info.getSchemaMetadata(), schemaVersionInfo.getId(),
-                new SchemaVersion(schemaVersionInfo.getSchemaText(), schemaVersionInfo.getDescription(), schemaVersionInfo.getStateId()));
+                schemaVersionInfo); 
             LOG.debug("Added SchemaVersionInfo with id {}", schemaVersionInfo.getId());
             successCount.getAndIncrement();
         } catch (IncompatibleSchemaException | InvalidSchemaException | SchemaNotFoundException ex) {

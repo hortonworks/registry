@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,6 +87,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
                                                   SchemaMetadata schemaMetadata,
                                                   Long schemaMetadataId,
                                                   Supplier<Long> versionId,
+                                                  @Nullable Integer version,
                                                   SchemaVersion schemaVersion)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
@@ -126,9 +128,12 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
         }
 
         Byte initialState = schemaVersion.getInitialState();
-        int version = checkEvolvability(schemaMetadata, schemaVersion, schemaBranchName);
-
-        schemaVersionStorable.setVersion(version + 1);
+        if (version != null) {
+            schemaVersionStorable.setVersion(version);
+        } else {
+            int calculatedVersion = checkEvolvability(schemaMetadata, schemaVersion, schemaBranchName);
+            schemaVersionStorable.setVersion(calculatedVersion + 1);
+        }
 
         storageManager.add(schemaVersionStorable);
         updateSchemaVersionState(schemaVersionStorable.getId(), 1, initialState, schemaVersion.getStateDetails());
@@ -349,6 +354,7 @@ public class DefaultSchemaVersionLifecycleManager extends SchemaVersionLifecycle
                                                                schemaMetadataInfo.getSchemaMetadata(),
                                                                schemaMetadataInfo.getId(),
                                                                () -> storageManager.nextId(SchemaVersionStorable.NAME_SPACE),
+                                                               null,
                                                                new SchemaVersion(schemaVersionInfo.getSchemaText(),
                                                                                  schemaVersionInfo.getDescription(),
                                                                                  SchemaVersionLifecycleStates.INITIATED.getId(),

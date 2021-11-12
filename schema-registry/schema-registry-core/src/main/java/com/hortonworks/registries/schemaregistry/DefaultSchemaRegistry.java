@@ -14,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
@@ -569,15 +570,24 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public SchemaIdVersion addSchemaVersion(SchemaMetadata schemaMetadata, Long versionId, SchemaVersion schemaVersion) throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
-        return addSchemaVersionWithBranchName(SchemaBranch.MASTER_BRANCH, schemaMetadata, versionId, schemaVersion);
+        lockSchemaMetadata(schemaMetadata.getName());
+        return schemaVersionLifecycleManager.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaMetadata,
+            schemaVersion, this::registerSchemaMetadata, false);
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersionWithBranchName(String branchName, SchemaMetadata schemaMetadata, Long versionId, SchemaVersion schemaVersion) 
+    public SchemaIdVersion addSchemaVersionWithBranchName(String branchName, SchemaMetadata schemaMetadata, Long versionId, SchemaVersionInfo schemaVersionInfo) 
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaMetadata.getName());
+        byte [] stateDetails;
+        try {
+            stateDetails = ObjectMapperUtils.serialize(new InitializedStateDetails(branchName, schemaVersionInfo
+                .getId()));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(String.format("Failed to serialize initializedState for %s and %s", branchName, schemaVersionInfo.getId()));
+        }
         return schemaVersionLifecycleManager.addSchemaVersion(branchName, schemaMetadata,
-            versionId, schemaVersion, this::registerSchemaMetadata, false);
+            versionId, new SchemaVersion(schemaVersionInfo, stateDetails), schemaVersionInfo.getVersion(), this::registerSchemaMetadata, false);
     }
 
     @Override
