@@ -1,5 +1,5 @@
 /*
-  Copyright 2016-2019 Cloudera, Inc.
+  Copyright 2016-2021 Cloudera, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class SelectMaxIdQuery extends AbstractStorableSqlQuery {
             sequenceField = Optional.of(getOnlyElement(idFields));
         }
         String sql = String.format("SELECT MAX(%s) FROM %s", sequenceField.get().getName(), tableName);
-        LOG.debug("selecting max id for namespace {} with sql {}", getNamespace(), sql);
+        LOG.debug("Selecting max id for namespace {} with sql {}", getNamespace(), sql);
         return sql;
     }
 

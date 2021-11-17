@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +11,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 
 package com.hortonworks.registries.storage.impl.jdbc.sequences;
 
-import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
@@ -33,7 +32,7 @@ public class NamespaceSequenceStorable extends AbstractStorable {
     private static final String NEXT_ID_FIELD_NAME = "nextId";
 
     private String namespace;
-    private Long nextId;
+    private long nextId;
 
     public static final Schema.Field NAMESPACE_FIELD = Schema.Field.of(NAMESPACE_FIELD_NAME, Schema.Type.STRING);
     public static final Schema.Field NEXT_ID_FIELD = Schema.Field.of(NEXT_ID_FIELD_NAME, Schema.Type.LONG);
@@ -43,17 +42,13 @@ public class NamespaceSequenceStorable extends AbstractStorable {
     public NamespaceSequenceStorable() {
     }
 
-    public NamespaceSequenceStorable(String namespace, Long nextId) {
+    public NamespaceSequenceStorable(String namespace, long nextId) {
         this.namespace = namespace;
         this.nextId = nextId;
     }
 
     public NamespaceSequenceStorable(String namespace) {
-        this(namespace, null);
-    }
-
-    public NamespaceSequenceStorable withNextId(Long nextId) {
-        return new NamespaceSequenceStorable(namespace, nextId);
+        this(namespace, 0);
     }
 
     public String getNamespace() {
@@ -64,11 +59,11 @@ public class NamespaceSequenceStorable extends AbstractStorable {
         this.namespace = namespace;
     }
 
-    public Long getNextId() {
+    public long getNextId() {
         return nextId;
     }
 
-    public void setNextId(Long nextId) {
+    public void setNextId(long nextId) {
         this.nextId = nextId;
     }
 
@@ -118,7 +113,6 @@ public class NamespaceSequenceStorable extends AbstractStorable {
      * @return incremented sequence copied over (this.nextId is not changed)
      */
     public NamespaceSequenceStorable increment() {
-        Preconditions.checkNotNull(nextId, "only existing ");
         return new NamespaceSequenceStorable(namespace, nextId + 1);
     }
 

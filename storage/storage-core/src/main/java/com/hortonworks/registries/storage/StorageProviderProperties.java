@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ public class StorageProviderProperties {
     private String dbtype;
     private Integer queryTimeoutInSecs;
     private DbProperties properties;
+    private OffsetProperties offsetRange;
 
     @JsonProperty("db.type")
     public String getDbtype() {
@@ -50,5 +51,15 @@ public class StorageProviderProperties {
     @JsonProperty
     public void setProperties(DbProperties properties) {
         this.properties = properties;
+    }
+
+    @JsonProperty("offsetRange")
+    public OffsetProperties getOffsetRange() {
+        return offsetRange;
+    }
+
+    @JsonProperty
+    public void setOffsetRange(OffsetProperties offsetRange) {
+        this.offsetRange = offsetRange;
     }
 }

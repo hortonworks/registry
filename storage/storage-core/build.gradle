@@ -27,7 +27,7 @@ dependencies {
     testCompile libraries.junit
     testCompile libraries.commons.beanutils
     testCompile libraries.dropwizard.core
-    testCompile libraries.mockito_junit5
+    testCompile libraries.mockito_inline
 
 }
 
