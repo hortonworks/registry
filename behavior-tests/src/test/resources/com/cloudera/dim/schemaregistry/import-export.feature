@@ -27,13 +27,13 @@ Feature: Importing and exporting schemas
   Scenario: importing schemas from a Confluent registry
     Given an item exported from a Confluent registry:
     """
-    {"keytype":"SCHEMA","subject":"Car","version":1,"magic":1}      {"subject":"Car","version":1,"id":2,"schema":"{\"type\":\"record\",\"name\":\"Car\",\"namespace\":\"com.cloudera\",\"fields\":[{\"name\":\"model\",\"type\":\"string\"}]}","deleted":false}
-    {"keytype":"SCHEMA","subject":"Car","version":2,"magic":1}      {"subject":"Car","version":2,"id":3,"schema":"{\"type\":\"record\",\"name\":\"Car\",\"namespace\":\"com.cloudera\",\"fields\":[{\"name\":\"model\",\"type\":\"string\"},{\"name\":\"color\",\"type\":\"string\",\"default\":\"blue\"},{\"name\":\"price\",\"type\":\"string\",\"default\":\"0\"}]}","deleted":false}
+    {"keytype":"SCHEMA","subject":"Hippopotamus","version":1,"magic":1}      {"subject":"Hippopotamus","version":1,"id":25,"schema":"{\"type\":\"record\",\"name\":\"Hippopotamus\",\"namespace\":\"com.cloudera\",\"fields\":[{\"name\":\"model\",\"type\":\"string\"}]}","deleted":false}
+    {"keytype":"SCHEMA","subject":"Hippopotamus","version":2,"magic":1}      {"subject":"Hippopotamus","version":2,"id":35,"schema":"{\"type\":\"record\",\"name\":\"Hippopotamus\",\"namespace\":\"com.cloudera\",\"fields\":[{\"name\":\"model\",\"type\":\"string\"},{\"name\":\"color\",\"type\":\"string\",\"default\":\"blue\"},{\"name\":\"price\",\"type\":\"string\",\"default\":\"0\"}]}","deleted":false}
     """
     When we import that into the Schema Registry as a "confluent" format schema
     Then we should see 2 successfully imported versions in the response and 0 should have failed
-    And there should be a version 1 with id 2 of the schema "Car" on the "MASTER" branch
-    And there should be a version 2 with id 3 of the schema "Car" on the "MASTER" branch
+    And there should be a version 1 with id 25 of the schema "Hippopotamus" on the "MASTER" branch
+    And there should be a version 2 with id 35 of the schema "Hippopotamus" on the "MASTER" branch
 
   Scenario: importing new schemas
     Given an export containing the schema "Car" and version 1 on the "MASTER" branch and schema text:

@@ -116,7 +116,7 @@ public class BulkUploadService {
                 LOG.error("Should not reach this point ever, exception while adding branch with id {}", branch.getSchemaBranch().getId(), ex);
             }
         }
-        if (existingBranch != null) {
+        if (existingBranch != null && existingBranch.getSchemaMetadataName().equals(info.getSchemaMetadata().getName())) {
             SchemaBranch finalExistingBranch = existingBranch;
             branch.getSchemaVersionInfos().stream()
                 .sorted(Comparator.comparingLong(SchemaVersionInfo::getId))
@@ -127,6 +127,11 @@ public class BulkUploadService {
                         createNewSchemaVersion(schemaVersionInfo, info, finalExistingBranch, successCount, failedIds);
                     }
                 });
+        } else {
+            LOG.debug("Schema branch with id {} got different schema metadata ", branch.getSchemaBranch().getId());
+            failedIds.addAll(branch.getSchemaVersionInfos().stream()
+                .map(SchemaVersionInfo::getId)
+                .collect(Collectors.toSet()));
         }
     }
 
