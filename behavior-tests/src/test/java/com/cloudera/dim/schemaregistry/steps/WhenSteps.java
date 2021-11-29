@@ -218,6 +218,11 @@ public class WhenSteps extends AbstractSteps {
 
     @Given("we got an export containing an {string} typed {string} schema")
     public void weGotASchemaRegistryExportContainingASchemaWithTheNameAndType(String type, String name) {
+        weGotASchemaRegistryExportContainingASchemaWithTheNameAndType(type, name, 1L);
+    }
+
+    @Given("we got an export containing an {string} typed {string} schema with id {long}")
+    public void weGotASchemaRegistryExportContainingASchemaWithTheNameAndType(String type, String name, long id) {
         AggregatedSchemaMetadataInfo aggregatedSchemaMetadataInfo = new AggregatedSchemaMetadataInfo(
                 new SchemaMetadata.Builder(name)
                         .type(type)
@@ -227,7 +232,7 @@ public class WhenSteps extends AbstractSteps {
                         .validationLevel(ALL)
                         .evolve(true)
                         .build(),
-                1L,
+                id,
                 currentTimeMillis(),
                 new ArrayList<>(),
                 emptyList()

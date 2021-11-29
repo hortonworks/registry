@@ -54,11 +54,10 @@ public class SchemaVersion implements Serializable {
         this.stateDetails = stateDetails;
     }
     
-    public SchemaVersion(SchemaVersionInfo schemaVersionInfo, byte [] stateDetails) {
+    public SchemaVersion(SchemaVersionInfo schemaVersionInfo) {
         this.description = schemaVersionInfo.getDescription();
         this.schemaText = schemaVersionInfo.getSchemaText();
         this.initialState = schemaVersionInfo.getStateId();
-        this.stateDetails = stateDetails;
     }
 
     public void setState(Byte state) {

@@ -43,9 +43,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class SchemaVersionLifecycleManager {
@@ -91,7 +91,7 @@ public abstract class SchemaVersionLifecycleManager {
                                             boolean disableCanonicalCheck)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
-        return addSchemaVersion(schemaBranchName, schemaMetadata, () -> null, null, schemaVersion,
+        return addSchemaVersion(schemaBranchName, schemaMetadata, Optional.empty(), null, schemaVersion,
                 registerSchemaMetadataFn, disableCanonicalCheck);
     }
 
@@ -104,13 +104,13 @@ public abstract class SchemaVersionLifecycleManager {
                                             boolean disableCanonicalCheck)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
-        return addSchemaVersion(schemaBranchName, schemaMetadata, () -> versionId, version, schemaVersion,
+        return addSchemaVersion(schemaBranchName, schemaMetadata, Optional.of(versionId), version, schemaVersion,
                 registerSchemaMetadataFn, disableCanonicalCheck);
     }
 
     private SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             SchemaMetadata schemaMetadata,
-                                            Supplier<Long> versionId,
+                                            Optional<Long> versionId,
                                             Integer version,
                                             SchemaVersion schemaVersion,
                                             Function<SchemaMetadata, Long> registerSchemaMetadataFn,
@@ -159,7 +159,7 @@ public abstract class SchemaVersionLifecycleManager {
     protected abstract SchemaVersionInfo createSchemaVersion(String schemaBranchName,
                                                     SchemaMetadata schemaMetadata,
                                                     Long schemaMetadataId,
-                                                    Supplier<Long> versionId,
+                                                    Optional<Long> versionId,
                                                     @Nullable Integer version,
                                                     SchemaVersion schemaVersion)
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
@@ -325,7 +325,7 @@ public abstract class SchemaVersionLifecycleManager {
         schemaVersionInfo = findSchemaVersion(schemaBranchName, schemaMetadata.getType(), schemaVersion.getSchemaText(),
                 schemaMetadataInfo.getSchemaMetadata().getName(), disableCanonicalCheck);
         if (schemaVersionInfo == null) {
-            schemaVersionInfo = createSchemaVersion(schemaBranchName, schemaMetadata, schemaMetadataInfo.getId(), () -> null, null, schemaVersion);
+            schemaVersionInfo = createSchemaVersion(schemaBranchName, schemaMetadata, schemaMetadataInfo.getId(), Optional.empty(), null, schemaVersion);
         }
 
         return new SchemaIdVersion(schemaMetadataInfo.getId(), schemaVersionInfo.getVersion(), schemaVersionInfo.getId());

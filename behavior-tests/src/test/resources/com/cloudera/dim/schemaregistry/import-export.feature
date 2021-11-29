@@ -177,3 +177,58 @@ Feature: Importing and exporting schemas
     """
     When we import that into the Schema Registry as a "cloudera" format schema
     Then we should see 0 successfully imported versions in the response and 1 should have failed showing the id 1 as failing
+
+  Scenario: when there's an existing meta with the same id but different name, import should fail
+    Given the schema meta "Car" exists with the following parameters:
+      | Name            | Value          |
+      | type            | avro           |
+      | schemaGroup     | Kafka          |
+    And we create a new version for schema "Car" with the following schema:
+    """
+    {
+      "type": "record",
+      "namespace": "com.cloudera",
+      "name": "Car",
+      "fields": [{ "name": "model", "type":  "string" }]
+    }
+    """
+    And assuming it was created with the id 1 and version 1
+    And we got an export containing an "avro" typed "IncompatibleCar" schema with id 1
+    But in the export there is a version 1 with id 2 on the "MASTER" branch with schema text:
+    """
+    {
+      "type": "record",
+      "namespace": "com.cloudera",
+      "name": "IncompatibleCar",
+      "fields": [
+                { "name": "model2", "type":  "string" }
+      ]
+    }
+    """
+    When we import that into the Schema Registry as a "cloudera" format schema
+    Then we should see 0 successfully imported versions in the response and 1 should have failed showing the id 2 as failing
+
+    Scenario: there is an imported metadata in the offset range and another metadata is created that would get the same ID as the imported one
+      Given we create a new schema meta "FullName" with the following parameters:
+        | Name            | Value          |
+        | type            | avro           |
+        | schemaGroup     | Kafka          |
+        | compatibility   | BACKWARD       |
+        | validationLevel | ALL            |
+        | evolve          | true           |
+        | description     | this is a test |
+      Given an import file "offset-import.json"
+      And we import that into the Schema Registry as a "cloudera" format schema
+      Given we create a new schema meta "FullerName" with the following parameters:
+        | Name            | Value          |
+        | type            | avro           |
+        | schemaGroup     | Kafka          |
+        | compatibility   | BACKWARD       |
+        | validationLevel | ALL            |
+        | evolve          | true           |
+        | description     | description    |
+      And we export all schemas
+      Then we should see the "FullName" schema with id 1 in the export
+      And we should see the "offset-import" schema with id 2 in the export
+      And we should see the "FullerName" schema with id 3 in the export
+      

@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
+import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.json.JsonSchemaProvider;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
@@ -24,18 +25,20 @@ import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.storage.search.WhereClause;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.*;
 
 public class DefaultSchemaRegistryTest {
 
@@ -47,9 +50,9 @@ public class DefaultSchemaRegistryTest {
     private MultivaluedMap<String, String> queryParametersWithoutDesc;
     private MultivaluedMap<String, String> queryParametersWithoutName;
     private DefaultSchemaRegistry underTest;
-
-    @BeforeEach
-    public void setup() {
+    StorageManager storageManagerMock;
+    
+    private void setup() {
         queryParametersWithNameAndDesc = new MultivaluedHashMap<>();
         queryParametersWithoutDesc = new MultivaluedHashMap<>();
         queryParametersWithoutName = new MultivaluedHashMap<>();
@@ -72,10 +75,21 @@ public class DefaultSchemaRegistryTest {
         ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
         underTest = new DefaultSchemaRegistry(configuration, storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
     }
+    
+    private void setupForIdCheck() {
+        storageManagerMock = mock(StorageManager.class);
+        Collection<Map<String, Object>> schemaProvidersConfig =
+            ImmutableList.of(
+                Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()),
+                Collections.singletonMap("providerClass", JsonSchemaProvider.class.getName()));
+        ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
+        underTest = new DefaultSchemaRegistry(configuration, storageManagerMock, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+    }
 
     @Test
     public void getWhereClauseTestNamePresent() {
         //given
+        setup();
         WhereClause expected = WhereClause.begin().contains(NAME, "only name").combine();
 
         //when
@@ -88,6 +102,7 @@ public class DefaultSchemaRegistryTest {
     @Test
     public void getWhereClauseTestNameDescriptionPresent() {
         //given
+        setup();
         WhereClause expected = WhereClause.begin().contains(NAME, "some name").and().contains(DESCRIPTION, "some desc").combine();
 
         //when
@@ -100,6 +115,7 @@ public class DefaultSchemaRegistryTest {
     @Test
     public void getWhereClauseTestDescriptionPresent() {
         //given
+        setup();
         WhereClause expected = WhereClause.begin().contains(DESCRIPTION, "only desc").combine();
 
         //when
@@ -111,6 +127,7 @@ public class DefaultSchemaRegistryTest {
 
     @Test
     public void testJsonSchemaCompatibility() {
+        setup();
         SchemaMetadata meta = new SchemaMetadata.Builder("hello-world")
                 .type("json")
                 .description("json schema")
@@ -141,5 +158,139 @@ public class DefaultSchemaRegistryTest {
         assertNotNull(updated);
         assertEquals(SchemaCompatibility.NONE, updated.getSchemaMetadata().getCompatibility());
         assertEquals("second version", updated.getSchemaMetadata().getDescription());
+    }
+
+    @Test
+    public void schemaBranchNotExisting() {
+        //given
+        setupForIdCheck();
+        Long id = 3L;
+        when(storageManagerMock.find(eq(SchemaBranchStorable.NAME_SPACE), eq(getQueryParams(SchemaBranchStorable.ID, id)))).thenReturn(Collections.emptyList());
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(SchemaBranchStorable.class, id);
+
+        //then
+        assertEquals(3L, actual);
+    }
+
+    @Test
+    public void schemaBranchExistingNextId() {
+        //given
+        setupForIdCheck();
+        Long id = 3L;
+        SchemaBranchStorable branchStorable = new SchemaBranchStorable(id);
+        when(storageManagerMock.find(eq(SchemaBranchStorable.NAME_SPACE), eq(getQueryParams(SchemaBranchStorable.ID, id)))).thenReturn(Collections.singletonList(branchStorable));
+        when(storageManagerMock.nextId(eq(SchemaBranchStorable.NAME_SPACE))).thenReturn(4L);
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(SchemaBranchStorable.class, id);
+
+        //then
+        verify(storageManagerMock, times(1)).nextId(eq(SchemaBranchStorable.NAME_SPACE));
+        assertEquals(4L, actual);
+    }
+
+    @Test
+    public void schemaBranchExistingNextNextId() {
+        //given
+        AtomicInteger callCounter = new AtomicInteger();
+        setupForIdCheck();
+        Long id = 3L;
+        SchemaBranchStorable branchStorable3 = new SchemaBranchStorable(id);
+        SchemaBranchStorable branchStorable4 = new SchemaBranchStorable(id + 1);
+        when(storageManagerMock.find(eq(SchemaBranchStorable.NAME_SPACE), eq(getQueryParams(SchemaBranchStorable.ID, id)))).thenReturn(Collections.singletonList(branchStorable3));
+        when(storageManagerMock.find(eq(SchemaBranchStorable.NAME_SPACE), eq(getQueryParams(SchemaBranchStorable.ID, id + 1)))).thenReturn(Collections.singletonList(branchStorable4));
+        when(storageManagerMock.nextId(eq(SchemaBranchStorable.NAME_SPACE))).thenAnswer(ans -> {
+            if (callCounter.get() == 0) {
+                callCounter.getAndIncrement();
+                return 4L;
+            } else {
+                return 5L;
+            }
+        });
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(SchemaBranchStorable.class, id);
+
+        //then
+        verify(storageManagerMock, times(2)).nextId(eq(SchemaBranchStorable.NAME_SPACE));
+        assertEquals(5L, actual);
+    }
+
+    @Test
+    public void schemaMetadataNotExisting() {
+        //given
+        setupForIdCheck();
+        Long id = 4L;
+        when(storageManagerMock.find(eq(SchemaMetadataStorable.NAME_SPACE), eq(getQueryParams(SchemaMetadataStorable.ID, id)))).thenReturn(Collections.emptyList());
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(SchemaMetadataStorable.class, id);
+
+        //then
+        assertEquals(4L, actual);
+    }
+
+    @Test
+    public void schemaMetaExistingNextId() {
+        //given
+        setupForIdCheck();
+        Long id = 3L;
+        SchemaMetadataStorable metaStorable = new SchemaMetadataStorable();
+        when(storageManagerMock.find(eq(SchemaMetadataStorable.NAME_SPACE), eq(getQueryParams(SchemaMetadataStorable.ID, id)))).thenReturn(Collections.singletonList(metaStorable));
+        when(storageManagerMock.nextId(eq(SchemaMetadataStorable.NAME_SPACE))).thenReturn(4L);
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(SchemaMetadataStorable.class, id);
+
+        //then
+        verify(storageManagerMock, times(1)).nextId(eq(SchemaMetadataStorable.NAME_SPACE));
+        assertEquals(4L, actual);
+    }
+
+    @Test
+    public void schemaMetaExistingNextNextId() {
+        //given
+        AtomicInteger counter = new AtomicInteger();
+        setupForIdCheck();
+        Long id = 3L;
+        SchemaMetadataStorable metadataStorable3 = new SchemaMetadataStorable();
+        SchemaMetadataStorable metadataStorable4 = new SchemaMetadataStorable();
+        when(storageManagerMock.find(eq(SchemaMetadataStorable.NAME_SPACE), eq(getQueryParams(SchemaMetadataStorable.ID, id)))).thenReturn(Collections.singletonList(metadataStorable3));
+        when(storageManagerMock.find(eq(SchemaMetadataStorable.NAME_SPACE), eq(getQueryParams(SchemaMetadataStorable.ID, id + 1)))).thenReturn(Collections.singletonList(metadataStorable4));
+        when(storageManagerMock.nextId(eq(SchemaMetadataStorable.NAME_SPACE))).thenAnswer(ans -> {
+            if (counter.get() == 0) {
+                counter.getAndIncrement();
+                return 4L;
+            } else {
+                return 5L;
+            }
+        });
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(SchemaMetadataStorable.class, id);
+
+        //then
+        verify(storageManagerMock, times(2)).nextId(eq(SchemaMetadataStorable.NAME_SPACE));
+        assertEquals(5L, actual);
+    }
+
+    @Test
+    public void invalidClassCheck() {
+        //given
+        setupForIdCheck();
+        Long id = 4L;
+
+        //when
+        Long actual = underTest.checkIfIdIsTaken(AtlasEventStorable.class, id);
+
+        //then
+        assertNull(actual);
+    }
+
+
+    private List<QueryParam> getQueryParams(String key, Long value) {
+        return Collections.singletonList(new QueryParam(key, String.valueOf(value)));
     }
 }

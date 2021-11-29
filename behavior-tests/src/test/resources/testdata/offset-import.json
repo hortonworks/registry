@@ -1,0 +1,19 @@
+{
+  "entities": [
+    {
+      "schemaMetadata": {
+        "type": "avro",
+        "schemaGroup": "Kafka",
+        "name": "offset-import",
+        "description": "test desc",
+        "compatibility": "BACKWARD",
+        "validationLevel": "LATEST",
+        "evolve": true
+      },
+      "id": 2,
+      "timestamp": 1638200867417,
+      "schemaBranches": [],
+      "serDesInfos": []
+    }
+  ]
+}

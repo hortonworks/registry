@@ -219,6 +219,16 @@ public class ThenSteps extends AbstractSteps {
         assertEquals(sow.getValue(SCHEMA_VERSION_TEXT), version.get().getSchemaText());
     }
 
+    @Then("we should see the {string} schema with id {long} in the export")
+    @SuppressWarnings("unchecked")
+    public void weShouldSeeTheSchemaWithIdInTheExport(String name, Long id) {
+        List<AggregatedSchemaMetadataInfo> aggregatedSchemas = (List<AggregatedSchemaMetadataInfo>) sow.getValue(AGGREGATED_SCHEMAS);
+
+        Optional<AggregatedSchemaMetadataInfo> aggregated = aggregatedSchemas.stream()
+            .filter(s -> s.getSchemaMetadata().getName().equals(name)).findFirst();
+        assertTrue(aggregated.isPresent());
+    }
+
     @Then("we should see {int} successfully imported versions in the response and {int} should have failed")
     public void inTheResponseWeShouldSeeSuccessfullyImportedVersionAndShouldHaveFailed(Integer successful, Integer failed) throws IOException {
         inTheResponseWeShouldSeeSuccessfullyImportedVersionAndShouldHaveFailedShowingTheIdAsFailing(successful, failed, null);

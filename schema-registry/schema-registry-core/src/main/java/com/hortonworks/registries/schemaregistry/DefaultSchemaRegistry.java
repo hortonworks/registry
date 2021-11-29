@@ -14,7 +14,6 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
@@ -47,6 +46,7 @@ import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.StorageManager;
+import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.storage.impl.jdbc.sequences.NamespaceSequenceStorable;
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
@@ -235,16 +235,15 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata,
                                   boolean throwErrorIfExists) throws UnsupportedSchemaTypeException {
-        return addSchemaMetadata(() -> storageManager.nextId(SchemaBranchStorable.NAME_SPACE),
-                schemaMetadata, throwErrorIfExists);
+        return addSchemaMetadata(Optional.empty(), schemaMetadata, throwErrorIfExists);
     }
 
     @Override
     public Long addSchemaMetadata(Long id, SchemaMetadata schemaMetadata) {
-        return addSchemaMetadata(() -> id, schemaMetadata, true);
+        return addSchemaMetadata(Optional.ofNullable(id), schemaMetadata, true);
     }
 
-    private Long addSchemaMetadata(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+    private Long addSchemaMetadata(Optional<Long> metadataId, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
         final SchemaMetadataStorable givenSchemaMetadataStorable = ensureJsonCompatibility(
                 SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata)));
         String type = schemaMetadata.getType();
@@ -259,8 +258,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 return schemaMetadataStorable.getId();
             }
         }
-
-        final Long nextId = storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
+        Long nextId = metadataId.orElseGet(() -> storageManager.nextId(givenSchemaMetadataStorable.getNameSpace()));
+        if (!metadataId.isPresent()) {
+            LOG.debug("Given id is null, id is generated");
+            nextId = checkIfIdIsTaken(SchemaMetadataStorable.class, nextId);
+        }
         givenSchemaMetadataStorable.setId(nextId);
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
         storageManager.add(givenSchemaMetadataStorable);
@@ -268,7 +270,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         // Add a schema branch for this metadata
         SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
                 schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
-        schemaBranchStorable.setId(id.get());
+        Long branchId = storageManager.nextId(schemaBranchStorable.getNameSpace());
+        branchId = checkIfIdIsTaken(SchemaBranchStorable.class, branchId);
+        schemaBranchStorable.setId(branchId);
         storageManager.add(schemaBranchStorable);
 
         storageManager.add(new SchemaLockStorable(givenSchemaMetadataStorable.getNameSpace(),
@@ -293,10 +297,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                 return schemaMetadataStorable.getId();
             }
         }
-        final Long nextId = id.get() != null ? id.get() :
+        Long nextId = id.get() != null ? id.get() :
             storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
         if (id.get() == null) {
             LOG.debug("Given id is null, id is generated");
+            nextId = checkIfIdIsTaken(SchemaMetadataStorable.class, nextId);
         }
         givenSchemaMetadataStorable.setId(nextId);
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
@@ -582,15 +587,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     public SchemaIdVersion addSchemaVersionWithBranchName(String branchName, SchemaMetadata schemaMetadata, Long versionId, SchemaVersionInfo schemaVersionInfo) 
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaMetadata.getName());
-        byte [] stateDetails;
-        try {
-            stateDetails = ObjectMapperUtils.serialize(new InitializedStateDetails(branchName, schemaVersionInfo
-                .getId()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(String.format("Failed to serialize initializedState for %s and %s", branchName, schemaVersionInfo.getId()));
-        }
         return schemaVersionLifecycleManager.addSchemaVersion(branchName, schemaMetadata,
-            versionId, new SchemaVersion(schemaVersionInfo, stateDetails), schemaVersionInfo.getVersion(), this::registerSchemaMetadata, false);
+            versionId, new SchemaVersion(schemaVersionInfo), schemaVersionInfo.getVersion(), this::registerSchemaMetadata, false);
     }
 
     @Override
@@ -604,7 +602,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             givenSchemaMetadataStorable.setName(schemaMetadata.getName());
             SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
                 schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), timeMillis);
-            schemaBranchStorable.setId(branchId);
+            Long id = checkIfIdIsTaken(SchemaBranchStorable.class, branchId);
+            schemaBranchStorable.setId(id);
             storageManager.add(schemaBranchStorable);
 
             storageManager.add(new SchemaLockStorable(givenSchemaMetadataStorable.getNameSpace(),
@@ -810,6 +809,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
             storageManager.nextId(SchemaBranchStorable.NAME_SPACE);
         if (schemaBranch.getId() == null) {
             LOG.debug("Given id is null, id is generated");
+            id = checkIfIdIsTaken(SchemaBranchStorable.class, id);
         }
         schemaBranchStorable.setId(id);
         storageManager.add(schemaBranchStorable);
@@ -826,6 +826,30 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         storageManager.add(schemaBranchVersionMapping);
 
         return persistedSchemaBranch;
+    }
+
+    @VisibleForTesting
+    Long checkIfIdIsTaken(Class<? extends AbstractStorable> storable, Long id) {
+        String namespace = "";
+        String idName = "";
+        if (storable.equals(SchemaBranchStorable.class)) {
+            namespace = SchemaBranchStorable.NAME_SPACE;
+            idName = SchemaBranchStorable.ID;
+        } else if (storable.equals(SchemaMetadataStorable.class)) {
+            namespace = SchemaMetadataStorable.NAME_SPACE;
+            idName = SchemaMetadataStorable.ID;
+        } else {
+            LOG.debug("Given storable is not branch or metadata.");
+        }
+        if (!(namespace.isEmpty() || idName.isEmpty())) {
+            while (!storageManager.find(namespace, Collections.singletonList(new QueryParam(idName, String.valueOf(id)))).isEmpty()) {
+                LOG.info("Next ID {} for Schema Branch already exists. Generating next ID.", id);
+                id = storageManager.nextId(namespace);
+            }
+            return id;
+        } else {
+            return null;
+        }
     }
 
     @Override
