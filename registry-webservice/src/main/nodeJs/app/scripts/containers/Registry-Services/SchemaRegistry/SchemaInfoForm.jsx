@@ -128,9 +128,9 @@ export default class SchemaFormContainer extends Component {
       var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        if(this.state.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result)) {
+        if(['avro', 'json'].includes(this.state.type.toLowerCase()) && Utils.isValidJson(reader.result)) {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
-        } else if(this.state.type.toLowerCase() != 'avro') {
+        } else if(!['avro', 'json'].includes(this.state.type.toLowerCase())) {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else {
           this.setState({schemaTextFile: null, schemaText: '', showCodemirror: true});
@@ -173,7 +173,7 @@ export default class SchemaFormContainer extends Component {
       }
       this.setState({showError: true, changedFields: changedFields, expandCodemirror: false});
       return false;
-    } else if (this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
+    } else if (['avro', 'json'].includes(this.state.type.toLowerCase()) && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
       return false;
     } else {
       this.setState({showError: false});
@@ -210,8 +210,8 @@ export default class SchemaFormContainer extends Component {
       lineNumbers: true,
       mode: "application/json",
       styleActiveLine: true,
-      gutters: this.state.type.toLowerCase() == 'avro' ? ["CodeMirror-lint-markers"] : [],
-      lint: this.state.type.toLowerCase() == 'avro'
+      gutters: ['avro', 'json'].includes(this.state.type.toLowerCase()) ? ["CodeMirror-lint-markers"] : [],
+      lint: ['avro', 'json'].includes(this.state.type.toLowerCase())
     };
     let {evolve, schemaText, showError, changedFields, showCodemirror, expandCodemirror} = this.state;
     const showCompatibility = this.state.type.toLowerCase() === 'avro';
@@ -300,7 +300,7 @@ export default class SchemaFormContainer extends Component {
               ?
               <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions} />
               :
-              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.state.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && ['avro', 'json'].includes(this.state.type.toLowerCase()) && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
                 <div onClick={(e) => {
                   this.setState({showCodemirror: true});
                 }}>

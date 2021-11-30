@@ -80,7 +80,7 @@ export default class SchemaVersionForm extends Component {
       var file = e.dataTransfer.files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        if(this.props.schemaObj.type.toLowerCase() == 'avro' && Utils.isValidJson(reader.result)) {
+        if(['avro', 'json'].includes(this.props.schemaObj.type.toLowerCase()) && Utils.isValidJson(reader.result)) {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
         } else if(this.props.schemaObj.type.toLowerCase() != 'avro') {
           this.setState({schemaTextFile: file, schemaText: reader.result, showCodemirror: true});
@@ -112,7 +112,7 @@ export default class SchemaVersionForm extends Component {
       }
       this.setState({showError: true, changedFields: changedFields});
       return false;
-    } else if(this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
+    } else if(['avro', 'json'].includes(this.props.schemaObj.type.toLowerCase()) && !Utils.isValidJson(schemaText.trim())) {/*Add validation logic to Utils method for schema type other than "Avro" */
       return false;
     } else {
       this.setState({showError: false});
@@ -164,8 +164,8 @@ export default class SchemaVersionForm extends Component {
       lineNumbers: true,
       mode: "application/json",
       styleActiveLine: true,
-      gutters: this.props.schemaObj.type.toLowerCase() == 'avro' ? ["CodeMirror-lint-markers"] : [],
-      lint: this.props.schemaObj.type.toLowerCase() == 'avro'
+      gutters: ['avro', 'json'].includes(this.props.schemaObj.type.toLowerCase()) ? ["CodeMirror-lint-markers"] : [],
+      lint: ['avro', 'json'].includes(this.props.schemaObj.type.toLowerCase())
     };
     let {schemaText, showError, changedFields, showCodemirror, schemaTextCompatibility, disableCanonicalCheck} = this.state;
     return (
@@ -216,7 +216,7 @@ export default class SchemaVersionForm extends Component {
                 <ReactCodemirror ref="JSONCodemirror" value={this.state.schemaText} onChange={this.handleJSONChange.bind(this)} options={jsonoptions}/>
               </div>
               :
-              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && this.props.schemaObj.type.toLowerCase() == 'avro' && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
+              <div ref="browseFileContainer" className={"addSchemaBrowseFileContainer"+(showError && ['avro', 'json'].includes(this.props.schemaObj.type.toLowerCase()) && !Utils.isValidJson(schemaText) ? ' invalidInput' : '')}>
                 <div onClick={(e) => {
                   this.setState({showCodemirror: true});
                 }}>
