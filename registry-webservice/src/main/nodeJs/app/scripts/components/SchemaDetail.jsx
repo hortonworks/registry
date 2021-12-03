@@ -83,7 +83,7 @@ export default class SchemaDetail extends Component{
       return branch.schemaBranch.name == 'MASTER';
     });
     let currentVersion = 0;
-    if(selectedBranch){
+    if(selectedBranch && selectedBranch.schemaVersionInfos.length){
       currentVersion = Utils.sortArray(selectedBranch.schemaVersionInfos.slice(), 'timestamp', false)[0].version;
     }
     return { selectedBranch, currentVersion };

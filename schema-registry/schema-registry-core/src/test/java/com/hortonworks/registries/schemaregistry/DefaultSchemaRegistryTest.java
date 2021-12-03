@@ -19,9 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.json.JsonSchemaProvider;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.storage.NOOPTransactionManager;
+import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import com.hortonworks.registries.storage.search.WhereClause;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DefaultSchemaRegistryTest {
 
@@ -287,6 +296,57 @@ public class DefaultSchemaRegistryTest {
 
         //then
         assertNull(actual);
+    }
+    
+    @Test
+    public void getAllSchemaBranchesNoMetadata() {
+        //given
+        setupForIdCheck();
+        when(storageManagerMock.get(any())).thenReturn(null);
+        String schemaName = "not-existing-meta";
+        
+        //when
+        assertThrows(SchemaNotFoundException.class, () -> underTest.getSchemaBranches(schemaName));
+    }
+
+    @Test
+    public void getAllSchemaBranchesExistingMetadata() throws Exception {
+        //given
+        setupForIdCheck();
+        String schemaName = "existing-meta";
+        String branchName1 = "first-branch";
+        String branchName2 = "second-branch";
+        SchemaMetadataStorable metadataStorable = createSchemaMetadataStorable(schemaName);
+        QueryParam queryParam = new QueryParam(SchemaBranchStorable.SCHEMA_METADATA_NAME, schemaName);
+        SchemaBranchStorable schemaBranchStorable1 = new SchemaBranchStorable(branchName1, schemaName, SchemaBranch.MASTER_BRANCH_DESC);
+        SchemaBranchStorable schemaBranchStorable2 = new SchemaBranchStorable(branchName2, schemaName, SchemaBranch.MASTER_BRANCH_DESC);
+        List<Storable> storableCollection = new ArrayList<>();
+        storableCollection.add(schemaBranchStorable1);
+        storableCollection.add(schemaBranchStorable2);
+        List<SchemaBranch> expected = new ArrayList<>();
+        expected.add(schemaBranchStorable1.toSchemaBranch());
+        expected.add(schemaBranchStorable2.toSchemaBranch());
+        when(storageManagerMock.find(eq(SchemaBranchStorable.NAME_SPACE), eq(Collections.singletonList(queryParam)))).thenReturn(storableCollection);
+        when(storageManagerMock.get(any())).thenReturn(metadataStorable);
+
+        //when
+        Collection<SchemaBranch> actual = underTest.getSchemaBranches(schemaName);
+        
+        //then
+        assertEquals(actual, expected);
+    }
+
+    private SchemaMetadataStorable createSchemaMetadataStorable(String schemaName) {
+        SchemaMetadataStorable storable = new SchemaMetadataStorable();
+        storable.setId(1L);
+        storable.setType("avro");
+        storable.setSchemaGroup("kafka");
+        storable.setName(schemaName);
+        storable.setDescription("desc");
+        storable.setValidationLevel(SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL);
+        storable.setCompatibility(SchemaCompatibility.DEFAULT_COMPATIBILITY);
+        storable.setEvolve(true);
+        return storable;
     }
 
 

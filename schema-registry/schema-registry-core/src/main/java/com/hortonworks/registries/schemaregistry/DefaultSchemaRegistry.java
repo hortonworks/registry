@@ -854,14 +854,13 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     @Override
     public Collection<SchemaBranch> getSchemaBranches(String schemaName) throws SchemaNotFoundException {
-        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
-        return schemaVersionInfos.stream().flatMap(schemaVersionInfo -> {
-            try {
-                return schemaVersionLifecycleManager.getSchemaBranches(schemaVersionInfo.getId()).stream();
-            } catch (SchemaBranchNotFoundException e) {
-                throw new RuntimeException(String.format("Failed to obtain schema branch associated with schema name : %s", schemaName), e);
-            }
-        }).collect(Collectors.toSet());
+        if (getSchemaMetadataInfo(schemaName) == null) {
+            throw new SchemaNotFoundException(String.format("No schema metadata with name {}", schemaName));
+        }
+        Collection<SchemaBranchStorable> branchStorables = storageManager.find(SchemaBranchStorable.NAME_SPACE, Collections.singletonList(new QueryParam(SchemaBranchStorable.SCHEMA_METADATA_NAME, schemaName)));
+        return branchStorables.stream()
+            .map(SchemaBranchStorable::toSchemaBranch)
+            .collect(Collectors.toList());
     }
 
     @Override
