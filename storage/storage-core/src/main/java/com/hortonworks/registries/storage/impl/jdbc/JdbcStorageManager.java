@@ -229,8 +229,8 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         queryExecutor.cleanup();
     }
 
-    private boolean belowMaxOffset(NamespaceSequenceStorable sequence) {
-        return offsetMax == null || sequence.getNextId() < offsetMax;
+    private boolean notAboveMaxOffset(NamespaceSequenceStorable sequence) {
+        return offsetMax == null || sequence.getNextId() <= offsetMax;
     }
 
     @Override
@@ -243,8 +243,8 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
             log.debug("Locked sequence row for namespace {} in {}ms", namespace, stopwatch.elapsed(MILLISECONDS));
             NamespaceSequenceStorable currentSequence = get(keyForNamespace);
             if (currentSequence != null) {
+                checkState(notAboveMaxOffset(currentSequence), "Sequence for namespace %s cannot go above max offset %s", namespace, offsetMax);
                 NamespaceSequenceStorable incremented = currentSequence.increment();
-                checkState(belowMaxOffset(incremented), "Sequence for namespace %s cannot go above max offset %s", namespace, offsetMax);
                 update(incremented);
 
                 if (offsetMax != null && incremented.getNextId() > offsetMax * 0.8) {

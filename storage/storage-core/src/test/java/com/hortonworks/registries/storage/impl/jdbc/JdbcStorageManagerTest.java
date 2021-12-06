@@ -48,6 +48,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -233,7 +234,7 @@ public class JdbcStorageManagerTest {
             }
 
             @Test
-            public void goingAboveTheMaxOffsetIsNotAllowed() {
+            public void maxOffsetIsStillAllowed() {
                 doNothing().when(storableFactory).addStorableClasses(anyCollection());
                 try (MockedStatic<QueryExecutorFactory> queryExecutorFactory = mockStatic(QueryExecutorFactory.class)) {
                     queryExecutorFactory
@@ -247,7 +248,30 @@ public class JdbcStorageManagerTest {
                     jdbcStorageManager.init(storageConfig);
                     jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
 
+                    assertEquals(offsetMax, jdbcStorageManager.nextId(NAMESPACE));
+
+                    verify(queryExecutor).update(eq(new NamespaceSequenceStorable(NAMESPACE, offsetMax + 1)));
+                }
+            }
+
+            @Test
+            public void goingAboveTheMaxOffsetIsNotAllowed() {
+                doNothing().when(storableFactory).addStorableClasses(anyCollection());
+                try (MockedStatic<QueryExecutorFactory> queryExecutorFactory = mockStatic(QueryExecutorFactory.class)) {
+                    queryExecutorFactory
+                            .when(() -> QueryExecutorFactory.get(any(DatabaseType.class), any(StorageProviderConfiguration.class)))
+                            .thenReturn(queryExecutor);
+
+                    NamespaceSequenceStorable sequence = new NamespaceSequenceStorable(NAMESPACE, offsetMax + 1);
+                    when(queryExecutor.selectForUpdate(any(StorableKey.class))).thenReturn(singleton(sequence));
+                    when(queryExecutor.select(any(StorableKey.class))).thenReturn(singleton(sequence));
+
+                    jdbcStorageManager.init(storageConfig);
+                    jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
+
                     assertThrows(IllegalStateException.class, () -> jdbcStorageManager.nextId(NAMESPACE));
+
+                    verify(queryExecutor, never()).update(any());
                 }
             }
         }
