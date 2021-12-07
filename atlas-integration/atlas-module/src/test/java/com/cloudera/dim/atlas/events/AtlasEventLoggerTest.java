@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@ package com.cloudera.dim.atlas.events;
 
 import com.cloudera.dim.atlas.AtlasPlugin;
 import com.hortonworks.registries.common.AtlasConfiguration;
+import com.hortonworks.registries.schemaregistry.AtlasEventStorable;
 import com.hortonworks.registries.schemaregistry.AtlasEventStorable.EventType;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
@@ -46,6 +47,7 @@ import java.util.HashSet;
 
 import static com.hortonworks.registries.schemaregistry.AtlasEventStorable.PROCESSED_ID;
 import static com.hortonworks.registries.schemaregistry.AtlasEventStorable.TYPE;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -69,7 +71,9 @@ public class AtlasEventLoggerTest {
         AtlasPlugin atlasPlugin = Mockito.mock(AtlasPlugin.class);
         ExecutionConfig config = new ExecutionConfig(3, DatabaseType.MYSQL);
         QueryExecutor queryExecutor = new MySqlExecutor(config, h2);
-        this.storageManager = new JdbcStorageManager(queryExecutor);
+        storageManager = new JdbcStorageManager(queryExecutor);
+        storageManager.registerStorables(singletonList(AtlasEventStorable.class));
+
         TransactionManager txManager = Mockito.mock(TransactionManager.class);
 
         this.atlasEventLogger = new AtlasEventLogger(atlasConfiguration, atlasPlugin, storageManager, txManager);
@@ -113,12 +117,6 @@ public class AtlasEventLoggerTest {
                     "  processed       BOOLEAN               NOT NULL," +
                     "  failed          BOOLEAN               NOT NULL," +
                     "  timestamp       BIGINT                NOT NULL," +
-                    "  UNIQUE KEY (id)" +
-                    ")");
-            stmt.execute("CREATE TABLE IF NOT EXISTS " + NAMESPACE_SEQUENCE + " (" +
-                    "  id              BIGINT AUTO_INCREMENT NOT NULL, " +
-                    "  namespace       VARCHAR(255)          NOT NULL, " +
-                    "  nextId          BIGINT                NOT NULL," +
                     "  UNIQUE KEY (id)" +
                     ")");
             stmt.close();

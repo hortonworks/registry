@@ -1,5 +1,5 @@
-/**
- * Copyright 2016-2019 Cloudera, Inc.
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class SchemaMetadataStorable extends AbstractStorable {
     @Override
     @JsonIgnore
     public PrimaryKey getPrimaryKey() {
-        return new PrimaryKey(Collections.<Schema.Field, Object>singletonMap(NAME_FIELD, name));
+        return new PrimaryKey(Collections.singletonMap(NAME_FIELD, name));
     }
 
     @Override
@@ -268,6 +268,11 @@ public class SchemaMetadataStorable extends AbstractStorable {
     /** Create a copy and set the compatibility field. */
     public SchemaMetadataStorable copy(SchemaCompatibility compatibility) {
         return new SchemaMetadataStorable(id, type, schemaGroup, name, description, timestamp, compatibility, validationLevel, evolve);
+    }
+
+    @Override
+    public boolean isIdAutoIncremented() {
+        return false;
     }
 
     @Override

@@ -1,5 +1,5 @@
-/**
- * Copyright 2016-2019 Cloudera, Inc.
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,5 +147,4 @@ public abstract class AbstractStorable implements Storable {
     public void setId(Long id) {
         throw new UnsupportedOperationException("Not implemented");
     }
-
 }

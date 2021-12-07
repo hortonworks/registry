@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.hortonworks.registries.storage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public interface Storable {
     // TODO: add some docs
     StorableKey getStorableKey();
 
-    /**
+    /*
      * TODO: Following two methods are not needed if we assume all storable entities will have setters and getters
      * for all the fields defined in its schema using POJO conventions. For now its easier to deal with maps rather
      * then Reflection. Both the methods will be needed for stuff like RelationalDB or HBase where each column/field
@@ -102,4 +103,11 @@ public interface Storable {
         return true;
     }
 
+    /**
+     * @return whether IDs are to be generated with the DB specific autoincrements with {@link QueryExecutor#nextId(String)}
+     * or with sequences that are kept in the namespace_sequence table.
+     */
+    default boolean isIdAutoIncremented() {
+        return true;
+    }
 }

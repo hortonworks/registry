@@ -235,7 +235,12 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
 
     @Override
     public final Long nextId(String namespace) {
-        log.debug("Finding nextId for table [{}]", namespace);
+        log.debug("Finding nextId for namespace [{}]", namespace);
+        if (storableFactory.create(namespace).isIdAutoIncremented()) {
+            log.debug("Storable for namespace {} is auto increment, deferring to the DB to generate the ID", namespace);
+            return queryExecutor.nextId(namespace);
+        }
+
         StorableKey keyForNamespace = new NamespaceSequenceStorable(namespace).getStorableKey();
         Stopwatch stopwatch = Stopwatch.createStarted();
         // tries to lock the row in the sequence table and updates with the sequence value incremented by 1

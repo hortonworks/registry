@@ -213,6 +213,11 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     }
 
     @Override
+    public boolean isIdAutoIncremented() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "SchemaVersionStorable{" +
                 "id=" + id +

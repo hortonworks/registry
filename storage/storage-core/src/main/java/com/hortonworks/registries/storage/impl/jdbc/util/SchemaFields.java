@@ -50,6 +50,10 @@ public class SchemaFields {
     }
 
     public static boolean needsSequence(Storable storable) {
-        return !idFieldsFor(storable).isEmpty() || getSequenceField(storable.getPrimaryKey()).isPresent();
+        if (storable.isIdAutoIncremented()) {
+            return false;
+        } else {
+            return !idFieldsFor(storable).isEmpty() || getSequenceField(storable.getPrimaryKey()).isPresent();
+        }
     }
 }
