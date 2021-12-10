@@ -1,5 +1,5 @@
-/**
- * Copyright 2017-2019 Cloudera, Inc.
+/*
+ * Copyright 2017-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package com.hortonworks.registries.storage.impl.jdbc.provider.oracle.factory;
 
 
 import com.google.common.cache.CacheBuilder;
+import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleAggregateSqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.oracle.query.OracleInsertUpdateDuplicate;
@@ -44,6 +46,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 
 public class OracleExecutor extends AbstractQueryExecutor {
@@ -119,6 +122,11 @@ public class OracleExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new OracleSelectForUpdateQuery(storableKey));
+    }
+
+    @Override
+    public <T> Optional<T> selectAggregate(String namespace, Schema.Field field, String aggregationFunction) {
+        return selectAggregate(namespace, field, new OracleAggregateSqlQuery(namespace, field, aggregationFunction));
     }
 
     @Override

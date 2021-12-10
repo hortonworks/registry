@@ -35,16 +35,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.hortonworks.registries.common.Schema.Field.of;
 import static com.hortonworks.registries.common.Schema.Type.LONG;
 import static com.hortonworks.registries.common.Schema.Type.STRING;
-import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
@@ -106,23 +102,20 @@ public class JdbcStorageManagerTest {
         }
 
         @Test
-        public void whenInitializingMaxIdIsSelected() throws SQLException {
+        public void whenInitializingMaxIdIsSelected() {
             doNothing().when(storableFactory).addStorableClasses(anyCollection());
             when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
-
-            Connection connection = mockSelectMaxQuery(null);
+            when(queryExecutor.selectAggregate(any(), any(), any())).thenReturn(Optional.of(2L));
 
             jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
 
-            verify(connection).prepareStatement(eq(format("SELECT MAX(%s) FROM %s", LongIdStorable.field.getName(), NAMESPACE)));
+            verify(queryExecutor).selectAggregate(NAMESPACE, LongIdStorable.field, "MAX");
         }
 
         @Test
-        public void sequenceForEmptyNamespaceShouldBeInitializedTo1() throws SQLException {
+        public void sequenceForEmptyNamespaceShouldBeInitializedTo1() {
             doNothing().when(storableFactory).addStorableClasses(anyCollection());
             when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
-
-            mockSelectMaxQuery(null);
 
             jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
 
@@ -130,11 +123,10 @@ public class JdbcStorageManagerTest {
         }
 
         @Test
-        public void sequenceShouldBeInitializedWithMaxPlus1() throws SQLException {
+        public void sequenceShouldBeInitializedWithMaxPlus1() {
             doNothing().when(storableFactory).addStorableClasses(anyCollection());
             when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
-
-            mockSelectMaxQuery(2L);
+            when(queryExecutor.selectAggregate(any(), any(), any())).thenReturn(Optional.of(2L));
 
             jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
 
@@ -171,7 +163,7 @@ public class JdbcStorageManagerTest {
             }
 
             @Test
-            public void newSequenceShouldBeInitializedToMaxIdWhenAboveTheOffset() throws SQLException {
+            public void newSequenceShouldBeInitializedToMaxIdWhenAboveTheOffset() {
                 doNothing().when(storableFactory).addStorableClasses(anyCollection());
 
                 try (MockedStatic<QueryExecutorFactory> queryExecutorFactory = mockStatic(QueryExecutorFactory.class)) {
@@ -180,8 +172,7 @@ public class JdbcStorageManagerTest {
                             .thenReturn(queryExecutor);
 
                     when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
-
-                    mockSelectMaxQuery(1001L);
+                    when(queryExecutor.selectAggregate(any(), any(), any())).thenReturn(Optional.of(1001L));
 
                     jdbcStorageManager.init(storageConfig);
                     jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
@@ -191,7 +182,7 @@ public class JdbcStorageManagerTest {
             }
 
             @Test
-            public void newSequenceShouldBeOffsetedWhenMaxIdIsBelowTheOffset() throws SQLException {
+            public void newSequenceShouldBeOffsetedWhenMaxIdIsBelowTheOffset() {
                 doNothing().when(storableFactory).addStorableClasses(anyCollection());
 
                 try (MockedStatic<QueryExecutorFactory> queryExecutorFactory = mockStatic(QueryExecutorFactory.class)) {
@@ -200,8 +191,7 @@ public class JdbcStorageManagerTest {
                             .thenReturn(queryExecutor);
 
                     when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
-
-                    mockSelectMaxQuery(1L);
+                    when(queryExecutor.selectAggregate(any(), any(), any())).thenReturn(Optional.of(1L));
 
                     jdbcStorageManager.init(storageConfig);
                     jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
@@ -459,22 +449,6 @@ public class JdbcStorageManagerTest {
         public boolean isIdAutoIncremented() {
             return false;
         }
-    }
-
-    private Connection mockSelectMaxQuery(Long maxValue) throws SQLException {
-        boolean emptyTable = maxValue == null;
-        Connection connection = mock(Connection.class);
-        PreparedStatement preparedStatement = mock(PreparedStatement.class);
-        ResultSet resultSet = mock(ResultSet.class);
-
-        when(queryExecutor.getConnection()).thenReturn(connection);
-        when(connection.prepareStatement(any())).thenReturn(preparedStatement);
-        when(preparedStatement.executeQuery()).thenReturn(resultSet);
-        when(resultSet.next()).thenReturn(!emptyTable);
-        if (maxValue != null) {
-            when(resultSet.getLong(eq(1))).thenReturn(maxValue);
-        }
-        return connection;
     }
 }
 

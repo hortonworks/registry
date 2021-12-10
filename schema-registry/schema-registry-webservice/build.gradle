@@ -107,7 +107,7 @@ dependencies {
     testCompile libraries.httpclient.client
 
     runtime group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
-
+//    runtime group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '12.2.0.1'
 }
 
 jar {

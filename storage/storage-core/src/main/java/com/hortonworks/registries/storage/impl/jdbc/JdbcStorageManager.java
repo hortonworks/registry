@@ -42,18 +42,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.hortonworks.registries.storage.impl.jdbc.util.SchemaFields.getSequenceField;
+import static com.hortonworks.registries.storage.impl.jdbc.util.SchemaFields.idFieldsFor;
 import static com.hortonworks.registries.storage.impl.jdbc.util.SchemaFields.needsSequence;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -283,13 +286,17 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
     }
 
     private long selectMaxId(Storable storable) throws SQLException {
-        SelectMaxIdQuery selectMaxIdQuery = new SelectMaxIdQuery(storable);
-        try (
-                PreparedStatement selectMaxStatement = selectMaxIdQuery.prepareStatement(queryExecutor);
-                ResultSet rs = selectMaxStatement.executeQuery()
-        ) {
-            return rs.next() ? rs.getLong(1) : 0;
+        Optional<Schema.Field> sequenceField = getSequenceField(storable.getPrimaryKey());
+        if (!sequenceField.isPresent()) {
+            Set<Schema.Field> idFields = idFieldsFor(storable);
+            if (idFields.isEmpty()) {
+                throw new IllegalStateException("No simple primary key or field named 'id' extists for namespace " + storable.getNameSpace());
+            }
+            sequenceField = Optional.of(getOnlyElement(idFields));
         }
+
+        Optional<Long> maxIdOrEmpty = queryExecutor.selectAggregate(storable.getNameSpace(), sequenceField.get(), "MAX");
+        return maxIdOrEmpty.orElse(0L);
     }
 
     private NamespaceSequenceStorable withOffset(NamespaceSequenceStorable sequence) {
