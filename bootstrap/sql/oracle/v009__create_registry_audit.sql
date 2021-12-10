@@ -13,7 +13,7 @@
 -- limitations under the License.;
 -- ;
 
-CREATE TABLE "atlas_events" (
+CALL create_if_not_exists('TABLE', 'CREATE TABLE "atlas_events" (
   "id"              NUMBER(19,0)        NOT NULL,
   "username"        VARCHAR2(255)       NOT NULL,
   "processedId"     NUMBER(19,0)        NOT NULL,
@@ -22,7 +22,20 @@ CREATE TABLE "atlas_events" (
   "failed"          NUMBER(1)           NOT NULL,
   "timestamp"       NUMBER(19,0)        NOT NULL,
   CONSTRAINT atlas_events_pk PRIMARY KEY ("id")
-);
+)');
 
-CREATE SEQUENCE "ATLAS_EVENTS" START WITH 1 INCREMENT BY 1 MAXVALUE 10000000000000000000;
-CREATE INDEX atlas_events_processed ON atlas_events("processed");
+CALL create_if_not_exists('SEQUENCE', 'CREATE SEQUENCE "ATLAS_EVENTS" START WITH 1 INCREMENT BY 1 MAXVALUE 10000000000000000000');
+
+DECLARE index_count INTEGER;
+BEGIN
+SELECT COUNT(*) INTO index_count
+    FROM USER_INDEXES
+    WHERE INDEX_NAME = 'atlas_events_processed';
+
+IF index_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP INDEX atlas_events_processed';
+END IF;
+END;
+/
+
+CREATE INDEX atlas_events_processed ON "atlas_events"("processed");
