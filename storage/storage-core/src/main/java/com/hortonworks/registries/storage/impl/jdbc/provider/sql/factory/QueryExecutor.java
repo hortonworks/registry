@@ -1,5 +1,5 @@
-/**
- * Copyright 2016-2019 Cloudera, Inc.
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,7 @@
 
 package com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory;
 
-import com.hortonworks.registries.storage.transaction.TransactionIsolation;
+import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
@@ -24,6 +24,7 @@ import com.hortonworks.registries.storage.exception.NonIncrementalColumnExceptio
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.util.Columns;
 import com.hortonworks.registries.storage.search.SearchQuery;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +32,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Exposes CRUD and other useful operations to the persistence storage
@@ -74,6 +76,15 @@ public interface QueryExecutor {
 
     <T extends Storable> Collection<T> select(StorableKey storableKey, List<OrderByField> orderByFields);
 
+    /**
+     *
+     * @param namespace is the namespace to select from
+     * @param field is the {@link Storable#getSchema()} field corresponding to the database column
+     * @param aggregationFunction the standard SQL function with which the aggregation is done
+     * @return field values aggregated with the aggregationFunction over the namespace
+     * @throws ClassCastException if the field's type does not correspond to the type T
+     */
+    <T> Optional<T> selectAggregate(String namespace, Schema.Field field, String aggregationFunction);
 
     /**
      * @return The next available id for the autoincrement column in the specified {@code namespace}

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+*/
 
 package com.hortonworks.registries.storage.impl.jdbc.config;
 import com.hortonworks.registries.storage.ConnectionProperties;
@@ -123,10 +123,11 @@ class OracleConfig extends HikariConfig {
 
     public OracleConfig(DbProperties dbProperties) {
         super(sanitizeConfig(dbProperties));
-        checkNotNull(dbProperties.getConnectionProperties());
-        Properties properties = new Properties();
-        putConnectionProperties(properties, dbProperties.getConnectionProperties());
-        this.addDataSourceProperty("connectionProperties", properties);
+        if (dbProperties.getConnectionProperties() != null) {
+            Properties properties = new Properties();
+            putConnectionProperties(properties, dbProperties.getConnectionProperties());
+            this.addDataSourceProperty("connectionProperties", properties);
+        }
     }
 
 

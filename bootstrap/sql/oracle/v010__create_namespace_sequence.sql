@@ -13,9 +13,9 @@
 -- limitations under the License.;
 -- ;
 
-CREATE TABLE "namespace_sequence" (
+CALL create_if_not_exists('TABLE', 'CREATE TABLE "namespace_sequence" (
   "namespace"       VARCHAR2(100)       NOT NULL,
   "nextId"          NUMBER(19,0)        NOT NULL,
   CONSTRAINT namespace_sequence_pk PRIMARY KEY ("namespace")
-);
+)');
 

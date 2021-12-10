@@ -1,5 +1,5 @@
-/**
- * Copyright 2016-2019 Cloudera, Inc.
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.hortonworks.registries.common.Schema;
+import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.AbstractAggregateSqlQuery;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableFactory;
@@ -52,8 +53,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
 
 /**
  *
@@ -85,8 +88,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
     public AbstractQueryExecutor(ExecutionConfig config,
                                  ConnectionBuilder connectionBuilder,
-                                 CacheBuilder<SqlQuery,
-                                         PreparedStatementBuilder> cacheBuilder,
+                                 CacheBuilder<SqlQuery, PreparedStatementBuilder> cacheBuilder,
                                  StorageDataTypeContext storageDataTypeContext) {
         this.connectionBuilder = connectionBuilder;
         this.config = config;
@@ -109,6 +111,43 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     @Override
     public <T extends Storable> Collection<T> select(final StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new SqlSelectQuery(storableKey));
+    }
+
+    protected <T> Optional<T> selectAggregate(String namespace, Schema.Field field, AbstractAggregateSqlQuery query) {
+        log.debug("Selecting field {} from namespace {} with sql {}", field, namespace, query.getParametrizedSql());
+        return executeQueryScalar(namespace, query).map(value -> castToType(value, field.getType()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T castToType(Object value, Schema.Type type) {
+        Class<T> javaType = (Class<T>) type.getJavaType();
+        try {
+            return javaType.cast(value);
+        } catch (ClassCastException e) {
+            if (Number.class.isAssignableFrom(value.getClass())) {
+                return (T) castNumberTo((Number) value, javaType);
+            } else {
+                throw new IllegalArgumentException("Cannot convert the value of class " + value.getClass() + " to the type " + type);
+            }
+        }
+    }
+
+    private Object castNumberTo(Number number, Class<?> javaType) {
+        if (javaType == Byte.class) {
+            return number.byteValue();
+        } else if (javaType == Short.class) {
+            return number.shortValue();
+        } else if (javaType == Integer.class) {
+            return number.intValue();
+        } else if (javaType == Long.class) {
+            return number.longValue();
+        } else if (javaType == Float.class) {
+            return number.floatValue();
+        } else if (javaType == Double.class) {
+            return number.doubleValue();
+        } else {
+            throw new IllegalArgumentException("Cannot convert the value of class " + number.getClass() + " to the type " + javaType);
+        }
     }
 
     public abstract Long nextId(String namespace);
@@ -364,6 +403,10 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         return getQueryExecution(sqlBuilder).executeQuery(namespace);
     }
 
+    protected Optional<Object> executeQueryScalar(String namespace, SqlQuery sqlBuilder) {
+        return getQueryExecution(sqlBuilder).executeQueryScalar(namespace);
+    }
+
     protected QueryExecution getQueryExecution(SqlQuery sqlQuery) {
         return new QueryExecution(sqlQuery);
     }
@@ -383,16 +426,22 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         }
 
         <T extends Storable> Collection<T> executeQuery(String namespace) {
-            Collection<T> result;
+            return executeQuery(namespace, this::getStorablesFromResultSet);
+        }
+
+        Optional<Object> executeQueryScalar(String namespace) {
+            return executeQuery(namespace, this::getSingleResult);
+        }
+
+        <E> E executeQuery(String namespace, BiFunction<ResultSet, String, E> resultExtractFunction) {
             try (PreparedStatement preparedStatement = getPreparedStatement();
                  ResultSet resultSet = preparedStatement.executeQuery()) {
-                result = getStorablesFromResultSet(resultSet, namespace);
+                return resultExtractFunction.apply(resultSet, namespace);
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
             } finally {
                 closeConn();
             }
-            return result;
         }
 
         void closeConn() {
@@ -533,8 +582,20 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             return maps;
         }
 
+        @SuppressWarnings("unchecked")
         private <T extends Storable> T newStorableInstance(String nameSpace) {
             return (T) storableFactory.create(nameSpace);
+        }
+
+        private Optional<Object> getSingleResult(ResultSet resultSet, String namespace) {
+            try {
+                if (resultSet.next()) {
+                  return Optional.ofNullable(resultSet.getObject(1));
+                }
+            } catch (SQLException e) {
+                log.error("Exception occurred while processing result set.", e);
+            }
+            return Optional.empty();
         }
     }
 

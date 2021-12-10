@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,14 @@
  */
 package com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.factory;
 
-/**
- *
- */
-
 import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.common.Schema;
-import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.OrderByField;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.impl.jdbc.config.ExecutionConfig;
 import com.hortonworks.registries.storage.impl.jdbc.connection.ConnectionBuilder;
+import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresAggregateSqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlInsertQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.postgresql.query.PostgresqlSelectForShareQuery;
@@ -37,11 +33,13 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.Abstrac
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.query.SqlQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.statement.PreparedStatementBuilder;
 import com.hortonworks.registries.storage.search.SearchQuery;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * SQL query executor for PostgreSQL
@@ -149,6 +147,11 @@ public class PostgresqlExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new PostgresqlSelectForUpdateQuery(storableKey));
+    }
+
+    @Override
+    public <T> Optional<T> selectAggregate(String namespace, Schema.Field field, String aggregationFunction) {
+        return selectAggregate(namespace, field, new PostgresAggregateSqlQuery(namespace, field, aggregationFunction));
     }
 
     // this is required since the Id type in Storable is long and Postgres supports Int type for SERIAL (auto increment) field
