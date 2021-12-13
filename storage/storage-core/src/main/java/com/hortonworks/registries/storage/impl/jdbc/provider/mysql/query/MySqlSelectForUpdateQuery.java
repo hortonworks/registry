@@ -1,5 +1,5 @@
-/**
- * Copyright 2016-2019 Cloudera, Inc.
+/*
+ * Copyright 2016-2021 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 
 package com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query;
 
@@ -22,14 +22,6 @@ public class MySqlSelectForUpdateQuery extends MySqlSelectQuery {
 
     public MySqlSelectForUpdateQuery(StorableKey storableKey) {
         super(storableKey);
-    }
-
-    @Override
-    protected String getParameterizedSql() {
-        String sql = super.getParameterizedSql();
-        sql += " FOR UPDATE";
-
-        LOG.debug(sql);
-        return sql;
+        setLockRows(true);
     }
 }
