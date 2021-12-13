@@ -25,8 +25,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-/**
+ /**
  *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -35,6 +36,7 @@ public class SearchQuery implements Serializable {
     private String nameSpace;
     private List<OrderBy> orderByFields;
     private WhereClause whereClause;
+    private boolean lockRows = false;
 
     private SearchQuery() {
     }
@@ -64,6 +66,11 @@ public class SearchQuery implements Serializable {
         return this;
     }
 
+    public SearchQuery forUpdate() {
+        lockRows = true;
+        return this;
+    }
+
     public String getNameSpace() {
         return nameSpace;
     }
@@ -76,53 +83,35 @@ public class SearchQuery implements Serializable {
         return whereClause;
     }
 
+    public boolean isForUpdate() {
+        return lockRows;
+    }
+
     @Override
     public String toString() {
         return "SearchQuery{" +
                 "nameSpace='" + nameSpace + '\'' +
                 ", orderByFields=" + orderByFields +
                 ", clause=" + whereClause +
+                ", lockRows=" + lockRows +
                 '}';
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
 
-        SearchQuery that = (SearchQuery) o;
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) {
+             return true;
+         }
+         if (!(o instanceof SearchQuery)) {
+             return false;
+         }
+         SearchQuery that = (SearchQuery) o;
+         return lockRows == that.lockRows && nameSpace.equals(that.nameSpace) && Objects.equals(orderByFields, that.orderByFields) && Objects.equals(whereClause, that.whereClause);
+     }
 
-        if (nameSpace != null ? !nameSpace.equals(that.nameSpace) : that.nameSpace != null) {
-            return false;
-        }
-        if (orderByFields != null ? !orderByFields.equals(that.orderByFields) : that.orderByFields != null) {
-            return false;
-        }
-        return whereClause != null ? whereClause.equals(that.whereClause) : that.whereClause == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = nameSpace != null ? nameSpace.hashCode() : 0;
-        result = 31 * result + (orderByFields != null ? orderByFields.hashCode() : 0);
-        result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
-        return result;
-    }
-
-    public static void main(String[] args) {
-        SearchQuery searchQuery = SearchQuery.searchFrom("store")
-                .where(WhereClause.begin()
-                               .contains("name", "foo")
-                               .and()
-                               .gt("amount", 500)
-                       .combine()
-                ).orderBy(OrderBy.asc("name"), OrderBy.desc("amount"));
-
-
-    }
-
+     @Override
+     public int hashCode() {
+         return Objects.hash(nameSpace, orderByFields, whereClause, lockRows);
+     }
 }
