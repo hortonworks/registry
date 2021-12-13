@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.cloudera.dim.atlas.events;
 
 import com.cloudera.dim.atlas.AtlasPlugin;
@@ -29,9 +29,13 @@ import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class AtlasEventLogger {
+public class AtlasEventLogger implements AutoCloseable {
 
-    private final ExecutorService threadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("audit-processor-%d").build());
+    private final ExecutorService threadPool = Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setDaemon(true)
+                    .setNameFormat("audit-processor-%d")
+                    .build()
+    );
     private final StorageManager storageManager;
     private String username = System.getProperty("user.name");
 
@@ -78,5 +82,10 @@ public class AtlasEventLogger {
             this.username = auth.getUser();
         }
         return this;
+    }
+
+    @Override
+    public void close() {
+        threadPool.shutdownNow();
     }
 }

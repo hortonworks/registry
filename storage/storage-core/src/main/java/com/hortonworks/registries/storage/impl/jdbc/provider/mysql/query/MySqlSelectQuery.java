@@ -72,4 +72,9 @@ public class MySqlSelectQuery extends AbstractSelectQuery {
         }
         return sql;
     }
+
+    @Override
+    protected String lockingBehaviorClause() {
+        return "FOR UPDATE";
+    }
 }
