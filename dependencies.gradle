@@ -155,11 +155,6 @@ ext.libraries = [
    ],
    jna               : "net.java.dev.jna:jna:$versions_jna_platform",
    jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
-   netty: [
-      common         : "io.netty:netty-common:$versions_netty",
-      handler        : "io.netty:netty-handler:$versions_netty",
-      transport      : "io.netty:netty-transport:$versions_netty"
-   ],
    nimbus            : dependencies.create("com.nimbusds:nimbus-jose-jwt:$versions_nimbus") {
        exclude group: 'net.minidev', module: 'json-smart'
    },
