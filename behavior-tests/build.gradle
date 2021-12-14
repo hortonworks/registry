@@ -55,7 +55,9 @@ dependencies {
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.mockito_junit5
-    testCompile libraries.mockserver
+    testCompile(libraries.mockserver) {
+        exclude group: "io.netty"
+    }
 
     testCompile libraries.cucumber.core
     testCompile libraries.cucumber.junit
