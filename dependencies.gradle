@@ -248,22 +248,7 @@ ext.libraries = [
 
    spring: [
      context         : "org.springframework:spring-context:$versions_spring",
-     core            : "org.springframework:spring-core:$versions_spring",
-     kerberos: dependencies.create("org.springframework.security.kerberos:spring-security-kerberos-core:$versions_spring_kerberos") {
-         exclude group: 'org.springframework', module: 'spring-context'
-         exclude group: 'org.springframework', module: 'spring-core'
-         exclude group: 'org.springframework', module: 'spring-aop'
-         exclude group: 'org.springframework', module: 'spring-beans'
-         exclude group: 'org.springframework', module: 'spring-expression'
-         exclude group: 'org.springframework.security', module: 'spring-security-core'
-     },
-     security_core: dependencies.create("org.springframework.security:spring-security-core:$versions_spring_security_core") {
-         exclude group: 'org.springframework', module: 'spring-context'
-         exclude group: 'org.springframework', module: 'spring-core'
-         exclude group: 'org.springframework', module: 'spring-aop'
-         exclude group: 'org.springframework', module: 'spring-beans'
-         exclude group: 'org.springframework', module: 'spring-expression'
-     }
+     core            : "org.springframework:spring-core:$versions_spring"
    ],
 
    validation_api     : "javax.validation:validation-api:$versions_validation_api"
