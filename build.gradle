@@ -50,6 +50,15 @@ subprojects {
         }
         tests.extendsFrom testRuntime
     }
+    dependencies {
+        constraints {
+            compile('com.fasterxml.jackson.core:jackson-databind') {
+                version {
+                    strictly project.versions_jackson_databind
+                }
+            }
+        }
+    }
 
     java {
         sourceCompatibility = java_version

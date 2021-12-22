@@ -75,7 +75,7 @@ ext.libraries = [
    jackson: [
       annotations    : "com.fasterxml.jackson.core:jackson-annotations:$versions_jackson2",
       core           : "com.fasterxml.jackson.core:jackson-core:$versions_jackson2",
-      databind       : "com.fasterxml.jackson.core:jackson-databind:$versions_jackson2",
+      databind       : "com.fasterxml.jackson.core:jackson-databind:$versions_jackson_databind",
       dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
       dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:$versions_jackson2",
       dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
