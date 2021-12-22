@@ -242,7 +242,7 @@ public class BulkUploadService {
             Long schemaId;
             try {
                 LOG.info("Adding {}", meta.getSchemaMetadata());
-                schemaId = schemaRegistry.addSchemaMetadata(meta.getId(), meta.getSchemaMetadata());
+                schemaId = schemaRegistry.addSchemaMetadata(meta.getSchemaMetadata(), false);
             } catch (UnsupportedSchemaTypeException | AlreadyExistsException ex) {
                 failedIds.add(meta.getId());
                 LOG.error("Could not add new schema metadata {}", meta, ex);

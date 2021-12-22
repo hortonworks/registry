@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.exportimport;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -45,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -93,23 +95,30 @@ public class BulkUploadServiceTest {
 
     @Test
     public void testUploadValidSchemas() throws Exception {
+        Map<Long, SchemaMetadata> mockDatabase = new HashMap<>();
         SchemaMetadataInfo car = createMetadata(1L, "Car");
         SchemaMetadataInfo fruit = createMetadata(2L, "Fruit");
+        Map<String, SchemaMetadataInfo> nameToMeta = ImmutableMap.of(
+                car.getSchemaMetadata().getName(), car,
+                fruit.getSchemaMetadata().getName(), fruit
+        );
+        mockDatabase.put(car.getId(), car.getSchemaMetadata());
+        mockDatabase.put(fruit.getId(), fruit.getSchemaMetadata());
+
         SchemaVersionInfo carV1 = createVersion(1L, "Car", 1, "avro1");
         SchemaVersionInfo carV2 = createVersion(2L, "Car", 2, "avro2");
         SchemaVersionInfo carV3 = createVersion(4L, "Car", 3, "avro3");
         SchemaVersionInfo fruitVersion = createVersion(3L, "Fruit", 1, "avro4");
 
-        final Map<Long, SchemaMetadata> mockDatabase = new HashMap<>();
         final Map<String, Integer> versionCount = new HashMap<>();
-        when(schemaRegistry.addSchemaMetadata(any(Long.class), any(SchemaMetadata.class))).thenAnswer((Answer<Long>) invocation -> {
-            Long id = invocation.getArgument(0, Long.class);
-            SchemaMetadata meta = invocation.getArgument(1, SchemaMetadata.class);
-            mockDatabase.put(id, meta);
-            return id;
+        when(schemaRegistry.addSchemaMetadata(any(SchemaMetadata.class), anyBoolean())).thenAnswer((Answer<Long>) invocation -> {
+            SchemaMetadata meta = invocation.getArgument(0, SchemaMetadata.class);
+            return nameToMeta.get(meta.getName()).getId();
         });
-        when(schemaRegistry.getSchemaMetadataInfo(any(Long.class))).thenAnswer((Answer<SchemaMetadataInfo>) invocation -> new SchemaMetadataInfo(mockDatabase.get(invocation.getArgument(0, Long.class)),
-                invocation.getArgument(0, Long.class), System.currentTimeMillis()));
+        when(schemaRegistry.getSchemaMetadataInfo(any(Long.class))).thenAnswer((Answer<SchemaMetadataInfo>) invocation -> {
+            Long id = invocation.getArgument(0, Long.class);
+            return new SchemaMetadataInfo(mockDatabase.get(id), id, System.currentTimeMillis());
+        });
         when(schemaRegistry.addSchemaVersionWithBranchName(anyString(), any(SchemaMetadata.class), any(Long.class), any(SchemaVersionInfo.class)))
                 .thenAnswer((Answer<SchemaIdVersion>) invocation -> {
                     SchemaMetadata schemaMetadata = invocation.getArgument(1, SchemaMetadata.class);
@@ -129,7 +138,7 @@ public class BulkUploadServiceTest {
         UploadResult result = bulkUploadService.uploadValidSchemas(schemasToUpload, failedIds);
 
         // validate - 2 schemas and 4 versions
-        verify(schemaRegistry, times(2)).addSchemaMetadata(any(Long.class), any(SchemaMetadata.class));
+        verify(schemaRegistry, times(2)).addSchemaMetadata(any(SchemaMetadata.class), eq(false));
         verify(schemaRegistry, times(2)).getSchemaMetadataInfo(any(Long.class));
         verify(schemaRegistry, times(4)).addSchemaVersionWithBranchName(anyString(), any(SchemaMetadata.class), any(Long.class), any(SchemaVersionInfo.class));
 
