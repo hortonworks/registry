@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package com.cloudera.dim.atlas.events;
 
 import com.cloudera.dim.atlas.AtlasPlugin;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Stopwatch;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.schemaregistry.AtlasEventStorable;
 import com.hortonworks.registries.schemaregistry.AtlasEventStorable.EventType;
@@ -28,24 +27,22 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionStorable;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
-import com.hortonworks.registries.storage.search.OrderBy;
-import com.hortonworks.registries.storage.search.SearchQuery;
-import com.hortonworks.registries.storage.search.WhereClause;
 import com.hortonworks.registries.storage.transaction.ManagedTransaction;
+import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import com.hortonworks.registries.storage.transaction.functional.ManagedTransactionFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.hortonworks.registries.storage.transaction.TransactionIsolation.READ_COMMITTED;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * The processor should be run in its own thread. It reads audit entries from the database. The audit
@@ -72,7 +69,7 @@ public class AtlasEventsProcessor implements Runnable {
         this.connectWithKafka = connectWithKafka;
         this.waitBetweenProcessing = waitBetweenProcessing;
         checkState(waitBetweenProcessing > 0L, "Wait period must be greater than 0");
-        this.managedTransaction = new ManagedTransaction(transactionManager, READ_COMMITTED);
+        this.managedTransaction = new ManagedTransaction(transactionManager, TransactionIsolation.SERIALIZABLE);
 
         LOG.info("Connecting schemas with kafka topics is {}", connectWithKafka ? "ENABLED" : "DISABLED");
     }
@@ -83,7 +80,7 @@ public class AtlasEventsProcessor implements Runnable {
         try {
             Thread.sleep(5000L);
         } catch (InterruptedException iex) {
-            LOG.warn("Interrupted while performing initial sleep.");
+            LOG.warn("Interrupted while performing initial sleep.", iex);
         }
         LOG.debug("Starting Atlas events processor.");
         while (!Thread.interrupted()) {
@@ -95,27 +92,20 @@ public class AtlasEventsProcessor implements Runnable {
                 return;
             } catch (Exception ex) {
                 LOG.error("An error occurred while processing Atlas events. The AtlasEventsProcessor thread will terminate.", ex);
-                throw new RuntimeException(ex);
+                throw new UndeclaredThrowableException(ex);
             }
         }
     }
 
     @VisibleForTesting
     void processAtlasEvents() throws Exception {
-        managedTransaction.executeFunction((ManagedTransactionFunction.Arg0<Object>) () -> {
-            SearchQuery query = SearchQuery.searchFrom(AtlasEventStorable.NAME_SPACE)
-                    .where(WhereClause.begin()
-                            .eq(AtlasEventStorable.PROCESSED, false)
-                            .and()
-                            .eq(AtlasEventStorable.FAILED, false)
-                            .combine()
-                    )
-                    .orderBy(OrderBy.asc(AtlasEventStorable.ID))
-                    .forUpdate();
+        List<QueryParam> queryParams = Arrays.asList(
+                new QueryParam(AtlasEventStorable.PROCESSED, "false"),
+                new QueryParam(AtlasEventStorable.FAILED, "false"));
 
-            Stopwatch searchTime = Stopwatch.createStarted();
-            Collection<AtlasEventStorable> atlasEvents = storageManager.search(query);
-            LOG.trace("Waited {} ms for query", searchTime.elapsed(MILLISECONDS));
+        managedTransaction.executeFunction((ManagedTransactionFunction.Arg0<Object>) () -> {
+
+            Collection<AtlasEventStorable> atlasEvents = storageManager.find(AtlasEventStorable.NAME_SPACE, queryParams);
 
             if (atlasEvents == null || atlasEvents.isEmpty()) {
                 return false;
@@ -125,7 +115,6 @@ public class AtlasEventsProcessor implements Runnable {
 
             for (AtlasEventStorable atlasEvent : atlasEvents) {
                 try {
-                    LOG.debug("Processing event {}", atlasEvent);
                     processAtlasEvent(atlasEvent);
                 } catch (Exception ex) {
                     LOG.error("Could not process Atlas event. Setting it to failed state: {}", atlasEvent, ex);

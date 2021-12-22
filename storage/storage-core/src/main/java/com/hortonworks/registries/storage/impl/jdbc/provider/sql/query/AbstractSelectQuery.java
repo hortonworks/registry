@@ -46,7 +46,6 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
 
     protected SearchQuery searchQuery;
     protected Schema schema;
-    protected boolean lockRows = false;
 
     public AbstractSelectQuery(String nameSpace) {
         this(nameSpace, null);
@@ -70,44 +69,21 @@ public abstract class AbstractSelectQuery extends AbstractStorableKeyQuery {
         super(searchQuery.getNameSpace());
         this.searchQuery = searchQuery;
         this.schema = schema;
-        this.lockRows = searchQuery.isForUpdate();
     }
 
     protected abstract String getParameterizedSql();
-
     protected abstract String orderBySql();
-
-    protected String lockingBehaviorClause() {
-        return "FOR UPDATE SKIP LOCKED";
-    }
-
-    public boolean isLockRows() {
-        return lockRows;
-    }
-
-    public void setLockRows(boolean lockRows) {
-        this.lockRows = lockRows;
-    }
 
     @Override
     protected final String createParameterizedSql() {
         if (searchQuery != null) {
-            return appendLockingClause(buildSqlWithSearchQuery(searchQuery, schema));
+            return buildSqlWithSearchQuery(searchQuery, schema);
         } else {
             String sql = getParameterizedSql();
             String orderBy = orderBySql();
             if (!StringUtils.isEmpty(orderBy)) {
                 sql += orderBy;
             }
-
-            return appendLockingClause(sql);
-        }
-    }
-
-    private String appendLockingClause(String sql) {
-        if (lockRows) {
-            return sql.trim() + " " + lockingBehaviorClause();
-        } else {
             return sql;
         }
     }

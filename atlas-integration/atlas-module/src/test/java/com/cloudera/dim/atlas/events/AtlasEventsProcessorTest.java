@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2016-2021 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package com.cloudera.dim.atlas.events;
 
 import com.cloudera.dim.atlas.AtlasPlugin;
@@ -25,7 +25,6 @@ import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
-import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -36,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +43,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -52,7 +51,7 @@ import static org.mockito.Mockito.when;
 
 public class AtlasEventsProcessorTest {
 
-    private AtlasPlugin atlasPlugin;
+    private AtlasPlugin schemaRegistry;
     private StorageManager storageManager;
     private TransactionManager transactionManager;
     private AtlasEventsProcessor atlasEventsProcessor;
@@ -60,15 +59,15 @@ public class AtlasEventsProcessorTest {
 
     @BeforeEach
     public void setUp() {
-        atlasPlugin = mock(AtlasPlugin.class);
+        schemaRegistry = mock(AtlasPlugin.class);
         storageManager = mock(StorageManager.class);
         transactionManager = mock(TransactionManager.class);
-        atlasEventsProcessor = new AtlasEventsProcessor(atlasPlugin, storageManager, transactionManager, 1000L, true);
+        atlasEventsProcessor = new AtlasEventsProcessor(schemaRegistry, storageManager, transactionManager, 1000L, true);
 
         persistedEvents = new ArrayList<>();
-        when(storageManager.<AtlasEventStorable>search(any(SearchQuery.class))).thenReturn(persistedEvents);
-        when(atlasPlugin.isKafkaSchemaModelInitialized()).thenReturn(true);
-        when(atlasPlugin.createMeta(any())).thenReturn(RandomStringUtils.randomAlphabetic(10));
+        when(storageManager.<AtlasEventStorable>find(eq(AtlasEventStorable.NAME_SPACE), anyList())).thenReturn(persistedEvents);
+        when(schemaRegistry.isKafkaSchemaModelInitialized()).thenReturn(true);
+        when(schemaRegistry.createMeta(any())).thenReturn(RandomStringUtils.randomAlphabetic(10));
     }
 
     @Test
@@ -80,21 +79,8 @@ public class AtlasEventsProcessorTest {
         atlasEventsProcessor.processAtlasEvents();
 
         // then
-        verifyNoInteractions(atlasPlugin);
-    }
-
-    @Test
-    public void testSearchesForAtlasEventsWithLocking() throws Exception {
-        persistedEvents.add(new AtlasEventStorable());
-
-        // when
-        atlasEventsProcessor.processAtlasEvents();
-
-        verify(storageManager).search(argThat(query ->
-                        AtlasEventStorable.NAME_SPACE.equals(query.getNameSpace()) &&
-                                query.isForUpdate()
-                )
-        );
+        verify(storageManager).find(eq(AtlasEventStorable.NAME_SPACE), anyList());
+        verifyNoInteractions(schemaRegistry);
     }
 
     @Test
@@ -127,10 +113,11 @@ public class AtlasEventsProcessorTest {
         atlasEventsProcessor.processAtlasEvents();
 
         // then
-        verify(transactionManager).beginTransaction(TransactionIsolation.READ_COMMITTED);
+        verify(transactionManager).beginTransaction(TransactionIsolation.SERIALIZABLE);
         verify(transactionManager).commitTransaction();
+        verify(storageManager).find(eq(AtlasEventStorable.NAME_SPACE), anyList());
         ArgumentCaptor<SchemaMetadataInfo> captor = ArgumentCaptor.forClass(SchemaMetadataInfo.class);
-        verify(atlasPlugin).createMeta(captor.capture());
+        verify(schemaRegistry).createMeta(captor.capture());
         SchemaMetadataInfo actualValue = captor.getValue();
 
         assertNotNull(actualValue);
@@ -138,19 +125,21 @@ public class AtlasEventsProcessorTest {
         assertEquals(metadataStorable.getDescription(), actualValue.getSchemaMetadata().getDescription());
 
         verify(storageManager).update(any(AtlasEventStorable.class));
-        verify(atlasPlugin).connectSchemaWithTopic(anyString(), any());
+        verify(schemaRegistry).connectSchemaWithTopic(anyString(), any());
     }
-
+    
     @Test
     public void testEmptyAuditList() throws Exception {
         //given
-        persistedEvents.clear();
-
+        persistedEvents = Collections.EMPTY_LIST;
+        
         //when
         atlasEventsProcessor.processAtlasEvents();
-
+        
         //then
+        verify(transactionManager).beginTransaction(TransactionIsolation.SERIALIZABLE);
         verify(transactionManager).commitTransaction();
+        verify(storageManager).find(eq(AtlasEventStorable.NAME_SPACE), anyList());
     }
 
     @Test
@@ -160,12 +149,14 @@ public class AtlasEventsProcessorTest {
         atlasEvent.setType(EventType.CREATE_META);
         atlasEvent.setProcessedId(-1L);
         persistedEvents.add(atlasEvent);
-
+        
         //when
         atlasEventsProcessor.processAtlasEvents();
 
         //then
+        verify(transactionManager).beginTransaction(TransactionIsolation.SERIALIZABLE);
         verify(transactionManager).commitTransaction();
         verify(storageManager).update(atlasEvent);
     }
+
 }
