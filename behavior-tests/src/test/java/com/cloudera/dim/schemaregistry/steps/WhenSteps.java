@@ -111,7 +111,12 @@ public class WhenSteps extends AbstractSteps {
     public void thatSchemaRegistryIsRunning() throws Exception {
         sow.clear();
         if (!testServer.isRunning()) {
-            testServer.start();   // start schema registry server
+            try {
+                testServer.start();   // start schema registry server
+            } catch (Throwable ex) {
+                LOG.error("Failed to start test server.", ex);
+                fail("Failed to start test server. If you're running from IntelliJ then do a gradle build first.");
+            }
         }
         testServer.cleanupDb();
         schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
