@@ -24,6 +24,7 @@ import org.apache.atlas.model.instance.AtlasObjectId;
 import org.apache.atlas.model.instance.AtlasRelationship;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.model.typedef.AtlasEntityDef;
+import org.apache.atlas.model.typedef.AtlasRelationshipDef;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -394,25 +395,45 @@ public class TestAtlasServer extends AbstractTestServer {
 
     public void queryAtlasModel() {
         mockWebServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/api/atlas/v2/types/typedefs/")
-                        .withContentType(MediaType.APPLICATION_JSON_UTF_8)
-                        .withQueryStringParameter("name", KAFKA_TOPIC_TYPEDEF_NAME)
+            .when(request()
+                .withMethod("GET")
+                .withPath("/api/atlas/v2/types/typedefs/")
+                .withContentType(MediaType.APPLICATION_JSON_UTF_8)
+                .withQueryStringParameter("name", KAFKA_TOPIC_TYPEDEF_NAME)
+            )
+            .respond(request ->
+                jsonResponse(
+                    new AtlasTypesDef(emptyList(), emptyList(), emptyList(), singletonList(new AtlasEntityDef(KAFKA_TOPIC_TYPEDEF_NAME)))
                 )
-                .respond(request ->
-                        jsonResponse(
-                            new AtlasTypesDef(emptyList(), emptyList(), emptyList(), singletonList(new AtlasEntityDef(KAFKA_TOPIC_TYPEDEF_NAME)))
-                        )
-                );
+            );
 
         mockWebServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/api/atlas/v2/types/relationshipdef/name/" + TOPIC_SCHEMA_REL_TYPE_NAME)
-                        .withContentType(MediaType.APPLICATION_JSON_UTF_8)
+            .when(request()
+                .withMethod("GET")
+                .withPath("/api/atlas/v2/types/relationshipdef/name/{name}")
+                .withPathParameter("name")
+                .withContentType(MediaType.APPLICATION_JSON_UTF_8)
+            )
+            .respond(request ->
+                jsonResponse(
+                    new AtlasRelationshipDef(request.getFirstPathParameter("name"), "", "",
+                        AtlasRelationshipDef.RelationshipCategory.ASSOCIATION, AtlasRelationshipDef.PropagateTags.BOTH,
+                        null, null)
                 )
-                .respond(request -> response().withBody("{}", MediaType.JSON_UTF_8));
+            );
+
+        mockWebServer
+            .when(request()
+                .withMethod("GET")
+                .withPath("/api/atlas/v2/types/typedefs/")
+                .withContentType(MediaType.APPLICATION_JSON_UTF_8)
+                .withQueryStringParameter("name")
+            )
+            .respond(request ->
+                jsonResponse(
+                    new AtlasTypesDef(emptyList(), emptyList(), emptyList(), singletonList(new AtlasEntityDef(request.getFirstQueryStringParameter("name"))))
+                )
+            );
     }
 
     @SuppressWarnings("unchecked")
@@ -515,8 +536,8 @@ public class TestAtlasServer extends AbstractTestServer {
 
     public void verifyNoConnectionWasMadeWith(String topicName) {
         mockWebServer.verify(
-                request().withMethod("POST").withPath("/api/atlas/v2/relationship/"),
-                exactly(0)
+            request().withMethod("POST").withPath("/api/atlas/v2/relationship/"),
+            exactly(0)
         );
     }
 

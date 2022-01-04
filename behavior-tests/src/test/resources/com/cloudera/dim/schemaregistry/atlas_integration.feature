@@ -3,8 +3,8 @@ Feature: Integration with Atlas
   Background: Schema Registry is running
     Given that Atlas is running
     And Atlas integration is enabled
-    And that Schema Registry is running
     And the model should be created in Atlas
+    And that Schema Registry is running
 
   Scenario: Create a new schema
     When we create a new schema meta "Car" with the following parameters:
