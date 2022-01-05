@@ -127,7 +127,7 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         private static final String PLG_TYPE = "schema-registry";
         private static final String PLG_NAME = "schema-registry";
 
-        private static SchemaRegistryRangerPlugin instance;
+        private static volatile SchemaRegistryRangerPlugin instance;
 
         private SchemaRegistryRangerPlugin() {
             this(PLG_TYPE, PLG_NAME);
@@ -137,16 +137,18 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
         }
 
         public static SchemaRegistryRangerPlugin getInstance() {
-            if (instance == null) {
+            SchemaRegistryRangerPlugin result = instance;
+            if (result == null) {
                 synchronized (SchemaRegistryRangerPlugin.class) {
-                    if (instance == null) {
-                        instance = new SchemaRegistryRangerPlugin();
+                    result = instance;
+                    if (result == null) {
+                        instance = result = new SchemaRegistryRangerPlugin();
                         instance.setResultProcessor(new RangerSchemaRegistryAuditHandler());
                         instance.init();
                     }
                 }
             }
-            return instance;
+            return result;
         }
     }
 
