@@ -61,7 +61,6 @@ dependencies {
     compile libraries.swagger
 
     compile libraries.guava
-    compile libraries.logging.slf4j_api
     compile libraries.commons.lang3
     compile libraries.commons.collections
     compile libraries.nimbus
@@ -88,8 +87,6 @@ dependencies {
     testCompile project(path: ':schema-registry:schema-registry-common', configuration: 'tests')
     testCompile project(path: ':schema-registry:schema-registry-core', configuration: 'tests')
     testCompile project(path: ':registry-common', configuration: 'tests')
-    
-    testCompile group: 'org.slf4j', name: 'jul-to-slf4j', version: versions_slf4j
 
     testCompile libraries.junit
     testCompile libraries.mockito
