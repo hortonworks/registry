@@ -44,6 +44,7 @@ abstract class AbstractTestServer {
 
     public void stop() throws Exception {
         running.set(false);
+        started.set(false);
     }
 
     protected int findFreePort() {

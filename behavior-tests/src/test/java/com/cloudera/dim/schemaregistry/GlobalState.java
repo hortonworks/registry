@@ -36,6 +36,23 @@ public class GlobalState {
 
     private final Map<String, Object> sow = new ConcurrentHashMap<>();
 
+    private volatile static GlobalState instance;
+
+    public static GlobalState getInstance() {
+        GlobalState localRef = instance;
+        if (localRef == null) {
+            synchronized (GlobalState.class) {
+                if (localRef == null) {
+                    instance = localRef = new GlobalState();
+                }
+            }
+        }
+        return localRef;
+    }
+
+    private GlobalState() {
+    }
+
     public Map<String, Object> getSow() {
         return sow;
     }

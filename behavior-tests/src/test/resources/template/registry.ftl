@@ -9,7 +9,7 @@ atlas:
   basicAuth:
     username: "${config.atlasConfiguration.basicAuth.username}"
     password: "${config.atlasConfiguration.basicAuth.password}"
-  waitBetweenAuditProcessing: 100
+  waitBetweenAuditProcessing: ${config.atlasConfiguration.waitBetweenAuditProcessing?c}
 <#if config.atlasConfiguration.customClasspathLoader?has_content>
   customClasspathLoader: "${config.atlasConfiguration.customClasspathLoader}"
   customClasspath: "${config.atlasConfiguration.customClasspath}"

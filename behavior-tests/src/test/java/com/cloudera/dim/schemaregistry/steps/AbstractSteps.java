@@ -23,6 +23,8 @@ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,16 +38,19 @@ import static java.util.Objects.requireNonNull;
 
 abstract class AbstractSteps {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSteps.class);
+
     protected final TestSchemaRegistryServer testServer;
     protected final TestAtlasServer testAtlasServer;
     protected final GlobalState sow;
     protected SchemaRegistryClient schemaRegistryClient;
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
-    protected AbstractSteps(TestSchemaRegistryServer testServer, GlobalState sow, TestAtlasServer testAtlasServer) {
-        this.testServer = testServer;
-        this.sow = sow;
-        this.testAtlasServer = testAtlasServer;
+    protected AbstractSteps() {
+        testServer = TestSchemaRegistryServer.getInstance();
+        sow = GlobalState.getInstance();
+        testAtlasServer = TestAtlasServer.getInstance();
+        testAtlasServer.replaceGlobalState(sow);
     }
 
     protected String getBaseUrl(int port) {

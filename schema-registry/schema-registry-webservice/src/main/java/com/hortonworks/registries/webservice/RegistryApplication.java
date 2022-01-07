@@ -15,6 +15,7 @@
 package com.hortonworks.registries.webservice;
 
 import com.cloudera.dim.atlas.conf.AtlasSchemaRegistryModule;
+import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
@@ -29,6 +30,7 @@ import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
@@ -38,6 +40,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.vyarus.dropwizard.guice.GuiceBundle;
+import ru.vyarus.dropwizard.guice.injector.lookup.InjectorProvider;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
@@ -53,6 +56,28 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
 
+    private class AutoCloseableManager implements Managed {
+        private final AutoCloseable closeableObject;
+
+        public AutoCloseableManager(AutoCloseable closeableObjects) {
+            this.closeableObject = closeableObjects;
+        }
+
+        @Override
+        public void start() {
+        }
+
+        @Override
+        public void stop() {
+            LOG.info("Close managed AutoCloseable: " + closeableObject.getClass().getSimpleName());
+            try {
+                closeableObject.close();
+            } catch (Exception e) {
+                LOG.warn("Could not close object.", e);
+            }
+        }
+    }
+
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
         initializeUGI(registryConfiguration);
@@ -63,6 +88,8 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(GenericExceptionMapper.class);
         environment.healthChecks().register("modulesHealthCheck", new ModulesHealthCheck(registryConfiguration));
+
+        manageAtlasEventLogger(environment);
 
         if (registryConfiguration.isEnableCors()) {
             enableCORS(environment);
@@ -156,6 +183,11 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 }
             }
         }
+    }
+
+    private void manageAtlasEventLogger(Environment environment) {
+        AutoCloseable managed = new InjectorProvider(this).get().getInstance(AtlasEventLogger.class);
+        environment.lifecycle().manage(new AutoCloseableManager(managed));
     }
 
     public static void main(String[] args) throws Exception {

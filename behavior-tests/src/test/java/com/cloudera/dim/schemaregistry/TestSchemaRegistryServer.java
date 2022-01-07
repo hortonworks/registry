@@ -66,8 +66,9 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private static final String DB_TYPE = "mysql";
 
     private static final String CONNECTION_URL_TEMPLATE = "jdbc:h2:%s:test;MODE=MYSQL;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=%s";
+    private static final int ATLAS_CONFIG_WAIT_BETWEEN_AUDIT_PROCESSING = 100;
 
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setNameFormat("sr-%d").setDaemon(true).build());
+    private ExecutorService threadPool;
     private org.h2.tools.Server h2Server;
     private int h2Port;
     private int schemaRegistryPort;
@@ -77,17 +78,18 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private int atlasPort = -1;
     private DataSource dataSource;
 
-    private static TestSchemaRegistryServer instance;
+    private volatile static TestSchemaRegistryServer instance;
 
     public static TestSchemaRegistryServer getInstance() {
-        if (instance == null) {
+        TestSchemaRegistryServer localRef = instance;
+        if (localRef == null) {
             synchronized (TestSchemaRegistryServer.class) {
-                if (instance == null) {
-                    instance = new TestSchemaRegistryServer();
+                if (localRef == null) {
+                    instance = localRef = new TestSchemaRegistryServer();
                 }
             }
         }
-        return instance;
+        return localRef;
     }
 
     @Override
@@ -95,6 +97,10 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         boolean alreadyStarted = started.getAndSet(true);
         if (alreadyStarted) {
             return;
+        }
+
+        if (threadPool == null) {
+            threadPool = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setNameFormat("sr-%d").setDaemon(true).build());
         }
 
         DbProperties dbProperties = startDatabase();
@@ -122,15 +128,18 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         this.running.set(true);
     }
 
+    @Override
     public void stop() throws Exception {
         try {
             localSchemaRegistry.stop();
         } catch (Exception ex) { }
         try {
             h2Server.shutdown();
+            h2Server.stop();
         } catch (Exception ex) { }
         try {
             threadPool.shutdown();
+            threadPool = null;
         } catch (Exception ex) { }
         super.stop();
     }
@@ -309,6 +318,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             basicAuth.setUsername("kafka");
             basicAuth.setPassword("cloudera");
             atlasConfiguration.setBasicAuth(basicAuth);
+            atlasConfiguration.setWaitBetweenAuditProcessing(ATLAS_CONFIG_WAIT_BETWEEN_AUDIT_PROCESSING);
 
             if (atlasEnabled) {
                 atlasConfiguration.setEnabled(true);
