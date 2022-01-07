@@ -37,6 +37,7 @@ import org.mockserver.model.HttpResponse;
 import org.mockserver.model.MediaType;
 import org.mockserver.model.NottableString;
 import org.mockserver.model.Parameter;
+import org.mockserver.model.RequestDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,7 @@ public class TestAtlasServer extends AbstractTestServer {
     public static final String KAFKA_TOPIC_TYPEDEF_NAME = "kafka_topic";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final GlobalState sow;
+    private GlobalState sow;
     private ClientAndServer mockWebServer;
 
     private Expectation createEntityExpectation;
@@ -81,8 +82,25 @@ public class TestAtlasServer extends AbstractTestServer {
     private Expectation updateMetaExpectation;
     private Expectation createModelExpectation;
 
-    public TestAtlasServer(GlobalState sow) {
-        this.sow = sow;
+    private volatile static TestAtlasServer instance;
+
+    public static TestAtlasServer getInstance() {
+      TestAtlasServer localRef = instance;
+      if (localRef == null) {
+        synchronized (TestAtlasServer.class) {
+          if (localRef == null) {
+            instance = localRef = new TestAtlasServer();
+          }
+        }
+      }
+      return localRef;
+    }
+
+    private TestAtlasServer() {
+    }
+
+    public void replaceGlobalState(GlobalState sow) {
+      this.sow = sow;
     }
 
     public int getAtlasPort() {
@@ -99,24 +117,22 @@ public class TestAtlasServer extends AbstractTestServer {
 
         mockWebServer = ClientAndServer.startClientAndServer();
 
-        createEntityExpectation = createEntity();
-        updateMetaExpectation = updateMeta();
-        queryMetaByName();
-        queryByGuidExpectation = queryByGuid();
-        createRelationshipExpectation = createOneToManyRelationship();
-        createModelExpectation = createAtlasModel();
+        resetExpectations();
 
         // we need to set the -Datlas.conf property for AtlasClient to work
         String atlasProps = configGenerator.generateAtlasProperties();
         File atlasPropFile = writeFile("atlas-application", ".properties", atlasProps);
         System.setProperty("atlas.conf", atlasPropFile.getParent());
+        running.set(true);
     }
 
     @Override
     public void stop() throws Exception {
+      if (isRunning()) {
         LOG.info("Stopping mock Atlas server");
         mockWebServer.close();
         super.stop();
+      }
     }
 
     private HttpResponse jsonResponse(Object value) {
@@ -543,5 +559,17 @@ public class TestAtlasServer extends AbstractTestServer {
 
     public void verifySchemaAndTopicGotConnected(String schemaName, String topicName) {
         mockWebServer.verify(new ExpectationId().withId(createRelationshipExpectation.getId()));
+    }
+
+    public void resetExpectations() {
+      mockWebServer.clear((RequestDefinition) null);
+      mockWebServer.reset();
+
+      createEntityExpectation = createEntity();
+      updateMetaExpectation = updateMeta();
+      queryMetaByName();
+      queryByGuidExpectation = queryByGuid();
+      createRelationshipExpectation = createOneToManyRelationship();
+      createModelExpectation = createAtlasModel();
     }
 }

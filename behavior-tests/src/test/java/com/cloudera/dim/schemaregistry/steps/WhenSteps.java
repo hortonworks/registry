@@ -15,9 +15,6 @@
  **/
 package com.cloudera.dim.schemaregistry.steps;
 
-import com.cloudera.dim.schemaregistry.GlobalState;
-import com.cloudera.dim.schemaregistry.TestAtlasServer;
-import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
@@ -102,10 +99,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class WhenSteps extends AbstractSteps {
 
     private static final Logger LOG = LoggerFactory.getLogger(WhenSteps.class);
-
-    public WhenSteps(TestSchemaRegistryServer testServer, GlobalState sow, TestAtlasServer testAtlasServer) {
-        super(testServer, sow, testAtlasServer);
-    }
 
     @Given("that Schema Registry is running")
     public void thatSchemaRegistryIsRunning() throws Exception {

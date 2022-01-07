@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -63,6 +64,7 @@ public class AtlasEventsProcessor implements Runnable {
     private final long waitBetweenProcessing;
     private final boolean connectWithKafka;
     private final ManagedTransaction managedTransaction;
+    private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     public AtlasEventsProcessor(AtlasPlugin atlasPlugin, StorageManager storageManager, TransactionManager transactionManager,
                                 long waitBetweenProcessing, boolean connectWithKafka) {
@@ -86,16 +88,23 @@ public class AtlasEventsProcessor implements Runnable {
             LOG.warn("Interrupted while performing initial sleep.");
         }
         LOG.debug("Starting Atlas events processor.");
-        while (!Thread.interrupted()) {
+        while (!isShutdown.get() && !Thread.interrupted()) {
             try {
                 processAtlasEvents();
-                wait(waitBetweenProcessing);
+                if (!isShutdown.get()) {
+                    wait(waitBetweenProcessing);
+                }
             } catch (InterruptedException iex) {
-                LOG.warn("Atlas events processor was interrupted.", iex);
+                LOG.info("Atlas events processor was interrupted.", iex);
                 return;
             } catch (Exception ex) {
-                LOG.error("An error occurred while processing Atlas events. The AtlasEventsProcessor thread will terminate.", ex);
-                throw new RuntimeException(ex);
+                LOG.error("An error occurred while processing Atlas events.", ex);
+                try {
+                    wait(waitBetweenProcessing);
+                } catch (InterruptedException ie) {
+                    return;
+                }
+                continue;
             }
         }
     }
@@ -158,6 +167,10 @@ public class AtlasEventsProcessor implements Runnable {
 
         atlasEventStorable.setProcessed(true);
         storageManager.update(atlasEventStorable);
+    }
+
+    public void stopProcessing() {
+        isShutdown.set(true);
     }
 
     private void createMeta(Long schemaMetadataId) throws SchemaNotFoundException {

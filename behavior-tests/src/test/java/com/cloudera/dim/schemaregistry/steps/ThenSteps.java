@@ -16,8 +16,6 @@
 package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.schemaregistry.GlobalState;
-import com.cloudera.dim.schemaregistry.TestAtlasServer;
-import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
@@ -70,10 +68,6 @@ public class ThenSteps extends AbstractSteps {
     private static final Logger LOG = LoggerFactory.getLogger(ThenSteps.class);
 
     private final ExecutorService threadPool = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).setNameFormat("then-%d").build());
-
-    public ThenSteps(TestSchemaRegistryServer testServer, GlobalState sow, TestAtlasServer testAtlasServer) {
-        super(testServer, sow, testAtlasServer);
-    }
 
     @Then("the schema is successfully created")
     public void theSchemaIsSuccessfullyCreated() {
@@ -157,6 +151,7 @@ public class ThenSteps extends AbstractSteps {
 
     @Then("the model should be created in Atlas")
     public void theModelShouldBeCreatedInAtlas() throws Exception {
+        testAtlasServer.resetExpectations();
         pollSow(10, sow -> testAtlasServer.verifyCreateModelRequest());
         testAtlasServer.queryAtlasModel();
     }

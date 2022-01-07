@@ -17,8 +17,6 @@ package com.cloudera.dim.schemaregistry;
 
 import io.cucumber.junit.CucumberOptions;
 import io.cucumber.junit.platform.engine.Cucumber;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,18 +30,6 @@ public class BehaviorTest {
     private static final Logger LOG = LoggerFactory.getLogger(BehaviorTest.class);
 
     public BehaviorTest() { }
-
-    @BeforeAll
-    public static void startServer() throws Exception {
-        LOG.info("Starting Schema Registry test server ...");
-        TestSchemaRegistryServer.getInstance().start();
-    }
-
-    @AfterAll
-    public static void stopServer() throws Exception {
-        LOG.info("Stopping Schema Registry test server ...");
-        TestSchemaRegistryServer.getInstance().stop();
-    }
 
     // suppress checkstyle error
     public void dummy() { }

@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class AtlasEventLogger implements AutoCloseable {
 
@@ -38,6 +39,7 @@ public class AtlasEventLogger implements AutoCloseable {
     );
     private final StorageManager storageManager;
     private String username = System.getProperty("user.name");
+    private AtlasEventsProcessor atlasEventsProcessor;
 
     @Inject
     public AtlasEventLogger(@Nullable AtlasConfiguration atlasConfiguration, AtlasPlugin atlasPlugin,
@@ -46,8 +48,9 @@ public class AtlasEventLogger implements AutoCloseable {
         this.storageManager = storageManager;
 
         if (atlasConfiguration != null && atlasConfiguration.isEnabled()) {
-            threadPool.submit(new AtlasEventsProcessor(atlasPlugin, storageManager, transactionManager,
-                    atlasConfiguration.getWaitBetweenAuditProcessing(), atlasConfiguration.isConnectWithKafka()));
+            atlasEventsProcessor = new AtlasEventsProcessor(atlasPlugin, storageManager, transactionManager,
+                atlasConfiguration.getWaitBetweenAuditProcessing(), atlasConfiguration.isConnectWithKafka());
+            threadPool.submit(atlasEventsProcessor);
         }
     }
 
@@ -86,6 +89,13 @@ public class AtlasEventLogger implements AutoCloseable {
 
     @Override
     public void close() {
-        threadPool.shutdownNow();
+        if (atlasEventsProcessor != null) {
+            atlasEventsProcessor.stopProcessing();
+        }
+        threadPool.shutdown();
+        try {
+            threadPool.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
     }
 }
