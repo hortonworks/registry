@@ -45,6 +45,9 @@ distributions {
                 from(configurations.runtimeJars) {
                     exclude '*shim*'
                 }
+                from("$rootDir/schema-registry/hadoop-extension/build/libs/hadoop-schema-registry-plugin-impl") {
+                    include '*aws-java-sdk-bundle*jar'
+                }
             }
 
             // Ranger plugin
@@ -58,6 +61,7 @@ distributions {
                     exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
+                    exclude '*aws-java-sdk-bundle*jar'
                 }
             }
             into('ranger-plugin/conf/') {
@@ -75,6 +79,7 @@ distributions {
                     exclude '*javadoc*jar'
                     exclude '*sources*jar'
                     exclude '*atlasDeps*jar'
+                    exclude '*aws-java-sdk-bundle*jar'
                 }
                 from("$rootDir/atlas-integration/atlas-translate/build/dependency") {
                     include '*jar'
@@ -82,6 +87,7 @@ distributions {
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
                     exclude '*atlas-common*jar'
+                    exclude '*aws-java-sdk-bundle*jar'
                 }
             }
             into('atlas-plugin/') {
@@ -101,6 +107,7 @@ distributions {
                     exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
+                    exclude '*aws-java-sdk-bundle*jar'
                 }
             }
             into('hadoop-plugin/') {
@@ -146,6 +153,7 @@ distributions {
 tasks.withType(Tar){
     compression = Compression.GZIP
     archiveExtension = 'tar.gz'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 dependencies {
