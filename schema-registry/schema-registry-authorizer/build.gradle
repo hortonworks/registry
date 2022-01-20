@@ -17,7 +17,6 @@
 dependencies {
 
     compileOnly project(':ranger-plugin')
-    compile libraries.spring.core
     compile libraries.jna_platform
 
     compile project(':schema-registry:schema-registry-core')
