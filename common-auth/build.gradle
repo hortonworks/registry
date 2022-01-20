@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-   
+ 
 dependencies {
 
     compile libraries.servlet_api
@@ -21,7 +21,6 @@ dependencies {
     compile libraries.directory_api
     compile libraries.nimbus
     compile libraries.json_smart
-    testCompile libraries.spring.core
     testCompile(libraries.hadoop.minikdc) {
         exclude group: 'junit'
     }
