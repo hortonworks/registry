@@ -101,7 +101,7 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
             if (ex instanceof UndeclaredThrowableException) {
                 ex = (Exception) ((UndeclaredThrowableException) ex).getUndeclaredThrowable();
             }
-            LOG.error("Encountered error while request: " + ex);
+            LOG.error("Encountered error while request: " + ex, ex);
             return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         }
         logUnhandledException(ex);

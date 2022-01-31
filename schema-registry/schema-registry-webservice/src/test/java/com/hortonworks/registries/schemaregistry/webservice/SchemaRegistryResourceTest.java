@@ -21,7 +21,7 @@ import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -46,7 +46,7 @@ public class SchemaRegistryResourceTest {
     private SchemaRegistryResource underTest;
     private ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
     private AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
-    private AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
+    private AuthenticationUtils authenticationUtils = new AuthenticationUtils(mock(HadoopPlugin.class));
     private AtlasEventLogger atlasEventLogger;
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";
@@ -245,7 +245,7 @@ public class SchemaRegistryResourceTest {
         String type = "type";
         SecurityContext securityContext = mock(SecurityContext.class);
         SchemaFieldQuery schemaFieldQuery = new SchemaFieldQuery("test", "testnamespace", TYPE);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, null, null, atlasEventLogger, null) {
+        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authenticationUtils, null, null, null, atlasEventLogger, null) {
             @Override
             SchemaFieldQuery buildSchemaFieldQuery(MultivaluedMap<String, String> queryParameters) {
                 MultivaluedMap<String, String> expectedParameters = new MultivaluedHashMap<>();

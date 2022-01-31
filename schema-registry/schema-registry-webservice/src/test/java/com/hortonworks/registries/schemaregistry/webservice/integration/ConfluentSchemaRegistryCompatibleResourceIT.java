@@ -28,7 +28,7 @@ import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentCompatibilityResult;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
@@ -61,7 +61,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         private static ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
         private static AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
         private static AtlasEventLogger atlasEventLogger = getAtlasEventLogger();
-        private static AuthorizationUtils authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
+        private static AuthenticationUtils authenticationUtils = new AuthenticationUtils(mock(HadoopPlugin.class));
         private static ResourceExtension RESOURCE = ResourceExtension.builder()
                 .addResource(instantiateResource())
                 .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
@@ -75,7 +75,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         }
 
         private static ConfluentSchemaRegistryCompatibleResource instantiateResource() {
-            return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, atlasEventLogger);
+            return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock, authenticationUtils, atlasEventLogger);
         }
         @Test
         public void getSubjectById() throws Exception {

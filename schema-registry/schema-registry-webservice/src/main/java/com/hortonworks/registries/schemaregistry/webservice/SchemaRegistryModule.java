@@ -15,24 +15,25 @@
  **/
 package com.hortonworks.registries.schemaregistry.webservice;
 
-import com.google.inject.AbstractModule;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.common.util.HadoopPluginFactory;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.schemaregistry.providers.ModuleDetailsConfigurationProvider;
 import com.hortonworks.registries.schemaregistry.providers.SchemaRegistryProvider;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.vyarus.dropwizard.guice.module.support.DropwizardAwareModule;
 
 import javax.inject.Singleton;
 
-public class SchemaRegistryModule extends AbstractModule {
+public class SchemaRegistryModule extends DropwizardAwareModule<RegistryConfiguration> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
 
@@ -42,7 +43,7 @@ public class SchemaRegistryModule extends AbstractModule {
 
         bind(HadoopPlugin.class).toProvider(HadoopPluginFactory.class).in(Singleton.class);
         bind(AuthorizationAgent.class).toProvider(AuthorizationAgentFactory.class).in(Singleton.class);
-        bind(AuthorizationUtils.class).in(Singleton.class);
+        bind(AuthenticationUtils.class).in(Singleton.class);
         bind(ISchemaRegistry.class).toProvider(SchemaRegistryProvider.class).in(Singleton.class);
         bind(ModuleDetailsConfiguration.class).toProvider(ModuleDetailsConfigurationProvider.class).in(Singleton.class);
 

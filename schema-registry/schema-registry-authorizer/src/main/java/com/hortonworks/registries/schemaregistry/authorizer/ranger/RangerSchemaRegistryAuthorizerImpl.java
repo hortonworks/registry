@@ -55,6 +55,10 @@ public class RangerSchemaRegistryAuthorizerImpl implements Authorizer {
                              AccessType accessType,
                              UserAndGroups userAndGroups) {
 
+        if (userAndGroups == null) {
+            throw new NullPointerException("Must provide requesting user");
+        }
+
         return authorize(registryResource2RangerResource(registryResource), accessType, userAndGroups)
                 || authorizeRangerSchemaRegistryResource(accessType, userAndGroups);
     }

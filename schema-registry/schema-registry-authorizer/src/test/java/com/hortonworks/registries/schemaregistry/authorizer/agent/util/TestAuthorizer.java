@@ -32,6 +32,9 @@ public class TestAuthorizer implements Authorizer {
 
     @Override
     public boolean authorize(Resource resource, AccessType accessType, UserAndGroups userAndGroups) {
+        if (userAndGroups == null) {
+            throw new NullPointerException("Must provide requesting user.");
+        }
         for (Policy p : policies) {
             if (resourcesEqual(resource, p.resource)
                && p.accessTypes.contains(accessType)
