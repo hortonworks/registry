@@ -41,31 +41,13 @@ modules:
         enableCaching : false
 
 servletFilters:
-# - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
-#   params:
-#     type: "kerberos"
-#     kerberos.principal: "HTTP/streamline-ui-host.com"
-#     kerberos.keytab: "/vagrant/keytabs/http.keytab"
-#     enable.trusted.proxy: true
-#     proxyuser.knox.hosts: 172.22.64.70
-#     login.enabled: "true"
-#     spnego.enabled: "true"
-#     kerberos.name.rules: "RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/ RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT"
-#     allowed.resources: "401.html,back-default.png,favicon.ico"
-# Note that it is highly recommended to force ssl connections if you are using the jwt handler config below. Unsecured connections will expose jwt
-# - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
-#   params:
-#     type: "com.hortonworks.registries.auth.server.JWTAuthenticationHandler"
-#     allowed.resources: "401.html,back-default.png,favicon.ico"
-#     authentication.provider.url: "https://localhost:8883/gateway/knoxsso/api/v1/websso"
-#     public.key.pem: "<public key corresponding to the PKI key pair of the token issuer>"
-
- - className: "com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter"
-   params:
-     # value format is [<targetpath>,<paths-should-be-redirected-to>,*|]*
-     # below /subjects and /schemas/ids are forwarded to /api/v1/confluent
-     forwardPaths: "/api/v1/confluent,/subjects/*,/schemas/ids/*"
-     redirectPaths: "/ui/,/"
+<#list config.servletFilters as filter>
+  - className: "${filter.className}"
+    params:
+<#list filter.params as key, value>
+      ${key}: "${value}"
+</#list>
+</#list>
 
 ## HA configuration
 ## When no configuration is set, then all the nodes in schema registry cluster are eligible to write to the backend storage.

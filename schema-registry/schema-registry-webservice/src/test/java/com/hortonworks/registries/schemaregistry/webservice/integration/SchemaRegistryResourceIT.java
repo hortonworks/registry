@@ -28,7 +28,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthorizationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
@@ -76,7 +76,7 @@ public class SchemaRegistryResourceIT {
 
     private static ISchemaRegistry schemaRegistryMock;
     private static AuthorizationAgent authorizationAgentMock;
-    private static AuthorizationUtils authorizationUtils;
+    private static AuthenticationUtils authenticationUtils;
     private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock;
     private static AtlasEventLogger atlasEventLogger;
     private static ResourceExtension RESOURCE = beforeAll();
@@ -85,11 +85,11 @@ public class SchemaRegistryResourceIT {
     private static ResourceExtension beforeAll() {
         schemaRegistryMock = mock(ISchemaRegistry.class);
         authorizationAgentMock = mock(AuthorizationAgent.class);
-        authorizationUtils = new AuthorizationUtils(mock(HadoopPlugin.class));
+        authenticationUtils = new AuthenticationUtils(mock(HadoopPlugin.class));
         schemaMetadataTypeValidatorMock = mock(SchemaMetadataTypeValidator.class);
         atlasEventLogger = mock(AtlasEventLogger.class);
         return ResourceExtension.builder()
-                .addResource(new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authorizationUtils, null, schemaMetadataTypeValidatorMock, null, atlasEventLogger, null))
+                .addResource(new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authenticationUtils, null, schemaMetadataTypeValidatorMock, null, atlasEventLogger, null))
                 .addProvider(GenericExceptionMapper.class)
                 .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())
                 .build();

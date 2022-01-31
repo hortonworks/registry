@@ -17,6 +17,7 @@ package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.schemaregistry.GlobalState;
 import com.cloudera.dim.schemaregistry.TestAtlasServer;
+import com.cloudera.dim.schemaregistry.TestOAuth2Server;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
@@ -42,6 +43,7 @@ abstract class AbstractSteps {
 
     protected final TestSchemaRegistryServer testServer;
     protected final TestAtlasServer testAtlasServer;
+    protected final TestOAuth2Server testOAuth2Server;
     protected final GlobalState sow;
     protected SchemaRegistryClient schemaRegistryClient;
     protected final ObjectMapper objectMapper = new ObjectMapper();
@@ -51,19 +53,28 @@ abstract class AbstractSteps {
         sow = GlobalState.getInstance();
         testAtlasServer = TestAtlasServer.getInstance();
         testAtlasServer.replaceGlobalState(sow);
+        testOAuth2Server = TestOAuth2Server.getInstance();
     }
 
     protected String getBaseUrl(int port) {
         return String.format("http://localhost:%d", port);
     }
 
-    protected SchemaRegistryClient createSchemaRegistryClient(int port) {
+    protected SchemaRegistryClient createSchemaRegistryClient(int port, boolean oauth2Enabled) {
         Map<String, Object> config = new HashMap<>();
         config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), getBaseUrl(port) + "/api/v1");
         config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 10);
         config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS.name(), 5000);
         config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_SIZE.name(), 1000);
         config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(), 60 * 60 * 1000);
+
+        if (oauth2Enabled) {
+            // TODO CDPD-34178 Configure test client to use the mock OAuth2 server
+            /*
+            config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(),
+                    String.format("http://localhost:%s", testOAuth2Server.getPort()));
+             */
+        }
 
         return new SchemaRegistryClient(config);
     }
@@ -81,7 +92,7 @@ abstract class AbstractSteps {
 
     protected SchemaRegistryClient getSchemaRegistryClient() {
         if (schemaRegistryClient == null) {
-            schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
+            schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), false);
         }
         return schemaRegistryClient;
     }

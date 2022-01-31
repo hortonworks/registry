@@ -38,6 +38,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import org.apache.atlas.model.discovery.AtlasSearchResult;
 import org.apache.atlas.model.instance.AtlasEntityHeader;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
@@ -50,6 +51,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +71,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
+import static com.cloudera.dim.schemaregistry.GlobalState.AUTH_TOKEN;
 import static com.cloudera.dim.schemaregistry.GlobalState.COMPATIBILITY;
 import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_EXPORT;
@@ -88,10 +91,12 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
 import static org.apache.http.HttpHeaders.ACCEPT_CHARSET;
+import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.entity.ContentType.MULTIPART_FORM_DATA;
 import static org.apache.http.protocol.HttpCoreContext.HTTP_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -101,10 +106,20 @@ public class WhenSteps extends AbstractSteps {
     private static final Logger LOG = LoggerFactory.getLogger(WhenSteps.class);
 
     @Given("that Schema Registry is running")
-    public void thatSchemaRegistryIsRunning() throws Exception {
+    public void thatSchemaRegistryIsRunning() {
+        schemaRegistryIsRunning(false);
+    }
+
+    @Given("that Schema Registry is running with OAuth2")
+    public void thatSchemaRegistryIsRunningWithOAuth2() {
+        schemaRegistryIsRunning(true);
+    }
+
+    private void schemaRegistryIsRunning(boolean oauth2Enabled) {
         sow.clear();
         if (!testServer.isRunning()) {
             try {
+                testServer.setOAuth2Enabled(oauth2Enabled);
                 testServer.start();   // start schema registry server
             } catch (Throwable ex) {
                 LOG.error("Failed to start test server.", ex);
@@ -112,13 +127,20 @@ public class WhenSteps extends AbstractSteps {
             }
         }
         testServer.cleanupDb();
-        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
+        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), oauth2Enabled);
     }
 
     @Given("that Atlas is running")
     public void thatAtlasIsRunning() throws Exception {
         if (!testAtlasServer.isRunning()) {
             testAtlasServer.start();
+        }
+    }
+
+    @Given("that an OAuth2 server exists")
+    public void thatAnOAuthServerExists() throws Exception {
+        if (!testOAuth2Server.isRunning()) {
+            testOAuth2Server.start();
         }
     }
 
@@ -425,6 +447,9 @@ public class WhenSteps extends AbstractSteps {
             request.setEntity(new UrlEncodedFormEntity(parameters));
             request.setHeader(ACCEPT_CHARSET, "UTF-8");
             request.setHeader(CONTENT_TYPE, "application/x-www-form-urlencoded");
+            if (sow.getValue(AUTH_TOKEN) != null) {
+                request.setHeader(AUTHORIZATION, "Bearer " + sow.getValue(AUTH_TOKEN));
+            }
 
             CloseableHttpResponse response = httpClient.execute(request);
             storeHttpResponse(response);
@@ -465,6 +490,9 @@ public class WhenSteps extends AbstractSteps {
     private void weSendHttpGetTo(@Nonnull URI uri) {
         try (CloseableHttpClient httpClient = getHttpClient()) {
             HttpGet request = new HttpGet(uri);
+            if (sow.getValue(AUTH_TOKEN) != null) {
+                request.setHeader(AUTHORIZATION, "Bearer " + sow.getValue(AUTH_TOKEN));
+            }
 
             CloseableHttpResponse response = httpClient.execute(request);
             storeHttpResponse(response);
@@ -507,7 +535,7 @@ public class WhenSteps extends AbstractSteps {
 
     @When("we initialize a new schema registry client")
     public void weInitializeANewSchemaRegistryClient() {
-        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort());
+        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), false);
     }
 
     @When("we check the compatibility of schema {string} with the following Avro test:")
@@ -605,4 +633,35 @@ public class WhenSteps extends AbstractSteps {
         sow.setValue(SCHEMA_EXPORT, export);
     }
 
+    @When("we authenticate with OAuth2")
+    public void weAuthenticateWithOauth() {
+        LOG.info("Requesting JWT token from the mock OAuth2 server");
+        try (CloseableHttpClient httpClient = getHttpClient()) {
+            List<NameValuePair> parameters = new ArrayList<>();
+            parameters.add(new BasicNameValuePair("grant_type", "client_credentials"));
+
+            HttpPost request = new HttpPost(getBaseUrl(testOAuth2Server.getPort()) + "/auth");
+
+            request.setHeader(AUTHORIZATION, "Basic " + Base64.encodeBase64String(
+                    String.format("%s:%s", testOAuth2Server.getClientId(), testOAuth2Server.getSecret()).getBytes(UTF_8)));
+
+            request.setEntity(new UrlEncodedFormEntity(parameters));
+            request.setHeader(ACCEPT_CHARSET, "UTF-8");
+            request.setHeader(CONTENT_TYPE, "application/x-www-form-urlencoded");
+
+            CloseableHttpResponse response = httpClient.execute(request);
+
+            if (response.getStatusLine().getStatusCode() != 200) {
+                fail("OAuth2 server responded with an error: " + response.getStatusLine().getReasonPhrase());
+            } else {
+                String jwt = EntityUtils.toString(response.getEntity(), UTF_8);
+                assertNotNull(jwt, "Received null response");
+                assertFalse(jwt.trim().isEmpty(), "Received empty response");
+                sow.setValue(AUTH_TOKEN, jwt);
+                LOG.info("We have received an auth token from the OAuth2 server.");
+            }
+        } catch (Exception ex) {
+            fail(ex);
+        }
+    }
 }

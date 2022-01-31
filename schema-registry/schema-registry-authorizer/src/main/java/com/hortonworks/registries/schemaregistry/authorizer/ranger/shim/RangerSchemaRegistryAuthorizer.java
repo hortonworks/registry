@@ -73,6 +73,7 @@ public class RangerSchemaRegistryAuthorizer implements Authorizer {
                     userAndGroups.getUser(),
                     userAndGroups.getGroups()));
         }
+        checkNotNull(userAndGroups, "Must provide requesting user.");
 
         boolean ret;
 

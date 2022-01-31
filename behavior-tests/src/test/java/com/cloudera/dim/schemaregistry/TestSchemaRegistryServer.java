@@ -15,13 +15,18 @@
  **/
 package com.cloudera.dim.schemaregistry;
 
+import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
+import com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.AtlasConfiguration;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.FileStorageProperties;
 import com.hortonworks.registries.common.RegistryConfiguration;
+import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.common.util.LocalFileSystemStorage;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
+import com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter;
 import com.hortonworks.registries.storage.DbProperties;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.StorageProviderProperties;
@@ -30,6 +35,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.atlas.plugin.classloader.AtlasCustomPathClassLoader;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
 import org.h2.Driver;
@@ -50,9 +56,12 @@ import java.nio.file.Files;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -77,6 +86,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private boolean atlasEnabled = false;
     private int atlasPort = -1;
     private DataSource dataSource;
+    private boolean oauth2Enabled = false;
 
     private volatile static TestSchemaRegistryServer instance;
 
@@ -107,7 +117,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         this.flyway = populateDatabase(dbProperties);
 
         // now we can start Schema Registry and have it connect to our H2 database
-        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort);
+        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, oauth2Enabled);
 
         this.schemaRegistryPort = findFreePort();
         String registryYamlTxt = configGenerator.generateRegistryYaml(config, schemaRegistryPort);
@@ -310,7 +320,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     }
 
     /** Prepare a configuration which will be passed to Schema Registry. */
-    public RegistryConfiguration prepareConfig(DbProperties h2DbProps, boolean atlasEnabled, int atlasPort) throws IOException {
+    public RegistryConfiguration prepareConfig(DbProperties h2DbProps, boolean atlasEnabled, int atlasPort, boolean oauth2Enabled) throws IOException {
         RegistryConfiguration configuration = new RegistryConfiguration();
         if (configuration.getAtlasConfiguration() == null) {
             AtlasConfiguration atlasConfiguration = new AtlasConfiguration();
@@ -369,6 +379,31 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             configuration.setFileStorageConfiguration(fileConfig);
         }
 
+        List<ServletFilterConfiguration> servletFilters = configuration.getServletFilters();
+        if (servletFilters == null) {
+            servletFilters = new ArrayList<>();
+            configuration.setServletFilters(servletFilters);
+        }
+        if (oauth2Enabled) {
+            ServletFilterConfiguration filterConfig = new ServletFilterConfiguration();
+            servletFilters.add(filterConfig);
+            filterConfig.setClassName(AuthenticationFilter.class.getName());
+            Map<String, String> params = new LinkedHashMap<>();;
+            filterConfig.setParams(params);
+            params.put("type", OAuth2AuthenticationHandler.class.getName());
+            params.put(OAuth2AuthenticationHandler.PUBLIC_KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
+            params.put(OAuth2AuthenticationHandler.PUBLIC_KEY_PROPERTY,
+                    IOUtils.toString(getClass().getResource("/template/test_rsa.pub"), StandardCharsets.UTF_8)
+                            .replaceAll("\n", ""));
+        }
+        ServletFilterConfiguration rewriteFilterConf = new ServletFilterConfiguration();
+        servletFilters.add(rewriteFilterConf);
+        rewriteFilterConf.setClassName(RewriteUriFilter.class.getName());
+        Map<String, String> params = new LinkedHashMap<>();;
+        rewriteFilterConf.setParams(params);
+        params.put("forwardPaths", "/api/v1/confluent,/subjects/*,/schemas/ids/*");
+        params.put("redirectPaths", "/ui/,/");
+
         return configuration;
     }
 
@@ -403,5 +438,13 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
                 return failed;
             }
         }
+    }
+
+    public boolean isOAuth2Enabled() {
+        return oauth2Enabled;
+    }
+
+    public void setOAuth2Enabled(boolean oauth2Enabled) {
+        this.oauth2Enabled = oauth2Enabled;
     }
 }
