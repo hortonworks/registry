@@ -19,6 +19,8 @@ dependencies {
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
+    compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
+
     compile libraries.commons.io
     compile libraries.commons.lang3
     compile libraries.guava

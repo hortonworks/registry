@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.server.AuthenticationHandler;
 import com.hortonworks.registries.auth.server.AuthenticationToken;
+import com.hortonworks.registries.shaded.javax.ws.rs.client.Entity;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSVerifier;
@@ -53,8 +54,16 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+
+import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.OAUTH_GET_CERT_METHOD;
+import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.OAUTH_GET_CERT_METHOD_BODY;
+import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.OAUTH_GET_CERT_METHOD_CONTENT_TYPE;
+import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.PROPERTY_PREFIX;
 
 public class OAuth2AuthenticationHandler implements AuthenticationHandler {
 
@@ -76,6 +85,8 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
     private String bearerPrefix = "Bearer ";
     private List<String> audiences = null;
     private JwtCertificateType certType;
+    private JwtKeyStoreType keyStoreType;
+    private HttpClientForOAuth2 httpClient;
 
     @Override
     public String getType() {
@@ -87,7 +98,13 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         LOG.info("Initializing OAuth2 based authentication ...");
         if (publicKey == null) {
             certType = JwtCertificateType.parseString(config.getProperty(PUBLIC_KEY_ALGORITHM, JwtCertificateType.RSA.getValue()));
-            publicKey = readPublicKey(certType, config);
+            keyStoreType = JwtKeyStoreType.parseString(config.getProperty(PUBLIC_KEY_STORE_TYPE));
+            if (keyStoreType == null) {
+                throw new RuntimeException("Property is required: " + PUBLIC_KEY_STORE_TYPE);
+            } else if (httpClient == null && keyStoreType == JwtKeyStoreType.URL) {
+                httpClient = initHttpClient(config);
+            }
+            publicKey = readPublicKey(keyStoreType, certType, config);
         }
 
         if (config.containsKey(HEADER_PREFIX)) {
@@ -109,14 +126,24 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         }
     }
 
-    @Nonnull
-    private PublicKey readPublicKey(@Nullable JwtCertificateType certType, Properties config) throws ServletException {
-        try {
-            JwtKeyStoreType keyStoreType = JwtKeyStoreType.parseString(config.getProperty(PUBLIC_KEY_STORE_TYPE));
-            if (keyStoreType == null) {
-                throw new RuntimeException("Property is required: " + PUBLIC_KEY_STORE_TYPE);
+    private HttpClientForOAuth2 initHttpClient(Properties config) {
+        Map<String, String> clientSettings = new HashMap<>();
+        Enumeration<?> names = config.propertyNames();
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            if (name.startsWith(PROPERTY_PREFIX)) {
+                String value = config.getProperty(name);
+                clientSettings.put(name.substring(PROPERTY_PREFIX.length()), value);
             }
+        }
 
+        return new HttpClientForOAuth2(clientSettings);
+    }
+
+    @Nonnull
+    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JwtCertificateType certType,
+                                    Properties config) throws ServletException {
+        try {
             switch (keyStoreType) {
                 case PROPERTY:
                 case URL:
@@ -145,13 +172,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
                 result = config.getProperty(PUBLIC_KEY_PROPERTY);
                 break;
             case URL:
-                // TODO CDPD-34171
-                String url = config.getProperty(PUBLIC_KEY_URL);
-                if (StringUtils.isBlank(url)) {
-                    throw new RuntimeException("Property is required: " + PUBLIC_KEY_URL);
-                }
-                URL keyUrl = new URL(url);
-                result = IOUtils.toString(keyUrl, StandardCharsets.UTF_8.name());
+                result = readFromUrl(config, httpClient);
                 break;
             // store type KEYSTORE is handled elsewhere
             default:
@@ -175,6 +196,32 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
                 throw new RuntimeException("Not implemented yet"); // TODO CDPD-34174
             default:
                 throw new IllegalArgumentException("Unsupported certificate type: " + config.getProperty(PUBLIC_KEY_ALGORITHM));
+        }
+    }
+
+    private String readFromUrl(Properties config, @Nonnull HttpClientForOAuth2 httpClient) throws IOException {
+        String url = config.getProperty(PUBLIC_KEY_URL);
+        if (StringUtils.isBlank(url)) {
+            throw new RuntimeException("Property is required: " + PUBLIC_KEY_URL);
+        }
+        URL keyUrl = new URL(url);
+
+        switch (keyUrl.getProtocol().toLowerCase()) {
+            // read from the network
+            case "http":
+            case "https":
+                String httpMethod = config.getProperty(OAUTH_GET_CERT_METHOD, "get").toLowerCase();
+                Entity<?> body = null;
+                if (httpMethod.equals("post") || httpMethod.equals("put")) {
+                    String bodyTxt = config.getProperty(OAUTH_GET_CERT_METHOD_BODY, "get").toLowerCase();
+                    String contentType = config.getProperty(OAUTH_GET_CERT_METHOD_CONTENT_TYPE, "get").toLowerCase();
+                    body = Entity.entity(bodyTxt, contentType);
+                }
+                return httpClient.download(keyUrl, httpMethod, body);
+
+            // read from elsewhere (eg. file)
+            default:
+                return IOUtils.toString(keyUrl, StandardCharsets.UTF_8.name());
         }
     }
 
@@ -221,6 +268,11 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         } catch (NoSuchAlgorithmException | InvalidKeySpecException ce) {
             throw new RuntimeException("Failed to parse certificate.", ce);
         }
+    }
+
+    @VisibleForTesting
+    void setHttpClient(HttpClientForOAuth2 httpClient) {
+        this.httpClient = httpClient;
     }
 
     @Override

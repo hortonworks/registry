@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.util.Properties;
@@ -31,8 +32,14 @@ import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLI
 import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_KEYSTORE_ALIAS;
 import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_KEYSTORE_PASSWORD;
 import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_PROPERTY;
+import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 // check README.md for details how the keys and the keystore were created
 public class OAuth2AuthenticationHandlerTest {
@@ -54,6 +61,31 @@ public class OAuth2AuthenticationHandlerTest {
             value = IOUtils.toString(in, StandardCharsets.UTF_8);
         }
         config.setProperty(PUBLIC_KEY_PROPERTY, value);
+
+        PublicKey result = handler.parseKey(config, type, JwtCertificateType.RSA);
+
+        assertNotNull(result);
+        assertEquals("RSA", result.getAlgorithm());
+    }
+
+    @Test
+    public void testReadCertFromUrl() throws Exception {
+        JwtKeyStoreType type = JwtKeyStoreType.URL;
+
+        HttpClientForOAuth2 httpClient = mock(HttpClientForOAuth2.class);
+        handler.setHttpClient(httpClient);
+
+        Properties config = new Properties();
+        final String value;
+        try (InputStream in = getClass().getResourceAsStream("/test.pub")) {
+            assertNotNull(in, "Failed to read public key");
+            value = IOUtils.toString(in, StandardCharsets.UTF_8);
+        }
+
+        String url = "https://my.auth.server";
+        config.setProperty(PUBLIC_KEY_URL, url);
+
+        when(httpClient.download(eq(new URL(url)), anyString(), any())).thenReturn(value);
 
         PublicKey result = handler.parseKey(config, type, JwtCertificateType.RSA);
 
