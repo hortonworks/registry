@@ -17,6 +17,7 @@ package com.cloudera.dim.schemaregistry;
 
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler;
+import com.cloudera.dim.registry.oauth2.OAuth2Config;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.AtlasConfiguration;
@@ -391,8 +392,8 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             Map<String, String> params = new LinkedHashMap<>();;
             filterConfig.setParams(params);
             params.put("type", OAuth2AuthenticationHandler.class.getName());
-            params.put(OAuth2AuthenticationHandler.PUBLIC_KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
-            params.put(OAuth2AuthenticationHandler.PUBLIC_KEY_PROPERTY,
+            params.put(OAuth2Config.KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
+            params.put(OAuth2Config.PUBLIC_KEY_PROPERTY,
                     IOUtils.toString(getClass().getResource("/template/test_rsa.pub"), StandardCharsets.UTF_8)
                             .replaceAll("\n", ""));
         }

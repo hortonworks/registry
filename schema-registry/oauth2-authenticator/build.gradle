@@ -28,6 +28,7 @@ dependencies {
 
     testCompile libraries.junit
     testCompile libraries.mockito
-    testRuntime libraries.servlet_api
+    testCompileOnly libraries.servlet_api
+    testRuntimeOnly libraries.servlet_api
 
 }

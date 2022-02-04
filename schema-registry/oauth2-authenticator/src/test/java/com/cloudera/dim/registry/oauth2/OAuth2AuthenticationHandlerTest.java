@@ -15,33 +15,25 @@
  **/
 package com.cloudera.dim.registry.oauth2;
 
-import org.apache.commons.io.IOUtils;
+import com.hortonworks.registries.auth.server.AuthenticationToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Properties;
 
-import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_KEYSTORE;
-import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_KEYSTORE_ALIAS;
-import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_KEYSTORE_PASSWORD;
-import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_PROPERTY;
-import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.PUBLIC_KEY_URL;
+import static com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler.AUTHORIZATION;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.HMAC_SECRET_KEY_PROPERTY;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.KEY_ALGORITHM;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.KEY_STORE_TYPE;
+import static com.cloudera.dim.registry.oauth2.TestHmacJwtGenerator.generateSignedJwt;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-// check README.md for details how the keys and the keystore were created
 public class OAuth2AuthenticationHandlerTest {
 
     private OAuth2AuthenticationHandler handler;
@@ -52,73 +44,26 @@ public class OAuth2AuthenticationHandlerTest {
     }
 
     @Test
-    public void testReadCertFromProperty() throws Exception {
-        JwtKeyStoreType type = JwtKeyStoreType.PROPERTY;
+    public void testHmac() throws Exception {
+        final String subject = "marton";
         Properties config = new Properties();
-        String value;
-        try (InputStream in = getClass().getResourceAsStream("/test.pub")) {
-            assertNotNull(in, "Failed to read public key");
-            value = IOUtils.toString(in, StandardCharsets.UTF_8);
-        }
-        config.setProperty(PUBLIC_KEY_PROPERTY, value);
+        config.setProperty(KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
+        config.setProperty(KEY_ALGORITHM, JwtCertificateType.HMAC.getValue());
+        String secretKey = "969c55677e9f397060a21e4bbef1dcc9";
+        config.setProperty(HMAC_SECRET_KEY_PROPERTY, secretKey);
 
-        PublicKey result = handler.parseKey(config, type, JwtCertificateType.RSA);
+        handler.init(config);
 
-        assertNotNull(result);
-        assertEquals("RSA", result.getAlgorithm());
+        String jwt = generateSignedJwt(subject, secretKey);
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        when(request.getHeader(AUTHORIZATION)).thenReturn("Bearer " + jwt);
+
+        AuthenticationToken token = handler.authenticate(request, response);
+        assertNotNull(token);
+        assertEquals(subject, token.getUserName());
+
     }
 
-    @Test
-    public void testReadCertFromUrl() throws Exception {
-        JwtKeyStoreType type = JwtKeyStoreType.URL;
-
-        HttpClientForOAuth2 httpClient = mock(HttpClientForOAuth2.class);
-        handler.setHttpClient(httpClient);
-
-        Properties config = new Properties();
-        final String value;
-        try (InputStream in = getClass().getResourceAsStream("/test.pub")) {
-            assertNotNull(in, "Failed to read public key");
-            value = IOUtils.toString(in, StandardCharsets.UTF_8);
-        }
-
-        String url = "https://my.auth.server";
-        config.setProperty(PUBLIC_KEY_URL, url);
-
-        when(httpClient.download(eq(new URL(url)), anyString(), any())).thenReturn(value);
-
-        PublicKey result = handler.parseKey(config, type, JwtCertificateType.RSA);
-
-        assertNotNull(result);
-        assertEquals("RSA", result.getAlgorithm());
-    }
-
-    @Test
-    public void testReadCertFromKeystore() throws Exception {
-        Properties config = new Properties();
-        String keystorePath = getKeystorePath().getAbsolutePath();
-        String ktAlias = "oauth";
-        String ksPassword = "test123";
-
-        config.setProperty(PUBLIC_KEY_KEYSTORE, keystorePath);
-        config.setProperty(PUBLIC_KEY_KEYSTORE_ALIAS, ktAlias);
-        config.setProperty(PUBLIC_KEY_KEYSTORE_PASSWORD, ksPassword);
-
-        PublicKey publicKey = handler.readFromKeystore(config);
-
-        assertNotNull(publicKey);
-        assertEquals("RSA", publicKey.getAlgorithm());
-    }
-
-    private File getKeystorePath() throws IOException {
-        try (InputStream is = getClass().getResourceAsStream("/testkeystore.jks")) {
-            byte[] bytes = IOUtils.toByteArray(is);
-            File tmpFile = File.createTempFile("kys", "jks");
-            try (FileOutputStream out = new FileOutputStream(tmpFile)) {
-                IOUtils.write(bytes, out);
-            }
-            tmpFile.deleteOnExit();
-            return tmpFile;
-        }
-    }
 }
