@@ -18,11 +18,7 @@ package com.cloudera.dim.registry.oauth2.variant;
 import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.google.common.annotations.VisibleForTesting;
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -34,16 +30,11 @@ import javax.servlet.ServletException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.Properties;
 
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.*;
@@ -65,48 +56,28 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
     private final HttpClientForOAuth2 httpClient;
     private final PublicKey publicKey;
 
-    public RsaSignedJwtValidator(JwtKeyStoreType keyStoreType, JWSAlgorithm certType, Properties config, @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
+    public RsaSignedJwtValidator(JwtKeyStoreType keyStoreType, JWSAlgorithm algType, Properties config, @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
         this.httpClient = httpClient;
 
-        publicKey = readPublicKey(keyStoreType, certType, config);
+        publicKey = readPublicKey(keyStoreType, algType, config);
     }
 
+    @Override
     public boolean validateSignature(SignedJWT jwtToken) {
-        boolean valid = false;
-        if (JWSObject.State.SIGNED == jwtToken.getState()) {
-            LOG.debug("JWT token is in a SIGNED state");
-            if (jwtToken.getSignature() != null) {
-                LOG.debug("JWT token signature is not null");
-                if (publicKey == null) {
-                    throw new RuntimeException("Public key is null, cannot verify signature.");
-                }
-                try {
-                    JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
-                    if (jwtToken.verify(verifier)) {
-                        valid = true;
-                        LOG.debug("JWT token has been successfully verified");
-                    } else {
-                        LOG.warn("JWT signature verification failed.");
-                    }
-                } catch (JOSEException je) {
-                    LOG.warn("Error while validating signature", je);
-                }
-            }
-        }
-        return valid;
+        return RsaUtil.validateSignature((RSAPublicKey) publicKey, jwtToken);
     }
 
     @Nonnull
-    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JWSAlgorithm certType,
+    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JWSAlgorithm algType,
                                     Properties config) throws ServletException {
         try {
             switch (keyStoreType) {
                 case PROPERTY:
                 case URL:
-                    if (certType == null) {
+                    if (algType == null) {
                         throw new IllegalArgumentException("Please provide the algorithm with: " + KEY_ALGORITHM);
                     } else {
-                        return parsePublicKey(config, keyStoreType, certType);
+                        return parsePublicKey(config, keyStoreType, algType);
                     }
                 case KEYSTORE:
                     return readFromKeystore(config);
@@ -140,11 +111,7 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
         }
 
         if (certType == JWSAlgorithm.RS256 || certType == JWSAlgorithm.RS384 || certType == JWSAlgorithm.RS512) {
-            result = result
-                    .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-                    .replaceAll("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\n", "");
-            return parseRSAPublicKey(result);
+            return RsaUtil.parseRSAPublicKey(result);
         } else {
             throw new IllegalArgumentException("Unsupported certificate type: " + config.getProperty(KEY_ALGORITHM));
         }
@@ -174,24 +141,6 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
             return publicKey;
         } catch (Exception ex) {
             throw new RuntimeException("Could not read from keystore.", ex);
-        }
-    }
-
-    @Nonnull
-    private RSAPublicKey parseRSAPublicKey(String publicKeyText) {
-        try {
-
-            byte[] decoded = Base64.getDecoder().decode(publicKeyText);
-
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPublicKey result = (RSAPublicKey) kf.generatePublic(spec);
-            if (result == null) {
-                throw new RuntimeException("Could not generate public RSA key.");
-            }
-            return result;
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException ce) {
-            throw new RuntimeException("Failed to parse certificate.", ce);
         }
     }
 

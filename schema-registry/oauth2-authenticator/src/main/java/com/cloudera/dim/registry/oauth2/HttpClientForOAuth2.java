@@ -91,7 +91,7 @@ public class HttpClientForOAuth2 {
     /** Download key from the given URL. */
     public String readKeyFromUrl(Properties config, String url) throws IOException {
         if (StringUtils.isBlank(url)) {
-            throw new RuntimeException("Property is required: " + PUBLIC_KEY_URL);
+            throw new RuntimeException("URL is missing, don't know where to download keys from.");
         }
         URL keyUrl = new URL(url);
 

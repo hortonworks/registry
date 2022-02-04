@@ -24,7 +24,7 @@ public final class OAuth2Config {
     /** Expected JWT audiences, used for validation. */
     public static final String EXPECTED_JWT_AUDIENCES = "expected.jwt.audiences";
 
-    /** Algorithm used for validating the signature, eg. rsa, hmac */
+    /** Algorithm used for validating the signature, eg. rs256, hs256 */
     public static final String KEY_ALGORITHM = "key.algorithm";
     /** Storage type, where the key is stored, eg. property, keystore, url */
     public static final String KEY_STORE_TYPE = "key.store.type";
@@ -48,6 +48,10 @@ public final class OAuth2Config {
     public static final String HMAC_SECRET_KEY_PROPERTY = "hmac.secret.key";
     /** If storage type is "url" then provide the path where the secret key can be downloaded from */
     public static final String HMAC_SECRET_KEY_URL = "hmac.secret.key";
+
+    // -------------------------------- jwk properties ---------------------
+
+    public static final String JWK_URL = "jwk.url";
 
     // -------------------------------- HTTP Client properties ---------------------
 

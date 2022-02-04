@@ -18,7 +18,8 @@ package com.cloudera.dim.registry.oauth2;
 public enum JwtKeyStoreType {
     URL("url"),
     PROPERTY("property"),
-    KEYSTORE("keystore");
+    KEYSTORE("keystore"),
+    JWK("jwk");
 
     private final String value;
 
