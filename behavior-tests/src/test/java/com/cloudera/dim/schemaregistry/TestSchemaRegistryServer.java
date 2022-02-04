@@ -393,6 +393,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             filterConfig.setParams(params);
             params.put("type", OAuth2AuthenticationHandler.class.getName());
             params.put(OAuth2Config.KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
+            params.put(OAuth2Config.KEY_ALGORITHM, "RS256");
             params.put(OAuth2Config.PUBLIC_KEY_PROPERTY,
                     IOUtils.toString(getClass().getResource("/template/test_rsa.pub"), StandardCharsets.UTF_8)
                             .replaceAll("\n", ""));

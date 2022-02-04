@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.server.AuthenticationHandler;
 import com.hortonworks.registries.auth.server.AuthenticationToken;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -66,7 +67,10 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
     public void init(Properties config) throws ServletException {
         LOG.info("Initializing OAuth2 based authentication ...");
         if (handlerImpl == null) {
-            JwtCertificateType certType = JwtCertificateType.parseString(config.getProperty(KEY_ALGORITHM, JwtCertificateType.RSA.getValue()));
+            if (StringUtils.isBlank(config.getProperty(KEY_ALGORITHM))) {
+                throw new IllegalArgumentException("Property is required: " + KEY_ALGORITHM);
+            }
+            JWSAlgorithm certType = JWSAlgorithm.parse(config.getProperty(KEY_ALGORITHM));
             JwtKeyStoreType keyStoreType = JwtKeyStoreType.parseString(config.getProperty(KEY_STORE_TYPE));
             if (keyStoreType == null) {
                 throw new RuntimeException("Property is required: " + KEY_STORE_TYPE);
@@ -75,14 +79,10 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
                 httpClient = initHttpClient(config);
             }
 
-            switch (certType) {
-                case HMAC:
-                    handlerImpl = new HmacSignedJwtValidator(keyStoreType, config, httpClient);
-                    break;
-                case RSA:
-                default:
-                    handlerImpl = new RsaSignedJwtValidator(keyStoreType, certType, config, httpClient);
-                    break;
+            if (certType == JWSAlgorithm.HS256 || certType == JWSAlgorithm.HS384 || certType == JWSAlgorithm.HS512) {
+                handlerImpl = new HmacSignedJwtValidator(keyStoreType, config, httpClient);
+            } else {
+                handlerImpl = new RsaSignedJwtValidator(keyStoreType, certType, config, httpClient);
             }
         }
 
