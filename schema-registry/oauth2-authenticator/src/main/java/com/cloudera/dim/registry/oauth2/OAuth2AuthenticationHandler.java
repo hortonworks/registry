@@ -15,17 +15,14 @@
  **/
 package com.cloudera.dim.registry.oauth2;
 
+import com.cloudera.dim.registry.oauth2.variant.HmacSignedJwtValidator;
+import com.cloudera.dim.registry.oauth2.variant.JwtValidatorVariant;
+import com.cloudera.dim.registry.oauth2.variant.RsaSignedJwtValidator;
 import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.server.AuthenticationHandler;
 import com.hortonworks.registries.auth.server.AuthenticationToken;
-import com.hortonworks.registries.shaded.javax.ws.rs.client.Entity;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,24 +32,10 @@ import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.cert.Certificate;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -60,33 +43,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.OAUTH_GET_CERT_METHOD;
-import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.OAUTH_GET_CERT_METHOD_BODY;
-import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.OAUTH_GET_CERT_METHOD_CONTENT_TYPE;
 import static com.cloudera.dim.registry.oauth2.HttpClientForOAuth2.PROPERTY_PREFIX;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.*;
 
 public class OAuth2AuthenticationHandler implements AuthenticationHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(OAuth2AuthenticationHandler.class);
 
-    private static final String AUTHORIZATION = "Authorization";
-    public static final String PUBLIC_KEY_ALGORITHM = "public.key.algorithm";
-    // url, property, keystore
-    public static final String PUBLIC_KEY_STORE_TYPE = "public.key.store.type";
-    public static final String PUBLIC_KEY_URL = "public.key.url";
-    public static final String PUBLIC_KEY_PROPERTY = "public.key.property";
-    public static final String PUBLIC_KEY_KEYSTORE = "public.key.keystore";
-    public static final String PUBLIC_KEY_KEYSTORE_ALIAS = "public.key.keystore.alias";
-    public static final String PUBLIC_KEY_KEYSTORE_PASSWORD = "public.key.keystore.password";
-    public static final String HEADER_PREFIX = "header.prefix";
-    public static final String EXPECTED_JWT_AUDIENCES = "expected.jwt.audiences";
+    public static final String AUTHORIZATION = "Authorization";
 
-    private PublicKey publicKey = null;
     private String bearerPrefix = "Bearer ";
     private List<String> audiences = null;
-    private JwtCertificateType certType;
-    private JwtKeyStoreType keyStoreType;
     private HttpClientForOAuth2 httpClient;
+    private JwtValidatorVariant handlerImpl;
 
     @Override
     public String getType() {
@@ -96,15 +65,25 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
     @Override
     public void init(Properties config) throws ServletException {
         LOG.info("Initializing OAuth2 based authentication ...");
-        if (publicKey == null) {
-            certType = JwtCertificateType.parseString(config.getProperty(PUBLIC_KEY_ALGORITHM, JwtCertificateType.RSA.getValue()));
-            keyStoreType = JwtKeyStoreType.parseString(config.getProperty(PUBLIC_KEY_STORE_TYPE));
+        if (handlerImpl == null) {
+            JwtCertificateType certType = JwtCertificateType.parseString(config.getProperty(KEY_ALGORITHM, JwtCertificateType.RSA.getValue()));
+            JwtKeyStoreType keyStoreType = JwtKeyStoreType.parseString(config.getProperty(KEY_STORE_TYPE));
             if (keyStoreType == null) {
-                throw new RuntimeException("Property is required: " + PUBLIC_KEY_STORE_TYPE);
-            } else if (httpClient == null && keyStoreType == JwtKeyStoreType.URL) {
+                throw new RuntimeException("Property is required: " + KEY_STORE_TYPE);
+            }
+            if (httpClient == null && keyStoreType == JwtKeyStoreType.URL) {
                 httpClient = initHttpClient(config);
             }
-            publicKey = readPublicKey(keyStoreType, certType, config);
+
+            switch (certType) {
+                case HMAC:
+                    handlerImpl = new HmacSignedJwtValidator(keyStoreType, config, httpClient);
+                    break;
+                case RSA:
+                default:
+                    handlerImpl = new RsaSignedJwtValidator(keyStoreType, certType, config, httpClient);
+                    break;
+            }
         }
 
         if (config.containsKey(HEADER_PREFIX)) {
@@ -138,136 +117,6 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         }
 
         return new HttpClientForOAuth2(clientSettings);
-    }
-
-    @Nonnull
-    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JwtCertificateType certType,
-                                    Properties config) throws ServletException {
-        try {
-            switch (keyStoreType) {
-                case PROPERTY:
-                case URL:
-                    if (certType == null) {
-                        throw new IllegalArgumentException("Please provide the algorithm with: " + PUBLIC_KEY_ALGORITHM);
-                    } else {
-                        return parseKey(config, keyStoreType, certType);
-                    }
-                case KEYSTORE:
-                    return readFromKeystore(config);
-                default:
-                    throw new IllegalArgumentException("Unsupported keystore type: " + keyStoreType);
-            }
-        } catch (RuntimeException slex) {
-            throw slex;
-        } catch (Exception ex) {
-            throw new ServletException("Failed to read public key.", ex);
-        }
-    }
-
-    @VisibleForTesting
-    PublicKey parseKey(Properties config, JwtKeyStoreType keyStoreType, @Nonnull JwtCertificateType certType) throws IOException {
-        String result;
-        switch (keyStoreType) {
-            case PROPERTY:
-                result = config.getProperty(PUBLIC_KEY_PROPERTY);
-                break;
-            case URL:
-                result = readFromUrl(config, httpClient);
-                break;
-            // store type KEYSTORE is handled elsewhere
-            default:
-                throw new RuntimeException("Unsupported keystore type: " + keyStoreType);
-        }
-
-        if (StringUtils.isBlank(result)) {
-            throw new RuntimeException("Failed to read the key of type " + keyStoreType);
-        }
-
-        result = result
-                .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-                .replaceAll("-----END PUBLIC KEY-----", "")
-                .replaceAll("\n", "");
-
-        switch (certType) {
-            case RSA:
-                return parseRSAPublicKey(result);
-            case HMAC:
-                // certType
-                throw new RuntimeException("Not implemented yet"); // TODO CDPD-34174
-            default:
-                throw new IllegalArgumentException("Unsupported certificate type: " + config.getProperty(PUBLIC_KEY_ALGORITHM));
-        }
-    }
-
-    private String readFromUrl(Properties config, @Nonnull HttpClientForOAuth2 httpClient) throws IOException {
-        String url = config.getProperty(PUBLIC_KEY_URL);
-        if (StringUtils.isBlank(url)) {
-            throw new RuntimeException("Property is required: " + PUBLIC_KEY_URL);
-        }
-        URL keyUrl = new URL(url);
-
-        switch (keyUrl.getProtocol().toLowerCase()) {
-            // read from the network
-            case "http":
-            case "https":
-                String httpMethod = config.getProperty(OAUTH_GET_CERT_METHOD, "get").toLowerCase();
-                Entity<?> body = null;
-                if (httpMethod.equals("post") || httpMethod.equals("put")) {
-                    String bodyTxt = config.getProperty(OAUTH_GET_CERT_METHOD_BODY, "get").toLowerCase();
-                    String contentType = config.getProperty(OAUTH_GET_CERT_METHOD_CONTENT_TYPE, "get").toLowerCase();
-                    body = Entity.entity(bodyTxt, contentType);
-                }
-                return httpClient.download(keyUrl, httpMethod, body);
-
-            // read from elsewhere (eg. file)
-            default:
-                return IOUtils.toString(keyUrl, StandardCharsets.UTF_8.name());
-        }
-    }
-
-    @VisibleForTesting
-    @Nonnull
-    PublicKey readFromKeystore(Properties config) throws KeyStoreException, IOException {
-        String keystorePath = config.getProperty(PUBLIC_KEY_KEYSTORE);
-        String ksAlias = config.getProperty(PUBLIC_KEY_KEYSTORE_ALIAS);
-        String ksPassword = config.getProperty(PUBLIC_KEY_KEYSTORE_PASSWORD);
-
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-        try (InputStream in = new FileInputStream(keystorePath)) {
-            ks.load(in, ksPassword.toCharArray());
-
-            Certificate certificate = ks.getCertificate(ksAlias);
-            if (certificate == null) {
-                throw new RuntimeException("No certificate with alias " + ksAlias);
-            }
-
-            PublicKey publicKey = certificate.getPublicKey();
-            if (publicKey == null) {
-                throw new RuntimeException("Certificate did not contain a public key. Alias: " + ksAlias);
-            }
-
-            return publicKey;
-        } catch (Exception ex) {
-            throw new RuntimeException("Could not read from keystore.", ex);
-        }
-    }
-
-    @Nonnull
-    private RSAPublicKey parseRSAPublicKey(String publicKeyText) {
-        try {
-
-            byte[] decoded = Base64.getDecoder().decode(publicKeyText);
-
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPublicKey result = (RSAPublicKey) kf.generatePublic(spec);
-            if (result == null) {
-                throw new RuntimeException("Could not generate public RSA key.");
-            }
-            return result;
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException ce) {
-            throw new RuntimeException("Failed to parse certificate.", ce);
-        }
     }
 
     @VisibleForTesting
@@ -318,7 +167,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         }
 
         String userName = null;
-        SignedJWT jwtToken = null;
+        SignedJWT jwtToken;
         boolean valid = false;
         Long exp = null;
         try {
@@ -326,13 +175,13 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
             valid = validateToken(jwtToken);
             if (valid) {
                 userName = jwtToken.getJWTClaimsSet().getSubject();
-                LOG.info("USERNAME: " + userName);
+                LOG.debug("USERNAME: " + userName);
             } else {
                 LOG.warn("jwtToken failed validation: " + jwtToken.serialize());
             }
             Date expirationTime = jwtToken.getJWTClaimsSet().getExpirationTime();
             if (expirationTime.toInstant().isBefore(Instant.now())) {
-                LOG.info("JWT token has expired.");
+                LOG.debug("JWT token has expired.");
                 return null;
             }
             exp = expirationTime.getTime();
@@ -363,7 +212,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
      * @return true if valid
      */
     protected boolean validateToken(SignedJWT jwtToken) {
-        boolean sigValid = validateSignature(jwtToken);
+        boolean sigValid = handlerImpl.validateSignature(jwtToken);
         if (!sigValid) {
             LOG.warn("Signature could not be verified");
         }
@@ -377,50 +226,6 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         }
 
         return sigValid && audValid && expValid;
-    }
-
-    /**
-     * Verify the signature of the JWT token in this method. This method depends
-     * on the public key that was established during init based upon the
-     * provisioned public key. Override this method in subclasses in order to
-     * customize the signature verification behavior.
-     *
-     * @param jwtToken the token that contains the signature to be validated
-     * @return valid true if signature verifies successfully; false otherwise
-     */
-    private boolean validateSignature(SignedJWT jwtToken) {
-        boolean valid = false;
-        if (JWSObject.State.SIGNED == jwtToken.getState()) {
-            LOG.debug("JWT token is in a SIGNED state");
-            if (jwtToken.getSignature() != null) {
-                LOG.debug("JWT token signature is not null");
-                if (publicKey == null) {
-                    throw new RuntimeException("Public key is null, cannot verify signature.");
-                }
-                switch (certType) {
-                    case RSA:
-                        try {
-                            JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
-                            if (jwtToken.verify(verifier)) {
-                                valid = true;
-                                LOG.debug("JWT token has been successfully verified");
-                            } else {
-                                LOG.warn("JWT signature verification failed.");
-                            }
-                        } catch (JOSEException je) {
-                            LOG.warn("Error while validating signature", je);
-                        }
-                        break;
-                    case HMAC:
-                        valid = false;  // TODO CDPD-34174
-                        break;
-                    default:
-                        valid = false;  // TODO
-                        break;
-                }
-            }
-        }
-        return valid;
     }
 
     /**
