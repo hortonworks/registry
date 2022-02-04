@@ -16,8 +16,8 @@
 package com.cloudera.dim.registry.oauth2.variant;
 
 import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
-import com.cloudera.dim.registry.oauth2.JwtCertificateType;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
+import com.nimbusds.jose.JWSAlgorithm;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
@@ -53,8 +53,8 @@ public class RsaSignedJwtValidatorTest {
         }
         config.setProperty(PUBLIC_KEY_PROPERTY, value);
 
-        validator = new RsaSignedJwtValidator(type, JwtCertificateType.RSA, config, null);
-        PublicKey result = validator.parsePublicKey(config, type, JwtCertificateType.RSA);
+        validator = new RsaSignedJwtValidator(type, JWSAlgorithm.RS256, config, null);
+        PublicKey result = validator.parsePublicKey(config, type, JWSAlgorithm.RS256);
 
         assertNotNull(result);
         assertEquals("RSA", result.getAlgorithm());
@@ -78,8 +78,8 @@ public class RsaSignedJwtValidatorTest {
 
         when(httpClient.readKeyFromUrl(any(), eq(url))).thenReturn(value);
 
-        validator = new RsaSignedJwtValidator(type, JwtCertificateType.RSA, config, httpClient);
-        PublicKey result = validator.parsePublicKey(config, type, JwtCertificateType.RSA);
+        validator = new RsaSignedJwtValidator(type, JWSAlgorithm.RS256, config, httpClient);
+        PublicKey result = validator.parsePublicKey(config, type, JWSAlgorithm.RS256);
 
         assertNotNull(result);
         assertEquals("RSA", result.getAlgorithm());
@@ -98,7 +98,7 @@ public class RsaSignedJwtValidatorTest {
         config.setProperty(PUBLIC_KEY_KEYSTORE_ALIAS, ktAlias);
         config.setProperty(PUBLIC_KEY_KEYSTORE_PASSWORD, ksPassword);
 
-        validator = new RsaSignedJwtValidator(type, JwtCertificateType.RSA, config, null);
+        validator = new RsaSignedJwtValidator(type, JWSAlgorithm.RS256, config, null);
         PublicKey publicKey = validator.readFromKeystore(config);
 
         assertNotNull(publicKey);

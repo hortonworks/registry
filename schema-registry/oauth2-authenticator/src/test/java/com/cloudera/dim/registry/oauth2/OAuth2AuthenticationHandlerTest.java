@@ -16,6 +16,7 @@
 package com.cloudera.dim.registry.oauth2;
 
 import com.hortonworks.registries.auth.server.AuthenticationToken;
+import com.nimbusds.jose.JWSAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +49,7 @@ public class OAuth2AuthenticationHandlerTest {
         final String subject = "marton";
         Properties config = new Properties();
         config.setProperty(KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
-        config.setProperty(KEY_ALGORITHM, JwtCertificateType.HMAC.getValue());
+        config.setProperty(KEY_ALGORITHM, JWSAlgorithm.HS256.getName());
         String secretKey = "969c55677e9f397060a21e4bbef1dcc9";
         config.setProperty(HMAC_SECRET_KEY_PROPERTY, secretKey);
 

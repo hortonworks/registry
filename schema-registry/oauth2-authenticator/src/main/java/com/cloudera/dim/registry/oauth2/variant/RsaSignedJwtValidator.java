@@ -16,10 +16,10 @@
 package com.cloudera.dim.registry.oauth2.variant;
 
 import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
-import com.cloudera.dim.registry.oauth2.JwtCertificateType;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.google.common.annotations.VisibleForTesting;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
@@ -65,7 +65,7 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
     private final HttpClientForOAuth2 httpClient;
     private final PublicKey publicKey;
 
-    public RsaSignedJwtValidator(JwtKeyStoreType keyStoreType, JwtCertificateType certType, Properties config, @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
+    public RsaSignedJwtValidator(JwtKeyStoreType keyStoreType, JWSAlgorithm certType, Properties config, @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
         this.httpClient = httpClient;
 
         publicKey = readPublicKey(keyStoreType, certType, config);
@@ -97,7 +97,7 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
     }
 
     @Nonnull
-    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JwtCertificateType certType,
+    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JWSAlgorithm certType,
                                     Properties config) throws ServletException {
         try {
             switch (keyStoreType) {
@@ -121,7 +121,7 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
     }
 
     @VisibleForTesting
-    PublicKey parsePublicKey(Properties config, JwtKeyStoreType keyStoreType, @Nonnull JwtCertificateType certType) throws IOException {
+    PublicKey parsePublicKey(Properties config, JwtKeyStoreType keyStoreType, @Nonnull JWSAlgorithm certType) throws IOException {
         String result;
         switch (keyStoreType) {
             case PROPERTY:
@@ -139,15 +139,14 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
             throw new RuntimeException("Failed to read the key of type " + keyStoreType + ", empty string returned.");
         }
 
-        switch (certType) {
-            case RSA:
-                result = result
-                        .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-                        .replaceAll("-----END PUBLIC KEY-----", "")
-                        .replaceAll("\n", "");
-                return parseRSAPublicKey(result);
-            default:
-                throw new IllegalArgumentException("Unsupported certificate type: " + config.getProperty(KEY_ALGORITHM));
+        if (certType == JWSAlgorithm.RS256 || certType == JWSAlgorithm.RS384 || certType == JWSAlgorithm.RS512) {
+            result = result
+                    .replaceAll("-----BEGIN PUBLIC KEY-----", "")
+                    .replaceAll("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\n", "");
+            return parseRSAPublicKey(result);
+        } else {
+            throw new IllegalArgumentException("Unsupported certificate type: " + config.getProperty(KEY_ALGORITHM));
         }
     }
 
