@@ -17,6 +17,7 @@ package com.cloudera.dim.registry.oauth2.variant;
 
 import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +43,7 @@ public class HmacSignedJwtValidatorTest {
         String secretKey = "969c55677e9f397060a21e4bbef1dcc9";
         config.setProperty(HMAC_SECRET_KEY_PROPERTY, secretKey);
 
-        String jwtAsString = generateSignedJwt("abigel", secretKey);
+        String jwtAsString = generateSignedJwt(JWSAlgorithm.HS256, null, "abigel", secretKey);
 
         // parse the JWS and verify its HMAC
         SignedJWT signedJWT = SignedJWT.parse(jwtAsString);
@@ -62,7 +63,7 @@ public class HmacSignedJwtValidatorTest {
         String secretKey = "969c55677e9f397060a21e4bbef1dcc9";
         config.setProperty(HMAC_SECRET_KEY_PROPERTY, secretKey);
 
-        String jwtAsString = generateSignedJwt("marton", secretKey);
+        String jwtAsString = generateSignedJwt(JWSAlgorithm.HS256, null, "marton", secretKey);
 
         String url = "https://my.auth.server";
         config.setProperty(HMAC_SECRET_KEY_URL, url);

@@ -16,6 +16,7 @@
 package com.cloudera.dim.registry.oauth2;
 
 import com.cloudera.dim.registry.oauth2.variant.HmacSignedJwtValidator;
+import com.cloudera.dim.registry.oauth2.variant.JwkValidator;
 import com.cloudera.dim.registry.oauth2.variant.JwtValidatorVariant;
 import com.cloudera.dim.registry.oauth2.variant.RsaSignedJwtValidator;
 import com.google.common.annotations.VisibleForTesting;
@@ -67,22 +68,27 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
     public void init(Properties config) throws ServletException {
         LOG.info("Initializing OAuth2 based authentication ...");
         if (handlerImpl == null) {
-            if (StringUtils.isBlank(config.getProperty(KEY_ALGORITHM))) {
-                throw new IllegalArgumentException("Property is required: " + KEY_ALGORITHM);
-            }
-            JWSAlgorithm certType = JWSAlgorithm.parse(config.getProperty(KEY_ALGORITHM));
             JwtKeyStoreType keyStoreType = JwtKeyStoreType.parseString(config.getProperty(KEY_STORE_TYPE));
             if (keyStoreType == null) {
                 throw new RuntimeException("Property is required: " + KEY_STORE_TYPE);
             }
-            if (httpClient == null && keyStoreType == JwtKeyStoreType.URL) {
+            if (httpClient == null && (keyStoreType == JwtKeyStoreType.URL || keyStoreType == JwtKeyStoreType.JWK)) {
                 httpClient = initHttpClient(config);
             }
 
-            if (certType == JWSAlgorithm.HS256 || certType == JWSAlgorithm.HS384 || certType == JWSAlgorithm.HS512) {
-                handlerImpl = new HmacSignedJwtValidator(keyStoreType, config, httpClient);
+            if (keyStoreType == JwtKeyStoreType.JWK) {
+                handlerImpl = new JwkValidator(config, httpClient);
             } else {
-                handlerImpl = new RsaSignedJwtValidator(keyStoreType, certType, config, httpClient);
+                if (StringUtils.isBlank(config.getProperty(KEY_ALGORITHM))) {
+                    throw new IllegalArgumentException("Property is required: " + KEY_ALGORITHM);
+                }
+                JWSAlgorithm algType = JWSAlgorithm.parse(config.getProperty(KEY_ALGORITHM));
+
+                if (algType == JWSAlgorithm.HS256 || algType == JWSAlgorithm.HS384 || algType == JWSAlgorithm.HS512) {
+                    handlerImpl = new HmacSignedJwtValidator(keyStoreType, config, httpClient);
+                } else {
+                    handlerImpl = new RsaSignedJwtValidator(keyStoreType, algType, config, httpClient);
+                }
             }
         }
 

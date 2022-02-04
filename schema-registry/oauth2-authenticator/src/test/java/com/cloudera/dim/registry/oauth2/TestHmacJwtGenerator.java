@@ -23,12 +23,18 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import javax.annotation.Nullable;
 import java.util.Date;
 
 public class TestHmacJwtGenerator {
 
-    public static String generateSignedJwt(String subject, String secretKey) throws JOSEException {
+    public static String generateSignedJwt(JWSAlgorithm alg, @Nullable String kid, String subject, String secretKey) throws JOSEException {
         JWSSigner signer = new MACSigner(secretKey);
+        JWSHeader.Builder headerBuilder = new JWSHeader.Builder(alg);
+        if (kid != null) {
+            headerBuilder.keyID(kid);
+        }
+        JWSHeader header = headerBuilder.build();
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(subject)
@@ -36,7 +42,7 @@ public class TestHmacJwtGenerator {
                 .expirationTime(new Date(new Date().getTime() + 60 * 1000))
                 .build();
 
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+        SignedJWT signedJWT = new SignedJWT(header, claimsSet);
         signedJWT.sign(signer);
 
         return signedJWT.serialize();

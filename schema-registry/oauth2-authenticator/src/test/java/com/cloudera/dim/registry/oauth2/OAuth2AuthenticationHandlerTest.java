@@ -55,7 +55,7 @@ public class OAuth2AuthenticationHandlerTest {
 
         handler.init(config);
 
-        String jwt = generateSignedJwt(subject, secretKey);
+        String jwt = generateSignedJwt(JWSAlgorithm.HS256, null, subject, secretKey);
 
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
