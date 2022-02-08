@@ -69,11 +69,11 @@ abstract class AbstractSteps {
         config.put(SchemaRegistryClient.Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name(), 60 * 60 * 1000);
 
         if (oauth2Enabled) {
-            // TODO CDPD-34178 Configure test client to use the mock OAuth2 server
-            /*
-            config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(),
-                    String.format("http://localhost:%s", testOAuth2Server.getPort()));
-             */
+            config.put(SchemaRegistryClient.Configuration.OAUTH_SERVER_URL.name(),
+                    String.format("http://localhost:%s/auth", testOAuth2Server.getPort()));
+            config.put(SchemaRegistryClient.Configuration.OAUTH_CLIENT_ID.name(), testOAuth2Server.getClientId());
+            config.put(SchemaRegistryClient.Configuration.OAUTH_CLIENT_SECRET.name(), testOAuth2Server.getSecret());
+            config.put(SchemaRegistryClient.Configuration.AUTH_TYPE.name(), "oauth2");
         }
 
         return new SchemaRegistryClient(config);

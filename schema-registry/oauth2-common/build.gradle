@@ -15,21 +15,5 @@
 */
 
 dependencies {
-
-    compile(project(':common-auth')) {
-        exclude group: 'javax.servlet', module: 'servlet-api'
-    }
     compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
-    compile project(':schema-registry:oauth2-common')
-    compile libraries.commons.io
-    compile libraries.commons.lang3
-    compile libraries.guava
-    compileOnly libraries.servlet_api
-
-    testCompile libraries.junit
-    testCompile libraries.mockito
-    testCompile libraries.jose4j
-    testCompileOnly libraries.servlet_api
-    testRuntimeOnly libraries.servlet_api
-
 }

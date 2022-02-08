@@ -62,6 +62,8 @@ import com.hortonworks.registries.schemaregistry.serde.pull.PullSerializer;
 import com.hortonworks.registries.schemaregistry.serde.push.PushDeserializer;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
+import com.hortonworks.registries.shaded.javax.ws.rs.client.Invocation;
+import com.hortonworks.registries.shaded.javax.ws.rs.core.HttpHeaders;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import com.hortonworks.registries.shaded.org.glassfish.jersey.SslConfigurator;
@@ -119,6 +121,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.AUTH_TYPE;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL;
@@ -356,9 +359,28 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return backoffPolicy;
     }
 
-    /** Login with kerberos */
+    /** Login with kerberos or oauth2*/
     protected void initializeSecurityContext() {
-        this.login = dynamicJaasLogin().orElse(staticJaasLogin());
+            String authType = configuration.getValue(AUTH_TYPE.name());
+            switch (authType) {
+                case "oauth2":
+                    this.login = createOAuth2Login();
+                    break;
+                default:
+                    this.login = dynamicJaasLogin().orElse(staticJaasLogin());
+                    break;
+            }
+    }
+
+    private Login createOAuth2Login() {
+        Login oauthLogin = new OAuth2Login();
+        oauthLogin.configure(configuration.getConfig(), "");
+        try {
+            oauthLogin.login();
+        } catch (LoginException e) {
+            e.printStackTrace();
+        }
+        return oauthLogin;
     }
 
     /** Attempt to login with dynamic JAAS (from an in-memory string) */
@@ -603,7 +625,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                        return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).delete(Response.class);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -681,7 +703,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request().post(multiPartEntity, Response.class);
+                        return addHeaderIfOAuthLogin(target.request()).post(multiPartEntity, Response.class);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -754,7 +776,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request(MediaType.APPLICATION_JSON_TYPE).delete(Response.class);
+                        return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).delete(Response.class);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -763,6 +785,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         });
 
         handleDeleteSchemaResponse(response);
+    }
+    
+    private Invocation.Builder addHeaderIfOAuthLogin(Invocation.Builder request) {
+        if (login instanceof OAuth2Login) {
+            request.header(HttpHeaders.AUTHORIZATION, "Bearer " + ((OAuth2Login) login).getAuthToken());
+        }
+        return request;
+        
     }
 
     private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException, SchemaLifecycleException {
@@ -795,7 +825,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaVersion), Response.class);
+                        return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).post(Entity.json(schemaVersion), Response.class);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -958,7 +988,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request().post(null);
+                        return addHeaderIfOAuthLogin(target.request()).post(null);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -1003,7 +1033,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(schemaBranch), Response.class);
+                        return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).post(Entity.json(schemaBranch), Response.class);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -1033,7 +1063,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request().get();
+                        return addHeaderIfOAuthLogin(target.request()).get();
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -1059,7 +1089,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return target.request().delete();
+                        return addHeaderIfOAuthLogin(target.request()).delete();
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -1100,7 +1130,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<Response>() {
                     @Override
                     public Response run() {
-                        return webTarget.request().post(Entity.text(transitionDetails));
+                        return addHeaderIfOAuthLogin(webTarget.request()).post(Entity.text(transitionDetails));
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -1187,7 +1217,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<String>() {
                     @Override
                     public String run() {
-                        return webTarget.request().post(Entity.text(toSchemaText), String.class);
+                        return addHeaderIfOAuthLogin(webTarget.request()).post(Entity.text(toSchemaText), String.class);
                     }
                 });
             } catch (LoginException | ProcessingException e) {
@@ -1229,7 +1259,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<String>() {
                     @Override
                     public String run() {
-                            return targets.filesTarget.request().accept(MediaType.TEXT_PLAIN)
+                            return addHeaderIfOAuthLogin(targets.filesTarget.request()).accept(MediaType.TEXT_PLAIN)
                                     .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA), String.class);
                         }
                 });
@@ -1246,8 +1276,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 return login.doAction(new PrivilegedAction<InputStream>() {
                     @Override
                     public InputStream run() {
-                        return targets.filesTarget.path("download/" + encode(fileId))
-                                .request()
+                        return addHeaderIfOAuthLogin(targets.filesTarget.path("download/" + encode(fileId))
+                                .request())
                                 .get(InputStream.class);
                     }
                 });
@@ -1393,7 +1423,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             response = login.doAction(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
-                    return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+                    return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).get(String.class);
                 }
             });
         } catch (LoginException | ProcessingException e) {
@@ -1423,7 +1453,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             response = login.doAction(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
-                    return target.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(json), String.class);
+                    return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).post(Entity.json(json), String.class);
                 }
             });
         } catch (LoginException | ProcessingException e) {
@@ -1447,7 +1477,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             response = login.doAction(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
-                    return target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+                    return addHeaderIfOAuthLogin(target.request(MediaType.APPLICATION_JSON_TYPE)).get(String.class);
                 }
             });
         } catch (LoginException | ProcessingException e) {
@@ -1693,6 +1723,38 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         "MD5",
                         ConfigEntry.StringConverter.get(),
                         ConfigEntry.NonEmptyStringValidator.get());
+
+        public static final ConfigEntry<String> AUTH_TYPE = 
+                ConfigEntry.optional("schema.registry.auth.type",
+                        String.class,
+                        "Authentication type",
+                        "kerberos", 
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
+
+        public static final ConfigEntry<String> OAUTH_CLIENT_ID =
+            ConfigEntry.optional("schema.registry.oauth.client.id",
+                String.class,
+                "Client ID for OAuth server",
+                "",
+                ConfigEntry.StringConverter.get(),
+                ConfigEntry.NonEmptyStringValidator.get());
+
+        public static final ConfigEntry<String> OAUTH_CLIENT_SECRET =
+            ConfigEntry.optional("schema.registry.oauth.secret",
+                String.class,
+                "Secret for OAuth server",
+                "",
+                ConfigEntry.StringConverter.get(),
+                ConfigEntry.NonEmptyStringValidator.get());
+
+        public static final ConfigEntry<String> OAUTH_SERVER_URL =
+            ConfigEntry.optional("schema.registry.oauth.server.url",
+                String.class,
+                "OAuth server URL",
+                "",
+                ConfigEntry.StringConverter.get(),
+                ConfigEntry.NonEmptyStringValidator.get());
 
         private final Map<String, ?> config;
         private final Map<String, ConfigEntry<?>> options;
