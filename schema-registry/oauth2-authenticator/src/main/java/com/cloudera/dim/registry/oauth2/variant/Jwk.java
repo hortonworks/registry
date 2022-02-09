@@ -15,6 +15,17 @@
  **/
 package com.cloudera.dim.registry.oauth2.variant;
 
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.core.JsonParser;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.core.TreeNode;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.DeserializationContext;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.JsonDeserializer;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.io.IOException;
+
 /** Based on https://datatracker.ietf.org/doc/html/rfc7517 */
 /*
   {"keys":
@@ -39,6 +50,7 @@ package com.cloudera.dim.registry.oauth2.variant;
        ]
      }
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Jwk {
 
     // https://www.rfc-editor.org/rfc/rfc7518.html#page-28
@@ -53,7 +65,8 @@ class Jwk {
     private String use;
     private String alg;
     private String kid;
-    private String x5c;
+    // x5c is sometimes a String and sometimes an array of strings, so we need a custom serializer
+    private X5c x5c;
 
     public Jwk() { }
 
@@ -129,11 +142,11 @@ class Jwk {
         this.kid = kid;
     }
 
-    public String getX5c() {
+    public X5c getX5c() {
         return x5c;
     }
 
-    public void setX5c(String x5c) {
+    public void setX5c(X5c x5c) {
         this.x5c = x5c;
     }
 
@@ -143,5 +156,46 @@ class Jwk {
 
     public void setK(String k) {
         this.k = k;
+    }
+
+    @JsonDeserialize(using = X5cDeserializer.class)
+    public static class X5c {
+        private String value;
+
+        public X5c() { }
+
+        public X5c(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+    }
+
+    public static class X5cDeserializer extends JsonDeserializer<X5c> {
+
+        @Override
+        public X5c deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+            ObjectMapper mapper = (ObjectMapper) jsonParser.getCodec();
+            TreeNode root = mapper.readTree(jsonParser);
+            if (root == null) {
+                return null;
+            }
+            if (root.isArray()) {
+                if (root.size() <= 0) {
+                    return null;
+                } else {
+                    String[] values = mapper.readerForArrayOf(String.class).readValue(root.traverse());
+                    return new X5c(values[0]);
+                }
+            } else {
+                return new X5c(mapper.readValue(jsonParser, String.class));
+            }
+        }
     }
 }

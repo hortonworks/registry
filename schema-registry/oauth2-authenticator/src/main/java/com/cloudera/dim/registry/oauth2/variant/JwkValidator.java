@@ -28,8 +28,12 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWK_URL;
@@ -44,11 +48,18 @@ public class JwkValidator implements JwtValidatorVariant {
     private static final String KEYTYPE_RSA = "RSA";
     private static final String KEYTYPE_OCTET = "oct";
 
+    private final ExecutorService threadPool = Executors.newFixedThreadPool(1);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final List<Jwk> keys;
+    private final HttpClientForOAuth2 httpClient;
 
     public JwkValidator(Properties config, @Nonnull HttpClientForOAuth2 httpClient) throws ServletException {
-        keys = retrieveKeys(config, httpClient);
+        this.httpClient = httpClient;
+        this.keys = Collections.synchronizedList(retrieveKeys(config, httpClient));
+
+        // refresh the JWKs every 5 minutes
+        threadPool.submit(new JwkRefresher(config, httpClient));
     }
 
     @Override
@@ -79,10 +90,11 @@ public class JwkValidator implements JwtValidatorVariant {
     }
 
     private boolean validateRsa(SignedJWT jwtToken, Jwk jwk) {
-        String keyText = jwk.getX5c();
+        String keyText = jwk.getX5c() == null ? null : jwk.getX5c().getValue();
         if (keyText == null) {
             keyText = jwk.getN();
         }
+
         RSAPublicKey rsaPublicKey = RsaUtil.parseRSAPublicKey(keyText);
         return RsaUtil.validateSignature(rsaPublicKey, jwtToken);
     }
@@ -106,7 +118,8 @@ public class JwkValidator implements JwtValidatorVariant {
         Jwk matchingKey = null;
         for (Jwk jwk : keys) {
             if (kid != null) {
-                if (kid.equals(jwk.getKid()) && alg.getName().equals(jwk.getAlg())) {
+                // Azure AD doesn't provide alg, so we can only use kid
+                if (kid.equals(jwk.getKid())) {
                     matchingKey = jwk;
                     break;
                 }
@@ -150,6 +163,49 @@ public class JwkValidator implements JwtValidatorVariant {
             throw slex;
         } catch (Exception ex) {
             throw new ServletException("Couldn't read JWK.", ex);
+        }
+    }
+
+    @Override
+    public void close() {
+        shutdown.set(true);
+        threadPool.shutdown();
+        if (httpClient != null) {
+            httpClient.close();
+        }
+    }
+
+    /** We'll query the JWK URL every 5 minutes to ensure we've got the latest keys. */
+    private class JwkRefresher implements Runnable {
+
+        private final Properties config;
+        private final HttpClientForOAuth2 httpClient;
+
+        public JwkRefresher(Properties config, HttpClientForOAuth2 httpClient) {
+            this.config = config;
+            this.httpClient = httpClient;
+        }
+
+        @Override
+        public synchronized void run() {
+            while (!shutdown.get() && !Thread.interrupted()) {
+                try {
+                    wait(5 * 60000L);
+                } catch (InterruptedException iex) {
+                    LOG.warn("JWK refresh thread was interrupted.");
+                    return;
+                }
+
+                try {
+                    List<Jwk> jwks = retrieveKeys(config, httpClient);
+                    if (jwks != null && jwks.size() > 0) {
+                        keys.clear();
+                        keys.addAll(jwks);
+                    }
+                } catch (Exception ex) {
+                    LOG.warn("Exception while refreshing JWKs.", ex);
+                }
+            }
         }
     }
 

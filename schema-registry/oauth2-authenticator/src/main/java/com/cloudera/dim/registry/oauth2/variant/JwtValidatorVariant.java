@@ -27,4 +27,7 @@ public interface JwtValidatorVariant {
      */
     boolean validateSignature(SignedJWT jwtToken);
 
+    /** Close any resources this validator might have opened. */
+    void close();
+
 }

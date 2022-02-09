@@ -1756,6 +1756,22 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                 ConfigEntry.StringConverter.get(),
                 ConfigEntry.NonEmptyStringValidator.get());
 
+        public static final ConfigEntry<String> OAUTH_SCOPE =
+                ConfigEntry.optional("schema.registry.oauth.scope",
+                        String.class,
+                        "OAuth scope",
+                        "",
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
+
+        public static final ConfigEntry<String> OAUTH_REQUEST_METHOD =
+                ConfigEntry.optional("schema.registry.oauth.request.method",
+                        String.class,
+                        "HTTP method for requesting the auth token",
+                        "post",
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
+
         private final Map<String, ?> config;
         private final Map<String, ConfigEntry<?>> options;
 
