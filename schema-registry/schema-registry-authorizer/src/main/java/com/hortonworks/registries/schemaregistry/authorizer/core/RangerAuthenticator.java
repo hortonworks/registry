@@ -13,25 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.cloudera.dim.registry.oauth2.variant;
+package com.hortonworks.registries.schemaregistry.authorizer.core;
 
-import com.hortonworks.registries.shaded.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import javax.annotation.Nullable;
+import javax.ws.rs.core.SecurityContext;
 
-import java.util.ArrayList;
-import java.util.List;
+/** Schema Registry receives its principal through SPNEGO, OAuth2 or other mechanisms.
+ * We need to pass the principal to Ranger. */
+public interface RangerAuthenticator {
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-class JwkList {
+ /** Get the user which will be sent to Ranger for authentication. */
+ @Nullable
+ Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc);
 
-    private List<Jwk> keys = new ArrayList<>();
-
-    public JwkList() { }
-
-    public List<Jwk> getKeys() {
-        return keys;
-    }
-
-    public void setKeys(List<Jwk> keys) {
-        this.keys = keys;
-    }
 }

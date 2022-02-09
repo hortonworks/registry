@@ -33,7 +33,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
@@ -79,13 +79,13 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     private static final String OPERATION_GROUP_CONFLUENT_SR = "5. Confluent Schema Registry compatible API";
 
     private final AuthorizationAgent authorizationAgent;
-    private final AuthenticationUtils authenticationUtils;
+    private final RangerAuthenticator authenticationUtils;
     private final AtlasEventLogger atlasEventLogger;
 
     @Inject
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
                                                      AuthorizationAgent authorizationAgent,
-                                                     AuthenticationUtils authenticationUtils,
+                                                     RangerAuthenticator authenticationUtils,
                                                      AtlasEventLogger atlasEventLogger) {
         super(schemaRegistry);
 

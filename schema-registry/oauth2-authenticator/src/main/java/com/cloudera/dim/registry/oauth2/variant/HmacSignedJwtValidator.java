@@ -17,14 +17,12 @@ package com.cloudera.dim.registry.oauth2.variant;
 
 import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.SignedJWT;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jose4j.base64url.Base64Url;
+import org.jose4j.keys.AesKey;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
+import java.security.Key;
 import java.util.Properties;
 
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.HMAC_SECRET_KEY_PROPERTY;
@@ -39,50 +37,42 @@ import static com.cloudera.dim.registry.oauth2.OAuth2Config.HMAC_SECRET_KEY_URL;
  *   </ul>
  * </p>
  */
-public class HmacSignedJwtValidator implements JwtValidatorVariant {
-
-    private static final Logger LOG = LoggerFactory.getLogger(HmacSignedJwtValidator.class);
+public class HmacSignedJwtValidator extends StoredKeyValidator {
 
     private final HttpClientForOAuth2 httpClient;
-    private final String hmacSecret;
 
     public HmacSignedJwtValidator(JwtKeyStoreType keyStoreType, Properties config, @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
+        super(readHmacSecret(keyStoreType, config, httpClient), config);
         this.httpClient = httpClient;
-
-        hmacSecret = readHmacSecret(keyStoreType, config);
-        if (hmacSecret == null) {
-            throw new RuntimeException("HMAC secret key is null.");
-        }
     }
 
-    private String readHmacSecret(JwtKeyStoreType keyStoreType, Properties config) throws ServletException {
+    private static Key readHmacSecret(JwtKeyStoreType keyStoreType, Properties config,
+                                      @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
+        final String hmacSecret;
         switch (keyStoreType) {
             case PROPERTY:
-                return config.getProperty(HMAC_SECRET_KEY_PROPERTY);
+                hmacSecret = config.getProperty(HMAC_SECRET_KEY_PROPERTY);
+                break;
             case URL:
                 try {
                     String url = config.getProperty(HMAC_SECRET_KEY_URL);
                     if (url == null) {
                         throw new IllegalArgumentException("Property is required: " + HMAC_SECRET_KEY_URL);
+                    } else if (httpClient == null) {
+                        throw new IllegalArgumentException("HTTP Client was not created.");
                     }
-                    return httpClient.readKeyFromUrl(config, url);
+                    hmacSecret = httpClient.readKeyFromUrl(config, url);
                 } catch (Exception ex) {
                     throw new ServletException("Failed to download secret key from URL.", ex);
                 }
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported store type for HMAC: " + keyStoreType);
         }
-    }
 
-    @Override
-    public boolean validateSignature(SignedJWT jwtToken) {
-        try {
-            JWSVerifier verifier = new MACVerifier(hmacSecret);
-            return jwtToken.verify(verifier);
-        } catch (Exception ex) {
-            LOG.warn("Failed to verify HMAC signature of the JWT.", ex);
-        }
-        return false;
+        Base64Url base64Url = new Base64Url();
+        byte[] octetSequence = base64Url.base64UrlDecode(hmacSecret);
+        return new AesKey(octetSequence);
     }
 
     @Override

@@ -15,11 +15,6 @@
  **/
 package com.cloudera.dim.registry.oauth2.variant;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,31 +83,6 @@ class RsaUtil {
             LOG.warn("Failed to parse public key: {}", ex.toString());
         }
         return null;
-    }
-
-    public static boolean validateSignature(RSAPublicKey publicKey, SignedJWT jwtToken) {
-        boolean valid = false;
-        if (JWSObject.State.SIGNED == jwtToken.getState()) {
-            LOG.debug("JWT token is in a SIGNED state");
-            if (jwtToken.getSignature() != null) {
-                LOG.debug("JWT token signature is not null");
-                if (publicKey == null) {
-                    throw new RuntimeException("Public key is null, cannot verify signature.");
-                }
-                try {
-                    JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
-                    if (jwtToken.verify(verifier)) {
-                        valid = true;
-                        LOG.debug("JWT token has been successfully verified");
-                    } else {
-                        LOG.warn("JWT signature verification failed.");
-                    }
-                } catch (JOSEException je) {
-                    LOG.warn("Error while validating signature", je);
-                }
-            }
-        }
-        return valid;
     }
 
     private RsaUtil() { }

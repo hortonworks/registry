@@ -16,7 +16,6 @@ package com.hortonworks.registries.schemaregistry.webservice.integration;
 
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.GenericExceptionMapper;
-import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -28,7 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
@@ -76,7 +75,7 @@ public class SchemaRegistryResourceIT {
 
     private static ISchemaRegistry schemaRegistryMock;
     private static AuthorizationAgent authorizationAgentMock;
-    private static AuthenticationUtils authenticationUtils;
+    private static RangerAuthenticator authenticationUtils;
     private static SchemaMetadataTypeValidator schemaMetadataTypeValidatorMock;
     private static AtlasEventLogger atlasEventLogger;
     private static ResourceExtension RESOURCE = beforeAll();
@@ -85,7 +84,7 @@ public class SchemaRegistryResourceIT {
     private static ResourceExtension beforeAll() {
         schemaRegistryMock = mock(ISchemaRegistry.class);
         authorizationAgentMock = mock(AuthorizationAgent.class);
-        authenticationUtils = new AuthenticationUtils(mock(HadoopPlugin.class));
+        authenticationUtils = mock(RangerAuthenticator.class);
         schemaMetadataTypeValidatorMock = mock(SchemaMetadataTypeValidator.class);
         atlasEventLogger = mock(AtlasEventLogger.class);
         return ResourceExtension.builder()

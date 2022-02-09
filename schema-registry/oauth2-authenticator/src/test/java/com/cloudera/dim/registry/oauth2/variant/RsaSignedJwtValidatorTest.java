@@ -54,7 +54,7 @@ public class RsaSignedJwtValidatorTest {
         config.setProperty(PUBLIC_KEY_PROPERTY, value);
 
         validator = new RsaSignedJwtValidator(type, JWSAlgorithm.RS256, config, null);
-        PublicKey result = validator.parsePublicKey(config, type, JWSAlgorithm.RS256);
+        PublicKey result = validator.parsePublicKey(config, type, JWSAlgorithm.RS256, null);
 
         assertNotNull(result);
         assertEquals("RSA", result.getAlgorithm());
@@ -79,7 +79,7 @@ public class RsaSignedJwtValidatorTest {
         when(httpClient.readKeyFromUrl(any(), eq(url))).thenReturn(value);
 
         validator = new RsaSignedJwtValidator(type, JWSAlgorithm.RS256, config, httpClient);
-        PublicKey result = validator.parsePublicKey(config, type, JWSAlgorithm.RS256);
+        PublicKey result = validator.parsePublicKey(config, type, JWSAlgorithm.RS256, httpClient);
 
         assertNotNull(result);
         assertEquals("RSA", result.getAlgorithm());

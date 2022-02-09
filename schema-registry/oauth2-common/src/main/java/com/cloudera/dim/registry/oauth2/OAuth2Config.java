@@ -23,6 +23,10 @@ public final class OAuth2Config {
     public static final String HEADER_PREFIX = "header.prefix";
     /** Expected JWT audiences, used for validation. */
     public static final String EXPECTED_JWT_AUDIENCES = "expected.jwt.audiences";
+    public static final String EXPECTED_JWT_ISSUER = "expected.jwt.issuer";
+    public static final String CLOCK_SKEW = "clock.skew";
+    /** Which claim to use for retrieving the principal (default is 'sub') */
+    public static final String JWT_PRINCIPAL_CLAIM = "jwt.principal.claim";
 
     /** Algorithm used for validating the signature, eg. rs256, hs256 */
     public static final String KEY_ALGORITHM = "key.algorithm";
@@ -52,6 +56,8 @@ public final class OAuth2Config {
     // -------------------------------- jwk properties ---------------------
 
     public static final String JWK_URL = "jwk.url";
+    /** Refresh keys in milliseconds (default is 5 mins) */
+    public static final String JWK_REFRESH_MS = "jwk.refresh.ms";
 
     // -------------------------------- HTTP Client properties ---------------------
 

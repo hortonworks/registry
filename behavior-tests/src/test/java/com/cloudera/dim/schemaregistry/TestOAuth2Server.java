@@ -15,7 +15,6 @@
  **/
 package com.cloudera.dim.schemaregistry;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
@@ -30,11 +29,19 @@ import org.mockserver.model.RequestDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.StringBody.exact;
@@ -111,24 +118,47 @@ public class TestOAuth2Server extends AbstractTestServer {
     }
 
     private String generateJwt(String subject, int expirationInMinutes) throws JoseException {
-        final JwtClaims claims = new JwtClaims();
-        claims.setSubject(subject);
+        RSAPrivateKey rsaPrivateKey;
+        try {
+            String privateKeyTxt = IOUtils.toString(
+                    getClass().getResourceAsStream("/template/test_rsa.private"), StandardCharsets.UTF_8);
+            rsaPrivateKey = readPrivateKey(privateKeyTxt);
+        } catch (IOException iex) {
+            throw new RuntimeException("Failed to read private key from resource file.", iex);
+        }
+
+        JwtClaims claims = new JwtClaims();
         claims.setExpirationTimeMinutesInTheFuture(expirationInMinutes);
+        claims.setGeneratedJwtId();
+        claims.setIssuedAtToNow();
+        claims.setSubject(subject);
 
-        final JsonWebSignature jws = new JsonWebSignature();
+        // sign the JWT
+        JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());
+        jws.setKey(rsaPrivateKey);
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
-        jws.setKey(readPrivateKey());
 
+        // this is the result
         return jws.getCompactSerialization();
     }
 
-    private RSAPrivateKey readPrivateKey() {
-        try {
-            String temp = IOUtils.toString(getClass().getResourceAsStream("/template/test_rsa.private"), StandardCharsets.UTF_8);
-            String privateKeyPEM = temp.replaceAll("\n", "");
+    public String getClientId() {
+        return clientId;
+    }
 
-            byte[] decoded = Base64.decodeBase64(privateKeyPEM);
+    public String getSecret() {
+        return secret;
+    }
+
+    private static RSAPrivateKey readPrivateKey(String privateKeyTxt) {
+        try {
+            privateKeyTxt = privateKeyTxt
+                    .replaceAll("-----BEGIN PRIVATE KEY-----", "")
+                    .replaceAll("-----END PRIVATE KEY-----", "")
+                    .replaceAll("\n", "");
+
+            byte[] decoded = java.util.Base64.getDecoder().decode(privateKeyTxt);
 
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
@@ -139,11 +169,56 @@ public class TestOAuth2Server extends AbstractTestServer {
         }
     }
 
-    public String getClientId() {
-        return clientId;
+    @Nonnull
+    private static RSAPublicKey parseRSAPublicKey(@Nonnull String publicKeyText) {
+        // The input can be a public key OR a certificate. Attempt to guess what we got.
+        boolean isPublicKey = publicKeyText.contains("-----BEGIN PUBLIC KEY-----");
+
+        publicKeyText = publicKeyText
+                .replaceAll("-----BEGIN PUBLIC KEY-----", "")
+                .replaceAll("-----END PUBLIC KEY-----", "")
+                .replaceAll("\n", "");
+
+        byte[] decoded = java.util.Base64.getDecoder().decode(publicKeyText);
+
+        RSAPublicKey result;
+        if (isPublicKey) {
+            result = readBytesAsPublicKey(decoded);
+            if (result == null) {
+                result = readBytesAsX509Certificate(decoded);
+            }
+        } else {
+            result = readBytesAsX509Certificate(decoded);
+            if (result == null) {
+                result = readBytesAsPublicKey(decoded);
+            }
+        }
+
+        if (result == null) {
+            throw new RuntimeException("Could not generate public RSA key.");
+        }
+
+        return result;
+    }
+    private static RSAPublicKey readBytesAsX509Certificate(byte[] decoded) {
+        try {
+            InputStream certstream = new ByteArrayInputStream(decoded);
+            Certificate cert = CertificateFactory.getInstance("X.509").generateCertificate(certstream);
+            return (RSAPublicKey) cert.getPublicKey();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 
-    public String getSecret() {
-        return secret;
+    private static RSAPublicKey readBytesAsPublicKey(byte[] decoded) {
+        try {
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return (RSAPublicKey) kf.generatePublic(spec);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 }

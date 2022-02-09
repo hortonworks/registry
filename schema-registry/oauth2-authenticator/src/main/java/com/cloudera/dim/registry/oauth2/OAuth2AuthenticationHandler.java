@@ -19,7 +19,6 @@ import com.cloudera.dim.registry.oauth2.variant.HmacSignedJwtValidator;
 import com.cloudera.dim.registry.oauth2.variant.JwkValidator;
 import com.cloudera.dim.registry.oauth2.variant.JwtValidatorVariant;
 import com.cloudera.dim.registry.oauth2.variant.RsaSignedJwtValidator;
-import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.server.AuthenticationHandler;
 import com.hortonworks.registries.auth.server.AuthenticationToken;
@@ -55,6 +54,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
     public static final String AUTHORIZATION = "Authorization";
 
     private String bearerPrefix = "Bearer ";
+    private String jwtPrincipalClaim = "sub";
     private List<String> audiences = null;
     private HttpClientForOAuth2 httpClient;
     private JwtValidatorVariant handlerImpl;
@@ -99,6 +99,13 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
             }
         }
 
+        if (config.containsKey(JWT_PRINCIPAL_CLAIM)) {
+            jwtPrincipalClaim = config.getProperty(JWT_PRINCIPAL_CLAIM);
+            if (jwtPrincipalClaim == null) {
+                jwtPrincipalClaim = "sub";
+            }
+        }
+
         // setup the list of valid audiences for token validation
         String auds = config.getProperty(EXPECTED_JWT_AUDIENCES);
         if (auds != null) {
@@ -123,11 +130,6 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         }
 
         return new HttpClientForOAuth2(clientSettings);
-    }
-
-    @VisibleForTesting
-    void setHttpClient(HttpClientForOAuth2 httpClient) {
-        this.httpClient = httpClient;
     }
 
     @Override
@@ -184,7 +186,11 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
             jwtToken = SignedJWT.parse(jwt);
             valid = validateToken(jwtToken);
             if (valid) {
-                userName = jwtToken.getJWTClaimsSet().getSubject();
+                if (jwtPrincipalClaim == null || jwtPrincipalClaim.equals("sub")) {
+                    userName = jwtToken.getJWTClaimsSet().getSubject();
+                } else {
+                    userName = jwtToken.getJWTClaimsSet().toJSONObject().getAsString(jwtPrincipalClaim);
+                }
                 LOG.debug("USERNAME: " + userName);
             } else {
                 LOG.warn("jwtToken failed validation: " + jwtToken.serialize());

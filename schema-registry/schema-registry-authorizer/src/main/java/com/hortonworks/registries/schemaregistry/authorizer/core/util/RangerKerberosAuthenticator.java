@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.authorizer.core.util;
 import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,17 +34,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/** Authenticator which retrieves validates the principal with kerberos. */
 @Singleton
-public class AuthenticationUtils {
+public class RangerKerberosAuthenticator implements RangerAuthenticator {
 
     private static final Map<String, Authorizer.UserAndGroups> USER_GROUPS_STORE = new ConcurrentHashMap<>();
 
-    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RangerKerberosAuthenticator.class);
 
     private final HadoopPlugin hadoopPlugin;
 
     @Inject
-    public AuthenticationUtils(HadoopPlugin hadoopPlugin) {
+    public RangerKerberosAuthenticator(HadoopPlugin hadoopPlugin) {
         this.hadoopPlugin = checkNotNull(hadoopPlugin, "hadoopPlugin");
     }
 
