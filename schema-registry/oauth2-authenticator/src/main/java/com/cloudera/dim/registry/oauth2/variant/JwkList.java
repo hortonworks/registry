@@ -15,9 +15,12 @@
  **/
 package com.cloudera.dim.registry.oauth2.variant;
 
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class JwkList {
 
     private List<Jwk> keys = new ArrayList<>();

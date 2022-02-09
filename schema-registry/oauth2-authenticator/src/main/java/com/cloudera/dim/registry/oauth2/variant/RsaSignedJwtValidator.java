@@ -144,4 +144,11 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
         }
     }
 
+    @Override
+    public void close() {
+        if (httpClient != null) {
+            httpClient.close();
+        }
+    }
+
 }

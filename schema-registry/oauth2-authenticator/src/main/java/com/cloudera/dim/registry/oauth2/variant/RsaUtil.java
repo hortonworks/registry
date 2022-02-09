@@ -24,10 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
@@ -37,24 +39,55 @@ class RsaUtil {
 
     @Nonnull
     public static RSAPublicKey parseRSAPublicKey(@Nonnull String publicKeyText) {
+        // The input can be a public key OR a certificate. Attempt to guess what we got.
+        boolean isPublicKey = publicKeyText.contains("-----BEGIN PUBLIC KEY-----");
+
+        publicKeyText = publicKeyText
+            .replaceAll("-----BEGIN PUBLIC KEY-----", "")
+            .replaceAll("-----END PUBLIC KEY-----", "")
+            .replaceAll("\n", "");
+
+        byte[] decoded = Base64.getDecoder().decode(publicKeyText);
+
+        RSAPublicKey result;
+        if (isPublicKey) {
+            result = readBytesAsPublicKey(decoded);
+            if (result == null) {
+                result = readBytesAsX509Certificate(decoded);
+            }
+        } else {
+            result = readBytesAsX509Certificate(decoded);
+            if (result == null) {
+                result = readBytesAsPublicKey(decoded);
+            }
+        }
+
+        if (result == null) {
+            throw new RuntimeException("Could not generate public RSA key.");
+        }
+
+        return result;
+    }
+    private static RSAPublicKey readBytesAsX509Certificate(byte[] decoded) {
         try {
-            publicKeyText = publicKeyText
-                .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-                .replaceAll("-----END PUBLIC KEY-----", "")
-                .replaceAll("\n", "");
+            InputStream certstream = new ByteArrayInputStream(decoded);
+            Certificate cert = CertificateFactory.getInstance("X.509").generateCertificate(certstream);
+            return (RSAPublicKey) cert.getPublicKey();
+        } catch (Exception ex) {
+            LOG.warn("Failed to parse certificate: {}", ex.toString());
+        }
+        return null;
+    }
 
-            byte[] decoded = Base64.getDecoder().decode(publicKeyText);
-
+    private static RSAPublicKey readBytesAsPublicKey(byte[] decoded) {
+        try {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPublicKey result = (RSAPublicKey) kf.generatePublic(spec);
-            if (result == null) {
-                throw new RuntimeException("Could not generate public RSA key.");
-            }
-            return result;
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException ce) {
-            throw new RuntimeException("Failed to parse certificate.", ce);
+            return (RSAPublicKey) kf.generatePublic(spec);
+        } catch (Exception ex) {
+            LOG.warn("Failed to parse public key: {}", ex.toString());
         }
+        return null;
     }
 
     public static boolean validateSignature(RSAPublicKey publicKey, SignedJWT jwtToken) {

@@ -131,7 +131,11 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
     }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+        if (handlerImpl != null) {
+            handlerImpl.close();
+        }
+    }
 
     @Override
     public boolean managementOperation(AuthenticationToken token, HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {

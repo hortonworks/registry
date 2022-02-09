@@ -84,4 +84,11 @@ public class HmacSignedJwtValidator implements JwtValidatorVariant {
         }
         return false;
     }
+
+    @Override
+    public void close() {
+        if (httpClient != null) {
+            httpClient.close();
+        }
+    }
 }
