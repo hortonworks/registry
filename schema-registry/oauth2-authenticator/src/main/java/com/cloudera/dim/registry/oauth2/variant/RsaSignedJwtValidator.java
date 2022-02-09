@@ -19,7 +19,6 @@ import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.google.common.annotations.VisibleForTesting;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +33,14 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
-import java.security.interfaces.RSAPublicKey;
 import java.util.Properties;
 
-import static com.cloudera.dim.registry.oauth2.OAuth2Config.*;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.KEY_ALGORITHM;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.PUBLIC_KEY_KEYSTORE;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.PUBLIC_KEY_KEYSTORE_ALIAS;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.PUBLIC_KEY_KEYSTORE_PASSWORD;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.PUBLIC_KEY_PROPERTY;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.PUBLIC_KEY_URL;
 
 /**
  * <p>Validate JWT with a public key.</p>
@@ -49,27 +52,20 @@ import static com.cloudera.dim.registry.oauth2.OAuth2Config.*;
  *   </ul>
  * </p>
  */
-public class RsaSignedJwtValidator implements JwtValidatorVariant {
+public class RsaSignedJwtValidator extends StoredKeyValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(RsaSignedJwtValidator.class);
 
     private final HttpClientForOAuth2 httpClient;
-    private final PublicKey publicKey;
 
     public RsaSignedJwtValidator(JwtKeyStoreType keyStoreType, JWSAlgorithm algType, Properties config, @Nullable HttpClientForOAuth2 httpClient) throws ServletException {
+        super(readPublicKey(keyStoreType, algType, config, httpClient), config);
         this.httpClient = httpClient;
-
-        publicKey = readPublicKey(keyStoreType, algType, config);
-    }
-
-    @Override
-    public boolean validateSignature(SignedJWT jwtToken) {
-        return RsaUtil.validateSignature((RSAPublicKey) publicKey, jwtToken);
     }
 
     @Nonnull
-    private PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JWSAlgorithm algType,
-                                    Properties config) throws ServletException {
+    private static PublicKey readPublicKey(@Nonnull JwtKeyStoreType keyStoreType, @Nullable JWSAlgorithm algType,
+                                    Properties config, HttpClientForOAuth2 httpClient) throws ServletException {
         try {
             switch (keyStoreType) {
                 case PROPERTY:
@@ -77,7 +73,7 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
                     if (algType == null) {
                         throw new IllegalArgumentException("Please provide the algorithm with: " + KEY_ALGORITHM);
                     } else {
-                        return parsePublicKey(config, keyStoreType, algType);
+                        return parsePublicKey(config, keyStoreType, algType, httpClient);
                     }
                 case KEYSTORE:
                     return readFromKeystore(config);
@@ -92,13 +88,17 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
     }
 
     @VisibleForTesting
-    PublicKey parsePublicKey(Properties config, JwtKeyStoreType keyStoreType, @Nonnull JWSAlgorithm certType) throws IOException {
+    static PublicKey parsePublicKey(Properties config, JwtKeyStoreType keyStoreType, @Nonnull JWSAlgorithm certType,
+                                    @Nullable HttpClientForOAuth2 httpClient) throws IOException {
         String result;
         switch (keyStoreType) {
             case PROPERTY:
                 result = config.getProperty(PUBLIC_KEY_PROPERTY);
                 break;
             case URL:
+                if (httpClient == null) {
+                    throw new IllegalArgumentException("HTTPClient is null.");
+                }
                 result = httpClient.readKeyFromUrl(config, config.getProperty(PUBLIC_KEY_URL));
                 break;
             // store type KEYSTORE is handled elsewhere
@@ -119,7 +119,7 @@ public class RsaSignedJwtValidator implements JwtValidatorVariant {
 
     @VisibleForTesting
     @Nonnull
-    PublicKey readFromKeystore(Properties config) throws KeyStoreException, IOException {
+    static PublicKey readFromKeystore(Properties config) throws KeyStoreException, IOException {
         String keystorePath = config.getProperty(PUBLIC_KEY_KEYSTORE);
         String ksAlias = config.getProperty(PUBLIC_KEY_KEYSTORE_ALIAS);
         String ksPassword = config.getProperty(PUBLIC_KEY_KEYSTORE_PASSWORD);

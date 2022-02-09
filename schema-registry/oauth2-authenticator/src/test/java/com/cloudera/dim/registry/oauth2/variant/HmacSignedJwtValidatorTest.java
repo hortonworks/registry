@@ -25,7 +25,7 @@ import java.util.Properties;
 
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.HMAC_SECRET_KEY_PROPERTY;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.HMAC_SECRET_KEY_URL;
-import static com.cloudera.dim.registry.oauth2.TestHmacJwtGenerator.generateSignedJwt;
+import static com.cloudera.dim.registry.oauth2.TestJwtGenerator.generateSignedJwt;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,7 +40,7 @@ public class HmacSignedJwtValidatorTest {
     public void testValidationFromProperty() throws Exception {
         JwtKeyStoreType type = JwtKeyStoreType.PROPERTY;
         Properties config = new Properties();
-        String secretKey = "969c55677e9f397060a21e4bbef1dcc9";
+        String secretKey = "FdFYFzERwC2uCBB46pZQi4GG85LujR8obt-KWRBICVQ";
         config.setProperty(HMAC_SECRET_KEY_PROPERTY, secretKey);
 
         String jwtAsString = generateSignedJwt(JWSAlgorithm.HS256, null, "abigel", secretKey);
@@ -60,7 +60,7 @@ public class HmacSignedJwtValidatorTest {
         HttpClientForOAuth2 httpClient = mock(HttpClientForOAuth2.class);
 
         Properties config = new Properties();
-        String secretKey = "969c55677e9f397060a21e4bbef1dcc9";
+        String secretKey = "FdFYFzERwC2uCBB46pZQi4GG85LujR8obt-KWRBICVQ";
         config.setProperty(HMAC_SECRET_KEY_PROPERTY, secretKey);
 
         String jwtAsString = generateSignedJwt(JWSAlgorithm.HS256, null, "marton", secretKey);

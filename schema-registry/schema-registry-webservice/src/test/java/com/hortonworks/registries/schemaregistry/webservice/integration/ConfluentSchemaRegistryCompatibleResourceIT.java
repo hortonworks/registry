@@ -17,7 +17,6 @@ package com.hortonworks.registries.schemaregistry.webservice.integration;
 
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -28,7 +27,7 @@ import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentCompatibilityResult;
 import com.hortonworks.registries.schemaregistry.webservice.ConfluentSchemaRegistryCompatibleResource;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
@@ -61,7 +60,7 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         private static ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
         private static AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
         private static AtlasEventLogger atlasEventLogger = getAtlasEventLogger();
-        private static AuthenticationUtils authenticationUtils = new AuthenticationUtils(mock(HadoopPlugin.class));
+        private static RangerAuthenticator authenticationUtils = mock(RangerAuthenticator.class);
         private static ResourceExtension RESOURCE = ResourceExtension.builder()
                 .addResource(instantiateResource())
                 .addProperty("jersey.config.server.provider.classnames", MultiPartFeature.class.getName())

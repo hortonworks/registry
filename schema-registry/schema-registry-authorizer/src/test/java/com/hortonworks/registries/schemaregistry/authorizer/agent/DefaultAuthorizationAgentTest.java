@@ -33,7 +33,8 @@ import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SchemaTextStore;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.SecurityContextForTesting;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.RangerKerberosAuthenticator;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
@@ -70,7 +71,7 @@ public class DefaultAuthorizationAgentTest {
 
 
     private static AuthorizationAgent authorizationAgent;
-    private static AuthenticationUtils authenticationUtils;
+    private static RangerAuthenticator rangerAuthenticator;
     private static ISchemaRegistry schemaRegistry;
     private static SchemaIdVersion siv3;
     private static SchemaIdVersion siv31;
@@ -87,7 +88,7 @@ public class DefaultAuthorizationAgentTest {
 
         final ImmutableMap.Builder<String, Long> schemaIdMap = ImmutableMap.builder();
 
-        authenticationUtils = new AuthenticationUtils(new KerberosKeytabCheck());
+        rangerAuthenticator = new RangerKerberosAuthenticator(new KerberosKeytabCheck());
 
         Collection<Map<String, Object>> schemaProvidersConfig =
                 Collections.singleton(Collections.singletonMap("providerClass",
@@ -284,13 +285,13 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc = new SecurityContextForTesting(user);
 
         // Authorized by p13, p14, p15, p16
-        authorizationAgent.authorizeDeleteSchemaMetadata(authenticationUtils.getUserAndGroups(sc),
+        authorizationAgent.authorizeDeleteSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc),
                 schemaRegistry, "Schema3");
 
         try {
             String user999 = "user999";
             SecurityContext sc999 = new SecurityContextForTesting(user999);
-            authorizationAgent.authorizeDeleteSchemaMetadata(authenticationUtils.getUserAndGroups(sc999),
+            authorizationAgent.authorizeDeleteSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc999),
                     schemaRegistry, "Schema3");
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
@@ -303,7 +304,7 @@ public class DefaultAuthorizationAgentTest {
             String user999 = "user33";
             SecurityContext sc999 = new SecurityContextForTesting(user999);
             // Partially authorized by p3
-            authorizationAgent.authorizeDeleteSchemaMetadata(authenticationUtils.getUserAndGroups(sc999),
+            authorizationAgent.authorizeDeleteSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc999),
                     schemaRegistry, "Schema3");
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
@@ -317,7 +318,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeDeleteSchemaMetadata(authenticationUtils.getUserAndGroups(sc),
+            authorizationAgent.authorizeDeleteSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc),
                     schemaRegistry, "SchemaNotFound");
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
@@ -335,7 +336,7 @@ public class DefaultAuthorizationAgentTest {
         String user = "user4";
         SecurityContext sc = new SecurityContextForTesting(user);
         ArrayList<SchemaMetadataInfo> schemas = new ArrayList();
-        Collection<SchemaMetadataInfo> resEmpty = authorizationAgent.authorizeFindSchemas(authenticationUtils.getUserAndGroups(sc), schemas);
+        Collection<SchemaMetadataInfo> resEmpty = authorizationAgent.authorizeFindSchemas(rangerAuthenticator.getUserAndGroups(sc), schemas);
         assertTrue(resEmpty.isEmpty());
 
         // 2
@@ -352,7 +353,7 @@ public class DefaultAuthorizationAgentTest {
                 .build();
         SchemaMetadataInfo smi1 = new SchemaMetadataInfo(sm1);
         schemas.add(smi1);
-        resEmpty = authorizationAgent.authorizeFindSchemas(authenticationUtils.getUserAndGroups(sc1), schemas);
+        resEmpty = authorizationAgent.authorizeFindSchemas(rangerAuthenticator.getUserAndGroups(sc1), schemas);
         assertTrue(resEmpty.isEmpty());
 
         // 3
@@ -369,7 +370,7 @@ public class DefaultAuthorizationAgentTest {
                 .build();
         SchemaMetadataInfo smi2 = new SchemaMetadataInfo(sm2);
         schemas.add(smi2);
-        Collection<SchemaMetadataInfo> resNonEmpty = authorizationAgent.authorizeFindSchemas(authenticationUtils.getUserAndGroups(sc2), schemas);
+        Collection<SchemaMetadataInfo> resNonEmpty = authorizationAgent.authorizeFindSchemas(rangerAuthenticator.getUserAndGroups(sc2), schemas);
         assertTrue(resNonEmpty.size() == 1);
         assertTrue(resNonEmpty.contains(smi2));
 
@@ -387,7 +388,7 @@ public class DefaultAuthorizationAgentTest {
                 .build();
         SchemaMetadataInfo smi3 = new SchemaMetadataInfo(sm3);
         schemas.add(smi3);
-        resNonEmpty = authorizationAgent.authorizeFindSchemas(authenticationUtils.getUserAndGroups(sc), schemas);
+        resNonEmpty = authorizationAgent.authorizeFindSchemas(rangerAuthenticator.getUserAndGroups(sc), schemas);
         assertTrue(resNonEmpty.size() == 2);
         assertTrue(resNonEmpty.contains(smi2));
         assertTrue(resNonEmpty.contains(smi3));
@@ -406,7 +407,7 @@ public class DefaultAuthorizationAgentTest {
                 .build();
         SchemaMetadataInfo smi4 = new SchemaMetadataInfo(sm4);
         schemas.add(smi4);
-        resNonEmpty = authorizationAgent.authorizeFindSchemas(authenticationUtils.getUserAndGroups(sc), schemas);
+        resNonEmpty = authorizationAgent.authorizeFindSchemas(rangerAuthenticator.getUserAndGroups(sc), schemas);
         assertTrue(resNonEmpty.size() == 2);
         assertTrue(resNonEmpty.contains(smi2));
         assertTrue(resNonEmpty.contains(smi3));
@@ -436,7 +437,7 @@ public class DefaultAuthorizationAgentTest {
 
         SecurityContext sc3 = new SecurityContextForTesting("user3");
         Collection<AggregatedSchemaMetadataInfo> res = authorizationAgent
-                .authorizeGetAggregatedSchemaList(authenticationUtils.getUserAndGroups(sc3), asmiList);
+                .authorizeGetAggregatedSchemaList(rangerAuthenticator.getUserAndGroups(sc3), asmiList);
         assertTrue(res.isEmpty());
 
         SchemaMetadataInfo smi3 = schemaRegistry.getSchemaMetadataInfo("Schema3");
@@ -460,12 +461,12 @@ public class DefaultAuthorizationAgentTest {
 
         asmiList.add(asmi);
         res = authorizationAgent
-                .authorizeGetAggregatedSchemaList(authenticationUtils.getUserAndGroups(sc3), asmiList);
+                .authorizeGetAggregatedSchemaList(rangerAuthenticator.getUserAndGroups(sc3), asmiList);
         assertTrue(res.size() == 1);
 
         SecurityContext sc999 = new SecurityContextForTesting("user999");
         res = authorizationAgent
-                .authorizeGetAggregatedSchemaList(authenticationUtils.getUserAndGroups(sc999), asmiList);
+                .authorizeGetAggregatedSchemaList(rangerAuthenticator.getUserAndGroups(sc999), asmiList);
         assertTrue(res.isEmpty());
 
         // NOT_FOUND TEST CASES do not exist
@@ -493,11 +494,11 @@ public class DefaultAuthorizationAgentTest {
                         serDesInfo);
 
         SecurityContext sc3 = new SecurityContextForTesting("user3");
-        authorizationAgent.authorizeGetAggregatedSchemaInfo(authenticationUtils.getUserAndGroups(sc3), asmi);
+        authorizationAgent.authorizeGetAggregatedSchemaInfo(rangerAuthenticator.getUserAndGroups(sc3), asmi);
 
         try {
             SecurityContext sc999 = new SecurityContextForTesting("user999");
-            authorizationAgent.authorizeGetAggregatedSchemaInfo(authenticationUtils.getUserAndGroups(sc999), asmi);
+            authorizationAgent.authorizeGetAggregatedSchemaInfo(rangerAuthenticator.getUserAndGroups(sc999), asmi);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [read] permission on " +
@@ -507,7 +508,7 @@ public class DefaultAuthorizationAgentTest {
 
         try {
             SecurityContext sc100 = new SecurityContextForTesting("user100");
-            authorizationAgent.authorizeGetAggregatedSchemaInfo(authenticationUtils.getUserAndGroups(sc100), asmi);
+            authorizationAgent.authorizeGetAggregatedSchemaInfo(rangerAuthenticator.getUserAndGroups(sc100), asmi);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user100' does not have [read] permission on " +
                     "SchemaBranch{ schemaGroupName='Group3', schemaMetadataName='Schema3', schemaBranchName='Branch3' }";
@@ -516,7 +517,7 @@ public class DefaultAuthorizationAgentTest {
 
         try {
             SecurityContext sc101 = new SecurityContextForTesting("user101");
-            authorizationAgent.authorizeGetAggregatedSchemaInfo(authenticationUtils.getUserAndGroups(sc101), asmi);
+            authorizationAgent.authorizeGetAggregatedSchemaInfo(rangerAuthenticator.getUserAndGroups(sc101), asmi);
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user101",
                     "read", "Group3", "Schema3", "Branch3");
@@ -525,7 +526,7 @@ public class DefaultAuthorizationAgentTest {
 
         try {
             SecurityContext sc101 = new SecurityContextForTesting("user102");
-            authorizationAgent.authorizeGetAggregatedSchemaInfo(authenticationUtils.getUserAndGroups(sc101), asmi);
+            authorizationAgent.authorizeGetAggregatedSchemaInfo(rangerAuthenticator.getUserAndGroups(sc101), asmi);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user102' does not have [read] permission on SerDe{ serDeName='*' }";
             assertEquals(expectedMsg, e.getMessage());
@@ -543,7 +544,7 @@ public class DefaultAuthorizationAgentTest {
         // Empty array should stay empty
         List<SchemaVersionKey> versions = new ArrayList<>();
         Collection<SchemaVersionKey> res = authorizationAgent
-                .authorizeFindSchemasByFields(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
+                .authorizeFindSchemasByFields(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, versions);
         assertTrue(res.isEmpty());
 
         SchemaVersionKey svi3 = new SchemaVersionKey("Schema3", siv3.getVersion());
@@ -553,7 +554,7 @@ public class DefaultAuthorizationAgentTest {
 
         List<SchemaVersionKey> expected = new ArrayList<>(versions);
         // Authorized by p7
-        res = authorizationAgent.authorizeFindSchemasByFields(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
+        res = authorizationAgent.authorizeFindSchemasByFields(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, versions);
         assertEquals(expected, res);
 
         SchemaVersionKey svi4 = new SchemaVersionKey("Schema4", siv4.getVersion());
@@ -563,7 +564,7 @@ public class DefaultAuthorizationAgentTest {
         String user4 = "user4";
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         // Authorized by p11
-        res = authorizationAgent.authorizeFindSchemasByFields(authenticationUtils.getUserAndGroups(sc4), schemaRegistry, versions);
+        res = authorizationAgent.authorizeFindSchemasByFields(rangerAuthenticator.getUserAndGroups(sc4), schemaRegistry, versions);
         assertEquals(expected, res);
 
         // NOT_FOUND TEST CASES do not exist
@@ -590,15 +591,15 @@ public class DefaultAuthorizationAgentTest {
 
         // Access allowed by policy p3
         authorizationAgent.authorizeSchemaMetadata(
-                authenticationUtils.getUserAndGroups(sc3),
+                rangerAuthenticator.getUserAndGroups(sc3),
                 sm3,
                 Authorizer.AccessType.READ);
         authorizationAgent.authorizeSchemaMetadata(
-                authenticationUtils.getUserAndGroups(sc3),
+                rangerAuthenticator.getUserAndGroups(sc3),
                 smi3, 
                 Authorizer.AccessType.UPDATE);
         authorizationAgent.authorizeSchemaMetadata(
-                authenticationUtils.getUserAndGroups(sc3),
+                rangerAuthenticator.getUserAndGroups(sc3),
                 schemaRegistry, 
                 sm3.getName(), 
                 Authorizer.AccessType.READ);
@@ -606,7 +607,7 @@ public class DefaultAuthorizationAgentTest {
         ///////////////////////////// Negative cases /////////////////////////////////
 
         try {
-            authorizationAgent.authorizeSchemaMetadata(authenticationUtils.getUserAndGroups(sc3),
+            authorizationAgent.authorizeSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc3),
                     smi3, Authorizer.AccessType.DELETE);
         } catch (NotSupportedException e) {
             String expectedMsg = "AccessType.DELETE is not supported for authorizeSchemaMetadata method";
@@ -618,7 +619,7 @@ public class DefaultAuthorizationAgentTest {
         try {
             String user4 = "user4";
             SecurityContext sc4 = new SecurityContextForTesting(user4);
-            authorizationAgent.authorizeSchemaMetadata(authenticationUtils.getUserAndGroups(sc4), sm3, Authorizer.AccessType.UPDATE);
+            authorizationAgent.authorizeSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc4), sm3, Authorizer.AccessType.UPDATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user4' does not have [update] permission on " +
@@ -626,7 +627,7 @@ public class DefaultAuthorizationAgentTest {
             assertEquals(expectedMsg, e.getMessage());
         }
         try {
-            authorizationAgent.authorizeSchemaMetadata(authenticationUtils.getUserAndGroups(sc3), smi3, Authorizer.AccessType.CREATE);
+            authorizationAgent.authorizeSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc3), smi3, Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [create] permission on " +
@@ -635,7 +636,7 @@ public class DefaultAuthorizationAgentTest {
         }
         try {
             authorizationAgent.authorizeSchemaMetadata(
-                    authenticationUtils.getUserAndGroups(sc3),
+                    rangerAuthenticator.getUserAndGroups(sc3),
                     schemaRegistry, 
                     sm3.getName(),
                     Authorizer.AccessType.CREATE);
@@ -654,7 +655,7 @@ public class DefaultAuthorizationAgentTest {
                 .build();
         SchemaMetadataInfo smi4 = new SchemaMetadataInfo(sm4);
         try {
-            authorizationAgent.authorizeSchemaMetadata(authenticationUtils.getUserAndGroups(sc3), sm4, Authorizer.AccessType.READ);
+            authorizationAgent.authorizeSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc3), sm4, Authorizer.AccessType.READ);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [read] permission on " +
@@ -662,7 +663,7 @@ public class DefaultAuthorizationAgentTest {
             assertEquals(expectedMsg, e.getMessage());
         }
         try {
-            authorizationAgent.authorizeSchemaMetadata(authenticationUtils.getUserAndGroups(sc3), smi4, Authorizer.AccessType.READ);
+            authorizationAgent.authorizeSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc3), smi4, Authorizer.AccessType.READ);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user3' does not have [read] permission on " +
@@ -671,7 +672,7 @@ public class DefaultAuthorizationAgentTest {
         }
         try {
             authorizationAgent.authorizeSchemaMetadata(
-                    authenticationUtils.getUserAndGroups(sc3),
+                    rangerAuthenticator.getUserAndGroups(sc3),
                     schemaRegistry,
                     sm4.getName(),
                     Authorizer.AccessType.DELETE);
@@ -683,7 +684,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeSchemaMetadata(authenticationUtils.getUserAndGroups(sc3),
+            authorizationAgent.authorizeSchemaMetadata(rangerAuthenticator.getUserAndGroups(sc3),
                     schemaRegistry, "SchemaNotFound", Authorizer.AccessType.READ);
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
@@ -703,13 +704,13 @@ public class DefaultAuthorizationAgentTest {
         String schemaName3 = "Schema3";
 
         // Access allowed by p4 (for creating Branch3) and p5 (for reading siv3)
-        authorizationAgent.authorizeCreateSchemaBranch(authenticationUtils.getUserAndGroups(sc3),
+        authorizationAgent.authorizeCreateSchemaBranch(rangerAuthenticator.getUserAndGroups(sc3),
                 schemaRegistry,
                 schemaNameToIdMap.get(schemaName3),
                  new Long(siv3.getSchemaVersionId()), "Branch3");
 
         // Access allowed by p6 (for creating Branch3) and p7 (for reading siv31)
-        authorizationAgent.authorizeCreateSchemaBranch(authenticationUtils.getUserAndGroups(sc3),
+        authorizationAgent.authorizeCreateSchemaBranch(rangerAuthenticator.getUserAndGroups(sc3),
                 schemaRegistry,
                 schemaNameToIdMap.get(schemaName3),
                 siv31.getSchemaVersionId(), "Branch4");
@@ -719,7 +720,7 @@ public class DefaultAuthorizationAgentTest {
         String user999 = "user999";
         SecurityContext sc999 = new SecurityContextForTesting(user999);
         try {
-            authorizationAgent.authorizeCreateSchemaBranch(authenticationUtils.getUserAndGroups(sc999),
+            authorizationAgent.authorizeCreateSchemaBranch(rangerAuthenticator.getUserAndGroups(sc999),
                     schemaRegistry,
                     schemaNameToIdMap.get(schemaName3),
                     new Long(siv31.getSchemaVersionId()), "Branch4");
@@ -734,7 +735,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         try {
             // Creation is allowed by p6
-            authorizationAgent.authorizeCreateSchemaBranch(authenticationUtils.getUserAndGroups(sc4),
+            authorizationAgent.authorizeCreateSchemaBranch(rangerAuthenticator.getUserAndGroups(sc4),
                     schemaRegistry,
                     schemaNameToIdMap.get(schemaName3),
                     new Long(siv31.getSchemaVersionId()), "Branch4");
@@ -747,7 +748,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeCreateSchemaBranch(authenticationUtils.getUserAndGroups(sc3),
+            authorizationAgent.authorizeCreateSchemaBranch(rangerAuthenticator.getUserAndGroups(sc3),
                     schemaRegistry,
                     schemaNameToIdMap.get(schemaName3),
                     -9999L,
@@ -758,7 +759,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            authorizationAgent.authorizeCreateSchemaBranch(authenticationUtils.getUserAndGroups(sc4),
+            authorizationAgent.authorizeCreateSchemaBranch(rangerAuthenticator.getUserAndGroups(sc4),
                     schemaRegistry,
                     99999999999999L,
                     siv31.getSchemaVersionId(),
@@ -776,7 +777,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc5 = new SecurityContextForTesting(user5);
 
         // Allowed by p8, p12
-        authorizationAgent.authorizeDeleteSchemaBranch(authenticationUtils.getUserAndGroups(sc5),
+        authorizationAgent.authorizeDeleteSchemaBranch(rangerAuthenticator.getUserAndGroups(sc5),
                 schemaRegistry,
                 new Long(branch3.getId()));
 
@@ -785,7 +786,7 @@ public class DefaultAuthorizationAgentTest {
 
         /////////////////// Negative cases //////////////////////////
         try {
-            authorizationAgent.authorizeDeleteSchemaBranch(authenticationUtils.getUserAndGroups(sc999),
+            authorizationAgent.authorizeDeleteSchemaBranch(rangerAuthenticator.getUserAndGroups(sc999),
                     schemaRegistry,
                     new Long(branch3.getId()));
             fail("Expected an AuthorizationException to be thrown");
@@ -800,7 +801,7 @@ public class DefaultAuthorizationAgentTest {
 
         /////////////////// Negative cases //////////////////////////
         try {
-            authorizationAgent.authorizeDeleteSchemaBranch(authenticationUtils.getUserAndGroups(sc88),
+            authorizationAgent.authorizeDeleteSchemaBranch(rangerAuthenticator.getUserAndGroups(sc88),
                     schemaRegistry,
                     new Long(branch3.getId()));
             fail("Expected an AuthorizationException to be thrown");
@@ -812,7 +813,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeDeleteSchemaBranch(authenticationUtils.getUserAndGroups(sc88),
+            authorizationAgent.authorizeDeleteSchemaBranch(rangerAuthenticator.getUserAndGroups(sc88),
                     schemaRegistry,
                     new Long(-9999));
         } catch (SchemaBranchNotFoundException e) {
@@ -827,7 +828,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc6 = new SecurityContextForTesting(user6);
         ArrayList<SchemaBranch> branches = new ArrayList<>();
         Collection<SchemaBranch> res =
-                authorizationAgent.authorizeGetAllBranches(authenticationUtils.getUserAndGroups(sc6), schemaRegistry,
+                authorizationAgent.authorizeGetAllBranches(rangerAuthenticator.getUserAndGroups(sc6), schemaRegistry,
                         "Schema3", branches);
         assertTrue(res.isEmpty());
 
@@ -840,20 +841,20 @@ public class DefaultAuthorizationAgentTest {
 
         Collection<SchemaBranch> expected = new ArrayList<>(branches);
         // Filter by p8, p9
-        res = authorizationAgent.authorizeGetAllBranches(authenticationUtils.getUserAndGroups(sc6), schemaRegistry,
+        res = authorizationAgent.authorizeGetAllBranches(rangerAuthenticator.getUserAndGroups(sc6), schemaRegistry,
                 "Schema3", branches);
         assertEquals(expected, res);
 
         expected = new ArrayList<>(branches);
         branches.add(branch4);
         // Filter by p8, p9
-        res = authorizationAgent.authorizeGetAllBranches(authenticationUtils.getUserAndGroups(sc6), schemaRegistry,
+        res = authorizationAgent.authorizeGetAllBranches(rangerAuthenticator.getUserAndGroups(sc6), schemaRegistry,
                 "Schema3", branches);
         assertEquals(expected, res);
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeGetAllBranches(authenticationUtils.getUserAndGroups(sc6), schemaRegistry,
+            authorizationAgent.authorizeGetAllBranches(rangerAuthenticator.getUserAndGroups(sc6), schemaRegistry,
                     "SchemaNotFound", branches);
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
@@ -871,21 +872,21 @@ public class DefaultAuthorizationAgentTest {
         ///////////////// Positive cases ////////////////////////////
 
         // Authorized by p5
-        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3),
+        authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3),
                 schemaRegistry,
                 "Schema3",
                 "MASTER",
                 Authorizer.AccessType.READ);
 
         SchemaVersionKey svk3 = new SchemaVersionKey("Schema3", siv3.getVersion());
-        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, svk3,  Authorizer.AccessType.DELETE);
+        authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, svk3,  Authorizer.AccessType.DELETE);
 
         SchemaVersionInfo svi3 = schemaRegistry.getSchemaVersionInfo(siv3);
-        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, svi3, Authorizer.AccessType.READ);
+        authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, svi3, Authorizer.AccessType.READ);
 
-        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, siv3, Authorizer.AccessType.DELETE);
+        authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, siv3, Authorizer.AccessType.DELETE);
 
-        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry,
+        authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry,
                 siv31.getSchemaVersionId(), Authorizer.AccessType.READ);
 
         /////////////////// Negative cases //////////////////////////
@@ -893,7 +894,7 @@ public class DefaultAuthorizationAgentTest {
         String user4 = "user4";
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc4),
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc4),
                     schemaRegistry,
                     "Schema3",
                     "MASTER",
@@ -906,7 +907,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.UPDATE);
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.UPDATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
@@ -915,7 +916,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc4), schemaRegistry, svi3, Authorizer.AccessType.CREATE);
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc4), schemaRegistry, svi3, Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user4",
@@ -924,7 +925,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, siv31, Authorizer.AccessType.CREATE);
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, siv31, Authorizer.AccessType.CREATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user3",
@@ -933,7 +934,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry,
                     siv31.getSchemaVersionId(), Authorizer.AccessType.UPDATE);
             fail("Expected an AuthorizationException to be thrown");
         } catch (AuthorizationException e) {
@@ -945,7 +946,7 @@ public class DefaultAuthorizationAgentTest {
         // NOT_FOUND test cases
 
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3),
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3),
                     schemaRegistry,
                     "SchemaNotFound",
                     "MASTER",
@@ -958,7 +959,7 @@ public class DefaultAuthorizationAgentTest {
 
         try {
             svk3 = new SchemaVersionKey("SchemaNotFound", siv3.getVersion());
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.DELETE);
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.DELETE);
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
@@ -967,7 +968,7 @@ public class DefaultAuthorizationAgentTest {
 
         try {
             svk3 = new SchemaVersionKey("Schema3", -99999);
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.DELETE);
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, svk3, Authorizer.AccessType.DELETE);
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with name Schema3 and version -99999";
@@ -976,7 +977,7 @@ public class DefaultAuthorizationAgentTest {
 
         try {
             SchemaIdVersion notFoundSchemaIdVersion = new SchemaIdVersion(-9999L);
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry,
                     notFoundSchemaIdVersion, Authorizer.AccessType.DELETE);
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
@@ -985,7 +986,7 @@ public class DefaultAuthorizationAgentTest {
         }
 
         try {
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry,
+            authorizationAgent.authorizeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry,
                 new Long(-9999), Authorizer.AccessType.READ);
             fail("Expected an SchemaNotFoundException to be thrown");
         } catch (SchemaNotFoundException e) {
@@ -1018,7 +1019,7 @@ public class DefaultAuthorizationAgentTest {
         SchemaMetadataInfo smi3 = new SchemaMetadataInfo(sm3);
 
         // Access allowed by p3 and p10
-        authorizationAgent.authorizeGetSerializers(authenticationUtils.getUserAndGroups(sc3), smi3);
+        authorizationAgent.authorizeGetSerializers(rangerAuthenticator.getUserAndGroups(sc3), smi3);
 
         /////////////////// Negative cases //////////////////////////
 
@@ -1026,7 +1027,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc5 = new SecurityContextForTesting(user5);
 
         try {
-            authorizationAgent.authorizeGetSerializers(authenticationUtils.getUserAndGroups(sc5), smi3);
+            authorizationAgent.authorizeGetSerializers(rangerAuthenticator.getUserAndGroups(sc5), smi3);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user5' does not have [read] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
@@ -1043,7 +1044,7 @@ public class DefaultAuthorizationAgentTest {
         SchemaMetadataInfo smi1 = new SchemaMetadataInfo(sm1);
         try {
             // Access allowed to metadata by p1
-            authorizationAgent.authorizeGetSerializers(authenticationUtils.getUserAndGroups(sc1), smi1);
+            authorizationAgent.authorizeGetSerializers(rangerAuthenticator.getUserAndGroups(sc1), smi1);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user1' does not have [read] permission on " +
                     "SerDe{ serDeName='*' }";
@@ -1058,13 +1059,13 @@ public class DefaultAuthorizationAgentTest {
         ///////////////// Positive cases ////////////////////////////
         String user3 = "user3";
         SecurityContext sc3 = new SecurityContextForTesting(user3);
-        authorizationAgent.authorizeSerDes(authenticationUtils.getUserAndGroups(sc3), Authorizer.AccessType.READ);
+        authorizationAgent.authorizeSerDes(rangerAuthenticator.getUserAndGroups(sc3), Authorizer.AccessType.READ);
 
         /////////////////// Negative cases //////////////////////////
         String user999 = "user999";
         SecurityContext sc999 = new SecurityContextForTesting(user999);
         try {
-            authorizationAgent.authorizeSerDes(authenticationUtils.getUserAndGroups(sc999), Authorizer.AccessType.READ);
+            authorizationAgent.authorizeSerDes(rangerAuthenticator.getUserAndGroups(sc999), Authorizer.AccessType.READ);
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user999' does not have [read] permission on SerDe{ serDeName='*' }";
             assertEquals(expectedMsg, e.getMessage());
@@ -1081,14 +1082,14 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc3 = new SecurityContextForTesting(user3);
 
         // Access allowed by p3 and p10
-        authorizationAgent.authorizeMapSchemaWithSerDes(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, "Schema3");
+        authorizationAgent.authorizeMapSchemaWithSerDes(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, "Schema3");
 
         /////////////////// Negative cases //////////////////////////
         String user5 = "user5";
         SecurityContext sc5 = new SecurityContextForTesting(user5);
 
         try {
-            authorizationAgent.authorizeMapSchemaWithSerDes(authenticationUtils.getUserAndGroups(sc5), schemaRegistry, "Schema3");
+            authorizationAgent.authorizeMapSchemaWithSerDes(rangerAuthenticator.getUserAndGroups(sc5), schemaRegistry, "Schema3");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user5' does not have [read] permission on SerDe{ serDeName='*' }";
             assertEquals(expectedMsg, e.getMessage());
@@ -1098,7 +1099,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         try {
             // Accessed allowed to serdes by p10
-            authorizationAgent.authorizeMapSchemaWithSerDes(authenticationUtils.getUserAndGroups(sc4), schemaRegistry, "Schema3");
+            authorizationAgent.authorizeMapSchemaWithSerDes(rangerAuthenticator.getUserAndGroups(sc4), schemaRegistry, "Schema3");
         } catch (AuthorizationException e) {
             String expectedMsg = "User 'user4' does not have [update] permission on " +
                     "SchemaMetadata{ schemaGroupName='Group3', schemaMetadataName='Schema3' }";
@@ -1107,7 +1108,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeMapSchemaWithSerDes(authenticationUtils.getUserAndGroups(sc4), schemaRegistry, "SchemaNotFound");
+            authorizationAgent.authorizeMapSchemaWithSerDes(rangerAuthenticator.getUserAndGroups(sc4), schemaRegistry, "SchemaNotFound");
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No SchemaMetadata exists with key: SchemaNotFound";
             assertEquals(expectedMsg, e.getMessage());
@@ -1122,14 +1123,14 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc3 = new SecurityContextForTesting(user3);
 
         // Accessed allowed by p7
-        authorizationAgent.authorizeMergeSchemaVersion(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, siv31.getSchemaVersionId());
+        authorizationAgent.authorizeMergeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, siv31.getSchemaVersionId());
 
         /////////////////// Negative cases //////////////////////////
         String user999 = "user999";
         SecurityContext sc999 = new SecurityContextForTesting(user999);
 
         try {
-            authorizationAgent.authorizeMergeSchemaVersion(authenticationUtils.getUserAndGroups(sc999), schemaRegistry, siv31.getSchemaVersionId());
+            authorizationAgent.authorizeMergeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc999), schemaRegistry, siv31.getSchemaVersionId());
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user999",
                     "read", "Group3", "Schema3", "Branch3");
@@ -1140,7 +1141,7 @@ public class DefaultAuthorizationAgentTest {
         SecurityContext sc33 = new SecurityContextForTesting(user33);
         try {
             // Read is allowed by p7
-            authorizationAgent.authorizeMergeSchemaVersion(authenticationUtils.getUserAndGroups(sc33), schemaRegistry, siv31.getSchemaVersionId());
+            authorizationAgent.authorizeMergeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc33), schemaRegistry, siv31.getSchemaVersionId());
         } catch (AuthorizationException e) {
             String expectedMsg = errorMsgForUnathorizedSchemaVersion("user33",
                     "create", "Group3", "Schema3", "MASTER");
@@ -1149,7 +1150,7 @@ public class DefaultAuthorizationAgentTest {
 
         // NOT_FOUND test cases
         try {
-            authorizationAgent.authorizeMergeSchemaVersion(authenticationUtils.getUserAndGroups(sc33), schemaRegistry, -9999L);
+            authorizationAgent.authorizeMergeSchemaVersion(rangerAuthenticator.getUserAndGroups(sc33), schemaRegistry, -9999L);
         } catch (SchemaNotFoundException e) {
             String expectedMsg = "No Schema version exists with id -9999";
             assertEquals(expectedMsg, e.getMessage());
@@ -1164,7 +1165,7 @@ public class DefaultAuthorizationAgentTest {
         // Empty array should stay empty
         List<SchemaVersionInfo> versions = new ArrayList<>();
         Collection<SchemaVersionInfo> res = authorizationAgent.authorizeGetAllVersions(
-                authenticationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
+                rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, versions);
         assertTrue(res.isEmpty());
 
         SchemaVersionInfo svi3 = schemaRegistry.getSchemaVersionInfo(siv3);
@@ -1174,7 +1175,7 @@ public class DefaultAuthorizationAgentTest {
 
         List<SchemaVersionInfo> expected = new ArrayList<>(versions);
         // Authorized by p7
-        res = authorizationAgent.authorizeGetAllVersions(authenticationUtils.getUserAndGroups(sc3), schemaRegistry, versions);
+        res = authorizationAgent.authorizeGetAllVersions(rangerAuthenticator.getUserAndGroups(sc3), schemaRegistry, versions);
         assertEquals(expected, res);
 
         SchemaVersionInfo svi4 = schemaRegistry.getSchemaVersionInfo(siv4);
@@ -1184,7 +1185,7 @@ public class DefaultAuthorizationAgentTest {
         String user4 = "user4";
         SecurityContext sc4 = new SecurityContextForTesting(user4);
         // Authorized by p11
-        res = authorizationAgent.authorizeGetAllVersions(authenticationUtils.getUserAndGroups(sc4), schemaRegistry, versions);
+        res = authorizationAgent.authorizeGetAllVersions(rangerAuthenticator.getUserAndGroups(sc4), schemaRegistry, versions);
         assertEquals(expected, res);
 
         // NOT_FOUND test cases do not exist

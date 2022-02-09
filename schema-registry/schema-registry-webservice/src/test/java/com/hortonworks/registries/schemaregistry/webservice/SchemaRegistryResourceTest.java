@@ -16,12 +16,11 @@ package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.CollectionResponse;
-import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -46,7 +45,7 @@ public class SchemaRegistryResourceTest {
     private SchemaRegistryResource underTest;
     private ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
     private AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
-    private AuthenticationUtils authenticationUtils = new AuthenticationUtils(mock(HadoopPlugin.class));
+    private RangerAuthenticator authenticationUtils = mock(RangerAuthenticator.class);
     private AtlasEventLogger atlasEventLogger;
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";

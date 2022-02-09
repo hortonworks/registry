@@ -16,27 +16,38 @@
 package com.cloudera.dim.registry.oauth2.variant;
 
 import com.cloudera.dim.registry.oauth2.HttpClientForOAuth2;
-import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.jwt.consumer.JwtContext;
+import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.CLOCK_SKEW;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.EXPECTED_JWT_AUDIENCES;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.EXPECTED_JWT_ISSUER;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWK_REFRESH_MS;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWK_URL;
+import static org.jose4j.jwa.AlgorithmConstraints.DISALLOW_NONE;
 
 /**
  * Validate a JWT with the keys obtained from a JWK.
@@ -50,13 +61,21 @@ public class JwkValidator implements JwtValidatorVariant {
 
     private final ExecutorService threadPool = Executors.newFixedThreadPool(1);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final List<Jwk> keys;
+    private final AtomicReference<JsonWebKeySet> keys;
     private final HttpClientForOAuth2 httpClient;
+
+    private final Integer clockSkew;
+    private final String[] expectedAudiences;
+    private final String expectedIssuer;
+    private final long refreshIntervalMs;
 
     public JwkValidator(Properties config, @Nonnull HttpClientForOAuth2 httpClient) throws ServletException {
         this.httpClient = httpClient;
-        this.keys = Collections.synchronizedList(retrieveKeys(config, httpClient));
+        this.clockSkew = config.contains(CLOCK_SKEW) ? Integer.parseInt(config.getProperty(CLOCK_SKEW)) : null;
+        this.expectedAudiences = config.contains(EXPECTED_JWT_AUDIENCES) ? ((String) config.get(EXPECTED_JWT_AUDIENCES)).split("\\n") : null;
+        this.expectedIssuer = config.contains(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
+        this.refreshIntervalMs = Long.parseLong((String) config.getOrDefault(JWK_REFRESH_MS, String.valueOf(5 * 60000L)));
+        this.keys = new AtomicReference<>(retrieveKeys(config, httpClient));
 
         // refresh the JWKs every 5 minutes
         threadPool.submit(new JwkRefresher(config, httpClient));
@@ -66,103 +85,109 @@ public class JwkValidator implements JwtValidatorVariant {
     public boolean validateSignature(SignedJWT jwtToken) {
         LOG.debug("Validating signature for JWT");
         try {
-            String kid = jwtToken.getHeader().getKeyID();
-            JWSAlgorithm alg = jwtToken.getHeader().getAlgorithm();
 
-            Jwk matchingKey = findKeyForJwt(kid, alg);
-            if (matchingKey == null) {
-                LOG.info("No matching key found for {}", kid);
-            } else {
-                switch (matchingKey.getKty()) {
-                    case KEYTYPE_RSA:
-                        return validateRsa(jwtToken, matchingKey);
-                    case KEYTYPE_OCTET:
-                        return validateOctet(jwtToken, matchingKey);
-                    default:
-                        // indicates a bug in the code
-                        throw new RuntimeException("Unsupported keytype: " + matchingKey.getKty());
-                }
+            final JwtConsumerBuilder jwtConsumerBuilder = new JwtConsumerBuilder();
+
+            if (clockSkew != null) {
+                jwtConsumerBuilder.setAllowedClockSkewInSeconds(clockSkew);
             }
-        } catch (Exception ex) {
+            if (expectedAudiences != null && expectedAudiences.length > 0) {
+                jwtConsumerBuilder.setExpectedAudience(expectedAudiences);
+            }
+
+            if (expectedIssuer != null) {
+                jwtConsumerBuilder.setExpectedIssuer(expectedIssuer);
+            }
+
+            JwksVerificationKeyResolver keyResolver = new JwksVerificationKeyResolver(keys.get().getJsonWebKeys());
+
+            JwtConsumer jwtConsumer = jwtConsumerBuilder
+                    .setJwsAlgorithmConstraints(DISALLOW_NONE)
+                    .setRequireExpirationTime()
+                    .setRequireIssuedAt()
+                    .setRequireSubject()
+                    .setVerificationKeyResolver(keyResolver)
+                    .build();
+
+            LOG.debug("Received JWT: {}", jwtToken.getParsedString());
+
+            JwtContext jwtContext = jwtConsumer.process(jwtToken.getParsedString());
+            if (jwtContext == null) {
+                throw new RuntimeException("Could not validate JWT.");
+            }
+
+            return true;
+        } catch (InvalidJwtException ex) {
             LOG.warn("Failed to validate JWT.", ex);
         }
         return false;
     }
 
-    private boolean validateRsa(SignedJWT jwtToken, Jwk jwk) {
-        String keyText = jwk.getX5c() == null ? null : jwk.getX5c().getValue();
-        if (keyText == null) {
-            keyText = jwk.getN();
-        }
-
-        RSAPublicKey rsaPublicKey = RsaUtil.parseRSAPublicKey(keyText);
-        return RsaUtil.validateSignature(rsaPublicKey, jwtToken);
-    }
-
-    private boolean validateOctet(SignedJWT jwtToken, Jwk jwk) {
-        JWSAlgorithm algType = JWSAlgorithm.parse(jwk.getAlg());
-        if (algType == JWSAlgorithm.HS256 || algType == JWSAlgorithm.HS384 || algType == JWSAlgorithm.HS512) {
-            try {
-                JWSVerifier verifier = new MACVerifier(jwk.getK());
-                return jwtToken.verify(verifier);
-            } catch (Exception ex) {
-                LOG.warn("Failed to validate HMAC signature.", ex);
-            }
-        } else {
-            throw new RuntimeException("Unsupported algorithm: " + jwk.getAlg());
-        }
-        return false;
-    }
-
-    private Jwk findKeyForJwt(String kid, JWSAlgorithm alg) {
-        Jwk matchingKey = null;
-        for (Jwk jwk : keys) {
-            if (kid != null) {
-                // Azure AD doesn't provide alg, so we can only use kid
-                if (kid.equals(jwk.getKid())) {
-                    matchingKey = jwk;
-                    break;
-                }
-            } else {
-                if (alg.getName().equals(jwk.getAlg())) {
-                    matchingKey = jwk;
-                    break;
-                }
-            }
-        }
-        return matchingKey;
-    }
-
-    private List<Jwk> retrieveKeys(Properties config, HttpClientForOAuth2 httpClient) throws ServletException {
+    private JsonWebKeySet retrieveKeys(Properties config, HttpClientForOAuth2 httpClient) throws ServletException {
         String url = config.getProperty(JWK_URL);
         LOG.info("Loading JWK from {}", url);
         if (StringUtils.isBlank(url)) {
             throw new IllegalArgumentException("Property is required: " + JWK_URL);
         }
 
+        URL jwksEndpointUrl;
+        try {
+            jwksEndpointUrl = new URL(url);
+        } catch (MalformedURLException mlex) {
+            throw new ServletException("The provided JWK url is not valid: " + url, mlex);
+        }
+
+        if (jwksEndpointUrl.getProtocol().toLowerCase(Locale.ROOT).equals("file")) {
+            return jwkFromFile(jwksEndpointUrl);
+        } else {
+            return jwkFromNetwork(config, url, httpClient);
+        }
+    }
+
+    private JsonWebKeySet jwkFromNetwork(Properties config, String url, HttpClientForOAuth2 httpClient) throws ServletException {
         try {
             String response = httpClient.readKeyFromUrl(config, url);
             if (StringUtils.isBlank(response)) {
-                throw new ServletException("Could not download JWK from " + url + ", received an empty response.");
+                throw new ServletException(String.format("Could not download JWK from %s, received an empty response.", url));
             }
 
-            JwkList jwkList = objectMapper.readValue(response, JwkList.class);
-            if (jwkList == null) {
-                throw new ServletException("Failed to parse response from " + url);
-            }
-
-            return jwkList.getKeys().stream()
-                // only select keys with an ID
-                .filter(jwk -> StringUtils.isNotBlank(jwk.getKid()))
-                // only select keys intended for signing
-                .filter(jwk -> "sig".equals(jwk.getUse()) || jwk.getUse() == null)
-                // only select RSA and HMAC/AES keys
-                .filter(jwk -> KEYTYPE_RSA.equals(jwk.getKty()) || KEYTYPE_OCTET.equals(jwk.getKty()))
-                .collect(Collectors.toList());
+            return new JsonWebKeySet(response);
         } catch (ServletException slex) {
             throw slex;
         } catch (Exception ex) {
-            throw new ServletException("Couldn't read JWK.", ex);
+            throw new ServletException("Could not download JWK from the network.", ex);
+        }
+    }
+
+    @Nonnull
+    private JsonWebKeySet jwkFromFile(URL jwksEndpointUrl) throws ServletException {
+        try {
+            File file = new File(jwksEndpointUrl.toURI().getRawPath()).getAbsoluteFile();
+
+            if (!file.exists()) {
+                throw new ServletException("JWKS file does not exist: " + file.getAbsolutePath());
+            }
+
+            if (!file.canRead()) {
+                throw new ServletException("JWKS file can't be read: " + file.getAbsolutePath());
+            }
+
+            if (file.isDirectory()) {
+                throw new ServletException("JWKS file is a directory: " + file.getAbsolutePath());
+            }
+
+            String json = IOUtils.toString(jwksEndpointUrl.toURI(), StandardCharsets.UTF_8);
+            if (StringUtils.isBlank(json)) {
+                throw new ServletException("JWKS file contents is blank: " + file.getAbsolutePath());
+            }
+
+            return new JsonWebKeySet(json);
+        } catch (ServletException slex) {
+            throw slex;
+        } catch (URISyntaxException ue) {
+            throw new ServletException(String.format("The JWKS URL is malformed: %s", jwksEndpointUrl), ue);
+        } catch (Exception ex) {
+            throw new ServletException("Could not read JWKS file.", ex);
         }
     }
 
@@ -190,17 +215,16 @@ public class JwkValidator implements JwtValidatorVariant {
         public synchronized void run() {
             while (!shutdown.get() && !Thread.interrupted()) {
                 try {
-                    wait(5 * 60000L);
+                    wait(refreshIntervalMs);
                 } catch (InterruptedException iex) {
                     LOG.warn("JWK refresh thread was interrupted.");
                     return;
                 }
 
                 try {
-                    List<Jwk> jwks = retrieveKeys(config, httpClient);
-                    if (jwks != null && jwks.size() > 0) {
-                        keys.clear();
-                        keys.addAll(jwks);
+                    JsonWebKeySet newKeyset = retrieveKeys(config, httpClient);
+                    if (newKeyset != null && newKeyset.getJsonWebKeys().size() > 0) {
+                        keys.set(newKeyset);
                     }
                 } catch (Exception ex) {
                     LOG.warn("Exception while refreshing JWKs.", ex);

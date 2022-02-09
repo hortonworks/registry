@@ -42,7 +42,7 @@ import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.core.util.AuthenticationUtils;
+import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.AuthorizationException;
 import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
@@ -123,7 +123,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     private final AuthorizationAgent authorizationAgent;
     private final JarInputStreamValidator jarInputStreamValidator;
     private final SchemaMetadataTypeValidator schemaMetadataTypeValidator;
-    private final AuthenticationUtils authenticationUtils;
+    private final RangerAuthenticator authenticationUtils;
     private final RegistryConfiguration registryConfiguration;
     private final AtlasEventLogger atlasEventLogger;
     private final AtlasPlugin atlasPlugin;
@@ -131,7 +131,7 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     @Inject
     public SchemaRegistryResource(ISchemaRegistry schemaRegistry,
                                   AuthorizationAgent authorizationAgent,
-                                  AuthenticationUtils authenticationUtils,
+                                  RangerAuthenticator authenticationUtils,
                                   JarInputStreamValidator jarInputStreamValidator,
                                   SchemaMetadataTypeValidator schemaMetadataTypeValidator,
                                   RegistryConfiguration registryConfiguration,
