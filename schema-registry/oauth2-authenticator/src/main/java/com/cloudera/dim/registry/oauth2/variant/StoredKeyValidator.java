@@ -41,9 +41,9 @@ abstract class StoredKeyValidator implements JwtValidatorVariant {
 
     protected StoredKeyValidator(Key key, Properties config) {
         this.key = key;
-        this.clockSkew = config.contains(CLOCK_SKEW) ? Integer.parseInt(config.getProperty(CLOCK_SKEW)) : null;
-        this.expectedAudiences = config.contains(EXPECTED_JWT_AUDIENCES) ? ((String) config.get(EXPECTED_JWT_AUDIENCES)).split("\\n") : null;
-        this.expectedIssuer = config.contains(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
+        this.clockSkew = config.containsKey(CLOCK_SKEW) ? Integer.parseInt(config.getProperty(CLOCK_SKEW)) : null;
+        this.expectedAudiences = config.containsKey(EXPECTED_JWT_AUDIENCES) ? ((String) config.get(EXPECTED_JWT_AUDIENCES)).split("\\n") : null;
+        this.expectedIssuer = config.containsKey(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
     }
 
     public boolean validateSignature(SignedJWT jwtToken) {

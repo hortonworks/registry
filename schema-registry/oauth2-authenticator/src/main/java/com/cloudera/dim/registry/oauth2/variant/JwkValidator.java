@@ -71,9 +71,9 @@ public class JwkValidator implements JwtValidatorVariant {
 
     public JwkValidator(Properties config, @Nonnull HttpClientForOAuth2 httpClient) throws ServletException {
         this.httpClient = httpClient;
-        this.clockSkew = config.contains(CLOCK_SKEW) ? Integer.parseInt(config.getProperty(CLOCK_SKEW)) : null;
-        this.expectedAudiences = config.contains(EXPECTED_JWT_AUDIENCES) ? ((String) config.get(EXPECTED_JWT_AUDIENCES)).split("\\n") : null;
-        this.expectedIssuer = config.contains(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
+        this.clockSkew = config.containsKey(CLOCK_SKEW) ? Integer.parseInt(config.getProperty(CLOCK_SKEW)) : null;
+        this.expectedAudiences = config.containsKey(EXPECTED_JWT_AUDIENCES) ? ((String) config.get(EXPECTED_JWT_AUDIENCES)).split("\\n") : null;
+        this.expectedIssuer = config.containsKey(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
         this.refreshIntervalMs = Long.parseLong((String) config.getOrDefault(JWK_REFRESH_MS, String.valueOf(5 * 60000L)));
         this.keys = new AtomicReference<>(retrieveKeys(config, httpClient));
 
