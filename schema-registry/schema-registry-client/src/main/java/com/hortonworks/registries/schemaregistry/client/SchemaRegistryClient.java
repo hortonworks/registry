@@ -1203,6 +1203,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public List<SchemaMetadataInfo> findAllSchemas() {
+        return runRetryableBlock((SchemaRegistryTargets targets) -> {
+            WebTarget target = targets.schemasTarget;
+            return getEntities(target, SchemaMetadataInfo.class);
+        });
+    }
+
+    @Override
     public CompatibilityResult checkCompatibility(String schemaName, String toSchemaText) 
             throws SchemaNotFoundException, SchemaBranchNotFoundException {
         return checkCompatibility(SchemaBranch.MASTER_BRANCH, schemaName, toSchemaText);

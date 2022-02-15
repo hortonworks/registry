@@ -18,6 +18,7 @@ package com.hortonworks.registries.schemaregistry.client;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistryService;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -238,5 +239,12 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      * @return  list of aggregates schema metadata info
      */
     List<AggregatedSchemaMetadataInfo> findAggregatedSchemas(String schemaName, String schemaDescription, String orderByFields);
+
+    /**
+     * Return all schemas.
+     *
+     * @return  list of aggregates schema metadata info
+    */
+    List<SchemaMetadataInfo> findAllSchemas();
 
 }

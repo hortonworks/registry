@@ -697,4 +697,25 @@ public class AvroSchemaRegistryClientTest {
         Assertions.assertTrue(notFound.isEmpty());
     }
 
+    @ParameterizedTest
+    @MethodSource("profiles")
+    public void testFindAllSchemas(SchemaRegistryTestProfileType profile) throws Exception {
+        beforeParam(profile);
+        SchemaMetadata schemaMetadata = createSchemaMetadata("apples", SchemaCompatibility.BOTH);
+        final String schema1 = schemaMetadata.getName();
+        SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata);
+        SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schema1, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc"), "Initial version of the schema"));
+        SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schema1, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-2.avsc"), "Second version of the schema"));
+
+        SchemaMetadata schemaMetadata2 = createSchemaMetadata("oranges", SchemaCompatibility.BACKWARD);
+        final String schema2 = schemaMetadata2.getName();
+        SCHEMA_REGISTRY_CLIENT.registerSchemaMetadata(schemaMetadata2);
+        SCHEMA_REGISTRY_CLIENT.addSchemaVersion(schema2, new SchemaVersion(AvroSchemaRegistryClientUtil.getSchema("/schema-1.avsc"), "Initial version of the schema"));
+
+        List<SchemaMetadataInfo> result = SCHEMA_REGISTRY_CLIENT.findAllSchemas();
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isEmpty());
+        Assertions.assertEquals(2, result.size());
+    }
+
 }

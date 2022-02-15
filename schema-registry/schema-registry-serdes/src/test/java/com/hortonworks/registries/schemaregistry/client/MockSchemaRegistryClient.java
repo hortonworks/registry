@@ -349,6 +349,11 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
+    public List<SchemaMetadataInfo> findAllSchemas() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId, boolean disableCanonicalCheck) 
             throws SchemaNotFoundException, IncompatibleSchemaException {
          return schemaRegistry.mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.OPTIMISTIC, disableCanonicalCheck);
