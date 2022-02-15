@@ -599,7 +599,7 @@ public class AuthenticationFilter implements Filter {
                     // -1 content lenght may indicate that the whole content is not yet set sent over the wire. We need
                     // to drain it becase some proxies will try continue sending it after we responded with the auth
                     // header and closed the connection. This would result in a proxy error.
-                    if (request.getContentLength() < 0) {
+                    if (request.getContentLength() < 0 && !expectContinue(request)) {
                         LOG.debug("Draining request input stream before sending back auth headers to avoid proxy issues.");
                         drainInputStream(request.getInputStream());
                     }
@@ -610,6 +610,20 @@ public class AuthenticationFilter implements Filter {
                     }
                 }
             }
+        }
+    }
+
+    private boolean expectContinue(ServletRequest request) {
+        if (!(request instanceof HttpServletRequest)) {
+            return false;
+        } else {
+            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            String expect = httpRequest.getHeader("Expect");
+            if (null == expect) {
+                expect = httpRequest.getHeader("expect");
+            }
+            LOG.debug("Value of expect header: {}", expect);
+            return null != expect && "100-continue".equals(expect.toLowerCase().trim());
         }
     }
 

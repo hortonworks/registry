@@ -43,8 +43,10 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.net.HttpCookie;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -55,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyString;
 
 public class TestAuthenticationFilter {
 
@@ -520,6 +523,15 @@ public class TestAuthenticationFilter {
 
     @Test
     public void testDoFilterNotAuthenticated() throws Exception {
+        doFilterNotAuthenticated(Collections.emptyMap(), true);
+    }
+
+    @Test
+    public void testDoFilterNotAuthenticatedExpect100() throws Exception {
+        doFilterNotAuthenticated(Collections.singletonMap("Expect", "100-continue"), false);
+    }
+
+    public void doFilterNotAuthenticated(Map<String, String> extraHeaders, boolean expectDrainInputStream) throws Exception {
         AuthenticationFilter filter = new AuthenticationFilter();
         try {
             FilterConfig config = Mockito.mock(FilterConfig.class);
@@ -541,6 +553,8 @@ public class TestAuthenticationFilter {
             Mockito.when(request.getContentLength()).thenReturn(-1);
             ServletInputStream requestInputStream = new TestServletInputStream("Hello World!");
             Mockito.when(request.getInputStream()).thenReturn(requestInputStream);
+            Mockito.when(request.getHeader(anyString())).thenAnswer(
+                invocation -> extraHeaders.get((String) invocation.getArguments()[0]));
 
             HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
 
@@ -561,9 +575,14 @@ public class TestAuthenticationFilter {
 
             Mockito.verify(response).sendError(
                     HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
+
             // Since the input stream is backed by a byte array it is safe to assume that the stream is empty when
             // avaliable() return 0
-            assertEquals(0, requestInputStream.available(), "Request input stream hasn't been drained.");
+            if (expectDrainInputStream) {
+                assertEquals(0, requestInputStream.available(), "Request input stream is expected to be drained, but is't.");
+            } else {
+                assertTrue(requestInputStream.available() > 0, "Request input stream expected not to be drained, but is.");
+            }
         } finally {
             filter.destroy();
         }
@@ -625,7 +644,7 @@ public class TestAuthenticationFilter {
                 parseCookieMap(cookieHeader, cookieMap);
                 return null;
             }
-        }).when(response).addHeader(Mockito.eq("Set-Cookie"), Mockito.anyString());
+        }).when(response).addHeader(Mockito.eq("Set-Cookie"), anyString());
 
         try {
             filter.init(config);
@@ -633,7 +652,7 @@ public class TestAuthenticationFilter {
 
             if (expired) {
                 Mockito.verify(response, Mockito.never()).
-                        addHeader(Mockito.eq("Set-Cookie"), Mockito.anyString());
+                        addHeader(Mockito.eq("Set-Cookie"), anyString());
             } else {
                 String v = cookieMap.get(AuthenticatedURL.AUTH_COOKIE);
                 assertNotNull(v, "cookie missing");
@@ -794,7 +813,7 @@ public class TestAuthenticationFilter {
                             return null;
                         }
                     }
-            ).when(response).addHeader(Mockito.eq("Set-Cookie"), Mockito.anyString());
+            ).when(response).addHeader(Mockito.eq("Set-Cookie"), anyString());
 
             Mockito.doAnswer(
                     new Answer<Object>() {
@@ -810,7 +829,7 @@ public class TestAuthenticationFilter {
 
             Mockito.verify(response).sendError(
                     HttpServletResponse.SC_FORBIDDEN, "AUTH FAILED");
-            Mockito.verify(response, Mockito.never()).setHeader(Mockito.eq("WWW-Authenticate"), Mockito.anyString());
+            Mockito.verify(response, Mockito.never()).setHeader(Mockito.eq("WWW-Authenticate"), anyString());
 
             String value = cookieMap.get(AuthenticatedURL.AUTH_COOKIE);
             assertNotNull(value, "cookie missing");
@@ -882,12 +901,12 @@ public class TestAuthenticationFilter {
                 parseCookieMap(cookieHeader, cookieMap);
                 return null;
             }
-        }).when(response).addHeader(Mockito.eq("Set-Cookie"), Mockito.anyString());
+        }).when(response).addHeader(Mockito.eq("Set-Cookie"), anyString());
 
         filter.doFilter(request, response, chain);
 
         Mockito.verify(response).sendError(Mockito.eq(HttpServletResponse
-                .SC_UNAUTHORIZED), Mockito.anyString());
+                .SC_UNAUTHORIZED), anyString());
         Mockito.verify(chain, Mockito.never()).doFilter(Mockito.any(ServletRequest.class), Mockito.any(ServletResponse.class));
 
         assertTrue(cookieMap.containsKey(AuthenticatedURL.AUTH_COOKIE), "cookie is missing");
