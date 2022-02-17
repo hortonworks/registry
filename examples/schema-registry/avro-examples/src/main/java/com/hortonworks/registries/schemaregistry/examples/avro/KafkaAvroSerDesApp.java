@@ -44,10 +44,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry.METADATA_ID_VERSION_PROTOCOL;
@@ -140,7 +140,7 @@ public class KafkaAvroSerDesApp {
         } finally {
             producer.flush();
             LOG.info("All message are successfully sent to topic: [{}]", topicName);
-            producer.close(5, TimeUnit.SECONDS);
+            producer.close(Duration.of(5, ChronoUnit.SECONDS));
         }
     }
 
