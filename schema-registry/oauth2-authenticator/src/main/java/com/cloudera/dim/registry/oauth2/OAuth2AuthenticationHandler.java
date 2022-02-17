@@ -51,6 +51,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(OAuth2AuthenticationHandler.class);
 
+    public static final String TYPE = "oauth2";
     public static final String AUTHORIZATION = "Authorization";
 
     private String bearerPrefix = "Bearer ";
@@ -61,7 +62,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
 
     @Override
     public String getType() {
-        return "oauth2";
+        return TYPE;
     }
 
     @Override
@@ -137,11 +138,6 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
         if (handlerImpl != null) {
             handlerImpl.close();
         }
-    }
-
-    @Override
-    public boolean managementOperation(AuthenticationToken token, HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {
-        return true;
     }
 
     @Override

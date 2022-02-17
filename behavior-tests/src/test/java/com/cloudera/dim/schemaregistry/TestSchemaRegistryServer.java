@@ -67,6 +67,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class TestSchemaRegistryServer extends AbstractTestServer {
 
@@ -87,6 +88,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private boolean atlasEnabled = false;
     private int atlasPort = -1;
     private DataSource dataSource;
+    private List<ServletFilterConfiguration> additionalFilters;
     private boolean oauth2Enabled = false;
 
     private volatile static TestSchemaRegistryServer instance;
@@ -117,8 +119,10 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         DbProperties dbProperties = startDatabase();
         this.flyway = populateDatabase(dbProperties);
 
+        List<ServletFilterConfiguration> filters = prepareServletFilters(oauth2Enabled, additionalFilters);
+
         // now we can start Schema Registry and have it connect to our H2 database
-        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, oauth2Enabled);
+        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, filters);
 
         this.schemaRegistryPort = findFreePort();
         String registryYamlTxt = configGenerator.generateRegistryYaml(config, schemaRegistryPort);
@@ -234,6 +238,36 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         return flyway;
     }
 
+    private List<ServletFilterConfiguration> prepareServletFilters(boolean oauth2Enabled,
+                                           List<ServletFilterConfiguration> additionalFilters) throws IOException {
+        List<ServletFilterConfiguration> servletFilters = additionalFilters;
+        if (servletFilters == null) {
+            servletFilters = new ArrayList<>();
+        }
+
+        if (oauth2Enabled) {
+            ServletFilterConfiguration filterConfig = new ServletFilterConfiguration();
+            servletFilters.add(filterConfig);
+            filterConfig.setClassName(AuthenticationFilter.class.getName());
+            Map<String, String> params = new LinkedHashMap<>();;
+            filterConfig.setParams(params);
+            params.put("type", OAuth2AuthenticationHandler.class.getName());
+            params.put(OAuth2Config.KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
+            params.put(OAuth2Config.KEY_ALGORITHM, "RS256");
+            params.put(OAuth2Config.PUBLIC_KEY_PROPERTY,
+                    IOUtils.toString(getClass().getResource("/template/test_rsa.pub"), StandardCharsets.UTF_8)
+                            .replaceAll("\n", ""));
+        }
+
+        if (!servletFilters.isEmpty()) {
+            LOG.info("{} servlet filters: {}", servletFilters.size(), servletFilters.stream()
+                    .map(ServletFilterConfiguration::getClassName)
+                    .collect(Collectors.joining(", ")));
+        }
+
+        return servletFilters;
+    }
+
     /** The DDL files under bootstrap need to be sanitized before we can pass them to H2. */
     private File preprocessMigrations() throws IOException {
         File tmpDir = Files.createTempDirectory("srtest").toFile();
@@ -321,7 +355,8 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     }
 
     /** Prepare a configuration which will be passed to Schema Registry. */
-    public RegistryConfiguration prepareConfig(DbProperties h2DbProps, boolean atlasEnabled, int atlasPort, boolean oauth2Enabled) throws IOException {
+    public RegistryConfiguration prepareConfig(DbProperties h2DbProps, boolean atlasEnabled, int atlasPort,
+                                               List<ServletFilterConfiguration> servletFilters) throws IOException {
         RegistryConfiguration configuration = new RegistryConfiguration();
         if (configuration.getAtlasConfiguration() == null) {
             AtlasConfiguration atlasConfiguration = new AtlasConfiguration();
@@ -380,26 +415,15 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             configuration.setFileStorageConfiguration(fileConfig);
         }
 
-        List<ServletFilterConfiguration> servletFilters = configuration.getServletFilters();
-        if (servletFilters == null) {
-            servletFilters = new ArrayList<>();
-            configuration.setServletFilters(servletFilters);
+        if (configuration.getServletFilters() == null) {
+            configuration.setServletFilters(new ArrayList<>());
         }
-        if (oauth2Enabled) {
-            ServletFilterConfiguration filterConfig = new ServletFilterConfiguration();
-            servletFilters.add(filterConfig);
-            filterConfig.setClassName(AuthenticationFilter.class.getName());
-            Map<String, String> params = new LinkedHashMap<>();;
-            filterConfig.setParams(params);
-            params.put("type", OAuth2AuthenticationHandler.class.getName());
-            params.put(OAuth2Config.KEY_STORE_TYPE, JwtKeyStoreType.PROPERTY.getValue());
-            params.put(OAuth2Config.KEY_ALGORITHM, "RS256");
-            params.put(OAuth2Config.PUBLIC_KEY_PROPERTY,
-                    IOUtils.toString(getClass().getResource("/template/test_rsa.pub"), StandardCharsets.UTF_8)
-                            .replaceAll("\n", ""));
+        if (servletFilters != null) {
+            configuration.getServletFilters().addAll(servletFilters);
         }
+
         ServletFilterConfiguration rewriteFilterConf = new ServletFilterConfiguration();
-        servletFilters.add(rewriteFilterConf);
+        configuration.getServletFilters().add(rewriteFilterConf);
         rewriteFilterConf.setClassName(RewriteUriFilter.class.getName());
         Map<String, String> params = new LinkedHashMap<>();;
         rewriteFilterConf.setParams(params);
@@ -448,5 +472,9 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
 
     public void setOAuth2Enabled(boolean oauth2Enabled) {
         this.oauth2Enabled = oauth2Enabled;
+    }
+
+    public void setAdditionalFilters(List<ServletFilterConfiguration> additionalFilters) {
+        this.additionalFilters = additionalFilters;
     }
 }

@@ -122,17 +122,6 @@ public class TestAuthenticationFilter {
         }
 
         @Override
-        public boolean managementOperation(AuthenticationToken token,
-                                           HttpServletRequest request,
-                                           HttpServletResponse response)
-                throws IOException, AuthenticationException {
-            if (!managementOperationReturn) {
-                response.setStatus(HttpServletResponse.SC_ACCEPTED);
-            }
-            return managementOperationReturn;
-        }
-
-        @Override
         public void destroy() {
             destroy = true;
         }
@@ -956,63 +945,6 @@ public class TestAuthenticationFilter {
             FilterChain chain = Mockito.mock(FilterChain.class);
 
             verifyUnauthorized(filter, request, response, chain);
-        } finally {
-            filter.destroy();
-        }
-    }
-
-    @Test
-    public void testManagementOperation() throws Exception {
-        AuthenticationFilter filter = new AuthenticationFilter();
-        try {
-            FilterConfig config = Mockito.mock(FilterConfig.class);
-            Mockito.when(config.getInitParameter("management.operation.return")).
-                    thenReturn("false");
-            Mockito.when(config.getInitParameter(AuthenticationFilter.AUTH_TYPE)).
-                    thenReturn(DummyAuthenticationHandler.class.getName());
-            Mockito.when(config.getInitParameterNames()).thenReturn(
-                    new Vector<String>(
-                            Arrays.asList(AuthenticationFilter.AUTH_TYPE,
-                                    "management.operation.return")).elements());
-            getMockedServletContextWithStringSigner(config);
-            filter.init(config);
-
-            HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-            Mockito.when(request.getRequestURL()).
-                    thenReturn(new StringBuffer("http://foo:8080/bar"));
-            Mockito.when(request.getRequestURI()).thenReturn("/bar");
-
-            HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-
-            FilterChain chain = Mockito.mock(FilterChain.class);
-
-            filter.doFilter(request, response, chain);
-            Mockito.verify(response).setStatus(HttpServletResponse.SC_ACCEPTED);
-            Mockito.verifyNoMoreInteractions(response);
-
-            Mockito.reset(request);
-            Mockito.reset(response);
-
-            AuthenticationToken token = new AuthenticationToken("u", "p", "t");
-            token.setExpires(System.currentTimeMillis() + TOKEN_VALIDITY_SEC);
-            SignerSecretProvider secretProvider =
-                    StringSignerSecretProviderCreator.newStringSignerSecretProvider();
-            Properties secretProviderProps = new Properties();
-            secretProviderProps.setProperty(
-                    AuthenticationFilter.SIGNATURE_SECRET, "secret");
-            secretProvider.init(secretProviderProps, null, TOKEN_VALIDITY_SEC);
-            Signer signer = new Signer(secretProvider);
-            String tokenSigned = signer.sign(token.toString());
-            Cookie cookie = new Cookie(AuthenticatedURL.AUTH_COOKIE, tokenSigned);
-            Mockito.when(request.getCookies()).thenReturn(new Cookie[]{cookie});
-            Mockito.when(request.getRequestURI()).thenReturn("/bar");
-            Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer("http://foo:8080/bar"));
-
-            filter.doFilter(request, response, chain);
-
-            Mockito.verify(response).setStatus(HttpServletResponse.SC_ACCEPTED);
-            Mockito.verifyNoMoreInteractions(response);
-
         } finally {
             filter.destroy();
         }

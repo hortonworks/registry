@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.util.Properties;
 
 /**
@@ -54,12 +53,10 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
      */
     public static final String ANONYMOUS_ALLOWED = TYPE + ".anonymous.allowed";
 
-    private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
-
     private static final String PSEUDO_AUTH = "PseudoAuth";
 
     private boolean acceptAnonymous;
-    private String type;
+    private final String type;
 
     /**
      * Creates a pseudo authentication handler with the default auth-token
@@ -119,27 +116,6 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
     @Override
     public String getType() {
         return type;
-    }
-
-    /**
-     * This is an empty implementation, it always returns <code>TRUE</code>.
-     *
-     *
-     *
-     * @param token the authentication token if any, otherwise <code>NULL</code>.
-     * @param request the HTTP client request.
-     * @param response the HTTP client response.
-     *
-     * @return <code>TRUE</code>
-     * @throws IOException it is never thrown.
-     * @throws AuthenticationException it is never thrown.
-     */
-    @Override
-    public boolean managementOperation(AuthenticationToken token,
-                                       HttpServletRequest request,
-                                       HttpServletResponse response)
-            throws IOException, AuthenticationException {
-        return true;
     }
 
     private String getUserName(HttpServletRequest request) {

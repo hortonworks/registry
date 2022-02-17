@@ -35,12 +35,10 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,7 +127,7 @@ import java.util.TimeZone;
 
 public class AuthenticationFilter implements Filter {
 
-    private static Logger LOG = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     /**
      * Constant for the property that specifies the configuration prefix.
@@ -140,6 +138,13 @@ public class AuthenticationFilter implements Filter {
      * Constant for the property that specifies the authentication handler to use.
      */
     public static final String AUTH_TYPE = "type";
+
+    /**
+     * If true then the filter will expect there to be multiple filters in the line.
+     * Instead of terminating the response in case of error, it will just pass to
+     * the next filter.
+     */
+    public static final String IS_COMPOSITE = "composite";
 
     /**
      * Constant for the property that specifies the secret to use for signing the HTTP Cookies.
@@ -190,6 +195,10 @@ public class AuthenticationFilter implements Filter {
      */
     public static final String ALLOWED_RESOURCES = "allowed.resources";
 
+    /** In case of composite filters, we will pass the state to the next filter. */
+    protected static final String AUTH_FAILED = "failed";
+
+    private boolean isComposite;
     private Properties config;
     private Signer signer;
     private SignerSecretProvider secretProvider;
@@ -214,6 +223,9 @@ public class AuthenticationFilter implements Filter {
         String configPrefix = filterConfig.getInitParameter(CONFIG_PREFIX);
         configPrefix = (configPrefix != null) ? configPrefix + "." : "";
         config = getConfiguration(configPrefix, filterConfig);
+
+        isComposite = Boolean.parseBoolean(config.getProperty(IS_COMPOSITE, "false"));
+
         String authHandlerName = config.getProperty(AUTH_TYPE, null);
         String authHandlerClassName;
         if (authHandlerName == null) {
@@ -239,7 +251,7 @@ public class AuthenticationFilter implements Filter {
                 * 1000; //10 hours
         initializeSecretProvider(filterConfig);
 
-        initializeAuthHandler(authHandlerClassName, filterConfig);
+        initializeAuthHandler(authHandlerClassName);
 
         cookieDomain = config.getProperty(COOKIE_DOMAIN, null);
         cookiePath = config.getProperty(COOKIE_PATH, null);
@@ -248,8 +260,7 @@ public class AuthenticationFilter implements Filter {
         }
     }
 
-    protected void initializeAuthHandler(String authHandlerClassName, FilterConfig filterConfig)
-            throws ServletException {
+    protected void initializeAuthHandler(String authHandlerClassName) throws ServletException {
         try {
             Class<?> klass = Thread.currentThread().getContextClassLoader().loadClass(authHandlerClassName);
             authHandler = (AuthenticationHandler) klass.newInstance();
@@ -509,106 +520,117 @@ public class AuthenticationFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        if (isResourceAllowed(httpRequest) || !authHandler.shouldAuthenticate(httpRequest)) {
+
+        if (alreadyAuthenticated(httpRequest)) {
+            proceedToNextFilter(filterChain, httpRequest, httpResponse);
+        } else if (isResourceAllowed(httpRequest) || !authHandler.shouldAuthenticate(httpRequest)) {
             LOG.debug("Skipping authentication filter of type {} for {}", authHandler.getType(), httpRequest);
-            doFilter(filterChain, httpRequest, httpResponse);
+            request.setAttribute(AUTH_FAILED, "skipped");
+            proceedToNextFilter(filterChain, httpRequest, httpResponse);
         } else {
             LOG.debug("Performing authentication filter of type {} for {}", authHandler.getType(), httpRequest);
-            boolean unauthorizedResponse = true;
-            int errCode = HttpServletResponse.SC_UNAUTHORIZED;
-            AuthenticationException authenticationEx = null;
-            boolean isHttps = "https".equals(httpRequest.getScheme());
+            performAuthentication(filterChain, httpRequest, httpResponse);
+        }
+    }
+
+    private void performAuthentication(FilterChain filterChain, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
+        boolean unauthorizedResponse = true;
+        int errCode = HttpServletResponse.SC_UNAUTHORIZED;
+        AuthenticationException authenticationEx = null;
+        try {
+            boolean newToken = false;
+            AuthenticationToken token;
             try {
-                boolean newToken = false;
-                AuthenticationToken token;
-                try {
-                    token = getToken(httpRequest);
-                } catch (AuthenticationException ex) {
-                    LOG.warn("AuthenticationToken ignored: " + ex.getMessage());
-                    // will be sent back in a 401 unless filter authenticates
-                    authenticationEx = ex;
-                    token = null;
-                }
-                if (authHandler.managementOperation(token, httpRequest, httpResponse)) {
-                    if (token == null) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Request [{}] triggering authentication", getRequestURL(httpRequest));
-                        }
-                        token = authHandler.authenticate(httpRequest, httpResponse);
-                        if (token != null && token.getExpires() != 0 &&
-                                token != AuthenticationToken.ANONYMOUS) {
-                            token.setExpires(System.currentTimeMillis() + getValidity() * 1000);
-                        }
-                        newToken = true;
-                    }
-                    if (token != null) {
-                        unauthorizedResponse = false;
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Request [{}] user [{}] authenticated", getRequestURL(httpRequest), token.getUserName());
-                        }
-                        final AuthenticationToken authToken = token;
-                        httpRequest = new HttpServletRequestWrapper(httpRequest) {
-
-                            @Override
-                            public String getAuthType() {
-                            return authToken.getType();
-                        }
-
-                            @Override
-                            public String getRemoteUser() {
-                            return authToken.getUserName();
-                        }
-
-                            @Override
-                            public Principal getUserPrincipal() {
-                            return (authToken != AuthenticationToken.ANONYMOUS) ? authToken : null;
-                        }
-                        };
-                        if (newToken && !token.isExpired() && token != AuthenticationToken.ANONYMOUS) {
-                            String signedToken = signer.sign(token.toString());
-                            createAuthCookie(httpResponse, signedToken, getCookieDomain(),
-                                    getCookiePath(), token.getExpires(), isHttps);
-                        }
-                        doFilter(filterChain, httpRequest, httpResponse);
-                    }
-                } else {
-                    unauthorizedResponse = false;
-                }
+                token = getToken(httpRequest);
             } catch (AuthenticationException ex) {
-                // exception from the filter itself is fatal
-                errCode = HttpServletResponse.SC_FORBIDDEN;
+                LOG.warn("AuthenticationToken ignored: " + ex.getMessage());
+                // will be sent back in a 401 unless filter authenticates
                 authenticationEx = ex;
+                token = null;
+            }
+            if (token == null) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Authentication exception: " + ex.getMessage(), ex);
+                    LOG.debug("Request [{}] triggering authentication", getRequestURL(httpRequest));
+                }
+                token = authHandler.authenticate(httpRequest, httpResponse);
+                if (token != null && token.getExpires() != 0 &&
+                        token != AuthenticationToken.ANONYMOUS) {
+                    token.setExpires(System.currentTimeMillis() + getValidity() * 1000);
+                }
+                newToken = true;
+            }
+            if (token != null) {
+                // authentication was successful
+                unauthorizedResponse = false;
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Request [{}] user [{}] authenticated", getRequestURL(httpRequest), token.getUserName());
+                }
+
+                // we will wrap the principal around the http request
+                httpRequest = new AuthTokenRequestWrapper(httpRequest, token);
+                if (newToken && !token.isExpired() && token != AuthenticationToken.ANONYMOUS) {
+                    String signedToken = signer.sign(token.toString());
+                    createAuthCookie(httpResponse, signedToken, getCookieDomain(),
+                            getCookiePath(), token.getExpires(), "https".equals(httpRequest.getScheme()));
+                }
+                httpRequest.setAttribute(AUTH_FAILED, "false");
+                proceedToNextFilter(filterChain, httpRequest, httpResponse);
+            }
+        } catch (AuthenticationException ex) {
+            // exception from the filter itself is fatal
+            errCode = HttpServletResponse.SC_FORBIDDEN;
+            authenticationEx = ex;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Authentication exception: {}", ex.getMessage(), ex);
+            } else {
+                if (isComposite) {
+                    LOG.info("Authentication exception: {}", ex.getMessage());
                 } else {
-                    LOG.warn("Authentication exception: " + ex.getMessage());
+                    LOG.warn("Authentication exception: {}", ex.getMessage());
                 }
             }
-            if (unauthorizedResponse) {
-                if (!httpResponse.isCommitted()) {
-                    createAuthCookie(httpResponse, "", getCookieDomain(),
-                            getCookiePath(), 0, isHttps);
-                    // If response code is 401. Then WWW-Authenticate Header should be
-                    // present.. reset to 403 if not found..
-                    if ((errCode == HttpServletResponse.SC_UNAUTHORIZED)
-                            && (!httpResponse.containsHeader(
-                            KerberosAuthenticator.WWW_AUTHENTICATE))) {
-                        errCode = HttpServletResponse.SC_FORBIDDEN;
-                    }
-                    // Consume request before sending auth response to become proxy friendly.
-                    // -1 content lenght may indicate that the whole content is not yet set sent over the wire. We need
-                    // to drain it becase some proxies will try continue sending it after we responded with the auth
-                    // header and closed the connection. This would result in a proxy error.
-                    if (request.getContentLength() < 0 && !expectContinue(request)) {
-                        LOG.debug("Draining request input stream before sending back auth headers to avoid proxy issues.");
-                        drainInputStream(request.getInputStream());
-                    }
-                    if (authenticationEx == null) {
-                        httpResponse.sendError(errCode, "Authentication required");
-                    } else {
-                        httpResponse.sendError(errCode, authenticationEx.getMessage());
-                    }
-                }
+        }
+        if (unauthorizedResponse) {
+            if (isComposite) {
+                LOG.info("Composite Authentication - Did not pass authentication with [{}] filter, passing to the next one.", authHandler.getType());
+                httpRequest.setAttribute(AUTH_FAILED, "true");
+                proceedToNextFilter(filterChain, httpRequest, httpResponse);
+            } else {
+                respondWithUnauthorized(httpRequest, httpResponse, errCode, authenticationEx);
+            }
+        }
+    }
+
+    private boolean alreadyAuthenticated(HttpServletRequest httpRequest) {
+        Object value = httpRequest.getAttribute(AUTH_FAILED);
+        return "false".equals(value);
+    }
+
+    protected void respondWithUnauthorized(ServletRequest request, HttpServletResponse httpResponse, int errCode,
+                                           AuthenticationException authenticationEx) throws IOException {
+        if (!httpResponse.isCommitted()) {
+            boolean isHttps = "https".equals(request.getScheme());
+            createAuthCookie(httpResponse, "", getCookieDomain(),
+                    getCookiePath(), 0, isHttps);
+            // If response code is 401. Then WWW-Authenticate Header should be
+            // present.. reset to 403 if not found..
+            if ((errCode == HttpServletResponse.SC_UNAUTHORIZED)
+                    && (!httpResponse.containsHeader(
+                    KerberosAuthenticator.WWW_AUTHENTICATE))) {
+                errCode = HttpServletResponse.SC_FORBIDDEN;
+            }
+            // Consume request before sending auth response to become proxy friendly.
+            // -1 content lenght may indicate that the whole content is not yet set sent over the wire. We need
+            // to drain it becase some proxies will try continue sending it after we responded with the auth
+            // header and closed the connection. This would result in a proxy error.
+            if (request.getContentLength() < 0 && !expectContinue(request)) {
+                LOG.debug("Draining request input stream before sending back auth headers to avoid proxy issues.");
+                drainInputStream(request.getInputStream());
+            }
+            if (authenticationEx == null) {
+                httpResponse.sendError(errCode, "Authentication required");
+            } else {
+                httpResponse.sendError(errCode, authenticationEx.getMessage());
             }
         }
     }
@@ -640,8 +662,8 @@ public class AuthenticationFilter implements Filter {
      * Delegates call to the servlet filter chain. Sub-classes my override this
      * method to perform pre and post tasks.
      */
-    protected void doFilter(FilterChain filterChain, HttpServletRequest request,
-                            HttpServletResponse response) throws IOException, ServletException {
+    protected void proceedToNextFilter(FilterChain filterChain, HttpServletRequest request,
+                                       HttpServletResponse response) throws IOException, ServletException {
         filterChain.doFilter(request, response);
     }
 

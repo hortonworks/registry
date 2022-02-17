@@ -169,7 +169,10 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 try {
                     String className = servletFilterConfig.getClassName();
                     Map<String, String> params = servletFilterConfig.getParams();
-                    String typeSuffix = params.get("type") != null ? ("-" + params.get("type")) : "";
+                    String typeSuffix = "";
+                    if (params != null) {
+                        typeSuffix = params.get("type") != null ? ("-" + params.get("type")) : "";
+                    }
                     LOG.info("Registering servlet filter [{}]", servletFilterConfig);
                     Class<? extends Filter> filterClass = (Class<? extends Filter>) Class.forName(className);
                     FilterRegistration.Dynamic dynamic = environment.servlets().addFilter(className + typeSuffix, filterClass);
