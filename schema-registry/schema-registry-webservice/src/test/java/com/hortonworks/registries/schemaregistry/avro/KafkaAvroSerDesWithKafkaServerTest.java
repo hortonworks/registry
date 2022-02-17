@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,7 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 
@@ -117,14 +117,14 @@ public class KafkaAvroSerDesWithKafkaServerTest {
 
         void startCluster() {
             try {
-                before();
+                start();
             } catch (Throwable throwable) {
                 throw new RuntimeException(throwable);
             }
         }
 
         void stopCluster() {
-            after();
+            stop();
         }
     }
 
@@ -253,7 +253,7 @@ public class KafkaAvroSerDesWithKafkaServerTest {
         producer.send(producerRecord, callback);
         producer.flush();
         LOG.info("Message successfully sent to topic: [{}]", topicName);
-        producer.close(5, TimeUnit.SECONDS);
+        producer.close(Duration.of(5, ChronoUnit.SECONDS));
 
         return bootstrapServers;
     }
