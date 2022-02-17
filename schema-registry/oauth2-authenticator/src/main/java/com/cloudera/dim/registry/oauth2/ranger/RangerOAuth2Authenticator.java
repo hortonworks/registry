@@ -19,6 +19,7 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 
 import javax.annotation.Nullable;
+import javax.inject.Singleton;
 import javax.ws.rs.core.SecurityContext;
 import java.util.HashSet;
 
@@ -26,6 +27,7 @@ import java.util.HashSet;
  * The principal was extracted in {@link com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler}
  * and we need to return a Ranger user containing the same principal.
  * */
+@Singleton
 public class RangerOAuth2Authenticator implements RangerAuthenticator {
 
     @Nullable

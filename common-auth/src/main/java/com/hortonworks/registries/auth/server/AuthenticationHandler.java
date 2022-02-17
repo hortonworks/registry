@@ -31,11 +31,10 @@ import java.util.Properties;
  */
 public interface AuthenticationHandler {
 
-    public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-    public static final String JWT_SSO_ENABLED = "jwtSSOEnabled";
-    public static final String NON_BROWSER_USER_AGENTS = "non-browser.user-agents";
-    public static final String NON_BROWSER_USER_AGENTS_DEFAULT =
-            "java,curl,wget,perl,Jersey";
+    String WWW_AUTHENTICATE = "WWW-Authenticate";
+    String JWT_SSO_ENABLED = "jwtSSOEnabled";
+    String NON_BROWSER_USER_AGENTS = "non-browser.user-agents";
+    String NON_BROWSER_USER_AGENTS_DEFAULT = "java,curl,wget,perl,Jersey";
 
     /**
      * Returns the authentication type of the authentication handler.
@@ -44,7 +43,7 @@ public interface AuthenticationHandler {
      *
      * @return the authentication type of the authentication handler.
      */
-    public String getType();
+    String getType();
 
     /**
      * Initializes the authentication handler instance.
@@ -55,42 +54,14 @@ public interface AuthenticationHandler {
      *
      * @throws ServletException thrown if the handler could not be initialized.
      */
-    public void init(Properties config) throws ServletException;
+    void init(Properties config) throws ServletException;
 
     /**
      * Destroys the authentication handler instance.
      * <p>
      * This method is invoked by the {@link AuthenticationFilter#destroy} method.
      */
-    public void destroy();
-
-    /**
-     * Performs an authentication management operation.
-     * <p>
-     * This is useful for handling operations like get/renew/cancel
-     * delegation tokens which are being handled as operations of the
-     * service end-point.
-     * <p>
-     * If the method returns <code>TRUE</code> the request will continue normal
-     * processing, this means the method has not produced any HTTP response.
-     * <p>
-     * If the method returns <code>FALSE</code> the request will end, this means
-     * the method has produced the corresponding HTTP response.
-     *
-     * @param token the authentication token if any, otherwise <code>NULL</code>.
-     * @param request the HTTP client request.
-     * @param response the HTTP client response.
-     * @return <code>TRUE</code> if the request should be processed as a regular
-     * request,
-     * <code>FALSE</code> otherwise.
-     *
-     * @throws IOException thrown if an IO error occurred.
-     * @throws AuthenticationException thrown if an Authentication error occurred.
-     */
-    public boolean managementOperation(AuthenticationToken token,
-                                       HttpServletRequest request,
-                                       HttpServletResponse response)
-            throws IOException, AuthenticationException;
+    void destroy();
 
     /**
      * Performs an authentication step for the given HTTP client request.
@@ -117,7 +88,7 @@ public interface AuthenticationHandler {
      * @throws IOException thrown if an IO error occurred.
      * @throws AuthenticationException thrown if an Authentication error occurred.
      */
-    public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response)
+    AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response)
             throws IOException, AuthenticationException;
 
     /**
@@ -138,6 +109,6 @@ public interface AuthenticationHandler {
      * @return <code>TRUE</code> if this request should be authenticated by the handler,
      * <code>FALSE</code> otherwise.
      */
-    public boolean shouldAuthenticate(HttpServletRequest request);
+    boolean shouldAuthenticate(HttpServletRequest request);
 
 }

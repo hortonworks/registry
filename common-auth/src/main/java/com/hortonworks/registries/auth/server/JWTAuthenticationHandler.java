@@ -161,12 +161,6 @@ public class JWTAuthenticationHandler implements AuthenticationHandler {
     }
 
     @Override
-    public boolean managementOperation(AuthenticationToken token, HttpServletRequest request, HttpServletResponse response)
-            throws IOException, AuthenticationException {
-        return true;
-    }
-
-    @Override
     public AuthenticationToken authenticate(HttpServletRequest request,
                                                      HttpServletResponse response) throws IOException,
             AuthenticationException {

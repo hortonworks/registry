@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.common.CollectionResponse;
+import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -41,6 +42,7 @@ import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -50,6 +52,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -64,6 +67,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -107,19 +111,20 @@ public class WhenSteps extends AbstractSteps {
 
     @Given("that Schema Registry is running")
     public void thatSchemaRegistryIsRunning() {
-        schemaRegistryIsRunning(false);
+        schemaRegistryIsRunning(false, null);
     }
 
     @Given("that Schema Registry is running with OAuth2")
     public void thatSchemaRegistryIsRunningWithOAuth2() {
-        schemaRegistryIsRunning(true);
+        schemaRegistryIsRunning(true, null);
     }
 
-    private void schemaRegistryIsRunning(boolean oauth2Enabled) {
+    private void schemaRegistryIsRunning(boolean oauth2Enabled, List<ServletFilterConfiguration> filters) {
         sow.clear();
         if (!testServer.isRunning()) {
             try {
                 testServer.setOAuth2Enabled(oauth2Enabled);
+                testServer.setAdditionalFilters(filters);
                 testServer.start();   // start schema registry server
             } catch (Throwable ex) {
                 LOG.error("Failed to start test server.", ex);
@@ -186,6 +191,39 @@ public class WhenSteps extends AbstractSteps {
                 )
         );
         testAtlasServer.dslSearch(result);
+    }
+
+    @Given("that Schema Registry is running with the following servlet filters:")
+    public void thatWeHaveTheFollowingServletFilters(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        List<ServletFilterConfiguration> filterConfigs = new ArrayList<>();
+
+        ServletFilterConfiguration config = null;
+        for (Map<String, String> columns : rows) {
+            String className = StringUtils.trimToNull(columns.get("ClassName"));
+            if ("-".equals(className)) {
+                className = null;
+            }
+            String paramKey = StringUtils.trimToNull(columns.get("Param Key"));
+            String paramValue = StringUtils.trimToNull(columns.get("Param Value"));
+
+            if (className != null) {
+                config = new ServletFilterConfiguration();
+                config.setClassName(className);
+                config.setParams(new HashMap<>());
+                filterConfigs.add(config);
+            }
+            if (config == null) {
+                throw new IllegalArgumentException("Servlet filter class name is required.");
+            }
+
+            if (paramKey != null && paramValue != null) {
+                config.getParams().put(paramKey, paramValue);
+            }
+        }
+
+        schemaRegistryIsRunning(false, filterConfigs);
     }
 
     @Given("an item exported from a Confluent registry:")
@@ -487,9 +525,12 @@ public class WhenSteps extends AbstractSteps {
         }
     }
 
-    private void weSendHttpGetTo(@Nonnull URI uri) {
+    private void weSendHttpGetTo(@Nonnull URI uri, @Nullable Header[] headers) {
         try (CloseableHttpClient httpClient = getHttpClient()) {
             HttpGet request = new HttpGet(uri);
+            if (headers != null) {
+                request.setHeaders(headers);
+            }
             if (sow.getValue(AUTH_TOKEN) != null) {
                 request.setHeader(AUTHORIZATION, "Bearer " + sow.getValue(AUTH_TOKEN));
             }
@@ -503,7 +544,7 @@ public class WhenSteps extends AbstractSteps {
 
     @When("we send an HTTP GET request to {string}")
     public void weSendAnHTTPGETRequestTo(String url) {
-        weSendHttpGetTo(URI.create(getBaseUrl(testServer.getPort()) + url));
+        weSendHttpGetTo(URI.create(getBaseUrl(testServer.getPort()) + url), null);
     }
 
     @When("we send an HTTP GET request to {string} with the following query parameters:")
@@ -518,7 +559,24 @@ public class WhenSteps extends AbstractSteps {
         }
 
         URI uri = uriBuilder.build();
-        weSendHttpGetTo(uri);
+        weSendHttpGetTo(uri, null);
+    }
+
+    @When("we send an HTTP GET request to {string} with the following headers:")
+    public void weSendAnHTTPGETRequestToWithTheFollowingHeaders(String url, DataTable table) throws URISyntaxException {
+        URIBuilder uriBuilder = new URIBuilder(getBaseUrl(testServer.getPort()) + url);
+
+        List<Header> headers = new ArrayList<>();
+
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+        for (Map<String, String> columns : rows) {
+            String name = checkNotNull(columns.get("Key"), "Missing \"Key\" column.");
+            String value = StringUtils.trimToEmpty(columns.get("Value"));
+            headers.add(new BasicHeader(name, value));
+        }
+
+        URI uri = uriBuilder.build();
+        weSendHttpGetTo(uri, headers.toArray(new Header[headers.size()]));
     }
 
     private void storeHttpResponse(CloseableHttpResponse response) {
@@ -664,4 +722,5 @@ public class WhenSteps extends AbstractSteps {
             fail(ex);
         }
     }
+
 }
