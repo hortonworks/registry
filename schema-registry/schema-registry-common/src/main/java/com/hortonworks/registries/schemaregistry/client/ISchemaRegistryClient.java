@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -245,6 +246,8 @@ public interface ISchemaRegistryClient extends ISchemaRegistryService, AutoClose
      *
      * @return  list of aggregates schema metadata info
     */
-    List<SchemaMetadataInfo> findAllSchemas();
+    default List<SchemaMetadataInfo> findAllSchemas() {
+        return Collections.emptyList();
+    }
 
 }
