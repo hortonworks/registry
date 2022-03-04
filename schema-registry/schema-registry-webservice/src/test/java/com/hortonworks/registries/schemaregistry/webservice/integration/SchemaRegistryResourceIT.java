@@ -27,11 +27,13 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import com.hortonworks.registries.schemaregistry.authorizer.exception.RangerException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryResource;
+import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -53,6 +55,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,6 +63,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
@@ -434,6 +438,26 @@ public class SchemaRegistryResourceIT {
         // then
         assertEquals(200, response.getStatus());
         assertNotNull(response.getEntity());
+        verifyNoInteractions(atlasEventLogger);
+    }
+    
+    @Test
+    public void offsetReachedThrowException() {
+        //given
+        SchemaMetadata schemaMetadata = new SchemaMetadata.Builder("magnesium").type("avro").schemaGroup("eyebrow").compatibility(SchemaCompatibility.BACKWARD).validationLevel(SchemaValidationLevel.LATEST).description("b6").build();
+        when(authenticationUtils.getUserAndGroups(any())).thenReturn(new Authorizer.UserAndGroups("user", new HashSet<>()));
+        doNothing().when(authorizationAgentMock).authorizeSchemaMetadata(any(), eq(schemaMetadata), eq(Authorizer.AccessType.CREATE));
+        when(schemaRegistryMock.getSchemaMetadataInfo(schemaMetadata.getName())).thenReturn(null);
+        when(schemaRegistryMock.addSchemaMetadata(eq(schemaMetadata), anyBoolean())).thenThrow(OffsetRangeReachedException.class);
+
+        //when
+        Response response = testClient.target(
+                String.format("/api/v1/schemaregistry/schemas"))
+            .request(MediaType.APPLICATION_JSON)
+            .post(Entity.json(schemaMetadata), Response.class);
+        
+        //then
+        assertEquals(409, response.getStatus());
         verifyNoInteractions(atlasEventLogger);
     }
 

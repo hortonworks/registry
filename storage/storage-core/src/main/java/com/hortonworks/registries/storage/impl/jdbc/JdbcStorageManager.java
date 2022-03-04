@@ -30,6 +30,7 @@ import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
+import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
@@ -53,7 +54,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.hortonworks.registries.storage.impl.jdbc.util.SchemaFields.getSequenceField;
 import static com.hortonworks.registries.storage.impl.jdbc.util.SchemaFields.idFieldsFor;
@@ -251,7 +251,10 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
             log.debug("Locked sequence row for namespace {} in {}ms", namespace, stopwatch.elapsed(MILLISECONDS));
             NamespaceSequenceStorable currentSequence = get(keyForNamespace);
             if (currentSequence != null) {
-                checkState(notAboveMaxOffset(currentSequence), "Sequence for namespace %s cannot go above max offset %s", namespace, offsetMax);
+                if (!notAboveMaxOffset(currentSequence)) {
+                    log.error(String.format("Sequence for namespace %s cannot go above max offset %s", namespace, offsetMax));
+                    throw new OffsetRangeReachedException(String.format("Sequence for namespace %s cannot go above max offset %s", namespace, offsetMax));
+                }
                 NamespaceSequenceStorable incremented = currentSequence.increment();
                 update(incremented);
 

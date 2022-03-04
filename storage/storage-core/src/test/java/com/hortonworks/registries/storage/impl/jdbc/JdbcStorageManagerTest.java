@@ -27,6 +27,7 @@ import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.storage.common.DatabaseType;
+import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.sequences.NamespaceSequenceStorable;
@@ -281,7 +282,7 @@ public class JdbcStorageManagerTest {
                     jdbcStorageManager.init(storageConfig);
                     jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
 
-                    assertThrows(IllegalStateException.class, () -> jdbcStorageManager.nextId(namespace));
+                    assertThrows(OffsetRangeReachedException.class, () -> jdbcStorageManager.nextId(namespace));
 
                     verify(queryExecutor, never()).update(any());
                 }
