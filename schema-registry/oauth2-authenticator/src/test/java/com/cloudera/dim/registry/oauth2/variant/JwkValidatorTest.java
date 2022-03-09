@@ -22,14 +22,18 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWK_URL;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWT_PRINCIPAL_CLAIM;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.KEY_STORE_TYPE;
 import static com.cloudera.dim.registry.oauth2.TestJwtGenerator.generateSignedJwt;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,6 +41,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class JwkValidatorTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JwkValidatorTest.class);
 
     private JwkValidator validator;
     private String jwksJsonText;
@@ -73,24 +79,45 @@ public class JwkValidatorTest {
 
     @Test
     public void testRsaValidation() throws Exception {
-        JwtKeyStoreType type = JwtKeyStoreType.JWK;
-        String url = "https://my.auth.server/jwks";
-        String kid = "2";
-
-        HttpClientForOAuth2 httpClient = mock(HttpClientForOAuth2.class);
-        when(httpClient.readKeyFromUrl(any(), eq(url))).thenReturn(jwksJsonText);
-
         Properties config = new Properties();
-        config.setProperty(JWK_URL, url);
-        config.setProperty(KEY_STORE_TYPE, type.getValue());
+        HttpClientForOAuth2 httpClient = mock(HttpClientForOAuth2.class);
+        String jwtAsString = generateRsaJwt(config, httpClient);
 
-        String jwtAsString = generateSignedJwt(JWSAlgorithm.RS256, kid, "marton");
         SignedJWT signedJWT = SignedJWT.parse(jwtAsString);
 
         validator = new JwkValidator(config, httpClient);
         boolean result = validator.validateSignature(signedJWT);
 
         assertTrue(result);
+    }
+
+    @Test
+    public void testNoSubClaim() throws Exception {
+        Properties config = new Properties();
+        HttpClientForOAuth2 httpClient = mock(HttpClientForOAuth2.class);
+        String jwtAsString = generateRsaJwt(config, httpClient);
+
+        SignedJWT signedJWT = SignedJWT.parse(jwtAsString);
+
+        config.setProperty(JWT_PRINCIPAL_CLAIM, "xxx");
+        validator = new JwkValidator(config, httpClient);
+
+        assertThrows(RuntimeException.class, () -> validator.validateSignature(signedJWT));
+    }
+
+    private String generateRsaJwt(Properties config, HttpClientForOAuth2 httpClient) throws Exception {
+        JwtKeyStoreType type = JwtKeyStoreType.JWK;
+        String url = "https://my.auth.server/jwks";
+        String kid = "2";
+
+        when(httpClient.readKeyFromUrl(any(), eq(url))).thenReturn(jwksJsonText);
+
+        config.setProperty(JWK_URL, url);
+        config.setProperty(KEY_STORE_TYPE, type.getValue());
+
+        String jwtAsString = generateSignedJwt(JWSAlgorithm.RS256, kid, "marton");
+        LOG.debug("Generated JWT: {}", jwtAsString);
+        return jwtAsString;
     }
 
 }

@@ -47,6 +47,7 @@ import static com.cloudera.dim.registry.oauth2.OAuth2Config.EXPECTED_JWT_AUDIENC
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.EXPECTED_JWT_ISSUER;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWK_REFRESH_MS;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWK_URL;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWT_PRINCIPAL_CLAIM;
 import static org.jose4j.jwa.AlgorithmConstraints.DISALLOW_NONE;
 
 /**
@@ -55,9 +56,6 @@ import static org.jose4j.jwa.AlgorithmConstraints.DISALLOW_NONE;
 public class JwkValidator implements JwtValidatorVariant {
 
     private static final Logger LOG = LoggerFactory.getLogger(JwkValidator.class);
-
-    private static final String KEYTYPE_RSA = "RSA";
-    private static final String KEYTYPE_OCTET = "oct";
 
     private final ExecutorService threadPool = Executors.newFixedThreadPool(1);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -68,6 +66,7 @@ public class JwkValidator implements JwtValidatorVariant {
     private final String[] expectedAudiences;
     private final String expectedIssuer;
     private final long refreshIntervalMs;
+    private final String jwtPrincipalClaim;
 
     public JwkValidator(Properties config, @Nonnull HttpClientForOAuth2 httpClient) throws ServletException {
         this.httpClient = httpClient;
@@ -76,6 +75,7 @@ public class JwkValidator implements JwtValidatorVariant {
         this.expectedIssuer = config.containsKey(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
         this.refreshIntervalMs = Long.parseLong((String) config.getOrDefault(JWK_REFRESH_MS, String.valueOf(5 * 60000L)));
         this.keys = new AtomicReference<>(retrieveKeys(config, httpClient));
+        this.jwtPrincipalClaim = config.containsKey(JWT_PRINCIPAL_CLAIM) ? (String) config.get(JWT_PRINCIPAL_CLAIM) : "sub";
 
         // refresh the JWKs every 5 minutes
         threadPool.submit(new JwkRefresher(config, httpClient));
@@ -105,7 +105,6 @@ public class JwkValidator implements JwtValidatorVariant {
                     .setJwsAlgorithmConstraints(DISALLOW_NONE)
                     .setRequireExpirationTime()
                     .setRequireIssuedAt()
-                    .setRequireSubject()
                     .setVerificationKeyResolver(keyResolver)
                     .build();
 
@@ -114,6 +113,11 @@ public class JwkValidator implements JwtValidatorVariant {
             JwtContext jwtContext = jwtConsumer.process(jwtToken.getParsedString());
             if (jwtContext == null) {
                 throw new RuntimeException("Could not validate JWT.");
+            }
+
+            String subject = jwtContext.getJwtClaims().getClaimValueAsString(jwtPrincipalClaim);
+            if (subject == null) {
+                throw new RuntimeException(String.format("Could not read the claim '%s' from the access token.", jwtPrincipalClaim));
             }
 
             return true;
