@@ -28,6 +28,7 @@ import java.util.Properties;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.CLOCK_SKEW;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.EXPECTED_JWT_AUDIENCES;
 import static com.cloudera.dim.registry.oauth2.OAuth2Config.EXPECTED_JWT_ISSUER;
+import static com.cloudera.dim.registry.oauth2.OAuth2Config.JWT_PRINCIPAL_CLAIM;
 import static org.jose4j.jwa.AlgorithmConstraints.DISALLOW_NONE;
 
 abstract class StoredKeyValidator implements JwtValidatorVariant {
@@ -38,12 +39,14 @@ abstract class StoredKeyValidator implements JwtValidatorVariant {
     private final Integer clockSkew;
     private final String[] expectedAudiences;
     private final String expectedIssuer;
+    private final String jwtPrincipalClaim;
 
     protected StoredKeyValidator(Key key, Properties config) {
         this.key = key;
         this.clockSkew = config.containsKey(CLOCK_SKEW) ? Integer.parseInt(config.getProperty(CLOCK_SKEW)) : null;
         this.expectedAudiences = config.containsKey(EXPECTED_JWT_AUDIENCES) ? ((String) config.get(EXPECTED_JWT_AUDIENCES)).split("\\n") : null;
         this.expectedIssuer = config.containsKey(EXPECTED_JWT_ISSUER) ? (String) config.get(EXPECTED_JWT_ISSUER) : null;
+        this.jwtPrincipalClaim = config.containsKey(JWT_PRINCIPAL_CLAIM) ? (String) config.get(JWT_PRINCIPAL_CLAIM) : "sub";
     }
 
     public boolean validateSignature(SignedJWT jwtToken) {
@@ -65,7 +68,6 @@ abstract class StoredKeyValidator implements JwtValidatorVariant {
                     .setJwsAlgorithmConstraints(DISALLOW_NONE)
                     .setRequireExpirationTime()
                     .setRequireIssuedAt()
-                    .setRequireSubject()
                     .setVerificationKey(key)
                     .build();
 
@@ -74,9 +76,16 @@ abstract class StoredKeyValidator implements JwtValidatorVariant {
                 throw new RuntimeException("Could not validate JWT.");
             }
 
+            String subject = jwtContext.getJwtClaims().getClaimValueAsString(jwtPrincipalClaim);
+            if (subject == null) {
+                throw new RuntimeException(String.format("Could not read the claim '%s' from the access token.", jwtPrincipalClaim));
+            }
+
             return true;
+        } catch (RuntimeException rex) {
+            throw rex;
         } catch (Exception ex) {
-            LOG.warn("Failed to verify HMAC signature of the JWT.", ex);
+            LOG.warn("Failed to verify the signature of the JWT.", ex);
         }
         return false;
     }
