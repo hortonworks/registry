@@ -288,7 +288,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         return offsetMin != null && sequence.getNextId() < offsetMin;
     }
 
-    private long selectMaxId(Storable storable) throws SQLException {
+    private long selectMaxId(Storable storable) {
         Optional<Schema.Field> sequenceField = getSequenceField(storable.getPrimaryKey());
         if (!sequenceField.isPresent()) {
             Set<Schema.Field> idFields = idFieldsFor(storable);
@@ -318,27 +318,50 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
                     continue;
                 }
 
-                NamespaceSequenceStorable sequenceStorable = new NamespaceSequenceStorable(storable.getNameSpace());
-                NamespaceSequenceStorable existingSequence = get(sequenceStorable.getStorableKey());
+                String nameSpace = storable.getNameSpace();
+                NamespaceSequenceStorable existingSequence = get(NamespaceSequenceStorable.getStorableKeyForNamespace(nameSpace));
                 if (existingSequence != null) {
-                    if (sequenceNeedsToBeOffseted(existingSequence)) {
-                        NamespaceSequenceStorable withOffset = withOffset(sequenceStorable);
-                        log.debug("Increasing sequence for namespace {} from existing value {} to {}", storable.getNameSpace(), existingSequence.getNextId(), withOffset.getNextId());
-                        update(withOffset);
-                    } else {
-                        log.debug("Existing sequence value for namespace {} is {}", storable.getNameSpace(), existingSequence.getNextId());
-                        continue;
-                    }
+                    offsetExistingSequence(nameSpace, existingSequence);
                 } else {
-                    sequenceStorable.setNextId(selectMaxId(storable) + 1);
-                    NamespaceSequenceStorable newSequence = withOffset(sequenceStorable);
-                    log.debug("Initializing sequence for namespace {} to {}", storable.getNameSpace(), newSequence.getNextId());
-                    add(newSequence);
+                    initializeNewSequence(storable);
                 }
             } catch (InstantiationException | IllegalAccessException | SQLException e) {
                 log.error("Cannot initialize sequence for storable " + storableClass.getSimpleName(), e);
                 throw new StorageException("Cannot initialize sequence for storable " + storableClass.getSimpleName(), e);
             }
+        }
+    }
+
+    private void initializeNewSequence(Storable storable) throws SQLException {
+        String nameSpace = storable.getNameSpace();
+        NamespaceSequenceStorable newSequence = new NamespaceSequenceStorable(nameSpace);
+        newSequence.setNextId(selectMaxId(storable) + 1);
+        if (sequenceNeedsToBeOffseted(newSequence)) {
+            newSequence = withOffset(newSequence);
+        }
+        log.info("Initializing sequence for namespace {} to {}", nameSpace, newSequence.getNextId());
+        try {
+            add(newSequence);
+        } catch (StorageException storageException) {
+            log.warn("Couldn't initialize sequence for namespace " + nameSpace, storageException);
+            if (get(newSequence.getStorableKey()) == null) {
+                log.warn("Initializing failed but sequence is still not there?");
+                throw new StorageException("Cannot continue without a sequence for storable " + storable.getClass().getSimpleName());
+            }
+        }
+    }
+
+    private void offsetExistingSequence(String nameSpace, NamespaceSequenceStorable existingSequence) {
+        if (sequenceNeedsToBeOffseted(existingSequence)) {
+            NamespaceSequenceStorable withOffset = withOffset(existingSequence);
+            log.info("Increasing sequence for namespace {} from existing value {} to {}", nameSpace, existingSequence.getNextId(), withOffset.getNextId());
+            if (writeLock(existingSequence.getStorableKey(), 0L, MILLISECONDS)) {
+                update(withOffset);
+            } else {
+                log.info("Couldn't lock sequence for namespace {}, another process may be updating it.", nameSpace);
+            }
+        } else {
+            log.info("Existing sequence value for namespace {} is {}", nameSpace, existingSequence.getNextId());
         }
     }
 

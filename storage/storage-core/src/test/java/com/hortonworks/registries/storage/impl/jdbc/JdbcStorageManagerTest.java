@@ -28,6 +28,7 @@ import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
+import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.QueryExecutor;
 import com.hortonworks.registries.storage.impl.jdbc.sequences.NamespaceSequenceStorable;
@@ -35,15 +36,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import org.mockito.stubbing.Answer;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.hortonworks.registries.common.Schema.Field.of;
 import static com.hortonworks.registries.common.Schema.Type.LONG;
 import static com.hortonworks.registries.common.Schema.Type.STRING;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,9 +58,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -100,6 +107,45 @@ public class JdbcStorageManagerTest {
 
             verify(queryExecutor).select(eq(sequenceStorable.getStorableKey()));
             verify(queryExecutor, never()).insert(any());
+        }
+
+        @Test
+        public void afterFailedInsertWhileInitializingDbValueIsQueriedAgainToSeeIfAlreadyInitializedNow() {
+            doNothing().when(storableFactory).addStorableClasses(anyCollection());
+
+            AtomicBoolean first = new AtomicBoolean(true);
+            when(queryExecutor.select(any(StorableKey.class))).thenAnswer((Answer<Collection<NamespaceSequenceStorable>>) invocation -> {
+                        boolean currentVal = first.get();
+                        first.set(false);
+                        return currentVal ? emptyList() : singletonList(new NamespaceSequenceStorable(NAMESPACE, 1L));
+                    }
+            );
+
+            doThrow(new StorageException("wasn't there first time but now it is!"))
+                    .when(queryExecutor).insert(any(Storable.class));
+
+            jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
+
+            PrimaryKey primaryKey = new PrimaryKey(singletonMap(NamespaceSequenceStorable.NAMESPACE_FIELD, NAMESPACE));
+            verify(queryExecutor, times(2))
+                    .select(new StorableKey(NamespaceSequenceStorable.NAMESPACE, primaryKey));
+        }
+
+        @Test
+        public void afterFailedInsertDbValueQueriedAgainAndExpectedToBeAlreadyInitialized() {
+            doNothing().when(storableFactory).addStorableClasses(anyCollection());
+            when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
+            doThrow(new StorageException("wasn't there first but now it is!"))
+                    .when(queryExecutor).insert(any(Storable.class));
+
+            assertThrows(
+                    StorageException.class,
+                    () -> jdbcStorageManager.registerStorables(singleton(LongIdStorable.class))
+            );
+
+            PrimaryKey primaryKey = new PrimaryKey(singletonMap(NamespaceSequenceStorable.NAMESPACE_FIELD, NAMESPACE));
+            verify(queryExecutor, times(2))
+                    .select(new StorableKey(NamespaceSequenceStorable.NAMESPACE, primaryKey));
         }
 
         @Test
@@ -212,11 +258,32 @@ public class JdbcStorageManagerTest {
 
                     NamespaceSequenceStorable sequenceStorable = new NamespaceSequenceStorable(NAMESPACE, 5L);
                     when(queryExecutor.select(any(StorableKey.class))).thenReturn(singleton(sequenceStorable));
+                    when(queryExecutor.selectForUpdate(any(StorableKey.class))).thenReturn(singleton(sequenceStorable));
 
                     jdbcStorageManager.init(storageConfig);
                     jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
 
                     verify(queryExecutor).update(eq(new NamespaceSequenceStorable(NAMESPACE, offsetMin)));
+                }
+            }
+
+            @Test
+            public void sequnceUpdateisSkippedWhenStorableCannotBeLocked() {
+                doNothing().when(storableFactory).addStorableClasses(anyCollection());
+
+                try (MockedStatic<QueryExecutorFactory> queryExecutorFactory = mockStatic(QueryExecutorFactory.class)) {
+                    queryExecutorFactory
+                            .when(() -> QueryExecutorFactory.get(any(DatabaseType.class), any(StorageProviderConfiguration.class)))
+                            .thenReturn(queryExecutor);
+
+                    NamespaceSequenceStorable sequenceStorable = new NamespaceSequenceStorable(NAMESPACE, 5L);
+                    when(queryExecutor.select(any(StorableKey.class))).thenReturn(singleton(sequenceStorable));
+                    when(queryExecutor.selectForUpdate(any(StorableKey.class))).thenReturn(emptyList());
+
+                    jdbcStorageManager.init(storageConfig);
+                    jdbcStorageManager.registerStorables(singleton(LongIdStorable.class));
+
+                    verify(queryExecutor, never()).update(eq(new NamespaceSequenceStorable(NAMESPACE, offsetMin)));
                 }
             }
 

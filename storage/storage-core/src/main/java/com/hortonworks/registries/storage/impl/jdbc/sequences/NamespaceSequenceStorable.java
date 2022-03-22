@@ -18,6 +18,7 @@ package com.hortonworks.registries.storage.impl.jdbc.sequences;
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
+import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import java.util.Optional;
 
 public class NamespaceSequenceStorable extends AbstractStorable {
 
-    private static final String NAMESPACE = "namespace_sequence";
+    public static final String NAMESPACE = "namespace_sequence";
     private static final String NAMESPACE_FIELD_NAME = "namespace";
     private static final String NEXT_ID_FIELD_NAME = "nextId";
 
@@ -49,6 +50,10 @@ public class NamespaceSequenceStorable extends AbstractStorable {
 
     public NamespaceSequenceStorable(String namespace) {
         this(namespace, 0);
+    }
+
+    public static StorableKey getStorableKeyForNamespace(String nameSpace) {
+        return new NamespaceSequenceStorable(nameSpace).getStorableKey();
     }
 
     public String getNamespace() {
