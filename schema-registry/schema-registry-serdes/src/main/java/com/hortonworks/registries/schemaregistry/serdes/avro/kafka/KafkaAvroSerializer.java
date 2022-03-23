@@ -109,10 +109,10 @@ public class KafkaAvroSerializer implements Serializer<Object> {
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
-        compatibility = SchemaCompatibility.valueOf(
-                Utils.getOrDefaultAsString(configs, SCHEMA_COMPATIBILITY, SchemaCompatibility.DEFAULT_COMPATIBILITY.name())
-                        .toUpperCase()
-        );
+        String compatSetting = Utils.getOrDefaultAsString(configs, SCHEMA_COMPATIBILITY, "").toUpperCase();
+        if (!"".equals(compatSetting)) {
+            compatibility = SchemaCompatibility.valueOf(compatSetting);
+        }
 
         schemaGroup = Utils.getOrDefaultAsString(configs, SCHEMA_GROUP, DEFAULT_SCHEMA_GROUP);
         schemaNameKeySuffix = Utils.getOrDefaultAsString(configs, SCHEMA_NAME_KEY_SUFFIX, DEFAULT_SCHEMA_NAME_KEY_SUFFIX);
@@ -157,7 +157,11 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     private SchemaMetadata createSchemaMetadata(String topic) {
         SchemaMetadata schemaMetadata = getSchemaKey(topic, isKey);
         String description = "Schema registered by KafkaAvroSerializer for topic: [" + topic + "] iskey: [" + isKey + "]";
-        return new SchemaMetadata.Builder(schemaMetadata).description(description).compatibility(compatibility).build();
+        SchemaMetadata.Builder builder = new SchemaMetadata.Builder(schemaMetadata).description(description);
+        if (compatibility != null) {
+            builder.compatibility(compatibility);
+        }
+        return builder.build();
     }
 
     public SchemaMetadata getSchemaKey(String topic, boolean isKey) {

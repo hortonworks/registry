@@ -16,6 +16,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.common.util.FileStorage;
@@ -56,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
@@ -96,6 +98,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private final SchemaVersionLifecycleManager schemaVersionLifecycleManager;
     private final SchemaBranchCache schemaBranchCache;
     private final SchemaLockManager schemaLockManager;
+    private final CompatibilityConfig compatibilityConfig;
     private final BulkUploadService bulkUploadService;
 
     @Inject
@@ -103,10 +106,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                  StorageManager storageManager,
                                  FileStorage fileStorage,
                                  Collection<Map<String, Object>> schemaProvidersConfig,
-                                 SchemaLockManager schemaLockManager) {
+                                 SchemaLockManager schemaLockManager,
+                                 CompatibilityConfig compatibilityConfig) {
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaLockManager = schemaLockManager;
+        this.compatibilityConfig = compatibilityConfig;
         this.bulkUploadService = new BulkUploadService(this);
 
         storageManager.registerStorables(
@@ -235,15 +240,44 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
     public Long addSchemaMetadata(SchemaMetadata schemaMetadata,
                                   boolean throwErrorIfExists) throws UnsupportedSchemaTypeException {
-        return addSchemaMetadata(Optional.empty(), schemaMetadata, throwErrorIfExists);
+        return addSchemaMetadata(null, schemaMetadata, throwErrorIfExists);
     }
 
     @Override
     public Long addSchemaMetadata(Long id, SchemaMetadata schemaMetadata) {
-        return addSchemaMetadata(Optional.ofNullable(id), schemaMetadata, true);
+        return addSchemaMetadata(id, schemaMetadata, true);
     }
 
-    private Long addSchemaMetadata(Optional<Long> metadataId, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+    private Long addSchemaMetadata(@Nullable Long metadataId, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+        SchemaMetadataStorable metaStorable = createSchemaMetadata(metadataId, schemaMetadata, throwErrorIfExists);
+
+        // Add a schema branch for this metadata
+        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
+                schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
+        Long branchId = storageManager.nextId(schemaBranchStorable.getNameSpace());
+        branchId = checkIfIdIsTaken(SchemaBranchStorable.class, branchId);
+        schemaBranchStorable.setId(branchId);
+        storageManager.add(schemaBranchStorable);
+
+        storageManager.add(new SchemaLockStorable(metaStorable.getNameSpace(),
+                metaStorable.getName(), System.currentTimeMillis()));
+
+        return metaStorable.getId();
+    }
+    
+    @Override
+    public Long addSchemaMetadataWithoutBranch(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+        SchemaMetadataStorable metaStorable = createSchemaMetadata(id.get(), schemaMetadata, throwErrorIfExists);
+        return metaStorable.getId();
+    }
+
+    private SchemaMetadataStorable createSchemaMetadata(@Nullable Long id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+        if (schemaMetadata.getInternalCompatibility() == null) {
+            schemaMetadata.setCompatibility(SchemaCompatibility.valueOf(compatibilityConfig.getAvroCompatibility()));
+        }
+        if (schemaMetadata.getInternalValidationLevel() == null) {
+            schemaMetadata.setValidationLevel(SchemaValidationLevel.valueOf(compatibilityConfig.getValidationLevel()));
+        }
         final SchemaMetadataStorable givenSchemaMetadataStorable = ensureJsonCompatibility(
                 SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata)));
         String type = schemaMetadata.getType();
@@ -255,11 +289,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (!throwErrorIfExists) {
             Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
             if (schemaMetadataStorable != null) {
-                return schemaMetadataStorable.getId();
+                return (SchemaMetadataStorable) schemaMetadataStorable;
             }
         }
-        Long nextId = metadataId.orElseGet(() -> storageManager.nextId(givenSchemaMetadataStorable.getNameSpace()));
-        if (!metadataId.isPresent()) {
+        Long nextId = id != null ? id :
+                storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
+        if (id == null) {
             LOG.debug("Given id is null, id is generated");
             nextId = checkIfIdIsTaken(SchemaMetadataStorable.class, nextId);
         }
@@ -267,47 +302,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
         storageManager.add(givenSchemaMetadataStorable);
 
-        // Add a schema branch for this metadata
-        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
-                schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
-        Long branchId = storageManager.nextId(schemaBranchStorable.getNameSpace());
-        branchId = checkIfIdIsTaken(SchemaBranchStorable.class, branchId);
-        schemaBranchStorable.setId(branchId);
-        storageManager.add(schemaBranchStorable);
-
-        storageManager.add(new SchemaLockStorable(givenSchemaMetadataStorable.getNameSpace(),
-                givenSchemaMetadataStorable.getName(), System.currentTimeMillis()));
-
-        return givenSchemaMetadataStorable.getId();
-    }
-    
-    @Override
-    public Long addSchemaMetadataWithoutBranch(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
-        final SchemaMetadataStorable givenSchemaMetadataStorable = ensureJsonCompatibility(
-            SchemaMetadataStorable.fromSchemaMetadataInfo(new SchemaMetadataInfo(schemaMetadata)));
-        String type = schemaMetadata.getType();
-
-        if (schemaTypeWithProviders.get(type) == null) {
-            throw new UnsupportedSchemaTypeException("Given schema type " + type + " not supported");
-        }
-
-        if (!throwErrorIfExists) {
-            Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
-            if (schemaMetadataStorable != null) {
-                return schemaMetadataStorable.getId();
-            }
-        }
-        Long nextId = id.get() != null ? id.get() :
-            storageManager.nextId(givenSchemaMetadataStorable.getNameSpace());
-        if (id.get() == null) {
-            LOG.debug("Given id is null, id is generated");
-            nextId = checkIfIdIsTaken(SchemaMetadataStorable.class, nextId);
-        }
-        givenSchemaMetadataStorable.setId(nextId);
-        givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
-        storageManager.add(givenSchemaMetadataStorable);
-
-        return givenSchemaMetadataStorable.getId();
+        return givenSchemaMetadataStorable;
     }
 
     @Override
@@ -412,7 +407,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     /** JSON schema compatibility is always NONE. */
     private SchemaMetadataStorable ensureJsonCompatibility(@Nonnull SchemaMetadataStorable schemaMetadata) {
         if (StringUtils.equalsIgnoreCase("json", schemaMetadata.getType())) {
-            return schemaMetadata.copy(SchemaCompatibility.NONE);
+            return schemaMetadata.copy(
+                SchemaCompatibility.valueOf(compatibilityConfig.getJsonCompatibility()));
         }
         return schemaMetadata;
     }

@@ -26,6 +26,7 @@ import com.hortonworks.registries.common.FileStorageProperties;
 import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.common.util.LocalFileSystemStorage;
+import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 import com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter;
 import com.hortonworks.registries.storage.DbProperties;
@@ -90,6 +91,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private DataSource dataSource;
     private List<ServletFilterConfiguration> additionalFilters;
     private boolean oauth2Enabled = false;
+    private String defaultAvroCompatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY.name();
 
     private volatile static TestSchemaRegistryServer instance;
 
@@ -122,7 +124,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         List<ServletFilterConfiguration> filters = prepareServletFilters(oauth2Enabled, additionalFilters);
 
         // now we can start Schema Registry and have it connect to our H2 database
-        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, filters);
+        RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, filters, defaultAvroCompatibility);
 
         this.schemaRegistryPort = findFreePort();
         String registryYamlTxt = configGenerator.generateRegistryYaml(config, schemaRegistryPort);
@@ -356,7 +358,8 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
 
     /** Prepare a configuration which will be passed to Schema Registry. */
     public RegistryConfiguration prepareConfig(DbProperties h2DbProps, boolean atlasEnabled, int atlasPort,
-                                               List<ServletFilterConfiguration> servletFilters) throws IOException {
+                                               List<ServletFilterConfiguration> servletFilters,
+                                               String defaultAvroCompatibility) throws IOException {
         RegistryConfiguration configuration = new RegistryConfiguration();
         if (configuration.getAtlasConfiguration() == null) {
             AtlasConfiguration atlasConfiguration = new AtlasConfiguration();
@@ -421,6 +424,9 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         if (servletFilters != null) {
             configuration.getServletFilters().addAll(servletFilters);
         }
+        if (defaultAvroCompatibility != null) {
+            configuration.getCompatibility().setAvroCompatibility(defaultAvroCompatibility);
+        }
 
         ServletFilterConfiguration rewriteFilterConf = new ServletFilterConfiguration();
         configuration.getServletFilters().add(rewriteFilterConf);
@@ -476,5 +482,13 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
 
     public void setAdditionalFilters(List<ServletFilterConfiguration> additionalFilters) {
         this.additionalFilters = additionalFilters;
+    }
+
+    public String getDefaultAvroCompatibility() {
+        return defaultAvroCompatibility;
+    }
+
+    public void setDefaultAvroCompatibility(String defaultAvroCompatibility) {
+        this.defaultAvroCompatibility = defaultAvroCompatibility;
     }
 }

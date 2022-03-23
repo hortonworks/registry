@@ -34,6 +34,7 @@ public class GlobalState {
     public static final String ATLAS_ENTITY_UPDATE = "atlasEntityUpdate";
     public static final String SCHEMA_EXPORT = "schemaExport";
     public static final String AUTH_TOKEN = "authToken";
+    public static final String RESPONSE_IN_JSON = "responseJson";
 
     private final Map<String, Object> sow = new ConcurrentHashMap<>();
 

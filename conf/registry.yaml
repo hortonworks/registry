@@ -109,6 +109,11 @@ enableCors: true
 #httpProxyUsername: "username"
 #httpProxyPassword: "password"
 
+compatibility:
+  avroCompatibility: "BACKWARD"
+  jsonCompatibility: "NONE"
+  validationLevel: "ALL"
+
 server:
   allowedMethods: 
     - GET

@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.collect.ImmutableList;
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
@@ -82,7 +83,8 @@ public class DefaultSchemaRegistryTest {
                         Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()),
                         Collections.singletonMap("providerClass", JsonSchemaProvider.class.getName()));
         ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
-        underTest = new DefaultSchemaRegistry(configuration, storageManager, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+        underTest = new DefaultSchemaRegistry(configuration, storageManager, null, schemaProvidersConfig,
+                new SchemaLockManager(new NOOPTransactionManager()), new CompatibilityConfig());
     }
     
     private void setupForIdCheck() {
@@ -92,7 +94,8 @@ public class DefaultSchemaRegistryTest {
                 Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()),
                 Collections.singletonMap("providerClass", JsonSchemaProvider.class.getName()));
         ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
-        underTest = new DefaultSchemaRegistry(configuration, storageManagerMock, null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+        underTest = new DefaultSchemaRegistry(configuration, storageManagerMock, null, schemaProvidersConfig,
+                new SchemaLockManager(new NOOPTransactionManager()), new CompatibilityConfig());
     }
 
     @Test

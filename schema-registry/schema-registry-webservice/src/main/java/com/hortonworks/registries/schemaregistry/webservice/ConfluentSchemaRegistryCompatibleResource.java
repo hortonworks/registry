@@ -19,15 +19,18 @@ import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.common.exception.ErrorCallback;
 import com.hortonworks.registries.common.util.WSUtils;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaBranch;
+import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
@@ -81,17 +84,20 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
     private final AuthorizationAgent authorizationAgent;
     private final RangerAuthenticator authenticationUtils;
     private final AtlasEventLogger atlasEventLogger;
+    private final CompatibilityConfig compatibilityConfig;
 
     @Inject
     public ConfluentSchemaRegistryCompatibleResource(ISchemaRegistry schemaRegistry,
                                                      AuthorizationAgent authorizationAgent,
                                                      RangerAuthenticator authenticationUtils,
-                                                     AtlasEventLogger atlasEventLogger) {
+                                                     AtlasEventLogger atlasEventLogger,
+                                                     CompatibilityConfig compatibilityConfig) {
         super(schemaRegistry);
 
         this.authorizationAgent = authorizationAgent;
         this.authenticationUtils = authenticationUtils;
         this.atlasEventLogger = atlasEventLogger;
+        this.compatibilityConfig = compatibilityConfig;
     }
 
     @GET
@@ -347,6 +353,8 @@ public class ConfluentSchemaRegistryCompatibleResource extends BaseRegistryResou
             if (schemaMetadataInfo == null) {
                 SchemaMetadata schemaMetadata = new SchemaMetadata.Builder(subject)
                         .type(AvroSchemaProvider.TYPE)
+                        .compatibility(SchemaCompatibility.valueOf(compatibilityConfig.getAvroCompatibility()))
+                        .validationLevel(SchemaValidationLevel.valueOf(compatibilityConfig.getValidationLevel()))
                         .schemaGroup("Kafka")
                         .build();
 

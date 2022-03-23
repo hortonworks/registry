@@ -16,15 +16,20 @@
 package com.hortonworks.registries.schemaregistry.serdes.json;
 
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.JsonNode;
+import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JsonSnapshotSerializerTest {
-  private AbstractJsonSnapshotSerializer<byte[]> underTest = new JsonSnapshotSerializer();
+  private final AbstractJsonSnapshotSerializer<byte[]> underTest = new JsonSnapshotSerializer();
+  private final ObjectMapper objectMapper = new ObjectMapper();
   
   @Test
-  void getSchemaTextTest() {
+  void getSchemaTextTest() throws IOException {
     //given
     SchemaMetadata metadata = new SchemaMetadata.Builder("name").description("description").schemaGroup("kafka").type("json").build();
     String expectedSchema = "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"title\":\"Schema Metadata\",\"type\":\"object\",\"additionalProperties\":false,\"properties\":{\"type\":{\"oneOf\":[{\"type\":\"null\"," +
@@ -36,7 +41,10 @@ class JsonSnapshotSerializerTest {
     String actual = underTest.getSchemaText(metadata);
 
     //then
-    assertEquals(expectedSchema, actual);
+    JsonNode actualTree = objectMapper.readTree(actual);
+    JsonNode expectedTree = objectMapper.readTree(expectedSchema);
+
+    assertEquals(expectedTree, actualTree);
   }
 
 }

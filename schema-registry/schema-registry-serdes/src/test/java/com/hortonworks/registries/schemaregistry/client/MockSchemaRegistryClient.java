@@ -15,6 +15,7 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
@@ -70,7 +71,8 @@ public class MockSchemaRegistryClient implements ISchemaRegistryClient {
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", 
                 AvroSchemaProvider.class.getName()));
         this.schemaRegistry = new DefaultSchemaRegistry(new ModuleDetailsConfiguration(), storageManager,
-                null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()));
+                null, schemaProvidersConfig, new SchemaLockManager(new NOOPTransactionManager()),
+                new CompatibilityConfig());
     }
 
     public MockSchemaRegistryClient(ISchemaRegistry schemaRegistry) {

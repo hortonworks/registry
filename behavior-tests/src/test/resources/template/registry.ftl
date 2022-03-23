@@ -94,6 +94,11 @@ enableCors: true
 #httpProxyUsername: "username"
 #httpProxyPassword: "password"
 
+compatibility:
+  avroCompatibility: "${config.compatibility.avroCompatibility}"
+  jsonCompatibility: "${config.compatibility.jsonCompatibility}"
+  validationLevel: "${config.compatibility.validationLevel}"
+
 server:
   allowedMethods: 
     - GET

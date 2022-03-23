@@ -16,6 +16,7 @@
 
 package com.hortonworks.registries.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import io.dropwizard.Configuration;
@@ -25,8 +26,9 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
- *
+ * The main configuration class. This object is created by parsing the <tt>registry.yaml</tt> file.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RegistryConfiguration extends Configuration {
 
     @NotNull
@@ -44,6 +46,9 @@ public class RegistryConfiguration extends Configuration {
 
     @JsonProperty
     private boolean enableCors;
+
+    @JsonProperty
+    private CompatibilityConfig compatibility = new CompatibilityConfig();
 
     private String httpProxyUrl;
     private String httpProxyUsername;
@@ -139,5 +144,13 @@ public class RegistryConfiguration extends Configuration {
 
     public void setAtlasConfiguration(AtlasConfiguration atlasConfiguration) {
         this.atlasConfiguration = atlasConfiguration;
+    }
+
+    public CompatibilityConfig getCompatibility() {
+        return compatibility;
+    }
+
+    public void setCompatibility(CompatibilityConfig compatibility) {
+        this.compatibility = compatibility;
     }
 }

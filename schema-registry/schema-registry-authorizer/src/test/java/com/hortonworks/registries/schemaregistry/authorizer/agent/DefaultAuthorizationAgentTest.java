@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
 import com.google.common.collect.ImmutableMap;
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
@@ -99,7 +100,8 @@ public class DefaultAuthorizationAgentTest {
         schemaRegistry = new DefaultSchemaRegistry(configuration, storageManager,
                 null,
                 schemaProvidersConfig,
-                new SchemaLockManager(new NOOPTransactionManager()));
+                new SchemaLockManager(new NOOPTransactionManager()),
+                new CompatibilityConfig());
 
         ///////////////////////////////// SchemaRegistry initialization ////////////////
 

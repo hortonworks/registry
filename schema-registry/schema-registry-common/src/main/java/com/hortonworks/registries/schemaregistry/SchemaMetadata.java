@@ -14,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
@@ -56,12 +57,16 @@ public class SchemaMetadata implements Serializable {
     /**
      * Compatibility to be supported for versions of this evolving schema.
      */
-    private SchemaCompatibility compatibility;
+    // the field name is different from the accessor name in order to prevent
+    // Jackson from setting the field value with reflection
+    private SchemaCompatibility schemaCompatibility;
 
     /**
      * Validation level of this evolving schema, if to validate all or just latest.
      */
-    private SchemaValidationLevel validationLevel;
+    // the field name is different from the accessor name in order to prevent
+    // Jackson from setting the field value with reflection
+    private SchemaValidationLevel schemaValidationLevel;
 
     /**
      * Whether this can have evolving schemas or not. If false, this can have only one version of the schema.
@@ -92,8 +97,8 @@ public class SchemaMetadata implements Serializable {
         this.schemaGroup = schemaGroup;
         this.description = description;
         this.evolve = evolve;
-        this.compatibility = compatibility;
-        this.validationLevel = validationLevel;
+        this.schemaCompatibility = compatibility;
+        this.schemaValidationLevel = validationLevel;
     }
 
     /**
@@ -130,19 +135,41 @@ public class SchemaMetadata implements Serializable {
         return description;
     }
 
+    /** Internal use only! */
+    @com.hortonworks.registries.shaded.com.fasterxml.jackson.annotation.JsonGetter("compatibility")
+    @JsonIgnore
+    public SchemaCompatibility getInternalCompatibility() {
+        return schemaCompatibility;
+    }
+
     /**
      * @return compatibility supported by this schema
      */
     @ApiModelProperty(example = "BACKWARD")
     public SchemaCompatibility getCompatibility() {
-        return compatibility != null ? compatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
+        return schemaCompatibility != null ? schemaCompatibility : SchemaCompatibility.DEFAULT_COMPATIBILITY;
+    }
+
+    public void setCompatibility(SchemaCompatibility compatibility) {
+        this.schemaCompatibility = compatibility;
+    }
+
+    /** Internal use only! */
+    @com.hortonworks.registries.shaded.com.fasterxml.jackson.annotation.JsonGetter("validationLevel")
+    @JsonIgnore
+    public SchemaValidationLevel getInternalValidationLevel() {
+        return schemaValidationLevel;
     }
 
     /**
      * @return validation supported by this schema
      */
     public SchemaValidationLevel getValidationLevel() {
-        return validationLevel != null ? validationLevel : SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL;
+        return schemaValidationLevel != null ? schemaValidationLevel : SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL;
+    }
+
+    public void setValidationLevel(SchemaValidationLevel schemaValidationLevel) {
+        this.schemaValidationLevel = schemaValidationLevel;
     }
 
     public boolean isEvolve() {
@@ -156,8 +183,8 @@ public class SchemaMetadata implements Serializable {
                 ", schemaGroup='" + schemaGroup + '\'' +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", compatibility=" + compatibility +
-                ", validationLevel=" + validationLevel +
+                ", compatibility=" + schemaCompatibility +
+                ", validationLevel=" + schemaValidationLevel +
                 ", evolve=" + evolve +
                 '}';
     }
@@ -237,8 +264,8 @@ public class SchemaMetadata implements Serializable {
             type = schemaMetadata.getType();
             schemaGroup = schemaMetadata.getSchemaGroup();
             description = schemaMetadata.getDescription();
-            compatibility = schemaMetadata.getCompatibility();
-            validationLevel = schemaMetadata.getValidationLevel();
+            compatibility = schemaMetadata.getInternalCompatibility();
+            validationLevel = schemaMetadata.getInternalValidationLevel();
             evolve = schemaMetadata.isEvolve();
         }
 

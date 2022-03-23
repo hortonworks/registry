@@ -33,6 +33,7 @@ dependencies {
     compile libraries.swagger
     compile libraries.commons.io
     compile libraries.validation_api
+    compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
     
     testCompile(project(':registry-common')) { transitive = false }
     testCompile libraries.junit

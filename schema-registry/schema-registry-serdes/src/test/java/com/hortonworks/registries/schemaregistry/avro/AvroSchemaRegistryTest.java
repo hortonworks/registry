@@ -16,6 +16,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
@@ -71,7 +72,7 @@ public class AvroSchemaRegistryTest {
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", 
                 AvroSchemaProvider.class.getName()));
         schemaRegistry = new DefaultSchemaRegistry(new ModuleDetailsConfiguration(), storageManager, null, schemaProvidersConfig,
-                new SchemaLockManager(new NOOPTransactionManager()));
+                new SchemaLockManager(new NOOPTransactionManager()), new CompatibilityConfig());
     }
 
     protected String schema1;

@@ -16,7 +16,9 @@
 
 dependencies {
 
-    compile project(':schema-registry:schema-registry-common')
+    compile(project(':schema-registry:schema-registry-common')) {
+        exclude group: 'schema-registry', module: 'jersey-shaded'
+    }
     compile project(':storage:storage-core')
     compile libraries.commons.beanutils
     compile libraries.jersey.media_json

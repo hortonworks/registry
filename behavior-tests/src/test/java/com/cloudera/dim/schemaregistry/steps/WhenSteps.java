@@ -111,20 +111,29 @@ public class WhenSteps extends AbstractSteps {
 
     @Given("that Schema Registry is running")
     public void thatSchemaRegistryIsRunning() {
-        schemaRegistryIsRunning(false, null);
+        schemaRegistryIsRunning(false, null, null);
     }
 
     @Given("that Schema Registry is running with OAuth2")
     public void thatSchemaRegistryIsRunningWithOAuth2() {
-        schemaRegistryIsRunning(true, null);
+        schemaRegistryIsRunning(true, null, null);
     }
 
-    private void schemaRegistryIsRunning(boolean oauth2Enabled, List<ServletFilterConfiguration> filters) {
+    @Given("that Schema Registry is running with default avro compatibility set to {string}")
+    public void thatSchemaRegistryIsRunningWithDefaultAvroCompatibilitySetTo(String compat) {
+        schemaRegistryIsRunning(false, null, compat);
+    }
+
+    private void schemaRegistryIsRunning(boolean oauth2Enabled, List<ServletFilterConfiguration> filters, String compatibility) {
         sow.clear();
+        if (compatibility == null) {
+            compatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY.name();
+        }
         if (!testServer.isRunning()) {
             try {
                 testServer.setOAuth2Enabled(oauth2Enabled);
                 testServer.setAdditionalFilters(filters);
+                testServer.setDefaultAvroCompatibility(compatibility);
                 testServer.start();   // start schema registry server
             } catch (Throwable ex) {
                 LOG.error("Failed to start test server.", ex);
@@ -223,7 +232,7 @@ public class WhenSteps extends AbstractSteps {
             }
         }
 
-        schemaRegistryIsRunning(false, filterConfigs);
+        schemaRegistryIsRunning(false, filterConfigs, null);
     }
 
     @Given("an item exported from a Confluent registry:")
@@ -722,5 +731,4 @@ public class WhenSteps extends AbstractSteps {
             fail(ex);
         }
     }
-
 }

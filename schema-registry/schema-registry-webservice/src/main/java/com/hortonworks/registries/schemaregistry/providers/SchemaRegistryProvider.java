@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.providers;
 
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
@@ -37,6 +38,7 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
     private final StorageManager storageManager;
     private final FileStorage fileStorage;
     private final SchemaLockManager schemaLockManager;
+    private final CompatibilityConfig compatibilityConfig;
 
     @Inject
     public SchemaRegistryProvider(RegistryConfiguration configuration,
@@ -46,6 +48,7 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
                                   SchemaLockManager schemaLockManager) {
         this.configuration = configuration;
         this.moduleDetailsConfiguration = moduleDetailsConfiguration;
+        this.compatibilityConfig = configuration.getCompatibility();
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
         this.schemaLockManager = schemaLockManager;
@@ -61,7 +64,7 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
         LOG.info("Configuring {}", DefaultSchemaRegistry.class);
 
         return new DefaultSchemaRegistry(moduleDetailsConfiguration, storageManager, fileStorage,
-                moduleDetailsConfiguration.getSchemaProviders(), schemaLockManager);
+                moduleDetailsConfiguration.getSchemaProviders(), schemaLockManager, compatibilityConfig);
     }
 
 

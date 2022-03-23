@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -43,7 +44,7 @@ class JsonSerDesHandlerTest {
   private final ObjectMapper objectMapper = JsonUtils.getObjectMapper();
 
   @Test
-  void handlePayloadSerializationSchemaMetadata() {
+  void handlePayloadSerializationSchemaMetadata() throws IOException {
     //given
     OutputStream outputStream = new ByteArrayOutputStream();
     SchemaMetadata input = new SchemaMetadata.Builder("serdes").type("json").build();
@@ -53,7 +54,10 @@ class JsonSerDesHandlerTest {
     handler.handlePayloadSerialization(outputStream, input);
     
     //then
-    assertEquals(expected, outputStream.toString());
+    JsonNode actualTree = objectMapper.readTree(outputStream.toString());
+    JsonNode expectedTree = objectMapper.readTree(expected);
+
+    assertEquals(expectedTree, actualTree);
   }
 
   @Test

@@ -16,10 +16,13 @@
 package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.schemaregistry.GlobalState;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
+import com.hortonworks.registries.schemaregistry.SchemaMetadata;
+import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exportimport.UploadResult;
@@ -27,6 +30,8 @@ import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -34,9 +39,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -51,6 +60,7 @@ import java.util.stream.Collectors;
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
 import static com.cloudera.dim.schemaregistry.GlobalState.COMPATIBILITY;
 import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
+import static com.cloudera.dim.schemaregistry.GlobalState.RESPONSE_IN_JSON;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_ID;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_META_INFO;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_VERSION_ID;
@@ -124,8 +134,62 @@ public class ThenSteps extends AbstractSteps {
         LOG.debug("Checking the response we received from schema registry");
         HttpResponse response = (HttpResponse) sow.getValue(HTTP_RESPONSE);
         assertNotNull(response, "No response found.");
-        CollectionResponse result = objectMapper.readValue(response.getEntity().getContent(), CollectionResponse.class);
+
+        String responseJson = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+        CollectionResponse result = objectMapper.readValue(responseJson, CollectionResponse.class);
         assertEquals(count, result.getEntities().size());
+
+        sow.setValue(RESPONSE_IN_JSON, responseJson);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Then("the response metadata will have the following properties:")
+    public void andTheResponseEntityWillHaveProps(DataTable table) throws IOException {
+        LOG.debug("Checking the response we received from schema registry");
+        String responseJson = (String) sow.getValue(RESPONSE_IN_JSON);
+        List<SchemaMetadataInfo> schemas = new ArrayList<>();
+        JsonNode node = objectMapper.readTree(responseJson);
+        Iterator<JsonNode> it = node.get("entities").elements();
+        while (it.hasNext()) {
+            schemas.add(objectMapper.treeToValue(it.next(), SchemaMetadataInfo.class));
+        }
+
+        assertNotNull(schemas, "No response schemas found.");
+        SchemaMetadataInfo metaInfo = schemas.get(0);
+        SchemaMetadata meta = metaInfo.getSchemaMetadata();
+
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+        for (Map<String, String> columns : rows) {
+            String expectedKey = StringUtils.trimToNull(columns.get("Name"));
+            String expectedValue = StringUtils.trimToNull(columns.get("Value"));
+
+            if (expectedKey == null) {
+                continue;
+            }
+            switch (expectedKey) {
+                case "name":
+                    assertEquals(expectedValue, meta.getName());
+                    break;
+                case "compatibility":
+                    assertEquals(expectedValue, meta.getCompatibility().name());
+                    break;
+                case "description":
+                    assertEquals(expectedValue, meta.getDescription());
+                    break;
+                case "type":
+                    assertEquals(expectedValue, meta.getType());
+                    break;
+                case "schemaGroup":
+                    assertEquals(expectedValue, meta.getSchemaGroup());
+                    break;
+                case "validationLevel":
+                    assertEquals(expectedValue, meta.getValidationLevel().name());
+                    break;
+                default:
+                    LOG.warn("Unknown key in expectation table: {}", expectedKey);
+                    break;
+            }
+        }
     }
 
     @Then("the Avro test is compatible")

@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry.webservice.integration;
 
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.schemaregistry.CompatibilityResult;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -74,7 +75,8 @@ public class ConfluentSchemaRegistryCompatibleResourceIT {
         }
 
         private static ConfluentSchemaRegistryCompatibleResource instantiateResource() {
-            return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock, authenticationUtils, atlasEventLogger);
+            return new ConfluentSchemaRegistryCompatibleResource(schemaRegistryMock, authorizationAgentMock,
+                    authenticationUtils, atlasEventLogger, new CompatibilityConfig());
         }
         @Test
         public void getSubjectById() throws Exception {
