@@ -237,5 +237,8 @@ buildscript {
         classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
         classpath "com.peterabeles.gversion:com.peterabeles.gversion.gradle.plugin:1.10"
         classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"
     }
 }
+
+apply plugin: "org.sonarqube"
