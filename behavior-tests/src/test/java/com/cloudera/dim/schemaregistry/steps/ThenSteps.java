@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
 import static com.cloudera.dim.schemaregistry.GlobalState.COMPATIBILITY;
+import static com.cloudera.dim.schemaregistry.GlobalState.EXCEPTION_MSG;
 import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
 import static com.cloudera.dim.schemaregistry.GlobalState.RESPONSE_IN_JSON;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_ID;
@@ -70,6 +71,7 @@ import static org.apache.http.protocol.HttpCoreContext.HTTP_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -92,6 +94,12 @@ public class ThenSteps extends AbstractSteps {
     @Then("the schema is successfully updated")
     public void theSchemaIsSuccessfullyUpdated() {
         assertNotNull(sow.getValue(SCHEMA_META_INFO), "Schema meta was not updated.");
+    }
+
+    @Then("the schema failed to be created with error {string}")
+    public void theSchemaFailedToBeCreated(String errorMsg) {
+        assertNull(sow.getValue(SCHEMA_ID), "Expected the schema to not exist.");
+        assertEquals(errorMsg, sow.getValue(EXCEPTION_MSG));
     }
 
     @SuppressWarnings("unchecked")
@@ -142,7 +150,6 @@ public class ThenSteps extends AbstractSteps {
         sow.setValue(RESPONSE_IN_JSON, responseJson);
     }
 
-    @SuppressWarnings("unchecked")
     @Then("the response metadata will have the following properties:")
     public void andTheResponseEntityWillHaveProps(DataTable table) throws IOException {
         LOG.debug("Checking the response we received from schema registry");

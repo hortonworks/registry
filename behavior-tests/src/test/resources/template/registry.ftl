@@ -108,8 +108,17 @@ server:
     - HEAD
     - OPTIONS
   applicationConnectors:
-    - type: http
+    - type: ${connectorType}
       port: ${port}
+<#if tlsConfig?? && tlsConfig.needClientAuth>
+      needClientAuth: ${tlsConfig.needClientAuth?string('true', 'false')}
+      keyStorePath: "${tlsConfig.keyStorePath}"
+      keyStorePassword: "${tlsConfig.keyStorePassword}"
+      certAlias: "${tlsConfig.certAlias}"
+      enableCRLDP: ${tlsConfig.enableCRLDP?string('true', 'false')}
+      trustStorePath: "${tlsConfig.trustStorePath}"
+      trustStorePassword: "${tlsConfig.trustStorePassword}"
+</#if>
   adminConnectors: []
 
 # Logging settings.

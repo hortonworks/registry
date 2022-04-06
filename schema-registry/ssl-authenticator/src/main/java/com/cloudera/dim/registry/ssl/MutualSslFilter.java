@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.auth.client.AuthenticationException;
 import com.hortonworks.registries.auth.server.AuthenticationHandler;
 import com.hortonworks.registries.auth.server.AuthenticationToken;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,6 @@ import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
@@ -49,6 +49,64 @@ public class MutualSslFilter implements AuthenticationHandler {
     private static final Pattern RULE_PARSER = Pattern.compile("((DEFAULT)|(RULE:(([^/]*)/([^/]*))/([LU])?))");
 
     private List<Rule> rules;
+
+    @Override
+    public void init(Properties config) throws ServletException {
+        LOG.info("Initializing mutual TLS authentication ...");
+        String mappingRules = StringUtils.trimToEmpty(config.getProperty(SSL_PRINCIPAL_MAPPING_RULES, "DEFAULT"));
+        rules = parseRules(Arrays.asList(mappingRules.split("(?=\"DEFAULT)|(?=\"RULE:)")));
+
+        if (rules.isEmpty()) {
+            throw new ServletException("Invalid value for SSL principal mapping rules: " + mappingRules);
+        }
+    }
+
+    @Override
+    public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+
+        if (certs.length != 0) {
+            X509Certificate clientCert = certs[0];
+            long expirationDate = getExpiration(clientCert);
+            X500Principal subjectDN = clientCert.getSubjectX500Principal();
+
+            for (Rule rule : rules) {
+                String principal = rule.apply(subjectDN.getName());
+                if (principal != null) {
+                    AuthenticationToken authenticationToken = new AuthenticationToken(principal, principal, getType());
+                    authenticationToken.setExpires(expirationDate);
+                    return authenticationToken;
+                }
+            }
+        } else {
+            throw new AuthenticationException("Request did not contain an SSL certificate.");
+        }
+
+        throw new AuthenticationException("Rules did not match principal in the SSL certificate.");
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public void destroy() { }
+
+    @Override
+    public boolean shouldAuthenticate(HttpServletRequest request) {
+        return true;
+    }
+
+    private Long getExpiration(X509Certificate clientCert) throws AuthenticationException {
+        Date notAfter = clientCert.getNotAfter();
+        try {
+            clientCert.checkValidity();
+        } catch (CertificateNotYetValidException | CertificateExpiredException e) {
+            throw new AuthenticationException("SSL certificate is not valid.", e);
+        }
+        return notAfter.getTime();
+    }
 
     private static List<Rule> parseRules(List<String> rules) {
         List<Rule> result = new ArrayList<>();
@@ -84,71 +142,6 @@ public class MutualSslFilter implements AuthenticationHandler {
             result = rule.substring(1, rule.length() - 1);
         }
         return result;
-    }
-
-    @Override
-    public String getType() {
-        return TYPE;
-    }
-
-    @Override
-    public void init(Properties config) throws ServletException {
-        LOG.info("Initializing mutual TLS authentication ...");
-        if (config.containsKey(SSL_PRINCIPAL_MAPPING_RULES)) {
-            rules = parseRules(Arrays.asList(config.getProperty(SSL_PRINCIPAL_MAPPING_RULES).split("(?=\"DEFAULT)|(?=\"RULE:)")));
-        }
-    }
-
-    public String getName(String distinguishedName) throws IOException {
-        for (Rule r : rules) {
-            String principalName = r.apply(distinguishedName);
-            if (principalName != null) {
-                return principalName;
-            }
-        }
-        throw new NoMatchingRule("No rules apply to " + distinguishedName + ", rules " + rules);
-    }
-
-    @Override
-    public void destroy() {
-
-    }
-
-    @Override
-    public boolean shouldAuthenticate(HttpServletRequest request) {
-        return true;
-    }
-
-    @Override
-    public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws IOException, AuthenticationException {
-        X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
-        AuthenticationToken token = null;
-        if (certs.length != 0) {
-            X509Certificate clientCert = certs[0];
-            long expirationDate = getExpiration(clientCert);
-            X500Principal subjectDN = clientCert.getSubjectX500Principal();
-            if (!rules.isEmpty()) {
-                for (Rule rule : rules) {
-                    String principal = rule.apply(subjectDN.getName());
-                    if (principal != null) {
-                        AuthenticationToken authenticationToken = new AuthenticationToken(principal, principal, getType());
-                        authenticationToken.setExpires(expirationDate);
-                        return authenticationToken;
-                    }
-                }
-            }
-        }
-        return token;
-    }
-
-    private Long getExpiration(X509Certificate clientCert) throws AuthenticationException {
-        Date notAfter = clientCert.getNotAfter();
-        try {
-            clientCert.checkValidity();
-        } catch (CertificateNotYetValidException | CertificateExpiredException e) {
-            throw new AuthenticationException("SSL certificate is not valid.", e);
-        }
-        return notAfter.getTime();
     }
 
     @VisibleForTesting
@@ -290,9 +283,4 @@ public class MutualSslFilter implements AuthenticationHandler {
         }
     }
 
-    public static class NoMatchingRule extends IOException {
-        NoMatchingRule(String msg) {
-            super(msg);
-        }
-    }
 }

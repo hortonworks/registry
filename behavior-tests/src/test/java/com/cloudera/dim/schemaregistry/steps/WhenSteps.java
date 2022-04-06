@@ -15,11 +15,15 @@
  **/
 package com.cloudera.dim.schemaregistry.steps;
 
+import com.cloudera.dim.registry.ssl.MutualSslFilter;
+import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
+import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.common.collect.ImmutableMap;
+import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.CollectionResponse;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
@@ -40,6 +44,7 @@ import io.cucumber.java.en.When;
 import org.apache.atlas.model.discovery.AtlasSearchResult;
 import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
@@ -61,6 +66,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
@@ -73,10 +80,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
 import static com.cloudera.dim.schemaregistry.GlobalState.AUTH_TOKEN;
 import static com.cloudera.dim.schemaregistry.GlobalState.COMPATIBILITY;
+import static com.cloudera.dim.schemaregistry.GlobalState.EXCEPTION_MSG;
 import static com.cloudera.dim.schemaregistry.GlobalState.HTTP_RESPONSE_CODE;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_EXPORT;
 import static com.cloudera.dim.schemaregistry.GlobalState.SCHEMA_ID;
@@ -111,20 +120,46 @@ public class WhenSteps extends AbstractSteps {
 
     @Given("that Schema Registry is running")
     public void thatSchemaRegistryIsRunning() {
-        schemaRegistryIsRunning(false, null, null);
+        schemaRegistryIsRunning(false, null, null, false, false);
     }
 
     @Given("that Schema Registry is running with OAuth2")
     public void thatSchemaRegistryIsRunningWithOAuth2() {
-        schemaRegistryIsRunning(true, null, null);
+        schemaRegistryIsRunning(true, null, null, false, false);
     }
 
     @Given("that Schema Registry is running with default avro compatibility set to {string}")
     public void thatSchemaRegistryIsRunningWithDefaultAvroCompatibilitySetTo(String compat) {
-        schemaRegistryIsRunning(false, null, compat);
+        schemaRegistryIsRunning(false, null, compat, false, false);
     }
 
-    private void schemaRegistryIsRunning(boolean oauth2Enabled, List<ServletFilterConfiguration> filters, String compatibility) {
+    @Given("that Schema Registry is running with TLS enabled")
+    public void thatSchemaRegistryIsRunningWithTLS() {
+        schemaRegistryIsRunning(false, null, null, true, false);
+    }
+
+    @Given("that Schema Registry is running with 2-way TLS enabled")
+    public void thatSchemaRegistryIsRunningWith2wayTLS() {
+        thatSchemaRegistryIsRunningWith2wayTLSRules("DEFAULT");
+    }
+
+    @Given("that Schema Registry is running with 2-way TLS enabled using rules: {string}")
+    public void thatSchemaRegistryIsRunningWith2wayTLSRules(String rules) {
+        List<ServletFilterConfiguration> filterConfigs = new ArrayList<>();
+
+        ServletFilterConfiguration config = new ServletFilterConfiguration();
+        config.setClassName(AuthenticationFilter.class.getName());
+        config.setParams(ImmutableMap.of(
+                "type", MutualSslFilter.class.getName(),
+                "rules", rules
+        ));
+        filterConfigs.add(config);
+
+        schemaRegistryIsRunning(false, filterConfigs, null, true, true);
+    }
+
+    private void schemaRegistryIsRunning(boolean oauth2Enabled, List<ServletFilterConfiguration> filters, String compatibility,
+                                         boolean tlsEnabled, boolean clientAuthEnabled) {
         sow.clear();
         if (compatibility == null) {
             compatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY.name();
@@ -134,6 +169,9 @@ public class WhenSteps extends AbstractSteps {
                 testServer.setOAuth2Enabled(oauth2Enabled);
                 testServer.setAdditionalFilters(filters);
                 testServer.setDefaultAvroCompatibility(compatibility);
+                if (tlsEnabled) {
+                    configureServerForTls(testServer, clientAuthEnabled);
+                }
                 testServer.start();   // start schema registry server
             } catch (Throwable ex) {
                 LOG.error("Failed to start test server.", ex);
@@ -141,7 +179,57 @@ public class WhenSteps extends AbstractSteps {
             }
         }
         testServer.cleanupDb();
-        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), oauth2Enabled);
+        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), oauth2Enabled, configureClientForTls());
+    }
+
+    private void configureServerForTls(TestSchemaRegistryServer testServer, boolean clientAuthEnabled) throws IOException {
+        testServer.setConnectorType("https");
+        testServer.setTlsConfig(new TestConfigGenerator.TlsConfig(
+                clientAuthEnabled,
+                getResourceAsTempFile("/tls/keystore.jks"),
+                "password",
+                "selfsigned",
+                false,
+                getResourceAsTempFile("/tls/truststore.jks"),
+                "password"
+        ));
+    }
+
+    private Map<String, Object> configureClientForTls() {
+        Map<String, Object> config = new HashMap<>();
+
+        try {
+            config.put("schema.registry.client.ssl.protocol", "SSL");
+
+            config.put("schema.registry.client.ssl.trustStoreType", "JKS");
+            config.put("schema.registry.client.ssl.trustStorePath", getResourceAsTempFile("/tls/truststore.jks"));
+            config.put("schema.registry.client.ssl.trustStorePassword", "password");
+
+            config.put("schema.registry.client.ssl.keyStoreType", "JKS");
+            config.put("schema.registry.client.ssl.keyStorePath", getResourceAsTempFile("/tls/keystore.jks"));
+            config.put("schema.registry.client.ssl.keyStorePassword", "password");
+        } catch (Exception ex) {
+            LOG.error("Failed to read TLS config for the SR client.", ex);
+        }
+
+        return config;
+    }
+
+    private String getResourceAsTempFile(String resourcePath) throws IOException {
+        byte[] resourceBytes = IOUtils.toByteArray(getClass().getResource(resourcePath));
+
+        File tmpFile = File.createTempFile("tmpFile", ".jks");
+
+        try (FileOutputStream out = new FileOutputStream(tmpFile)) {
+            IOUtils.write(resourceBytes, out);
+        }
+
+        String absolutePath = tmpFile.getAbsolutePath();
+        if (File.separator.equals("\\")) {
+            // fix windows file path
+            absolutePath = absolutePath.replaceAll(Pattern.quote(File.separator), "/");
+        }
+        return absolutePath;
     }
 
     @Given("that Atlas is running")
@@ -232,7 +320,7 @@ public class WhenSteps extends AbstractSteps {
             }
         }
 
-        schemaRegistryIsRunning(false, filterConfigs, null);
+        schemaRegistryIsRunning(false, filterConfigs, null, false, false);
     }
 
     @Given("an item exported from a Confluent registry:")
@@ -378,11 +466,16 @@ public class WhenSteps extends AbstractSteps {
     @When("we create a new schema meta {string} with the following parameters:")
     public void weCreateANewSchemaMetaWithTheFollowingParameters(String schemaName, DataTable table) {
         SchemaMetadata meta = dataTableToSchemaMetadata(schemaName, table);
-        Long id = schemaRegistryClient.addSchemaMetadata(meta);
-        sow.setValue(SCHEMA_NAME, schemaName);
-        sow.setValue(SCHEMA_ID, id);
+        try {
+            Long id = schemaRegistryClient.addSchemaMetadata(meta);
+            sow.setValue(SCHEMA_NAME, schemaName);
+            sow.setValue(SCHEMA_ID, id);
 
-        LOG.info("New schema [{}] was created with id {}", schemaName, id);
+            LOG.info("New schema [{}] was created with id {}", schemaName, id);
+        } catch (Exception ex) {
+            LOG.error("Failed to create meta {}", schemaName, ex);
+            sow.setValue(EXCEPTION_MSG, ex.getMessage());
+        }
     }
 
     @When("we update the schema {string} with the following parameters:")
@@ -602,7 +695,7 @@ public class WhenSteps extends AbstractSteps {
 
     @When("we initialize a new schema registry client")
     public void weInitializeANewSchemaRegistryClient() {
-        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), false);
+        schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), false, configureClientForTls());
     }
 
     @When("we check the compatibility of schema {string} with the following Avro test:")

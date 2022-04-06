@@ -50,14 +50,22 @@ public class TestConfigGenerator {
     /**
      * Generate a registry.yaml file. You can use it to run Schema Registry.
      * @param configuration         configuration object with prefilled values, this will be used while generating the yaml file
+     * @param connectorType         http or https
      * @param schemaRegistryPort    on which port should SR open the HTTP port
+     * @param tlsConfig             if TLS is enabled then we need to configure the keystore and trust store
      */
-    public String generateRegistryYaml(@Nonnull RegistryConfiguration configuration, int schemaRegistryPort) {
+    public String generateRegistryYaml(@Nonnull RegistryConfiguration configuration, String connectorType,
+                                       int schemaRegistryPort, TlsConfig tlsConfig) {
         checkNotNull(configuration);
+        if (connectorType == null) {
+            connectorType = "http";
+        }
 
         Map<String, Object> model = new HashMap<>();
         model.put("config", configuration);
+        model.put("connectorType", connectorType);
         model.put("port", String.valueOf(schemaRegistryPort));
+        model.put("tlsConfig", tlsConfig);
 
         return generate("registry.ftl", model);
     }
@@ -83,6 +91,85 @@ public class TestConfigGenerator {
             }
         } catch (Exception ex) {
             throw new IllegalArgumentException("Could not generate with template " + templateName, ex);
+        }
+    }
+
+    public static class TlsConfig {
+        private boolean needClientAuth;
+        private String keyStorePath;
+        private String keyStorePassword;
+        private String certAlias;
+        private boolean enableCRLDP;
+        private String trustStorePath;
+        private String trustStorePassword;
+
+        public TlsConfig() { }
+
+        public TlsConfig(boolean needClientAuth, String keyStorePath, String keyStorePassword, String certAlias,
+                         boolean enableCRLDP, String trustStorePath, String trustStorePassword) {
+            this.needClientAuth = needClientAuth;
+            this.keyStorePath = keyStorePath;
+            this.keyStorePassword = keyStorePassword;
+            this.certAlias = certAlias;
+            this.enableCRLDP = enableCRLDP;
+            this.trustStorePath = trustStorePath;
+            this.trustStorePassword = trustStorePassword;
+        }
+
+        public boolean isNeedClientAuth() {
+            return needClientAuth;
+        }
+
+        public void setNeedClientAuth(boolean needClientAuth) {
+            this.needClientAuth = needClientAuth;
+        }
+
+        public String getKeyStorePath() {
+            return keyStorePath;
+        }
+
+        public void setKeyStorePath(String keyStorePath) {
+            this.keyStorePath = keyStorePath;
+        }
+
+        public String getKeyStorePassword() {
+            return keyStorePassword;
+        }
+
+        public void setKeyStorePassword(String keyStorePassword) {
+            this.keyStorePassword = keyStorePassword;
+        }
+
+        public String getCertAlias() {
+            return certAlias;
+        }
+
+        public void setCertAlias(String certAlias) {
+            this.certAlias = certAlias;
+        }
+
+        public boolean isEnableCRLDP() {
+            return enableCRLDP;
+        }
+
+        public void setEnableCRLDP(boolean enableCRLDP) {
+            this.enableCRLDP = enableCRLDP;
+        }
+
+        public String getTrustStorePath() {
+            return trustStorePath;
+        }
+
+        public void setTrustStorePath(String trustStorePath) {
+            this.trustStorePath = trustStorePath;
+        }
+
+        public String getTrustStorePassword() {
+            return trustStorePassword;
+        }
+
+        public void setTrustStorePassword(String trustStorePassword) {
+            this.trustStorePassword = trustStorePassword;
         }
     }
 }

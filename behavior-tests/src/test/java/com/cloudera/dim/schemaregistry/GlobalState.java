@@ -29,6 +29,7 @@ public class GlobalState {
     public static final String AGGREGATED_SCHEMAS = "aggregatedSchemas";
     public static final String COMPATIBILITY = "compatibility";
     public static final String HTTP_RESPONSE_CODE = "httpResponseCode";
+    public static final String EXCEPTION_MSG = "exceptionMsg";
     public static final String ATLAS_ENTITIES = "atlasEntities";
     public static final String ATLAS_RELATIONSHIPS = "atlasRelationships";
     public static final String ATLAS_ENTITY_UPDATE = "atlasEntityUpdate";

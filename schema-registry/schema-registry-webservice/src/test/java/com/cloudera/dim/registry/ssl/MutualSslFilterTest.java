@@ -32,7 +32,6 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -173,10 +172,7 @@ class MutualSslFilterTest {
 
         //when
         underTest.init(properties);
-        AuthenticationToken authenticate = underTest.authenticate(request, responseMock);
-
-        //then
-        assertNull(authenticate);
+        assertThrows(AuthenticationException.class, () -> underTest.authenticate(request, responseMock));
     }
 
     @Test

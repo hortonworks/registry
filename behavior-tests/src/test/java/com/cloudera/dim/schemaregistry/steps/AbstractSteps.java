@@ -57,10 +57,13 @@ abstract class AbstractSteps {
     }
 
     protected String getBaseUrl(int port) {
+        if ("https".equals(testServer.getConnectorType())) {
+            return String.format("https://localhost:%d", port);
+        }
         return String.format("http://localhost:%d", port);
     }
 
-    protected SchemaRegistryClient createSchemaRegistryClient(int port, boolean oauth2Enabled) {
+    protected SchemaRegistryClient createSchemaRegistryClient(int port, boolean oauth2Enabled, Map<String, Object> sslConfig) {
         Map<String, Object> config = new HashMap<>();
         config.put(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), getBaseUrl(port) + "/api/v1");
         config.put(SchemaRegistryClient.Configuration.CLASSLOADER_CACHE_SIZE.name(), 10);
@@ -74,6 +77,11 @@ abstract class AbstractSteps {
             config.put(SchemaRegistryClient.Configuration.OAUTH_CLIENT_ID.name(), testOAuth2Server.getClientId());
             config.put(SchemaRegistryClient.Configuration.OAUTH_CLIENT_SECRET.name(), testOAuth2Server.getSecret());
             config.put(SchemaRegistryClient.Configuration.AUTH_TYPE.name(), "oauth2");
+        }
+
+        if (sslConfig != null && !sslConfig.isEmpty()) {
+            LOG.info("Configuring SR Client for TLS connection.");
+            config.putAll(sslConfig);
         }
 
         return new SchemaRegistryClient(config);
@@ -92,7 +100,7 @@ abstract class AbstractSteps {
 
     protected SchemaRegistryClient getSchemaRegistryClient() {
         if (schemaRegistryClient == null) {
-            schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), false);
+            schemaRegistryClient = createSchemaRegistryClient(testServer.getPort(), false, null);
         }
         return schemaRegistryClient;
     }

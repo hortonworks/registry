@@ -18,6 +18,7 @@ package com.cloudera.dim.schemaregistry;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler;
 import com.cloudera.dim.registry.oauth2.OAuth2Config;
+import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.AtlasConfiguration;
@@ -84,6 +85,8 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private org.h2.tools.Server h2Server;
     private int h2Port;
     private int schemaRegistryPort;
+    private String connectorType = "http";
+    private TestConfigGenerator.TlsConfig tlsConfig = null;
     private Flyway flyway;
     private LocalSchemaRegistryServer localSchemaRegistry;
     private boolean atlasEnabled = false;
@@ -127,7 +130,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, filters, defaultAvroCompatibility);
 
         this.schemaRegistryPort = findFreePort();
-        String registryYamlTxt = configGenerator.generateRegistryYaml(config, schemaRegistryPort);
+        String registryYamlTxt = configGenerator.generateRegistryYaml(config, connectorType, schemaRegistryPort, tlsConfig);
 
         File registryYaml = writeFile("registry", ".yaml", registryYamlTxt);
         LOG.debug("registry.yaml file generated at {}", registryYaml.getAbsolutePath());
@@ -158,6 +161,12 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             threadPool.shutdown();
             threadPool = null;
         } catch (Exception ex) { }
+        // reset to default
+        connectorType = "http";
+        tlsConfig = null;
+        atlasEnabled = false;
+        additionalFilters = null;
+        oauth2Enabled = false;
         super.stop();
     }
 
@@ -490,5 +499,25 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
 
     public void setDefaultAvroCompatibility(String defaultAvroCompatibility) {
         this.defaultAvroCompatibility = defaultAvroCompatibility;
+    }
+
+    @Nonnull
+    public String getConnectorType() {
+        if (connectorType == null) {
+            return "http";
+        }
+        return connectorType;
+    }
+
+    public void setConnectorType(String connectorType) {
+        this.connectorType = connectorType;
+    }
+
+    public TestConfigGenerator.TlsConfig getTlsConfig() {
+        return tlsConfig;
+    }
+
+    public void setTlsConfig(TestConfigGenerator.TlsConfig tlsConfig) {
+        this.tlsConfig = tlsConfig;
     }
 }
