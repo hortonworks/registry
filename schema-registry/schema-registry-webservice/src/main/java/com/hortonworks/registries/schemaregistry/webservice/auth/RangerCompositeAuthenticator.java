@@ -17,6 +17,8 @@ package com.hortonworks.registries.schemaregistry.webservice.auth;
 
 import com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler;
 import com.cloudera.dim.registry.oauth2.ranger.RangerOAuth2Authenticator;
+import com.cloudera.dim.registry.ssl.MutualSslFilter;
+import com.cloudera.dim.registry.ssl.ranger.RangerMutualSslAuthenticator;
 import com.hortonworks.registries.auth.server.AltKerberosAuthenticationHandler;
 import com.hortonworks.registries.auth.server.JWTAuthenticationHandler;
 import com.hortonworks.registries.auth.server.KerberosAuthenticationHandler;
@@ -49,12 +51,15 @@ public class RangerCompositeAuthenticator implements RangerAuthenticator {
 
     private final RangerKerberosAuthenticator kerberosAuthenticator;
     private final RangerOAuth2Authenticator oauth2Authenticator;
+    private final RangerMutualSslAuthenticator sslAuthenticator;
 
     @Inject
     public RangerCompositeAuthenticator(RangerKerberosAuthenticator kerberosAuthenticator,
-                                        RangerOAuth2Authenticator oauth2Authenticator) {
+                                        RangerOAuth2Authenticator oauth2Authenticator,
+                                        RangerMutualSslAuthenticator sslAuthenticator) {
         this.kerberosAuthenticator = kerberosAuthenticator;
         this.oauth2Authenticator = oauth2Authenticator;
+        this.sslAuthenticator = sslAuthenticator;
     }
 
     @Nullable
@@ -79,6 +84,8 @@ public class RangerCompositeAuthenticator implements RangerAuthenticator {
                 LOG.trace("Using oauth2 principal.");
                 return getOAuth2Authenticator().getUserAndGroups(sc);
 
+            case MutualSslFilter.TYPE:
+                return getMutualSslAuthenticator().getUserAndGroups(sc);
             default:
                 LOG.warn("Unknown authentication scheme [{}], defaulting to kerberos.", authType);
                 return getKerberosAuthenticator().getUserAndGroups(sc);
@@ -91,5 +98,9 @@ public class RangerCompositeAuthenticator implements RangerAuthenticator {
 
     private RangerOAuth2Authenticator getOAuth2Authenticator() {
         return oauth2Authenticator;
+    }
+    
+    private RangerMutualSslAuthenticator getMutualSslAuthenticator() {
+        return sslAuthenticator;
     }
 }

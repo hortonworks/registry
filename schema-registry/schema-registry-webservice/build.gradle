@@ -35,6 +35,7 @@ dependencies {
     }
     compile project(':schema-registry:schema-registry-core')
     compile project(':schema-registry:oauth2-authenticator')
+    compile project(':schema-registry:ssl-authenticator')
     compile project(':atlas-integration:atlas-module')
     compile project(':storage:storage-core')
     compile project(':cache')
