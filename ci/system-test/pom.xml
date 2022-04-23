@@ -263,7 +263,7 @@
                             <key>${useDefaultListeners}</key>
                         </property>
                     </properties>
-                    <disableXmlReport>${disableXmlReport}</disableXmlReport>
+                    <disableXmlReport>true</disableXmlReport>
                     <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
             </plugin>
