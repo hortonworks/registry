@@ -179,13 +179,13 @@ ext.libraries = [
    ],
 
    hadoop: [
-     aws              : "org.apache.hadoop:hadoop-aws:$versions_hadoop",
-     azure            : "org.apache.hadoop:hadoop-azure:$versions_hadoop",
-     azure_datalake   : "org.apache.hadoop:hadoop-azure-datalake:$versions_hadoop",
-     client           : "org.apache.hadoop:hadoop-client:$versions_hadoop",
-     cloud            : "org.apache.hadoop:hadoop-cloud-storage:$versions_hadoop",
-     common           : "org.apache.hadoop:hadoop-common:$versions_hadoop",
-     minikdc          : "org.apache.hadoop:hadoop-minikdc:$versions_hadoop"
+     aws              : "org.apache.hadoop:hadoop-aws:3.1.1.7.1.7.1000-141",
+     azure            : "org.apache.hadoop:hadoop-azure:3.1.1.7.1.7.1000-141",
+     azure_datalake   : "org.apache.hadoop:hadoop-azure-datalake:3.1.1.7.1.7.1000-141",
+     client           : "org.apache.hadoop:hadoop-client:3.1.1.7.1.7.1000-141",
+     cloud            : "org.apache.hadoop:hadoop-cloud-storage:3.1.1.7.1.7.1000-141",
+     common           : "org.apache.hadoop:hadoop-common:3.1.1.7.1.7.1000-141",
+     minikdc          : "org.apache.hadoop:hadoop-minikdc:3.1.1.7.1.7.1000-141"
    ],
 
    plexus: [
@@ -202,9 +202,9 @@ ext.libraries = [
    postgresql        : "org.postgresql:postgresql:$versions_postgresql",
 
    ranger: [
-     common          : "org.apache.ranger:ranger-plugins-common:$versions_ranger",
-     audit           : "org.apache.ranger:ranger-plugins-audit:$versions_ranger",
-     classloader     : "org.apache.ranger:ranger-plugin-classloader:$versions_ranger"
+     common          : "org.apache.ranger:ranger-plugins-common:2.1.0.7.1.7.1000-141",
+     audit           : "org.apache.ranger:ranger-plugins-audit:2.1.0.7.1.7.1000-141",
+     classloader     : "org.apache.ranger:ranger-plugin-classloader:2.1.0.7.1.7.1000-141"
    ],
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
