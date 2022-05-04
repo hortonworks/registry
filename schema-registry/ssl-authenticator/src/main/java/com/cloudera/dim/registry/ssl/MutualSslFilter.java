@@ -65,7 +65,7 @@ public class MutualSslFilter implements AuthenticationHandler {
     public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
 
-        if (certs.length != 0) {
+        if (certs != null && certs.length != 0) {
             X509Certificate clientCert = certs[0];
             long expirationDate = getExpiration(clientCert);
             X500Principal subjectDN = clientCert.getSubjectX500Principal();
@@ -79,6 +79,7 @@ public class MutualSslFilter implements AuthenticationHandler {
                 }
             }
         } else {
+            LOG.error("Request did not contain an SSL certificate.");
             throw new AuthenticationException("Request did not contain an SSL certificate.");
         }
 

@@ -192,4 +192,17 @@ class MutualSslFilterTest {
         underTest.init(properties);
         assertThrows(AuthenticationException.class, () -> underTest.authenticate(request, responseMock));
     }
+
+    @Test
+    void authenticateNullCert() throws Exception {
+        //given
+        setUp(true, "Authentication_Invalid");
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse responseMock = Mockito.mock(HttpServletResponse.class);
+        
+        when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(null);
+
+        //when
+        assertThrows(AuthenticationException.class, () -> underTest.authenticate(request, responseMock));
+    }
 }
