@@ -79,14 +79,18 @@ public final class WSUtils {
     public static StreamingOutput wrapWithStreamingOutput(final InputStream inputStream) {
         return new StreamingOutput() {
             public void write(OutputStream os) throws IOException, WebApplicationException {
-                OutputStream wrappedOutputStream = os;
-                if (!(os instanceof BufferedOutputStream)) {
-                    wrappedOutputStream = new BufferedOutputStream(os);
+                try {
+                    OutputStream wrappedOutputStream = os;
+                    if (!(os instanceof BufferedOutputStream)) {
+                        wrappedOutputStream = new BufferedOutputStream(os);
+                    }
+
+                    ByteStreams.copy(inputStream, wrappedOutputStream);
+
+                    wrappedOutputStream.flush();
+                } finally {
+                    inputStream.close();
                 }
-
-                ByteStreams.copy(inputStream, wrappedOutputStream);
-
-                wrappedOutputStream.flush();
             }
         };
     }
