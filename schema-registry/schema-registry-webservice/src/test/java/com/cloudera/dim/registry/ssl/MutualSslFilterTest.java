@@ -55,6 +55,8 @@ class MutualSslFilterTest {
             properties.put("rules", "RULE:^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$/$1/U");
         } else if (testType.equals("Authentication_Invalid")) {
             properties.put("rules", "RULE:^.*[Cc][Nn]=(CN*).*$/$1/U");
+        } else if (testType.equals("Second_Cert_Valid")) {
+            properties.put("rules", "RULE:.*?ST=(B.*?),C=(.*?)$/$1,C=$2/U");
         }
     }
 
@@ -144,6 +146,64 @@ class MutualSslFilterTest {
         X509Certificate[] expectedCerts = new X509Certificate[]{(X509Certificate) cert};
         when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(expectedCerts);
         AuthenticationToken expectedToken = new AuthenticationToken("LOCALHOST", "LOCALHOST", "mTLS");
+        expectedToken.setExpires(1679823307000L);
+
+        //when
+        underTest.init(properties);
+        AuthenticationToken authenticate = underTest.authenticate(request, responseMock);
+
+        //then
+        assertEquals(expectedToken.getName(), authenticate.getName());
+        assertEquals(expectedToken.getType(), authenticate.getType());
+        assertEquals(expectedToken.getUserName(), authenticate.getUserName());
+        assertEquals(expectedToken.getExpires(), authenticate.getExpires());
+    }
+
+    @Test
+    void authenticateWithValidRulesTwoCerts() throws Exception {
+        //given
+        setUp(false, "Authentication_Valid");
+        String secondCert = "/test.cer";
+        String firstCert = "/another_test.cer";
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse responseMock = Mockito.mock(HttpServletResponse.class);
+
+        InputStream secondCertAsStream = getClass().getResourceAsStream(secondCert);
+        InputStream firstCertAsStream = getClass().getResourceAsStream(firstCert);
+        Certificate certSecond = CertificateFactory.getInstance("X.509").generateCertificate(secondCertAsStream);
+        Certificate certFirst = CertificateFactory.getInstance("X.509").generateCertificate(firstCertAsStream);
+        X509Certificate[] expectedCerts = new X509Certificate[]{(X509Certificate) certFirst, (X509Certificate) certSecond};
+        when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(expectedCerts);
+        AuthenticationToken expectedToken = new AuthenticationToken("TEST", "TEST", "mTLS");
+        expectedToken.setExpires(1683294803000L);
+
+        //when
+        underTest.init(properties);
+        AuthenticationToken authenticate = underTest.authenticate(request, responseMock);
+
+        //then
+        assertEquals(expectedToken.getName(), authenticate.getName());
+        assertEquals(expectedToken.getType(), authenticate.getType());
+        assertEquals(expectedToken.getUserName(), authenticate.getUserName());
+        assertEquals(expectedToken.getExpires(), authenticate.getExpires());
+    }
+
+    @Test
+    void authenticateWithValidRulesTwoCertsMatchInSecondCert() throws Exception {
+        //given
+        setUp(false, "Second_Cert_Valid");
+        String secondCert = "/test.cer";
+        String firstCert = "/another_test.cer";
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse responseMock = Mockito.mock(HttpServletResponse.class);
+
+        InputStream secondCertAsStream = getClass().getResourceAsStream(secondCert);
+        InputStream firstCertAsStream = getClass().getResourceAsStream(firstCert);
+        Certificate certSecond = CertificateFactory.getInstance("X.509").generateCertificate(secondCertAsStream);
+        Certificate certFirst = CertificateFactory.getInstance("X.509").generateCertificate(firstCertAsStream);
+        X509Certificate[] expectedCerts = new X509Certificate[]{(X509Certificate) certFirst, (X509Certificate) certSecond};
+        when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(expectedCerts);
+        AuthenticationToken expectedToken = new AuthenticationToken("BUDAPEST,C=HU", "BUDAPEST,C=HU", "mTLS");
         expectedToken.setExpires(1679823307000L);
 
         //when
