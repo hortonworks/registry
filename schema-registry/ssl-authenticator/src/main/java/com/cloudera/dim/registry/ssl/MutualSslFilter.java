@@ -66,16 +66,17 @@ public class MutualSslFilter implements AuthenticationHandler {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
 
         if (certs != null && certs.length != 0) {
-            X509Certificate clientCert = certs[0];
-            long expirationDate = getExpiration(clientCert);
-            X500Principal subjectDN = clientCert.getSubjectX500Principal();
+            for (X509Certificate clientCert : certs) {
+                long expirationDate = getExpiration(clientCert);
+                X500Principal subjectDN = clientCert.getSubjectX500Principal();
 
-            for (Rule rule : rules) {
-                String principal = rule.apply(subjectDN.getName());
-                if (principal != null) {
-                    AuthenticationToken authenticationToken = new AuthenticationToken(principal, principal, getType());
-                    authenticationToken.setExpires(expirationDate);
-                    return authenticationToken;
+                for (Rule rule : rules) {
+                    String principal = rule.apply(subjectDN.getName());
+                    if (principal != null) {
+                        AuthenticationToken authenticationToken = new AuthenticationToken(principal, principal, getType());
+                        authenticationToken.setExpires(expirationDate);
+                        return authenticationToken;
+                    }
                 }
             }
         } else {
