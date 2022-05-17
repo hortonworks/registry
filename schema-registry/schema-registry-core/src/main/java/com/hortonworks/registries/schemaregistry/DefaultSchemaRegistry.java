@@ -53,6 +53,7 @@ import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,29 +250,33 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     private Long addSchemaMetadata(@Nullable Long metadataId, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
-        SchemaMetadataStorable metaStorable = createSchemaMetadata(metadataId, schemaMetadata, throwErrorIfExists);
+        Pair<SchemaMetadataStorable, Boolean> metaAndWasNewlyAdded = createSchemaMetadata(metadataId, schemaMetadata, throwErrorIfExists);
+        Boolean metaWasNewlyAdded = metaAndWasNewlyAdded.getRight();
+        SchemaMetadataStorable metaStorable = metaAndWasNewlyAdded.getLeft();
 
-        // Add a schema branch for this metadata
-        SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
-                schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
-        Long branchId = storageManager.nextId(schemaBranchStorable.getNameSpace());
-        branchId = checkIfIdIsTaken(SchemaBranchStorable.class, branchId);
-        schemaBranchStorable.setId(branchId);
-        storageManager.add(schemaBranchStorable);
+        // Only add the MASTER branch if the metadata was newly added and not an already existing one was returned
+        if (metaWasNewlyAdded) {
+            SchemaBranchStorable schemaBranchStorable = new SchemaBranchStorable(SchemaBranch.MASTER_BRANCH,
+                    schemaMetadata.getName(), String.format(SchemaBranch.MASTER_BRANCH_DESC, schemaMetadata.getName()), System.currentTimeMillis());
+            Long branchId = storageManager.nextId(schemaBranchStorable.getNameSpace());
+            branchId = checkIfIdIsTaken(SchemaBranchStorable.class, branchId);
+            schemaBranchStorable.setId(branchId);
+            storageManager.add(schemaBranchStorable);
 
-        storageManager.add(new SchemaLockStorable(metaStorable.getNameSpace(),
-                metaStorable.getName(), System.currentTimeMillis()));
+            storageManager.add(new SchemaLockStorable(metaStorable.getNameSpace(),
+                    metaStorable.getName(), System.currentTimeMillis()));
+        }
 
         return metaStorable.getId();
     }
     
     @Override
     public Long addSchemaMetadataWithoutBranch(Supplier<Long> id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
-        SchemaMetadataStorable metaStorable = createSchemaMetadata(id.get(), schemaMetadata, throwErrorIfExists);
+        SchemaMetadataStorable metaStorable = createSchemaMetadata(id.get(), schemaMetadata, throwErrorIfExists).getLeft();
         return metaStorable.getId();
     }
 
-    private SchemaMetadataStorable createSchemaMetadata(@Nullable Long id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
+    private Pair<SchemaMetadataStorable, Boolean> createSchemaMetadata(@Nullable Long id, SchemaMetadata schemaMetadata, boolean throwErrorIfExists) {
         if (schemaMetadata.getInternalCompatibility() == null) {
             schemaMetadata.setCompatibility(SchemaCompatibility.valueOf(compatibilityConfig.getAvroCompatibility()));
         }
@@ -289,7 +294,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         if (!throwErrorIfExists) {
             Storable schemaMetadataStorable = storageManager.get(givenSchemaMetadataStorable.getStorableKey());
             if (schemaMetadataStorable != null) {
-                return (SchemaMetadataStorable) schemaMetadataStorable;
+                return Pair.of((SchemaMetadataStorable) schemaMetadataStorable, false);
             }
         }
         Long nextId = id != null ? id :
@@ -302,7 +307,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         givenSchemaMetadataStorable.setTimestamp(System.currentTimeMillis());
         storageManager.add(givenSchemaMetadataStorable);
 
-        return givenSchemaMetadataStorable;
+        return Pair.of(givenSchemaMetadataStorable, true);
     }
 
     @Override
