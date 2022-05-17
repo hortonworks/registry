@@ -102,7 +102,9 @@ ext.libraries = [
       scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version:$versions_jackson2",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
-   json_kjetland     : "com.kjetland:mbknor-jackson-jsonschema_$kafka_scala_version:$versions_json_kjetland",
+   json_kjetland     : dependencies.create("com.kjetland:mbknor-jackson-jsonschema_$kafka_scala_version:$versions_json_kjetland") {
+       exclude group: 'org.jetbrains.kotlin', module: 'kotlin-scripting-compiler-embeddable'
+   },
 
    jersey: [
       bom            : "org.glassfish.jersey:jersey-bom:$versions_jersey",
