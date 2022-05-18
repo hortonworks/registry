@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.authorizer;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.util.TestAuthorizer;
 import org.junit.jupiter.api.Test;
 import java.util.HashMap;
@@ -28,19 +27,6 @@ public class AuthorizerFactoryTest {
 
     @Test
     public void getAuthorizer() {
-
-        Map<String, Object> props = null;
-        Authorizer authorizer = AuthorizerFactory.getAuthorizer(props);
-        assertTrue(authorizer instanceof RangerSchemaRegistryAuthorizer);
-
-        Map<String, Object> props1 = new HashMap<>();
-        Authorizer authorizer1 = AuthorizerFactory.getAuthorizer(props1);
-        assertTrue(authorizer1 instanceof RangerSchemaRegistryAuthorizer);
-
-        Map<String, Object> props2 = new HashMap<>();
-        props2.put(Authorizer.AUTHORIZER_CONFIG, RangerSchemaRegistryAuthorizer.class.getCanonicalName());
-        Authorizer authorizer2 = AuthorizerFactory.getAuthorizer(props2);
-        assertTrue(authorizer2 instanceof RangerSchemaRegistryAuthorizer);
 
         Map<String, Object> props3 = new HashMap<>();
         props3.put(Authorizer.AUTHORIZER_CONFIG, TestAuthorizer.class.getCanonicalName());

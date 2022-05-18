@@ -50,28 +50,6 @@ distributions {
                 }
             }
 
-            // Ranger plugin
-            into('ranger-plugin/ranger-schema-registry-plugin-impl/') {
-                from("$rootDir/schema-registry/schema-registry-authorizer/build/libs") {
-                    include '*ranger*jar'
-                }
-                from("$rootDir/ranger-plugin/build/dependency") {
-                    include '*jar'
-                    exclude 'ranger-plugin-classloader*jar'
-                    exclude '*slf4j*jar'
-                    exclude '*commons-logging*jar'
-                    exclude '*log4j*jar'
-                    exclude '*aws-java-sdk-bundle*jar'
-                }
-            }
-            into('ranger-plugin/conf/') {
-                from("$rootDir/schema-registry/schema-registry-authorizer/conf")
-            }
-            into('ranger-plugin/') {
-                from("$rootDir/schema-registry/schema-registry-authorizer/build/libs") {
-                    include '*shim*jar'
-                }
-            }
 
             // Atlas plugin
             into('atlas-plugin/atlas-schema-registry-plugin-impl/') {
@@ -168,16 +146,12 @@ dependencies {
     compile project(':schema-registry:schema-registry-serdes')
     
     compile libraries.jackson.scala_module
-    compile(libraries.ranger.classloader) {
-        exclude group: 'org.slf4j'
-    }
     
     // this will force Gradle to build the tar and zip file only after every other project was built
     distTar.dependsOn(':schema-registry:schema-registry-webservice:build')
     distTar.dependsOn(':registry-common-client:build')
     distTar.dependsOn(':cache:build')
     distTar.dependsOn(':common-auth:build')
-    distTar.dependsOn(':ranger-plugin:build')
     distTar.dependsOn(':schema-registry:schema-registry-common:build')
     distTar.dependsOn(':atlas-integration:atlas-common:build')
     distTar.dependsOn(':atlas-integration:atlas-shim:build')

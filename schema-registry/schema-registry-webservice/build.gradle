@@ -29,10 +29,7 @@ dependencies {
     compile(project(':registry-webservice')) {
         exclude group: 'com.sun.jersey.contribs', module: 'jersey-guice'
     }
-    compile(project(':schema-registry:schema-registry-authorizer')) {
-        // this has to be on a separate classpath
-        exclude group: 'com.hortonworks.registries', module: 'ranger-plugin'
-    }
+    compile project(':schema-registry:schema-registry-authorizer')
     compile project(':schema-registry:schema-registry-core')
     compile project(':schema-registry:oauth2-authenticator')
     compile project(':schema-registry:ssl-authenticator')

@@ -203,12 +203,6 @@ ext.libraries = [
 
    postgresql        : "org.postgresql:postgresql:$versions_postgresql",
 
-   ranger: [
-     common          : "org.apache.ranger:ranger-plugins-common:$versions_ranger",
-     audit           : "org.apache.ranger:ranger-plugins-audit:$versions_ranger",
-     classloader     : "org.apache.ranger:ranger-plugin-classloader:$versions_ranger"
-   ],
-
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
    snakeyaml          : "org.yaml:snakeyaml",
 

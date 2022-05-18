@@ -40,11 +40,6 @@ public class AuthorizationAgentFactoryTest {
         AuthorizationAgent authorizationAgent2 = AuthorizationAgentFactory.getAuthorizationAgent(props2);
         assertTrue(authorizationAgent2 instanceof NOOPAuthorizationAgent);
 
-        Map<String, Object> props3 = new HashMap<>();
-        props3.put(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG, DefaultAuthorizationAgent.class.getCanonicalName());
-        AuthorizationAgent authorizationAgent3 = AuthorizationAgentFactory.getAuthorizationAgent(props3);
-        assertTrue(authorizationAgent3 instanceof DefaultAuthorizationAgent);
-
         Map<String, Object> props4 = new HashMap<>();
         props4.put(AuthorizationAgent.AUTHORIZATION_AGENT_CONFIG, TestAuthorizationAgent.class.getCanonicalName());
         AuthorizationAgent authorizationAgent4 = AuthorizationAgentFactory.getAuthorizationAgent(props4);

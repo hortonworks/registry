@@ -16,19 +16,19 @@
 
 dependencies {
 
-    compileOnly project(':ranger-plugin')
     compile libraries.jna_platform
 
     compile project(':schema-registry:schema-registry-core')
+    compileOnly libraries.hadoop.common
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
     compile(project(path: ':schema-registry:hadoop-extension', configuration: 'shim')) {
         transitive = false
     }
-    
-    testCompile project(':ranger-plugin')
+
     testCompile libraries.junit
+    testCompile libraries.hadoop.common
     testCompile(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
         transitive = false
     }
@@ -40,27 +40,3 @@ task copyDependencies(type: Sync) {
     from configurations.runtime
 }
 assemble.dependsOn(copyDependencies)
-
-// This project generates 3 JAR files
-
-task shim(type: Jar) {
-    archiveClassifier = "shim"
-    from(sourceSets.main.output) {
-        include "com/hortonworks/registries/schemaregistry/authorizer/ranger/shim/**"
-    }
-}
-
-task authRanger(type: Jar) {
-    archiveClassifier = "ranger"
-    from(sourceSets.main.output) {
-        include "com/hortonworks/registries/schemaregistry/authorizer/ranger/**"
-        exclude "com/hortonworks/registries/schemaregistry/authorizer/ranger/shim/**"
-    }
-}
-
-jar {
-    exclude "com/hortonworks/registries/schemaregistry/authorizer/ranger/**"
-}
-
-compileJava.finalizedBy(shim)
-shim.finalizedBy(authRanger)

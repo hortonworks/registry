@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.authorizer;
 
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
-import com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * This is a factory class that is used to create instance of  {@link Authorizer}.
- * The default authorizer is {@link RangerSchemaRegistryAuthorizer}. User defined authorizers
+ * The default authorizer is RangerSchemaRegistryAuthorizer. User defined authorizers
  * are supported.
  * The exact type of authorizer is configured by 'authorizerClassName' property.
  */
@@ -37,13 +36,16 @@ public class AuthorizerFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizerFactory.class);
 
+    private static final String RANGER_SCHEMA_REGISTRY_AUTHORIZER =
+            "com.hortonworks.registries.schemaregistry.authorizer.ranger.shim.RangerSchemaRegistryAuthorizer";
+
     public static Authorizer getAuthorizer(Map<String, Object> props) {
         final Class<?> authorizerClass;
         try {
             // If authorizer is not specified in config then RangerSchemaRegistryAuthorizer is used by default
             if (props == null || !props.containsKey(Authorizer.AUTHORIZER_CONFIG)) {
-                LOG.info("Authorizer was not specified in the config so we're using {} by default", RangerSchemaRegistryAuthorizer.class);
-                authorizerClass = RangerSchemaRegistryAuthorizer.class;
+                LOG.info("Authorizer was not specified in the config so we're using {} by default", RANGER_SCHEMA_REGISTRY_AUTHORIZER);
+                authorizerClass = Class.forName(RANGER_SCHEMA_REGISTRY_AUTHORIZER);
             } else {
                 String authorizerClassName = (String) props.get(Authorizer.AUTHORIZER_CONFIG);
                 checkNotNull(authorizerClassName, "Authorizer class not defined for %s", Authorizer.AUTHORIZER_CONFIG);
