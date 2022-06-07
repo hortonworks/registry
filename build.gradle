@@ -98,6 +98,10 @@ subprojects {
                     strictly project.versions_swagger
                 }
             }
+            constraints {
+                implementation("org.apache.commons:commons-compress:$versions_commons_compress")
+                testCompile("org.apache.commons:commons-compress:$versions_commons_compress")
+            }
         }
     }
 
