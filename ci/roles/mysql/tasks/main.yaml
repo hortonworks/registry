@@ -1,6 +1,6 @@
-- name: helm repo add bitnami
+- name: helm repo add DIM
   command: >
-    helm repo add bitnami https://charts.bitnami.com/bitnami --tiller-namespace={{ tiller_namespace }}
+    helm repo add DIM https://docker-registry.infra.cloudera.com:8443/helm/ --tiller-namespace={{ tiller_namespace }}
   args:
     chdir: "{{ srcdir }}"
 
@@ -16,5 +16,5 @@
         --name db
         --tiller-namespace={{ tiller_namespace }}
         --set "db.user={{ mysql_dbuser }},db.password={{ mysql_password }},db.name={{ mysql_dbname }},replication.enabled=false,master.persistence.enabled=false"
-        --version 11.0.10
+        --version 7.3.14
         --wait
