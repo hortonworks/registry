@@ -12,7 +12,7 @@
 
 - name: helm install postgresql
   command: >
-    helm install bitnami/postgresql
+    helm install DIM/postgresql
         --name psql
         --set postgresqlUsername=registry,postgresqlPassword=registry,postgresqlDatabase=registry,persistence.enabled=false
         --tiller-namespace={{ tiller_namespace }}
