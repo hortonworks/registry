@@ -12,7 +12,7 @@
 
 - name: helm install mariadb
   command: >
-    helm install bitnami/mariadb
+    helm install DIM/mariadb
         --name db
         --tiller-namespace={{ tiller_namespace }}
         --set "db.user={{ mysql_dbuser }},db.password={{ mysql_password }},db.name={{ mysql_dbname }},replication.enabled=false,master.persistence.enabled=false"
