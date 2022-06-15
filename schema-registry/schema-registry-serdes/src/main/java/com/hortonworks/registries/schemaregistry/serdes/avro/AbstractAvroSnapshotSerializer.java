@@ -95,11 +95,14 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     @SuppressWarnings("unchecked")
     public void doInit(Map<String, ?> config) {
 
-        Number number = (Number) ((Map<String, Object>) config).getOrDefault(SERDES_PROTOCOL_VERSION,
-                                                                             SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL);
-        validateSerdesProtocolVersion(number);
+        byte protocolVersion = SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL;
 
-        Byte protocolVersion = number.byteValue();
+        Object configValue = config.get(SERDES_PROTOCOL_VERSION);
+        if (configValue != null) {
+            protocolVersion = byteValue(configValue);
+        }
+
+        validateSerdesProtocolVersion(protocolVersion);
 
         SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion);
         if (serDesProtocolHandler == null) {
@@ -107,6 +110,14 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         }
 
         this.serDesProtocolHandler = serDesProtocolHandler;
+    }
+
+    private byte byteValue(Object configValue) {
+        if (configValue instanceof Number) {
+            return ((Number) configValue).byteValue();
+        } else {
+            return Byte.parseByte(configValue.toString());
+        }
     }
 
     private void validateSerdesProtocolVersion(Number number) {
@@ -134,7 +145,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     protected void serializePayload(OutputStream os, Object input) throws SerDesException {
         serDesProtocolHandler.handlePayloadSerialization(os, input);
     }
-    
+
     protected Byte getProtocolId() {
         return serDesProtocolHandler.getProtocolId();
     }
