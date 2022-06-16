@@ -4,7 +4,6 @@
     namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
     docker_host: "tcp://dockerd.zuul:2375"
     patchset: "{{ zuul.change }}-{{ zuul.patchset }}"
-    tiller_namespace: "{{ zuul.resources['k8s-namespace'].namespace }}"
     repository: "docker-registry.infra.cloudera.com/kubernator-ci/"
 
   environment:
@@ -18,11 +17,9 @@
         kubernetes_resource: k8s-namespace
       when: zuul is defined
 
-    - name: Install helm
+    - name: Install helm3
       include_role:
-        name: helm
-      vars:
-        tiller_namespace: '{{ namespace }}'
+        name: helm3
       when: zuul is defined
 
     - name: certificates {{ namespace }}
@@ -33,12 +30,11 @@
 
     - name: helm install kdc
       command: >
-        helm install ci/helm/kdc
-            --name kdc
+        helm install kdc ci/helm/kdc
+            --namespace={{ namespace }}
             --set image.tag=k8s-v4
             --set image.repository=docker-registry.infra.cloudera.com/kubernator-ci/kdc
             --set service.type=ClusterIP
-            --tiller-namespace={{ tiller_namespace }}
             --wait
       args:
         chdir: "{{ srcdir }}"

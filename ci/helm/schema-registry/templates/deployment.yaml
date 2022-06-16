@@ -28,14 +28,12 @@ spec:
             - mountPath: /opt/entrypoint.sh
               name: conf-volume
               subPath: entrypoint.sh
-              defaultMode: 0777
             - mountPath: /etc/krb5.conf
               name: conf-volume
               subPath: krb5.conf
             - mountPath: /tmp/create-certificate.sh
               name: conf-volume
               subPath: generate-certificates-script
-              defaultMode: 0755
 {{ if eq .Values.security.type "kerberos" }}
             - mountPath: /tmp/ca-key
               name: keystore-volume
