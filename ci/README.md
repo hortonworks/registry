@@ -4,10 +4,6 @@ Start minikube
 ```
 minikube start --vm-driver=hyperkit --cpus 4 --memory 8192
 ```
-Setup tiller if not yet available:
-``` 
-helm init --wait
-```
 ## Generate images
 ```
 ansible-playbook -i ci/local_inventory -e @ci/local_vars.yaml ci/build-images.yaml -vvv
@@ -29,10 +25,6 @@ srcdir: "../"
 ### namespace: default
 ```
 namespace: default
-```
-### tiller_namespace: kube-system 
-```
-tiller_namespace: kube-system 
 ```
 ### mit_kerberos
 ```

@@ -1,20 +1,14 @@
-- name: helm repo add DIM
+- name: Add the bitnami helm repo
   command: >
-    helm repo add DIM https://docker-registry.infra.cloudera.com:8443/helm/ --tiller-namespace={{ tiller_namespace }}
-  args:
-    chdir: "{{ srcdir }}"
+    helm repo add bitnami https://charts.bitnami.com/bitnami
 
-- name: helm repo update
+- name: Update helm repos
   command: >
-    helm repo update --tiller-namespace={{ tiller_namespace }}
-  args:
-    chdir: "{{ srcdir }}"
+    helm repo update
 
 - name: helm install mariadb
   command: >
-    helm install DIM/mariadb
-        --name db
-        --tiller-namespace={{ tiller_namespace }}
-        --set "db.user={{ mysql_dbuser }},db.password={{ mysql_password }},db.name={{ mysql_dbname }},replication.enabled=false,master.persistence.enabled=false"
-        --version 7.3.14
+    helm install db bitnami/mariadb
+        --namespace={{ namespace }}
+        --set "auth.username={{ mysql_dbuser }},auth.password={{ mysql_password }},auth.database={{ mysql_dbname }},architecture=standalone,primary.persistence.enabled=false"
         --wait

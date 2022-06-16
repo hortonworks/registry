@@ -1,21 +1,15 @@
-- name: helm repo add DIM
+- name: Add the bitnami helm repo
   command: >
-    helm repo add DIM https://docker-registry.infra.cloudera.com:8443/helm/ --tiller-namespace={{ tiller_namespace }}
-  args:
-    chdir: "{{ srcdir }}"
+    helm repo add bitnami https://charts.bitnami.com/bitnami
 
-- name: helm repo update
+- name: Update helm repos
   command: >
-    helm repo update --tiller-namespace={{ tiller_namespace }}
-  args:
-    chdir: "{{ srcdir }}"
+    helm repo update
 
 - name: helm install postgresql
   command: >
-    helm install DIM/postgresql
-        --name psql
+    helm install psql bitnami/postgresql
+        --namespace={{ namespace }}
         --set postgresqlUsername=registry,postgresqlPassword=registry,postgresqlDatabase=registry,persistence.enabled=false
-        --tiller-namespace={{ tiller_namespace }}
-        --set "db.user=registry,db.password=registry,db.name=registry,replication.enabled=false,master.persistence.enabled=false"
-        --version 8.6.4
+        --set "auth.username=registry,auth.password=registry,auth.database=registry,architecture=standalone,primary.persistence.enabled=false"
         --wait

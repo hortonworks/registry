@@ -1,9 +1,8 @@
 srcdir: "../"
 namespace: default
-docker_host: 'tcp://192.168.64.40:2376'
+docker_host: "tcp://127.0.0.1:57433"
 patchset: localbuild
-tiller_namespace: kube-system
-database: inmemory
+database: mysql
 security: none
 repository: ""
 mit_kerberos: "/usr/local/opt/krb5/bin/"
