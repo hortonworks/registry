@@ -452,8 +452,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         }
 
         int executeUpdate() {
-            try {
-                return getPreparedStatement().executeUpdate();
+            try (PreparedStatement preparedStatement = getPreparedStatement()) {
+                return preparedStatement.executeUpdate();
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
             } finally {
@@ -465,11 +465,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
             try {
                 PreparedStatement pstmt = getPreparedStatementWithSetReturningGeneratedKey();
                 pstmt.executeUpdate();
-                ResultSet generatedKeys = pstmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    return generatedKeys.getLong(1);
-                } else {
-                    return null;
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getLong(1);
+                    } else {
+                        return null;
+                    }
                 }
             } catch (SQLException | ExecutionException e) {
                 throw new StorageException(e);
