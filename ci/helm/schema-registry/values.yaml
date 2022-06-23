@@ -1,0 +1,58 @@
+# Default values for schema-registry.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: docker-registry.infra.cloudera.com/kubernator-ci/registry
+  tag: 0.8.1.99.0.0.0-197
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 9090
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: { "beta.kubernetes.io/os": "linux" }
+
+tolerations: []
+
+affinity: {}
+# inmemory, mysql, postgresql
+database: "inmemory"
+namespace: "default"
+configfile: "/opt/registry/conf/registry.yaml"
+security: 
+  type: none
+  caCertPath: "files/ca-cert"
+  caKeyPath: "files/ca-key"
