@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "schema-registry.fullname" . }}-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "schema-registry.fullname" . }}-sr
+  template:
+    metadata:
+      labels:
+        app: {{ include "schema-registry.fullname" . }}-sr
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["/bin/bash", "/opt/entrypoint.sh"]
+
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 9090
+            - containerPort: 8443
+          volumeMounts:
+            - mountPath: /opt/registry/conf/registry.yaml
+              name: conf-volume
+              subPath: registry.yaml
+            - mountPath: /opt/entrypoint.sh
+              name: conf-volume
+              subPath: entrypoint.sh
+              defaultMode: 0777
+            - mountPath: /etc/krb5.conf
+              name: conf-volume
+              subPath: krb5.conf
+            - mountPath: /tmp/create-certificate.sh
+              name: conf-volume
+              subPath: generate-certificates-script
+              defaultMode: 0755
+{{ if eq .Values.security.type "kerberos" }}
+            - mountPath: /tmp/ca-key
+              name: keystore-volume
+              subPath: ca-key
+            - mountPath: /tmp/ca-cert
+              name: keystore-volume
+              subPath: ca-cert
+{{ end }}
+      volumes:
+        - name: conf-volume
+          configMap:
+            name: {{ .Release.Name }}-configmap
+
+{{ if eq .Values.security.type "kerberos" }}
+        - name: keystore-volume
+          configMap:
+            name: {{ .Release.Name }}-configmap
+            items:
+              - key: ca-cert
+                path: ca-cert
+              - key: ca-key
+                path: ca-key
+{{ end }}

@@ -1,19 +1,6 @@
-
-- name: helm repo add
-  command: >
-    helm repo add DIM https://docker-registry.infra.cloudera.com:8443/helm/ --tiller-namespace={{ tiller_namespace }}
-  args:
-    chdir: "{{ srcdir }}"
-
-- name: helm repo update
-  command: >
-    helm repo update --tiller-namespace={{ tiller_namespace }}
-  args:
-    chdir: "{{ srcdir }}"
-
 - name: helm install registry
   command: >
-    helm install DIM/schema-registry
+    helm install ci/helm/schema-registry
         --debug
         --name schema-registry
         --set security.type={{ security }}
