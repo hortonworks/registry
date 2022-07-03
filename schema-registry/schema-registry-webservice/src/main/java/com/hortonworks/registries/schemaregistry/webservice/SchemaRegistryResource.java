@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -560,6 +560,33 @@ public class SchemaRegistryResource extends BaseRegistryResource {
     }
 
     @GET
+    @Path("/schemas/{name}/versions/latest/schemaText")
+    @ApiOperation(value = "Get the latest version of the schema for the given schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getLatestSchemaVersionText(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                                           @Context SecurityContext securityContext) throws Exception {
+            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
+            if (schemaVersionInfo != null) {
+                authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext),
+                        schemaRegistry,
+                        schemaName,
+                        schemaBranchName,
+                        Authorizer.AccessType.READ);
+
+                return Response.status(Response.Status.OK)
+                        .entity(schemaVersionInfo.getSchemaText())
+                        .type(MediaType.APPLICATION_JSON_TYPE)
+                        .build();
+            } else {
+                LOG.info("No schemas found with schemakey: [{}]", schemaName);
+                return WSUtils.respond(Response.Status.NOT_FOUND, CatalogResponse.ResponseMessage.ENTITY_NOT_FOUND, schemaName);
+            }
+    }
+
+    @GET
     @Path("/schemas/{name}/versions")
     @ApiOperation(value = "Get all the versions of the schema for the given schema name)",
             response = SchemaVersionInfo.class, responseContainer = "List", tags = OPERATION_GROUP_SCHEMA)
@@ -593,11 +620,31 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                      @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
                                      @Context SecurityContext securityContext) throws Exception {
         SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
-            SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
-            authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext), schemaRegistry,
-                    schemaVersionInfo, Authorizer.AccessType.READ);
+        SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
+        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                schemaVersionInfo, Authorizer.AccessType.READ);
 
-            return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+        return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/{name}/versions/{version}/schemaText")
+    @ApiOperation(value = "Get a version of the schema identified by the schema name",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaVersionText(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
+                                     @ApiParam(value = "version of the schema", required = true) @PathParam("version") Integer versionNumber,
+                                     @Context SecurityContext securityContext) throws Exception {
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaMetadata, versionNumber);
+        SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaVersionKey);
+        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                schemaVersionInfo, Authorizer.AccessType.READ);
+
+            return Response.status(Response.Status.OK)
+                    .entity(schemaVersionInfo.getSchemaText())
+                    .type(MediaType.APPLICATION_JSON_TYPE)
+                    .build();
     }
 
     @GET
@@ -613,6 +660,25 @@ public class SchemaRegistryResource extends BaseRegistryResource {
             authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext), schemaRegistry,
                     schemaIdVersion, Authorizer.AccessType.READ);
             return WSUtils.respondEntity(schemaVersionInfo, Response.Status.OK);
+    }
+
+    @GET
+    @Path("/schemas/versionsById/{id}/schemaText")
+    @ApiOperation(value = "Get a version of the schema identified by the given version id",
+            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @Timed
+    @UnitOfWork
+    public Response getSchemaTextVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
+                                         @Context SecurityContext securityContext) throws Exception {
+        SchemaIdVersion schemaIdVersion = new SchemaIdVersion(versionId);
+        SchemaVersionInfo schemaVersionInfo = schemaRegistry.getSchemaVersionInfo(schemaIdVersion);
+        authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext), schemaRegistry,
+                schemaIdVersion, Authorizer.AccessType.READ);
+
+        return Response.status(Response.Status.OK)
+                .entity(schemaVersionInfo.getSchemaText())
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
     }
 
     @GET

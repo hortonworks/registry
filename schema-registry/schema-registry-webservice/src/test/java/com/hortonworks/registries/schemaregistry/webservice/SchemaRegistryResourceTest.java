@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,11 +16,16 @@ package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.hortonworks.registries.common.CollectionResponse;
+import com.hortonworks.registries.common.catalog.CatalogResponse;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaFieldQuery;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
+import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -35,7 +40,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.hortonworks.registries.schemaregistry.SchemaBranch.MASTER_BRANCH;
+import static java.util.Collections.emptySet;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,22 +54,21 @@ import static org.mockito.Mockito.when;
 public class SchemaRegistryResourceTest {
 
     private SchemaRegistryResource underTest;
-    private ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
-    private AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
-    private RangerAuthenticator authenticationUtils = mock(RangerAuthenticator.class);
+    private final ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
+    private final AuthorizationAgent authorizationAgentMock = mock(AuthorizationAgent.class);
+    private final RangerAuthenticator authenticationUtils = mock(RangerAuthenticator.class);
     private AtlasEventLogger atlasEventLogger;
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";
     private static final String ORDER = "_orderByFields";
     private static final String FIELD_NAMESPACE = "fieldNamespace";
     private static final String TYPE = "type";
-    
+    private static final String SCHEMA_TEXT = "[schema-text]";
 
     @BeforeEach
     public void setup() {
         atlasEventLogger = mock(AtlasEventLogger.class);
-        ISchemaRegistry schemaRegistryMock = mock(ISchemaRegistry.class);
-        underTest = new SchemaRegistryResource(schemaRegistryMock, null, null, null, null, null, atlasEventLogger, null);
+        underTest = new SchemaRegistryResource(schemaRegistryMock, authorizationAgentMock, authenticationUtils, null, null, null, atlasEventLogger, null);
     }
     
     @Test
@@ -382,5 +392,92 @@ public class SchemaRegistryResourceTest {
 
         //then
         assertEquals(expected.toQueryMap(), actual.toQueryMap());
+    }
+
+    @Test
+    public void shouldReturnLatestVersionSchemaText() throws Exception {
+        //given
+        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1L, NAME, 1, SCHEMA_TEXT, 0L, "[description]");
+        when(schemaRegistryMock.getLatestEnabledSchemaVersionInfo(anyString(), anyString())).thenReturn(schemaVersionInfo);
+        when(authenticationUtils.getUserAndGroups(any(SecurityContext.class))).thenReturn(new Authorizer.UserAndGroups("[user]", emptySet()));
+
+        //when
+        Response response = underTest.getLatestSchemaVersionText(NAME, MASTER_BRANCH, mock(SecurityContext.class));
+
+        //then
+        assertEquals(200, response.getStatus());
+        assertEquals(APPLICATION_JSON_TYPE, response.getMediaType());
+        assertEquals(SCHEMA_TEXT, response.getEntity());
+    }
+
+    @Test
+    public void shouldReturn404ForLatestVersionSchemaTextWhenSchemaNotFound() throws Exception {
+        //given
+        when(schemaRegistryMock.getLatestEnabledSchemaVersionInfo(anyString(), anyString())).thenReturn(null);
+
+        //when
+        Response response = underTest.getLatestSchemaVersionText(NAME, MASTER_BRANCH, mock(SecurityContext.class));
+
+        //then
+        assertEquals(404, response.getStatus());
+        assertEquals(APPLICATION_JSON_TYPE, response.getMediaType());
+        CatalogResponse catalogResponse = (CatalogResponse) response.getEntity();
+        assertEquals(1101, catalogResponse.getResponseCode());
+    }
+
+    @Test
+    public void shouldReturnVersionSchemaText() throws Exception {
+        //given
+        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1L, NAME, 1, SCHEMA_TEXT, 0L, "[description]");
+        when(schemaRegistryMock.getSchemaVersionInfo(any(SchemaVersionKey.class))).thenReturn(schemaVersionInfo);
+        when(authenticationUtils.getUserAndGroups(any(SecurityContext.class)))
+                .thenReturn(new Authorizer.UserAndGroups("[user]", emptySet()));
+
+        //when
+        Response response = underTest.getSchemaVersionText(NAME, 1, mock(SecurityContext.class));
+
+        //then
+        assertEquals(200, response.getStatus());
+        assertEquals(APPLICATION_JSON_TYPE, response.getMediaType());
+        assertEquals(SCHEMA_TEXT, response.getEntity());
+    }
+
+    @Test
+    public void shouldThrowForVersionSchemaTextWhenSchemaNotFound() throws Exception {
+        //given
+        when(schemaRegistryMock.getSchemaVersionInfo(any(SchemaVersionKey.class)))
+                .thenThrow(new SchemaNotFoundException(""));
+
+        //when
+        assertThrows(SchemaNotFoundException.class,
+                () -> underTest.getSchemaVersionText(NAME, 1, mock(SecurityContext.class)));
+    }
+
+    @Test
+    public void shouldReturnVersionByIdSchemaText() throws Exception {
+        //given
+        SchemaVersionInfo schemaVersionInfo = new SchemaVersionInfo(1L, NAME, 1, SCHEMA_TEXT, 0L, "[description]");
+        when(schemaRegistryMock.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenReturn(schemaVersionInfo);
+        when(authenticationUtils.getUserAndGroups(any(SecurityContext.class)))
+                .thenReturn(new Authorizer.UserAndGroups("[user]", emptySet()));
+
+        //then
+        Response response = underTest.getSchemaTextVersionById(1L, mock(SecurityContext.class));
+
+        //then
+        assertEquals(200, response.getStatus());
+        assertEquals(APPLICATION_JSON_TYPE, response.getMediaType());
+        assertEquals(SCHEMA_TEXT, response.getEntity());
+    }
+
+    @Test
+    public void shouldThrowForVersionByIdSchemaTextWhenSchemaNotFound() throws Exception {
+        //given
+        when(schemaRegistryMock.getSchemaVersionInfo(any(SchemaIdVersion.class)))
+                .thenThrow(new SchemaNotFoundException(""));
+
+        //when
+        assertThrows(SchemaNotFoundException.class,
+                () -> underTest.getSchemaTextVersionById(1L, mock(SecurityContext.class)));
     }
 }
