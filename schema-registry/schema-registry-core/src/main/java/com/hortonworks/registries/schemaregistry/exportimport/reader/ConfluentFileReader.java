@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,7 +251,7 @@ public class ConfluentFileReader {
         if (i1 < 0) {
             return false;
         }
-        int i2 = line.indexOf('{', i1);
+        int i2 = line.indexOf('{', i1 + 1);
         if (i2 < 0) {
             return false;
         }
@@ -259,7 +259,7 @@ public class ConfluentFileReader {
         if (i3 < 0) {
             return false;
         }
-        int i4 = line.indexOf('}', i3);
+        int i4 = line.indexOf('}', i3 + 1);
         if (i4 < 0) {
             return false;
         }
