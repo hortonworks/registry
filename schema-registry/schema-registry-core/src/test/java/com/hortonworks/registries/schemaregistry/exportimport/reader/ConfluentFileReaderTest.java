@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.exportimport.reader;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
 import com.hortonworks.registries.schemaregistry.SchemaValidationLevel;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -98,6 +100,23 @@ public class ConfluentFileReaderTest {
 
         ConfluentFileReader reader2 = new ConfluentFileReader(new ByteArrayInputStream("{invalid schema} {invalid}".getBytes()));
         assertNull(reader2.readSchema());
+    }
+
+    @Test
+    public void testLineWithoutVersionDataShouldBeDropped() {
+        //given
+        String confluentFile = String.join("\n", ImmutableList.of(
+                "{\"subject\":\"invalid-line-subject\",\"version\":1,\"magic\":1,\"keytype\":\"SCHEMA\"}\tnull",
+                "{\"keytype\":\"SCHEMA\",\"subject\":\"Car\",\"version\":1,\"magic\":1} {\"subject\":\"Car\",\"version\":1,\"id\":2,\"schema\":\"{}\",\"deleted\":false}"
+        ));
+        ConfluentFileReader fileReader = new ConfluentFileReader(new ByteArrayInputStream(confluentFile.getBytes(UTF_8)));
+
+        //when
+        RawSchema rawSchema = fileReader.readSchema();
+
+        //then
+        assertEquals("Car", rawSchema.getMetadata().getSchemaMetadata().getName());
+        assertEquals(1, rawSchema.getVersion().getVersion());
     }
 
     /** Parse an expected amount of schemas and return them in a set. */
