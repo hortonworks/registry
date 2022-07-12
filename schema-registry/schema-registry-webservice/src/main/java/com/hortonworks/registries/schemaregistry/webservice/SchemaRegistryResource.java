@@ -561,13 +561,13 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/schemas/{name}/versions/latest/schemaText")
-    @ApiOperation(value = "Get the latest version of the schema for the given schema name",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Get the schema text property of the latest version of the given schema name",
+            response = String.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
-    @UnitOfWork
-    public Response getLatestSchemaVersionText(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
-                                           @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
-                                           @Context SecurityContext securityContext) throws Exception {
+        @UnitOfWork
+        public Response getLatestSchemaVersionText(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaName,
+                @QueryParam("branch") @DefaultValue(MASTER_BRANCH) String schemaBranchName,
+                @Context SecurityContext securityContext) throws Exception {
             SchemaVersionInfo schemaVersionInfo = schemaRegistry.getLatestEnabledSchemaVersionInfo(schemaBranchName, schemaName);
             if (schemaVersionInfo != null) {
                 authorizationAgent.authorizeSchemaVersion(authenticationUtils.getUserAndGroups(securityContext),
@@ -629,8 +629,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/schemas/{name}/versions/{version}/schemaText")
-    @ApiOperation(value = "Get a version of the schema identified by the schema name",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Get the schema text property of the schema identified by name and version",
+            response = String.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
     public Response getSchemaVersionText(@ApiParam(value = "Schema name", required = true) @PathParam("name") String schemaMetadata,
@@ -664,8 +664,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
 
     @GET
     @Path("/schemas/versionsById/{id}/schemaText")
-    @ApiOperation(value = "Get a version of the schema identified by the given version id",
-            response = SchemaVersionInfo.class, tags = OPERATION_GROUP_SCHEMA)
+    @ApiOperation(value = "Get the schema text property of the schema identified by the given version id",
+            response = String.class, tags = OPERATION_GROUP_SCHEMA)
     @Timed
     @UnitOfWork
     public Response getSchemaTextVersionById(@ApiParam(value = "version identifier of the schema", required = true) @PathParam("id") Long versionId,
