@@ -21,7 +21,7 @@ import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.common.util.HdfsFileStorage;
 import com.hortonworks.registries.common.FileStorageProperties;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;

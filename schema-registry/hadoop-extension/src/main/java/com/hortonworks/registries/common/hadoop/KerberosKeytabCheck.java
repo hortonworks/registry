@@ -16,13 +16,14 @@
 package com.hortonworks.registries.common.hadoop;
 
 import com.hortonworks.registries.common.ServiceAuthenticationConfiguration;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 public class KerberosKeytabCheck extends AbstractHadoopPlugin {
 
@@ -60,6 +61,6 @@ public class KerberosKeytabCheck extends AbstractHadoopPlugin {
 
     @Override
     public Set<String> getGroupsForUser(String kerberosShortName) {
-        return UserGroupInformation.createRemoteUser(kerberosShortName).getGroupsSet();
+        return new HashSet<>(UserGroupInformation.createRemoteUser(kerberosShortName).getGroups());
     }
 }
