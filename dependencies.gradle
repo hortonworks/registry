@@ -130,7 +130,6 @@ ext.libraries = [
 
    logging: [
       logback        : "ch.qos.logback:logback-classic",
-      log4j          : "log4j:log4j",
       slf4j_log4j    : "org.slf4j:log4j-over-slf4j",
       slf4j_api      : "org.slf4j:slf4j-api",
       slf4j_simple   : "org.slf4j:slf4j-simple"
