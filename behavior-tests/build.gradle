@@ -35,6 +35,7 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.jaxrs'
         exclude group: 'org.slf4j'
         exclude group: 'cglib'
+        exclude group: 'netty'
     }
     // Atlas dependencies which will be copied to a separate location, to
     // be loaded by the custom classpathloader
@@ -63,15 +64,12 @@ dependencies {
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.mockito_junit5
-    testCompile(libraries.mockserver) {
-        exclude group: "io.netty"
-    }
+    testCompile libraries.mockserver
 
     testCompile libraries.cucumber.core
     testCompile libraries.cucumber.junit
     testCompile libraries.cucumber.junit_platform
     testCompile libraries.cucumber.picocontainer
-
 }
 
 task cucumber() {

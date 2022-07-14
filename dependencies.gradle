@@ -28,6 +28,7 @@ ext.libraries = [
           exclude group: 'jdk.tools', module: 'jdk.tools'
           exclude group: 'org.apache.curator'
           exclude group: 'org.slf4j'
+          exclude group: 'io.netty'
       },
       intg: dependencies.create("org.apache.atlas:atlas-intg:$versions_atlas") {
           transitive = false
@@ -43,12 +44,6 @@ ext.libraries = [
       io             :"commons-io:commons-io:$versions_commons_io",
       lang3          : "org.apache.commons:commons-lang3",
       text           : "org.apache.commons:commons-text",
-   ],
-   curator: [
-      client         : "org.apache.curator:curator-client:$versions_curator",
-      framework      : "org.apache.curator:curator-framework:$versions_curator",
-      recipes        : "org.apache.curator:curator-recipes:$versions_curator",
-      test           : "org.apache.curator:curator-test:$versions_curator",
    ],
    directory_api     : "org.apache.directory.api:api-util:$versions_directory_api",
    directory_server: dependencies.create("org.apache.directory.server:apacheds-kerberos-codec:$versions_directory_server") {
@@ -161,7 +156,8 @@ ext.libraries = [
    json_smart        : "net.minidev:json-smart:$versions_json_smart",
 
    kafka: [
-     avro_serializer : "io.confluent:kafka-avro-serializer:$versions_kafka_avro",
+     confluent_avro_serializer : "io.confluent:kafka-avro-serializer:$versions_confluent",
+     confluent_sr_client : "io.confluent:kafka-schema-registry-client:$versions_confluent",
      core : dependencies.create("org.apache.kafka:kafka_$kafka_scala_version:$versions_kafka") {
          exclude group: 'org.apache.zookeeper', module: 'zookeeper'
          exclude group: 'log4j', module: 'log4j'
