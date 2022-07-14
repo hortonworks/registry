@@ -68,15 +68,11 @@ dependencies {
     compile libraries.json_smart
     compile libraries.jersey.media_multipart
 
-    compile libraries.curator.framework
-    compile libraries.curator.client
-    compile libraries.curator.recipes
-    
     testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
     
     testImplementation group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
     testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
-    
+
     testCompile libraries.kafka.avro_serializer
 
     testCompile project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests')
@@ -89,7 +85,8 @@ dependencies {
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.dropwizard.testing
-    
+
+    testCompile libraries.kafka.clients
     testCompile libraries.kafka.test.clients
     testCompile libraries.kafka.test.streams
     testCompile libraries.kafka.test.streams_test_utils
@@ -97,7 +94,6 @@ dependencies {
     testCompile(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
     testCompile(libraries.kafka.core) { exclude group: 'org.scala-lang' }
 
-    testCompile libraries.curator.test
     testCompile libraries.logging.reload4j
     testCompile libraries.httpclient
 

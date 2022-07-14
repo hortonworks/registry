@@ -40,12 +40,6 @@ ext.libraries = [
       lang3          : "org.apache.commons:commons-lang3:$versions_commons_lang3",
       text           : "org.apache.commons:commons-text:$versions_commons_text",
    ],
-   curator: [
-      client         : "org.apache.curator:curator-client:$versions_curator",
-      framework      : "org.apache.curator:curator-framework:$versions_curator",
-      recipes        : "org.apache.curator:curator-recipes:$versions_curator",
-      test           : "org.apache.curator:curator-test:$versions_curator",
-   ],
    directory_api     : "org.apache.directory.api:api-util:$versions_directory_api",
    directory_server: dependencies.create("org.apache.directory.server:apacheds-kerberos-codec:$versions_directory_server") {
        exclude group: 'org.apache.directory.api', module: 'api-asn1-ber'
