@@ -22,8 +22,8 @@ dependencies {
     compile libraries.logging.slf4j_log4j
     compile libraries.dropwizard.testing
     
-    testImplementation group: 'org.scala-lang', name: 'scala-library', version: scala_version
-    testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
+    testImplementation group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
+    testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
     
     testCompile libraries.junit
     testCompile project(path: ':schema-registry:schema-registry-webservice', configuration: 'tests')

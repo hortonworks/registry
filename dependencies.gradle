@@ -245,12 +245,7 @@ ext.libraries = [
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
    snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
-
-   spring: [
-     context         : "org.springframework:spring-context:$versions_spring",
-     core            : "org.springframework:spring-core:$versions_spring"
-   ],
-
+   reflections        : "org.reflections:reflections:$versions_reflections",
    validation_api     : "javax.validation:validation-api:$versions_validation_api"
 
 ]

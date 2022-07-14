@@ -16,8 +16,8 @@
 
 dependencies {
 
-    compileOnly group: 'org.scala-lang', name: 'scala-library', version: scala_version
-    compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
+    compileOnly group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
+    compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
 
     compile libraries.ranger.common
     compile libraries.ranger.audit

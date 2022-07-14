@@ -74,8 +74,8 @@ dependencies {
     
     testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
     
-    testImplementation group: 'org.scala-lang', name: 'scala-library', version: scala_version
-    testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
+    testImplementation group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
+    testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
     
     testCompile libraries.kafka.avro_serializer
 

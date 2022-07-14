@@ -21,7 +21,6 @@ dependencies {
     compile libraries.directory_api
     compile libraries.nimbus
     compile libraries.json_smart
-    testCompile libraries.spring.core
     testCompile libraries.hadoop.minikdc
     testCompile libraries.httpclient
     testCompile libraries.junit

@@ -22,11 +22,12 @@ dependencies {
     compile libraries.hikari
     compile libraries.commons.lang3
     compile libraries.commons.io
-    
+
+    testCompile libraries.reflections
+
     testCompile libraries.h2
     testCompile libraries.jmockit
     testCompile libraries.junit
-    testCompile libraries.spring.context
 
 }
 

@@ -20,8 +20,8 @@ plugins {
 
 dependencies {
 
-    compile group: 'org.scala-lang', name: 'scala-library', version: scala_version
-    compile group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
+    compile group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
+    compile group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
     
     compile project(':schema-registry:schema-registry-serdes')
     testCompile(project(':registry-webservice')) {

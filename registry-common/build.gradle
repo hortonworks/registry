@@ -45,7 +45,8 @@ dependencies {
     compile libraries.jersey.media_multipart
     
     compile libraries.hibernate_validator
-    compile libraries.spring.context
+
+    compile libraries.reflections
     
     testCompile libraries.commons.io
     testCompile libraries.junit
