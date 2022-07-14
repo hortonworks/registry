@@ -70,7 +70,7 @@ ext.libraries = [
       jersey         : "io.dropwizard:dropwizard-jersey:$versions_dropwizard",
       util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
       metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
-      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard_testing") {
+      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard") {
           exclude group: 'junit'
       },
       swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
