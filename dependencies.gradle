@@ -36,7 +36,7 @@ ext.libraries = [
    commons: [
       cli            : "commons-cli:commons-cli:$versions_commons_cli",
       codec          : "commons-codec:commons-codec:$versions_commons_codec",
-      io             :"commons-io:commons-io:$versions_commons_io",
+      io             : "commons-io:commons-io:$versions_commons_io",
       lang3          : "org.apache.commons:commons-lang3:$versions_commons_lang3",
       text           : "org.apache.commons:commons-text:$versions_commons_text",
    ],
