@@ -29,6 +29,7 @@ dependencies {
     compile libraries.jackson.datatype_joda
     compile libraries.jackson.datatype_jsr310
     compile libraries.jackson.parameter_names
+    compile libraries.jsr305
     compile libraries.avro
     compile libraries.swagger
     compile libraries.commons.io

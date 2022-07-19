@@ -18,6 +18,8 @@ dependencies {
     
     testCompile libraries.junit
     compile project(':storage:storage-common')
+    
+    compile platform(libraries.dropwizard.bom)
 
     compile libraries.commons.lang3
     compile libraries.commons.cli
