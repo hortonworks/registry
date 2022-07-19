@@ -28,6 +28,7 @@ dependencies {
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.jetty
-    testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
+    testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet'
+    testCompile "commons-logging:commons-logging:1.2"
 
 }

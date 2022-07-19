@@ -52,17 +52,10 @@ subprojects {
 
     // dependency constraints only
     dependencies {
-        compile enforcedPlatform(libraries.dropwizard.bom)
-        compile enforcedPlatform(libraries.jackson.bom)
-        compile enforcedPlatform(libraries.jersey.bom)
-        compile enforcedPlatform(libraries.jetty_bom)
+        compile platform(libraries.dropwizard.bom)
+        compile platform(libraries.dropwizard.dependencies)
 
         constraints {
-            compile(libraries.hibernate_validator) {
-                version {
-                    strictly project.versions_hibernate_validator
-                }
-            }
             compile(libraries.logging.logback) {
                 version {
                     strictly project.versions_logback

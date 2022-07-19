@@ -48,7 +48,12 @@ dependencies {
     testCompile libraries.freemarker
     // we need to use version 200 due to new features, but we also need to keep
     // the old version in storage-core because (h2) transactions don't work with newer versions
-    testCompile "com.h2database:h2:1.4.200"
+    testCompile("com.h2database:h2") {
+        version {
+            strictly "1.4.200"
+        }
+    }
+            
     testCompile libraries.httpclient.client
     testCompile libraries.httpclient.mime
     testCompile libraries.validation_api2

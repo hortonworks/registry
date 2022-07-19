@@ -557,7 +557,7 @@ public class TestAuthenticationFilter {
                             return null;
                         }
                     }
-            ).when(chain).doFilter(Mockito.<ServletRequest>anyObject(), Mockito.<ServletResponse>anyObject());
+            ).when(chain).doFilter(Mockito.<ServletRequest>any(), Mockito.<ServletResponse>any());
 
             Mockito.when(response.containsHeader("WWW-Authenticate")).thenReturn(true);
             filter.doFilter(request, response, chain);
@@ -758,7 +758,7 @@ public class TestAuthenticationFilter {
                             return null;
                         }
                     }
-            ).when(chain).doFilter(Mockito.<ServletRequest>anyObject(), Mockito.<ServletResponse>anyObject());
+            ).when(chain).doFilter(Mockito.<ServletRequest>any(), Mockito.<ServletResponse>any());
 
             filter.doFilter(request, response, chain);
 
@@ -812,7 +812,7 @@ public class TestAuthenticationFilter {
                             return null;
                         }
                     }
-            ).when(chain).doFilter(Mockito.<ServletRequest>anyObject(), Mockito.<ServletResponse>anyObject());
+            ).when(chain).doFilter(Mockito.<ServletRequest>any(), Mockito.<ServletResponse>any());
 
             filter.doFilter(request, response, chain);
 

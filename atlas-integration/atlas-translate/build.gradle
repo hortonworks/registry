@@ -24,7 +24,8 @@ dependencies {
     compile libraries.atlas.client
     compile libraries.guava
     compile group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
-    
+    compile libraries.jsr305
+
     testCompile libraries.junit
 
     atlasJars libraries.atlas.client
