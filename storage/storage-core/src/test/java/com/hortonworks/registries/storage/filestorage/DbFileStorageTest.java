@@ -146,7 +146,11 @@ public class DbFileStorageTest {
                     transactionManager.commitTransaction();
                     return name;
                 } catch (Exception e) {
-                    transactionManager.rollbackTransaction();
+                    try {
+                        transactionManager.rollbackTransaction();
+                    } catch (Exception ex) {
+                        // ignore
+                    }
                     throw e;
                 }
             });

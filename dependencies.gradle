@@ -29,16 +29,18 @@ ext.libraries = [
           exclude group: 'org.apache.avro', module: 'avro'
           exclude group: 'jdk.tools', module: 'jdk.tools'
           exclude group: 'org.apache.curator'
-      }
+          exclude group: 'io.netty'
+      },
    ],
    avro              : "org.apache.avro:avro:$versions_avro",
 
    commons: [
       cli            : "commons-cli:commons-cli:$versions_commons_cli",
-      codec          : "commons-codec:commons-codec:$versions_commons_codec",
+      codec          : "commons-codec:commons-codec",
+      collections    : "org.apache.commons:commons-collections4:$versions_commons_collections",
       io             : "commons-io:commons-io:$versions_commons_io",
-      lang3          : "org.apache.commons:commons-lang3:$versions_commons_lang3",
-      text           : "org.apache.commons:commons-text:$versions_commons_text",
+      lang3          : "org.apache.commons:commons-lang3",
+      text           : "org.apache.commons:commons-text",
    ],
    directory_api     : "org.apache.directory.api:api-util:$versions_directory_api",
    directory_server: dependencies.create("org.apache.directory.server:apacheds-kerberos-codec:$versions_directory_server") {
@@ -51,14 +53,18 @@ ext.libraries = [
    },
 
    dropwizard: [
+      bom            : "io.dropwizard:dropwizard-bom:$versions_dropwizard",
+      dependencies   : "io.dropwizard:dropwizard-dependencies:$versions_dropwizard",
       core           : "io.dropwizard:dropwizard-core:$versions_dropwizard",
       assets         : "io.dropwizard:dropwizard-assets:$versions_dropwizard",
       auth           : "io.dropwizard:dropwizard-auth:$versions_dropwizard",
       jersey         : "io.dropwizard:dropwizard-jersey:$versions_dropwizard",
       util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
       metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
-      testing        : "io.dropwizard:dropwizard-testing:$versions_dropwizard_testing",
-      swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger"
+      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard") {
+          exclude group: 'junit'
+      },
+      swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
    ],
    swagger           : "io.swagger:swagger-annotations:$versions_swagger",
    swagger_core      : "io.swagger:swagger-core:$versions_swagger",
@@ -74,30 +80,38 @@ ext.libraries = [
       dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
       dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv",
       dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
+      datatype_json_org : "com.fasterxml.jackson.datatype:jackson-datatype-json-org",
+      datatype_guava : "com.fasterxml.jackson.datatype:jackson-datatype-guava",
+      datatype_jsk8  : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8",
+      datatype_joda  : "com.fasterxml.jackson.datatype:jackson-datatype-joda",
+      datatype_jsr310: "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
+      parameter_names: "com.fasterxml.jackson.module:jackson-module-parameter-names",
       jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider",
-      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_2.12",
-      bom            : "com.fasterxml.jackson:jackson-bom:$versions_jackson2_bom"
+      mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
+      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
 
    jersey: [
-      client: dependencies.create("org.glassfish.jersey.core:jersey-client:$versions_jersey") {
+      client: dependencies.create("org.glassfish.jersey.core:jersey-client") {
           exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
       },
-      hk2            : "org.glassfish.jersey.inject:jersey-hk2:$versions_jersey",
-      server         : "org.glassfish.jersey.core:jersey-server:$versions_jersey",
-      media_json     : "org.glassfish.jersey.media:jersey-media-json-jackson:$versions_jersey",
-      media_multipart: "org.glassfish.jersey.media:jersey-media-multipart:$versions_jersey"
+      hk2            : "org.glassfish.jersey.inject:jersey-hk2",
+      server         : "org.glassfish.jersey.core:jersey-server",
+      media_json     : "org.glassfish.jersey.media:jersey-media-json-jackson",
+      media_multipart: "org.glassfish.jersey.media:jersey-media-multipart"
    ],
 
-   jetty_bom         : "org.eclipse.jetty:jetty-bom:$versions_jetty",
-   jetty             : "org.eclipse.jetty:jetty-server:$versions_jetty",
-   joda_time         : "joda-time:joda-time:$versions_joda_time",
+   jetty             : "org.eclipse.jetty:jetty-server",
+   joda_time         : "joda-time:joda-time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
-
-   json_schema_validator : "com.github.fge:json-schema-validator:$versions_json_schema_validator",
-   junit             : "junit:junit:$versions_junit",
    jmockit           : "org.jmockit:jmockit:$versions_jmockit",
+   jose4j            : "org.bitbucket.b_c:jose4j:$versions_jose4j",
+   jsr305            : "com.google.code.findbugs:jsr305",
+
+   json_org          : "org.json:json:$versions_json_org",
+   json_schema_validator : "com.github.erosb:everit-json-schema:$versions_json_schema_validator",
+   junit             : "junit:junit:$versions_junit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
    powermock_api     : "org.powermock:powermock-api-mockito2:$versions_powermock",
    powermock_module  : "org.powermock:powermock-module-junit4:$versions_powermock",
@@ -115,13 +129,16 @@ ext.libraries = [
    ],
 
    libphonenumber    : "com.googlecode.libphonenumber:libphonenumber:$versions_libphonenumber",
-   guava             : "com.google.guava:guava:$versions_guava",
+   guava             : "com.google.guava:guava",
    guice             : "com.google.inject:guice:$versions_guice",
 
-   h2                : "com.h2database:h2:$versions_h2",
+   h2                : "com.h2database:h2",
    hikari            : "com.zaxxer:HikariCP:$versions_hikari",
-   hibernate_validator: "org.hibernate:hibernate-validator:$versions_hibernate_validator",
-   httpclient        : "org.apache.httpcomponents:httpclient:$versions_httpclient",
+   hibernate_validator: "org.hibernate.validator:hibernate-validator",
+   httpclient        : [
+           "client" : "org.apache.httpcomponents:httpclient",
+           "mime"   : "org.apache.httpcomponents:httpmime:4.5.13",
+   ],
    jna               : "net.java.dev.jna:jna:$versions_jna_platform",
    jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
    nimbus            : "com.nimbusds:nimbus-jose-jwt:$versions_nimbus",
@@ -238,8 +255,11 @@ ext.libraries = [
    ],
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
-   snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
    reflections        : "org.reflections:reflections:$versions_reflections",
-   validation_api     : "javax.validation:validation-api:$versions_validation_api"
+   validation_api     : "javax.validation:validation-api:$versions_validation_api",
+   snakeyaml          : "org.yaml:snakeyaml",
+
+   validation_api     : "javax.validation:validation-api:$versions_validation_api",
+   validation_api2    : "jakarta.validation:jakarta.validation-api"
 
 ]

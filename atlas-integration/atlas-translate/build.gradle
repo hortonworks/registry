@@ -20,7 +20,8 @@ dependencies {
     compile libraries.avro
     compile libraries.atlas.client
     compile libraries.guava
-    
+    compile libraries.jsr305
+
     testCompile libraries.junit
 
 }

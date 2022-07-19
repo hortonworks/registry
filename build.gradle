@@ -51,8 +51,8 @@ subprojects {
         tests.extendsFrom testRuntime
     }
     dependencies {
-        implementation(enforcedPlatform(libraries.jackson.bom))
-        implementation(enforcedPlatform(libraries.jetty_bom))
+        compile platform(libraries.dropwizard.bom)
+        compile platform(libraries.dropwizard.dependencies)
 
         constraints {
             compile(libraries.logging.logback) {
@@ -63,6 +63,11 @@ subprojects {
             compile(libraries.logging.logback_access) {
                 version {
                     strictly project.versions_logback
+                }
+            }
+            compile(libraries.json_org) {
+                version {
+                    strictly project.versions_json_org
                 }
             }
             constraints {

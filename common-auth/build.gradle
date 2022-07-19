@@ -23,11 +23,11 @@ dependencies {
     testCompile(libraries.hadoop.minikdc) {
        exclude group: 'org.slf4j'
     }
-    testCompile libraries.httpclient
+    testCompile libraries.httpclient.client
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.jetty
-    testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
+    testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet'
     testRuntimeOnly libraries.logging.slf4j_api
     testRuntimeOnly libraries.logging.slf4j_jcl
     testRuntimeOnly libraries.logging.slf4j_log4j
