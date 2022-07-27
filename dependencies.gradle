@@ -14,8 +14,6 @@
  * limitations under the License.
 */
 
-ext.java_version = JavaVersion.VERSION_1_8
-
 ext.libraries = [
 
    atlas: [
