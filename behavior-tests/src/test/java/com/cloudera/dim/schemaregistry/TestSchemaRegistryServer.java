@@ -95,6 +95,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     private List<ServletFilterConfiguration> additionalFilters;
     private boolean oauth2Enabled = false;
     private String defaultAvroCompatibility = SchemaCompatibility.DEFAULT_COMPATIBILITY.name();
+    private volatile static File atlasJarsSubdir;
 
     private volatile static TestSchemaRegistryServer instance;
 
@@ -393,11 +394,20 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
                     }
                 }
 
-                String customClasspath = atlasJarsDir.toPath().normalize().toAbsolutePath().toString();
-                if (File.separatorChar == '\\') {
-                    customClasspath = customClasspath.replaceAll("\\\\", "/");
+                if (atlasJarsDir == null) {
+                    atlasJarsDir = findSubdir(new File(System.getProperty("user.dir")), "atlasJars");
+                    atlasJarsSubdir = atlasJarsDir;
                 }
-                atlasConfiguration.setCustomClasspath(customClasspath);
+
+                if (atlasJarsDir == null) {
+                    LOG.error("The test was unable to load Atlas JAR files from the classpath. If you are running from an IDE then please examine where the tests are being run from.");
+                } else {
+                    String customClasspath = atlasJarsDir.toPath().normalize().toAbsolutePath().toString();
+                    if (File.separatorChar == '\\') {
+                        customClasspath = customClasspath.replaceAll("\\\\", "/");
+                    }
+                    atlasConfiguration.setCustomClasspath(customClasspath);
+                }
             }
 
             configuration.setAtlasConfiguration(atlasConfiguration);
@@ -446,6 +456,28 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         params.put("redirectPaths", "/ui/,/");
 
         return configuration;
+    }
+
+    /** Recursively search all subdirectories. */
+    private File findSubdir(File root, String name) {
+        if (atlasJarsSubdir != null) {
+            return atlasJarsSubdir;
+        }
+
+        if (root.getName().equals(name)) {
+            return root;
+        } else {
+            File[] files = root.listFiles();
+            if (files == null) {
+                return null;
+            }
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    return findSubdir(f, name);
+                }
+            }
+        }
+        return null;
     }
 
     public boolean isAtlasEnabled() {
