@@ -108,7 +108,7 @@ public class SchemaVersionProtocolHandlerTest {
 
     @Test
     public void testSerDesProtocolVersionAsMoreThan127() {
-       Assertions.assertThrows(AvroException.class, () -> testSerDes(1L, Byte.MAX_VALUE + Math.abs(new Random().nextInt())));
+       Assertions.assertThrows(AvroException.class, () -> testSerDes(1L, Byte.MAX_VALUE + 1 + Math.abs(new Random().nextInt())));
     }
 
     @Test
