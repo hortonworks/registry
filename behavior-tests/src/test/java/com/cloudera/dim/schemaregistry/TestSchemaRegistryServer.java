@@ -473,7 +473,10 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             }
             for (File f : files) {
                 if (f.isDirectory()) {
-                    return findSubdir(f, name);
+                    File subdir = findSubdir(f, name);
+                    if (subdir != null) {
+                        return subdir;
+                    }
                 }
             }
         }
