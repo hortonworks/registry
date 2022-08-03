@@ -121,6 +121,9 @@ subprojects {
         toolVersion = '9.3'
         ignoreFailures = false
         configFile = rootProject.file('checkstyle/checkstyle.xml')
+        configProperties = [
+                'suppressionsFile': rootProject.file('checkstyle/suppressions.xml')
+        ]
     }
     test.dependsOn('checkstyleMain', 'checkstyleTest')
     test.finalizedBy(check)
