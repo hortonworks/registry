@@ -104,6 +104,11 @@ subprojects {
                 implementation("org.apache.commons:commons-text:$versions_commons_text")
                 testCompile("org.apache.commons:commons-text:$versions_commons_text")
             }
+            compile(libraries.avro) {
+                version {
+                    strictly project.versions_avro
+                }
+            }
         }
     }
 

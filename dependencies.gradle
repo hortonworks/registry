@@ -164,7 +164,7 @@ ext.libraries = [
    json_smart        : "net.minidev:json-smart:$versions_json_smart",
 
    kafka: [
-     avro_serializer : "io.confluent:kafka-avro-serializer:$versions_kafka_avro",
+     confluent_avro_serializer : "io.confluent:kafka-avro-serializer:$versions_confluent",
      core : dependencies.create("org.apache.kafka:kafka_$kafka_scala_version:$versions_kafka") {
          exclude group: 'org.apache.zookeeper', module: 'zookeeper'
          exclude group: 'log4j', module: 'log4j'

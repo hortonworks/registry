@@ -83,7 +83,13 @@ dependencies {
         transitive = false
     }
 
-    testCompile libraries.kafka.avro_serializer
+    testCompile (libraries.kafka.confluent_avro_serializer) {
+        constraints {
+            testCompile(libraries.kafka.clients) {
+                force = true
+            }
+        }
+    }
 
     testCompile project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests')
     testCompile project(path: ':schema-registry:schema-registry-common', configuration: 'tests')
