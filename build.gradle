@@ -95,6 +95,11 @@ subprojects {
                 implementation("org.apache.commons:commons-compress:$versions_commons_compress")
                 testCompile("org.apache.commons:commons-compress:$versions_commons_compress")
             }
+            compile(libraries.avro) {
+                version {
+                    strictly project.versions_avro
+                }
+            }
         }
     }
 
