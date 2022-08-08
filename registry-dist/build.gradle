@@ -138,12 +138,12 @@ dependencies {
     
     runtimeJars configurations.runtimeClasspath
 
-    compile project(':schema-registry:schema-registry-client')
+    compile(project(':schema-registry:schema-registry-client')) { transitive = false }
     compile(project(':schema-registry:schema-registry-webservice')) {
         exclude group: 'mysql'
     }
     compile project(':atlas-integration:atlas-module')
-    compile project(':schema-registry:schema-registry-serdes')
+    compile(project(':schema-registry:schema-registry-serdes')) { transitive = false }
     
     compile libraries.jackson.scala_module
     

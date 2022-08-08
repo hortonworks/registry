@@ -17,7 +17,7 @@
 dependencies {
 
     compile project(':schema-registry:schema-registry-webservice')
-    compile project(':schema-registry:schema-registry-client')
+    compile(project(':schema-registry:schema-registry-client')) { transitive = false }
 
     compile libraries.logging.slf4j_log4j
     compile libraries.dropwizard.testing

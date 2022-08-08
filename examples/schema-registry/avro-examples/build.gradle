@@ -23,8 +23,15 @@ dependencies {
     compile group: 'org.scala-lang', name: 'scala-library', version: scala_version
     compile group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
     
-    compile project(':schema-registry:schema-registry-serdes')
+    compile project(':schema-registry:schema-registry-common')
+    compile(project(':schema-registry:schema-registry-serdes')) {
+        transitive = false
+    }
+    compile(project(':schema-registry:schema-registry-client')) {
+        transitive = false
+    }
 
+    compile libraries.avro
     compile libraries.commons.cli
     compile libraries.dropwizard.testing
     compile libraries.el_api

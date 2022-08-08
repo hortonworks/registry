@@ -16,15 +16,50 @@
 
 dependencies {
 
+    compile("com.fasterxml.jackson.core:jackson-core")
+    compile("com.fasterxml.jackson.core:jackson-databind")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-joda")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    compile("com.fasterxml.jackson.module:jackson-module-parameter-names")
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
+    compile("com.fasterxml.jackson.core:jackson-annotations")
+
+    constraints {
+        compile("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
+    }
+
     compile(project(':schema-registry:schema-registry-common')) {
         exclude group: 'javax.validation', module: 'validation-api'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.datatype'
+        exclude group: 'com.fasterxml.jackson.module'
+        exclude group: 'com.fasterxml.jackson.dataformat'
     }
     
     compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
-    compile project(':registry-common-client')
+    compile(project(':registry-common-client')) {
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.dataformat'
+    }
     compile project(':schema-registry:oauth2-common')
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.datatype'
+        exclude group: 'com.fasterxml.jackson.module'
+        exclude group: 'com.fasterxml.jackson.dataformat'
     }
     
     testCompile libraries.mockito

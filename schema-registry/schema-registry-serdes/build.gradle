@@ -19,16 +19,40 @@ dependencies {
     compileOnly group: 'org.scala-lang', name: 'scala-library', version: scala_version
     compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
     
+    compile("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider")
+    compile("org.glassfish.jersey.media:jersey-media-json-jackson")
+
+    constraints {
+        compile("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml") { version { strictly project.versions_jackson2 } }
+        compile("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
+        compile("org.glassfish.jersey.media:jersey-media-json-jackson") { version { strictly project.versions_jersey2 } }
+        compile("org.glassfish.jersey.core:jersey-common") { version { strictly project.versions_jersey2 } }
+        compile("org.glassfish.jersey.ext:jersey-entity-filtering") { version { strictly project.versions_jersey2 } }
+    }
+    
     compile project(':schema-registry:schema-registry-client')
     
-    compile libraries.jackson.jaxrs
-    compile libraries.jersey.media_json
     compile libraries.json_kjetland
 
     compile libraries.avro
     compile libraries.commons.io
     
-    testCompile project(':schema-registry:schema-registry-core')
+    testCompile(project(':schema-registry:schema-registry-core')) {
+        exclude group: 'javax.validation', module: 'validation-api'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.datatype'
+        exclude group: 'com.fasterxml.jackson.module'
+        exclude group: 'com.fasterxml.jackson.dataformat'
+    }
     
     compileOnly libraries.kafka.clients
     testCompile libraries.kafka.clients

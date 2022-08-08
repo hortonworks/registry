@@ -20,8 +20,12 @@ configurations {
 
 dependencies {
 
-    testCompile project(':schema-registry:schema-registry-client')
-    testCompile project(':schema-registry:schema-registry-serdes')
+    testCompile(project(':schema-registry:schema-registry-client')) {
+        transitive = false
+    }
+    testCompile(project(':schema-registry:schema-registry-serdes')) {
+        transitive = false
+    }
     testCompile project(':schema-registry:oauth2-authenticator')
     testCompile project(':schema-registry:schema-registry-webservice')
     testCompile(project(path: ':atlas-integration:atlas-translate', configuration: 'runtime')) {
