@@ -63,6 +63,10 @@ public class KerberosTestUtils {
         return "HTTP/localhost@EXAMPLE.COM";
     }
 
+    public static String getLoadBalancerPrincipal() {
+        return "HTTP/loadbalancer@EXAMPLE.COM";
+    }
+
     public static String getKeytabFile() {
         return keytabFile;
     }

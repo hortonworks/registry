@@ -39,6 +39,7 @@ servletFilters:
 #   params:
 #     type: "kerberos"
 #     kerberos.principal: "HTTP/streamline-ui-host.com"
+#     kerberos.loadbalancer.principal: "HTTP/loadbalancer@REALM
 #     kerberos.keytab: "/vagrant/keytabs/http.keytab"
 #     enable.trusted.proxy: true
 #     proxyuser.knox.hosts: 172.22.64.70

@@ -65,6 +65,8 @@ public class TestKerberosAuthenticationHandler
         Properties props = new Properties();
         props.setProperty(KerberosAuthenticationHandler.PRINCIPAL,
                 KerberosTestUtils.getServerPrincipal());
+        props.setProperty(KerberosAuthenticationHandler.LOAD_BALANCER_PRINCIPAL,
+                KerberosTestUtils.getLoadBalancerPrincipal());
         props.setProperty(KerberosAuthenticationHandler.KEYTAB,
                 KerberosTestUtils.getKeytabFile());
         props.setProperty(KerberosAuthenticationHandler.NAME_RULES,
@@ -131,10 +133,11 @@ public class TestKerberosAuthenticationHandler
     public void testInit() throws Exception {
         Assertions.assertEquals(KerberosTestUtils.getKeytabFile(), handler.getKeytab());
         Set<KerberosPrincipal> principals = handler.getPrincipals();
-        Principal expectedPrincipal =
-                new KerberosPrincipal(KerberosTestUtils.getServerPrincipal());
+        Principal expectedPrincipal = new KerberosPrincipal(KerberosTestUtils.getServerPrincipal());
+        Principal loadBalancerPrincipal = new KerberosPrincipal(KerberosTestUtils.getLoadBalancerPrincipal());
         Assertions.assertTrue(principals.contains(expectedPrincipal));
-        Assertions.assertEquals(1, principals.size());
+        Assertions.assertTrue(principals.contains(loadBalancerPrincipal));
+        Assertions.assertEquals(2, principals.size());
     }
 
     // dynamic configuration of HTTP principals

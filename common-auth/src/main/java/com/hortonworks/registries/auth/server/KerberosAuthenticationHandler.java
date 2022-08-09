@@ -139,6 +139,11 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     public static final String PRINCIPAL = TYPE + ".principal";
 
     /**
+     * Constant for the configuration property that indicates the kerberos principal.
+     */
+    public static final String LOAD_BALANCER_PRINCIPAL = TYPE + ".loadbalancer.principal";
+
+    /**
      * Constant for the configuration property that indicates the keytab file path.
      */
     public static final String KEYTAB = TYPE + ".keytab";
@@ -223,7 +228,12 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                     throw new ServletException("Principals do not exist in the keytab");
                 }
             } else {
-                spnegoPrincipals = new String[]{principal};
+                String loadBalancerPrincipal = config.getProperty(LOAD_BALANCER_PRINCIPAL);
+                if (loadBalancerPrincipal != null) {
+                    spnegoPrincipals = new String[]{principal, loadBalancerPrincipal};
+                } else {
+                    spnegoPrincipals = new String[]{principal};
+                }
             }
 
             String nameRules = config.getProperty(NAME_RULES, null);
