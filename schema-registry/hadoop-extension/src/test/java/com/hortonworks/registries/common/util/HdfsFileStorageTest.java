@@ -55,6 +55,7 @@ public class HdfsFileStorageTest {
         Assertions.assertThrows(RuntimeException.class, () -> fileStorage.exists(""));
     }
 
+    @org.junit.jupiter.api.Disabled
     @Test
     public void testUploadJarWithDir() throws Exception {
         FileStorageConfiguration config = new FileStorageConfiguration();
