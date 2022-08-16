@@ -23,6 +23,7 @@ import com.hortonworks.registries.auth.util.Utils;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -386,7 +387,11 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                 LOG.trace("SPNEGO in progress");
                             } else {
-                                String clientPrincipal = gssContext.getSrcName().toString();
+                                GSSName gssContextSrcName = gssContext.getSrcName();
+                                if (gssContextSrcName == null) {
+                                    throw new AuthenticationException("Kerberos authentication failed.");
+                                }
+                                String clientPrincipal = gssContextSrcName.toString();
                                 KerberosName kerberosName = new KerberosName(clientPrincipal);
                                 String userName = kerberosName.getShortName();
                                 String doAsUser = null;
