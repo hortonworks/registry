@@ -17,8 +17,8 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.CompatibilityConfig;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.json.JsonSchemaProvider;
@@ -82,8 +82,7 @@ public class DefaultSchemaRegistryTest {
                 ImmutableList.of(
                         Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()),
                         Collections.singletonMap("providerClass", JsonSchemaProvider.class.getName()));
-        ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
-        underTest = new DefaultSchemaRegistry(configuration, storageManager, null, schemaProvidersConfig,
+        underTest = new DefaultSchemaRegistry(new RegistryConfiguration(), storageManager, null, schemaProvidersConfig,
                 new SchemaLockManager(new NOOPTransactionManager()), new CompatibilityConfig());
     }
     
@@ -93,8 +92,7 @@ public class DefaultSchemaRegistryTest {
             ImmutableList.of(
                 Collections.singletonMap("providerClass", AvroSchemaProvider.class.getName()),
                 Collections.singletonMap("providerClass", JsonSchemaProvider.class.getName()));
-        ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
-        underTest = new DefaultSchemaRegistry(configuration, storageManagerMock, null, schemaProvidersConfig,
+        underTest = new DefaultSchemaRegistry(new RegistryConfiguration(), storageManagerMock, null, schemaProvidersConfig,
                 new SchemaLockManager(new NOOPTransactionManager()), new CompatibilityConfig());
     }
 

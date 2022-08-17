@@ -17,7 +17,6 @@ package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.cloudera.dim.registry.oauth2.ranger.RangerOAuth2Authenticator;
 import com.hortonworks.registries.common.CompatibilityConfig;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.common.util.HadoopPluginFactory;
@@ -28,7 +27,6 @@ import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthentic
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.RangerKerberosAuthenticator;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.schemaregistry.providers.CompatibilityConfigurationProvider;
-import com.hortonworks.registries.schemaregistry.providers.ModuleDetailsConfigurationProvider;
 import com.hortonworks.registries.schemaregistry.providers.SchemaRegistryProvider;
 import com.hortonworks.registries.schemaregistry.validator.SchemaMetadataTypeValidator;
 import com.hortonworks.registries.schemaregistry.webservice.auth.RangerCompositeAuthenticator;
@@ -51,7 +49,6 @@ public class SchemaRegistryModule extends DropwizardAwareModule<RegistryConfigur
         configureAuthenticator();
 
         bind(ISchemaRegistry.class).toProvider(SchemaRegistryProvider.class).in(Singleton.class);
-        bind(ModuleDetailsConfiguration.class).toProvider(ModuleDetailsConfigurationProvider.class).in(Singleton.class);
         bind(CompatibilityConfig.class).toProvider(CompatibilityConfigurationProvider.class).in(Singleton.class);
 
         bind(SchemaLockManager.class).in(Singleton.class);

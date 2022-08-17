@@ -1,16 +1,10 @@
 {{- define "registry.config" }}
 
 # registries configuration
-modules:
-  - name: schema-registry
-    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
-    config:
-      schemaProviders:
-        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
-          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
-          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
-      cache:
-        enableCaching: false
+schemaProviders:
+  - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+    defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+    defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
 
 
 servletFilters:

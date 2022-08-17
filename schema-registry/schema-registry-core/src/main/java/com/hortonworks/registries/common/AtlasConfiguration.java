@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Configuration for the Atlas bundle. */
-public class AtlasConfiguration extends ModuleDetailsConfiguration {
+public class AtlasConfiguration {
 
     public static class BasicAuth {
 

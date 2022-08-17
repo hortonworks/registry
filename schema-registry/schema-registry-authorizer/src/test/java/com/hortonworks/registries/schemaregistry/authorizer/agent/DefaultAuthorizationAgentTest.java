@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
 import com.google.common.collect.ImmutableMap;
 import com.hortonworks.registries.common.CompatibilityConfig;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaBranch;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
@@ -95,9 +95,9 @@ public class DefaultAuthorizationAgentTest {
                 Collections.singleton(Collections.singletonMap("providerClass",
                         AvroSchemaProvider.class.getName()));
         StorageManager storageManager = new InMemoryStorageManager();
+        RegistryConfiguration registryConfig = new RegistryConfiguration();
 
-        ModuleDetailsConfiguration configuration = new ModuleDetailsConfiguration();
-        schemaRegistry = new DefaultSchemaRegistry(configuration, storageManager,
+        schemaRegistry = new DefaultSchemaRegistry(registryConfig, storageManager,
                 null,
                 schemaProvidersConfig,
                 new SchemaLockManager(new NOOPTransactionManager()),

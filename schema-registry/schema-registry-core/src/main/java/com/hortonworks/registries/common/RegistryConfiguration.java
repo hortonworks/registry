@@ -23,13 +23,23 @@ import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import javax.validation.constraints.NotNull;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The main configuration class. This object is created by parsing the <tt>registry.yaml</tt> file.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RegistryConfiguration extends Configuration {
+
+    private Collection<Map<String, Object>> schemaProviders;
+
+    @JsonProperty("authorization")
+    private Map<String, Object> authorizationProps;
+
+    @JsonProperty("customSchemaStateExecutor")
+    private Map<String, Object> schemaReviewExecConfig;
 
     @NotNull
     private StorageProviderConfiguration storageProviderConfiguration;
@@ -39,10 +49,6 @@ public class RegistryConfiguration extends Configuration {
 
     @JsonProperty("atlas")
     private AtlasConfiguration atlasConfiguration;
-
-    @NotNull
-    @JsonProperty
-    private List<ModuleConfiguration> modules;
 
     @JsonProperty
     private boolean enableCors;
@@ -56,6 +62,30 @@ public class RegistryConfiguration extends Configuration {
 
     @JsonProperty
     private ServiceAuthenticationConfiguration serviceAuthenticationConfiguration;
+
+    public Collection<Map<String, Object>> getSchemaProviders() {
+        return schemaProviders;
+    }
+
+    public void setSchemaProviders(Collection<Map<String, Object>> schemaProviders) {
+        this.schemaProviders = schemaProviders;
+    }
+
+    public Map<String, Object> getAuthorizationProps() {
+        return authorizationProps;
+    }
+
+    public void setAuthorizationProps(Map<String, Object> authorizationProps) {
+        this.authorizationProps = authorizationProps;
+    }
+
+    public Map<String, Object> getSchemaReviewExecConfig() {
+        return schemaReviewExecConfig;
+    }
+
+    public void setSchemaReviewExecConfig(Map<String, Object> schemaReviewExecConfig) {
+        this.schemaReviewExecConfig = schemaReviewExecConfig;
+    }
 
     public String getHttpProxyUrl() {
         return httpProxyUrl;
@@ -104,14 +134,6 @@ public class RegistryConfiguration extends Configuration {
 
     public boolean isEnableCors() {
         return enableCors;
-    }
-
-    public List<ModuleConfiguration> getModules() {
-        return modules;
-    }
-
-    public void setModules(List<ModuleConfiguration> modules) {
-        this.modules = modules;
     }
 
     public void setSwaggerBundleConfiguration(SwaggerBundleConfiguration swaggerBundleConfiguration) {

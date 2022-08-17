@@ -17,7 +17,7 @@ package com.hortonworks.registries.schemaregistry.avro;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hortonworks.registries.common.CompatibilityConfig;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.AggregatedSchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaCompatibility;
@@ -71,7 +71,7 @@ public class AvroSchemaRegistryTest {
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig = Collections.singleton(Collections.singletonMap("providerClass", 
                 AvroSchemaProvider.class.getName()));
-        schemaRegistry = new DefaultSchemaRegistry(new ModuleDetailsConfiguration(), storageManager, null, schemaProvidersConfig,
+        schemaRegistry = new DefaultSchemaRegistry(new RegistryConfiguration(), storageManager, null, schemaProvidersConfig,
                 new SchemaLockManager(new NOOPTransactionManager()), new CompatibilityConfig());
     }
 

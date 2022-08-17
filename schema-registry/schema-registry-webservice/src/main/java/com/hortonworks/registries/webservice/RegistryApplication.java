@@ -16,6 +16,7 @@ package com.hortonworks.registries.webservice;
 
 import com.cloudera.dim.atlas.conf.AtlasSchemaRegistryModule;
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
+import com.codahale.metrics.health.HealthCheck;
 import com.hortonworks.registries.common.GenericExceptionMapper;
 import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
@@ -25,7 +26,6 @@ import com.hortonworks.registries.common.util.HadoopPlugin;
 import com.hortonworks.registries.common.util.HadoopPluginFactory;
 import com.hortonworks.registries.schemaregistry.webservice.CoreModule;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule;
-import com.hortonworks.registries.webservice.healthchecks.ModulesHealthCheck;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
@@ -87,7 +87,7 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
         environment.jersey().register(MultiPartFeature.class);
         environment.jersey().register(GenericExceptionMapper.class);
-        environment.healthChecks().register("modulesHealthCheck", new ModulesHealthCheck(registryConfiguration));
+        environment.healthChecks().register("dummyHealthCheck", new DummyHealthCheck());
 
         manageAtlasEventLogger(environment);
 
@@ -196,6 +196,21 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     public static void main(String[] args) throws Exception {
         RegistryApplication registryApplication = new RegistryApplication();
         registryApplication.run(args);
+    }
+
+    /** Dropwizard requires us to have at least one health check. These health checks can be
+     * observed through the admin endpoint. However, we have disabled the admin port due to
+     * security reasons, so there's no actual way to see a health check's results. We are adding
+     * this dummy health check in order to avoid the ugly/misleading message in the logs.
+     *
+     * See CDPD-14175 for more details.
+     */
+    private static class DummyHealthCheck extends HealthCheck {
+
+        @Override
+        protected Result check() {
+            return Result.healthy();
+        }
     }
 
 }

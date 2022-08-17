@@ -16,7 +16,7 @@
 package com.hortonworks.registries.schemaregistry.authorizer.agent;
 
 import com.google.inject.Provider;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +39,8 @@ public class AuthorizationAgentFactory implements Provider<AuthorizationAgent> {
     private final Map<String, Object> props;
 
     @Inject
-    public AuthorizationAgentFactory(ModuleDetailsConfiguration configuration) {
-        this.props = configuration.getAuthorizationProps();
+    public AuthorizationAgentFactory(RegistryConfiguration config) {
+        this.props = config.getAuthorizationProps();
         if (props == null) {
             LOG.warn("Authorization configuration is not set.");
         }

@@ -17,12 +17,9 @@ package com.hortonworks.registries.schemaregistry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.hortonworks.registries.common.CompatibilityConfig;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.QueryParam;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
-import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
-import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
-import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -97,13 +94,12 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     private final Map<String, SchemaProvider> schemaTypeWithProviders;
     private final List<SchemaProviderInfo> schemaProviderInfos;
     private final SchemaVersionLifecycleManager schemaVersionLifecycleManager;
-    private final SchemaBranchCache schemaBranchCache;
     private final SchemaLockManager schemaLockManager;
     private final CompatibilityConfig compatibilityConfig;
     private final BulkUploadService bulkUploadService;
 
     @Inject
-    public DefaultSchemaRegistry(ModuleDetailsConfiguration configuration,
+    public DefaultSchemaRegistry(RegistryConfiguration configuration,
                                  StorageManager storageManager,
                                  FileStorage fileStorage,
                                  Collection<Map<String, Object>> schemaProvidersConfig,
@@ -130,14 +126,9 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                         AtlasEventStorable.class
                 ));
 
-        Options options = new Options(configuration);
-        schemaBranchCache = new SchemaBranchCache(options.getMaxSchemaCacheSize(),
-                                                  options.getSchemaExpiryInSecs(),
-                                                  createSchemaBranchFetcher());
-
         SchemaMetadataFetcher schemaMetadataFetcher = createSchemaMetadataFetcher();
         this.schemaVersionLifecycleManager = new DefaultSchemaVersionLifecycleManager(storageManager,
-                configuration, schemaMetadataFetcher, schemaBranchCache);
+                configuration, schemaMetadataFetcher, this::getSchemaBranch, this::getSchemaBranch);
 
         Collection<SchemaProvider> schemaProviders = initSchemaProviders(schemaProvidersConfig, schemaVersionLifecycleManager.getSchemaVersionRetriever());
 
@@ -149,21 +140,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                                 schemaProvider.getDescription(), schemaProvider.getDefaultSerializerClassName(),
                                 schemaProvider.getDefaultDeserializerClassName()))
                         .collect(Collectors.toList()));
-    }
-
-
-    private SchemaBranchCache.SchemaBranchFetcher createSchemaBranchFetcher() {
-        return new SchemaBranchCache.SchemaBranchFetcher() {
-            @Override
-            public SchemaBranch getSchemaBranch(SchemaBranchKey schemaBranchKey) throws SchemaBranchNotFoundException {
-                return DefaultSchemaRegistry.this.getSchemaBranch(schemaBranchKey);
-            }
-
-            @Override
-            public SchemaBranch getSchemaBranch(Long id) throws SchemaBranchNotFoundException {
-                return DefaultSchemaRegistry.this.getSchemaBranch(id);
-            }
-        };
     }
 
     private SchemaMetadataFetcher createSchemaMetadataFetcher() {
@@ -737,36 +713,6 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString) {
-        switch (schemaRegistryCacheType) {
-            case SCHEMA_BRANCH_CACHE:
-                SchemaBranchCache.Key schemaBranchKey;
-                try {
-                    schemaBranchKey = ObjectMapperUtils.deserialize(keyAsString, SchemaBranchCache.Key.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(String.format("Failed to deserialize keyString : [%s]", keyAsString), e);
-                }
-                schemaBranchCache.invalidateSchemaBranch(schemaBranchKey);
-                break;
-            case SCHEMA_VERSION_CACHE:
-                SchemaVersionInfoCache.Key schemaVersionKey;
-                try {
-                    schemaVersionKey = ObjectMapperUtils.deserialize(keyAsString, SchemaVersionInfoCache.Key.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(String.format("Failed to deserialize keyString : [%s]", keyAsString), e);
-                }
-                schemaVersionLifecycleManager.invalidateSchemaVersionCache(schemaVersionKey);
-                break;
-            case ALL:
-                schemaBranchCache.invalidateAll();
-                schemaVersionLifecycleManager.invalidateAllSchemaVersionCache();
-                break;
-            default:
-                throw new RuntimeException(String.format("Invalid cache type : '%s'", schemaRegistryCacheType.name()));
-        }
-    }
-
-    @Override
     public SchemaVersionMergeResult mergeSchemaVersion(Long schemaVersionId,
                                                        boolean disableCanonicalCheck) throws SchemaNotFoundException, IncompatibleSchemaException {
         return mergeSchemaVersion(schemaVersionId, SchemaVersionMergeStrategy.valueOf(DEFAULT_SCHEMA_VERSION_MERGE_STRATEGY), disableCanonicalCheck);
@@ -796,7 +742,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranch.getName(), schemaVersionInfo.getName());
         SchemaBranch existingSchemaBranch = null;
         try {
-            existingSchemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey));
+            existingSchemaBranch = getSchemaBranch(schemaBranchKey);
         } catch (SchemaBranchNotFoundException e) {
             // Ignore this error
         }
@@ -817,7 +763,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         SchemaBranch persistedSchemaBranch;
         try {
-           persistedSchemaBranch  = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey));
+           persistedSchemaBranch = getSchemaBranch(schemaBranchKey);
         } catch (SchemaBranchNotFoundException e) {
             throw new RuntimeException(String.format("Failed to fetch persisted schema branch : '%s' from the database", schemaBranch.getName()));
         }
@@ -869,14 +815,11 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
 
         checkNotNull(schemaBranchId, "Schema branch name can't be null");
 
-        SchemaBranch schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchId));
+        SchemaBranch schemaBranch = getSchemaBranch(schemaBranchId);
 
         if (schemaBranch.getName().equals(SchemaBranch.MASTER_BRANCH)) {
             throw new InvalidSchemaBranchDeletionException(String.format("Can't delete '%s' branch", SchemaBranch.MASTER_BRANCH));
         }
-
-        SchemaBranchCache.Key keyOfSchemaBranchToDelete = SchemaBranchCache.Key.of(schemaBranchId);
-        schemaBranchCache.invalidateSchemaBranch(keyOfSchemaBranchToDelete);
 
         List<QueryParam> schemaVersionMappingStorableQueryParams = new ArrayList<>();
         schemaVersionMappingStorableQueryParams.add(new QueryParam(SchemaBranchVersionMapping.SCHEMA_BRANCH_ID, schemaBranch.getId().toString()));
@@ -913,7 +856,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
                     SchemaVersionInfo schemaVersionInfo = schemaVersionLifecycleManager.getSchemaVersionInfo(new SchemaIdVersion(schemaVersionId));
                     List<String> forkedBranchName = mappingsForSchemaTiedToMutlipleBranch.stream().
                             filter(mapping -> !mapping.getSchemaBranchId().equals(schemaBranchId)).
-                            map(mappping -> schemaBranchCache.get(SchemaBranchCache.Key.of(mappping.getSchemaBranchId())).getName()).
+                            map(mappping -> getSchemaBranch(mappping.getSchemaBranchId()).getName()).
                             collect(Collectors.toList());
                     schemaVersionTiedToOtherBranch.put(schemaVersionInfo.getVersion(), forkedBranchName);
                 } else {

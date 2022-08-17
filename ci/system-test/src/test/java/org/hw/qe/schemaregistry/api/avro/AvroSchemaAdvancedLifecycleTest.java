@@ -124,7 +124,7 @@ public class AvroSchemaAdvancedLifecycleTest extends BaseAPITest {
     SchemaVersionKey schemaVersionKey = new SchemaVersionKey("NonExistentSchema", 1);
     ((ExpectException) () -> getSchemaRegistryClient().deleteSchemaVersion(schemaVersionKey)).
         assertExceptionThrown(SchemaNotFoundException.class,
-            "Entity with id [SchemaVersionKey{schemaName='NonExistentSchema', version=1}] not found.",
+            "Entity with id [NonExistentSchema] not found.",
             "Deleting non-existent schema");
   }
 
@@ -134,7 +134,7 @@ public class AvroSchemaAdvancedLifecycleTest extends BaseAPITest {
   @Test(enabled = false)
   public void testGetNonExistentLatestSchemaVersion() {
     String expectedErrorMessage = String.format(
-        "Entity with id [SchemaVersionKey{schemaName='%s',version=1}] not found.", getSchemaName());
+        "Entity with id [%s] not found.", getSchemaName());
     String exceptionThrownWhen = String.format("Getting non-existent latest version for schema %s", getSchemaName());
     SchemaMetadata originalSchemaMetadata = getSchemaRegistryHelper().getSchemaMetadataWithDefault(getSchemaName(),
         "Registering schema");
@@ -151,7 +151,7 @@ public class AvroSchemaAdvancedLifecycleTest extends BaseAPITest {
   @Test(enabled = false)
   public void testGetNonExistentSchemaVersionInfo() {
     String expectedErrorMessage = String.format(
-        "Entity with id [SchemaVersionKey{schemaName='%s',version=1}] not found.", getSchemaName());
+        "Entity with id [%s] not found.", getSchemaName());
     String exceptionThrownWhen = String.format("Getting non-existent version for schema %s", getSchemaName());
     SchemaMetadata originalSchemaMetadata = getSchemaRegistryHelper().getSchemaMetadataWithDefault(getSchemaName(),
         "Registering schema");

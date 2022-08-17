@@ -14,8 +14,6 @@
  **/
 package com.hortonworks.registries.schemaregistry;
 
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
-import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
@@ -28,7 +26,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -216,15 +213,6 @@ public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId
      */
     SchemaVersionInfo fetchSchemaVersionInfo(Long id) throws SchemaNotFoundException;
 
-
-    /**
-     *  Invalidates a cache entry given its cache type and its key, invalidates all entries in all the caches if the cache type is 'ALL'
-     *
-     * @param schemaRegistryCacheType cache type
-     * @param keyAsString serialized version of the key of the cache
-     */
-    void invalidateCache(SchemaRegistryCacheType schemaRegistryCacheType, String keyAsString);
-
     /**
      * Parse the input file and upload the schemas to the currently running Schema Registry's database.
      *
@@ -234,45 +222,5 @@ public interface ISchemaRegistry extends ISchemaRegistryService, AddSchemaWithId
      * @return  information about how many schemas were added, how many failed
      */
     UploadResult bulkUploadSchemas(InputStream file, boolean failOnError, BulkUploadInputFormat format) throws IOException;
-
-    class Options {
-        // we may want to remove schema.registry prefix from configuration properties as these are all properties
-        // given by client.
-        public static final String ENABLE_CACHING = "enableCaching";
-        public static final String SCHEMA_CACHE_SIZE = "schemaCacheSize";
-        public static final String SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = "schemaCacheExpiryInterval";
-        public static final int DEFAULT_SCHEMA_CACHE_SIZE = 10000;
-        public static final long DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS = 60 * 60L;
-
-        private final Map<String, ?> config;
-
-        public Options(ModuleDetailsConfiguration config) {
-            this.config = config.getCache() != null ? config.getCache() : new HashMap<>();
-        }
-
-        private Object getValue(Map<String, ?> properties, String propertyKey, Object defaultValue) {
-            Object value = properties.get(propertyKey);
-            return value != null ? value : defaultValue;
-        }
-
-        private Object getPropertyValue(String propertyKey, Object defaultValue) {
-            Map<String, ?> properties = (Map<String, ?>) getValue(config, "properties", new HashMap<>());
-            return getValue(properties, propertyKey, defaultValue);
-        }
-
-        public Boolean isCacheEnabled() {
-            return (Boolean) getValue(config, ENABLE_CACHING, Boolean.TRUE);
-        }
-
-        public int getMaxSchemaCacheSize() {
-            return isCacheEnabled() ?
-                    Integer.parseInt(getPropertyValue(SCHEMA_CACHE_SIZE, DEFAULT_SCHEMA_CACHE_SIZE).toString()) : 0;
-        }
-
-        public long getSchemaExpiryInSecs() {
-            return Long.valueOf(getPropertyValue(SCHEMA_CACHE_EXPIRY_INTERVAL_SECS, DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS)
-                    .toString());
-        }
-    }
 
 }

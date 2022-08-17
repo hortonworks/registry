@@ -16,29 +16,22 @@ atlas:
 </#if>
 
 # registries configuration
-modules:
-  - name: schema-registry
-    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
-    config:
-      schemaProviders:
-        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
-          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
-          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
-          hashFunction: "MD5"
-        - providerClass: "com.hortonworks.registries.schemaregistry.json.JsonSchemaProvider"
-          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.json.JsonSnapshotSerializer"
-          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.json.JsonSnapshotDeserializer"
-          hashFunction: "MD5"
-      # schema reviewer configuration
-      customSchemaStateExecutor:
-        className: "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor"
-        props:
-      # authorization properties
-      #authorization:
-      #  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
-      # schema cache properties
-      cache:
-        enableCaching : false
+schemaProviders:
+  - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+    defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+    defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
+    hashFunction: "MD5"
+  - providerClass: "com.hortonworks.registries.schemaregistry.json.JsonSchemaProvider"
+    defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.json.JsonSnapshotSerializer"
+    defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.json.JsonSnapshotDeserializer"
+    hashFunction: "MD5"
+# schema reviewer configuration
+customSchemaStateExecutor:
+  className: "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor"
+  props:
+# authorization properties
+#authorization:
+#  authorizationAgentClassName: "com.hortonworks.registries.schemaregistry.authorizer.agent.DefaultAuthorizationAgent"
 
 servletFilters:
 <#list config.servletFilters as filter>

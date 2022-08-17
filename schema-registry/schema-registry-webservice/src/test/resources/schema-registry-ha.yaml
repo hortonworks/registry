@@ -1,17 +1,8 @@
 # registries configuration
-modules:
-#  - name: tag-registry
-#    className: com.hortonworks.iotas.registries.tag.service.TagRegistryModule
-  - name: schema-registry
-    className: com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule
-    config:
-      schemaProviders:
-        - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
-          defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
-          defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
-      # schema cache properties
-      cache:
-        enableCaching: false
+schemaProviders:
+  - providerClass: "com.hortonworks.registries.schemaregistry.avro.AvroSchemaProvider"
+    defaultSerializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSerializer"
+    defaultDeserializerClass: "com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer"
 
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"

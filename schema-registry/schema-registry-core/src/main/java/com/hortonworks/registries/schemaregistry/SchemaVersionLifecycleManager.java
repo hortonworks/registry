@@ -17,9 +17,7 @@ package com.hortonworks.registries.schemaregistry;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
-import com.hortonworks.registries.schemaregistry.cache.SchemaBranchCache;
-import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
+import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
@@ -56,22 +54,18 @@ public abstract class SchemaVersionLifecycleManager {
     private static final String DEFAULT_SCHEMA_REVIEW_EXECUTOR_CLASS = "com.hortonworks.registries.schemaregistry.state.DefaultCustomSchemaStateExecutor";
 
     protected final SchemaVersionLifecycleStateMachine schemaVersionLifecycleStateMachine;
-    protected final SchemaBranchCache schemaBranchCache;
     protected final SchemaVersionRetriever schemaVersionRetriever;
-    protected final SchemaVersionInfoCache schemaVersionInfoCache;
     protected final CustomSchemaStateExecutor customSchemaStateExecutor;
+    protected final Function<SchemaBranchKey, SchemaBranch> getSchemaBranch;
+    protected final Function<Long, SchemaBranch> getSchemaBranchId;
 
-    public SchemaVersionLifecycleManager(ModuleDetailsConfiguration props, SchemaBranchCache schemaBranchCache) {
-        this.schemaBranchCache = schemaBranchCache;
+    public SchemaVersionLifecycleManager(RegistryConfiguration configuration, Function<SchemaBranchKey, SchemaBranch> getSchemaBranch, Function<Long, SchemaBranch> getSchemaBranchId) {
+        this.getSchemaBranch = getSchemaBranch;
+        this.getSchemaBranchId = getSchemaBranchId;
         schemaVersionRetriever = createSchemaVersionRetriever();
-        ISchemaRegistry.Options options = new ISchemaRegistry.Options(props);
-        schemaVersionInfoCache = new SchemaVersionInfoCache(
-                schemaVersionRetriever,
-                options.getMaxSchemaCacheSize(),
-                options.getSchemaExpiryInSecs() * 1000L);
 
         SchemaVersionLifecycleStateMachine.Builder builder = SchemaVersionLifecycleStateMachine.newBuilder();
-        customSchemaStateExecutor = createSchemaReviewExecutor(props, builder);
+        customSchemaStateExecutor = createSchemaReviewExecutor(configuration.getSchemaReviewExecConfig(), builder);
 
         schemaVersionLifecycleStateMachine = builder.build();
     }
@@ -168,7 +162,7 @@ public abstract class SchemaVersionLifecycleManager {
     protected SchemaBranch getSchemaBranch(String schemaBranchName, SchemaMetadata schemaMetadata) throws SchemaNotFoundException {
         SchemaBranch schemaBranch = null;
         try {
-            schemaBranch = schemaBranchCache.get(SchemaBranchCache.Key.of(new SchemaBranchKey(schemaBranchName, schemaMetadata.getName())));
+            schemaBranch = getSchemaBranch.apply(new SchemaBranchKey(schemaBranchName, schemaMetadata.getName()));
         } catch (SchemaBranchNotFoundException e) {
             // Ignore this error
         }
@@ -463,8 +457,8 @@ public abstract class SchemaVersionLifecycleManager {
         Collection<SchemaVersionInfo> schemaVersionInfos;
         SchemaBranchKey schemaBranchKey = new SchemaBranchKey(schemaBranchName, schemaName);
 
-        schemaVersionInfos = Lists.reverse(getSortedSchemaVersions(schemaBranchCache.get(SchemaBranchCache.Key.of(schemaBranchKey))));
-        if (schemaVersionInfos == null || schemaVersionInfos.isEmpty()) {
+        schemaVersionInfos = Lists.reverse(getSortedSchemaVersions(getSchemaBranch.apply(schemaBranchKey)));
+        if (schemaVersionInfos.isEmpty()) {
             schemaVersionInfos = Collections.emptyList();
         }
 
@@ -526,11 +520,11 @@ public abstract class SchemaVersionLifecycleManager {
                                                            boolean disableCanonicalCheck) throws InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException;
 
     public SchemaVersionInfo getSchemaVersionInfo(SchemaIdVersion schemaIdVersion) throws SchemaNotFoundException {
-        return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaIdVersion));
+        return retrieveSchemaVersionInfo(schemaIdVersion);
     }
 
     public SchemaVersionInfo getSchemaVersionInfo(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException {
-        return schemaVersionInfoCache.getSchema(SchemaVersionInfoCache.Key.of(schemaVersionKey));
+        return retrieveSchemaVersionInfo(schemaVersionKey);
     }
 
     public abstract SchemaVersionInfo findSchemaVersionInfoByFingerprint(String fingerprint) throws SchemaNotFoundException;
@@ -597,18 +591,10 @@ public abstract class SchemaVersionLifecycleManager {
         return sortedVersionInfo.iterator().next();
     }
 
-    public void invalidateAllSchemaVersionCache() {
-        schemaVersionInfoCache.invalidateAll();
-    }
-
-    public void invalidateSchemaVersionCache(SchemaVersionInfoCache.Key key) {
-        schemaVersionInfoCache.invalidateSchema(key);
-    }
-
     @SuppressWarnings("unchecked")
-    protected CustomSchemaStateExecutor createSchemaReviewExecutor(ModuleDetailsConfiguration props,
+    protected CustomSchemaStateExecutor createSchemaReviewExecutor(Map<String, Object> schemaReviewExecProps,
                                                                  SchemaVersionLifecycleStateMachine.Builder builder) {
-        Map<String, Object> schemaReviewExecConfig = props.getSchemaReviewExecConfig() != null ? props.getSchemaReviewExecConfig() : Collections.emptyMap();
+        Map<String, Object> schemaReviewExecConfig = schemaReviewExecProps != null ? schemaReviewExecProps : Collections.emptyMap();
         String className = (String) schemaReviewExecConfig.getOrDefault("className", DEFAULT_SCHEMA_REVIEW_EXECUTOR_CLASS);
         Map<String, ?> executorProps = (Map<String, ?>) schemaReviewExecConfig.getOrDefault("props", Collections.emptyMap());
         CustomSchemaStateExecutor customSchemaStateExecutor;

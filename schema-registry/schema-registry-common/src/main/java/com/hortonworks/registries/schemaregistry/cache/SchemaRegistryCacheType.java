@@ -17,7 +17,6 @@
 package com.hortonworks.registries.schemaregistry.cache;
 
 public enum  SchemaRegistryCacheType {
-    SCHEMA_BRANCH_CACHE,
     SCHEMA_VERSION_CACHE,
     ALL;
 }

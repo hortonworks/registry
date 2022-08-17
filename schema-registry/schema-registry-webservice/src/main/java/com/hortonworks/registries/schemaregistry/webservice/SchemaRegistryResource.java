@@ -1021,7 +1021,6 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                         @PathParam("cacheType") SchemaRegistryCacheType cacheType, 
                                     @ApiParam(value = "key") String keyString) {
             LOG.debug("RetryableBlock to invalidate cache : {} with key : {} accepted", cacheType.name(), keyString);
-            schemaRegistry.invalidateCache(cacheType, keyString);
             return WSUtils.respond(Response.Status.OK);
     }
 

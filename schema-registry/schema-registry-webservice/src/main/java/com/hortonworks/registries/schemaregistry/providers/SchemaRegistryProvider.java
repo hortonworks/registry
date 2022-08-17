@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.providers;
 
 import com.hortonworks.registries.common.CompatibilityConfig;
-import com.hortonworks.registries.common.ModuleDetailsConfiguration;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
@@ -34,7 +33,6 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryProvider.class);
 
     private final RegistryConfiguration configuration;
-    private final ModuleDetailsConfiguration moduleDetailsConfiguration;
     private final StorageManager storageManager;
     private final FileStorage fileStorage;
     private final SchemaLockManager schemaLockManager;
@@ -42,12 +40,10 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
 
     @Inject
     public SchemaRegistryProvider(RegistryConfiguration configuration,
-                                  ModuleDetailsConfiguration moduleDetailsConfiguration,
                                   StorageManager storageManager,
                                   FileStorage fileStorage,
                                   SchemaLockManager schemaLockManager) {
         this.configuration = configuration;
-        this.moduleDetailsConfiguration = moduleDetailsConfiguration;
         this.compatibilityConfig = configuration.getCompatibility();
         this.storageManager = storageManager;
         this.fileStorage = fileStorage;
@@ -63,8 +59,8 @@ public class SchemaRegistryProvider implements Provider<ISchemaRegistry> {
     private DefaultSchemaRegistry defaultSchemaRegistry() {
         LOG.info("Configuring {}", DefaultSchemaRegistry.class);
 
-        return new DefaultSchemaRegistry(moduleDetailsConfiguration, storageManager, fileStorage,
-                moduleDetailsConfiguration.getSchemaProviders(), schemaLockManager, compatibilityConfig);
+        return new DefaultSchemaRegistry(configuration, storageManager, fileStorage,
+                configuration.getSchemaProviders(), schemaLockManager, compatibilityConfig);
     }
 
 
