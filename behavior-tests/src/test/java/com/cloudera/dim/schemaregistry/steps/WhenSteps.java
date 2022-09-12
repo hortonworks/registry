@@ -102,7 +102,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
+import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
 import static org.apache.http.HttpHeaders.ACCEPT_CHARSET;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;

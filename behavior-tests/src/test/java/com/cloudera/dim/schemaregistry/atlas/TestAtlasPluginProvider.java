@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.cloudera.dim.atlas.types.kafka;
+package com.cloudera.dim.schemaregistry.atlas;
 
-import org.apache.atlas.model.typedef.AtlasTypesDef;
+import com.cloudera.dim.atlas.AtlasPlugin;
 
-import static com.google.common.collect.Lists.newArrayList;
+import javax.inject.Provider;
 
-/** Extend the kafka_topic model (created by the Kafka-Atlas Hook) and
- *  connect the topic with the schema. */
-public class KafkaExtendedModel extends AtlasTypesDef {
+public class TestAtlasPluginProvider implements Provider<AtlasPlugin> {
 
-    public KafkaExtendedModel() {
-        setRelationshipDefs(newArrayList(
-                new KafkaTopicSchemaRelationshipDef()
-        ));
+    /*
+     * We need to use the AtlasPluginImpl in order to accurately reproduce HTTP requests
+     * which are sent to Atlas.
+     */
+    @Override
+    public AtlasPlugin get() {
+        //return new AtlasPluginImpl();
+        return null;  // TODO add testCompile dependency on sr-atlas-plugin
     }
+
 }

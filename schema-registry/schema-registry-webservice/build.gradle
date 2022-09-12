@@ -39,12 +39,6 @@ dependencies {
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
-    compile(project(path: ':schema-registry:hadoop-extension', configuration: 'shim')) {
-        transitive = false
-    }
-    runtimeOnly(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
-        transitive = false
-    }
 
     compile libraries.hibernate_validator
     compile libraries.el_api
@@ -71,10 +65,6 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.13.2'
     testCompile group: 'org.scala-lang', name: 'scala-library', version: scala_version
     testCompile group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
-
-    testCompile(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
-        transitive = false
-    }
 
     testCompile (libraries.kafka.confluent_avro_serializer) {
         constraints {

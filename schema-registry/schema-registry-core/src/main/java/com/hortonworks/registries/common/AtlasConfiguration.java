@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class AtlasConfiguration {
     private String customClasspathLoader;
     private String customClasspath;
     private boolean connectWithKafka = true;
+    private String customPluginProvider;
 
     /** List of Atlas REST URLs. */
     public List<String> getAtlasUrls() {
@@ -120,6 +121,14 @@ public class AtlasConfiguration {
         this.connectWithKafka = connectWithKafka;
     }
 
+    public String getCustomPluginProvider() {
+        return customPluginProvider;
+    }
+
+    public void setCustomPluginProvider(String customPluginProvider) {
+        this.customPluginProvider = customPluginProvider;
+    }
+
     /** Convert this Java object to a Map. */
     public Map<String, Object> asMap() {
         Map<String, Object> result = new HashMap<>();
@@ -133,6 +142,7 @@ public class AtlasConfiguration {
                 "username", basicAuth.username,
                 "password", basicAuth.password
         ));
+        result.put("customPluginProvider", customPluginProvider);
 
         return Collections.unmodifiableMap(result);
     }

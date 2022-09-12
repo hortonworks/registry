@@ -56,9 +56,6 @@ dependencies {
         exclude group: 'org.apache.hadoop'
         exclude group: 'junit'
     }
-    testCompile(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
-        transitive = false
-    }
 
 }
 

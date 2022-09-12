@@ -16,7 +16,7 @@
 package com.hortonworks.registries.schemaregistry.authorizer.core.util;
 
 import com.hortonworks.registries.auth.util.KerberosName;
-import com.hortonworks.registries.common.util.HadoopPlugin;
+import com.hortonworks.registries.common.KerberosService;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
 import org.slf4j.Logger;
@@ -42,11 +42,11 @@ public class RangerKerberosAuthenticator implements RangerAuthenticator {
 
     private static final Logger LOG = LoggerFactory.getLogger(RangerKerberosAuthenticator.class);
 
-    private final HadoopPlugin hadoopPlugin;
+    private final KerberosService kerberosService;
 
     @Inject
-    public RangerKerberosAuthenticator(HadoopPlugin hadoopPlugin) {
-        this.hadoopPlugin = checkNotNull(hadoopPlugin, "hadoopPlugin");
+    public RangerKerberosAuthenticator(KerberosService kerberosService) {
+        this.kerberosService = checkNotNull(kerberosService, "kerberosService");
     }
 
     @Nullable
@@ -65,7 +65,7 @@ public class RangerKerberosAuthenticator implements RangerAuthenticator {
                 return res;
             }
 
-            Set<String> groupsSet = hadoopPlugin.getGroupsForUser(user);
+            Set<String> groupsSet = kerberosService.getGroupsForUser(user);
 
             res = new Authorizer.UserAndGroups(user, groupsSet);
 

@@ -14,10 +14,6 @@
  * limitations under the License.
 */
 
-configurations {
-    atlasJars
-}
-
 dependencies {
 
     testCompile(project(':schema-registry:schema-registry-client')) {
@@ -28,24 +24,6 @@ dependencies {
     }
     testCompile project(':schema-registry:oauth2-authenticator')
     testCompile project(':schema-registry:schema-registry-webservice')
-    testCompile(project(path: ':atlas-integration:atlas-translate', configuration: 'runtime')) {
-        exclude group: 'commons-collections'
-        exclude group: 'commons-validator'
-        exclude group: 'org.apache.hadoop'
-        exclude group: 'org.springframework'
-        exclude group: 'com.google.guava'
-        exclude group: 'com.sun.jersey.contribs'
-        exclude group: 'com.sun.jersey'
-        exclude group: 'com.fasterxml.jackson.jaxrs'
-        exclude group: 'org.slf4j'
-        exclude group: 'cglib'
-        exclude group: 'netty'
-    }
-    // Atlas dependencies which will be copied to a separate location, to
-    // be loaded by the custom classpathloader
-    atlasJars(project(path: ':atlas-integration:atlas-translate', configuration: 'atlasJars')) {
-        transitive = false
-    }
     // we need this to use Atlas types, but we don't import any transitive dependencies
     testCompile libraries.atlas.intg
 
@@ -90,8 +68,3 @@ task cucumber() {
 
 check.dependsOn(cucumber)
 
-task copyAtlasDependencies(type: Copy) {
-    into "$buildDir/atlasJars"
-    from configurations.atlasJars
-}
-testClasses.dependsOn(copyAtlasDependencies)

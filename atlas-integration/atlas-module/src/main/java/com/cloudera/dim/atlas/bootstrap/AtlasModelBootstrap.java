@@ -34,12 +34,10 @@ public class AtlasModelBootstrap implements Runnable {
     private static final int MAX_ATTEMPTS_TO_CONNECT_TO_ATLAS = 3;
     private final ExecutorService threadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("atlas-bootstrap-%d").build());
 
-    private final AtlasConfiguration atlasConfiguration;
     private final AtlasPlugin atlasPlugin;
 
     @Inject
     public AtlasModelBootstrap(@Nullable AtlasConfiguration atlasConfiguration, AtlasPlugin atlasPlugin) {
-        this.atlasConfiguration = atlasConfiguration;
         this.atlasPlugin = atlasPlugin;
 
         if (atlasConfiguration != null && atlasConfiguration.isEnabled()) {

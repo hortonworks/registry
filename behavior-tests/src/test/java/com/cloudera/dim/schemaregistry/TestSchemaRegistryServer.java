@@ -18,6 +18,7 @@ package com.cloudera.dim.schemaregistry;
 import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler;
 import com.cloudera.dim.registry.oauth2.OAuth2Config;
+import com.cloudera.dim.schemaregistry.atlas.TestAtlasPluginProvider;
 import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
@@ -36,7 +37,6 @@ import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.apache.atlas.plugin.classloader.AtlasCustomPathClassLoader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
@@ -382,7 +382,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             if (atlasEnabled) {
                 atlasConfiguration.setEnabled(true);
                 atlasConfiguration.setAtlasUrls(Collections.singletonList("http://localhost:" + atlasPort));
-                atlasConfiguration.setCustomClasspathLoader(AtlasCustomPathClassLoader.class.getName());
+                atlasConfiguration.setCustomPluginProvider(TestAtlasPluginProvider.class.getName());
 
                 // $root/behavior-tests/build/classes/java/test/
                 File atlasJarsDir = null;

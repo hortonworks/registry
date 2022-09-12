@@ -18,12 +18,11 @@ import com.cloudera.dim.atlas.conf.AtlasSchemaRegistryModule;
 import com.cloudera.dim.atlas.events.AtlasEventLogger;
 import com.codahale.metrics.health.HealthCheck;
 import com.hortonworks.registries.common.GenericExceptionMapper;
+import com.hortonworks.registries.common.KerberosService;
 import com.hortonworks.registries.common.RegistryConfiguration;
 import com.hortonworks.registries.common.SchemaRegistryServiceInfo;
 import com.hortonworks.registries.common.SchemaRegistryVersion;
 import com.hortonworks.registries.common.ServletFilterConfiguration;
-import com.hortonworks.registries.common.util.HadoopPlugin;
-import com.hortonworks.registries.common.util.HadoopPluginFactory;
 import com.hortonworks.registries.schemaregistry.webservice.CoreModule;
 import com.hortonworks.registries.schemaregistry.webservice.SchemaRegistryModule;
 import io.dropwizard.Application;
@@ -98,10 +97,17 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         addServletFilters(registryConfiguration, environment);
     }
 
+    @SuppressWarnings("unchecked")
     private void initializeUGI(RegistryConfiguration conf) {
         if (conf.getServiceAuthenticationConfiguration() != null) {
-            HadoopPlugin keytabCheck = HadoopPluginFactory.createKeytabCheck();
-            keytabCheck.loadKerberosUser(conf.getServiceAuthenticationConfiguration());
+            try {
+                Class<? extends KerberosService> keytabCheck = (Class<? extends KerberosService>) Class.forName(conf.getKerberosServiceImplementation());
+                keytabCheck.newInstance().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
+            } catch (ClassNotFoundException cnex) {
+                LOG.warn("Kerberos service implementation was not found: {}", conf.getKerberosServiceImplementation());
+            } catch (Throwable t) {
+                LOG.error("Failed to initialize kerberos.", t);
+            }
         } else {
             LOG.debug("No service authentication is configured");
         }

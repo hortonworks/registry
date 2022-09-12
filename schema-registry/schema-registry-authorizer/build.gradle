@@ -23,15 +23,9 @@ dependencies {
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
-    compile(project(path: ':schema-registry:hadoop-extension', configuration: 'shim')) {
-        transitive = false
-    }
 
     testCompile libraries.junit
     testCompile libraries.hadoop.common
-    testCompile(project(path: ':schema-registry:hadoop-extension', configuration: 'plugin')) {
-        transitive = false
-    }
     
 }
 

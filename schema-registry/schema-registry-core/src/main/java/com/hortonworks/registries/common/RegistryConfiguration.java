@@ -50,6 +50,9 @@ public class RegistryConfiguration extends Configuration {
     @JsonProperty("atlas")
     private AtlasConfiguration atlasConfiguration;
 
+    private String fileServiceImplementation = "com.cloudera.dim.hadoop.FileServiceProvider";
+    private String kerberosServiceImplementation = "com.cloudera.dim.hadoop.KerberosServiceProvider";
+
     @JsonProperty
     private boolean enableCors;
 
@@ -174,5 +177,21 @@ public class RegistryConfiguration extends Configuration {
 
     public void setCompatibility(CompatibilityConfig compatibility) {
         this.compatibility = compatibility;
+    }
+
+    public String getFileServiceImplementation() {
+        return fileServiceImplementation;
+    }
+
+    public void setFileServiceImplementation(String fileServiceImplementation) {
+        this.fileServiceImplementation = fileServiceImplementation;
+    }
+
+    public String getKerberosServiceImplementation() {
+        return kerberosServiceImplementation;
+    }
+
+    public void setKerberosServiceImplementation(String kerberosServiceImplementation) {
+        this.kerberosServiceImplementation = kerberosServiceImplementation;
     }
 }
