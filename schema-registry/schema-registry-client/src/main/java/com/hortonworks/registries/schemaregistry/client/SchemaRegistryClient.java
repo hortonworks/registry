@@ -64,6 +64,7 @@ import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.schemaregistry.state.SchemaVersionLifecycleStateMachineInfo;
 import com.hortonworks.registries.shaded.javax.ws.rs.client.Invocation;
 import com.hortonworks.registries.shaded.javax.ws.rs.core.HttpHeaders;
+import com.hortonworks.registries.shaded.org.glassfish.jersey.client.spi.ConnectorProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import com.hortonworks.registries.shaded.org.glassfish.jersey.SslConfigurator;
@@ -122,6 +123,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.AUTH_TYPE;
+import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.CONNECTOR_PROVIDER;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_CONNECTION_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.DEFAULT_READ_TIMEOUT;
 import static com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL;
@@ -535,6 +537,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         config.property(ClientProperties.CONNECT_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
         config.property(ClientProperties.READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
         config.property(ClientProperties.FOLLOW_REDIRECTS, true);
+        String connectorProvider = (String) conf.get(CONNECTOR_PROVIDER.name());
+        if (connectorProvider != null) {
+            try {
+                Class<?> connectionProviderClass = Class.forName(connectorProvider);
+                config.connectorProvider((ConnectorProvider) connectionProviderClass.newInstance());
+            } catch (Exception ex) {
+                LOG.error("Failed to construct client with Connector provider class.", ex);
+                throw new RuntimeException(ex);
+            }
+        }
         for (Map.Entry<String, ?> entry : conf.entrySet()) {
             config.property(entry.getKey(), entry.getValue());
         }
@@ -1779,6 +1791,31 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                         "post",
                         ConfigEntry.StringConverter.get(),
                         ConfigEntry.NonEmptyStringValidator.get());
+
+        /**
+         * Jersey connector provider classname. For ex: "org.glassfish.jersey.apache.connector.ApacheConnectorProvider"
+         */
+        public static final ConfigEntry<String> CONNECTOR_PROVIDER =
+                ConfigEntry.optional("connector.provider.class",
+                        String.class,
+                        "Classname of connector provider. Make sure class is on classpath. If this is set, Backoff policy might need to be set to " +
+                                "com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy.",
+                        "",
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
+
+        /**
+         * Jersey connector provider classname. For ex: "org.glassfish.jersey.apache.connector.ApacheConnectorProvider"
+         */
+        public static final ConfigEntry<String> RETRY_POLICY =
+                ConfigEntry.optional("schema.registry.client.retry.policy",
+                        String.class,
+                        "Classname of backoff policy. It can be set to com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy, " +
+                                "com.hortonworks.registries.schemaregistry.retry.policy.FixedTimeBackoffPolicy. By default, this is set to com.hortonworks.registries.schemaregistry.retry.policy.NOOPBackoffPolicy.",
+                        "",
+                        ConfigEntry.StringConverter.get(),
+                        ConfigEntry.NonEmptyStringValidator.get());
+
 
         private final Map<String, ?> config;
         private final Map<String, ConfigEntry<?>> options;

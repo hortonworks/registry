@@ -29,6 +29,7 @@ dependencies {
     }
     compile libraries.jersey.media_json
     compile libraries.jackson.jaxrs
+    compile libraries.jersey.netty_connector
     
 }
 

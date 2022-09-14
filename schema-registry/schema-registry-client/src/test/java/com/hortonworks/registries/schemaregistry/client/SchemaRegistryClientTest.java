@@ -20,6 +20,8 @@ import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
+import com.hortonworks.registries.shaded.org.glassfish.jersey.client.ClientConfig;
+import com.hortonworks.registries.shaded.org.glassfish.jersey.client.spi.ConnectorProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +33,7 @@ import static org.mockito.Mockito.when;
 
 public class SchemaRegistryClientTest {
     
-    private SchemaRegistryClient schemaRegistryClient = mock(SchemaRegistryClient.class);
+    private SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
 
     @Test
     public void testClientWithCache() throws Exception {
@@ -41,13 +43,13 @@ public class SchemaRegistryClientTest {
         final SchemaVersion schemaVersion = new SchemaVersion("schema-text", "desc");
         final SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1);
 
-        when(schemaRegistryClient.registerSchemaMetadata(schemaMetaData)).thenReturn(1L);
-        when(schemaRegistryClient.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion, false)).thenReturn(schemaIdVersion);
+        when(schemaRegistryClientMock.registerSchemaMetadata(schemaMetaData)).thenReturn(1L);
+        when(schemaRegistryClientMock.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion, false)).thenReturn(schemaIdVersion);
 
-        Long metadataId = schemaRegistryClient.registerSchemaMetadata(schemaMetaData);
-        schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
-        schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
-        schemaRegistryClient.addSchemaVersion(schemaName, schemaVersion);
+        Long metadataId = schemaRegistryClientMock.registerSchemaMetadata(schemaMetaData);
+        schemaRegistryClientMock.addSchemaVersion(schemaMetaData, schemaVersion);
+        schemaRegistryClientMock.addSchemaVersion(schemaMetaData, schemaVersion);
+        schemaRegistryClientMock.addSchemaVersion(schemaName, schemaVersion);
     }
     
     @Test
@@ -79,5 +81,70 @@ public class SchemaRegistryClientTest {
         //when
         Assertions.assertThrows(IllegalArgumentException.class, () -> configuration.buildConfig(badConf));
         
+    }
+    
+    @Test
+    public void testCreateClientConfigWithDefaultConnectorProvider() {
+        //given
+        Map<String, String> conf = new HashMap<>();
+        String nettyConnectorProvider = "com.hortonworks.registries.shaded.org.glassfish.jersey.netty.connector.NettyConnectorProvider";
+        conf.put("schema.registry.url", "http://localhost:9090/api/v1");
+        conf.put("connector.provider.class", nettyConnectorProvider);
+        when(schemaRegistryClientMock.createClientConfig(conf)).thenCallRealMethod();
+        
+        //when
+        ClientConfig underTest = schemaRegistryClientMock.createClientConfig(conf);
+        
+        //then
+        ConnectorProvider connector = underTest.getConnectorProvider();
+        Assertions.assertEquals(nettyConnectorProvider, connector.getClass().getName());
+    }
+    
+    @Test
+    public void testCreateClientConfigWithBadConnectionProvider() {
+        //given
+        Map<String, String> conf = new HashMap<>();
+        conf.put("schema.registry.url", "http://localhost:9090/api/v1");
+        conf.put("connector.provider.class", "bad.class.name");
+        when(schemaRegistryClientMock.createClientConfig(conf)).thenCallRealMethod();
+
+        //when
+        Assertions.assertThrows(RuntimeException.class, () -> schemaRegistryClientMock.createClientConfig(conf));
+        
+    }
+    
+    @Test
+    public void testCreateClientConfigWithUnknownConnectorProvider() {
+        //given
+        String testConnectorProvider = "com.hortonworks.registries.schemaregistry.client.TestConnectorProvider";
+        Map<String, String> conf = new HashMap<>();
+        conf.put("schema.registry.url", "http://localhost:9090/api/v1");
+        conf.put("connector.provider.class", testConnectorProvider);
+        when(schemaRegistryClientMock.createClientConfig(conf)).thenCallRealMethod();
+
+        //when
+        ClientConfig underTest = schemaRegistryClientMock.createClientConfig(conf);
+
+        //then
+        ConnectorProvider connector = underTest.getConnectorProvider();
+        Assertions.assertEquals(testConnectorProvider, connector.getClass().getName());
+        
+    }
+
+    @Test
+    public void testCreateClientConfigWithNotSetConnectorProvider() {
+        //given
+        String testConnectorProvider = "com.hortonworks.registries.shaded.org.glassfish.jersey.client.HttpUrlConnectorProvider";
+        Map<String, String> conf = new HashMap<>();
+        conf.put("schema.registry.url", "http://localhost:9090/api/v1");
+        when(schemaRegistryClientMock.createClientConfig(conf)).thenCallRealMethod();
+
+        //when
+        ClientConfig underTest = schemaRegistryClientMock.createClientConfig(conf);
+
+        //then
+        ConnectorProvider connector = underTest.getConnectorProvider();
+        Assertions.assertEquals(testConnectorProvider, connector.getClass().getName());
+
     }
 }

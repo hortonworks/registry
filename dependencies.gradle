@@ -106,7 +106,8 @@ ext.libraries = [
       hk2            : "org.glassfish.jersey.inject:jersey-hk2",
       server         : "org.glassfish.jersey.core:jersey-server",
       media_json     : "org.glassfish.jersey.media:jersey-media-json-jackson",
-      media_multipart: "org.glassfish.jersey.media:jersey-media-multipart"
+      media_multipart: "org.glassfish.jersey.media:jersey-media-multipart",
+      netty_connector: "org.glassfish.jersey.connectors:jersey-netty-connector"
    ],
 
    jetty             : "org.eclipse.jetty:jetty-server",
