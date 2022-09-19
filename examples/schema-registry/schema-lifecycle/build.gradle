@@ -19,7 +19,7 @@ dependencies {
     compile project(':schema-registry:schema-registry-webservice')
     compile project(':schema-registry:schema-registry-client')
 
-    compile libraries.logging.slf4j_log4j
+    compile libraries.logging.reload4j
     compile libraries.dropwizard.testing
     
     testImplementation group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
