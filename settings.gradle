@@ -18,7 +18,6 @@ rootProject.name = 'registry'
 
 include ':registry-common-client'
 include ':registry-common'
-include ':cache'
 include ':common-auth'
 include ':schema-registry:jersey-shaded'
 include ':schema-registry:schema-registry-common'

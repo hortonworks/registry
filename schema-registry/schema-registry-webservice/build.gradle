@@ -35,7 +35,6 @@ dependencies {
     compile project(':schema-registry:ssl-authenticator')
     compile project(':atlas-integration:atlas-module')
     compile project(':storage:storage-core')
-    compile project(':cache')
     compile(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
