@@ -16,7 +16,7 @@
 
 dependencies {
 
-    compile project(':cache')
+    compile project(':registry-common')
     compile project(':storage:storage-common')
     compile libraries.postgresql
     compile libraries.hikari
