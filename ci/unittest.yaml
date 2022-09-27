@@ -7,6 +7,6 @@
         ./gradlew
         --continue
         clean
-        test
+        build -x test -x check -x javadoc
       args:
         chdir: "{{ srcdir }}"
