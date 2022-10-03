@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+apply plugin: 'io.codearte.nexus-staging'
 
 allprojects {
   repositories {
@@ -155,19 +156,60 @@ subprojects {
     }
 
     // jersey-shaded has custom publication and we don't publish any test artifacts
-    if (it.name != 'jersey-shaded' & it.name != 'behavior-tests') {
+    if (it.name != 'jersey-shaded' && it.name != 'behavior-tests'/* && it.name != 'atlas-integration' && it.name != 'schema-registry' && it.name != 'cache' && it.name != 'storage' && it.name != 'examples'*/) {
         publishing {
             publications {
                 mavenJava(MavenPublication) {
                     groupId = group
                     from components.java
+
+/*                    
+                    groupId = 'com.cloudera.dim'
+                   artifactId = 'schema_registry_hadoop_plugin'
+                   artifact("$buildDir/libs/${rootProject.name}-${version}-shim.jar") {
+                       classifier "shim"
+                   }
+                   artifact("$buildDir/libs/${rootProject.name}-${version}.jar") {
+                       // default classifier
+                   }
+                   artifact(packageJavadoc) {
+                       classifier "javadoc"
+                   }
+*/
                 }
             }
         }
         
         signing {
+            useGpgCmd()
             sign publishing.publications.mavenJava
         }
+        
+        /*
+        artifacts {
+            archives javadocJar, sourcesJar
+        }
+        
+        print("project name = ${it.name}")
+        
+        uploadArchives {
+          repositories {
+            mavenDeployer {
+              beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+              repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+              }
+
+              snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+              }
+
+            }
+          }
+        }
+        */
+        
     }
 
     // put your password into ~/.gradle/build.gradle and then run "gradle sign uploadArchive" to upload into nexus
@@ -202,6 +244,11 @@ subprojects {
                     name 'Csenge Virag Maruzsi'
                     email 'csenge.maruzsi@cloudera.com'
                 }
+                developer {
+                    id 'acsaki'
+                    name 'Andras Csaki'
+                    email 'acsaki@cloudera.com'
+                }
             }
         }
     }
@@ -214,9 +261,17 @@ subprojects {
 
     nexus {
         sign = true
-        repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-        snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+        repositoryUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+        snapshotRepositoryUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
     }
+    
+    /*
+    nexusStaging {
+        //serverUrl = "https://s01.oss.sonatype.org/service/local/" //required only for projects registered in Sonatype after 2021-02-24
+        //packageGroup = "org.mycompany.myproject" //optional if packageGroup == project.getGroup()
+        //stagingProfileId = "yourStagingProfileId" //when not defined will be got from server using "packageGroup"
+    }
+    */
 }
 
 buildscript {
@@ -229,6 +284,7 @@ buildscript {
 
     dependencies {
         classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0"
         classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
         classpath "com.peterabeles.gversion:com.peterabeles.gversion.gradle.plugin:1.10"
         classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
