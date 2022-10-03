@@ -120,15 +120,10 @@ dependencies {
 
 }
 
+/*
 signing {
+    //useGpgCmd()  // enable if using command line gpg
     sign distTar
     sign distZip
 }
-
-//uploadArchives {
-//    repositories {
-//        mavenDeployer {
-//            repository(url: "https://oss.sonatype.org/content/repositories/snapshots")
-//        }
-//    }
-//}
+*/
