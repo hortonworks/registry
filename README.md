@@ -12,12 +12,10 @@ Documentation and tutorials can be found on the [Registry docs](http://registry-
 
 Registry users or devs should send a message to [Registry Google Group](https://groups.google.com/forum/#!forum/registry)
 
-[![Join the chat at https://gitter.im/registry-users/Lobby](https://badges.gitter.im/registry-users/Lobby.svg)](https://gitter.im/registry-users/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 
 ## License
 
-Copyright 2016-2021 Cloudera.
+Copyright 2016-2022 Cloudera.
  
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,3 +43,6 @@ limitations under the License.
 * Saravanan Raju ([@raju-saravanan](https://github.com/raju-saravanan))
 * Csaba Galyo ([@gcsaba2](https://github.com/gcsaba2))
 * Csenge Virag Maruzsi ([@csengevirag](https://github.com/csengevirag))
+* Andras Csaki ([@acsaki](https://github.com/acsaki))
+
+...and many more!

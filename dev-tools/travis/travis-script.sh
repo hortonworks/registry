@@ -20,16 +20,10 @@ TRAVIS_SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 cd ${SRC_ROOT_DIR}
   
-# Travis only has 3GB of memory, lets use 1GB for build, and 1.5GB for forked JVMs
-export MAVEN_OPTS="-Xmx1024m"
+# Travis only has 3GB of memory, lets use 2GB for build
+export GRADLE_OPTS="-Xmx2048m"
 
-mvn --batch-mode verify -Dmaven.test.redirectTestOutputToFile=true
+"$TRAVIS_SCRIPT_DIR/../../gradlew" clean build -x javadoc
 BUILD_RET_VAL=$?
-
-for dir in `find . -type d -and -wholename \*/target/surefire-reports`;
-do
-echo "Looking for errors in ${dir}"
-python ${TRAVIS_SCRIPT_DIR}/print-errors-from-test-reports.py "${dir}"
-done
 
 exit ${BUILD_RET_VAL}
