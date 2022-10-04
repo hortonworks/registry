@@ -30,8 +30,7 @@ dependencies {
     compile libraries.jackson.dataformat
     
     compile libraries.snakeyaml
-    
-    compile libraries.logging.slf4j_log4j
+
     compile libraries.logging.slf4j_api
 
 }
