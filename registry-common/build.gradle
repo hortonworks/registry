@@ -19,8 +19,6 @@ dependencies {
     compile project(':registry-common-client')
     compile libraries.guava
     
-    
-    compile libraries.logging.slf4j_log4j
     compile libraries.logging.slf4j_api
     
     compile libraries.commons.lang3

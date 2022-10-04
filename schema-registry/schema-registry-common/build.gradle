@@ -18,7 +18,6 @@ dependencies {
 
     compile libraries.guava
     compile libraries.logging.slf4j_api
-    compile libraries.logging.slf4j_log4j
     compile libraries.commons.lang3
     compile libraries.jackson.core
     compile libraries.jackson.databind
