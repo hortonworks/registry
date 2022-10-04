@@ -81,8 +81,11 @@ dependencies {
         }
     }
 
-    testCompile(project(path: ':schema-registry:schema-registry-client')) { transitive = false }
-    testCompile(project(path: ':schema-registry:schema-registry-serdes')) { transitive = false }
+    testCompile(project(path: ':schema-registry:schema-registry-client', configuration: 'tests')) { transitive = false }
+    testCompile(project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests')) { transitive = false }
+    testCompile project(path: ':schema-registry:schema-registry-common', configuration: 'tests')
+    testCompile project(path: ':schema-registry:schema-registry-core', configuration: 'tests')
+    testCompile project(path: ':registry-common', configuration: 'tests')
 
     testCompile libraries.junit
     testCompile libraries.mockito
@@ -92,7 +95,7 @@ dependencies {
     testCompile libraries.kafka.test.clients
     testCompile libraries.kafka.test.streams
     testCompile libraries.kafka.test.streams_test_utils
-
+    
     testCompile(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
     testCompile(libraries.kafka.core) { exclude group: 'org.scala-lang' }
 
