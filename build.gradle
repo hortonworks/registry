@@ -46,6 +46,7 @@ subprojects {
     configurations {
         compile {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'org.slf4j', module: 'log4j-over-slf4j'
         }
         tests.extendsFrom testRuntime
     }
@@ -62,11 +63,6 @@ subprojects {
                 }
             }
             compile(libraries.logging.slf4j_api) {
-                version {
-                    strictly project.versions_slf4j
-                }
-            }
-            compile(libraries.logging.slf4j_log4j) {
                 version {
                     strictly project.versions_slf4j
                 }
