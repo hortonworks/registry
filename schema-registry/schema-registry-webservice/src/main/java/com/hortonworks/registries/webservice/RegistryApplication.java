@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import ru.vyarus.dropwizard.guice.GuiceBundle;
 import ru.vyarus.dropwizard.guice.injector.lookup.InjectorProvider;
 
+import javax.inject.Provider;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
@@ -100,13 +101,22 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
     @SuppressWarnings("unchecked")
     private void initializeUGI(RegistryConfiguration conf) {
         if (conf.getServiceAuthenticationConfiguration() != null) {
+            // first try to load a Provider - this is the preferred method
+            try {
+                Class<Provider<? extends KerberosService>> keytabProviderClass = (Class<Provider<? extends KerberosService>>) Class.forName(conf.getKerberosServiceImplementation());
+                keytabProviderClass.newInstance().get().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
+
+                return;  // success
+            } catch (Throwable t) {
+                LOG.debug("Kerberos plugin provider was not found on the classpath, trying with an implementation.");
+            }
+
+            // if a provider was not found then try a direct implementation
             try {
                 Class<? extends KerberosService> keytabCheck = (Class<? extends KerberosService>) Class.forName(conf.getKerberosServiceImplementation());
                 keytabCheck.newInstance().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
-            } catch (ClassNotFoundException cnex) {
-                LOG.warn("Kerberos service implementation was not found: {}", conf.getKerberosServiceImplementation());
             } catch (Throwable t) {
-                LOG.error("Failed to initialize kerberos.", t);
+                LOG.error("Failed to initialize kerberos. Plugin implementation [{}] was not found on the classpath.", conf.getKerberosServiceImplementation(), t);
             }
         } else {
             LOG.debug("No service authentication is configured");
