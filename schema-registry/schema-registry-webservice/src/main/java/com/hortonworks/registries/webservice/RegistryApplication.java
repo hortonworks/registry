@@ -34,6 +34,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -55,28 +56,6 @@ import java.util.Map;
 public class RegistryApplication extends Application<RegistryConfiguration> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
-
-    private class AutoCloseableManager implements Managed {
-        private final AutoCloseable closeableObject;
-
-        public AutoCloseableManager(AutoCloseable closeableObjects) {
-            this.closeableObject = closeableObjects;
-        }
-
-        @Override
-        public void start() {
-        }
-
-        @Override
-        public void stop() {
-            LOG.info("Close managed AutoCloseable: " + closeableObject.getClass().getSimpleName());
-            try {
-                closeableObject.close();
-            } catch (Exception e) {
-                LOG.warn("Could not close object.", e);
-            }
-        }
-    }
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
@@ -100,26 +79,35 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
 
     @SuppressWarnings("unchecked")
     private void initializeUGI(RegistryConfiguration conf) {
-        if (conf.getServiceAuthenticationConfiguration() != null) {
-            // first try to load a Provider - this is the preferred method
-            try {
-                Class<Provider<? extends KerberosService>> keytabProviderClass = (Class<Provider<? extends KerberosService>>) Class.forName(conf.getKerberosServiceImplementation());
-                keytabProviderClass.newInstance().get().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
-
-                return;  // success
-            } catch (Throwable t) {
-                LOG.debug("Kerberos plugin provider was not found on the classpath, trying with an implementation.");
-            }
-
-            // if a provider was not found then try a direct implementation
-            try {
-                Class<? extends KerberosService> keytabCheck = (Class<? extends KerberosService>) Class.forName(conf.getKerberosServiceImplementation());
-                keytabCheck.newInstance().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
-            } catch (Throwable t) {
-                LOG.error("Failed to initialize kerberos. Plugin implementation [{}] was not found on the classpath.", conf.getKerberosServiceImplementation(), t);
-            }
-        } else {
+        if (conf.getServiceAuthenticationConfiguration() == null || StringUtils.isBlank(conf.getKerberosServiceImplementation())) {
             LOG.debug("No service authentication is configured");
+            return;
+        }
+
+        final Class<?> kerbServiceClass;
+        try {
+            kerbServiceClass = Class.forName(conf.getKerberosServiceImplementation());
+        } catch (Throwable t) {
+            // this will cause Schema Registry to halt
+            throw new Error("Error while loading the KerberosService implementation class " + conf.getKerberosServiceImplementation(), t);
+        }
+
+        try {
+        // first try to load a Provider - this is the preferred method
+        if (Provider.class.isAssignableFrom(kerbServiceClass)) {
+            Class<Provider<? extends KerberosService>> keytabProviderClass = (Class<Provider<? extends KerberosService>>) kerbServiceClass;
+            keytabProviderClass.newInstance().get().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
+
+            return;  // success
+        }
+
+        // if a provider was not found then try a direct implementation
+        if (KerberosService.class.isAssignableFrom(kerbServiceClass)) {
+            Class<? extends KerberosService> keytabCheck = (Class<? extends KerberosService>) kerbServiceClass;
+            keytabCheck.newInstance().loadKerberosUser(conf.getServiceAuthenticationConfiguration());
+        }
+        } catch (Throwable t) {
+            LOG.error("Failed to initialize kerberos service while using plugin implementation [{}].", conf.getKerberosServiceImplementation(), t);
         }
     }
 
@@ -226,6 +214,28 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         @Override
         protected Result check() {
             return Result.healthy();
+        }
+    }
+
+    private static class AutoCloseableManager implements Managed {
+        private final AutoCloseable closeableObject;
+
+        public AutoCloseableManager(AutoCloseable closeableObjects) {
+            this.closeableObject = closeableObjects;
+        }
+
+        @Override
+        public void start() {
+        }
+
+        @Override
+        public void stop() {
+            LOG.info("Close managed AutoCloseable: " + closeableObject.getClass().getSimpleName());
+            try {
+                closeableObject.close();
+            } catch (Exception e) {
+                LOG.warn("Could not close object.", e);
+            }
         }
     }
 
