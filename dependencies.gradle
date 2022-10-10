@@ -178,7 +178,6 @@ ext.libraries = [
    postgresql        : "org.postgresql:postgresql:$versions_postgresql",
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
-   snakeyaml          : "org.yaml:snakeyaml",
 
    validation_api     : "javax.validation:validation-api:$versions_validation_api",
    validation_api2    : "jakarta.validation:jakarta.validation-api"

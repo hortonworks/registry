@@ -71,11 +71,6 @@ subprojects {
                     strictly project.versions_slf4j
                 }
             }
-            compile(libraries.snakeyaml) {
-                version {
-                    strictly project.versions_snakeyaml
-                }
-            }
             compile(libraries.swagger) {
                 version {
                     strictly project.versions_swagger
