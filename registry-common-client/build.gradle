@@ -28,8 +28,6 @@ dependencies {
 
     compile libraries.jackson.databind
     compile libraries.jackson.dataformat
-    
-    compile libraries.snakeyaml
 
     compile libraries.logging.slf4j_api
 
