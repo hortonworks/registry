@@ -16,7 +16,7 @@
 package com.hortonworks.registries.schemaregistry.avro.util;
 
 import com.hortonworks.registries.schemaregistry.avro.AvroSchemaRegistryClientTest;
-import com.hortonworks.registries.serdes.Device;
+import com.hortonworks.registries.schemaregistry.avro.Device;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;

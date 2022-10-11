@@ -20,7 +20,6 @@ import com.hortonworks.registries.schemaregistry.avro.helper.SchemaRegistryTestS
 import com.hortonworks.registries.schemaregistry.avro.util.AvroSchemaRegistryClientUtil;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.kafka.KafkaAvroSerializer;
-import com.hortonworks.registries.serdes.Device;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
