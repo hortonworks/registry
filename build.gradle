@@ -41,6 +41,7 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'checkstyle'
     apply plugin: 'signing'
+    apply plugin: 'net.kyori.indra.licenser.spotless'
 
     configurations {
         compile {
@@ -217,7 +218,11 @@ subprojects {
             }
           }
         }
+    }
 
+    indraSpotlessLicenser {
+        licenseHeaderFile(rootProject.file("HEADER.txt")) // default value
+        newLine(false) // default value, adds a blank line between the license header and delimiter
     }
 }
 
@@ -235,6 +240,7 @@ buildscript {
         classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
         classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"
         classpath 'org.owasp:dependency-check-gradle:7.1.1'
+        classpath "net.kyori:indra-licenser-spotless:3.0.0"
     }
 }
 
