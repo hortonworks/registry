@@ -48,6 +48,7 @@ subprojects {
             exclude group: 'org.slf4j', module: 'log4j-over-slf4j'
         }
         tests.extendsFrom testRuntime
+        releaseArtifacts { }
     }
 
     // dependency constraints only
@@ -195,16 +196,61 @@ subprojects {
         signing {
             //useGpgCmd()  // enable if using command line gpg
             sign publishing.publications.mavenJava
+            sign configurations.releaseArtifacts
         }
         
         artifacts {
             archives javadocJar, sourcesJar
+
+            releaseArtifacts jar
+            releaseArtifacts javadocJar
+            releaseArtifacts sourcesJar
+            releaseArtifacts file("build/libs/${name}-${version}-javadoc.jar.asc")
+            releaseArtifacts file("build/libs/${name}-${version}-sources.jar.asc")
+            releaseArtifacts file("build/libs/${name}-${version}.jar.asc")
         }
         
         uploadArchives {
           repositories {
             mavenDeployer {
               beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+              pom.project {
+                name = 'Schema Registry'
+                url = 'https://github.com/hortonworks/registry'
+                description = 'Registry is a framework to build metadata repositories. As part of Registry, we currently have SchemaRegistry repositories.'
+
+                scm {
+                  url = 'https://github.com/hortonworks/registry'
+                  connection = 'scm:git:git@github.com:hortonworks/registry.git'
+                  developerConnection = 'scm:git:git@github.com:hortonworks/registry.git'
+                }
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'galyo'
+                        name = 'Csaba Galyo'
+                        email = 'galyo@cloudera.com'
+                    }
+                    developer {
+                        id = 'csenge.maruzsi'
+                        name = 'Csenge Virag Maruzsi'
+                        email = 'csenge.maruzsi@cloudera.com'
+                    }
+                    developer {
+                        id = 'acsaki'
+                        name = 'Andras Csaki'
+                        email = 'acsaki@cloudera.com'
+                    }
+                  }
+              }
 
               repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
                 authentication(userName: nexusUsername, password: nexusPassword)
