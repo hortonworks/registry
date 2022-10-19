@@ -103,7 +103,6 @@ dependencies {
     // this will force Gradle to build the tar and zip file only after every other project was built
     distTar.dependsOn(':schema-registry:schema-registry-webservice:build')
     distTar.dependsOn(':registry-common-client:build')
-    distTar.dependsOn(':cache:build')
     distTar.dependsOn(':common-auth:build')
     distTar.dependsOn(':schema-registry:schema-registry-common:build')
     distTar.dependsOn(':atlas-integration:atlas-common:build')
