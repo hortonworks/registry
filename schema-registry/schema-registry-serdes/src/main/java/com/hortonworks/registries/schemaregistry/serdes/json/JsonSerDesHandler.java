@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  **/
 package com.hortonworks.registries.schemaregistry.serdes.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BinaryNode;
 import com.hortonworks.registries.schemaregistry.json.JsonUtils;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import org.everit.json.schema.Schema;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -43,14 +46,13 @@ public class JsonSerDesHandler {
     }
   }
 
-  public Object handlePayloadDeserialization(InputStream inputStream, Schema jsonSchema) throws SerDesException {
+  public JsonNode handlePayloadDeserialization(InputStream inputStream, Schema jsonSchema) throws SerDesException {
     checkNotNull(inputStream, "inputStream");
     checkNotNull(jsonSchema, "jsonSchema");
 
     try {
       JsonNode jsonNode = objectMapper.readTree(inputStream);
-      JSONObject jsonObject = objectMapper.treeToValue(jsonNode, JSONObject.class);
-      jsonSchema.validate(jsonObject);
+      validate(jsonSchema, jsonNode);
       return jsonNode;
     } catch (IOException iex) {
       throw new RuntimeException("Could not read input.", iex);
@@ -59,4 +61,32 @@ public class JsonSerDesHandler {
     }
   }
 
+  private void validate(Schema jsonSchema, JsonNode jsonNode) throws JsonProcessingException {
+    switch (jsonNode.getNodeType()) {
+      case NULL:
+        jsonSchema.validate(JSONObject.NULL);
+        return;
+      case ARRAY:
+        jsonSchema.validate(objectMapper.treeToValue(jsonNode, JSONArray.class));
+        return;
+      case BINARY:
+        // should not encounter this since reading from the input stream will just produce a STRING text node
+        BinaryNode binaryNode = (BinaryNode) jsonNode;
+        jsonSchema.validate(binaryNode.asText());
+        return;
+      case NUMBER:
+        jsonSchema.validate(jsonNode.numberValue());
+        return;
+      case BOOLEAN:
+        jsonSchema.validate(jsonNode.booleanValue());
+        return;
+      case STRING:
+        jsonSchema.validate(jsonNode.textValue());
+        return;
+      case OBJECT:
+      default:
+        jsonSchema.validate(objectMapper.treeToValue(jsonNode, JSONObject.class));
+        return;
+    }
+  }
 }
