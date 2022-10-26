@@ -43,7 +43,7 @@ ext.libraries = [
       collections    : "org.apache.commons:commons-collections4:$versions_commons_collections",
       io             :"commons-io:commons-io:$versions_commons_io",
       lang3          : "org.apache.commons:commons-lang3",
-      text           : "org.apache.commons:commons-text",
+      text           : "org.apache.commons:commons-text:$versions_commons_text",
    ],
    directory_api     : "org.apache.directory.api:api-util:$versions_directory_api",
    directory_server: dependencies.create("org.apache.directory.server:apacheds-kerberos-codec:$versions_directory_server") {

@@ -80,6 +80,8 @@ subprojects {
             constraints {
                 implementation("org.apache.commons:commons-compress:$versions_commons_compress")
                 testCompile("org.apache.commons:commons-compress:$versions_commons_compress")
+                implementation("org.apache.commons:commons-text:$versions_commons_text")
+                testCompile("org.apache.commons:commons-text:$versions_commons_text")
             }
             compile(libraries.avro) {
                 version {
