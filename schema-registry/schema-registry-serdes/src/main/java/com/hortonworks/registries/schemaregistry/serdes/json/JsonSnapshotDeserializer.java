@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.serdes.json;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.json.JsonSchemaResolver;
@@ -43,8 +42,7 @@ public class JsonSnapshotDeserializer extends AbstractJsonSnapshotDeserializer<I
     }
 
     @Override
-    protected Object doDeserialize(InputStream input, byte protocolId, SchemaMetadata schemaMetadata, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
-        String schemaName = schemaMetadata.getName();
+    protected Object doDeserialize(InputStream input, byte protocolId, String schemaName, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
         SchemaVersionKey versionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         try {
             Schema json = getParsedSchema(versionKey);

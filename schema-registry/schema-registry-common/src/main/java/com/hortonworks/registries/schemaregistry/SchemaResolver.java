@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,4 +42,14 @@ public interface SchemaResolver {
      * @throws SchemaNotFoundException when any of the dependent schemas is not found.
      */
     String resolveSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException;
+
+    /**
+
+     * @return Resolved effective schema of the given schema after resolving all the dependencies.
+     *
+     * @param schemaIdVersion {@link SchemaIdVersion} of a specific schema version for which dependencies should be resolved.
+     * @throws InvalidSchemaException  when the schema is semantically invalid or when there are cyclic dependencies.
+     * @throws SchemaNotFoundException when any of the dependent schemas is not found.
+     */
+    String resolveSchema(SchemaIdVersion schemaIdVersion) throws InvalidSchemaException, SchemaNotFoundException;
 }

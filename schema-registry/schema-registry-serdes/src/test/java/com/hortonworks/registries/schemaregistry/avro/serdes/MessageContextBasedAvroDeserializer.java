@@ -1,5 +1,5 @@
  /*
- * Copyright 2017-2021 Cloudera, Inc.
+ * Copyright 2017-2022 Cloudera, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,11 +19,10 @@
  */
 package com.hortonworks.registries.schemaregistry.avro.serdes;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
+ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
+ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+ import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotDeserializer;
 
 /**
  *
@@ -37,12 +36,12 @@ public class MessageContextBasedAvroDeserializer extends AbstractAvroSnapshotDes
     @Override
     protected Object doDeserialize(MessageContext input,
                                    byte protocolId,
-                                   SchemaMetadata schemaMetadata,
+                                   String schemaName,
                                    Integer writerSchemaVersion,
                                    Integer readerSchemaVersion) throws SerDesException {
         return buildDeserializedObject(protocolId,
                 input.payloadEntity,
-                schemaMetadata,
+                schemaName,
                 writerSchemaVersion, readerSchemaVersion);
     }
 

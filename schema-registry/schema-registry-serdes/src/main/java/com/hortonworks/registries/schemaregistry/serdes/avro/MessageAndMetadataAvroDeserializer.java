@@ -1,5 +1,5 @@
  /*
- * Copyright 2017-2021 Cloudera, Inc.
+ * Copyright 2017-2022 Cloudera, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,17 +19,21 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
-import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
-import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
-import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
-import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
-import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+ import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+ import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
+ import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
+ import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
+ import com.hortonworks.registries.schemaregistry.serde.AbstractSerDes;
+ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
+ import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
+ import java.io.ByteArrayInputStream;
 
 public class MessageAndMetadataAvroDeserializer extends AbstractAvroSnapshotDeserializer<MessageAndMetadata> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSerDes.class);
 
     public MessageAndMetadataAvroDeserializer() {
     }
@@ -43,24 +47,27 @@ public class MessageAndMetadataAvroDeserializer extends AbstractAvroSnapshotDese
                               Integer readerSchemaVersion) throws SerDesException {
         byte protocolId = retrieveProtocolId(context);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, context);
-        SchemaMetadata schemaMetadata;
-        SchemaVersionInfo schemaVersionInfo;
+
         try {
-            schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
-            schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
+            SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
+            return doDeserialize(
+                    context,
+                    protocolId,
+                    schemaVersionInfo.getName(),
+                    schemaVersionInfo.getVersion(),
+                    readerSchemaVersion);
         } catch (Exception e) {
             throw new RegistryException(e);
         }
-        return doDeserialize(context, protocolId, schemaMetadata, schemaVersionInfo.getVersion(), readerSchemaVersion);
     }
 
     @Override
     protected Object doDeserialize(MessageAndMetadata context,
                                    byte protocolId,
-                                   SchemaMetadata schemaMetadata,
+                                   String schemaName,
                                    Integer writerSchemaVersion,
                                    Integer readerSchemaVersion) throws SerDesException {
-        return buildDeserializedObject(protocolId, new ByteArrayInputStream(context.payload()), schemaMetadata,
+        return buildDeserializedObject(protocolId, new ByteArrayInputStream(context.payload()), schemaName,
                 writerSchemaVersion, readerSchemaVersion);
     }
 
