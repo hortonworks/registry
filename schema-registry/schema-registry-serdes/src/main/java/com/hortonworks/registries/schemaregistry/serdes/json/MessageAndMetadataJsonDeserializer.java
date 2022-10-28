@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.serdes.json;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
@@ -46,21 +45,23 @@ public class MessageAndMetadataJsonDeserializer extends AbstractJsonSnapshotDese
     }
 
     SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, context);
-    SchemaMetadata schemaMetadata;
-    SchemaVersionInfo schemaVersionInfo;
     try {
-      schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
-      schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
+      SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
+      return doDeserialize(
+              context,
+              protocolId,
+              schemaVersionInfo.getName(),
+              schemaVersionInfo.getVersion(),
+              readerSchemaVersion);
     } catch (Exception e) {
       throw new RegistryException(e);
     }
-    return doDeserialize(context, protocolId, schemaMetadata, schemaVersionInfo.getVersion(), readerSchemaVersion);
   }
 
   @Override
   protected Object doDeserialize(MessageAndMetadata context,
                                  byte protocolId,
-                                 SchemaMetadata schemaMetadata,
+                                 String schemaName,
                                  Integer writerSchemaVersion,
                                  Integer readerSchemaVersion) throws SerDesException {
 
@@ -68,7 +69,7 @@ public class MessageAndMetadataJsonDeserializer extends AbstractJsonSnapshotDese
       throw new SerDesException("Illegal protocol: " + protocolId);
     }
 
-    return buildDeserializedObject(protocolId, new ByteArrayInputStream(context.payload()), schemaMetadata,
+    return buildDeserializedObject(protocolId, new ByteArrayInputStream(context.payload()), schemaName,
         writerSchemaVersion);
   }
 

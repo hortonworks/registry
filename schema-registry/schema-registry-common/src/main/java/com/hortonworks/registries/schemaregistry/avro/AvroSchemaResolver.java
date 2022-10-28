@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.hortonworks.registries.schemaregistry.avro;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaResolver;
+import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.CyclicSchemaDependencyException;
@@ -43,7 +45,7 @@ import static org.apache.avro.Schema.Type.RECORD;
  * List of dependent schemas can be added with `includeSchemas` attribute in avro schema. This contains name and version
  * of each schema as mentioned below.
  * - name       : unique name of that schema in schema registry which is {@link com.hortonworks.registries.schemaregistry.SchemaMetadata#name}.
- * - version    : version number of the schema being used which is {@link SchemaVersionKey#version}.
+ * - version    : version number of the schema being used which is {@link SchemaVersionKey#getVersion}.
  *                When this property is not mentioned then it is considered to be latest version of that schema when
  *                it builds effective schema.
  *
@@ -114,6 +116,14 @@ public class AvroSchemaResolver implements SchemaResolver {
         return getResultantSchema(schemaVersionKey, schemaParsingStates);
     }
 
+    @Override
+    public String resolveSchema(SchemaIdVersion schemaIdVersion) throws InvalidSchemaException, SchemaNotFoundException {
+        SchemaVersionInfo schemaVersionInfo = schemaVersionRetriever.retrieveSchemaVersion(schemaIdVersion);
+        Map<String, SchemaParsingState> schemaParsingStates = new HashMap<>();
+        schemaParsingStates.put(schemaVersionInfo.getName(), SchemaParsingState.PARSING);
+        return getResultantSchema(schemaVersionInfo.getSchemaText(), schemaParsingStates);
+    }
+
     public String resolveSchema(String schemaText) throws InvalidSchemaException, SchemaNotFoundException {
         Map<String, SchemaParsingState> schemaParsingStates = new HashMap<>();
         return getResultantSchema(schemaText, schemaParsingStates);
@@ -122,8 +132,8 @@ public class AvroSchemaResolver implements SchemaResolver {
     private String getResultantSchema(SchemaVersionKey schemaVersionKey,
                                       Map<String, SchemaParsingState> schemaParsingStates)
             throws InvalidSchemaException, SchemaNotFoundException {
-        String schemaText = schemaVersionRetriever.retrieveSchemaVersion(schemaVersionKey).getSchemaText();
-        return getResultantSchema(schemaText, schemaParsingStates);
+        SchemaVersionInfo schemaVersionInfo = schemaVersionRetriever.retrieveSchemaVersion(schemaVersionKey);
+        return getResultantSchema(schemaVersionInfo.getSchemaText(), schemaParsingStates);
     }
 
     private String getResultantSchema(String schemaText, Map<String, SchemaParsingState> schemaParsingStates)

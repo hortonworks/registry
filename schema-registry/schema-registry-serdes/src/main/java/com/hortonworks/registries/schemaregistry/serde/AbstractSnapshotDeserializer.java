@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.client.ISchemaRegistryClient;
@@ -43,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * <ol>
  *  <li>getting ser/des protocol id by implementing {@link #retrieveProtocolId(Object)} </li>
  *  <li>getting schema version id by implementing {@link #retrieveSchemaIdVersion(byte, Object)} </li>
- *  <li>implement the actual deserialization with {@link #doDeserialize(Object, byte, SchemaMetadata, Integer, Integer)} </li>
+ *  <li>implement the actual deserialization with {@link #doDeserialize(Object, byte, String, Integer, Integer)} </li>
  * </ol>
  *
  * Extensions to this class may need to implement the above life cycle methods.
@@ -179,16 +178,17 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
         // it can be enhanced to have respective protocol handlers for different versions
         byte protocolId = retrieveProtocolId(input);
         SchemaIdVersion schemaIdVersion = retrieveSchemaIdVersion(protocolId, input);
-        SchemaVersionInfo schemaVersionInfo;
-        SchemaMetadata schemaMetadata;
         try {
-            schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
-            schemaMetadata = schemaRegistryClient.getSchemaMetadataInfo(schemaVersionInfo.getName()).getSchemaMetadata();
+            SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(schemaIdVersion);
+            return doDeserialize(
+                    input,
+                    protocolId,
+                    schemaVersionInfo.getName(),
+                    schemaVersionInfo.getVersion(),
+                    readerSchemaVersion);
         } catch (Exception e) {
             throw new RegistryException(e);
         }
-        return doDeserialize(input, protocolId, schemaMetadata, schemaVersionInfo.getVersion(), readerSchemaVersion);
-
     }
 
     /**
@@ -196,14 +196,14 @@ public abstract class AbstractSnapshotDeserializer<I, O, S> extends AbstractSerD
      *
      * @param input payload to be deserialized into.
      * @param protocolId protocol id for deserializtion.
-     * @param schemaMetadata metadata about the schema
+     * @param schemaName name of the schema
      * @param writerSchemaVersion schema version of writer used in building the serialized payload.
      * @param readerSchemaVersion schema version for reading/projection.
      * @throws SerDesException when any ser/des error occurs
      */
     protected abstract O doDeserialize(I input,
                                        byte protocolId,
-                                       SchemaMetadata schemaMetadata,
+                                       String schemaName,
                                        Integer writerSchemaVersion,
                                        Integer readerSchemaVersion) throws SerDesException;
 
