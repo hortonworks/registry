@@ -1,5 +1,5 @@
  /*
- * Copyright 2017-2021 Cloudera, Inc.
+ * Copyright 2017-2022 Cloudera, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,9 +18,6 @@
  * limitations under the License.
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
-
-import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.READER_SCHEMA;
-import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.WRITER_SCHEMA;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
@@ -44,13 +41,16 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.READER_SCHEMA;
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.WRITER_SCHEMA;
+
 /**
  * This class implements most of the required functionality for an avro deserializer by extending {@link AbstractSnapshotDeserializer}
  * and implementing the required methods.
  * <p>
  * <p>
  * The below example describes how to extend this deserializer with user supplied representation like MessageContext.
- * Default deserialization of avro payload is implemented in {@link #buildDeserializedObject(byte, InputStream, SchemaMetadata, Integer, Integer)}
+ * Default deserialization of avro payload is implemented in {@link #buildDeserializedObject(byte, InputStream, String, Integer, Integer)}
  * and it can be used while implementing {@link #doDeserialize(Object, byte, SchemaMetadata, Integer, Integer)} as given
  * below.
  * <p>
@@ -147,7 +147,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
      *
      * @param protocolId          protocol id
      * @param payloadInputStream  payload
-     * @param schemaMetadata      metadata about schema
+     * @param schemaName  schema name
      * @param writerSchemaVersion schema version of the writer
      * @param readerSchemaVersion schema version to be applied for reading or projection
      * @return the deserialized object
@@ -155,15 +155,14 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
      */
     protected Object buildDeserializedObject(byte protocolId,
                                              InputStream payloadInputStream,
-                                             SchemaMetadata schemaMetadata,
+                                             String schemaName,
                                              Integer writerSchemaVersion,
                                              Integer readerSchemaVersion) throws SerDesException {
-        String schemaName = schemaMetadata.getName();
         SchemaVersionKey writerSchemaVersionKey = new SchemaVersionKey(schemaName, writerSchemaVersion);
         LOG.debug("SchemaKey: [{}] for the received payload", writerSchemaVersionKey);
         Schema writerSchema = getSchema(writerSchemaVersionKey);
         if (writerSchema == null) {
-            throw new RegistryException("No schema exists with metadata-key: " + schemaMetadata + " and writerSchemaVersion: " + writerSchemaVersion);
+            throw new RegistryException("No schema exists with name: " + schemaName + " and writerSchemaVersion: " + writerSchemaVersion);
         }
         Schema readerSchema = readerSchemaVersion != null ? getSchema(new SchemaVersionKey(schemaName, readerSchemaVersion)) : null;
 

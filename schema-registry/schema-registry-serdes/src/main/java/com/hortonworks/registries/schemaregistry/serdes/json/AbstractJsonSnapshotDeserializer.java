@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.hortonworks.registries.schemaregistry.serdes.json;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
@@ -85,17 +84,16 @@ public abstract class AbstractJsonSnapshotDeserializer<I> extends AbstractSnapsh
 
   protected Object buildDeserializedObject(byte protocolId,
                                            InputStream payloadInputStream,
-                                           SchemaMetadata schemaMetadata,
+                                           String schemaName,
                                            Integer schemaVersion) throws SerDesException {
 
 
 
-    String schemaName = schemaMetadata.getName();
     SchemaVersionKey schemaVersionKey = new SchemaVersionKey(schemaName, schemaVersion);
     LOG.debug("SchemaKey: [{}] for the received payload", schemaVersionKey);
     Schema writerSchema = getSchema(schemaVersionKey);
     if (writerSchema == null) {
-      throw new RegistryException("No schema exists with metadata-key: " + schemaMetadata + " and schemaVersion: " + schemaVersionKey);
+      throw new RegistryException("No schema exists with name: " + schemaName + " and schemaVersion: " + schemaVersionKey);
     }
 
     return deserializePayloadForProtocol(protocolId, payloadInputStream, writerSchema);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Cloudera, Inc.
+ * Copyright 2017-2022 Cloudera, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -20,7 +20,6 @@
 package com.hortonworks.registries.schemaregistry.serde;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
-import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
@@ -166,7 +165,7 @@ public class AbstractSnapshotDeserializerTest {
         }
 
         @Override
-        protected Object doDeserialize(Object input, byte protocolId, SchemaMetadata schemaMetadata, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
+        protected Object doDeserialize(Object input, byte protocolId, String schemaName, Integer writerSchemaVersion, Integer readerSchemaVersion) throws SerDesException {
             return null;
         }
 

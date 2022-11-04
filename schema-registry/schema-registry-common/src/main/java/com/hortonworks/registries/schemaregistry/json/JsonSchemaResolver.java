@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.hortonworks.registries.schemaregistry.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaResolver;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
@@ -54,6 +55,12 @@ public class JsonSchemaResolver implements SchemaResolver {
     @Override
     public String resolveSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException {
         String schemaText = schemaVersionRetriever.retrieveSchemaVersion(schemaVersionKey).getSchemaText();
+        return parseSchema(schemaText).toString();
+    }
+
+    @Override
+    public String resolveSchema(SchemaIdVersion schemaIdVersion) throws InvalidSchemaException, SchemaNotFoundException {
+        String schemaText = schemaVersionRetriever.retrieveSchemaVersion(schemaIdVersion).getSchemaText();
         return parseSchema(schemaText).toString();
     }
 

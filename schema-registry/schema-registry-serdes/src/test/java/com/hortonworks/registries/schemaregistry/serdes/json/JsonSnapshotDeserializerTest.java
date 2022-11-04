@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2022 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ class JsonSnapshotDeserializerTest {
     Mockito.when(jsonSerDesHandlerMock.handlePayloadDeserialization(any(InputStream.class), any(Schema.class))).thenReturn(jsonNodeDeserialized);
     
     //when
-    Object deserialized = underTest.doDeserialize(is, Byte.parseByte("4"), metadata, 1, 0);
+    Object deserialized = underTest.doDeserialize(is, Byte.parseByte("4"), metadata.getName(), 1, 0);
     
     //then
     ObjectNode expected = JsonNodeFactory.instance.objectNode()
