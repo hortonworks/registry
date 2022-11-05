@@ -52,9 +52,39 @@ subprojects {
     }
     dependencies {
         constraints {
+            compile('com.fasterxml.jackson.core:jackson-annotations') {
+                version {
+                    strictly project.versions_jackson2
+                }
+            }
+            compile('com.fasterxml.jackson.core:jackson-core') {
+                version {
+                    strictly project.versions_jackson2
+                }
+            }
             compile('com.fasterxml.jackson.core:jackson-databind') {
                 version {
                     strictly project.versions_jackson_databind
+                }
+            }
+            compile('com.fasterxml.jackson.dataformat:jackson-dataformat-csv') {
+                version {
+                    strictly project.versions_jackson2
+                }
+            }
+            compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml') {
+                version {
+                    strictly project.versions_jackson2
+                }
+            }
+            compile('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider') {
+                version {
+                    strictly project.versions_jackson2
+                }
+            }
+            compile('com.fasterxml.jackson.module:jackson-module-scala_2.12') {
+                version {
+                    strictly project.versions_jackson_scala
                 }
             }
             constraints {
