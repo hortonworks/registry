@@ -1,5 +1,5 @@
- /*
- * Copyright 2017-2021 Cloudera, Inc.
+/*
+ * Copyright 2017-2022 Cloudera, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -92,19 +92,18 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     protected SerDesProtocolHandler serDesProtocolHandler;
 
     @Override
-    @SuppressWarnings("unchecked")
     public void doInit(Map<String, ?> config) {
 
-        byte protocolVersion = SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL;
+        long protocolVersion = SerDesProtocolHandlerRegistry.CURRENT_PROTOCOL;
 
         Object configValue = config.get(SERDES_PROTOCOL_VERSION);
         if (configValue != null) {
-            protocolVersion = byteValue(configValue);
+            protocolVersion = longValue(configValue);
         }
 
         validateSerdesProtocolVersion(protocolVersion);
 
-        SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolVersion);
+        SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler((byte) protocolVersion);
         if (serDesProtocolHandler == null) {
             throw new AvroException("SerDesProtocolHandler with protocol version " + protocolVersion + " does not exist");
         }
@@ -112,18 +111,16 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         this.serDesProtocolHandler = serDesProtocolHandler;
     }
 
-    private byte byteValue(Object configValue) {
+    private long longValue(Object configValue) {
         if (configValue instanceof Number) {
-            return ((Number) configValue).byteValue();
+            return ((Number) configValue).longValue();
         } else {
-            return Byte.parseByte(configValue.toString());
+            return Long.parseLong(configValue.toString());
         }
     }
 
-    private void validateSerdesProtocolVersion(Number number) {
-        final long x;
-        if ((x = number.longValue()) != number.doubleValue()
-                || (x < 0 || x > Byte.MAX_VALUE)) {
+    private void validateSerdesProtocolVersion(long protocolVersion) {
+        if (protocolVersion < 0 || protocolVersion > Byte.MAX_VALUE) {
             throw new AvroException(SERDES_PROTOCOL_VERSION + " value should be in [0, " + Byte.MAX_VALUE + "]");
         }
     }
@@ -149,5 +146,4 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     protected Byte getProtocolId() {
         return serDesProtocolHandler.getProtocolId();
     }
-
 }
