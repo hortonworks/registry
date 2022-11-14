@@ -82,6 +82,8 @@ subprojects {
                 testCompile("org.apache.commons:commons-compress:$versions_commons_compress")
                 implementation("org.apache.commons:commons-text:$versions_commons_text")
                 testCompile("org.apache.commons:commons-text:$versions_commons_text")
+                implementation("org.scala-lang:scala-library:$scala_version")
+                testCompile("org.scala-lang:scala-library:$scala_version")
             }
             compile(libraries.avro) {
                 version {
