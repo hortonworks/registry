@@ -30,16 +30,6 @@ dependencies {
     compile libraries.hadoop.common
     compile libraries.guava
     compile libraries.gson
-
-    /*
-    In Cloudera we need to use jackson-mapper-asl-1.9.13-cloudera.1.jar due to CVE. Unfortunately Ranger
-    pulls in the incorrect version so we are forced to override it.
-    */
-    compile(libraries.jackson.mapper) {
-        version {
-            strictly versions_jackson1
-        }
-    }
 }
 
 task copyDependencies(type: Sync) {

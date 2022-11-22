@@ -98,7 +98,6 @@ ext.libraries = [
       datatype_jsr310: "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$versions_jackson2",
       parameter_names: "com.fasterxml.jackson.module:jackson-module-parameter-names:$versions_jackson2",
       jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson2",
-      mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
       scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version:$versions_jackson2",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
