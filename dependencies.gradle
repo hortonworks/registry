@@ -74,7 +74,6 @@ ext.libraries = [
       dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:$versions_jackson2",
       dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
       jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson2",
-      mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
       scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_2.12:$versions_jackson_scala",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",

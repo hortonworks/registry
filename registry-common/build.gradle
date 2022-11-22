@@ -29,10 +29,8 @@ dependencies {
     compile libraries.jackson.databind
     compile libraries.jackson.annotations
     compile libraries.jackson.dataformat_yaml
-    compile libraries.jackson.mapper
-    
     compile libraries.json_schema_validator
-    
+
     compile libraries.libphonenumber
     
     compile libraries.jaxb_api
