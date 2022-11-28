@@ -51,46 +51,10 @@ subprojects {
         tests.extendsFrom testRuntime
     }
     dependencies {
+        implementation(enforcedPlatform(libraries.jackson.bom))
         constraints {
-            compile('com.fasterxml.jackson.core:jackson-annotations') {
-                version {
-                    strictly project.versions_jackson2
-                }
-            }
-            compile('com.fasterxml.jackson.core:jackson-core') {
-                version {
-                    strictly project.versions_jackson2
-                }
-            }
-            compile('com.fasterxml.jackson.core:jackson-databind') {
-                version {
-                    strictly project.versions_jackson_databind
-                }
-            }
-            compile('com.fasterxml.jackson.dataformat:jackson-dataformat-csv') {
-                version {
-                    strictly project.versions_jackson2
-                }
-            }
-            compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml') {
-                version {
-                    strictly project.versions_jackson2
-                }
-            }
-            compile('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider') {
-                version {
-                    strictly project.versions_jackson2
-                }
-            }
-            compile('com.fasterxml.jackson.module:jackson-module-scala_2.12') {
-                version {
-                    strictly project.versions_jackson_scala
-                }
-            }
-            constraints {
-                implementation("org.apache.commons:commons-text:$versions_commons_text")
-                testCompile("org.apache.commons:commons-text:$versions_commons_text")
-            }
+            implementation("org.apache.commons:commons-text:$versions_commons_text")
+            testCompile("org.apache.commons:commons-text:$versions_commons_text")
         }
     }
 

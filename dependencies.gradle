@@ -67,14 +67,15 @@ ext.libraries = [
    flyway            : "org.flywaydb:flyway-gradle-plugin:$versions_flyway",
 
    jackson: [
-      annotations    : "com.fasterxml.jackson.core:jackson-annotations:$versions_jackson2",
-      core           : "com.fasterxml.jackson.core:jackson-core:$versions_jackson2",
-      databind       : "com.fasterxml.jackson.core:jackson-databind:$versions_jackson_databind",
-      dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
-      dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:$versions_jackson2",
-      dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson2",
-      jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson2",
-      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_2.12:$versions_jackson_scala",
+      annotations    : "com.fasterxml.jackson.core:jackson-annotations",
+      core           : "com.fasterxml.jackson.core:jackson-core",
+      databind       : "com.fasterxml.jackson.core:jackson-databind",
+      dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
+      dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv",
+      dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
+      jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider",
+      scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_2.12",
+      bom            : "com.fasterxml.jackson:jackson-bom:$versions_jackson2_bom"
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
 
