@@ -89,6 +89,7 @@ ext.libraries = [
       media_multipart: "org.glassfish.jersey.media:jersey-media-multipart:$versions_jersey"
    ],
 
+   jetty_bom         : "org.eclipse.jetty:jetty-bom:$versions_jetty",
    jetty             : "org.eclipse.jetty:jetty-server:$versions_jetty",
    joda_time         : "joda-time:joda-time:$versions_joda_time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",

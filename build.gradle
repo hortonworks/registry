@@ -52,6 +52,7 @@ subprojects {
     }
     dependencies {
         implementation(enforcedPlatform(libraries.jackson.bom))
+        implementation(enforcedPlatform(libraries.jetty_bom))
         constraints {
             implementation("org.apache.commons:commons-text:$versions_commons_text")
             testCompile("org.apache.commons:commons-text:$versions_commons_text")
