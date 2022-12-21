@@ -16,8 +16,6 @@
 
 allprojects {
   repositories {
-
-      mavenLocal()
       mavenCentral() {
         mavenContent {
             releasesOnly()
@@ -25,6 +23,9 @@ allprojects {
       }
       maven { url gbnUrl }
       maven { url mavenUrl }
+
+      // if you need an artifact from the local .m2 uncomment below
+      // mavenLocal()
   }
 }
 
