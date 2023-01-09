@@ -29,5 +29,6 @@ dependencies {
     testCompile libraries.mockito
     testCompile libraries.jetty
     testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
+    testCompile libraries.logging.log4j
 
 }
