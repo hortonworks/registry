@@ -26,6 +26,7 @@ import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlIn
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlInsertUpdateDuplicate;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectForShareQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectForUpdateQuery;
+import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlDeleteQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MySqlSelectQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.mysql.query.MysqlUpdateQuery;
 import com.hortonworks.registries.storage.impl.jdbc.provider.sql.factory.AbstractQueryExecutor;
@@ -122,6 +123,11 @@ public class MySqlExecutor extends AbstractQueryExecutor {
     @Override
     public <T extends Storable> Collection<T> selectForUpdate(StorableKey storableKey) {
         return executeQuery(storableKey.getNameSpace(), new MySqlSelectForUpdateQuery(storableKey));
+    }
+
+    @Override
+    public void delete(StorableKey storableKey) {
+        executeUpdate(new MySqlDeleteQuery(storableKey));
     }
 
     private void insertOrUpdateWithUniqueId(final Storable storable, final SqlQuery sqlQuery) {
