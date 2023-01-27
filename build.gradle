@@ -194,7 +194,7 @@ subprojects {
         }
         
         signing {
-            //useGpgCmd()  // enable if using command line gpg
+            useGpgCmd()
             sign publishing.publications.mavenJava
             sign configurations.releaseArtifacts
         }
@@ -202,12 +202,16 @@ subprojects {
         artifacts {
             archives javadocJar, sourcesJar
 
-            releaseArtifacts jar
-            releaseArtifacts javadocJar
-            releaseArtifacts sourcesJar
-            releaseArtifacts file("build/libs/${name}-${version}-javadoc.jar.asc")
-            releaseArtifacts file("build/libs/${name}-${version}-sources.jar.asc")
-            releaseArtifacts file("build/libs/${name}-${version}.jar.asc")
+            gradle.taskGraph.whenReady { taskGraph ->
+                if(taskGraph.hasTask('signMavenJavaPublication')) {
+                    releaseArtifacts jar
+                    releaseArtifacts javadocJar
+                    releaseArtifacts sourcesJar
+                    releaseArtifacts file("build/libs/${name}-${version}-javadoc.jar.asc")
+                    releaseArtifacts file("build/libs/${name}-${version}-sources.jar.asc")
+                    releaseArtifacts file("build/libs/${name}-${version}.jar.asc")
+                }
+            }
         }
         
         uploadArchives {
