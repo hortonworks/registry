@@ -88,7 +88,7 @@ class JsonSerDesHandlerTest {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       handler.handlePayloadSerialization(outputStream, stringValue);
 
-      String serializedAsString = outputStream.toString(StandardCharsets.UTF_8);
+      String serializedAsString = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
       assertEquals(TextNode.valueOf(stringValue).toString(), serializedAsString);
     }
   }
