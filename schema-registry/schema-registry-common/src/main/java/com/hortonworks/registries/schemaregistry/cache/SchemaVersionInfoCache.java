@@ -20,11 +20,13 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
 import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import com.hortonworks.registries.shaded.javax.ws.rs.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +116,17 @@ public class SchemaVersionInfoCache implements AbstractCache {
                 }
             }
             throw new RuntimeException(e);
+        } catch (UncheckedExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof NotFoundException) {
+                throw new SchemaNotFoundException(key.toString(), cause);
+            } else if (cause instanceof RuntimeException) {
+                // Do not expose cache implementation details to the caller
+                throw (RuntimeException) cause;
+            } else {
+                // Should not happen, best option is to rethrow
+                throw e;
+            }
         }
     }
 
