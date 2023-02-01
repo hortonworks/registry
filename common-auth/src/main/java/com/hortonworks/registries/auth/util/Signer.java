@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2023 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package com.hortonworks.registries.auth.util;
 
 
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.codec.digest.HmacUtils;
 
 /**
  * Signs strings and verifies signed strings using a SHA digest.
@@ -87,23 +85,14 @@ public class Signer {
      * @return the signature for the string.
      */
     protected String computeSignature(byte[] secret, String str) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA");
-            md.update(str.getBytes(Charset.forName("UTF-8")));
-            md.update(secret);
-            byte[] digest = md.digest();
-            return Base64.getEncoder().encodeToString(digest);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
-        }
+        return new HmacUtils(HmacAlgorithms.HMAC_SHA_512, secret).hmacHex(str);
     }
 
     protected void checkSignatures(String rawValue, String originalSignature)
             throws SignerException {
         boolean isValid = false;
         byte[][] secrets = secretProvider.getAllSecrets();
-        for (int i = 0; i < secrets.length; i++) {
-            byte[] secret = secrets[i];
+        for (byte[] secret : secrets) {
             if (secret != null) {
                 String currentSignature = computeSignature(secret, rawValue);
                 if (originalSignature.equals(currentSignature)) {

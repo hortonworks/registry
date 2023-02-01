@@ -23,7 +23,7 @@ dependencies {
     compile libraries.commons.beanutils
     compile libraries.jersey.media_json
     compile libraries.guava
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.14'
+    compile libraries.commons.codec
     compile libraries.swagger
     compile libraries.dropwizard.core
     compile libraries.dropwizard.guicey

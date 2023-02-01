@@ -16,6 +16,7 @@
  
 dependencies {
 
+    compile libraries.commons.codec
     compile libraries.servlet_api
     compile libraries.directory_server
     compile libraries.directory_api

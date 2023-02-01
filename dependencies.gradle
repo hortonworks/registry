@@ -39,7 +39,7 @@ ext.libraries = [
    commons: [
       beanutils      : "commons-beanutils:commons-beanutils:$versions_commons_beanutils",
       cli            : "commons-cli:commons-cli:$versions_commons_cli",
-      codec          : "commons-codec:commons-codec",
+      codec          : "commons-codec:commons-codec:$versions_commons_codec",
       collections    : "org.apache.commons:commons-collections4:$versions_commons_collections",
       io             :"commons-io:commons-io:$versions_commons_io",
       lang3          : "org.apache.commons:commons-lang3",
