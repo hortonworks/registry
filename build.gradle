@@ -80,6 +80,8 @@ subprojects {
             constraints {
                 implementation("org.apache.commons:commons-compress:$versions_commons_compress")
                 testCompile("org.apache.commons:commons-compress:$versions_commons_compress")
+                implementation("org.scala-lang:scala-library:$scala_version")
+                testCompile("org.scala-lang:scala-library:$scala_version")
             }
             compile(libraries.avro) {
                 version {
