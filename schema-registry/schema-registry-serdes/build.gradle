@@ -32,7 +32,6 @@ dependencies {
         compile("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
         compile("org.glassfish.jersey.media:jersey-media-json-jackson") { version { strictly project.versions_jersey2 } }
         compile("org.glassfish.jersey.core:jersey-common") { version { strictly project.versions_jersey2 } }

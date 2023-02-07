@@ -26,7 +26,6 @@ dependencies {
     compile libraries.jackson.core
     compile libraries.jackson.databind
     compile libraries.jackson.annotations
-    compile libraries.jackson.dataformat_yaml
 
     compile libraries.libphonenumber
     
