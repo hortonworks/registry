@@ -207,6 +207,10 @@ public class InMemoryStorageManager implements StorageManager {
         }
 
         Collection<T> result = new HashSet<>(list.size());
+        if (searchQuery.getWhereClause() == null) {
+             result.addAll(list);
+             return result;
+        }
         for (PredicateCombinerPair predicateCombinerPair : searchQuery.getWhereClause().getPredicateCombinerPairs()) {
             for (T storable : list) {
                 Map<String, Object> map = pairs.get(storable);
