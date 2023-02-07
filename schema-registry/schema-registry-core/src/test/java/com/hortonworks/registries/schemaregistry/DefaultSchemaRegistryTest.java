@@ -59,6 +59,7 @@ public class DefaultSchemaRegistryTest {
     private MultivaluedMap<String, String> queryParametersWithNameAndDesc;
     private MultivaluedMap<String, String> queryParametersWithoutDesc;
     private MultivaluedMap<String, String> queryParametersWithoutName;
+    private MultivaluedMap<String, String> queryParametersWithoutNameAndDesc;
     private DefaultSchemaRegistry underTest;
     StorageManager storageManagerMock;
     
@@ -66,6 +67,7 @@ public class DefaultSchemaRegistryTest {
         queryParametersWithNameAndDesc = new MultivaluedHashMap<>();
         queryParametersWithoutDesc = new MultivaluedHashMap<>();
         queryParametersWithoutName = new MultivaluedHashMap<>();
+        queryParametersWithoutNameAndDesc = new MultivaluedHashMap<>();
 
         queryParametersWithNameAndDesc.putSingle(NAME, "some name");
         queryParametersWithNameAndDesc.putSingle(DESCRIPTION, "some desc");
@@ -76,6 +78,8 @@ public class DefaultSchemaRegistryTest {
 
         queryParametersWithoutName.putSingle(DESCRIPTION, "only desc");
         queryParametersWithoutDesc.putSingle(ORDER, "foo,a,bar,d");
+
+        queryParametersWithoutNameAndDesc.putSingle(NAME, "");
 
         StorageManager storageManager = new InMemoryStorageManager();
         Collection<Map<String, Object>> schemaProvidersConfig =
@@ -109,6 +113,48 @@ public class DefaultSchemaRegistryTest {
         assertEquals(expected, actual);
     }
 
+    /**
+     * Test inputs and expected result:
+     * name  | desc   | where result
+     * null  |  null  |  null
+     * ""    |  null  |  null
+     * "a"   |  null  |  name == "a"
+     * null  |  ""    |  null
+     * ""    |  ""    |  null
+     * "a"   |  ""    |  name == "a"
+     * null  |  "b"   |  desc == "a"
+     * ""    |  "b"   |  desc == "a"
+     * "a"   |  "b"   |  name == "a" and desc == "b"
+     */
+    @Test
+    public void getWhereClauseTest() {
+        setup();
+        String[] names = {null, "", "a", null, "", "a", null, "", "a"};
+        String[] description = {null, null, null, "", "", "", "b", "b", "b"};
+        Object[] result = {null, null,
+            WhereClause.begin().contains(SchemaMetadataStorable.NAME, "a").combine(), null, null,
+            WhereClause.begin().contains(SchemaMetadataStorable.NAME, "a").combine(),
+            WhereClause.begin().contains(SchemaMetadataStorable.DESCRIPTION, "b").combine(),
+            WhereClause.begin().contains(SchemaMetadataStorable.DESCRIPTION, "b").combine(),
+            WhereClause.begin().contains(SchemaMetadataStorable.NAME, "a").
+                and().contains(SchemaMetadataStorable.DESCRIPTION, "b").combine(),
+        };
+        for (int i = 0; i < names.length; i++) {
+            MultivaluedHashMap queryParameters = new MultivaluedHashMap<>();
+
+            if (names[i] != null) {
+                queryParameters.putSingle("name", names[i]);
+            }
+            if (description[i] != null) {
+                queryParameters.putSingle("description", description[i]);
+            }
+
+            WhereClause actual = underTest.getWhereClause(queryParameters);
+            assertEquals(result[i], actual);
+
+        }
+    }
+
     @Test
     public void getWhereClauseTestNameDescriptionPresent() {
         //given
@@ -135,6 +181,16 @@ public class DefaultSchemaRegistryTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    public void getWhereClauseTestNameDescriptionNotPresent() {
+        //given
+        setup();
+        //when
+        WhereClause actual = underTest.getWhereClause(queryParametersWithoutNameAndDesc);
+
+        //then
+        assertNull(actual);
+    }
     @Test
     public void testJsonSchemaCompatibility() {
         setup();
