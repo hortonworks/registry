@@ -52,6 +52,7 @@ import com.hortonworks.registries.storage.impl.jdbc.sequences.NamespaceSequenceS
 import com.hortonworks.registries.storage.search.OrderBy;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.search.WhereClause;
+import com.hortonworks.registries.storage.search.WhereClauseCombiner;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -79,7 +80,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -1071,9 +1071,10 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
      */
     private Collection<SchemaMetadataInfo> searchSchemas(WhereClause whereClause, List<OrderBy> orderByFields) {
         SearchQuery searchQuery = SearchQuery.searchFrom(SchemaMetadataStorable.NAME_SPACE)
-                                             .where(whereClause)
                                              .orderBy(orderByFields.toArray(new OrderBy[orderByFields.size()]));
-
+        if (whereClause != null) {
+            searchQuery = searchQuery.where(whereClause);
+        }
         return storageManager.search(searchQuery)
                              .stream()
                              .map(y -> ((SchemaMetadataStorable) y).toSchemaMetadataInfo())
@@ -1093,27 +1094,22 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         String name = queryParameters.getFirst(SchemaMetadataStorable.NAME);
         String description = queryParameters.getFirst(SchemaMetadataStorable.DESCRIPTION);
 
-        WhereClause whereClause;
-        if (isNotBlank(name) && isBlank(description)) {
-            whereClause = WhereClause.begin()
-                    .contains(SchemaMetadataStorable.NAME, name).combine();
-        } else if (isNotBlank(description) && isBlank(name)) {
-            whereClause = WhereClause.begin()
-                    .contains(SchemaMetadataStorable.DESCRIPTION, description).combine();
-        } else {
-            //Make sure we're not passing nulls as Predicate values
-            if (name == null) {
-                name = "";
-            }
-            if (description == null) {
-                description = "";
-            }
-            whereClause = WhereClause.begin()
-                    .contains(SchemaMetadataStorable.NAME, name)
-                    .and().contains(SchemaMetadataStorable.DESCRIPTION, description)
-                    .combine();
+        WhereClause.Builder builder = WhereClause.begin();
+        WhereClauseCombiner whereClauseCombiner = null;
+        if (isNotBlank(name)) {
+            whereClauseCombiner = builder.contains(SchemaMetadataStorable.NAME, name);
         }
-        return whereClause;
+        if (isNotBlank(description)) {
+            if (whereClauseCombiner != null) {
+                whereClauseCombiner = whereClauseCombiner.and().contains(SchemaMetadataStorable.DESCRIPTION, description);
+            } else {
+                whereClauseCombiner = builder.contains(SchemaMetadataStorable.DESCRIPTION, description);
+            }
+        }
+        if (whereClauseCombiner == null) {
+            return null;
+        }
+        return whereClauseCombiner.combine();
     }
 
     private List<OrderBy> getOrderByFields(String value) {
