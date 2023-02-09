@@ -31,5 +31,5 @@ dependencies {
     testCompile libraries.jetty
     testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet'
     testCompile "commons-logging:commons-logging:1.2"
-
+    testCompile group: 'org.slf4j', name: 'slf4j-reload4j'
 }
