@@ -16,6 +16,7 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.cloudera.dim.registry.oauth2.ranger.RangerOAuth2Authenticator;
+import com.google.inject.Provides;
 import com.hortonworks.registries.common.CompatibilityConfig;
 import com.hortonworks.registries.common.FileService;
 import com.hortonworks.registries.common.FileStorageConfiguration;
@@ -25,6 +26,7 @@ import com.hortonworks.registries.schemaregistry.ISchemaRegistry;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgent;
 import com.hortonworks.registries.schemaregistry.authorizer.agent.AuthorizationAgentFactory;
 import com.hortonworks.registries.schemaregistry.authorizer.core.RangerAuthenticator;
+import com.hortonworks.registries.schemaregistry.authorizer.core.util.KerberosCacheDuration;
 import com.hortonworks.registries.schemaregistry.authorizer.core.util.RangerKerberosAuthenticator;
 import com.hortonworks.registries.schemaregistry.locks.SchemaLockManager;
 import com.hortonworks.registries.schemaregistry.providers.CompatibilityConfigurationProvider;
@@ -37,6 +39,7 @@ import ru.vyarus.dropwizard.guice.module.support.DropwizardAwareModule;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.time.Duration;
 
 public class SchemaRegistryModule extends DropwizardAwareModule<RegistryConfiguration> {
 
@@ -72,6 +75,13 @@ public class SchemaRegistryModule extends DropwizardAwareModule<RegistryConfigur
         bind(RangerOAuth2Authenticator.class).in(Singleton.class);
 
         bind(RangerAuthenticator.class).to(RangerCompositeAuthenticator.class).in(Singleton.class);
+    }
+
+    @Provides
+    @Singleton
+    @KerberosCacheDuration
+    public Duration kerberosCacheDuration() {
+        return Duration.ofMillis(configuration().getKerberosCacheExpirationMs());
     }
 
     @SuppressWarnings("unchecked")

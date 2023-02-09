@@ -194,4 +194,15 @@ public class RegistryConfiguration extends Configuration {
     public void setKerberosServiceImplementation(String kerberosServiceImplementation) {
         this.kerberosServiceImplementation = kerberosServiceImplementation;
     }
+
+    @JsonProperty
+    private long kerberosCacheExpirationMs = 5 * 60 * 1000;
+
+    public long getKerberosCacheExpirationMs() {
+        return kerberosCacheExpirationMs;
+    }
+
+    public void setKerberosCacheExpirationMs(long kerberosCacheExpirationMs) {
+        this.kerberosCacheExpirationMs = kerberosCacheExpirationMs;
+    }
 }

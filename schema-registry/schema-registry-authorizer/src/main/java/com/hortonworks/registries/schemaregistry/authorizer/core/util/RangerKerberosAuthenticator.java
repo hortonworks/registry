@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Cloudera, Inc.
+ * Copyright 2016-2023 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.core.util;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.common.KerberosService;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
@@ -28,9 +31,8 @@ import javax.inject.Singleton;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Map;
+import java.time.Duration;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,20 +40,28 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class RangerKerberosAuthenticator implements RangerAuthenticator {
 
-    private static final Map<String, Authorizer.UserAndGroups> USER_GROUPS_STORE = new ConcurrentHashMap<>();
-
     private static final Logger LOG = LoggerFactory.getLogger(RangerKerberosAuthenticator.class);
+    private static final Duration DEFAULT_CACHE_DURATION = Duration.ofMinutes(5);
 
     private final KerberosService kerberosService;
+    private final LoadingCache<String, Authorizer.UserAndGroups> userGroupCache;
 
     @Inject
-    public RangerKerberosAuthenticator(KerberosService kerberosService) {
+    public RangerKerberosAuthenticator(KerberosService kerberosService, @KerberosCacheDuration Duration cacheDuration) {
         this.kerberosService = checkNotNull(kerberosService, "kerberosService");
+        userGroupCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(cacheDuration == null ? DEFAULT_CACHE_DURATION : cacheDuration)
+            .build(new CacheLoader<String, Authorizer.UserAndGroups>() {
+                @Override
+                public Authorizer.UserAndGroups load(String user) {
+                    return loadUserAndGroup(user);
+                }
+            });
     }
 
     @Nullable
     public Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
-
         Principal p = sc.getUserPrincipal();
         if (p == null) {
             return null;
@@ -60,18 +70,7 @@ public class RangerKerberosAuthenticator implements RangerAuthenticator {
 
         try {
             String user = kerberosName.getShortName();
-            Authorizer.UserAndGroups res = USER_GROUPS_STORE.get(user);
-            if (res != null) {
-                return res;
-            }
-
-            Set<String> groupsSet = kerberosService.getGroupsForUser(user);
-
-            res = new Authorizer.UserAndGroups(user, groupsSet);
-
-            USER_GROUPS_STORE.put(user, res);
-
-            return res;
+            return userGroupCache.get(user);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
@@ -80,4 +79,13 @@ public class RangerKerberosAuthenticator implements RangerAuthenticator {
         }
     }
 
+    private Authorizer.UserAndGroups loadUserAndGroup(String user) {
+        try {
+            Set<String> groupsSet = kerberosService.getGroupsForUser(user);
+            return new Authorizer.UserAndGroups(user, groupsSet);
+        } catch (Exception e) {
+            LOG.error("Error while getting hadoop user and groups for the principal.", e);
+            return null;
+        }
+    }
 }
