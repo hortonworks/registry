@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-   
+
 dependencies {
 
     compile libraries.servlet_api
@@ -27,5 +27,5 @@ dependencies {
     testCompile libraries.mockito
     testCompile libraries.jetty
     testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
-
+    testCompile group: 'org.slf4j', name: 'slf4j-reload4j'
 }
