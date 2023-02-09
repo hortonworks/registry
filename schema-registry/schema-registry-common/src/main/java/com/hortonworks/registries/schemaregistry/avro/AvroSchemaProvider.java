@@ -26,6 +26,7 @@ import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -95,6 +96,25 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         Map<String, String> env = new HashMap<>();
         StringBuilder sb = new StringBuilder();
         return build(env, schema, sb).toString();
+    }
+
+    private static String normalizedDefaultValue(Object defaultValue) {
+        if (JsonProperties.NULL_VALUE.equals(defaultValue)) {
+            return "null";
+        }
+        if (!defaultValue.getClass().isArray()) {
+            return defaultValue.toString();
+        }
+        StringBuilder result = new StringBuilder("\"[");
+        int length = Array.getLength(defaultValue);
+        for (int i = 0; i < length; i++) {
+            result.append(normalizedDefaultValue(Array.get(defaultValue, i)));
+            if (i < length - 1) {
+                result.append(",");
+            }
+        }
+        result.append("]\"");
+        return result.toString();
     }
 
     // This is borrowed from avro but this does not fully resolve schema according to resolution rules. For more info
@@ -186,17 +206,13 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
                     // handle default value
                     Object defaultValue = field.defaultVal();
                     if (defaultValue != null) {
-                        if (defaultValue == JsonProperties.NULL_VALUE) {
-                            appendable.append("null");
-                        } else {
-                            appendable.append(defaultValue.toString());
-                        }
+                        appendable.append(normalizedDefaultValue(defaultValue));
                     }
 
                     build(env, field.schema(), appendable).append("}");
                 }
                 return appendable.append("]").append("}");
-                
+
             default: // boolean, bytes, double, float, int, long, null, string
                 return appendable.append('"').append(schemaType.getName()).append('"');
 

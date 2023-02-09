@@ -73,6 +73,23 @@ public class AvroSchemaProviderTest {
             "  ]\n" +
             "}";
 
+    private String schemaWithBytesDefault = "{\n" +
+        " \"type\": \"record\",\n" +
+        " \"name\": \"test\",\n" +
+        " \"fields\": [\n" +
+        "  {\n" +
+        "   \"name\": \"myDecimal\",\n" +
+        "   \"type\": {\n" +
+        "    \"type\": \"bytes\",\n" +
+        "    \"logicalType\": \"decimal\",\n" +
+        "    \"precision\": 10,\n" +
+        "    \"scale\": 5\n" +
+        "   },\n" +
+        "   \"default\": \"\\u0000\"\n" +
+        "  }\n" +
+        " ]\n" +
+        "}";
+
     @Test
     public void testFingerPrints() throws Exception {
         AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
@@ -87,4 +104,11 @@ public class AvroSchemaProviderTest {
         assertFalse(Arrays.equals(schemaWithAliasesFingerprint, schemaWithDefaultsFingerprint));
     }
 
+    @Test
+    public void testFingerPrintsWithBytesDefaultValue() throws Exception {
+        AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
+        byte[] schemaFingerprint1 = avroSchemaProvider.getFingerprint(schemaWithBytesDefault);
+        byte[] schemaFingerprint2 = avroSchemaProvider.getFingerprint(schemaWithBytesDefault);
+        assertArrayEquals(schemaFingerprint1, schemaFingerprint2);
+    }
 }
