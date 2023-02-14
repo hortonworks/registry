@@ -16,6 +16,9 @@
 package com.hortonworks.registries.schemaregistry.avro;
 
 import com.hortonworks.registries.schemaregistry.SchemaFieldInfo;
+import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
+import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.avro.SchemaBuilder;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -23,11 +26,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class AvroSchemaProviderTest {
     private static final Logger LOG = LoggerFactory.getLogger(AvroSchemaProviderTest.class);
@@ -110,5 +116,62 @@ public class AvroSchemaProviderTest {
         byte[] schemaFingerprint1 = avroSchemaProvider.getFingerprint(schemaWithBytesDefault);
         byte[] schemaFingerprint2 = avroSchemaProvider.getFingerprint(schemaWithBytesDefault);
         assertArrayEquals(schemaFingerprint1, schemaFingerprint2);
+    }
+
+    @Test
+    public void sameUnionSchemaTest() throws InvalidSchemaException, SchemaNotFoundException {
+        Map<String, Object> config = new HashMap<>();
+
+        String unionSchema1 = SchemaBuilder.record("union1").fields().name("union").type(
+            SchemaBuilder.unionOf().nullBuilder().endNull()
+                .and().stringBuilder().endString()
+                .and().intBuilder().endInt().endUnion()).noDefault().endRecord().toString();
+        String unionSchema2 = SchemaBuilder.record("union1").fields().name("union").type(
+            SchemaBuilder.unionOf().nullBuilder().endNull()
+                .and().intBuilder().endInt()
+                .and().stringBuilder().endString().endUnion()).noDefault().endRecord().toString();
+
+        config.put("enhancedAvroUnionFingerprint", "true");
+        AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
+        avroSchemaProvider.init(config);
+        byte[] unionFingerprint1 = avroSchemaProvider.getFingerprint(unionSchema1);
+        byte[] unionFingerprint2 = avroSchemaProvider.getFingerprint(unionSchema2);
+        assertArrayEquals(unionFingerprint1, unionFingerprint2);
+
+        config.put("enhancedAvroUnionFingerprint", "false");
+        avroSchemaProvider = new AvroSchemaProvider();
+        avroSchemaProvider.init(config);
+        byte[] unionFingerprintOld1 = avroSchemaProvider.getFingerprint(unionSchema1);
+        byte[] unionFingerprintOld2 = avroSchemaProvider.getFingerprint(unionSchema2);
+        assertArrayNotEquals(unionFingerprintOld1, unionFingerprintOld2);
+    }
+
+    @Test
+    public void differentUnionSchemaTest() throws InvalidSchemaException, SchemaNotFoundException {
+        Map<String, Object> config = new HashMap<>();
+        config.put("enhancedAvroUnionFingerprint", "false");
+        AvroSchemaProvider avroSchemaProvider = new AvroSchemaProvider();
+        avroSchemaProvider.init(config);
+        String unionSchema1 = SchemaBuilder.record("union1").fields().name("union").type(
+            SchemaBuilder.unionOf().nullBuilder().endNull()
+                .and().stringBuilder().endString()
+                .and().intBuilder().endInt().endUnion()).noDefault().endRecord().toString();
+        String unionSchema2 = SchemaBuilder.record("union1").fields().name("union").type(
+            SchemaBuilder.unionOf().intBuilder().endInt()
+                .and().nullBuilder().endNull()
+                .and().stringBuilder().endString().endUnion()).noDefault().endRecord().toString();
+
+        byte[] unionFingerprint1 = avroSchemaProvider.getFingerprint(unionSchema1);
+        byte[] unionFingerprint2 = avroSchemaProvider.getFingerprint(unionSchema2);
+        assertArrayNotEquals(unionFingerprint1, unionFingerprint2);
+    }
+
+    private void assertArrayNotEquals(byte[] expecteds, byte[] actuals) {
+        try {
+            assertArrayEquals(expecteds, actuals);
+        } catch (AssertionError e) {
+            return;
+        }
+        fail("The arrays are equal");
     }
 }

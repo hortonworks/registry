@@ -29,18 +29,30 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.lang.Boolean.parseBoolean;
 /**
  *
  */
 public class AvroSchemaProvider extends AbstractSchemaProvider {
 
     public static final String TYPE = "avro";
+    public static final String ENHANCED_AVRO_UNION_FINGERPRINT = "enhancedAvroUnionFingerprint";
+
+    private boolean enhancedAvroUnionFingerprint;
+
+    public void init(Map<String, Object> config) {
+        super.init(config);
+        enhancedAvroUnionFingerprint = parseBoolean(config.getOrDefault(ENHANCED_AVRO_UNION_FINGERPRINT, "false").toString());
+    }
 
     @Override
     public String getName() {
@@ -121,7 +133,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     // https://issues.apache.org/jira/browse/AVRO-2002
     //
     // Added default and aliases handling here.
-    private static Appendable build(Map<String, String> env,
+    private Appendable build(Map<String, String> env,
                                     Schema schema,
                                     Appendable appendable) throws IOException {
         boolean firstTime = true;
@@ -130,7 +142,8 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
         switch (schemaType) {
             case UNION:
                 appendable.append('[');
-                for (Schema b : schema.getTypes()) {
+                List<Schema> types = getUnionSchemas(schema);
+                for (Schema b : types) {
                     if (!firstTime) {
                         appendable.append(',');
                     } else {
@@ -217,6 +230,25 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
                 return appendable.append('"').append(schemaType.getName()).append('"');
 
         }
+    }
+
+    private List<Schema> getUnionSchemas(Schema schema) {
+        if (enhancedAvroUnionFingerprint) {
+            return reorderUnion(schema.getTypes());
+        }
+        return schema.getTypes();
+    }
+
+    private List<Schema> reorderUnion(List<Schema> schemas) {
+        if (schemas.size() < 2) {
+            return schemas;
+        }
+        List<Schema> ordered = new ArrayList<>(schemas.size());
+        List<Schema> copy = new ArrayList<>(schemas.subList(1, schemas.size()));
+        Collections.sort(copy, Comparator.comparing(Schema::getName));
+        ordered.add(schemas.get(0));
+        ordered.addAll(copy);
+        return ordered;
     }
 
     private static void addNameType(Map<String, String> env, Appendable appendable, Schema.Type schemaType, String name) throws IOException {
