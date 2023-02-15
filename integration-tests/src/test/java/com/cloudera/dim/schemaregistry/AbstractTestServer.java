@@ -15,26 +15,20 @@
  **/
 package com.cloudera.dim.schemaregistry;
 
-import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-abstract class AbstractTestServer {
+public abstract class AbstractTestServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractTestServer.class);
 
     protected final AtomicBoolean running = new AtomicBoolean(false);
     protected final AtomicBoolean started = new AtomicBoolean(false);
-    protected final TestConfigGenerator configGenerator = new TestConfigGenerator();
+
+    public AbstractTestServer() {
+    }
 
     public boolean isRunning() {
         return running.get();
@@ -45,27 +39,6 @@ abstract class AbstractTestServer {
     public void stop() throws Exception {
         running.set(false);
         started.set(false);
-    }
-
-    protected int findFreePort() {
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
-            return serverSocket.getLocalPort();
-        } catch (Exception ex) {
-            LOG.warn("Could not find free port.", ex);
-            return 0;
-        }
-    }
-
-    protected File writeFile(String prefix, String suffix, String content) throws IOException {
-        File tmpDir;
-        do {
-            tmpDir = new File(FileUtils.getTempDirectory(), RandomStringUtils.randomAlphabetic(8));
-        } while (tmpDir.exists());
-        tmpDir.mkdirs();
-
-        File tmpFile = new File(tmpDir, prefix + suffix);
-        Files.write(tmpFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
-        return tmpFile;
     }
 
 }

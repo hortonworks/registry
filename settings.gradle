@@ -41,6 +41,8 @@ include ':examples:schema-registry:schema-lifecycle'
 include ':behavior-tests'
 include ':registry-dist'
 include ':docker'
+include ':integration-tests'
+include ':testcontainers'
 
 project(":registry-dist").name = "hortonworks-registries-bin"
 project(":docker").name = "hortonworks-registries-docker"

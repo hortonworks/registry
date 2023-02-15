@@ -36,7 +36,7 @@ public class SchemaFlywayFactory {
     private static final boolean CLEAN_ON_VALIDATION_ERROR = false;
 
 
-    static Flyway get(StorageProviderConfiguration conf,
+    public static Flyway get(StorageProviderConfiguration conf,
                       String scriptRootPath,
                       boolean validateOnMigrate) {
         switch (conf.getDbType()) {
