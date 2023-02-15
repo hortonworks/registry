@@ -15,36 +15,26 @@
  **/
 package com.cloudera.dim.schemaregistry.config;
 
+import com.google.common.base.Preconditions;
 import com.hortonworks.registries.common.RegistryConfiguration;
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import freemarker.template.TemplateModel;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+public class RegistryYamlGenerator {
 
-public class TestConfigGenerator {
+    private static final Logger LOG = LoggerFactory.getLogger(RegistryYamlGenerator.class);
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestConfigGenerator.class);
-
-    private final Configuration cfg;
-
-    public TestConfigGenerator() {
-        cfg = new Configuration(Configuration.VERSION_2_3_31);
-        cfg.setClassForTemplateLoading(getClass(), "/template");
-        cfg.setDefaultEncoding("UTF-8");
-        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setLogTemplateExceptions(false);
-        cfg.setWrapUncheckedExceptions(true);
-        cfg.setFallbackOnNullLoopVariable(false);
+    private RegistryYamlGenerator() {
     }
 
     /**
@@ -54,9 +44,10 @@ public class TestConfigGenerator {
      * @param schemaRegistryPort    on which port should SR open the HTTP port
      * @param tlsConfig             if TLS is enabled then we need to configure the keystore and trust store
      */
-    public String generateRegistryYaml(@Nonnull RegistryConfiguration configuration, String connectorType,
-                                       int schemaRegistryPort, TlsConfig tlsConfig) {
-        checkNotNull(configuration);
+    public static String generateRegistryYaml(RegistryConfiguration configuration, String connectorType,
+                                              int schemaRegistryPort, TlsConfig tlsConfig, Class classForTemplateLoading,
+                                              String configTemplateDir) {
+        Preconditions.checkNotNull(configuration);
         if (connectorType == null) {
             connectorType = "http";
         }
@@ -67,18 +58,30 @@ public class TestConfigGenerator {
         model.put("port", String.valueOf(schemaRegistryPort));
         model.put("tlsConfig", tlsConfig);
 
-        return generate("registry.ftl", model);
+        String ret = generate("registry.ftl", model,
+                classForTemplateLoading, configTemplateDir);
+        return ret;
     }
 
-    public String generateAtlasProperties() {
+    public static String generateAtlasProperties(Class classForTemplateLoading,
+                                                 String configTemplateDir) {
         Map<String, Object> model = new HashMap<>();
 
-        return generate("atlas-application.properties", model);
+        return generate("atlas-application.properties", model, classForTemplateLoading,
+                configTemplateDir);
     }
 
     @SuppressWarnings({"unchecked", "rawtype"})
-    private String generate(String templateName, Map model) {
+    private static String generate(String templateName, Map model, Class classForTemplateLoading, String configTemplateDir) {
         try {
+            Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+            cfg.setClassForTemplateLoading(classForTemplateLoading, configTemplateDir);
+            cfg.setDefaultEncoding("UTF-8");
+            cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+            cfg.setLogTemplateExceptions(false);
+            cfg.setWrapUncheckedExceptions(true);
+            cfg.setFallbackOnNullLoopVariable(false);
+
             Template template = cfg.getTemplate(templateName);
 
             BeansWrapper wrapper = new BeansWrapper(Configuration.VERSION_2_3_31);
@@ -94,6 +97,7 @@ public class TestConfigGenerator {
         }
     }
 
+    @Data
     public static class TlsConfig {
         private boolean needClientAuth;
         private String keyStorePath;
@@ -116,60 +120,5 @@ public class TestConfigGenerator {
             this.trustStorePassword = trustStorePassword;
         }
 
-        public boolean isNeedClientAuth() {
-            return needClientAuth;
-        }
-
-        public void setNeedClientAuth(boolean needClientAuth) {
-            this.needClientAuth = needClientAuth;
-        }
-
-        public String getKeyStorePath() {
-            return keyStorePath;
-        }
-
-        public void setKeyStorePath(String keyStorePath) {
-            this.keyStorePath = keyStorePath;
-        }
-
-        public String getKeyStorePassword() {
-            return keyStorePassword;
-        }
-
-        public void setKeyStorePassword(String keyStorePassword) {
-            this.keyStorePassword = keyStorePassword;
-        }
-
-        public String getCertAlias() {
-            return certAlias;
-        }
-
-        public void setCertAlias(String certAlias) {
-            this.certAlias = certAlias;
-        }
-
-        public boolean isEnableCRLDP() {
-            return enableCRLDP;
-        }
-
-        public void setEnableCRLDP(boolean enableCRLDP) {
-            this.enableCRLDP = enableCRLDP;
-        }
-
-        public String getTrustStorePath() {
-            return trustStorePath;
-        }
-
-        public void setTrustStorePath(String trustStorePath) {
-            this.trustStorePath = trustStorePath;
-        }
-
-        public String getTrustStorePassword() {
-            return trustStorePassword;
-        }
-
-        public void setTrustStorePassword(String trustStorePassword) {
-            this.trustStorePassword = trustStorePassword;
-        }
     }
 }
