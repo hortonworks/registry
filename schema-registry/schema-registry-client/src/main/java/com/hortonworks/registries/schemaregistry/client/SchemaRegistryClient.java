@@ -660,13 +660,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(String schemaBranchName, 
-                                            SchemaMetadata schemaMetadata, 
-                                            SchemaVersion schemaVersion, 
-                                            boolean disableCanonicalCheck) 
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName,
+                                            SchemaMetadata schemaMetadata,
+                                            SchemaVersion schemaVersion,
+                                            boolean disableCanonicalCheck)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         // get it, if it exists in cache
-        SchemaDigestEntry schemaDigestEntry = buildSchemaTextEntry(schemaVersion, schemaMetadata.getName());
+        SchemaDigestEntry schemaDigestEntry = buildSchemaTextEntry(schemaVersion.getSchemaText(), schemaMetadata.getName());
         SchemaIdVersion schemaIdVersion = schemaTextCache.getIfPresent(schemaDigestEntry);
 
         if (schemaIdVersion == null) {
@@ -730,10 +730,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return configuration.getValue(Configuration.HASH_FUNCTION.name());
     }
 
-    private SchemaDigestEntry buildSchemaTextEntry(SchemaVersion schemaVersion, String name) {
+    private SchemaDigestEntry buildSchemaTextEntry(String schemaText, String name) {
         byte[] digest;
         try {
-            digest = MessageDigest.getInstance(getHashFunction()).digest(schemaVersion.getSchemaText().getBytes(StandardCharsets.UTF_8));
+            digest = MessageDigest.getInstance(getHashFunction()).digest(schemaText.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -749,14 +749,14 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     }
 
     @Override
-    public SchemaIdVersion addSchemaVersion(final String schemaBranchName, 
-                                            final String schemaName, 
-                                            final SchemaVersion schemaVersion, 
+    public SchemaIdVersion addSchemaVersion(final String schemaBranchName,
+                                            final String schemaName,
+                                            final SchemaVersion schemaVersion,
                                             boolean disableCanonicalCheck)
             throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         try {
-            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion, schemaName),
+            return schemaTextCache.get(buildSchemaTextEntry(schemaVersion.getSchemaText(), schemaName),
                     () -> doAddSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck));
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
@@ -779,6 +779,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     @Override
     public void deleteSchemaVersion(SchemaVersionKey schemaVersionKey) throws SchemaNotFoundException, SchemaLifecycleException {
+        invalidateTextCache(schemaVersionKey);
         schemaVersionInfoCache.invalidateSchema(new SchemaVersionInfoCache.Key(schemaVersionKey));
 
         Response response = runRetryableBlock((SchemaRegistryTargets targets) -> {
@@ -798,13 +799,27 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
         handleDeleteSchemaResponse(response);
     }
-    
+
+    private void invalidateTextCache(SchemaVersionKey schemaVersionKey) {
+        SchemaVersionInfo schemaVersionInfo;
+        try {
+            schemaVersionInfo = getSchemaVersionInfo(schemaVersionKey);
+        } catch (SchemaNotFoundException e) {
+            return;
+        }
+        invalidateTextCache(schemaVersionInfo);
+    }
+
+    private void invalidateTextCache(SchemaVersionInfo schemaVersionInfo) {
+        SchemaDigestEntry schemaTextCacheKey = buildSchemaTextEntry(schemaVersionInfo.getSchemaText(), schemaVersionInfo.getName());
+        schemaTextCache.invalidate(schemaTextCacheKey);
+    }
+
     private Invocation.Builder addHeaderIfOAuthLogin(Invocation.Builder request) {
         if (login instanceof OAuth2Login) {
             request.header(HttpHeaders.AUTHORIZATION, "Bearer " + ((OAuth2Login) login).getAuthToken());
         }
         return request;
-        
     }
 
     private void handleDeleteSchemaResponse(Response response) throws SchemaNotFoundException, SchemaLifecycleException {
