@@ -47,7 +47,7 @@ class MutualSslFilterTest {
             properties.put("rules", "DEFAULT");
         } else if (testType.equals("RuleTests")) {
             properties.put("rules", "\"RULE:^CN=(.*?),OU=ServiceUsers.*$/$1/L\"," +
-                    "\"RULE:^CN=(.*?),OU=(.*?),O=(.*?),L=(.*?),ST=(.*?),C=(.*?)$/$1@$2/L\"," +
+                    "RULE:^CN=(.*?),OU=(.*?),O=(.*?),L=(.*?),ST=(.*?),C=(.*?)$/$1@$2/L," +
                     "\"RULE:^cn=(.*?),ou=(.*?),dc=(.*?),dc=(.*?)$/$1@$2/U\"," +
                     "\"RULE:^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$/$1/U\"," +
                     "\"DEFAULT\"");

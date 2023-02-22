@@ -54,7 +54,8 @@ public class MutualSslFilter implements AuthenticationHandler {
     public void init(Properties config) throws ServletException {
         LOG.info("Initializing mutual TLS authentication ...");
         String mappingRules = StringUtils.trimToEmpty(config.getProperty(SSL_PRINCIPAL_MAPPING_RULES, "DEFAULT"));
-        rules = parseRules(Arrays.asList(mappingRules.split("(?=\"DEFAULT)|(?=\"RULE:)")));
+        mappingRules = mappingRules.replaceAll("\"", "");
+        rules = parseRules(Arrays.asList(mappingRules.split("(?=DEFAULT)|(?=RULE:)")));
 
         if (rules.isEmpty()) {
             throw new ServletException("Invalid value for SSL principal mapping rules: " + mappingRules);
@@ -138,10 +139,8 @@ public class MutualSslFilter implements AuthenticationHandler {
 
     private static String normalizeRule(String rule) {
         String result = "";
-        if (rule.startsWith("\"") && rule.endsWith("\",")) {
-            result = rule.substring(1, rule.length() - 2);
-        } else if (rule.startsWith("\"") && rule.endsWith("\"")) {
-            result = rule.substring(1, rule.length() - 1);
+        if (rule.endsWith(",")) {
+            result = rule.substring(0, rule.length() - 1);
         }
         return result;
     }
