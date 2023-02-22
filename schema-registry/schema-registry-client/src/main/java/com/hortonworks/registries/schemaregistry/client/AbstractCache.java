@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2019 Cloudera, Inc.
+ * Copyright 2018-2023 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,9 @@
  * limitations under the License.
  **/
 
-package com.hortonworks.registries.schemaregistry.cache;
+package com.hortonworks.registries.schemaregistry.client;
+
+import com.hortonworks.registries.schemaregistry.cache.SchemaRegistryCacheType;
 
 public interface AbstractCache {
 
