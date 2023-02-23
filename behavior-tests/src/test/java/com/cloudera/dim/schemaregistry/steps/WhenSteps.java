@@ -17,7 +17,8 @@ package com.cloudera.dim.schemaregistry.steps;
 
 import com.cloudera.dim.registry.ssl.MutualSslFilter;
 import com.cloudera.dim.schemaregistry.TestSchemaRegistryServer;
-import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
+import com.cloudera.dim.schemaregistry.TestUtils;
+import com.cloudera.dim.schemaregistry.config.RegistryYamlGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
@@ -44,7 +45,6 @@ import io.cucumber.java.en.When;
 import org.apache.atlas.model.discovery.AtlasSearchResult;
 import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
@@ -66,8 +66,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
@@ -80,7 +78,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.AGGREGATED_SCHEMAS;
 import static com.cloudera.dim.schemaregistry.GlobalState.AUTH_TOKEN;
@@ -184,13 +181,13 @@ public class WhenSteps extends AbstractSteps {
 
     private void configureServerForTls(TestSchemaRegistryServer testServer, boolean clientAuthEnabled) throws IOException {
         testServer.setConnectorType("https");
-        testServer.setTlsConfig(new TestConfigGenerator.TlsConfig(
+        testServer.setTlsConfig(new RegistryYamlGenerator.TlsConfig(
                 clientAuthEnabled,
-                getResourceAsTempFile("/tls/keystore.jks"),
+                TestUtils.getResourceAsTempFile(getClass(), "/tls/keystore.jks"),
                 "password",
                 "selfsigned",
                 false,
-                getResourceAsTempFile("/tls/truststore.jks"),
+                TestUtils.getResourceAsTempFile(getClass(), "/tls/truststore.jks"),
                 "password"
         ));
     }
@@ -202,34 +199,19 @@ public class WhenSteps extends AbstractSteps {
             config.put("schema.registry.client.ssl.protocol", "SSL");
 
             config.put("schema.registry.client.ssl.trustStoreType", "JKS");
-            config.put("schema.registry.client.ssl.trustStorePath", getResourceAsTempFile("/tls/truststore.jks"));
+            config.put("schema.registry.client.ssl.trustStorePath",
+                    TestUtils.getResourceAsTempFile(getClass(), "/tls/truststore.jks"));
             config.put("schema.registry.client.ssl.trustStorePassword", "password");
 
             config.put("schema.registry.client.ssl.keyStoreType", "JKS");
-            config.put("schema.registry.client.ssl.keyStorePath", getResourceAsTempFile("/tls/keystore.jks"));
+            config.put("schema.registry.client.ssl.keyStorePath",
+                    TestUtils.getResourceAsTempFile(getClass(), "/tls/keystore.jks"));
             config.put("schema.registry.client.ssl.keyStorePassword", "password");
         } catch (Exception ex) {
             LOG.error("Failed to read TLS config for the SR client.", ex);
         }
 
         return config;
-    }
-
-    private String getResourceAsTempFile(String resourcePath) throws IOException {
-        byte[] resourceBytes = IOUtils.toByteArray(getClass().getResource(resourcePath));
-
-        File tmpFile = File.createTempFile("tmpFile", ".jks");
-
-        try (FileOutputStream out = new FileOutputStream(tmpFile)) {
-            IOUtils.write(resourceBytes, out);
-        }
-
-        String absolutePath = tmpFile.getAbsolutePath();
-        if (File.separator.equals("\\")) {
-            // fix windows file path
-            absolutePath = absolutePath.replaceAll(Pattern.quote(File.separator), "/");
-        }
-        return absolutePath;
     }
 
     @Given("that Atlas is running")

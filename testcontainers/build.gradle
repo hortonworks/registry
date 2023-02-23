@@ -1,0 +1,95 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+dependencies {
+
+    testImplementation project(':integration-tests').sourceSets.test.output
+
+    testImplementation(project(':registry-common')) { transitive = false }
+    testImplementation(project(':registry-common-client')) { transitive = false }
+    testImplementation(project(':common-auth')) { transitive = false }
+
+    testImplementation(project(':schema-registry:schema-registry-core')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-client')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-serdes')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-common')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-authorizer')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-webservice')) { transitive = false }
+    testImplementation(project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-client')) { transitive = false }
+    testImplementation(project(':schema-registry:oauth2-common')) { transitive = false }
+    testImplementation(project(':schema-registry:oauth2-authenticator')) { transitive = false }
+    testImplementation(project(':schema-registry:ssl-authenticator')) { transitive = false }
+
+    testImplementation(project(':atlas-integration:atlas-module')) { transitive = false }
+    testImplementation(project(':atlas-integration:atlas-common')) { transitive = false }
+    testImplementation(project(':atlas-integration:atlas-module')) { transitive = false }
+
+    testImplementation(project(':storage:storage-tool')) { transitive = false }
+    testImplementation(project(':storage:storage-core')) { transitive = false }
+    testImplementation(project(':storage:storage-common')) { transitive = false }
+
+    testImplementation libraries.lombok
+    testAnnotationProcessor libraries.lombok
+
+    // we need to use version 200 due to new features, but we also need to keep
+    // the old version in storage-core because (h2) transactions don't work with newer versions
+    testImplementation("com.h2database:h2") {
+        version {
+            strictly "1.4.200"
+        }
+    }
+
+    testImplementation libraries.jackson.core
+    testImplementation libraries.jackson.databind
+    testImplementation libraries.jackson.datatype_json_org
+    testImplementation libraries.jackson.datatype_guava
+    testImplementation libraries.jackson.datatype_jsk8
+    testImplementation libraries.jackson.datatype_joda
+    testImplementation libraries.jackson.datatype_jsr310
+    testImplementation libraries.jackson.parameter_names
+
+    testImplementation libraries.dropwizard.core
+    testImplementation libraries.dropwizard.swagger
+    testImplementation libraries.dropwizard.assets
+    testImplementation libraries.dropwizard.auth
+    testImplementation libraries.dropwizard.metrics
+    testImplementation libraries.dropwizard.guicey
+
+    testImplementation libraries.commons.lang3
+    testImplementation libraries.commons.beanutils
+    testImplementation libraries.commons.io
+    testImplementation libraries.commons.codec
+
+    testImplementation libraries.logging.slf4j_api
+    testImplementation libraries.logging.logback
+
+    testImplementation libraries.hikari
+    testImplementation libraries.postgresql
+
+    // classpath can only have one of the mysql-connector-jar versions
+    testImplementation libraries.mysql5
+    // testImplementation libraries.mysql8
+
+    testImplementation libraries.flyway
+
+    testImplementation libraries.junit
+
+    testImplementation libraries.avro
+    testImplementation libraries.freemarker
+
+    testImplementation libraries.testcontainers.testcontainers
+    testImplementation libraries.testcontainers.junit_jupiter
+    testImplementation libraries.awaitility
+}

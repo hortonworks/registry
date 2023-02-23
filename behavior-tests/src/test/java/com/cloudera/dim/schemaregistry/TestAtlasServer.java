@@ -15,6 +15,7 @@
  **/
 package com.cloudera.dim.schemaregistry;
 
+import com.cloudera.dim.schemaregistry.config.RegistryYamlGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.cloudera.dim.schemaregistry.GlobalState.ATLAS_ENTITIES;
 import static com.cloudera.dim.schemaregistry.GlobalState.ATLAS_ENTITY_UPDATE;
@@ -62,7 +64,7 @@ import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.JsonBody.json;
 import static org.mockserver.verify.VerificationTimes.exactly;
 
-public class TestAtlasServer extends AbstractTestServer {
+public class TestAtlasServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestAtlasServer.class);
 
@@ -71,6 +73,7 @@ public class TestAtlasServer extends AbstractTestServer {
     public static final String META_VERSION_REL_TYPE_NAME = "schema_version";
     public static final String TOPIC_SCHEMA_REL_TYPE_NAME = "topic_schema";
     public static final String KAFKA_TOPIC_TYPEDEF_NAME = "kafka_topic";
+    public static final String RESOURCES_DIR_OF_CONFIG_TEMPLATE = "/template";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private GlobalState sow;
@@ -82,6 +85,8 @@ public class TestAtlasServer extends AbstractTestServer {
     private Expectation updateMetaExpectation;
     private Expectation createModelExpectation;
 
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean started = new AtomicBoolean(false);
     private volatile static TestAtlasServer instance;
 
     public static TestAtlasServer getInstance() {
@@ -107,7 +112,6 @@ public class TestAtlasServer extends AbstractTestServer {
         return mockWebServer.getLocalPort();
     }
 
-    @Override
     public void start() throws Exception {
         boolean alreadyStarted = started.getAndSet(true);
         if (alreadyStarted) {
@@ -120,18 +124,22 @@ public class TestAtlasServer extends AbstractTestServer {
         resetExpectations();
 
         // we need to set the -Datlas.conf property for AtlasClient to work
-        String atlasProps = configGenerator.generateAtlasProperties();
-        File atlasPropFile = writeFile("atlas-application", ".properties", atlasProps);
+        String atlasProps = RegistryYamlGenerator.generateAtlasProperties(getClass(), RESOURCES_DIR_OF_CONFIG_TEMPLATE);
+        File atlasPropFile = TestUtils.writeFileToTempDir("atlas-application", ".properties", atlasProps);
         System.setProperty("atlas.conf", atlasPropFile.getParent());
         running.set(true);
     }
 
-    @Override
+    public boolean isRunning() {
+        return running.get();
+    }
+
     public void stop() throws Exception {
-      if (isRunning()) {
+      if (running.get()) {
         LOG.info("Stopping mock Atlas server");
         mockWebServer.close();
-        super.stop();
+        running.set(false);
+        started.set(false);
       }
     }
 

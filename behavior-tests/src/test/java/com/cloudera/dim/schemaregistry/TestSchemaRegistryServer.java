@@ -19,7 +19,7 @@ import com.cloudera.dim.registry.oauth2.JwtKeyStoreType;
 import com.cloudera.dim.registry.oauth2.OAuth2AuthenticationHandler;
 import com.cloudera.dim.registry.oauth2.OAuth2Config;
 import com.cloudera.dim.schemaregistry.atlas.TestAtlasPluginProvider;
-import com.cloudera.dim.schemaregistry.config.TestConfigGenerator;
+import com.cloudera.dim.schemaregistry.config.RegistryYamlGenerator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
 import com.hortonworks.registries.common.AtlasConfiguration;
@@ -37,7 +37,6 @@ import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
@@ -50,10 +49,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.PreparedStatement;
@@ -80,13 +76,14 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
 
     private static final String CONNECTION_URL_TEMPLATE = "jdbc:h2:%s:test;MODE=MYSQL;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=%s";
     private static final int ATLAS_CONFIG_WAIT_BETWEEN_AUDIT_PROCESSING = 100;
+    public static final String RESOURCES_DIR_OF_CONFIG_TEMPLATE = "/template";
 
     private ExecutorService threadPool;
     private org.h2.tools.Server h2Server;
     private int h2Port;
     private int schemaRegistryPort;
     private String connectorType = "http";
-    private TestConfigGenerator.TlsConfig tlsConfig = null;
+    private RegistryYamlGenerator.TlsConfig tlsConfig = null;
     private Flyway flyway;
     private LocalSchemaRegistryServer localSchemaRegistry;
     private boolean atlasEnabled = false;
@@ -111,6 +108,9 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         return localRef;
     }
 
+    public TestSchemaRegistryServer() {
+    }
+
     @Override
     public void start() throws Exception {
         boolean alreadyStarted = started.getAndSet(true);
@@ -130,10 +130,11 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         // now we can start Schema Registry and have it connect to our H2 database
         RegistryConfiguration config = prepareConfig(dbProperties, atlasEnabled, atlasPort, filters, defaultAvroCompatibility);
 
-        this.schemaRegistryPort = findFreePort();
-        String registryYamlTxt = configGenerator.generateRegistryYaml(config, connectorType, schemaRegistryPort, tlsConfig);
+        this.schemaRegistryPort = TestUtils.findFreePort();
+        String registryYamlTxt = RegistryYamlGenerator.generateRegistryYaml(config, connectorType, schemaRegistryPort, tlsConfig,
+                getClass(), RESOURCES_DIR_OF_CONFIG_TEMPLATE);
 
-        File registryYaml = writeFile("registry", ".yaml", registryYamlTxt);
+        File registryYaml = TestUtils.writeFileToTempDir("registry", ".yaml", registryYamlTxt);
         LOG.debug("registry.yaml file generated at {}", registryYaml.getAbsolutePath());
 
         this.localSchemaRegistry = new LocalSchemaRegistryServer(registryYaml.getAbsolutePath());
@@ -245,8 +246,27 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
     }
 
     private Flyway populateDatabase(DbProperties dbConnProps) throws IOException {
-        Flyway flyway = getFlyway(dbConnProps, preprocessMigrations().getAbsolutePath());
+        Flyway flyway = getFlyway(dbConnProps, TestUtils.preprocessMigrationsForH2(
+                TestUtils.getPathToBootstrap(DB_TYPE)).getAbsolutePath());
         flyway.migrate();
+        return flyway;
+    }
+
+    /** Use Flyway to create the data structure in H2. */
+    private Flyway getFlyway(DbProperties conf, String location) {
+        Flyway flyway = new Flyway();
+
+        flyway.setEncoding("UTF-8");
+        flyway.setTable("SCRIPT_CHANGE_LOG");
+        flyway.setValidateOnMigrate(true);
+        flyway.setOutOfOrder(false);
+        flyway.setBaselineOnMigrate(true);
+        flyway.setBaselineVersion(MigrationVersion.fromVersion("000"));
+        flyway.setCleanOnValidationError(false);
+        flyway.setLocations("filesystem:" + location);
+        flyway.setSqlMigrationPrefix("v");
+        flyway.setDataSource(conf.getDataSourceUrl(), conf.getDataSourceUser(), conf.getDataSourcePassword());
+
         return flyway;
     }
 
@@ -278,92 +298,6 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         }
 
         return servletFilters;
-    }
-
-    /** The DDL files under bootstrap need to be sanitized before we can pass them to H2. */
-    private File preprocessMigrations() throws IOException {
-        File tmpDir = Files.createTempDirectory("srtest").toFile();
-
-        File bootstrapDir = getPathToBootstrap(DB_TYPE);
-        for (File file : bootstrapDir.listFiles()) {
-            if (file.getName().startsWith("v006")) {
-                continue;
-            }
-            List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
-            File outFile = new File(tmpDir, file.getName());
-
-            try (PrintWriter out = new PrintWriter(new FileWriter(outFile))) {
-                boolean ignore = false;
-                for (String line : lines) {
-                    // ignore commented lines or lines which contain procedure operations
-                    if (line.startsWith("--") || line.contains("Cloudera") || line.toUpperCase().contains("CALL")
-                            || line.toUpperCase().contains("DROP PROCEDURE")) {
-                        continue;
-                    }
-                    // H2 has no support for MySql functions, but luckily we can ignore them
-                    if (!ignore && line.toLowerCase().contains("delimiter")) {
-                        ignore = true;
-                    } else if (ignore && line.toLowerCase().contains("delimiter")) {
-                        ignore = false;
-                    } else if (!ignore) {
-                        out.println(line);
-                    }
-                }
-            } catch (Exception ex) {
-                LOG.error("Failure while writing file {}", file.getName(), ex);
-            }
-            outFile.deleteOnExit();
-
-            LOG.debug("Wrote preprocessed DDL file {}", outFile.getAbsolutePath());
-        }
-
-        return tmpDir;
-    }
-
-    /** Usually bootstrap dir should be under the root, but let's try to play safer and look at a few other places too. */
-    @Nonnull
-    private File getPathToBootstrap(String dbType) throws FileNotFoundException {
-        // we want to find the path to /bootstrap/sql/mysql
-
-        File[] files = {
-            new File("bootstrap/sql/" + dbType),
-            new File(System.getProperty("user.dir"), "bootstrap/sql/" + dbType),
-            new File(System.getProperty("user.home"), "bootstrap/sql/" + dbType),
-            new File("../bootstrap/sql/" + dbType),
-            new File("../../bootstrap/sql/" + dbType),
-            new File("../../../bootstrap/sql/" + dbType)
-        };
-
-        for (File file : files) {
-            try {
-                if (file.exists() && file.isDirectory()) {
-                    LOG.debug("Bootstrap directory: {}", file.getAbsolutePath());
-                    return file;
-                }
-            } catch (Throwable ex) {
-                LOG.trace("Unexpected error for " + file, ex);
-            }
-        }
-
-        throw new FileNotFoundException("Could not find bootstrap directory near " + new File(".").getAbsolutePath());
-    }
-
-    /** Use Flyway to create the data structure in H2. */
-    private Flyway getFlyway(DbProperties conf, String location) {
-        Flyway flyway = new Flyway();
-
-        flyway.setEncoding("UTF-8");
-        flyway.setTable("SCRIPT_CHANGE_LOG");
-        flyway.setValidateOnMigrate(true);
-        flyway.setOutOfOrder(false);
-        flyway.setBaselineOnMigrate(true);
-        flyway.setBaselineVersion(MigrationVersion.fromVersion("000"));
-        flyway.setCleanOnValidationError(false);
-        flyway.setLocations("filesystem:" + location);
-        flyway.setSqlMigrationPrefix("v");
-        flyway.setDataSource(conf.getDataSourceUrl(), conf.getDataSourceUser(), conf.getDataSourcePassword());
-
-        return flyway;
     }
 
     /** Prepare a configuration which will be passed to Schema Registry. */
@@ -464,23 +398,7 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
             return atlasJarsSubdir;
         }
 
-        if (root.getName().equals(name)) {
-            return root;
-        } else {
-            File[] files = root.listFiles();
-            if (files == null) {
-                return null;
-            }
-            for (File f : files) {
-                if (f.isDirectory()) {
-                    File subdir = findSubdir(f, name);
-                    if (subdir != null) {
-                        return subdir;
-                    }
-                }
-            }
-        }
-        return null;
+        return TestUtils.findSubdir(root, name);
     }
 
     public boolean isAtlasEnabled() {
@@ -548,11 +466,11 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         this.connectorType = connectorType;
     }
 
-    public TestConfigGenerator.TlsConfig getTlsConfig() {
+    public RegistryYamlGenerator.TlsConfig getTlsConfig() {
         return tlsConfig;
     }
 
-    public void setTlsConfig(TestConfigGenerator.TlsConfig tlsConfig) {
+    public void setTlsConfig(RegistryYamlGenerator.TlsConfig tlsConfig) {
         this.tlsConfig = tlsConfig;
     }
 }
