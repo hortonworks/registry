@@ -16,6 +16,7 @@
 
 dependencies {
 
+    testCompile project(':integration-tests').sourceSets.test.output
     testCompile(project(':schema-registry:schema-registry-client')) {
         transitive = false
     }

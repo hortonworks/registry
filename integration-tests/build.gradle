@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    testImplementation(project(':atlas-integration:atlas-common')) { transitive = false }
+    testImplementation(project(':schema-registry:schema-registry-core')) { transitive = false }
+    testImplementation(project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')) { transitive = false }
+
+    testImplementation libraries.guava
+    testImplementation libraries.logging.slf4j_api
+    testImplementation libraries.logging.logback
+    testImplementation libraries.commons.io
+    testImplementation libraries.freemarker
+    testImplementation libraries.flyway
+
+    testImplementation libraries.cucumber.junit_platform
+
+    testImplementation libraries.lombok
+    testAnnotationProcessor libraries.lombok
+}
+

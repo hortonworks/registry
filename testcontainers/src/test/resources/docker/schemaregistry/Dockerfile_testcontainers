@@ -1,0 +1,29 @@
+FROM openjdk:8-jre-alpine
+LABEL maintainer="Data in Motion Streaming Team"
+
+RUN apk update && apk upgrade
+RUN apk add --no-cache bash krb5 openssl wget
+
+COPY ./registry-dist/build/distributions/schemaregistry-*.tar.gz /tmp/schemaregistry.tar.gz
+COPY ./testcontainers/src/test/resources/entrypoint.sh /tmp/entrypoint.sh
+COPY ./testcontainers/src/test/resources/custom_registry.yaml /tmp/registry.yaml
+
+RUN wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.48/mysql-connector-java-5.1.48.jar -q -O /tmp/mysql-connector-java.jar
+
+ENV REGISTRY_HOME /opt/schemaregistry
+
+RUN mkdir -p /opt/schemaregistry \
+&& tar xfz /tmp/schemaregistry.tar.gz -C /opt/schemaregistry --strip-components 1 \
+&& rm /tmp/schemaregistry.tar.gz
+
+RUN mv /tmp/registry.yaml /opt/schemaregistry/conf/registry.yaml
+RUN mv /tmp/entrypoint.sh /opt/schemaregistry/bin/entrypoint.sh
+RUN mv /tmp/mysql-connector-java.jar /opt/schemaregistry/libs/mysql-connector-java.jar
+RUN ln -s /opt/schemaregistry/libs/mysql-connector-java.jar /opt/schemaregistry/bootstrap/lib/mysql-connector-java.jar
+
+WORKDIR /opt/schemaregistry
+ENV DAEMON_MODE=false
+
+RUN chmod a+x /opt/schemaregistry/bin/entrypoint.sh
+ENTRYPOINT ["/opt/schemaregistry/bin/entrypoint.sh"]
+CMD ["/opt/schemaregistry/conf/registry.yaml"]

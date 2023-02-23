@@ -42,11 +42,12 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.StringBody.exact;
 
-public class TestOAuth2Server extends AbstractTestServer {
+public class TestOAuth2Server {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestOAuth2Server.class);
 
@@ -58,7 +59,11 @@ public class TestOAuth2Server extends AbstractTestServer {
     private String clientId = "test-client";
     private String secret = "secret";
 
-    private TestOAuth2Server() { }
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean started = new AtomicBoolean(false);
+
+    private TestOAuth2Server() {
+    }
 
     public static TestOAuth2Server getInstance() {
         TestOAuth2Server localRef = instance;
@@ -72,7 +77,6 @@ public class TestOAuth2Server extends AbstractTestServer {
         return localRef;
     }
 
-    @Override
     public void start() throws Exception {
         boolean alreadyStarted = started.getAndSet(true);
         if (alreadyStarted) {
@@ -85,6 +89,10 @@ public class TestOAuth2Server extends AbstractTestServer {
         resetExpectations();
 
         running.set(true);
+    }
+
+    public boolean isRunning() {
+        return running.get();
     }
 
     public int getPort() {
