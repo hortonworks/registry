@@ -35,7 +35,7 @@ import java.util.List;
 public class TestSetup {
 
     private static final boolean USE_SR_SERVER_FROM_CONTAINER = false;
-    public static final boolean REBUILD_KDC_SERVER_IMAGE_FROM_DOCKERFILE = false;
+    public static final boolean REBUILD_KDC_SERVER_IMAGE_FROM_DOCKERFILE = true;
 
 
     public static final boolean SR_USE_FIXED_PORT__DEV_ONLY = false;

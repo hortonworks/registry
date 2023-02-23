@@ -51,7 +51,7 @@ public class TestcontainersUtils {
 
     private static final String POSTGRES_DOCKER_IMAGE_V9_6_24_PUBLIC = "registry.hub.docker.com/bitnami/postgresql:9.6.24";
     private static final String POSTGRES_DOCKER_IMAGE_V12_CLDR = "docker-private.infra.cloudera.com/cloudera_thirdparty/postgres:12";
-    private static final String POSTGRES_DOCKER_IMAGE = POSTGRES_DOCKER_IMAGE_V12_CLDR;
+    private static final String POSTGRES_DOCKER_IMAGE = POSTGRES_DOCKER_IMAGE_V9_6_24_PUBLIC;
 
     public static final String POSTGRES_CONTAINER_NETWORK_ALIAS = "postgres_network_alias";
     public static final int POSTGRES_PORT_INSIDE_CONTAINER = 5433;
@@ -59,7 +59,7 @@ public class TestcontainersUtils {
 
     private static final String MYSQL_DOCKER_IMAGE_5_7_PUBLIC = "registry.hub.docker.com/bitnami/mysql:5.7.41";
     private static final String MYSQL_DOCKER_IMAGE_5_7_CLDR = "docker-private.infra.cloudera.com/cloudera_thirdparty/mysql:5.7";
-    private static final String MYSQL_DOCKER_IMAGE = MYSQL_DOCKER_IMAGE_5_7_CLDR;
+    private static final String MYSQL_DOCKER_IMAGE = MYSQL_DOCKER_IMAGE_5_7_PUBLIC;
     public static final String MYSQL_CONTAINER_NETWORK_ALIAS = "mysql_network_alias";
     public static final int MYSQL_PORT_INSIDE_CONTAINER = 3307;
 
