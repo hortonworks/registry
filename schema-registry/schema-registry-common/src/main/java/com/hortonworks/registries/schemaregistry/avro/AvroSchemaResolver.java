@@ -27,6 +27,7 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaParseException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -142,7 +143,12 @@ public class AvroSchemaResolver implements SchemaResolver {
 
         Schema.Parser parser = new Schema.Parser();
         parser.addTypes(complexTypes);
-        Schema schema = parser.parse(schemaText);
+        Schema schema;
+        try {
+            schema = parser.parse(schemaText);
+        } catch (SchemaParseException e) {
+            throw new InvalidSchemaException(e.getMessage(), e);
+        }
         Set<String> visitingTypes = new HashSet<>();
         Schema updatedSchema = handleUnionFieldsWithNull(schema, visitingTypes);
 
@@ -246,7 +252,12 @@ public class AvroSchemaResolver implements SchemaResolver {
         // this schema is not yet parsed till now
         if (schemaParsingState == null) {
             Schema.Parser parser = new Schema.Parser();
-            Schema schema = parser.parse(getResultantSchema(schemaVersionKey, schemaParsingStates));
+            Schema schema;
+            try {
+                schema = parser.parse(getResultantSchema(schemaVersionKey, schemaParsingStates));
+            } catch (SchemaParseException e) {
+                throw new InvalidSchemaException(e.getMessage(), e);
+            }
             Map<String, Schema> complexTypes = new HashMap<>();
             collectComplexTypes(schema, complexTypes);
             schemaParsingStates.put(schemaName, SchemaParsingState.PARSED);

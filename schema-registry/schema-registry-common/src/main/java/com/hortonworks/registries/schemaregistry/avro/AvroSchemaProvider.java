@@ -24,6 +24,7 @@ import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaParseException;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -73,7 +74,7 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
             // generates fingerprint of canonical form of the given schema.
             Schema schema = new Schema.Parser().parse(getResultantSchema(schemaText));
             return MessageDigest.getInstance(getHashFunction()).digest(normalize(schema).getBytes());
-        } catch (IOException e) {
+        } catch (IOException | SchemaParseException e) {
             throw new InvalidSchemaException("Given schema is invalid", e);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
@@ -89,7 +90,13 @@ public class AvroSchemaProvider extends AbstractSchemaProvider {
     @Override
     public List<SchemaFieldInfo> generateFields(String schemaText) throws InvalidSchemaException, SchemaNotFoundException {
         AvroFieldsGenerator avroFieldsGenerator = new AvroFieldsGenerator();
-        return avroFieldsGenerator.generateFields(new Schema.Parser().parse(getResultantSchema(schemaText)));
+        Schema schema;
+        try {
+            schema = new Schema.Parser().parse(getResultantSchema(schemaText));
+        } catch (SchemaParseException e) {
+            throw new InvalidSchemaException(e.getMessage(), e);
+        }
+        return avroFieldsGenerator.generateFields(schema);
     }
 
     public String normalize(Schema schema) throws IOException {

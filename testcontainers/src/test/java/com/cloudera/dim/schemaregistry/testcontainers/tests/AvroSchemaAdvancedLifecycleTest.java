@@ -65,7 +65,6 @@ public abstract class AvroSchemaAdvancedLifecycleTest extends TestcontainersTest
 
 
     @Test
-    @Disabled("This was skipped at ci tests. Check before re-enable.")
     public void testRegisterInvalidSchema() throws SchemaNotFoundException {
         SchemaMetadata originalSchemaMetadata = schemaRegistryHelper.getSchemaMetadataWithDefault(getSchemaName(),
                 "Registering schema");

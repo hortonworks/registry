@@ -33,6 +33,7 @@ import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeExc
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
 import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import com.hortonworks.registries.storage.exception.StorageException;
+import org.apache.avro.SchemaParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +63,8 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, ex.getMessage());
         } else if (ex instanceof InvalidSchemaBranchDeletionException) {
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, ex.getMessage());
-        } else if (ex instanceof InvalidSchemaException) {
+        } else if (ex instanceof InvalidSchemaException
+                || ex instanceof SchemaParseException) {
             LOG.error("Invalid schema. ", ex);
             return WSUtils.respond(Response.Status.BAD_REQUEST, CatalogResponse.ResponseMessage.INVALID_SCHEMA, ex.getMessage());
         } else if (ex instanceof AuthorizationException) {

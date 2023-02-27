@@ -35,6 +35,7 @@ import com.hortonworks.registries.storage.NOOPTransactionManager;
 import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 
 public class AvroSchemaRegistryTest {
 
@@ -171,7 +174,7 @@ public class AvroSchemaRegistryTest {
     }
 
     @Test
-    public void testInvalidSchema() throws Exception {
+    public void testInvalidSchema() {
         String schema = "--- random invalid schema ---" + new Date();
 
         SchemaMetadata schemaMetadataInfo = createSchemaInfo(displayName, SchemaCompatibility.BACKWARD);
@@ -180,6 +183,32 @@ public class AvroSchemaRegistryTest {
         Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
                 new SchemaVersion(schema, "Initial version of the schema"))
                 .getVersion());
+    }
+
+    @Test
+    public void testSlightlyInvalidSchema() throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException {
+        String validSchema = SchemaBuilder.builder(randomAlphabetic(5))
+                .record(randomAlphabetic(5))
+                .fields()
+                .nullableString("strField", "defaultStr")
+                .nullableLong("longField", 0L)
+                .endRecord().toString(true);
+
+        String invalidSchema1 = validSchema.replace("type", "typee");
+        String invalidSchema2 = validSchema.replace("fields", "filds");
+        String invalidSchema3 = "{\"abc\":\"xyz\"}";
+
+        SchemaMetadata schemaMetadataInfo = createSchemaInfo(displayName, SchemaCompatibility.BACKWARD);
+
+        Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion(invalidSchema1, "Should fail")).getVersion());
+        Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion(invalidSchema2, "Should fail")).getVersion());
+        Assertions.assertThrows(InvalidSchemaException.class, () -> schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion(invalidSchema3, "Should fail")).getVersion());
+        Assertions.assertNotNull(schemaRegistry.addSchemaVersion(schemaMetadataInfo,
+                new SchemaVersion(validSchema, "Should pass")).getVersion());
+
     }
 
     @Test

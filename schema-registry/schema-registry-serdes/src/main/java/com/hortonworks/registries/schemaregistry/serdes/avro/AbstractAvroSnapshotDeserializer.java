@@ -34,6 +34,7 @@ import com.hortonworks.registries.schemaregistry.serde.AbstractSnapshotDeseriali
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,7 +139,11 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
 
     @Override
     protected Schema getParsedSchema(SchemaVersionKey schemaVersionKey) throws InvalidSchemaException, SchemaNotFoundException {
-        return new Schema.Parser().parse(avroSchemaResolver.resolveSchema(schemaVersionKey));
+        try {
+            return new Schema.Parser().parse(avroSchemaResolver.resolveSchema(schemaVersionKey));
+        } catch (SchemaParseException e) {
+            throw new InvalidSchemaException(e.getMessage(), e);
+        }
     }
 
     /**
