@@ -22,6 +22,7 @@ import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.webservice.LocalSchemaRegistryServer;
 import org.apache.commons.io.IOUtils;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.FileInputStream;
 import java.net.URISyntaxException;
@@ -102,7 +103,7 @@ public class SchemaRegistryTestServerClientWrapper {
             return ret;
         }
         try (FileInputStream fis = new FileInputStream(schemaRegistryTestConfiguration.getClientYAMLPath())) {
-            Map<String, Object> ret = new Yaml().load(IOUtils.toString(fis, StandardCharsets.UTF_8));
+            Map<String, Object> ret = new Yaml(new SafeConstructor()).load(IOUtils.toString(fis, StandardCharsets.UTF_8));
             ret.put("schema.registry.url", registryURL);
             return ret;
         } catch (Exception e) {

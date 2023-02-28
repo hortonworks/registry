@@ -24,10 +24,10 @@ dependencies {
     compile("com.fasterxml.jackson.datatype:jackson-datatype-joda")
     compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     compile("com.fasterxml.jackson.module:jackson-module-parameter-names")
-    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
     compile("com.fasterxml.jackson.core:jackson-annotations")
 
     constraints {
+        compile("org.yaml:snakeyaml") { version { strictly project.versions_snakeyaml } }
         compile("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
@@ -36,9 +36,10 @@ dependencies {
         compile("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
     }
+
+    compile libraries.snakeyaml
 
     compile(project(':schema-registry:schema-registry-common')) {
         exclude group: 'javax.validation', module: 'validation-api'
