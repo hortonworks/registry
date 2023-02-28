@@ -1,2 +1,0 @@
-- import_playbook: gate-sut.yaml
-- import_playbook: gate-st.yaml

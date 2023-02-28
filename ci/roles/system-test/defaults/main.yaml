@@ -1,5 +1,0 @@
-urls:
-  none:
-    url: http://schema-registry.{{ namespace }}.svc.cluster.local:9090/api/v1/
-  kerberos:
-    url: https://schema-registry.{{ namespace }}.svc.cluster.local:8443/api/v1/
