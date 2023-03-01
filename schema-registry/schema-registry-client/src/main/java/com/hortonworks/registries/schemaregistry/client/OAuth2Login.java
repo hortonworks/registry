@@ -22,6 +22,7 @@ import com.hortonworks.registries.shaded.com.fasterxml.jackson.databind.ObjectMa
 import com.hortonworks.registries.shaded.javax.ws.rs.client.Entity;
 import com.hortonworks.registries.shaded.javax.ws.rs.core.MultivaluedHashMap;
 import com.hortonworks.registries.shaded.javax.ws.rs.core.MultivaluedMap;
+import com.hortonworks.registries.shaded.javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,13 +97,20 @@ public class OAuth2Login implements Login {
 
   @Override
   public <T> T doAction(PrivilegedAction<T> action) throws LoginException {
+    T result;
     try {
-      return action.run();
+      result = action.run();
     } catch (Exception e) {
-      LOG.info("Request failed, renewing token...");
-      login();
-      return action.run();
+      return renewAndRetry(action);
     }
+    if (result instanceof Response) {
+      Response response = (Response) result;
+      if (response.getStatus() == Response.Status.UNAUTHORIZED.getStatusCode()
+          || response.getStatus() == Response.Status.FORBIDDEN.getStatusCode()) {
+        return renewAndRetry(action);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -110,6 +118,12 @@ public class OAuth2Login implements Login {
     if (httpClient != null) {
       httpClient.close();
     }
+  }
+
+  private <T> T renewAndRetry(PrivilegedAction<T> action) throws LoginException {
+    LOG.info("Request failed, renewing token...");
+    login();
+    return action.run();
   }
 
   /** Some servers return us an opaque token, others a JWT, while others return

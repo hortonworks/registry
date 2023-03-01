@@ -35,6 +35,9 @@ public interface Login {
      */
     LoginContext login() throws LoginException;
 
+    //TODO if this is an internal class, refactor doAction by only allowing Response return type
+    // and also taking an HttpRequestBuilder as a parameter
+    // (this will allow login classes like OAuth2 to enhance the request with extra headers)
     /**
      *  Execute a privileged action which respect to the login context of this instance.
      */
