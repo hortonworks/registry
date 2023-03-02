@@ -16,13 +16,10 @@
 package com.hortonworks.registries.schemaregistry.client;
 
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.hortonworks.registries.schemaregistry.SchemaMetadataInfo;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.exceptions.RegistryException;
@@ -31,110 +28,101 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import static com.google.common.cache.RemovalCause.REPLACED;
 
 /**
  *
  */
 public class SchemaMetadataCache {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaMetadataCache.class);
+    private final Cache<Long, SchemaMetadataInfo> cache;
+    private final Map<String, Long> schemaNameToIdMap;
+    private final SchemaMetadataFetcher schemaMetadataFetcher;
 
-    private final LoadingCache<Key, SchemaMetadataInfo> loadingCache;
-    private final BiMap<String, Long> schemaNameToIdMap;
+    SchemaMetadataCache(Long size, Long expiryInSecs, final SchemaMetadataFetcher schemaMetadataFetcher,
+                        Map<String, Long> schemaNameToIdMap) {
+        this.schemaMetadataFetcher = schemaMetadataFetcher;
+        this.schemaNameToIdMap = schemaNameToIdMap;
+        cache = CacheBuilder.newBuilder()
+            .maximumSize(size)
+            .expireAfterAccess(expiryInSecs, TimeUnit.SECONDS)
+            .removalListener(new RemovalListener<Long, SchemaMetadataInfo>() {
+                @Override
+                public void onRemoval(RemovalNotification<Long, SchemaMetadataInfo> notification) {
+                    if (notification.getCause() != REPLACED) {
+                        schemaNameToIdMap.remove(notification.getValue().getSchemaMetadata().getName());
+                    }
+                }
+            })
+            .build();
+    }
 
     public SchemaMetadataCache(Long size, Long expiryInSecs, final SchemaMetadataFetcher schemaMetadataFetcher) {
-        schemaNameToIdMap = Maps.synchronizedBiMap(HashBiMap.create());
-        loadingCache = CacheBuilder.newBuilder()
-                .maximumSize(size)
-                .expireAfterAccess(expiryInSecs, TimeUnit.SECONDS)
-                .build(new CacheLoader<Key, SchemaMetadataInfo>() {
-                    @Override
-                    public SchemaMetadataInfo load(Key key) throws Exception {
-                        SchemaMetadataInfo schemaMetadataInfo;
-                        Key otherKey;
-                        if (key.getName() != null) {
-                            schemaMetadataInfo = schemaMetadataFetcher.fetch(key.getName());
-                            otherKey = Key.of(schemaMetadataInfo.getId());
-                            schemaNameToIdMap.put(key.getName(), schemaMetadataInfo.getId());
-                        } else if (key.getId() != null) {
-                            schemaMetadataInfo = schemaMetadataFetcher.fetch(key.getId());
-                            otherKey = Key.of(schemaMetadataInfo.getSchemaMetadata().getName());
-                            schemaNameToIdMap.put(schemaMetadataInfo.getSchemaMetadata().getName(), schemaMetadataInfo.getId());
-                        } else {
-                            throw new RegistryException("Key should have name or id as non null");
-                        }
-                        loadingCache.put(otherKey, schemaMetadataInfo);
-                        return schemaMetadataInfo;
-                    }
-                });
+        this(size, expiryInSecs, schemaMetadataFetcher, new ConcurrentHashMap<>());
     }
 
     public SchemaMetadataInfo get(Key key) {
-        SchemaMetadataInfo schemaMetadataInfo;
-        try {
-            schemaMetadataInfo = loadingCache.get(key);
-        } catch (ExecutionException e) {
-            LOG.error("Error occurred while retrieving schema metadata for [{}]", key, e);
-            Throwable cause = e.getCause();
-            if (cause instanceof IOException) {
-                throw new RegistryRetryableException(cause.getMessage(), cause);
-            } else if (cause instanceof RuntimeException) {
-                if (cause.getCause() instanceof IOException) {
-                    throw new RegistryRetryableException(cause.getMessage(), cause);
-                } else {
-                    throw new RegistryException(cause.getMessage(), cause);
-                }
-            } else if (!(cause instanceof SchemaNotFoundException)) {
-                throw new RegistryException(cause.getMessage(), cause);
-            }
-            schemaMetadataInfo = null;
-        } catch (UncheckedExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) {
-                // Do not expose cache implementation details to the caller
-                throw (RuntimeException) cause;
-            } else {
-                // Should not happen, best option is to rethrow
-                throw e;
-            }
+        if (key == null) {
+            return null;
         }
-
+        SchemaMetadataInfo schemaMetadataInfo = null;
+        try {
+            schemaMetadataInfo = getSchemaMetadataInfoFromCache(key);
+            if (schemaMetadataInfo == null) {
+                schemaMetadataInfo = fetchFromRemote(key);
+                updateCache(schemaMetadataInfo);
+            }
+        }  catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException) {
+                throw new RegistryRetryableException(e.getMessage(), e);
+            }
+            throw new RegistryException(e.getMessage(), e);
+        } catch (SchemaNotFoundException e) {
+            return null;
+        }
         return schemaMetadataInfo;
     }
 
     public void invalidateSchemaMetadata(SchemaMetadataCache.Key key) {
         LOG.info("Invalidating cache entry for key [{}]", key);
-        if (loadingCache.size() == 0) {
+        if (key == null) {
             return;
         }
-
-        // If the cache doesn't have entry for the key, then no need to invalidate the cache
-        if (loadingCache.getIfPresent(key) != null) {
-            loadingCache.invalidate(key);
-        }
-
-        final Key otherKey;
-        final Object id = key.id == null ? schemaNameToIdMap.get(key.name) : schemaNameToIdMap.inverse().get(key.id);
-        if (id == null) {
-            return;
-        } else if (id instanceof Long) {
-            otherKey = Key.of((Long) id);
-        } else {
-            otherKey = Key.of((String) id);
-        }
-
-        if (loadingCache.getIfPresent(otherKey) != null) {
-            loadingCache.invalidate(otherKey);
+        if (key.id != null) {
+            cache.invalidate(key.id);
+        } else if (key.name != null) {
+            Long id = schemaNameToIdMap.get(key.name);
+            if (id != null) {
+                cache.invalidate(id);
+            }
         }
     }
 
+    // TODO if this is an internal class, please update the signature. Ensure
+    // that schemaMetadataInfo.id cannot be null and key is not necessary.
+    // Key can be inferred from schemaMetadataInfo.
     public void put(Key key, SchemaMetadataInfo schemaMetadataInfo) {
-        loadingCache.put(key, schemaMetadataInfo);
+        LOG.info("Updating cache entry, key: [{}] value: [{}]", key, schemaMetadataInfo);
+        if (schemaMetadataInfo == null) {
+            LOG.error("SchemaMetadataInfo cannot be null.");
+            throw new RegistryException("SchemaMetadataInfo cannot be null.");
+        }
+        if (schemaMetadataInfo.getId() == null) {
+            LOG.error("SchemaMetadataInfo id is not available.");
+            throw new RegistryException("SchemaMetadataInfo id is not available.");
+        }
+        updateCache(schemaMetadataInfo);
     }
 
     public SchemaMetadataInfo getIfPresent(Key key) {
-        return loadingCache.getIfPresent(key);
+        if (key == null) {
+            return null;
+        }
+        return getSchemaMetadataInfoFromCache(key);
     }
 
     public interface SchemaMetadataFetcher {
@@ -197,5 +185,36 @@ public class SchemaMetadataCache {
         public static Key of(Long id) {
             return new Key(id);
         }
+    }
+
+    private SchemaMetadataInfo getSchemaMetadataInfoFromCache(Key key) {
+        if (key.id != null) {
+            return cache.getIfPresent(key.id);
+        }
+        if (key.name != null) {
+            Long id = schemaNameToIdMap.get(key.name);
+            if (id != null) {
+                return cache.getIfPresent(id);
+            }
+            return null;
+        }
+        throw new RegistryException("Key should have name or id as non null");
+    }
+
+    private void updateCache(SchemaMetadataInfo schemaMetadataInfo) {
+        if (schemaMetadataInfo != null) {
+            cache.put(schemaMetadataInfo.getId(), schemaMetadataInfo);
+            schemaNameToIdMap.put(schemaMetadataInfo.getSchemaMetadata().getName(), schemaMetadataInfo.getId());
+        }
+    }
+
+    private SchemaMetadataInfo fetchFromRemote(Key key) throws SchemaNotFoundException {
+        if (key.id != null) {
+            return schemaMetadataFetcher.fetch(key.id);
+        }
+        if (key.name != null) {
+            return schemaMetadataFetcher.fetch(key.name);
+        }
+        return null;
     }
 }
