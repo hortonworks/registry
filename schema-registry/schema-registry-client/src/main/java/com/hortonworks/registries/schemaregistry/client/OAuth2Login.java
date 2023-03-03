@@ -39,7 +39,7 @@ public class OAuth2Login implements Login {
   private final ObjectMapper objectMapper = new ObjectMapper();
   
   private String oauthServerUrl;
-  private String authToken;
+  private volatile String authToken;
   private HttpClientForOAuth2 httpClient;
   private String httpMethod;
   private String requestScope;
@@ -79,14 +79,14 @@ public class OAuth2Login implements Login {
         reqData.add("scope", requestScope);
       }
 
-      authToken = httpClient.download(new URL(oauthServerUrl),
+      String responseAuthToken = httpClient.download(new URL(oauthServerUrl),
           httpMethod,
           Entity.form(reqData));
 
-      if (authToken == null || authToken.trim().isEmpty()) {
+      if (responseAuthToken == null || responseAuthToken.trim().isEmpty()) {
         throw new LoginException("Empty response from the OAuth2 server.");
       } else {
-        authToken = postProcessAuthToken(authToken);
+        authToken = postProcessAuthToken(responseAuthToken);
       }
     } catch (Exception e) {
       LOG.error("Failed to retrieve OAuth2 token. ", e);
