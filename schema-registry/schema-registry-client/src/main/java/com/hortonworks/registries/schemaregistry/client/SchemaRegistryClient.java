@@ -45,7 +45,6 @@ import com.hortonworks.registries.schemaregistry.SchemaVersionKey;
 import com.hortonworks.registries.schemaregistry.SchemaVersionRetriever;
 import com.hortonworks.registries.schemaregistry.SerDesInfo;
 import com.hortonworks.registries.schemaregistry.SerDesPair;
-import com.hortonworks.registries.schemaregistry.cache.SchemaVersionInfoCache;
 import com.hortonworks.registries.schemaregistry.errors.IncompatibleSchemaException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaBranchDeletionException;
 import com.hortonworks.registries.schemaregistry.errors.InvalidSchemaException;
@@ -339,19 +338,20 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
 
     private SchemaVersionInfoCache createSchemaVersionInfoCache() {
         return new SchemaVersionInfoCache(
-                new SchemaVersionRetriever() {
-                    @Override
-                    public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
-                        return doGetSchemaVersionInfo(key);
-                    }
+            new SchemaVersionRetriever() {
+                @Override
+                public SchemaVersionInfo retrieveSchemaVersion(SchemaVersionKey key) throws SchemaNotFoundException {
+                    return doGetSchemaVersionInfo(key);
+                }
 
-                    @Override
-                    public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
-                        return doGetSchemaVersionInfo(key);
-                    }
-                },
-                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).intValue(),
-                ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue() * 1000L
+                @Override
+                public SchemaVersionInfo retrieveSchemaVersion(SchemaIdVersion key) throws SchemaNotFoundException {
+                    return doGetSchemaVersionInfo(key);
+                }
+            },
+            createSchemaMetadataFetcher(),
+            ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_SIZE.name())).intValue(),
+            ((Number) configuration.getValue(Configuration.SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS.name())).longValue() * 1000L
         );
     }
 
