@@ -71,3 +71,5 @@ logging:
   level: INFO
   loggers:
     com.hortonworks.registries: INFO
+  appenders:
+    - type: console

@@ -1,0 +1,3 @@
+docker_images:
+  schema-registry: __REGISTRY__/schema-registry:__VERSION__
+  schema-registry-latest: __REGISTRY__/schema-registry:__STACK_LATEST__
