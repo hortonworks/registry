@@ -198,6 +198,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final SchemaRegistryVersion CLIENT_VERSION = SchemaRegistryServiceInfo.get().version();
 
     private Login login;
+    private final boolean jaasKerberosLoginUsed;
     private final Client client;
     private final UrlSelector urlSelector;
     private final Map<String, SchemaRegistryTargets> urlWithTargets;
@@ -239,6 +240,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     public SchemaRegistryClient(Map<String, ?> conf) {
         configuration = new Configuration(conf);
         initializeSecurityContext();   // configure kerberos
+        jaasKerberosLoginUsed = jaasKerberosLoginUsed();
 
         ClientConfig config = createClientConfig(conf);
         ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder()
@@ -388,6 +390,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                     this.login = dynamicJaasLogin().orElse(staticJaasLogin());
                     break;
             }
+    }
+
+    private boolean jaasKerberosLoginUsed() {
+        return login instanceof KerberosLogin;
     }
 
     private Login createOAuth2Login() {
@@ -1501,7 +1507,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
                     }
                 });
                 resp.bufferEntity();
-                throwIfRetryable(resp);
+                throwIfRetryable(resp, jaasKerberosLoginUsed);
                 return resp;
             } catch (LoginException | ProcessingException e) {
                 throw new RegistryRetryableException(e);
@@ -1518,13 +1524,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return response;
     }
 
-    private static void throwIfRetryable(Response response) {
+    private static void throwIfRetryable(Response response, boolean kerberosAuthEnabled) {
         // Some erroneous responses might be received e.g. during rolling restart, these should be retried
         if (isSpnegoResponse(response)) {
             throw new RegistryRetryableException("Received SPNEGO related 401 response, retry");
         }
         if (response.getStatus() == Response.Status.SERVICE_UNAVAILABLE.getStatusCode()) {
             throw new RegistryRetryableException("Received HTTP " + response.getStatus() + " response, retry");
+        }
+        if (response.getStatus() == Response.Status.FORBIDDEN.getStatusCode() && kerberosAuthEnabled) {
+            throw new RegistryRetryableException("Received HTTP " + response.getStatus() +
+                    " (Forbidden) response, retry request as its cause is possibly just a" +
+                    " false-positive replay-attack");
         }
     }
 
