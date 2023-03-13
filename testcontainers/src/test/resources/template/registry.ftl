@@ -139,14 +139,23 @@ server:
 
 # Logging settings.
 logging:
-  level: INFO
+  level: DEBUG
   appenders:
     - type: console
       logFormat: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    - type: file
+      threshold: DEBUG
+      logFormat: "%d{ISO8601} %p %c: %m%n"
+      currentLogFilename: /tmp/registry.log
+      archivedLogFilenamePattern: /tmp/registry-%d{yyyy-MM-dd}-%i.log.gz
+      archivedFileCount: 10
+      timeZone: UTC
+      maxFileSize: 200MB
   loggers:
     com.hortonworks.registries: DEBUG
     com.cloudera.dim: DEBUG
     org.apache.atlas.plugin.classloader: DEBUG
+
 
 # Config for schema registry kerberos principle
 #serviceAuthenticationConfiguration:

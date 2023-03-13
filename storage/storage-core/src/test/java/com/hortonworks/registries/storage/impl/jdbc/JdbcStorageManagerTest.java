@@ -27,6 +27,7 @@ import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.StorageProviderProperties;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 import com.hortonworks.registries.storage.common.DatabaseType;
+import com.hortonworks.registries.storage.exception.DatabaseLockException;
 import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import com.hortonworks.registries.storage.impl.jdbc.provider.QueryExecutorFactory;
@@ -370,7 +371,7 @@ public class JdbcStorageManagerTest {
                 when(queryExecutor.selectForUpdate(any(StorableKey.class))).thenReturn(emptyList());
                 when(queryExecutor.select(any(StorableKey.class))).thenReturn(singleton(sequence));
 
-                assertThrows(IllegalStateException.class, () -> jdbcStorageManager.nextId(namespace));
+                assertThrows(DatabaseLockException.class, () -> jdbcStorageManager.nextId(namespace));
 
                 verify(queryExecutor, atLeastOnce()).selectForUpdate(eq(sequence.getStorableKey()));
             }
@@ -401,7 +402,7 @@ public class JdbcStorageManagerTest {
                 when(queryExecutor.selectForUpdate(any(StorableKey.class))).thenReturn(singleton(sequence));
                 when(queryExecutor.select(any(StorableKey.class))).thenReturn(emptyList());
 
-                assertThrows(IllegalStateException.class, () -> jdbcStorageManager.nextId(namespace));
+                assertThrows(DatabaseLockException.class, () -> jdbcStorageManager.nextId(namespace));
 
                 verify(queryExecutor).select(eq(sequence.getStorableKey()));
             }

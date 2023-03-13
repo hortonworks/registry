@@ -31,6 +31,7 @@ import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundExce
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.UnsupportedSchemaTypeException;
 import com.hortonworks.registries.schemaregistry.state.SchemaLifecycleException;
+import com.hortonworks.registries.storage.exception.DatabaseLockException;
 import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import com.hortonworks.registries.storage.exception.StorageException;
 import org.apache.avro.SchemaParseException;
@@ -93,6 +94,9 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
         } else if (ex instanceof OffsetRangeReachedException) {
             LOG.error("Offset Max defined in configurations is reached.", ex);
             return WSUtils.respond(Response.Status.CONFLICT, CatalogResponse.ResponseMessage.BAD_REQUEST_WITH_MESSAGE, ex.getMessage());
+        } else if (ex instanceof DatabaseLockException) {
+            LOG.error("Error while acquiring lock on the database.", ex);
+            return WSUtils.respond(Response.Status.INTERNAL_SERVER_ERROR, CatalogResponse.ResponseMessage.EXCEPTION, ex.getMessage());
         } else if (ex instanceof RangerException) {
             return WSUtils.respond(Response.Status.BAD_GATEWAY, CatalogResponse.ResponseMessage.EXTERNAL_ERROR, ex.getMessage());
         } else if (ex instanceof SchemaBranchNotFoundException) {

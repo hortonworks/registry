@@ -29,6 +29,7 @@ import com.hortonworks.registries.storage.StorageProviderConfiguration;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.common.DatabaseType;
 import com.hortonworks.registries.storage.exception.AlreadyExistsException;
+import com.hortonworks.registries.storage.exception.DatabaseLockException;
 import com.hortonworks.registries.storage.exception.IllegalQueryParameterException;
 import com.hortonworks.registries.storage.exception.OffsetRangeReachedException;
 import com.hortonworks.registries.storage.exception.StorageException;
@@ -65,6 +66,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 //Use unique constraints on respective columns of a table for handling concurrent inserts etc.
 public class JdbcStorageManager implements TransactionManager, StorageManager {
     private static final Logger log = LoggerFactory.getLogger(StorageManager.class);
+    private static final Long NEXT_ID_WRITE_LOCK_TIMEOUT_IN_SECS = 10L;
 
     private final StorableFactory storableFactory;
     private QueryExecutor queryExecutor;
@@ -247,7 +249,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
         StorableKey keyForNamespace = new NamespaceSequenceStorable(namespace).getStorableKey();
         Stopwatch stopwatch = Stopwatch.createStarted();
         // tries to lock the row in the sequence table and updates with the sequence value incremented by 1
-        if (writeLock(keyForNamespace, 3L, SECONDS)) {
+        if (writeLock(keyForNamespace, NEXT_ID_WRITE_LOCK_TIMEOUT_IN_SECS, SECONDS)) {
             log.debug("Locked sequence row for namespace {} in {}ms", namespace, stopwatch.elapsed(MILLISECONDS));
             NamespaceSequenceStorable currentSequence = get(keyForNamespace);
             if (currentSequence != null) {
@@ -263,7 +265,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
                 }
                 return currentSequence.getNextId();
             } else {
-                throw new IllegalStateException("Could not get the sequence after being locked: " + keyForNamespace);
+                throw new DatabaseLockException("Could not get the sequence after being locked: " + namespace);
             }
         } else {
             // Error when locking the sequence row is not successful unless it's not initialized yet, then initialize it.
@@ -273,7 +275,7 @@ public class JdbcStorageManager implements TransactionManager, StorageManager {
                 log.debug("Added new sequence row for namespace {} in {}ms", namespace, stopwatch.elapsed(MILLISECONDS));
                 return 1L;
             } else {
-                throw new IllegalStateException("Could not lock sequence row for namespace: " + keyForNamespace);
+                throw new DatabaseLockException("Could not lock sequence row for namespace: " + namespace);
             }
         }
     }
