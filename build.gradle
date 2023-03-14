@@ -244,8 +244,8 @@ apply plugin: 'org.owasp.dependencycheck'
 dependencyCheck {
     formats = ['HTML', 'JSON']
     cve {
-        urlModified = 'https://kafka-toolshed.infra.cloudera.com/nvd/nvdcve-1.1-modified.json.gz'
-        urlBase = 'https://kafka-toolshed.infra.cloudera.com/nvd/nvdcve-1.1-%d.json.gz'
+        urlModified = 'http://kafka-toolshed.infra.cloudera.com/nvd/nvdcve-1.1-modified.json.gz'
+        urlBase = 'http://kafka-toolshed.infra.cloudera.com/nvd/nvdcve-1.1-%d.json.gz'
         waitTime = 4000
         startYear = 2002
     }
