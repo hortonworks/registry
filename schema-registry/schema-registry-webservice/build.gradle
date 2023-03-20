@@ -53,6 +53,7 @@ dependencies {
     compile libraries.dropwizard.metrics
 
     compile libraries.swagger
+    compile libraries.swagger_core
 
     compile libraries.hadoop.aws
     compile libraries.hadoop.azure

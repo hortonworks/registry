@@ -61,6 +61,7 @@ ext.libraries = [
       swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger"
    ],
    swagger           : "io.swagger:swagger-annotations:$versions_swagger",
+   swagger_core      : "io.swagger:swagger-core:$versions_swagger",
 
    el_api            : "javax.el:javax.el-api:$versions_el_api",
 
