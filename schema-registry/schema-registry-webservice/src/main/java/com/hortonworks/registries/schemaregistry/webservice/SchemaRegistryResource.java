@@ -524,7 +524,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                                      @Context UriInfo uriInfo,
                                      @Context SecurityContext securityContext) throws Exception {
 
-                LOG.info("adding schema version for name [{}] with [{}]", schemaName, schemaVersion);
+                LOG.info("adding schema version for name [{}] with description [{}]", schemaName,
+                        schemaVersion.getDescription());
                 final Authorizer.UserAndGroups auth = authenticationUtils.getUserAndGroups(securityContext);
                 authorizationAgent.authorizeSchemaVersion(auth, schemaRegistry,
                         schemaName,
@@ -532,6 +533,8 @@ public class SchemaRegistryResource extends BaseRegistryResource {
                         Authorizer.AccessType.CREATE);
 
                 SchemaIdVersion version = schemaRegistry.addSchemaVersion(schemaBranchName, schemaName, schemaVersion, disableCanonicalCheck);
+                LOG.info("added schema version for name [{}] with description [{}], version number [{}], version ID [{}]",
+                        schemaName, schemaVersion.getDescription(), version.getVersion(), version.getSchemaVersionId());
                 atlasEventLogger.withAuth(auth).createVersion(version.getSchemaVersionId());
                 return WSUtils.respondEntity(version.getVersion(), Response.Status.CREATED);
     }
