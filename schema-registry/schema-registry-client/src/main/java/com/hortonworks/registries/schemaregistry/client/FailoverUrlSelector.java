@@ -15,19 +15,18 @@
  */
 package com.hortonworks.registries.schemaregistry.client;
 
-import java.util.PriorityQueue;
+import java.util.LinkedList;
 
 /**
  * This class defines strategy to failover to a url when the current chosen url is considered to be failed.
  */
 public class FailoverUrlSelector extends AbstractUrlSelector {
-
-    private final PriorityQueue<UrlTimeEntry> failedUrls;
-    private String current;
+    private final LinkedList<String> failedUrls;
+    private volatile String current;
 
     public FailoverUrlSelector(String clusterUrl) {
         super(clusterUrl);
-        failedUrls = new PriorityQueue<>();
+        failedUrls = new LinkedList<>();
         current = urls[0];
     }
 
@@ -40,12 +39,14 @@ public class FailoverUrlSelector extends AbstractUrlSelector {
     public void urlWithError(String url, Exception e) {
         if (failedError(e)) {
             synchronized (failedUrls) {
-                failedUrls.add(new UrlTimeEntry(url, System.currentTimeMillis()));
+                if (!failedUrls.contains(url)) {
+                    failedUrls.add(url);
+                }
                 if (failedUrls.size() == urls.length) {
-                    current = failedUrls.remove().url;
+                    current = failedUrls.remove();
                 } else if (current.equals(url)) {
                     for (String s : urls) {
-                        if (!failedUrls.contains(new UrlTimeEntry(s, System.currentTimeMillis()))) {
+                        if (!failedUrls.contains(s)) {
                             current = s;
                             break;
                         }
@@ -64,46 +65,4 @@ public class FailoverUrlSelector extends AbstractUrlSelector {
         return true;
     }
 
-    private static class UrlTimeEntry implements Comparable<UrlTimeEntry> {
-        final String url;
-        private final long time;
-
-        public UrlTimeEntry(String url, long time) {
-            this.url = url;
-            this.time = time;
-        }
-
-        @Override
-        public int compareTo(UrlTimeEntry other) {
-            int x = 0;
-            if (this.time == other.time) {
-                x = 0;
-            } else if (time < other.time) {
-                x = -1;
-            } else {
-                x = 1;
-            }
-
-            return x;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            UrlTimeEntry urlTimeEntry = (UrlTimeEntry) o;
-
-            return url != null ? url.equals(urlTimeEntry.url) : urlTimeEntry.url == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return url != null ? url.hashCode() : 0;
-        }
-    }
 }
