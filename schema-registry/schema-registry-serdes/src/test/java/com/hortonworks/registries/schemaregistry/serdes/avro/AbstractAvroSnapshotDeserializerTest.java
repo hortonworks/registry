@@ -30,11 +30,15 @@ public class AbstractAvroSnapshotDeserializerTest {
         AvroSnapshotDeserializer underTest = new AvroSnapshotDeserializer();
         Map<String, String> config = new HashMap<>();
         config.put("specific.avro.reader", "true");
+        config.put("logical.type.conversion.enabled", "true");
+
         //when
         underTest.doInit(config);
         
         //then
-        Assertions.assertTrue(underTest.isUseSpecificAvroReader());
+        Assertions.assertTrue(underTest.useSpecificAvroReader);
+        Assertions.assertTrue(underTest.logicalTypeConversionEnabled);
+
     }
     
     @Test
@@ -43,11 +47,15 @@ public class AbstractAvroSnapshotDeserializerTest {
         AvroSnapshotDeserializer underTest = new AvroSnapshotDeserializer();
         Map<String, Boolean> config = new HashMap<>();
         config.put("specific.avro.reader", true);
+        config.put("logical.type.conversion.enabled", true);
+
         //when
         underTest.doInit(config);
 
         //then
-        Assertions.assertTrue(underTest.isUseSpecificAvroReader());
+        Assertions.assertTrue(underTest.useSpecificAvroReader);
+        Assertions.assertTrue(underTest.logicalTypeConversionEnabled);
+
     }
 
     @Test
@@ -56,11 +64,15 @@ public class AbstractAvroSnapshotDeserializerTest {
         AvroSnapshotDeserializer underTest = new AvroSnapshotDeserializer();
         Map<String, Boolean> config = new HashMap<>();
         config.put("specific.avro.reader", null);
+        config.put("logical.type.conversion.enabled", null);
+
         //when
         underTest.doInit(config);
 
         //then
-        Assertions.assertFalse(underTest.isUseSpecificAvroReader());
+        Assertions.assertFalse(underTest.useSpecificAvroReader);
+        Assertions.assertFalse(underTest.logicalTypeConversionEnabled);
+
     }
     
     class AvroSnapshotDeserializer extends AbstractAvroSnapshotDeserializer<String> {

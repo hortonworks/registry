@@ -22,7 +22,9 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSerDesHandler;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.avro.DefaultAvroSerDesHandler;
 import com.hortonworks.registries.schemaregistry.serdes.avro.TestRecord;
+import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -35,10 +37,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -53,12 +61,79 @@ public class KafkaAvroSerdesTest {
     private final String topic = "topic";
     private final Schema schema = new Schema.Parser().parse(
             "{\"type\":\"record\",\"name\":\"TestRecord\",\"namespace\":\"com.hortonworks.registries.schemaregistry.serdes.avro\"," +
-               "\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}," +
-               "{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
+                    "\"fields\":[{\"name\":\"field1\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}," +
+                    "{\"name\":\"field2\",\"type\":[\"null\",{\"type\":\"string\",\"avro.java.string\":\"String\"}],\"default\":null}]}");
 
     @BeforeEach
     public void setup() {
         schemaRegistryClient = new MockSchemaRegistryClient();
+    }
+
+    @Test
+    public void testLogicalTypeConversionWithRecordSchema() {
+
+        Map<String, Object> serializerConfig = new HashMap<>();
+        serializerConfig.put("logical.type.conversion.enabled", true);
+        KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer(schemaRegistryClient);
+        kafkaAvroSerializer.configure(serializerConfig, false);
+
+        Map<String, Object> deserializerConfig = new HashMap<>();
+        deserializerConfig.put("logical.type.conversion.enabled", true);
+        KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
+        kafkaAvroDeserializer.configure(deserializerConfig, false);
+
+        Schema schemaWithLogicalTypes = SchemaBuilder
+                .record("schema_name").namespace("ns")
+                .fields()
+                .name("decimal_bytes")
+                .type(LogicalTypes.decimal(64).addToSchema(Schema.create(Schema.Type.BYTES))).noDefault()
+                .name("uuid_string")
+                .type(LogicalTypes.uuid().addToSchema(Schema.create(Schema.Type.STRING))).noDefault()
+                .name("date_int")
+                .type(LogicalTypes.date().addToSchema(Schema.create(Schema.Type.INT))).noDefault()
+                .name("time_millis_int")
+                .type(LogicalTypes.timeMillis().addToSchema(Schema.create(Schema.Type.INT))).noDefault()
+                .name("time_micros_long")
+                .type(LogicalTypes.timeMicros().addToSchema(Schema.create(Schema.Type.LONG))).noDefault()
+                .name("timestamp_millis_long")
+                .type(LogicalTypes.timestampMillis().addToSchema(Schema.create(Schema.Type.LONG))).noDefault()
+                .name("timestamp_micros_long")
+                .type(LogicalTypes.timestampMicros().addToSchema(Schema.create(Schema.Type.LONG))).noDefault()
+                .name("local_timestamp_millis_long")
+                .type(LogicalTypes.localTimestampMillis().addToSchema(Schema.create(Schema.Type.LONG))).noDefault()
+                .name("local_timestamp_micros_long")
+                .type(LogicalTypes.localTimestampMicros().addToSchema(Schema.create(Schema.Type.LONG))).noDefault()
+                .endRecord();
+
+        GenericRecord avroRecord = new GenericRecordBuilder(schemaWithLogicalTypes)
+                .set("decimal_bytes", new BigDecimal(987654321))
+                .set("uuid_string", UUID.fromString("1bae91b3-f1ef-48ff-802a-3ded9c1ccf15"))
+                .set("date_int", LocalDate.of(2023, 1, 1))
+                .set("time_millis_int", LocalTime.of(1, 2, 3))
+                .set("time_micros_long", LocalTime.of(1, 2, 3, 4000))
+                .set("timestamp_millis_long", Instant.ofEpochMilli(123456789))
+                .set("timestamp_micros_long", Instant.ofEpochSecond(1, 2000))
+                .set("local_timestamp_millis_long", LocalDateTime.of(2023, 1, 1, 1, 1, 1))
+                .set("local_timestamp_micros_long", LocalDateTime.of(2023, 1, 2, 3, 4, 5, 6000))
+                .build();
+
+        byte[] avroData = kafkaAvroSerializer.serialize(topic, avroRecord);
+        GenericData.Record deserialized = (GenericData.Record) kafkaAvroDeserializer.deserialize(topic, avroData);
+
+        Assertions.assertEquals(new BigDecimal(987654321), deserialized.get("decimal_bytes"));
+        Assertions.assertEquals(UUID.fromString("1bae91b3-f1ef-48ff-802a-3ded9c1ccf15"),
+                deserialized.get("uuid_string"));
+        Assertions.assertEquals(LocalDate.of(2023, 1, 1), deserialized.get("date_int"));
+        Assertions.assertEquals(LocalTime.of(1, 2, 3), deserialized.get("time_millis_int"));
+        Assertions.assertEquals(LocalTime.of(1, 2, 3, 4000),
+                deserialized.get("time_micros_long"));
+        Assertions.assertEquals(Instant.ofEpochMilli(123456789), deserialized.get("timestamp_millis_long"));
+        Assertions.assertEquals(Instant.ofEpochSecond(1, 2000), deserialized.get("timestamp_micros_long"));
+        Assertions.assertEquals(LocalDateTime.of(2023, 1, 1, 1, 1, 1),
+                deserialized.get("local_timestamp_millis_long"));
+        Assertions.assertEquals(LocalDateTime.of(2023, 1, 2, 3, 4, 5, 6000),
+                deserialized.get("local_timestamp_micros_long"));
+
     }
 
     @Test
@@ -206,7 +281,7 @@ public class KafkaAvroSerdesTest {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         AvroSerDesHandler handler = new DefaultAvroSerDesHandler();
-        handler.handlePayloadSerialization(outputStream, record);
+        handler.handlePayloadSerialization(outputStream, record, false);
 
         for (Boolean isKey : Arrays.asList(true, false)) {
             KafkaAvroSerde serde = new KafkaAvroSerde(schemaRegistryClient);

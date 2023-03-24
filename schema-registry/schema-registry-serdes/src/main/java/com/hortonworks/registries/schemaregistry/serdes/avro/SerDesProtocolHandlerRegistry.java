@@ -53,9 +53,9 @@ public final class SerDesProtocolHandlerRegistry {
     }
 
     private SerDesProtocolHandlerRegistry() {
-        List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new ConfluentProtocolHandler(), 
+        List<SerDesProtocolHandler> inbuiltHandlers = Arrays.asList(new ConfluentProtocolHandler(),
                 new SchemaMetadataIdProtocolHandler(),
-                new SchemaVersionIdAsIntProtocolHandler(), 
+                new SchemaVersionIdAsIntProtocolHandler(),
                 new SchemaVersionIdAsLongProtocolHandler(),
                 new JsonSerDesProtocolHandler());
         for (SerDesProtocolHandler inbuiltHandler : inbuiltHandlers) {
@@ -71,7 +71,7 @@ public final class SerDesProtocolHandlerRegistry {
     public void registerSerDesProtocolHandler(SerDesProtocolHandler serDesProtocolHandler) {
         SerDesProtocolHandler existingHandler = protocolWithHandlers.putIfAbsent(serDesProtocolHandler.getProtocolId(), serDesProtocolHandler);
         if (existingHandler != null) {
-            throw new IllegalArgumentException("SerDesProtocolHandler is already registered with the given protocol id: " + 
+            throw new IllegalArgumentException("SerDesProtocolHandler is already registered with the given protocol id: " +
                     serDesProtocolHandler.getProtocolId());
         }
     }

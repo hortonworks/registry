@@ -15,10 +15,13 @@
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
 import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
+import org.apache.avro.Conversions;
 import org.apache.avro.Schema;
+import org.apache.avro.data.TimeConversions;
 import org.apache.avro.generic.GenericContainer;
+import org.apache.avro.generic.GenericData;
 
-import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,9 +30,9 @@ import java.util.Map;
  * Utils class for Avro related functionality.
  */
 public final class AvroUtils {
-    public static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private static final Map<Schema.Type, Schema> PRIMITIVE_SCHEMAS;
+    private static final GenericData GENERIC_DATA_WITH_LOGICAL_TYPE_CONVERSIONS;
 
     static {
         Map<Schema.Type, Schema> map = new HashMap<>();
@@ -39,6 +42,19 @@ public final class AvroUtils {
             map.put(type, Schema.create(type));
         }
         PRIMITIVE_SCHEMAS = Collections.unmodifiableMap(map);
+
+        GENERIC_DATA_WITH_LOGICAL_TYPE_CONVERSIONS = new GenericData();
+        Arrays.asList(
+                new Conversions.DecimalConversion(),
+                new Conversions.UUIDConversion(),
+                new TimeConversions.DateConversion(),
+                new TimeConversions.TimeMillisConversion(),
+                new TimeConversions.TimeMicrosConversion(),
+                new TimeConversions.LocalTimestampMillisConversion(),
+                new TimeConversions.LocalTimestampMicrosConversion(),
+                new TimeConversions.TimestampMillisConversion(),
+                new TimeConversions.TimestampMicrosConversion()
+        ).forEach(GENERIC_DATA_WITH_LOGICAL_TYPE_CONVERSIONS::addLogicalTypeConversion);
     }
 
     private AvroUtils() {
@@ -71,13 +87,21 @@ public final class AvroUtils {
     }
 
     public static Schema computeSchema(Object input) {
-        Schema schema = null;
+        Schema schema;
         if (input instanceof GenericContainer) {
             schema = ((GenericContainer) input).getSchema();
         } else {
             schema = AvroUtils.getSchemaForPrimitives(input);
         }
         return schema;
+    }
+
+    public static GenericData getGenericData(boolean logicalTypeConversionEnabled) {
+        if (logicalTypeConversionEnabled) {
+            return GENERIC_DATA_WITH_LOGICAL_TYPE_CONVERSIONS;
+        } else {
+            return GenericData.get();
+        }
     }
 
 }

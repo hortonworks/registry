@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 2017-2022 Cloudera, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -19,7 +19,6 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersionInfo;
@@ -35,6 +34,7 @@ import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
+import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.LOGICAL_TYPE_CONVERSION_ENABLED;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.READER_SCHEMA;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.WRITER_SCHEMA;
 
@@ -106,6 +107,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
     private AvroSchemaResolver avroSchemaResolver;
 
     protected boolean useSpecificAvroReader = false;
+    protected boolean logicalTypeConversionEnabled = false;
 
     public AbstractAvroSnapshotDeserializer() {
         super();
@@ -120,7 +122,8 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
         super.doInit(config);
         SchemaVersionRetriever schemaVersionRetriever = createSchemaVersionRetriever();
         avroSchemaResolver = new AvroSchemaResolver(schemaVersionRetriever);
-        useSpecificAvroReader = getBooleanValue(config, SPECIFIC_AVRO_READER, false);
+        useSpecificAvroReader = MapUtils.getBooleanValue(config, SPECIFIC_AVRO_READER, false);
+        logicalTypeConversionEnabled = MapUtils.getBooleanValue(config, LOGICAL_TYPE_CONVERSION_ENABLED, false);
     }
 
     private SchemaVersionRetriever createSchemaVersionRetriever() {
@@ -152,7 +155,7 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
      *
      * @param protocolId          protocol id
      * @param payloadInputStream  payload
-     * @param schemaName  schema name
+     * @param schemaName          schema name
      * @param writerSchemaVersion schema version of the writer
      * @param readerSchemaVersion schema version to be applied for reading or projection
      * @return the deserialized object
@@ -177,18 +180,14 @@ public abstract class AbstractAvroSnapshotDeserializer<I> extends AbstractSnapsh
     protected Object deserializePayloadForProtocol(byte protocolId,
                                                    InputStream payloadInputStream,
                                                    Schema writerSchema,
-                                                   Schema readerSchema) throws SerDesException  {
+                                                   Schema readerSchema) throws SerDesException {
         Map<String, Object> props = new HashMap<>();
         props.put(SPECIFIC_AVRO_READER, useSpecificAvroReader);
+        props.put(LOGICAL_TYPE_CONVERSION_ENABLED, logicalTypeConversionEnabled);
         props.put(WRITER_SCHEMA, writerSchema);
         props.put(READER_SCHEMA, readerSchema);
         SerDesProtocolHandler serDesProtocolHandler = SerDesProtocolHandlerRegistry.get().getSerDesProtocolHandler(protocolId);
 
         return serDesProtocolHandler.handlePayloadDeserialization(payloadInputStream, props);
-    }
-
-    @VisibleForTesting
-    boolean isUseSpecificAvroReader() {
-        return useSpecificAvroReader;
     }
 }

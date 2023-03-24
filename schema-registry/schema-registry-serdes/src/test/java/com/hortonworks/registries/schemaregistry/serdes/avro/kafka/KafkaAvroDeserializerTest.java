@@ -35,8 +35,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-
 import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.emptyMap;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +48,9 @@ class KafkaAvroDeserializerTest {
 
     @DisplayName("Should deserialize even if topic name does not match the schema name")
     @Test
-    public void shouldDeserializeEvenWhenSchemaNameDoesNotMatchTopicName() throws SchemaNotFoundException, IncompatibleSchemaException, InvalidSchemaException, IOException {
+    public void shouldDeserializeEvenWhenSchemaNameDoesNotMatchTopicName() throws SchemaNotFoundException,
+            IncompatibleSchemaException, InvalidSchemaException {
+
         long schemaVersionId = 1L;
         String schemaName = "[schema-name]";
         int versionNth = 1;

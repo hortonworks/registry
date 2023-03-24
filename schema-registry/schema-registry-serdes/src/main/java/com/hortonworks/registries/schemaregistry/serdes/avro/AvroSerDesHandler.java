@@ -15,20 +15,21 @@
  */
 package com.hortonworks.registries.schemaregistry.serdes.avro;
 
+import org.apache.avro.Schema;
+
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.apache.avro.Schema;
 
 /**
  * Interface for serializing and deserializing avro payloads.
  */
 public interface AvroSerDesHandler {
 
-    void handlePayloadSerialization(OutputStream outputStream, Object input);
+    void handlePayloadSerialization(OutputStream outputStream, Object input, boolean logicalTypeConversionEnabled);
 
     Object handlePayloadDeserialization(InputStream payloadInputStream,
                                         Schema writerSchema,
                                         Schema readerSchema,
-                                        boolean useSpecificAvroReader);
+                                        boolean useSpecificAvroReader,
+                                        boolean logicalTypeConversionEnabled);
 }

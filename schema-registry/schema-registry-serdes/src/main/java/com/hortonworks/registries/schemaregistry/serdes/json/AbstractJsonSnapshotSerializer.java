@@ -27,6 +27,7 @@ import com.kjetland.jackson.jsonSchema.JsonSchemaDraft;
 import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator;
 
 import java.io.OutputStream;
+import java.util.Collections;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -62,7 +63,7 @@ public abstract class AbstractJsonSnapshotSerializer<O> extends AbstractSnapshot
   }
 
   protected void serializePayload(OutputStream os, Object input) throws SerDesException {
-    protocolHandler.handlePayloadSerialization(os, input);
+    protocolHandler.handlePayloadSerialization(os, input, Collections.emptyMap());
   }
 
 }

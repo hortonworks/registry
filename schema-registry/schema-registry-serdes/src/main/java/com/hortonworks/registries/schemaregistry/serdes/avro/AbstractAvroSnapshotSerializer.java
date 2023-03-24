@@ -28,9 +28,13 @@ import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serdes.SerDesProtocolHandler;
 import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import org.apache.avro.Schema;
+import org.apache.commons.collections.MapUtils;
 
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
+
+import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSerDesProtocolHandler.LOGICAL_TYPE_CONVERSION_ENABLED;
 
 /**
  * The below example describes how to extend this serializer with user supplied representation like MessageContext class.
@@ -91,6 +95,8 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
 
     protected SerDesProtocolHandler serDesProtocolHandler;
 
+    private Map<String, Object> serializationContext = new HashMap<>();
+
     @Override
     public void doInit(Map<String, ?> config) {
 
@@ -109,6 +115,8 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
         }
 
         this.serDesProtocolHandler = serDesProtocolHandler;
+        boolean logicalTypeConversionEnabled = MapUtils.getBooleanValue(config, LOGICAL_TYPE_CONVERSION_ENABLED, false);
+        serializationContext.put(LOGICAL_TYPE_CONVERSION_ENABLED, logicalTypeConversionEnabled);
     }
 
     private long longValue(Object configValue) {
@@ -140,7 +148,7 @@ public abstract class AbstractAvroSnapshotSerializer<O> extends AbstractSnapshot
     }
 
     protected void serializePayload(OutputStream os, Object input) throws SerDesException {
-        serDesProtocolHandler.handlePayloadSerialization(os, input);
+        serDesProtocolHandler.handlePayloadSerialization(os, input, serializationContext);
     }
 
     protected Byte getProtocolId() {

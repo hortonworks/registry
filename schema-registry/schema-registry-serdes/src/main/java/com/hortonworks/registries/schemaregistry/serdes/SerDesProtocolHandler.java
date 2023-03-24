@@ -54,8 +54,10 @@ public interface SerDesProtocolHandler {
      *
      * @param outputStream output stream
      * @param input        object to be serialized
+     * @param context      any context required for serialization.
      */
-    void handlePayloadSerialization(OutputStream outputStream, Object input) throws SerDesException;
+    void handlePayloadSerialization(OutputStream outputStream, Object input, Map<String, Object> context)
+            throws SerDesException;
 
     /**
      * Handles deserialization of given input stream and returns the deserialized Object.

@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
@@ -78,7 +79,8 @@ class AvroSnapshotSerializerTest {
         serializer.doSerialize(object, schemaIdVersion);
 
         verify(protocolHandler).handleSchemaVersionSerialization(any(OutputStream.class), eq(schemaIdVersion));
-        verify(protocolHandler).handlePayloadSerialization(any(OutputStream.class), refEq(object));
+        verify(protocolHandler).handlePayloadSerialization(any(OutputStream.class), refEq(object),
+                anyMap());
     }
 
     @ArgumentsSource(ZeroProtocolVersionProvider.class)

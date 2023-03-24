@@ -42,6 +42,8 @@ public abstract class AbstractAvroSerDesProtocolHandler implements SerDesProtoco
      */
     public static final String READER_SCHEMA = "reader.schema";
 
+    public static final String LOGICAL_TYPE_CONVERSION_ENABLED = "logical.type.conversion.enabled";
+
     private final AvroSerDesHandler avroSerDesHandler;
 
     protected final Byte protocolId;
@@ -70,18 +72,18 @@ public abstract class AbstractAvroSerDesProtocolHandler implements SerDesProtoco
     }
 
     @Override
-    public void handlePayloadSerialization(OutputStream outputStream, Object input) {
-        avroSerDesHandler.handlePayloadSerialization(outputStream, input);
+    public void handlePayloadSerialization(OutputStream outputStream, Object input, Map<String, Object> context) {
+        boolean logicalTypeConversionEnabled = (boolean) context.getOrDefault(LOGICAL_TYPE_CONVERSION_ENABLED, false);
+        avroSerDesHandler.handlePayloadSerialization(outputStream, input, logicalTypeConversionEnabled);
     }
 
     @Override
     public Object handlePayloadDeserialization(InputStream payloadInputStream, Map<String, Object> context) {
         boolean useSpecificAvroReader = (boolean) context.getOrDefault(SPECIFIC_AVRO_READER, false);
+        boolean logicalTypeConversionEnabled = (boolean) context.getOrDefault(LOGICAL_TYPE_CONVERSION_ENABLED, false);
         Schema writerSchema = (Schema) context.get(WRITER_SCHEMA);
         Schema readerSchema = (Schema) context.get(READER_SCHEMA);
-        return avroSerDesHandler.handlePayloadDeserialization(payloadInputStream,
-                                                                     writerSchema,
-                                                                     readerSchema,
-                                                                     useSpecificAvroReader);
+        return avroSerDesHandler.handlePayloadDeserialization(payloadInputStream, writerSchema, readerSchema,
+                useSpecificAvroReader, logicalTypeConversionEnabled);
     }
 }

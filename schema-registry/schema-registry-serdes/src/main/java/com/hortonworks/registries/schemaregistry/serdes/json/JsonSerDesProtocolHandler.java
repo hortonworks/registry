@@ -72,7 +72,7 @@ public class JsonSerDesProtocolHandler implements SerDesProtocolHandler {
   }
 
   @Override
-  public void handlePayloadSerialization(OutputStream outputStream, Object input) {
+  public void handlePayloadSerialization(OutputStream outputStream, Object input, Map<String, Object> context) {
     jsonSerDesHandler.handlePayloadSerialization(outputStream, input);
   }
 

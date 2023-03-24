@@ -34,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,7 +45,7 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
     private final Map<String, Schema> readerSchemaCache = new ConcurrentHashMap<>();
 
     @Override
-    public void handlePayloadSerialization(OutputStream outputStream, Object input) {
+    public void handlePayloadSerialization(OutputStream outputStream, Object input, boolean logicalTypeConversionEnabled) {
         try {
             Schema schema = AvroUtils.computeSchema(input);
             Schema.Type schemaType = schema.getType();
@@ -54,7 +55,7 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
                 outputStream.write((byte[]) input);
             } else if (Schema.Type.STRING.equals(schemaType)) {
                 // get UTF-8 bytes and directly send those over instead of using avro.
-                outputStream.write(input.toString().getBytes("UTF-8"));
+                outputStream.write(input.toString().getBytes(StandardCharsets.UTF_8));
             } else {
                 BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
                 DatumWriter<Object> writer;
@@ -62,7 +63,7 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
                 if (isSpecificRecord) {
                     writer = new SpecificDatumWriter<>(schema);
                 } else {
-                    writer = new GenericDatumWriter<>(schema);
+                    writer = new GenericDatumWriter<>(schema, AvroUtils.getGenericData(logicalTypeConversionEnabled));
                 }
 
                 writer.write(input, encoder);
@@ -79,7 +80,8 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
     public Object handlePayloadDeserialization(InputStream payloadInputStream,
                                                Schema writerSchema,
                                                Schema readerSchema,
-                                               boolean useSpecificAvroReader) {
+                                               boolean useSpecificAvroReader,
+                                               boolean logicalTypeConversionEnabled) {
         Object deserializedObj;
         Schema.Type writerSchemaType = writerSchema.getType();
         try {
@@ -88,9 +90,10 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
                 deserializedObj = IOUtils.toByteArray(payloadInputStream);
             } else if (Schema.Type.STRING.equals(writerSchemaType)) {
                 // generate UTF-8 string object from the received bytes.
-                deserializedObj = new String(IOUtils.toByteArray(payloadInputStream), AvroUtils.UTF_8);
+                deserializedObj = new String(IOUtils.toByteArray(payloadInputStream), StandardCharsets.UTF_8);
             } else {
-                DatumReader datumReader = getDatumReader(writerSchema, readerSchema, useSpecificAvroReader);
+                DatumReader datumReader = getDatumReader(writerSchema, readerSchema, useSpecificAvroReader,
+                        logicalTypeConversionEnabled);
                 deserializedObj = datumReader.read(null, DecoderFactory.get().binaryDecoder(payloadInputStream, null));
             }
         } catch (IOException e) {
@@ -101,7 +104,8 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
         return deserializedObj;
     }
 
-    private DatumReader getDatumReader(Schema writerSchema, Schema readerSchema, boolean useSpecificAvroReader) {
+    private DatumReader getDatumReader(Schema writerSchema, Schema readerSchema, boolean useSpecificAvroReader,
+                                       boolean logicalTypeConversionEnabled) {
         if (useSpecificAvroReader) {
             if (readerSchema == null) {
                 readerSchema = this.getReaderSchema(writerSchema);
@@ -109,7 +113,13 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
 
             return new SpecificDatumReader(writerSchema, readerSchema);
         } else {
-            return readerSchema == null ? new GenericDatumReader(writerSchema) : new GenericDatumReader(writerSchema, readerSchema);
+
+            if (readerSchema == null) {
+                readerSchema = writerSchema;
+            }
+
+            return new GenericDatumReader<>(writerSchema, readerSchema,
+                    AvroUtils.getGenericData(logicalTypeConversionEnabled));
         }
     }
 
@@ -118,16 +128,16 @@ public class DefaultAvroSerDesHandler implements AvroSerDesHandler {
         if (readerSchema == null) {
             Class readerClass = SpecificData.get().getClass(writerSchema);
             if (readerClass == null) {
-                throw new AvroException("Could not find class " + writerSchema.getFullName() + 
+                throw new AvroException("Could not find class " + writerSchema.getFullName() +
                         " specified in writer\'s schema whilst finding reader\'s schema for a SpecificRecord.");
             }
             try {
                 readerSchema = ((SpecificRecord) readerClass.newInstance()).getSchema();
             } catch (InstantiationException e) {
-                throw new AvroException(writerSchema.getFullName() + " specified by the " + 
+                throw new AvroException(writerSchema.getFullName() + " specified by the " +
                         "writers schema could not be instantiated to find the readers schema.");
             } catch (IllegalAccessException e) {
-                throw new AvroException(writerSchema.getFullName() + " specified by the " + 
+                throw new AvroException(writerSchema.getFullName() + " specified by the " +
                         "writers schema is not allowed to be instantiated to find the readers schema.");
             }
 
