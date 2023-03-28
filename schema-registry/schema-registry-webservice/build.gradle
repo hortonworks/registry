@@ -22,6 +22,12 @@ application {
     mainClassName = 'com.hortonworks.registries.webservice.RegistryApplication'
 }
 
+configurations {
+    testCompile {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
+}
+
 dependencies {
 
     compile(project(':registry-common')) { transitive = false }

@@ -17,13 +17,13 @@
 package com.hortonworks.registries.schemaregistry.retry.block;
 
 /**
- *  This class encapsulates the block of code that needs to be executed with RetryExecutor
- *  with retries
+ * This class encapsulates the block of code that needs to be executed with RetryExecutor
+ * with retries
  *
  * @param <T> Return type of the request
  */
 
 @FunctionalInterface
-public interface RetryableBlock<T> {
-    T run();
+public interface RetryableBlock<T, E1 extends Exception, E2 extends Exception> {
+    T run() throws E1, E2;
 }

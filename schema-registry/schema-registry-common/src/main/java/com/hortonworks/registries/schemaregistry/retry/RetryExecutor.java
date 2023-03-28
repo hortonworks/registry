@@ -47,7 +47,8 @@ public class RetryExecutor {
         this.exceptionClass = exceptionClass;
     }
 
-    public <T> T execute(RetryableBlock<T> retryableBlock) {
+    public <T, E1 extends Exception, E2 extends Exception> T execute(
+        RetryableBlock<T, E1, E2> retryableBlock) throws E1, E2 {
         RuntimeException exception = null;
 
         int attemptNumber = 1;

@@ -112,7 +112,8 @@ public abstract class AvroSchemaAdvancedLifecycleTest extends TestcontainersTest
 
     @Test
     public void testDeleteNonExistentSchemaID() {
-        SchemaVersionKey schemaVersionKey = new SchemaVersionKey("NonExistentSchema", 1);
+        String expectedEntitiy = "NonExistentSchema";
+        SchemaVersionKey schemaVersionKey = new SchemaVersionKey(expectedEntitiy, 1);
 
         Exception exception = assertThrows(
                 SchemaNotFoundException.class,
@@ -120,10 +121,13 @@ public abstract class AvroSchemaAdvancedLifecycleTest extends TestcontainersTest
                     schemaRegistryClient.deleteSchemaVersion(schemaVersionKey);
                 });
 
-        String expectedMessage = "Entity with id [NonExistentSchema] not found.";
+        String expectedMessage = "Entity with id [" + expectedEntitiy + "] not found.";
+
         assertTrue(exception instanceof SchemaNotFoundException);
-        String actualMessage = ((SchemaNotFoundException) exception).getEntity();
+        String actualMessage = exception.getMessage();
+        String actualEntity = ((SchemaNotFoundException) exception).getEntity();
         assertTrue(actualMessage.contains(expectedMessage), "Deleting non-existent schema");
+        assertTrue(actualEntity.contains(expectedEntitiy), "Deleting non-existent schema");
     }
 
 
