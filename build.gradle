@@ -53,9 +53,22 @@ subprojects {
     dependencies {
         implementation(enforcedPlatform(libraries.jackson.bom))
         implementation(enforcedPlatform(libraries.jetty_bom))
+
         constraints {
-            implementation("org.apache.commons:commons-text:$versions_commons_text")
-            testCompile("org.apache.commons:commons-text:$versions_commons_text")
+            compile(libraries.logging.logback) {
+                version {
+                    strictly project.versions_logback
+                }
+            }
+            compile(libraries.logging.logback_access) {
+                version {
+                    strictly project.versions_logback
+                }
+            }
+            constraints {
+                implementation("org.apache.commons:commons-text:$versions_commons_text")
+                testCompile("org.apache.commons:commons-text:$versions_commons_text")
+            }
         }
     }
 
