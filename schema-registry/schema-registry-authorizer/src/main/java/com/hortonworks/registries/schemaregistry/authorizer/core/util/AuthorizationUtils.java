@@ -15,6 +15,8 @@
  */
 package com.hortonworks.registries.schemaregistry.authorizer.core.util;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.hortonworks.registries.auth.util.KerberosName;
 import com.hortonworks.registries.schemaregistry.authorizer.core.Authorizer;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -22,15 +24,17 @@ import org.apache.hadoop.security.UserGroupInformation;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthorizationUtils {
 
-    private static Map<String, Authorizer.UserAndGroups> userGroupsStore = new ConcurrentHashMap<>();
+    private static Cache<String, Authorizer.UserAndGroups> userGroupsStore = CacheBuilder
+        .newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(5))
+        .build();
 
     public static Authorizer.UserAndGroups getUserAndGroups(SecurityContext sc) {
 
@@ -42,7 +46,7 @@ public class AuthorizationUtils {
 
         try {
             String user = kerberosName.getShortName();
-            Authorizer.UserAndGroups res = userGroupsStore.get(user);
+            Authorizer.UserAndGroups res = userGroupsStore.getIfPresent(user);
             if (res != null) {
                 return res;
             }
