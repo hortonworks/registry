@@ -77,11 +77,13 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     public static final String SCHEMA_NAME_KEY_SUFFIX = "schema.name.key.suffix";
     public static final String SCHEMA_NAME_VALUE_SUFFIX = "schema.name.value.suffix";
     public static final String STORE_SCHEMA_VERSION_ID_IN_HEADER = "store.schema.version.id.in.header";
+    public static final String NULL_PASS_THROUGH_ENABLED = "null.passthrough.enabled";
 
     public static final String DEFAULT_SCHEMA_GROUP = "kafka";
     public static final String DEFAULT_SCHEMA_NAME_KEY_SUFFIX = ":k";
     public static final String DEFAULT_SCHEMA_NAME_VALUE_SUFFIX = null;
     public static final String DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER = "false";
+    public static final String DEFAULT_NULL_PASS_THROUGH_ENABLED = "false";
 
     private boolean isKey;
     private final AvroSnapshotSerializer avroSnapshotSerializer;
@@ -96,6 +98,7 @@ public class KafkaAvroSerializer implements Serializer<Object> {
     private String schemaGroup;
     private String schemaNameKeySuffix;
     private String schemaNameValueSuffix;
+    private boolean nullPassthrough;
 
     public KafkaAvroSerializer() {
         avroSnapshotSerializer = new AvroSnapshotSerializer();
@@ -133,6 +136,8 @@ public class KafkaAvroSerializer implements Serializer<Object> {
 
         useRecordHeader = Boolean.valueOf(Utils.getOrDefaultAsString(configs, 
                 STORE_SCHEMA_VERSION_ID_IN_HEADER, DEFAULT_STORE_SCHEMA_VERSION_ID_IN_HEADER));
+        nullPassthrough = Boolean.valueOf(Utils.getOrDefaultAsString(configs,
+                NULL_PASS_THROUGH_ENABLED, DEFAULT_NULL_PASS_THROUGH_ENABLED));
 
         avroSnapshotSerializer.init(configs);
         messageAndMetadataAvroSerializer.init(configs);
@@ -140,11 +145,17 @@ public class KafkaAvroSerializer implements Serializer<Object> {
 
     @Override
     public byte[] serialize(String topic, Object data) {
+        if (data == null && nullPassthrough) {
+            return null;
+        }
         return avroSnapshotSerializer.serialize(data, createSchemaMetadata(topic));
     }
 
     @Override
     public byte[] serialize(String topic, Headers headers, Object data) {
+        if (data == null && nullPassthrough) {
+            return null;
+        }
         if (useRecordHeader) {
             final MessageAndMetadata context = messageAndMetadataAvroSerializer.serialize(data, createSchemaMetadata(topic));
             headers.add(isKey ? keySchemaVersionIdHeaderName : valueSchemaVersionIdHeaderName, context.metadata());

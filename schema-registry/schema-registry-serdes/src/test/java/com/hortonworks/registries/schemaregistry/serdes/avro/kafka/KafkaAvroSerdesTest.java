@@ -40,6 +40,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 /**
  *
  */
@@ -247,5 +251,41 @@ public class KafkaAvroSerdesTest {
             final TestRecord actual = (TestRecord) deserializer.deserialize(topic, headers, bytes);
             Assertions.assertEquals(record, actual);
         }
+    }
+
+    @Test
+    public void testNullWithoutPassthrough() {
+        String topic = "topic";
+        Map<String, Object> config = new HashMap<>();
+        KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
+        kafkaAvroDeserializer.configure(config, false);
+
+        KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer(schemaRegistryClient);
+        kafkaAvroSerializer.configure(config, false);
+
+        byte[] data = kafkaAvroSerializer.serialize(topic, null);
+        assertNotNull(data);
+        assertNotEquals(0, data.length);
+
+        Object deserialized = kafkaAvroDeserializer.deserialize(topic, data);
+        assertNull(deserialized);
+    }
+
+    @Test
+    public void testNullWithPassthrough() {
+        String topic = "topic";
+        Map<String, Object> config = new HashMap<>();
+        config.put(KafkaAvroSerializer.NULL_PASS_THROUGH_ENABLED, "true");
+        KafkaAvroDeserializer kafkaAvroDeserializer = new KafkaAvroDeserializer(schemaRegistryClient);
+        kafkaAvroDeserializer.configure(config, false);
+
+        KafkaAvroSerializer kafkaAvroSerializer = new KafkaAvroSerializer(schemaRegistryClient);
+        kafkaAvroSerializer.configure(config, false);
+
+        byte[] data = kafkaAvroSerializer.serialize(topic, null);
+        assertNull(data);
+
+        Object deserialized = kafkaAvroDeserializer.deserialize(topic, data);
+        assertNull(deserialized);
     }
 }
