@@ -75,11 +75,17 @@ public class KafkaJsonDeserializer implements Deserializer<Object> {
 
   @Override
   public Object deserialize(String topic, byte[] data) {
+    if (data == null) {
+      return null;
+    }
     return jsonSnapshotDeserializer.deserialize(new ByteArrayInputStream(data), readerVersions.get(topic));
   }
 
   @Override
   public Object deserialize(String topic, Headers headers, byte[] data) {
+    if (data == null) {
+      return null;
+    }
     if (headers != null) {
       final Header header = headers.lastHeader(isKey ? keySchemaVersionIdHeaderName : valueSchemaVersionIdHeaderName);
       if (header != null) {

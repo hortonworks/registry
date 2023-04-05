@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class KafkaJsonDeserializerTest {
 
@@ -50,6 +51,15 @@ class KafkaJsonDeserializerTest {
         Object deserialized = kafkaJsonDeserializer.deserialize("[topic]", jsonAsBytes);
 
         assertEquals(TextNode.valueOf(stringJsonLiteral), deserialized);
+    }
+
+    @Test
+    void readsNullAsNull() {
+        ISchemaRegistryClient schemaRegistryClient = Mockito.mock(ISchemaRegistryClient.class);
+        KafkaJsonDeserializer kafkaJsonDeserializer = new KafkaJsonDeserializer(schemaRegistryClient);
+        kafkaJsonDeserializer.configure(Collections.emptyMap(), false);
+
+        assertNull(kafkaJsonDeserializer.deserialize("topic", null));
     }
 
     private String quote(String stringJsonLiteral) {

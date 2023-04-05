@@ -102,11 +102,17 @@ public class KafkaJsonSerializer  implements Serializer<Object> {
 
   @Override
   public byte[] serialize(String topic, Object data) {
+    if (data == null) {
+      return null;
+    }
     return jsonSnapshotSerializer.serialize(data, createSchemaMetadata(topic));
   }
 
   @Override
   public byte[] serialize(String topic, Headers headers, Object data) {
+    if (data == null) {
+      return null;
+    }
     if (useRecordHeader) {
       final MessageAndMetadata context = messageAndMetadataJsonSerializer.serialize(data, createSchemaMetadata(topic));
       headers.add(isKey ? keySchemaVersionIdHeaderName : valueSchemaVersionIdHeaderName, context.metadata());
