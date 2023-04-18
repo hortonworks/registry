@@ -120,7 +120,7 @@ class MutualSslFilterTest {
         X509Certificate[] expectedCerts = new X509Certificate[]{(X509Certificate) cert};
         when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(expectedCerts);
         AuthenticationToken expectedToken = new AuthenticationToken("CN=localhost,OU=localhost,O=localhost,L=Budapest,ST=Budapest,C=HU", "CN=localhost,OU=localhost,O=localhost,L=Budapest,ST=Budapest,C=HU", "mTLS");
-        expectedToken.setExpires(1679823307000L);
+        expectedToken.setExpires(1893499908000L);
 
         //when
         underTest.init(properties);
@@ -146,7 +146,7 @@ class MutualSslFilterTest {
         X509Certificate[] expectedCerts = new X509Certificate[]{(X509Certificate) cert};
         when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(expectedCerts);
         AuthenticationToken expectedToken = new AuthenticationToken("LOCALHOST", "LOCALHOST", "mTLS");
-        expectedToken.setExpires(1679823307000L);
+        expectedToken.setExpires(1893499908000L);
 
         //when
         underTest.init(properties);
@@ -204,7 +204,7 @@ class MutualSslFilterTest {
         X509Certificate[] expectedCerts = new X509Certificate[]{(X509Certificate) certFirst, (X509Certificate) certSecond};
         when(request.getAttribute("javax.servlet.request.X509Certificate")).thenReturn(expectedCerts);
         AuthenticationToken expectedToken = new AuthenticationToken("BUDAPEST,C=HU", "BUDAPEST,C=HU", "mTLS");
-        expectedToken.setExpires(1679823307000L);
+        expectedToken.setExpires(1893499908000L);
 
         //when
         underTest.init(properties);
