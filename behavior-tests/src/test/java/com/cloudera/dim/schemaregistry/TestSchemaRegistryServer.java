@@ -54,6 +54,9 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.PreparedStatement;
@@ -384,13 +387,20 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
                 atlasConfiguration.setAtlasUrls(Collections.singletonList("http://localhost:" + atlasPort));
                 atlasConfiguration.setCustomClasspathLoader(AtlasCustomPathClassLoader.class.getName());
 
+                String resourcePath = getClassResourceFolderPath();
+                LOG.warn("Base resource path: " + resourcePath);
+
                 // $root/behavior-tests/build/classes/java/test/
                 File atlasJarsDir = null;
                 for (String subdir : Arrays.asList("../../../atlasJars", "../../atlasJars", "../atlasJars")) {
-                    File f = new File(getClass().getResource("/").getFile(), subdir);
+                    String filePath = resourcePath + "/" + subdir;
+                    File f = new File(filePath);
                     if (f.exists() && f.isDirectory()) {
                         atlasJarsDir = f;
+                        LOG.info("Atlas JAR dir set: " + f.getAbsolutePath());
                         break;
+                    } else {
+                        LOG.info("Atlas JAR dir tried, but not exists: " + f.getAbsolutePath());
                     }
                 }
 
@@ -456,6 +466,39 @@ public class TestSchemaRegistryServer extends AbstractTestServer {
         params.put("redirectPaths", "/ui/,/");
 
         return configuration;
+    }
+
+    private String getClassResourceFolderPath() {
+        Class c = getClass();
+        // get the class's raw resource path
+        final URL classResource = c.getResource(c.getSimpleName() + ".class");
+        if (classResource == null) {
+            throw new RuntimeException("class resource not found");
+        }
+
+        // check URL validity
+        final String url = classResource.toString();
+        final String suffix = c.getCanonicalName().replace('.', '/') + ".class";
+        if (!url.endsWith(suffix)) {
+            throw new RuntimeException("Bad URL");
+        }
+
+        // strip the class's path from the URL string
+        final String base = url.substring(0, url.length() - suffix.length());
+
+        String finalPath = base;
+        // remove the "jar:" prefix and "!/" suffix, if present
+        if (finalPath.startsWith("jar:")) {
+            finalPath = finalPath.substring(4, finalPath.length() - 2);
+        }
+
+        try {
+            return new URL(finalPath).toURI().getPath();
+        } catch (final MalformedURLException e) {
+            throw new RuntimeException("Malformed URL", e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("URI Syntax error", e);
+        }
     }
 
     /** Recursively search all subdirectories. */
