@@ -14,6 +14,7 @@
  **/
 package com.hortonworks.registries.schemaregistry.client;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
@@ -52,7 +53,7 @@ import com.hortonworks.registries.schemaregistry.exceptions.RegistryRetryableExc
 import com.hortonworks.registries.schemaregistry.retry.RetryExecutor;
 import com.hortonworks.registries.schemaregistry.retry.block.RetryableBlock;
 import com.hortonworks.registries.schemaregistry.retry.policy.BackoffPolicy;
-import com.hortonworks.registries.schemaregistry.retry.policy.NOOPBackoffPolicy;
+import com.hortonworks.registries.schemaregistry.retry.policy.ExponentialBackoffPolicy;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotDeserializer;
 import com.hortonworks.registries.schemaregistry.serde.SnapshotSerializer;
@@ -207,7 +208,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final String RETRY_POLICY_CLASS_NAME_KEY = "className";
     private static final String RETRY_POLICY_CONFIG_KEY = "config";
 
-    private static final String DEFAULT_RETRY_STRATEGY_CLASS = NOOPBackoffPolicy.class.getCanonicalName();
+    private static final String DEFAULT_RETRY_STRATEGY_CLASS = ExponentialBackoffPolicy.class.getCanonicalName();
     private final RetryExecutor retryExecutor;
 
     private final ResponseHandler responseHandler = new ResponseHandler();
@@ -260,6 +261,25 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         schemaMetadataCache = createSchemaMetadataCache();
 
         schemaTextCache = createSchemaTextCache();
+    }
+
+    @VisibleForTesting
+    SchemaRegistryClient(Login login, boolean jaasKerberosLoginUsed, boolean basicAuthLoginConfigured, Client client,
+                         UrlSelector urlSelector, Configuration configuration, ClassLoaderCache classLoaderCache,
+                         SchemaVersionInfoCache schemaVersionInfoCache, SchemaMetadataCache schemaMetadataCache,
+                         Cache<SchemaDigestEntry, SchemaIdVersion> schemaTextCache, RetryExecutor retryExecutor) {
+        this.login = login;
+        this.jaasKerberosLoginUsed = jaasKerberosLoginUsed;
+        this.basicAuthLoginConfigured = basicAuthLoginConfigured;
+        this.client = client;
+        this.urlSelector = urlSelector;
+        this.configuration = configuration;
+        this.classLoaderCache = classLoaderCache;
+        this.schemaVersionInfoCache = schemaVersionInfoCache;
+        this.schemaMetadataCache = schemaMetadataCache;
+        this.schemaTextCache = schemaTextCache;
+        this.retryExecutor = retryExecutor;
+        urlWithTargets = new ConcurrentHashMap<>();
     }
 
     @SuppressWarnings("unchecked")
@@ -472,7 +492,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return urlWithTargets.get(url);
     }
 
-    private static class SchemaRegistryTargets {
+    @VisibleForTesting
+    static class SchemaRegistryTargets {
         private final WebTarget schemaProvidersTarget;
         private final WebTarget schemasTarget;
         private final WebTarget schemasByIdTarget;
@@ -499,6 +520,10 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             filesTarget = rootTarget.path(FILES_PATH);
         }
 
+        @VisibleForTesting
+        WebTarget getRootTarget() {
+            return rootTarget;
+        }
     }
 
     private UrlSelector createUrlSelector() {
@@ -1341,46 +1366,44 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     /**
      *   If schema registry client is configured with URL ensemble eg: url1,url2,url3 and ExponentialBackoffPolicy is
      *   configured as a retry mechanism, then retry is done in following manner
-     *      1) Try url1, if not reachable try url2 and if url2 is not reachable try url3
-     *         if none of the urls are reachable, then
-     *            proceed to step 2)
+     *      1) Fetch a URL from the UrlSelector as targetUrl
+     *      2) Try targetUrl
+     *         if not reachable due to a retryable error, and the backoff policy allows it
+     *            proceed to step 3)
      *         else
      *            return
      *      2) sleep for sleepMs which is defined according to the backoff policy configured.
      *      3) Go to step 1)
      *   Retry attempts are made as long as they don't exceed the max attempts and are with in the timeoutMs configured
-     *   with the back off policy. In case no more attempts can be carried out due breach of number of attempts or exceeding timeout,
-     *   exception thrown with in the {@link RegistryRetryableBlock} is resurfaced.
+     *   with the back off policy. In case no more attempts can be carried out due breach of number of attempts
+     *   or exceeding timeout, the last {@link RegistryRetryableException} thrown from within
+     *   the {@link RegistryRetryableBlock} is resurfaced.
      *
      * @param registryRetryableBlock Block of code on which retry attempts should be made in case of failures
      * @param <T> return type of registryRetryableBlock
-     * @return
+     * @return The result of registryRetryableBlock
      */
-    private <T, E1 extends Exception, E2 extends Exception>
+    @VisibleForTesting
+    <T, E1 extends Exception, E2 extends Exception>
     T runRetryableBlock(RegistryRetryableBlock<T, E1, E2> registryRetryableBlock)
         throws E1, E2 {
         return retryExecutor.execute((RetryableBlock<T, E1, E2>) () -> {
-            WebTarget initialWebTarget = null;
-            RegistryRetryableException retryableException = null;
-            while (true) {
-                SchemaRegistryClient.SchemaRegistryTargets targets = currentSchemaRegistryTargets();
-                if (initialWebTarget == null) {
-                    initialWebTarget = targets.rootTarget;
-                } else if (initialWebTarget.equals(targets.rootTarget)) {
-                    throw retryableException;
-                }
-                try {
-                    LOG.debug("Using '{}' to make request", targets.rootTarget);
-                    return registryRetryableBlock.run(targets);
-                } catch (RegistryRetryableException e) {
-                    String failedUrl = targets.rootTarget.getUri().toString();
-                    String retryReason = e.getMessage();
-                    urlSelector.urlWithError(failedUrl, e);
-                    retryableException = e;
+            SchemaRegistryClient.SchemaRegistryTargets targets = currentSchemaRegistryTargets();
+            try {
+                LOG.debug("Using '{}' to make request", targets.rootTarget);
+                return registryRetryableBlock.run(targets);
+            } catch (RegistryRetryableException e) {
+                String failedUrl = targets.rootTarget.getUri().toString();
+                String retryReason = e.getMessage();
+                urlSelector.urlWithError(failedUrl, e);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Retryable exception happened. Target URL: {}", failedUrl, e);
+                } else {
                     LOG.info("Retryable exception happened.\n" +
-                        "        Target URL: " + failedUrl + "\n" +
-                        "        Retry reason: " + retryReason);
+                        "        Target URL: {} \n" +
+                        "        Retry reason: {}", failedUrl, retryReason);
                 }
+                throw e;
             }
         });
     }
@@ -1798,7 +1821,8 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         }
     }
 
-    private interface RegistryRetryableBlock<T, E1 extends Exception,  E2 extends Exception> {
+    @VisibleForTesting
+    interface RegistryRetryableBlock<T, E1 extends Exception,  E2 extends Exception> {
         T run(SchemaRegistryTargets targets) throws RegistryRetryableException, E1, E2;
     }
 

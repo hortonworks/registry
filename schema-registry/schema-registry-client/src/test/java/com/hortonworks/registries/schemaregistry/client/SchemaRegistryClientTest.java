@@ -23,6 +23,7 @@ import com.hortonworks.registries.schemaregistry.SchemaVersion;
 import com.hortonworks.registries.shaded.org.glassfish.jersey.client.ClientConfig;
 import com.hortonworks.registries.shaded.org.glassfish.jersey.client.spi.ConnectorProvider;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -33,7 +34,12 @@ import static org.mockito.Mockito.when;
 
 public class SchemaRegistryClientTest {
     
-    private SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
+    private SchemaRegistryClient schemaRegistryClientMock;
+
+    @BeforeEach
+    public void setup() {
+        schemaRegistryClientMock = mock(SchemaRegistryClient.class);
+    }
 
     @Test
     public void testClientWithCache() throws Exception {
