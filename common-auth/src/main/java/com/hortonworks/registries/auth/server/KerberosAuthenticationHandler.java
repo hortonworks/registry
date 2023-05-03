@@ -370,11 +370,11 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
                             gssCreds = gssManager.createCredential(
                                     gssManager.createName(
                                             KerberosUtil.getServicePrincipal("HTTP", serverName),
-                                            KerberosUtil.getOidInstance("NT_GSS_KRB5_PRINCIPAL")),
+                                            KerberosUtil.NT_GSS_KRB5_PRINCIPAL_OID),
                                     GSSCredential.INDEFINITE_LIFETIME,
                                     new Oid[]{
-                                            KerberosUtil.getOidInstance("GSS_SPNEGO_MECH_OID"),
-                                            KerberosUtil.getOidInstance("GSS_KRB5_MECH_OID")},
+                                            KerberosUtil.GSS_SPNEGO_MECH_OID,
+                                            KerberosUtil.GSS_KRB5_MECH_OID},
                                     GSSCredential.ACCEPT_ONLY);
                             gssContext = gssManager.createContext(gssCreds);
                             byte[] serverToken = gssContext.acceptSecContext(clientToken, 0, clientToken.length);

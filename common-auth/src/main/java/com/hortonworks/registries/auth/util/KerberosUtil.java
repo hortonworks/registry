@@ -15,13 +15,9 @@
  */
 package com.hortonworks.registries.auth.util;
 
-import static com.hortonworks.registries.auth.PlatformName.IBM_JAVA;
-
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -36,7 +32,26 @@ import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
 
+import javax.security.auth.kerberos.KerberosPrincipal;
+
 public class KerberosUtil {
+
+    public static final Oid GSS_SPNEGO_MECH_OID =
+        getNumericOidInstance("1.3.6.1.5.5.2");
+    public static final Oid GSS_KRB5_MECH_OID =
+        getNumericOidInstance("1.2.840.113554.1.2.2");
+    public static final Oid NT_GSS_KRB5_PRINCIPAL_OID =
+        getNumericOidInstance("1.2.840.113554.1.2.2.1");
+
+    // numeric oids will never generate a GSSException for a malformed oid.
+    // use to initialize statics.
+    private static Oid getNumericOidInstance(String oidName) {
+        try {
+            return new Oid(oidName);
+        } catch (GSSException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
 
     /* Return the Kerberos login module name */
     public static String getKrb5LoginModuleName() {
@@ -45,41 +60,47 @@ public class KerberosUtil {
                 : "com.sun.security.auth.module.Krb5LoginModule";
     }
 
+    /**
+     * Returns the Oid instance from string oidName.
+     * Use {@link GSS_SPNEGO_MECH_OID}, {@link GSS_KRB5_MECH_OID},
+     * or {@link NT_GSS_KRB5_PRINCIPAL_OID} instead.
+     *
+     * @return Oid instance
+     * @param oidName The oid Name
+     * @throws NoSuchFieldException if the input is not supported.
+     */
+    @Deprecated
     public static Oid getOidInstance(String oidName)
-            throws ClassNotFoundException, GSSException, NoSuchFieldException,
-            IllegalAccessException {
-        Class<?> oidClass;
-        if (IBM_JAVA) {
-            if ("NT_GSS_KRB5_PRINCIPAL".equals(oidName)) {
-                // IBM JDK GSSUtil class does not have field for krb5 principal oid
-                return new Oid("1.2.840.113554.1.2.2.1");
-            }
-            oidClass = Class.forName("com.ibm.security.jgss.GSSUtil");
-        } else {
-            oidClass = Class.forName("sun.security.jgss.GSSUtil");
+        throws NoSuchFieldException {
+        switch (oidName) {
+            case "GSS_SPNEGO_MECH_OID":
+                return GSS_SPNEGO_MECH_OID;
+            case "GSS_KRB5_MECH_OID":
+                return GSS_KRB5_MECH_OID;
+            case "NT_GSS_KRB5_PRINCIPAL":
+                return NT_GSS_KRB5_PRINCIPAL_OID;
+            default:
+                throw new NoSuchFieldException(
+                    "oidName: " + oidName + " is not supported.");
         }
-        Field oidField = oidClass.getDeclaredField(oidName);
-        return (Oid) oidField.get(oidClass);
     }
 
+    /**
+     * Return the default realm for this JVM.
+     *
+     * @return The default realm
+     * @throws IllegalArgumentException If the default realm does not exist.
+     * @throws ClassNotFoundException Not thrown. Exists for compatibility.
+     * @throws NoSuchMethodException Not thrown. Exists for compatibility.
+     * @throws IllegalAccessException Not thrown. Exists for compatibility.
+     * @throws InvocationTargetException Not thrown. Exists for compatibility.
+     */
     public static String getDefaultRealm()
-            throws ClassNotFoundException, NoSuchMethodException,
-            IllegalArgumentException, IllegalAccessException,
-            InvocationTargetException {
-        Object kerbConf;
-        Class<?> classRef;
-        Method getInstanceMethod;
-        Method getDefaultRealmMethod;
-        if (System.getProperty("java.vendor").contains("IBM")) {
-            classRef = Class.forName("com.ibm.security.krb5.internal.Config");
-        } else {
-            classRef = Class.forName("sun.security.krb5.Config");
-        }
-        getInstanceMethod = classRef.getMethod("getInstance", new Class[0]);
-        kerbConf = getInstanceMethod.invoke(classRef, new Object[0]);
-        getDefaultRealmMethod = classRef.getDeclaredMethod("getDefaultRealm",
-                new Class[0]);
-        return (String) getDefaultRealmMethod.invoke(kerbConf, new Object[0]);
+        throws ClassNotFoundException, NoSuchMethodException,
+        IllegalArgumentException, IllegalAccessException,
+        InvocationTargetException {
+        // Any name is okay.
+        return new KerberosPrincipal("tmp", 1).getRealm();
     }
 
     /* Return fqdn of the current host */
