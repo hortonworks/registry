@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2023 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,45 @@
  */
 package com.hortonworks.registries.auth.client;
 
-import org.apache.hadoop.minikdc.KerberosSecurityTestcase;
 import com.hortonworks.registries.auth.KerberosTestUtils;
 import com.hortonworks.registries.auth.server.AuthenticationFilter;
-import com.hortonworks.registries.auth.server.PseudoAuthenticationHandler;
 import com.hortonworks.registries.auth.server.KerberosAuthenticationHandler;
+import com.hortonworks.registries.auth.server.PseudoAuthenticationHandler;
+import org.apache.hadoop.minikdc.KerberosSecurityTestcase;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.File;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
+
+    private static SSLSocketFactory defaultSSLSocketFactory;
+
+    @BeforeAll
+    static void setupAll() {
+        defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+        try {
+            HttpsURLConnection.setDefaultSSLSocketFactory(AuthenticatorTestCase.getClientSocketFactory());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @AfterAll
+    static void tearDownAll() {
+        HttpsURLConnection.setDefaultSSLSocketFactory(defaultSSLSocketFactory);
+    }
 
     @BeforeEach
     public void setup() throws Exception {
@@ -91,8 +111,7 @@ public class TestKerberosAuthenticator extends KerberosSecurityTestcase {
         AuthenticatorTestCase.setAuthenticationHandlerConfig(getAuthenticationHandlerConfiguration());
         auth.start();
         try {
-            URL url = new URL(auth.getBaseURL());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            HttpsURLConnection conn = auth.getConnection();
             conn.connect();
             Assertions.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, conn.getResponseCode());
             Assertions.assertTrue(conn.getHeaderField(KerberosAuthenticator.WWW_AUTHENTICATE) != null);

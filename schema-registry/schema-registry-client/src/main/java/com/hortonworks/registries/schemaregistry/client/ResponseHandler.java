@@ -243,8 +243,18 @@ public class ResponseHandler {
             }
         }
         if (response.getStatus() == Response.Status.FORBIDDEN.getStatusCode() && kerberosAuthEnabled) {
-            if (response.getCookies() != null &&
-                response.getCookies().keySet().contains("hadoop.auth")) {
+            boolean authorizationFailure = false;
+            try {
+                CatalogResponse catalogResponse = response.readEntity(CatalogResponse.class);
+                if (catalogResponse != null &&
+                    catalogResponse.getResponseCode() == CatalogResponse.ResponseMessage.ACCESS_DENIED.getCode()) {
+                    authorizationFailure = true;
+                }
+            } catch (Exception e) {
+                // Assume the response is not authorization failure if the response entity is not a proper catalog response
+            }
+            if (!authorizationFailure) {
+                // Retry if the HTTP 403 response is not due to authorization failure
                 throw new RegistryRetryableException("Received HTTP " + response.getStatus() +
                     " (Forbidden) response, retry request as its cause is possibly just a" +
                     " false-positive replay-attack");

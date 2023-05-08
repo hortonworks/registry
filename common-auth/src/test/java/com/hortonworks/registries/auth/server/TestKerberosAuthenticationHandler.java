@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2023 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.security.Principal;
 import java.util.Properties;
 import java.util.Set;
@@ -199,101 +198,6 @@ public class TestKerberosAuthenticationHandler
     @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testType() throws Exception {
         Assertions.assertEquals(getExpectedType(), handler.getType());
-    }
-
-    @Test
-    public void testTrustedProxyNilConfig() {
-        KerberosAuthenticationHandler handler = new KerberosAuthenticationHandler();
-        KerberosAuthenticationHandler.ProxyUserAuthorization proxyUserAuthorization = handler.new ProxyUserAuthorization(new Properties());
-        Assertions.assertFalse(proxyUserAuthorization.authorize("knox", "127.0.0.1"));
-    }
-
-    @Test
-    public void testTrustedProxyConfig() {
-        KerberosAuthenticationHandler handler = new KerberosAuthenticationHandler();
-        KerberosAuthenticationHandler.ProxyUserAuthorization proxyUserAuthorization = handler.new ProxyUserAuthorization(new Properties() {{
-            put("proxyuser.knox.hosts", "127.0.0.1");
-            put("proxyuser.admin.hosts", "10.222.0.0,10.113.221.221");
-            put("proxyuser.user1.hosts", "*");
-        }});
-        Assertions.assertTrue(proxyUserAuthorization.authorize("knox", "127.0.0.1"));
-        Assertions.assertFalse(proxyUserAuthorization.authorize("knox", "10.222.0.0"));
-
-        Assertions.assertTrue(proxyUserAuthorization.authorize("admin", "10.222.0.0"));
-        Assertions.assertTrue(proxyUserAuthorization.authorize("admin", "10.113.221.221"));
-        Assertions.assertFalse(proxyUserAuthorization.authorize("admin", "127.0.0.1"));
-
-        Assertions.assertTrue(proxyUserAuthorization.authorize("user1", "10.222.0.0"));
-        Assertions.assertTrue(proxyUserAuthorization.authorize("user1", "10.113.221.221"));
-        Assertions.assertTrue(proxyUserAuthorization.authorize("user1", "127.0.0.1"));
-    }
-
-    @Test
-    public void testProxyDoAsUser() throws Exception {
-        Properties props = loadProperties();
-        props.setProperty(KerberosAuthenticationHandler.ENABLE_TRUSTED_PROXY, Boolean.TRUE.toString());
-        props.setProperty("proxyuser.client.hosts", "10.222.0.0");
-
-        KerberosAuthenticationHandler kerberosAuthHandler = new KerberosAuthenticationHandler();
-        kerberosAuthHandler.init(props);
-
-        //Request comes from proxyuser from whitelisted host
-        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-        HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        String token = generateClientToken();
-        Mockito.when(request.getHeader(KerberosAuthenticator.AUTHORIZATION))
-                .thenReturn(KerberosAuthenticator.NEGOTIATE + " " + token);
-        Mockito.when(request.getServerName()).thenReturn("localhost");
-        Mockito.when(request.getRemoteAddr()).thenReturn("10.222.0.0");
-        Mockito.when(request.getQueryString()).thenReturn("doAs=user1");
-
-        AuthenticationToken authToken = kerberosAuthHandler.authenticate(request, response);
-        Assertions.assertEquals("user1", authToken.getName());
-        Assertions.assertEquals("user1", authToken.getUserName());
-
-        //Request comes from proxyuser from non-whitelisted host with a doAsUser
-        HttpServletRequest request2 = Mockito.mock(HttpServletRequest.class);
-        HttpServletResponse response2 = Mockito.mock(HttpServletResponse.class);
-        String token2 = generateClientToken();
-        Mockito.when(request.getHeader(KerberosAuthenticator.AUTHORIZATION))
-                .thenReturn(KerberosAuthenticator.NEGOTIATE + " " + token2);
-        Mockito.when(request2.getServerName()).thenReturn("localhost");
-        Mockito.when(request2.getRemoteAddr()).thenReturn("10.222.0.1");
-        Mockito.when(request2.getQueryString()).thenReturn("doAs=user1");
-
-        AuthenticationToken authToken2 = kerberosAuthHandler.authenticate(request2, response2);
-        Assertions.assertNull(authToken2);
-
-        //Request comes from proxyuser from non-whitelisted host without a doAsUser
-        HttpServletRequest request3 = Mockito.mock(HttpServletRequest.class);
-        HttpServletResponse response3 = Mockito.mock(HttpServletResponse.class);
-        String token3 = generateClientToken();
-        Mockito.when(request3.getHeader(KerberosAuthenticator.AUTHORIZATION))
-                .thenReturn(KerberosAuthenticator.NEGOTIATE + " " + token3);
-        Mockito.when(request3.getServerName()).thenReturn("localhost");
-        Mockito.when(request3.getRemoteAddr()).thenReturn("10.222.0.0");
-
-        AuthenticationToken authToken3 = kerberosAuthHandler.authenticate(request3, response3);
-        Assertions.assertEquals("client@EXAMPLE.COM", authToken3.getName());
-        Assertions.assertEquals("client", authToken3.getUserName());
-
-        kerberosAuthHandler.destroy();
-    }
-
-    @Test
-    public void testGetDoAsUser() throws UnsupportedEncodingException {
-        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-        Mockito.when(request.getQueryString()).thenReturn("doAs=user1");
-        Assertions.assertEquals("user1", KerberosAuthenticationHandler.getDoasUser(request));
-
-        Mockito.when(request.getQueryString()).thenReturn("x=y&z=a");
-        Assertions.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
-
-        Mockito.when(request.getQueryString()).thenReturn("x=y&doAs=");
-        Assertions.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
-
-        Mockito.when(request.getQueryString()).thenReturn("x=y&doAs=%20");
-        Assertions.assertNull(KerberosAuthenticationHandler.getDoasUser(request));
     }
 
     public void testRequestWithoutAuthorization() throws Exception {

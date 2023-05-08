@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2022 Cloudera, Inc.
+ * Copyright 2016-2023 Cloudera, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static com.hortonworks.registries.auth.util.Utils.isRequestAuthenticated;
+
 /** When joining multiple auth filters into a composite filter, the last filter
  * needs to be the terminator filter, which terminates the chain. If the preceeding
  * auth filters managed to authenticate the user, the terminator filter will let
@@ -41,12 +43,10 @@ public class AuthTerminatorFilter extends AuthenticationFilter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        Object value = httpRequest.getAttribute(AUTH_FAILED);
-
-        if (value == null || "false".equals(value)) {
+        if (isRequestAuthenticated(httpRequest)) {
             chain.doFilter(request, response);
         } else {
-            respondWithUnauthorized(request, httpResponse, HttpServletResponse.SC_UNAUTHORIZED, null);
+            respondWithUnauthorized(httpRequest, httpResponse, HttpServletResponse.SC_UNAUTHORIZED, null);
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2019 Cloudera, Inc.
+ * Copyright 2017-2023 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  **/
 package com.hortonworks.registries.auth.util;
 
+import com.hortonworks.registries.auth.server.AuthTokenRequestWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
 import java.util.Locale;
 
 public class Utils {
@@ -92,6 +94,18 @@ public class Utils {
             }
         }
         return true;
+    }
+
+    public static boolean isRequestAuthenticated(HttpServletRequest httpRequest) {
+        if (!(httpRequest instanceof AuthTokenRequestWrapper)) {
+            return false;
+        }
+        Principal authenticatedUserPrincipal = httpRequest.getUserPrincipal();
+        if (authenticatedUserPrincipal == null) {
+            return false;
+        }
+        String authenticatedUser = authenticatedUserPrincipal.getName();
+        return authenticatedUser != null && !authenticatedUser.isEmpty();
     }
     
     private Utils() { }

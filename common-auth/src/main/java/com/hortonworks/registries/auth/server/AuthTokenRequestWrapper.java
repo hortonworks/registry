@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.security.Principal;
 
-class AuthTokenRequestWrapper extends HttpServletRequestWrapper {
+public class AuthTokenRequestWrapper extends HttpServletRequestWrapper {
 
     private final AuthenticationToken authToken;
 

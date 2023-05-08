@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2021 Cloudera, Inc.
+ * Copyright 2016-2023 Cloudera, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.hortonworks.registries.auth.util.Utils.isRequestAuthenticated;
 
 /**
  * <p>The {@link AuthenticationFilter} enables protecting web application
@@ -195,19 +201,24 @@ public class AuthenticationFilter implements Filter {
      */
     public static final String ALLOWED_RESOURCES = "allowed.resources";
 
-    /** In case of composite filters, we will pass the state to the next filter. */
-    protected static final String AUTH_FAILED = "failed";
+    /**
+     * Constant for the configuration property that indicates the Trusted Proxy setting.
+     */
+    public static final String ENABLE_TRUSTED_PROXY = "enable.trusted.proxy";
+
 
     private boolean isComposite;
     private Properties config;
     private Signer signer;
     private SignerSecretProvider secretProvider;
     private AuthenticationHandler authHandler;
-    private long validity;
+    private long tokenValidityMs;
     private String cookieDomain;
     private String cookiePath;
     private boolean isInitializedByTomcat;
     private List<String> allowedResources = new ArrayList<>();
+    private boolean trustedProxyEnabled = false;
+    private ProxyUserAuthorization proxyUserAuthorization;
 
     /**
      * <p>Initializes the authentication filter and signer secret provider.</p>
@@ -247,7 +258,7 @@ public class AuthenticationFilter implements Filter {
             authHandlerClassName = authHandlerName;
         }
 
-        validity = Long.parseLong(config.getProperty(AUTH_TOKEN_VALIDITY, "36000"))
+        tokenValidityMs = Long.parseLong(config.getProperty(AUTH_TOKEN_VALIDITY, "36000"))
                 * 1000; //10 hours
         initializeSecretProvider(filterConfig);
 
@@ -257,6 +268,11 @@ public class AuthenticationFilter implements Filter {
         cookiePath = config.getProperty(COOKIE_PATH, null);
         if ((config.getProperty(ALLOWED_RESOURCES) != null) && !config.getProperty(ALLOWED_RESOURCES).isEmpty()) {
             allowedResources = Arrays.asList(config.getProperty(ALLOWED_RESOURCES).split(","));
+        }
+
+        trustedProxyEnabled = Boolean.parseBoolean(config.getProperty(ENABLE_TRUSTED_PROXY));
+        if (trustedProxyEnabled) {
+            proxyUserAuthorization = new ProxyUserAuthorization(config);
         }
     }
 
@@ -375,7 +391,7 @@ public class AuthenticationFilter implements Filter {
      * @return the validity time of the generated tokens, in seconds.
      */
     protected long getValidity() {
-        return validity / 1000;
+        return tokenValidityMs / 1000;
     }
 
     /**
@@ -476,6 +492,9 @@ public class AuthenticationFilter implements Filter {
      * @throws AuthenticationException thrown if the token is invalid or if it has expired.
      */
     protected AuthenticationToken getToken(HttpServletRequest request) throws IOException, AuthenticationException {
+        if (!isSecureChannel(request)) {
+            return null;
+        }
         AuthenticationToken token = null;
         String tokenStr = null;
         Cookie[] cookies = request.getCookies();
@@ -521,11 +540,10 @@ public class AuthenticationFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        if (alreadyAuthenticated(httpRequest)) {
+        if (isRequestAuthenticated(httpRequest)) {
             proceedToNextFilter(filterChain, httpRequest, httpResponse);
         } else if (isResourceAllowed(httpRequest) || !authHandler.shouldAuthenticate(httpRequest)) {
             LOG.debug("Skipping authentication filter of type {} for {}", authHandler.getType(), httpRequest);
-            request.setAttribute(AUTH_FAILED, "skipped");
             proceedToNextFilter(filterChain, httpRequest, httpResponse);
         } else {
             LOG.debug("Performing authentication filter of type {} for {}", authHandler.getType(), httpRequest);
@@ -534,13 +552,12 @@ public class AuthenticationFilter implements Filter {
     }
 
     private void performAuthentication(FilterChain filterChain, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
-        boolean unauthorizedResponse = true;
         int errCode = HttpServletResponse.SC_UNAUTHORIZED;
         AuthenticationException authenticationEx = null;
         try {
-            boolean newToken = false;
             AuthenticationToken token;
             try {
+                // Extract authentication token from auth cookie (if present)
                 token = getToken(httpRequest);
             } catch (AuthenticationException ex) {
                 LOG.warn("AuthenticationToken ignored: " + ex.getMessage());
@@ -548,33 +565,52 @@ public class AuthenticationFilter implements Filter {
                 authenticationEx = ex;
                 token = null;
             }
-            if (token == null) {
+            boolean validTokenArrived = token != null;
+            boolean reauthenticationWasSuccessful = false;
+            if (!validTokenArrived) {
+                // If no valid token was found in cookie, authenticate the request
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Request [{}] triggering authentication", getRequestURL(httpRequest));
                 }
                 token = authHandler.authenticate(httpRequest, httpResponse);
-                if (token != null && token.getExpires() != 0 &&
-                        token != AuthenticationToken.ANONYMOUS) {
+                reauthenticationWasSuccessful = token != null;
+
+                if (shouldSetCookieExpiry(token, httpRequest)) {
                     token.setExpires(System.currentTimeMillis() + getValidity() * 1000);
                 }
-                newToken = true;
+                if (shouldCreateAuthCookie(token, httpRequest)) {
+                    String signedToken = signer.sign(token.toString());
+                    createAuthCookie(httpResponse, signedToken, getCookieDomain(),
+                        getCookiePath(), token.getExpires());
+                }
             }
-            if (token != null) {
+            if (validTokenArrived || reauthenticationWasSuccessful) {
                 // authentication was successful
-                unauthorizedResponse = false;
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Request [{}] user [{}] authenticated", getRequestURL(httpRequest), token.getUserName());
                 }
 
-                // we will wrap the principal around the http request
-                httpRequest = new AuthTokenRequestWrapper(httpRequest, token);
-                if (newToken && !token.isExpired() && token != AuthenticationToken.ANONYMOUS) {
-                    String signedToken = signer.sign(token.toString());
-                    createAuthCookie(httpResponse, signedToken, getCookieDomain(),
-                            getCookiePath(), token.getExpires(), "https".equals(httpRequest.getScheme()));
+                String doAsUser = trustedProxyEnabled ? getDoasUser(httpRequest) : null;
+                if (doAsUser != null) {
+                    String userName = token.getUserName();
+                    if (!proxyUserAuthorization.authorize(userName, httpRequest.getRemoteAddr())) {
+                        LOG.info("{} is not authorized to act as proxy user from {}", userName, httpRequest.getRemoteAddr());
+                        httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    } else {
+                        // Trusted proxy user is valid, put doAs user into the auth token as later
+                        // the user to be authorized will be extracted from this token.
+                        AuthenticationToken doAsUserToken = new AuthenticationToken(doAsUser, doAsUser, token.getType());
+                        doAsUserToken.setExpires(token.getExpires());
+                        httpRequest = new AuthTokenRequestWrapper(httpRequest, doAsUserToken);
+                        httpResponse.setStatus(HttpServletResponse.SC_OK);
+                        proceedToNextFilter(filterChain, httpRequest, httpResponse);
+                    }
+                } else {
+                    // No proxy user authentication, proceed with the successfully authenticated user
+                    httpRequest = new AuthTokenRequestWrapper(httpRequest, token);
+                    httpResponse.setStatus(HttpServletResponse.SC_OK);
+                    proceedToNextFilter(filterChain, httpRequest, httpResponse);
                 }
-                httpRequest.setAttribute(AUTH_FAILED, "false");
-                proceedToNextFilter(filterChain, httpRequest, httpResponse);
             }
         } catch (AuthenticationException ex) {
             // exception from the filter itself is fatal
@@ -590,10 +626,9 @@ public class AuthenticationFilter implements Filter {
                 }
             }
         }
-        if (unauthorizedResponse) {
+        if (!isRequestAuthenticated(httpRequest)) {
             if (isComposite) {
                 LOG.info("Composite Authentication - Did not pass authentication with [{}] filter, passing to the next one.", authHandler.getType());
-                httpRequest.setAttribute(AUTH_FAILED, "true");
                 proceedToNextFilter(filterChain, httpRequest, httpResponse);
             } else {
                 respondWithUnauthorized(httpRequest, httpResponse, errCode, authenticationEx);
@@ -601,17 +636,15 @@ public class AuthenticationFilter implements Filter {
         }
     }
 
-    private boolean alreadyAuthenticated(HttpServletRequest httpRequest) {
-        Object value = httpRequest.getAttribute(AUTH_FAILED);
-        return "false".equals(value);
-    }
-
-    protected void respondWithUnauthorized(ServletRequest request, HttpServletResponse httpResponse, int errCode,
+    protected void respondWithUnauthorized(HttpServletRequest request, HttpServletResponse httpResponse, int errCode,
                                            AuthenticationException authenticationEx) throws IOException {
         if (!httpResponse.isCommitted()) {
-            boolean isHttps = "https".equals(request.getScheme());
-            createAuthCookie(httpResponse, "", getCookieDomain(),
-                    getCookiePath(), 0, isHttps);
+
+            if (hasAuthCookie(request)) {
+                // Try to clear client-side cookie
+                addCleanerCookie(httpResponse);
+            }
+
             // If response code is 401. Then WWW-Authenticate Header should be
             // present.. reset to 403 if not found..
             if ((errCode == HttpServletResponse.SC_UNAUTHORIZED)
@@ -633,6 +666,36 @@ public class AuthenticationFilter implements Filter {
                 httpResponse.sendError(errCode, authenticationEx.getMessage());
             }
         }
+    }
+
+    private boolean hasAuthCookie(HttpServletRequest request) {
+        if (!isSecureChannel(request)) {
+            return false;
+        }
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            return Arrays.stream(cookies).anyMatch(cookie -> cookie.getName().equals(AuthenticatedURL.AUTH_COOKIE));
+        }
+        return false;
+    }
+
+    private void addCleanerCookie(HttpServletResponse httpResponse) {
+        String domain = getCookieDomain();
+        String path = getCookiePath();
+        StringBuilder sb = new StringBuilder(AuthenticatedURL.AUTH_COOKIE)
+            .append("=");
+        if (path != null) {
+            sb.append("; Path=").append(path);
+        }
+        if (domain != null) {
+            sb.append("; Domain=").append(domain);
+        }
+        Date date = new Date(0);
+        SimpleDateFormat df = new SimpleDateFormat("EEE, " +
+            "dd-MMM-yyyy HH:mm:ss zzz");
+        df.setTimeZone(TimeZone.getTimeZone("GMT"));
+        sb.append("; Expires=").append(df.format(date));
+        httpResponse.addHeader("Set-Cookie", sb.toString());
     }
 
     private boolean expectContinue(ServletRequest request) {
@@ -676,8 +739,7 @@ public class AuthenticationFilter implements Filter {
      *
      */
     public static void createAuthCookie(HttpServletResponse resp, String token,
-                                        String domain, String path, long expires,
-                                        boolean isSecure) {
+                                        String domain, String path, long expires) {
         StringBuilder sb = new StringBuilder(AuthenticatedURL.AUTH_COOKIE)
                 .append("=");
         if (token != null && token.length() > 0) {
@@ -700,9 +762,7 @@ public class AuthenticationFilter implements Filter {
             sb.append("; Expires=").append(df.format(date));
         }
 
-        if (isSecure) {
-            sb.append("; Secure");
-        }
+        sb.append("; Secure");
 
         sb.append("; HttpOnly");
         resp.addHeader("Set-Cookie", sb.toString());
@@ -718,5 +778,79 @@ public class AuthenticationFilter implements Filter {
             }
         }
         return result;
+    }
+
+    static String getDoasUser(HttpServletRequest request) {
+        String doAsUser = "";
+        try {
+            doAsUser = request.getParameter("doAs");
+            if (doAsUser == null) {
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.warn("Could not get the doAs parameter", e);
+        }
+        return doAsUser.isEmpty() ? null : doAsUser;
+    }
+
+    private static boolean isSecureChannel(ServletRequest request) {
+        return "https".equals(request.getScheme());
+    }
+
+    private static boolean shouldCreateAuthCookie(AuthenticationToken token, HttpServletRequest httpRequest) {
+        return token != null
+            && !token.isExpired()
+            && token != AuthenticationToken.ANONYMOUS
+            && isSecureChannel(httpRequest);
+    }
+
+    private static boolean shouldSetCookieExpiry(AuthenticationToken token, HttpServletRequest httpRequest) {
+        return token != null
+            && token.getExpires() != 0
+            && token != AuthenticationToken.ANONYMOUS
+            && isSecureChannel(httpRequest);
+    }
+
+    /**
+     * Utility class to support proxy user authorizations.
+     *
+     * An example config will look like this:
+     * proxyuser.knox.hosts = 10.222.0.0
+     * proxyuser.admin.hosts = 10.222.0.0,10.113.221.221
+     */
+    static class ProxyUserAuthorization {
+
+        /**
+         * Regex for the configuration property that indicates the Trusted Proxy user against approved host list.
+         */
+        static final String PROXYUSER_REGEX_PATTERN = "proxyuser\\.(.+)\\.hosts";
+        static final String DELIMITER = "\\s*,\\s*";
+
+        private final Map<String, List<String>> proxyUserHostsMap = new HashMap<>();
+
+        ProxyUserAuthorization(Properties config) {
+            Pattern pattern = Pattern.compile(PROXYUSER_REGEX_PATTERN);
+            config.stringPropertyNames().forEach((propertyName -> {
+                Matcher matcher = pattern.matcher(propertyName);
+                if (matcher.find()) {
+                    String proxyUser = matcher.group(1);
+                    String hostList = config.getProperty(propertyName).trim();
+                    List<String> hosts = hostList.equals("*") ? new ArrayList<>() : Arrays.asList(hostList.split(DELIMITER));
+                    proxyUserHostsMap.put(proxyUser, hosts);
+                }
+            }));
+        }
+
+        public boolean authorize(String proxyUser, String host) {
+            List<String> proxyHosts = proxyUserHostsMap.get(proxyUser);
+            if (proxyHosts == null) {
+                return false;
+            } else if (proxyHosts.isEmpty()) {
+                return true;
+            }
+
+            return proxyHosts.contains(host);
+        }
+
     }
 }
