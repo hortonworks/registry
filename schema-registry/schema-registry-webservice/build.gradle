@@ -62,7 +62,6 @@ dependencies {
     compile libraries.commons.lang3
     compile libraries.commons.collections
     compile libraries.nimbus
-    compile libraries.json_smart
     compile libraries.jersey.media_multipart
 
     testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }

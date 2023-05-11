@@ -133,7 +133,6 @@ ext.libraries = [
       slf4j_simple   : "org.slf4j:slf4j-simple"
    ],
 
-   gson              : "com.google.code.gson:gson:$versions_gson",
    libphonenumber    : "com.googlecode.libphonenumber:libphonenumber:$versions_libphonenumber",
    guava             : "com.google.guava:guava",
    guice             : "com.google.inject:guice:$versions_guice",
@@ -147,10 +146,7 @@ ext.libraries = [
    ],
    jna               : "net.java.dev.jna:jna:$versions_jna_platform",
    jna_platform      : "net.java.dev.jna:jna-platform:$versions_jna_platform",
-   nimbus            : dependencies.create("com.nimbusds:nimbus-jose-jwt:$versions_nimbus") {
-       exclude group: 'net.minidev', module: 'json-smart'
-   },
-   json_smart        : "net.minidev:json-smart:$versions_json_smart",
+   nimbus            : "com.nimbusds:nimbus-jose-jwt:$versions_nimbus",
 
    kafka: [
      confluent_avro_serializer : "io.confluent:kafka-avro-serializer:$versions_confluent",
