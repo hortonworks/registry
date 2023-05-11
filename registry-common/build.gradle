@@ -38,7 +38,6 @@ dependencies {
     compile libraries.joda_time
     
     compile libraries.nimbus
-    compile libraries.json_smart
     
     compile libraries.jersey.media_multipart
     
