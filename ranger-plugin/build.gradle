@@ -29,7 +29,6 @@ dependencies {
     compile libraries.httpclient.client
     compile libraries.hadoop.common
     compile libraries.guava
-    compile libraries.gson
 }
 
 task copyDependencies(type: Sync) {

@@ -185,7 +185,7 @@ public class OAuth2AuthenticationHandler implements AuthenticationHandler {
                 if (jwtPrincipalClaim == null || jwtPrincipalClaim.equals("sub")) {
                     userName = jwtToken.getJWTClaimsSet().getSubject();
                 } else {
-                    userName = jwtToken.getJWTClaimsSet().toJSONObject().getAsString(jwtPrincipalClaim);
+                    userName = jwtToken.getJWTClaimsSet().toJSONObject().get(jwtPrincipalClaim).toString();
                 }
                 LOG.debug("USERNAME: " + userName);
             } else {
