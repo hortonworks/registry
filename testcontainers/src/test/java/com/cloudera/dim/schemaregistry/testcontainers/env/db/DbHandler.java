@@ -17,6 +17,7 @@
 package com.cloudera.dim.schemaregistry.testcontainers.env.db;
 
 import com.cloudera.dim.schemaregistry.TestUtils;
+import com.google.common.base.Preconditions;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
@@ -30,6 +31,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Properties;
 
 public class DbHandler {
@@ -189,6 +193,16 @@ public class DbHandler {
                 dbConnProps.getUserPass());
 
         return flyway;
+    }
+
+    public long schemaVersionStateCount(long schemaVersionId) throws SQLException {
+        String sql = "SELECT COUNT(*) AS count FROM schema_version_state WHERE \"schemaVersionId\" = " + schemaVersionId;
+        try (PreparedStatement preparedStatement = dataSource.getConnection().prepareStatement(sql)) {
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                Preconditions.checkArgument(resultSet.next(), "Result set is empty");
+                return resultSet.getLong("count");
+            }
+        }
     }
 
 }

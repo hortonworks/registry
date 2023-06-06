@@ -74,7 +74,7 @@ public abstract class TestcontainersTestsBase {
     @Getter
     private String schemaName;
 
-    private final DbHandler dbHandler = new DbHandler();
+    protected final DbHandler dbHandler = new DbHandler();
     protected final SchemaRegistryHelper schemaRegistryHelper = new SchemaRegistryHelper();
 
     private static GenericContainer dbContainer;

@@ -64,7 +64,9 @@ public class TestUtils {
                 for (String line : lines) {
                     // ignore commented lines or lines which contain procedure operations
                     if (line.startsWith("--") || line.contains("Cloudera") || line.toUpperCase().contains("CALL")
-                            || line.toUpperCase().contains("DROP PROCEDURE")) {
+                            || line.toUpperCase().contains("DROP PROCEDURE")
+                            // H2 does not support table locks
+                            || line.toUpperCase().contains("LOCK TABLE")) {
                         continue;
                     }
                     // H2 has no support for MySql functions, but luckily we can ignore them

@@ -306,23 +306,7 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
     }
 
     @Override
-    public void deleteSchema(String schemaName) throws SchemaNotFoundException {
-        Collection<SchemaVersionInfo> schemaVersionInfos = getAllVersions(schemaName);
-        Long schemaMetadataId = null;
-        // Remove all the schema version state entities for this schema name, invalidate relevant caches and notify all HA servers
-        if (schemaVersionInfos != null) {
-            for (SchemaVersionInfo schemaVersionInfo: schemaVersionInfos) {
-                schemaMetadataId = schemaVersionInfo.getSchemaMetadataId();
-                List<QueryParam> queryParams = new ArrayList<>();
-                queryParams.add(new QueryParam(SchemaVersionStateStorable.SCHEMA_VERSION_ID, schemaVersionInfo.getId().toString()));
-                Collection<SchemaVersionStateStorable> schemaVersionStateStorables = storageManager.find(SchemaVersionStateStorable.NAME_SPACE, queryParams);
-                if (schemaVersionStateStorables != null) {
-                    for (SchemaVersionStateStorable schemaVersionStateStorable : schemaVersionStateStorables) {
-                        storageManager.remove(schemaVersionStateStorable.getStorableKey());
-                    }
-                }
-            }
-        }
+    public void deleteSchema(String schemaName) {
         // Remove all serdes mappings for this schema name
         SchemaMetadataInfo schemaMetadataInfo = checkNotNull(getSchemaMetadataInfo(schemaName),
                 "Could not find schema meta \"%s\"", schemaName);

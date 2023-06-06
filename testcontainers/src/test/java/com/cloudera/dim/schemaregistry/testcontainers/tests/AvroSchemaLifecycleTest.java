@@ -154,11 +154,15 @@ public abstract class AvroSchemaLifecycleTest extends TestcontainersTestsBase {
                 "Registering SCHEMA");
         schemaRegistryClient.registerSchemaMetadata(originalSchemaMetadata);
         SchemaVersion schemaVersion = new SchemaVersion(SCHEMA_STRING, "Adding version 1 to SCHEMA");
-        schemaRegistryClient.addSchemaVersion(getSchemaName(), schemaVersion);
+        SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(getSchemaName(), schemaVersion);
 
         schemaRegistryClient.deleteSchemaVersion(new SchemaVersionKey(getSchemaName(), 1));
 
         Assertions.assertEquals(schemaRegistryClient.getAllVersions(getSchemaName()).size(), 0,
                 "Delete of SCHEMA " + getSchemaName() + " unsuccessful");
+
+        long schemaVersionId = schemaIdVersion.getSchemaVersionId();
+        Assertions.assertEquals(0, dbHandler.schemaVersionStateCount(schemaVersionId),
+                "The schema_version_state should not hold any entries with schemaVersionId: " + schemaVersionId);
     }
 }
