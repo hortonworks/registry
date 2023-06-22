@@ -114,6 +114,7 @@ ext.libraries = [
    jose4j            : "org.bitbucket.b_c:jose4j:$versions_jose4j",
    jsr305            : "com.google.code.findbugs:jsr305",
 
+   json_org          : "org.json:json:$versions_json_org",
    json_schema_validator : "com.github.erosb:everit-json-schema:$versions_json_schema_validator",
    junit             : "org.junit.jupiter:junit-jupiter",
    mockito           : "org.mockito:mockito-core:$versions_mockito",

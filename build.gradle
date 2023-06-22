@@ -94,6 +94,11 @@ subprojects {
                     strictly project.versions_avro
                 }
             }
+            compile(libraries.json_org) {
+                version {
+                    strictly project.versions_json_org
+                }
+            }
         }
     }
 

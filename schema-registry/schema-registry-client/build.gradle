@@ -28,6 +28,7 @@ dependencies {
 
     constraints {
         compile("org.yaml:snakeyaml") { version { strictly project.versions_snakeyaml } }
+        compile("org.json:json") { version { strictly project.versions_json_org } }
         compile("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
         compile("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2_databind } }
         compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
@@ -40,6 +41,7 @@ dependencies {
     }
 
     compile libraries.snakeyaml
+    compile libraries.json_org
 
     compile(project(':schema-registry:schema-registry-common')) {
         exclude group: 'javax.validation', module: 'validation-api'
