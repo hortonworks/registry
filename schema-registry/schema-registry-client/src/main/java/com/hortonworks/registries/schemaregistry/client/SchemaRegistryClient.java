@@ -87,6 +87,7 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.login.LoginException;
 
@@ -212,6 +213,13 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     private final RetryExecutor retryExecutor;
 
     private final ResponseHandler responseHandler = new ResponseHandler();
+
+    static {
+        // This is a workaround for a jersey issue which can be traced back to a JDK issue.
+        // https://github.com/eclipse-ee4j/jersey/issues/4332
+        // By calling getDefaultSSLSocketFactory upfront, we can circumvent the concurrency issue.
+        HttpsURLConnection.getDefaultSSLSocketFactory();
+    }
 
     /**
      * Creates {@link SchemaRegistryClient} instance with the given yaml config.
