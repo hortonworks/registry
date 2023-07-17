@@ -549,7 +549,8 @@ public class DefaultSchemaRegistry implements ISchemaRegistry {
         throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
         lockSchemaMetadata(schemaMetadata.getName());
         return schemaVersionLifecycleManager.addSchemaVersion(branchName, schemaMetadata,
-            versionId, new SchemaVersion(schemaVersionInfo), schemaVersionInfo.getVersion(), this::registerSchemaMetadata, false);
+            versionId, new SchemaVersion(schemaVersionInfo), schemaVersionInfo.getVersion(),
+            this::registerSchemaMetadata, SchemaDeduplicationMode.NO_CHECK);
     }
 
     @Override

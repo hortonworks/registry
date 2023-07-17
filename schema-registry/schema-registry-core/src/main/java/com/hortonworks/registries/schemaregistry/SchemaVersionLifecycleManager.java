@@ -102,13 +102,44 @@ public abstract class SchemaVersionLifecycleManager {
                 registerSchemaMetadataFn, disableCanonicalCheck);
     }
 
+    public SchemaIdVersion addSchemaVersion(String schemaBranchName,
+                                            SchemaMetadata schemaMetadata,
+                                            Long versionId,
+                                            SchemaVersion schemaVersion,
+                                            Integer version,
+                                            Function<SchemaMetadata, Long> registerSchemaMetadataFn,
+                                            SchemaDeduplicationMode schemaDeduplicationMode
+    )
+            throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        return addSchemaVersion(schemaBranchName, schemaMetadata, Optional.of(versionId), version, schemaVersion,
+            registerSchemaMetadataFn, schemaDeduplicationMode
+        );
+    }
+
+    private SchemaIdVersion addSchemaVersion(String schemaBranchName,
+                                             SchemaMetadata schemaMetadata,
+                                             Optional<Long> versionId,
+                                             Integer version,
+                                             SchemaVersion schemaVersion,
+                                             Function<SchemaMetadata, Long> registerSchemaMetadataFn,
+                                             boolean disableCanonicalCheck)
+            throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
+        SchemaDeduplicationMode schemaDeduplicationMode = disableCanonicalCheck
+            ? SchemaDeduplicationMode.TEXT_CHECK
+            : SchemaDeduplicationMode.CANONICAL_CHECK;
+        return addSchemaVersion(schemaBranchName, schemaMetadata, versionId, version, schemaVersion,
+            registerSchemaMetadataFn, schemaDeduplicationMode
+        );
+    }
+
     private SchemaIdVersion addSchemaVersion(String schemaBranchName,
                                             SchemaMetadata schemaMetadata,
                                             Optional<Long> versionId,
                                             Integer version,
                                             SchemaVersion schemaVersion,
                                             Function<SchemaMetadata, Long> registerSchemaMetadataFn,
-                                            boolean disableCanonicalCheck)
+                                            SchemaDeduplicationMode schemaDeduplicationMode
+    )
             throws IncompatibleSchemaException, InvalidSchemaException, SchemaNotFoundException, SchemaBranchNotFoundException {
 
         Preconditions.checkNotNull(schemaBranchName, "Schema branch name can't be null");
@@ -117,8 +148,7 @@ public abstract class SchemaVersionLifecycleManager {
 
         checkSchemaText(schemaVersion.getSchemaText());
 
-        //
-        SchemaVersionInfo schemaVersionInfo;
+        SchemaVersionInfo schemaVersionInfo = null;
         String schemaName = schemaMetadata.getName();
         // check whether there exists schema-metadata for schema-metadata-key
         SchemaMetadataInfo retrievedschemaMetadataInfo = getSchemaMetadataInfo(schemaName);
@@ -126,7 +156,10 @@ public abstract class SchemaVersionLifecycleManager {
         if (retrievedschemaMetadataInfo != null) {
             schemaMetadataId = retrievedschemaMetadataInfo.getId();
             // check whether the same schema text exists
-            schemaVersionInfo = getSchemaVersionInfoWithBranchName(schemaName, schemaBranchName, schemaVersion.getSchemaText(), disableCanonicalCheck);
+            if (schemaDeduplicationMode != SchemaDeduplicationMode.NO_CHECK) {
+                schemaVersionInfo = getSchemaVersionInfoWithBranchName(schemaName, schemaBranchName,
+                    schemaVersion.getSchemaText(), schemaDeduplicationMode == SchemaDeduplicationMode.TEXT_CHECK);
+            }
             if (schemaVersionInfo == null) {
                 schemaVersionInfo = createSchemaVersion(schemaBranchName,
                         schemaMetadata,
