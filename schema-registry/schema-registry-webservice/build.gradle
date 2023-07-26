@@ -107,7 +107,6 @@ dependencies {
     testCompile(libraries.kafka.core) { exclude group: 'org.scala-lang' }
 
     testCompile libraries.curator.test
-    testCompile libraries.logging.log4j
     testCompile libraries.httpclient.client
 
     runtime group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'

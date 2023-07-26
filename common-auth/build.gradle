@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
- 
+
 dependencies {
 
     compile libraries.servlet_api
@@ -22,12 +22,15 @@ dependencies {
     compile libraries.nimbus
     testCompile(libraries.hadoop.minikdc) {
         exclude group: 'junit'
+        exclude group: 'org.slf4j'
     }
     testCompile libraries.httpclient.client
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.jetty
     testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
-    testCompile libraries.logging.log4j
-
+    testRuntimeOnly libraries.logging.slf4j_api
+    testRuntimeOnly libraries.logging.slf4j_jcl
+    testRuntimeOnly libraries.logging.slf4j_log4j
+    testRuntimeOnly libraries.logging.slf4j_simple
 }

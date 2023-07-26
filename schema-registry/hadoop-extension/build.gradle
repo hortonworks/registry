@@ -46,8 +46,9 @@ dependencies {
     testCompile libraries.mockito
     testCompile libraries.mockito_inline
 
-    testCompile libraries.logging.slf4j_api
-    testCompile libraries.logging.slf4j_simple
+    testRuntimeOnly libraries.logging.slf4j_api
+    testRuntimeOnly libraries.logging.slf4j_jcl
+    testRuntimeOnly libraries.logging.slf4j_simple
 
 }
 

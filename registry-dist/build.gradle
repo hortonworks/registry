@@ -44,6 +44,11 @@ distributions {
             into('libs/') {
                 from(configurations.runtimeJars) {
                     exclude '*shim*'
+                    exclude 'commons-logging*jar'
+                    exclude 'log4j-api*jar' // log4j 2.*
+                    exclude 'log4j-core*jar' // log4j 2.*
+                    exclude 'log4j-1*jar' // log4j 1.*
+                    exclude 'reload4j*jar'
                 }
                 from("$rootDir/schema-registry/hadoop-extension/build/libs/hadoop-schema-registry-plugin-impl") {
                     include '*aws-java-sdk-bundle*jar'
@@ -61,6 +66,7 @@ distributions {
                     exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
+                    exclude 'reload4j*jar'
                     exclude '*aws-java-sdk-bundle*jar'
                 }
             }
@@ -86,6 +92,7 @@ distributions {
                     exclude '*slf4j*jar'
                     exclude '*commons-logging*jar'
                     exclude '*log4j*jar'
+                    exclude 'reload4j*jar'
                     exclude '*atlas-common*jar'
                     exclude '*aws-java-sdk-bundle*jar'
                 }
