@@ -26,6 +26,7 @@ dependencies {
     
     testCompile project(':ranger-plugin')
     testCompile libraries.junit
+    testRuntimeOnly libraries.logging.slf4j_jcl
     
 }
 

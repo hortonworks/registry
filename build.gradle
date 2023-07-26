@@ -17,8 +17,6 @@
 allprojects {
   repositories {
 
-      mavenLocal()
-      jcenter()
       mavenCentral() {
         mavenContent {
             releasesOnly()
@@ -47,6 +45,8 @@ subprojects {
     configurations {
         compile {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+            exclude group: 'commons-logging'
         }
         tests.extendsFrom testRuntime
     }
@@ -194,7 +194,6 @@ subprojects {
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
         maven {
           url "https://plugins.gradle.org/m2/"
         }

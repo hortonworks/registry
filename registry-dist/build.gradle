@@ -44,6 +44,11 @@ distributions {
             into('libs/') {
                 from(configurations.runtimeJars) {
                     exclude '*shim*'
+                    exclude 'commons-logging*jar'
+                    exclude 'log4j-api*jar' // log4j 2.*
+                    exclude 'log4j-core*jar' // log4j 2.*
+                    exclude 'log4j-1*jar' // log4j 1.*
+                    exclude 'reload4j*jar'
                 }
             }
             
@@ -55,6 +60,10 @@ distributions {
                 from("$rootDir/ranger-plugin/build/dependency") {
                     include '*jar'
                     exclude 'ranger-plugin-classloader*jar'
+                    exclude '*slf4j*jar'
+                    exclude 'commons-logging*jar'
+                    exclude 'log4j*jar'
+                    exclude 'reload4j*jar'
                 }
             }
             into('ranger-plugin/conf/') {
@@ -74,6 +83,10 @@ distributions {
                 }
                 from("$rootDir/atlas-integration/atlas-translate/build/dependency") {
                     include '*jar'
+                    exclude '*slf4j*jar'
+                    exclude 'commons-logging*jar'
+                    exclude 'log4j*jar'
+                    exclude 'reload4j*jar'
                 }
             }
             into('atlas-plugin/') {

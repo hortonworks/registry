@@ -109,6 +109,7 @@ ext.libraries = [
       logback_access : "ch.qos.logback:logback-access:$versions_logback",
       reload4j       : "ch.qos.reload4j:reload4j:$versions_reload4j",
       slf4j_log4j    : "org.slf4j:log4j-over-slf4j:$versions_slf4j",
+      slf4j_jcl      : "org.slf4j:jcl-over-slf4j:$versions_slf4j",
       slf4j_api      : "org.slf4j:slf4j-api:$versions_slf4j",
       slf4j_simple   : "org.slf4j:slf4j-simple:$versions_slf4j"
    ],

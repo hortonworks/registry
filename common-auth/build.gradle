@@ -20,11 +20,16 @@ dependencies {
     compile libraries.directory_server
     compile libraries.directory_api
     compile libraries.nimbus
-    testCompile libraries.hadoop.minikdc
+    testCompile(libraries.hadoop.minikdc) {
+       exclude group: 'org.slf4j'
+    }
     testCompile libraries.httpclient
     testCompile libraries.junit
     testCompile libraries.mockito
     testCompile libraries.jetty
     testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: versions_jetty
-    testCompile group: 'org.slf4j', name: 'slf4j-reload4j'
+    testRuntimeOnly libraries.logging.slf4j_api
+    testRuntimeOnly libraries.logging.slf4j_jcl
+    testRuntimeOnly libraries.logging.slf4j_log4j
+    testRuntimeOnly libraries.logging.slf4j_simple
 }
