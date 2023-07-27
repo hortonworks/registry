@@ -47,7 +47,7 @@ subprojects {
     configurations {
         compile {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-            exclude group: 'org.slf4j', module: 'log4j-over-slf4j'
+            exclude group: 'commons-logging'
         }
         tests.extendsFrom testRuntime
     }
@@ -61,16 +61,6 @@ subprojects {
             compile(libraries.logging.logback) {
                 version {
                     strictly project.versions_logback
-                }
-            }
-            compile(libraries.logging.slf4j_api) {
-                version {
-                    strictly project.versions_slf4j
-                }
-            }
-            testCompile(libraries.logging.slf4j_simple) {
-                version {
-                    strictly project.versions_slf4j
                 }
             }
             compile(libraries.snakeyaml) {
