@@ -17,14 +17,13 @@ package com.hortonworks.registries.storage.impl.jdbc.sequences;
 
 import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
-import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.StorableKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 public class NamespaceSequenceStorable extends AbstractStorable {
 
@@ -72,6 +71,10 @@ public class NamespaceSequenceStorable extends AbstractStorable {
         this.nextId = nextId;
     }
 
+    public void setNextId(BigDecimal nextId) {
+        setNextId(nextId.longValueExact());
+    }
+
     @Override
     public String getNameSpace() {
         return NAMESPACE;
@@ -90,23 +93,6 @@ public class NamespaceSequenceStorable extends AbstractStorable {
         values.put(NAMESPACE_FIELD_NAME, namespace);
         values.put(NEXT_ID_FIELD_NAME, nextId);
         return values;
-    }
-
-    @Override
-    public Storable fromMap(Map<String, Object> map) {
-        namespace = getIgnoreCase(map, NAMESPACE_FIELD_NAME);
-        nextId = getIgnoreCase(map, NEXT_ID_FIELD_NAME);
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T getIgnoreCase(Map<String, Object> map, String fieldName) {
-        Optional<Object> value = map.entrySet()
-                .stream()
-                .filter(entry -> entry.getKey().equalsIgnoreCase(fieldName))
-                .map(Map.Entry::getValue)
-                .findFirst();
-        return (T) value.orElse(null);
     }
 
     @Override

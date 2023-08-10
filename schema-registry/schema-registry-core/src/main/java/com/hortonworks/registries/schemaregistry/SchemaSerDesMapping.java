@@ -19,6 +19,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,12 +63,20 @@ public class SchemaSerDesMapping extends AbstractStorable {
         this.schemaMetadataId = schemaMetadataId;
     }
 
+    public void setSchemaMetadataId(BigDecimal schemaMetadataId) {
+        setSchemaMetadataId(schemaMetadataId.longValueExact());
+    }
+
     public Long getSerDesId() {
         return serDesId;
     }
 
     public void setSerDesId(Long serDesId) {
         this.serDesId = serDesId;
+    }
+
+    public void setSerDesId(BigDecimal serDesId) {
+        setSerDesId(serDesId.longValueExact());
     }
 
     @Override

@@ -21,6 +21,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -93,6 +94,10 @@ public class SchemaBranchStorable extends AbstractStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public String getName() {
         return this.name;
     }
@@ -123,6 +128,10 @@ public class SchemaBranchStorable extends AbstractStorable {
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
     }
 
     @Override

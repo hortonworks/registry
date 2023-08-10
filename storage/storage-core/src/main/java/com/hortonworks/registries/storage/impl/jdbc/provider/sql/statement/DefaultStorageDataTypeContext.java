@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -82,6 +83,9 @@ public class DefaultStorageDataTypeContext implements StorageDataTypeContext {
             case ARRAY:
                 preparedStatement.setObject(index, val);    //TODO check this
                 break;
+            case BIG_DECIMAL:
+                preparedStatement.setBigDecimal(index, (BigDecimal) val);
+                break;
             default:
                 break;
         }
@@ -95,8 +99,7 @@ public class DefaultStorageDataTypeContext implements StorageDataTypeContext {
         for (int i = 1; i <= columnCount; i++) {
             final String columnLabel = rsMetadata.getColumnLabel(i);
             final int columnType = rsMetadata.getColumnType(i);
-            final int columnPrecision = rsMetadata.getPrecision(i);
-            final Class columnJavaType = Util.getJavaType(columnType, columnPrecision);
+            final Class columnJavaType = Util.getJavaType(columnType);
             map.put(columnLabel, getJavaObject(columnJavaType, columnLabel, resultSet));
         }
         if (LOG.isDebugEnabled()) {
@@ -132,6 +135,8 @@ public class DefaultStorageDataTypeContext implements StorageDataTypeContext {
             case NESTED:
             case ARRAY:
                 return Types.JAVA_OBJECT;
+            case BIG_DECIMAL:
+                return Types.NUMERIC;
             default:
                 throw new IllegalArgumentException("Not supported type: " + type);
         }
@@ -165,6 +170,8 @@ public class DefaultStorageDataTypeContext implements StorageDataTypeContext {
         } else if (columnJavaType.equals(InputStream.class)) {
             Blob blob = resultSet.getBlob(columnLabel);
             return blob != null ? blob.getBinaryStream() : null;
+        } else if (columnJavaType.equals(BigDecimal.class)) {
+            return resultSet.getBigDecimal(columnLabel);
         } else {
             throw new StorageException("type =  [" + columnJavaType + "] for column [" + columnLabel + "] not supported.");
         }

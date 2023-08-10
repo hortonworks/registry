@@ -20,6 +20,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,6 +79,10 @@ public class SchemaFieldInfoStorable extends AbstractStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public String getFieldNamespace() {
         return fieldNamespace;
     }
@@ -110,12 +115,20 @@ public class SchemaFieldInfoStorable extends AbstractStorable {
         this.schemaInstanceId = schemaInstanceId;
     }
 
+    public void setSchemaInstanceId(BigDecimal schemaInstanceId) {
+        setSchemaInstanceId(schemaInstanceId.longValueExact());
+    }
+
     public Long getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
     }
 
     public static SchemaFieldInfoStorable fromSchemaFieldInfo(SchemaFieldInfo schemaFieldInfo, Long id) {

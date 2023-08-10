@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,8 +92,16 @@ public class SchemaVersionStateStorable extends AbstractStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public void setSchemaVersionId(Long schemaVersionId) {
         this.schemaVersionId = schemaVersionId;
+    }
+
+    public void setSchemaVersionId(BigDecimal schemaVersionId) {
+        setSchemaVersionId(schemaVersionId.longValueExact());
     }
 
     public void setStateId(Byte stateId) {
@@ -104,12 +113,24 @@ public class SchemaVersionStateStorable extends AbstractStorable {
         this.stateId = stateId.byteValue();
     }
 
+    public void setStateId(BigDecimal stateId) {
+        setStateId(stateId.byteValueExact());
+    }
+
     public void setSequence(Integer sequence) {
         this.sequence = sequence;
     }
 
+    public void setSequence(BigDecimal sequence) {
+        setSequence(sequence.intValueExact());
+    }
+
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
     }
 
     public void setDetails(byte[] details) {

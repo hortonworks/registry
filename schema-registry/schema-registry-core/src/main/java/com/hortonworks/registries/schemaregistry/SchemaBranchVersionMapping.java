@@ -20,6 +20,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,12 +62,20 @@ public class SchemaBranchVersionMapping extends AbstractStorable {
         this.schemaBranchId = schemaBranchId;
     }
 
+    public void setSchemaBranchId(BigDecimal schemaBranchId) {
+        setSchemaBranchId(schemaBranchId.longValueExact());
+    }
+
     public Long getSchemaVersionInfoId() {
         return schemaVersionInfoId;
     }
 
     public void setSchemaVersionInfoId(Long schemaVersionInfoId) {
         this.schemaVersionInfoId = schemaVersionInfoId;
+    }
+
+    public void setSchemaVersionInfoId(BigDecimal schemaVersionInfoId) {
+        setSchemaVersionInfoId(schemaVersionInfoId.longValueExact());
     }
 
     @Override

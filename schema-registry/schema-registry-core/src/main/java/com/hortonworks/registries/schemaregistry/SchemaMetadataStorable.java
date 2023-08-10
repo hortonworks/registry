@@ -21,8 +21,11 @@ import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.Storable;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
+
+import static com.hortonworks.registries.storage.impl.jdbc.util.Util.numericToBoolean;
 
 /**
  *
@@ -165,6 +168,10 @@ public class SchemaMetadataStorable extends AbstractStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public String getSchemaGroup() {
         return schemaGroup;
     }
@@ -187,6 +194,10 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
     }
 
     public SchemaCompatibility getCompatibility() {
@@ -227,6 +238,10 @@ public class SchemaMetadataStorable extends AbstractStorable {
 
     public void setEvolve(Boolean evolve) {
         this.evolve = evolve;
+    }
+
+    public void setEvolve(BigDecimal evolve) {
+        setEvolve(numericToBoolean(evolve));
     }
 
     public static SchemaMetadataStorable fromSchemaMetadataInfo(SchemaMetadataInfo schemaMetadataInfo) {

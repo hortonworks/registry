@@ -20,6 +20,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.PrimaryKey;
 import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 
 /**
@@ -115,6 +116,10 @@ public class SerDesInfoStorable extends AbstractStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public String getDescription() {
         return description;
     }
@@ -161,6 +166,10 @@ public class SerDesInfoStorable extends AbstractStorable {
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
     }
 
     public SerDesInfo toSerDesInfo() {

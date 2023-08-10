@@ -155,7 +155,7 @@ public class OracleExecutor extends AbstractQueryExecutor {
                     new OracleSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
                 columns.add(rsMetadata.getColumnName(i),
-                        getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
+                        getType(rsMetadata.getColumnType(i)));
             }
             return columns;
         } catch (SQLException e) {

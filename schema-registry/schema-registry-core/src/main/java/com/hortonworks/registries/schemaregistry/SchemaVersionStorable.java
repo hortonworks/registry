@@ -20,6 +20,7 @@ import com.hortonworks.registries.common.Schema;
 import com.hortonworks.registries.storage.AbstractVersionedStorable;
 import com.hortonworks.registries.storage.PrimaryKey;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -139,6 +140,10 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public String getSchemaText() {
         return schemaText;
     }
@@ -155,6 +160,10 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         this.version = version;
     }
 
+    public void setVersion(BigDecimal version) {
+        setVersion(version.intValueExact());
+    }
+
     public Long getTimestamp() {
         return timestamp;
     }
@@ -163,12 +172,20 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
         this.timestamp = timestamp;
     }
 
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
+    }
+
     public Long getSchemaMetadataId() {
         return getRootEntityId();
     }
 
     public void setSchemaMetadataId(Long schemaMetadataId) {
         this.rootEntityId = schemaMetadataId;
+    }
+
+    public void setSchemaMetadataId(BigDecimal schemaMetadataId) {
+        setSchemaMetadataId(schemaMetadataId.longValueExact());
     }
 
     public String getDescription() {
@@ -206,6 +223,10 @@ public class SchemaVersionStorable extends AbstractVersionedStorable {
     // this is to address postgres in which it does not support byte values
     public void setState(Short state) {
         this.state = state.byteValue();
+    }
+
+    public void setState(BigDecimal state) {
+        setState(state.byteValueExact());
     }
 
     public SchemaVersionInfo toSchemaVersionInfo() {

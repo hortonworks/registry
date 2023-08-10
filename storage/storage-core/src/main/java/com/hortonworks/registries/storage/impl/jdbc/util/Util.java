@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -43,7 +44,7 @@ public class Util {
         throw new RuntimeException("Unknown sqlType " + sqlType);
     }
 
-    public static Class getJavaType(int sqlType, int precision) {
+    public static Class getJavaType(int sqlType) {
         switch (sqlType) {
             case Types.CHAR:
             case Types.VARCHAR:
@@ -78,16 +79,7 @@ public class Util {
             case Types.LONGVARBINARY:
                 return InputStream.class;
             case Types.NUMERIC:
-                switch (precision) {
-                    case 1:
-                        return Boolean.class;
-                    case 3:
-                        return Byte.class;
-                    case 10:
-                        return Integer.class;
-                    default:
-                        return Long.class;
-                }
+                return BigDecimal.class;
             default:
                 throw new RuntimeException("We do not support tables with SqlType: " + getSqlTypeName(sqlType));
         }
@@ -105,6 +97,20 @@ public class Util {
             if (property.equals(Constants.DataSource.URL) && StringUtils.isBlank(jdbcProps.getDataSourceUrl())) {
                 throw new IllegalArgumentException("jdbc properties should contain " + property);
             }
+        }
+    }
+
+    public static boolean numericToBoolean(BigDecimal value) {
+        long longValue = value.longValueExact();
+        if (longValue == 0) {
+            return false;
+        } else if (longValue == 1) {
+            return true;
+        } else {
+            throw new ArithmeticException(
+                "Numeric value: " + longValue + " can not be converted to boolean. " +
+                "Valid values are [0, 1]."
+            );
         }
     }
 

@@ -31,6 +31,7 @@ import com.hortonworks.registries.common.exception.ParserException;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +57,8 @@ public class Schema implements Serializable {
         BINARY(byte[].class), // raw data
         NESTED(Map.class),  // nested field
         ARRAY(List.class),  // array field
-        BLOB(InputStream.class);    // Blob
+        BLOB(InputStream.class),    // Blob
+        BIG_DECIMAL(BigDecimal.class);
 
         private final Class<?> javaType;
 

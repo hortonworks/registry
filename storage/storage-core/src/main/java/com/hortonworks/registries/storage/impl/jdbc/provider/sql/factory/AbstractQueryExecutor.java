@@ -182,7 +182,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
                     new SqlSelectQuery(namespace)).getMetaData();
             for (int i = 1; i <= rsMetadata.getColumnCount(); i++) {
                 columns.add(rsMetadata.getColumnName(i),
-                        getType(rsMetadata.getColumnType(i), rsMetadata.getPrecision(i)));
+                        getType(rsMetadata.getColumnType(i)));
             }
             return columns;
         } catch (SQLException e) {
@@ -195,8 +195,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
         }
     }
 
-    protected Schema.Type getType(int sqlType, int precision) {
-        return Schema.Type.fromJavaType(Util.getJavaType(sqlType, precision));
+    protected Schema.Type getType(int sqlType) {
+        return Schema.Type.fromJavaType(Util.getJavaType(sqlType));
     }
 
     public void closeConnection(Connection connection) {

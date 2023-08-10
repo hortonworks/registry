@@ -21,9 +21,12 @@ import com.hortonworks.registries.storage.catalog.AbstractStorable;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.hortonworks.registries.storage.impl.jdbc.util.Util.numericToBoolean;
 
 public class AtlasEventStorable extends AbstractStorable {
 
@@ -99,6 +102,10 @@ public class AtlasEventStorable extends AbstractStorable {
         this.id = id;
     }
 
+    public void setId(BigDecimal id) {
+        setId(id.longValueExact());
+    }
+
     public String getUsername() {
         return username;
     }
@@ -113,6 +120,10 @@ public class AtlasEventStorable extends AbstractStorable {
 
     public void setProcessedId(Long processedId) {
         this.processedId = processedId;
+    }
+
+    public void setProcessedId(BigDecimal processedId) {
+        setProcessedId(processedId.longValueExact());
     }
 
     public boolean isProcessed() {
@@ -131,12 +142,20 @@ public class AtlasEventStorable extends AbstractStorable {
         this.processed = processed;
     }
 
+    public void setProcessed(BigDecimal processed) {
+        setProcessed(numericToBoolean(processed));
+    }
+
     public Integer getType() {
         return type;
     }
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public void setType(BigDecimal type) {
+        setType(type.intValueExact());
     }
 
     public void setType(@Nullable EventType et) {
@@ -163,12 +182,20 @@ public class AtlasEventStorable extends AbstractStorable {
         this.failed = failed;
     }
 
+    public void setFailed(BigDecimal failed) {
+        setFailed(numericToBoolean(failed));
+    }
+
     public Long getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setTimestamp(BigDecimal timestamp) {
+        setTimestamp(timestamp.longValueExact());
     }
 
     @Override
