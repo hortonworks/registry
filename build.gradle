@@ -72,6 +72,14 @@ subprojects {
         }
     }
 
+    sourceSets {
+        all {
+            configurations.all { conf ->
+                attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+            }
+        }
+    }
+
     java {
         sourceCompatibility = java_version
         targetCompatibility = java_version
