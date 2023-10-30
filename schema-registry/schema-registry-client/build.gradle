@@ -16,6 +16,12 @@
 
 dependencies {
 
+    constraints {
+        compile("org.json:json") { version { strictly project.versions_json_org } }
+    }
+
+    compile libraries.json_org
+
     compile(project(':schema-registry:schema-registry-common')) {
         exclude group: 'javax.validation', module: 'validation-api'
     }

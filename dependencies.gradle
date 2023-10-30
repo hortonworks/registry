@@ -121,6 +121,7 @@ ext.libraries = [
    joda_time         : "joda-time:joda-time:$versions_joda_time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
    jose4j            : "org.bitbucket.b_c:jose4j:$versions_jose4j",
+   json_org          : "org.json:json:$versions_json_org",
    json_schema_validator : "com.github.erosb:everit-json-schema:$versions_json_schema_validator",
    junit             : "org.junit.jupiter:junit-jupiter:$versions_junit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
