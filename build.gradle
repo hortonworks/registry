@@ -44,6 +44,13 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'signing'
 
+    // Specific to gradle 6, can be removed when upgraded
+    sourceSets.all {
+        configurations.configureEach {
+            attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+        }
+    }
+
     configurations {
         compile {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
