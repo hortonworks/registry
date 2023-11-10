@@ -128,7 +128,7 @@ logging:
   loggers:
     com.hortonworks.registries: INFO
 
-# Config for schema registry kerberos principle
+# Config for schema registry service authentication
 #serviceAuthenticationConfiguration:
 #  type: kerberos
 #  properties:
