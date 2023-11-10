@@ -18,7 +18,7 @@
         <jersey-media-multipart.version>2.26</jersey-media-multipart.version>
         <guava.version>31.1-jre</guava.version>
         <avro.version>1.8.2</avro.version>
-        <logback.version>1.2.3</logback.version>
+        <logback.version>1.2.9</logback.version>
         <maven.javadoc.plugin.version>3.1.0</maven.javadoc.plugin.version>
         <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
         <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
