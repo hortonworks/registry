@@ -84,6 +84,7 @@ dependencies {
 
     testCompile libraries.junit
     testCompile libraries.mockito
+    testCompile libraries.mockito_inline
     testCompile libraries.dropwizard.testing
 
     testCompile libraries.kafka.clients

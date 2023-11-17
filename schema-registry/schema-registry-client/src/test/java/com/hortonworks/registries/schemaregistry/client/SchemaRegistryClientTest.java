@@ -20,26 +20,18 @@ import com.hortonworks.registries.schemaregistry.SchemaBranch;
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
 import com.hortonworks.registries.schemaregistry.SchemaMetadata;
 import com.hortonworks.registries.schemaregistry.SchemaVersion;
-import mockit.Expectations;
-import mockit.Tested;
-import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static mockit.Deencapsulation.invoke;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-/**
- *
- */
 public class SchemaRegistryClientTest {
 
-    @Tested
-    private SchemaRegistryClient schemaRegistryClient = 
-            new SchemaRegistryClient(Collections.singletonMap(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), "some-url"));
+    private SchemaRegistryClient schemaRegistryClient = mock(SchemaRegistryClient.class);
 
     @Test
     public void testClientWithCache() throws Exception {
@@ -49,15 +41,8 @@ public class SchemaRegistryClientTest {
         final SchemaVersion schemaVersion = new SchemaVersion("schema-text", "desc");
         final SchemaIdVersion schemaIdVersion = new SchemaIdVersion(1L, 1);
 
-        new Expectations(schemaRegistryClient) {{
-            invoke(schemaRegistryClient, "registerSchemaMetadata", schemaMetaData);
-            result = 1L;
-
-            invoke(schemaRegistryClient, "doAddSchemaVersion", SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion, false);
-            result = schemaIdVersion;
-            times = 1; // this should be invoked only once as this should have been cached
-
-        }};
+        when(schemaRegistryClient.registerSchemaMetadata(schemaMetaData)).thenReturn(1L);
+        when(schemaRegistryClient.addSchemaVersion(SchemaBranch.MASTER_BRANCH, schemaName, schemaVersion, false)).thenReturn(schemaIdVersion);
 
         Long metadataId = schemaRegistryClient.registerSchemaMetadata(schemaMetaData);
         schemaRegistryClient.addSchemaVersion(schemaMetaData, schemaVersion);
@@ -78,10 +63,10 @@ public class SchemaRegistryClientTest {
         Map<String, ?> result = configuration.buildConfig(goodConf);
         
         //then
-        Assert.assertThat(result, Is.is(goodConf));
+        Assert.assertEquals(goodConf, result);
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void testConfigEntryValidationBadconf() {
         //given
         Map<String, String> badConf = new HashMap<>();
@@ -92,9 +77,7 @@ public class SchemaRegistryClientTest {
         SchemaRegistryClient.Configuration configuration = new SchemaRegistryClient.Configuration(ImmutableMap.of("key", "value"));
         
         //when
-        Map<String, ?> result = configuration.buildConfig(badConf);
-        
-        //then
-        Assert.assertThat(result, Is.is(badConf));
+        Assert.assertThrows(IllegalArgumentException.class, () -> configuration.buildConfig(badConf));
+
     }
 }

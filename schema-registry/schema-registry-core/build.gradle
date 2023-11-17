@@ -25,7 +25,6 @@ dependencies {
 
     testCompile libraries.logging.logback
 
-    testCompile libraries.jmockit
     testCompile libraries.junit
     testCompile libraries.mockito
 

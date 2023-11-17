@@ -26,7 +26,7 @@ dependencies {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
     
-    testCompile libraries.jmockit
     testCompile libraries.junit
+    testCompile libraries.mockito
 
 }

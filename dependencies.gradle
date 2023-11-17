@@ -61,7 +61,7 @@ ext.libraries = [
       jersey         : "io.dropwizard:dropwizard-jersey:$versions_dropwizard",
       util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
       metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
-      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard") {
+      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard_testing") {
           exclude group: 'junit'
       },
       swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
@@ -105,7 +105,6 @@ ext.libraries = [
    jetty             : "org.eclipse.jetty:jetty-server",
    joda_time         : "joda-time:joda-time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
-   jmockit           : "org.jmockit:jmockit:$versions_jmockit",
    jose4j            : "org.bitbucket.b_c:jose4j:$versions_jose4j",
    jsr305            : "com.google.code.findbugs:jsr305",
 
@@ -113,8 +112,7 @@ ext.libraries = [
    json_schema_validator : "com.github.erosb:everit-json-schema:$versions_json_schema_validator",
    junit             : "junit:junit:$versions_junit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
-   powermock_api     : "org.powermock:powermock-api-mockito2:$versions_powermock",
-   powermock_module  : "org.powermock:powermock-module-junit4:$versions_powermock",
+   mockito_inline    : "org.mockito:mockito-inline:$versions_mockito",
 
    lettuce           : "biz.paluch.redis:lettuce:$versions_lettuce",
 

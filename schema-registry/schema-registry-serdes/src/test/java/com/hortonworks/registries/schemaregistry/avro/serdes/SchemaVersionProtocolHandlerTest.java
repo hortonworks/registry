@@ -29,25 +29,31 @@ import com.hortonworks.registries.schemaregistry.serdes.avro.AvroSnapshotSeriali
 import com.hortonworks.registries.schemaregistry.serdes.avro.SerDesProtocolHandlerRegistry;
 import com.hortonworks.registries.schemaregistry.serdes.avro.exceptions.AvroException;
 import com.hortonworks.registries.serdes.Device;
-import mockit.Expectations;
-import mockit.Mocked;
 import org.apache.avro.specific.SpecificData;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Before;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.Random;
 
 import static com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer.SERDES_PROTOCOL_VERSION;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- *
- */
 public class SchemaVersionProtocolHandlerTest {
 
-    @Mocked
-    SchemaRegistryClient mockSchemaRegistryClient;
+    private SchemaRegistryClient mockSchemaRegistryClient;
+
+    @Before
+    public void setup() {
+        mockSchemaRegistryClient = mock(SchemaRegistryClient.class);
+    }
 
     @Test
     public void testSerDesWithVersionIdGtLtIntMax() throws Exception {
@@ -74,36 +80,25 @@ public class SchemaVersionProtocolHandlerTest {
                                                                     input.getSchema().toString(),
                                                                     System.currentTimeMillis(),
                                                                     "some device");
+        when(mockSchemaRegistryClient.getSchemaMetadataInfo(anyString())).thenReturn(new SchemaMetadataInfo(schemaMetadata));
+        when(mockSchemaRegistryClient.addSchemaVersion(any(SchemaMetadata.class), any(SchemaVersion.class))).thenReturn(schemaIdVersion);
+        when(mockSchemaRegistryClient.getSchemaVersionInfo(any(SchemaVersionKey.class))).thenReturn(schemaVersionInfo);
+        when(mockSchemaRegistryClient.getSchemaVersionInfo(any(SchemaIdVersion.class))).thenReturn(schemaVersionInfo);
 
-        new Expectations() {
-            {
-                mockSchemaRegistryClient.getSchemaMetadataInfo(anyString);
-                result = new SchemaMetadataInfo(schemaMetadata); 
-                minTimes = 0;
-                maxTimes = 1;
-
-                mockSchemaRegistryClient.addSchemaVersion(withInstanceOf(SchemaMetadata.class), withInstanceOf(SchemaVersion.class));
-                result = schemaIdVersion; 
-                minTimes = 0; 
-                maxTimes = 1;
-
-                mockSchemaRegistryClient.getSchemaVersionInfo(withInstanceOf(SchemaVersionKey.class));
-                result = schemaVersionInfo; 
-                minTimes = 0; 
-                maxTimes = 1;
-            }
-        };
-
-        AvroSnapshotSerializer serializer = new AvroSnapshotSerializer();
+        AvroSnapshotSerializer serializer = new AvroSnapshotSerializer(mockSchemaRegistryClient);
         serializer.init(Collections.singletonMap(SERDES_PROTOCOL_VERSION, serdesProtocolVersion));
 
-        AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer();
+        AvroSnapshotDeserializer deserializer = new AvroSnapshotDeserializer(mockSchemaRegistryClient);
         deserializer.init(Collections.emptyMap());
 
         byte[] serializedData = serializer.serialize(input, schemaMetadata);
         Object deserializedObj = deserializer.deserialize(new ByteArrayInputStream(serializedData), null);
 
-        Assert.assertTrue(SpecificData.get().compare(input, deserializedObj, input.getSchema()) == 0);
+        Assert.assertEquals(0, SpecificData.get().compare(input, deserializedObj, input.getSchema()));
+
+        verify(mockSchemaRegistryClient, atMost(2)).getSchemaMetadataInfo(anyString());
+        verify(mockSchemaRegistryClient, atMost(2)).addSchemaVersion(any(SchemaMetadata.class), any(SchemaVersion.class));
+        verify(mockSchemaRegistryClient, atMost(2)).getSchemaVersionInfo(any(SchemaVersionKey.class));
     }
 
     @Test
@@ -111,14 +106,14 @@ public class SchemaVersionProtocolHandlerTest {
        testSerDes(1L, 1);
     }
 
-    @Test(expected = AvroException.class)
-    public void testSerDesProtocolVersionAsMoreThan127() throws Exception {
-       testSerDes(1L, Byte.MAX_VALUE + Math.abs(new Random().nextInt()));
+    @Test
+    public void testSerDesProtocolVersionAsMoreThan127() {
+       Assert.assertThrows(AvroException.class, () -> testSerDes(1L, Byte.MAX_VALUE + Math.abs(new Random().nextInt())));
     }
 
-    @Test(expected = AvroException.class)
-    public void testSerDesProtocolVersionAsLessThanZero() throws Exception {
-        testSerDes(1L, new Random().nextInt(127) - 128);
+    @Test
+    public void testSerDesProtocolVersionAsLessThanZero() {
+        Assert.assertThrows(AvroException.class, () -> testSerDes(1L, new Random().nextInt(127) - 128));
     }
 
 }

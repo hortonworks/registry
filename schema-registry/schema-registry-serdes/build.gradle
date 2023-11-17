@@ -32,7 +32,6 @@ dependencies {
     compileOnly libraries.kafka.clients
     testCompile libraries.kafka.clients
     
-    testCompile libraries.jmockit
     testCompile libraries.mockito
     testCompile libraries.junit
 

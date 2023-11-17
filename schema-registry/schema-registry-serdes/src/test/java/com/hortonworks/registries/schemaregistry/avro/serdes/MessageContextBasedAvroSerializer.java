@@ -20,6 +20,7 @@
 package com.hortonworks.registries.schemaregistry.avro.serdes;
 
 import com.hortonworks.registries.schemaregistry.SchemaIdVersion;
+import com.hortonworks.registries.schemaregistry.client.SchemaRegistryClient;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
 import com.hortonworks.registries.schemaregistry.serdes.avro.AbstractAvroSnapshotSerializer;
 
@@ -31,6 +32,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MessageContextBasedAvroSerializer extends AbstractAvroSnapshotSerializer<MessageContext> {
+
+    public MessageContextBasedAvroSerializer(SchemaRegistryClient mockSchemaRegistryClient) {
+        super(mockSchemaRegistryClient);
+    }
 
     @Override
     protected MessageContext doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {

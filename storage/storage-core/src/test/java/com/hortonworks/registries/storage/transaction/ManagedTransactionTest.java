@@ -17,28 +17,22 @@ package com.hortonworks.registries.storage.transaction;
 
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.exception.IgnoreTransactionRollbackException;
-import mockit.Expectations;
-import mockit.Injectable;
-import mockit.Tested;
-import mockit.VerificationsInOrder;
-import mockit.integration.junit4.JMockit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-@RunWith(JMockit.class)
+import javax.print.PrintException;
+
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 public class ManagedTransactionTest {
-    @Injectable
+
     private TransactionManager mockedTransactionManager;
-
-    @Injectable
     private TransactionIsolation transactionIsolation;
-
-    @Tested
     private ManagedTransaction managedTransaction;
-
-    private ManagedTransactionTestHelper testHelper;
 
     private final String testParam1 = "testParam1";
     private final String testParam2 = "testParam2";
@@ -46,9 +40,15 @@ public class ManagedTransactionTest {
     private final String testParam4 = "testParam4";
     private final String testParam5 = "testParam5";
 
+    private Object[] calledArgs;
+
     @Before
     public void setUp() throws Exception {
-        testHelper = new ManagedTransactionTestHelper();
+        this.calledArgs = null;
+        mockedTransactionManager = mock(TransactionManager.class);
+        transactionIsolation = TransactionIsolation.APPLICATION_DEFAULT;
+        managedTransaction = new ManagedTransaction(mockedTransactionManager, transactionIsolation);
+
     }
 
     @Test
@@ -81,20 +81,16 @@ public class ManagedTransactionTest {
 
     @Test
     public void testExecuteFunctionArg4SuccessCase() throws Exception {
-        Integer result = managedTransaction.executeFunction(this::callHelperWithReturn, testParam1, testParam2, testParam3,
-                testParam4);
+        Integer result = managedTransaction.executeFunction(this::callHelperWithReturn, testParam1, testParam2, testParam3, testParam4);
         Assert.assertEquals(Integer.valueOf(1), result);
-        verifyInteractionWithTransactionManagerSuccessCase(testParam1, testParam2, testParam3,
-                testParam4);
+        verifyInteractionWithTransactionManagerSuccessCase(testParam1, testParam2, testParam3, testParam4);
     }
 
     @Test
     public void testExecuteFunctionArg5SuccessCase() throws Exception {
-        Integer result = managedTransaction.executeFunction(this::callHelperWithReturn, testParam1, testParam2, testParam3,
-                testParam4, testParam5);
+        Integer result = managedTransaction.executeFunction(this::callHelperWithReturn, testParam1, testParam2, testParam3, testParam4, testParam5);
         Assert.assertEquals(Integer.valueOf(1), result);
-        verifyInteractionWithTransactionManagerSuccessCase(testParam1, testParam2, testParam3,
-                testParam4, testParam5);
+        verifyInteractionWithTransactionManagerSuccessCase(testParam1, testParam2, testParam3, testParam4, testParam5);
     }
 
     @Test
@@ -103,7 +99,6 @@ public class ManagedTransactionTest {
             managedTransaction.executeFunction(this::callHelperWithThrowException);
             Assert.fail("It should propagate Exception!");
         } catch (Exception e) {
-            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
             verifyInteractionWithTransactionManagerWithExceptionCase();
         }
     }
@@ -116,7 +111,7 @@ public class ManagedTransactionTest {
         } catch (Exception e) {
             // it should propagate cause, not exception itself
             Assert.assertFalse(e instanceof IgnoreTransactionRollbackException);
-            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
+            Assert.assertTrue(e instanceof PrintException);
             verifyInteractionWithTransactionManagerWithIgnoreRollbackCase();
         }
     }
@@ -164,7 +159,7 @@ public class ManagedTransactionTest {
             managedTransaction.executeConsumer(this::callHelperWithThrowException);
             Assert.fail("It should propagate Exception");
         } catch (Exception e) {
-            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
+            Assert.assertTrue(e instanceof PrintException);
             verifyInteractionWithTransactionManagerWithExceptionCase();
         }
     }
@@ -177,161 +172,77 @@ public class ManagedTransactionTest {
         } catch (Exception e) {
             // it should propagate cause, not exception itself
             Assert.assertFalse(e instanceof IgnoreTransactionRollbackException);
-            Assert.assertTrue(e instanceof ManagedTransactionTestHelper.IntendedException);
+            Assert.assertTrue(e instanceof PrintException);
             verifyInteractionWithTransactionManagerWithIgnoreRollbackCase();
         }
     }
 
     @Test
     public void testCaseCommitTransactionThrowsException() {
-        final Exception commitException = new Exception("Commit exception");
-        new Expectations() {{
-            mockedTransactionManager.commitTransaction();
-            result = commitException;
-        }};
-
-        try {
-            managedTransaction.executeConsumer(this::callHelperWithReturn);
-            Assert.fail("It should propagate Exception");
-        } catch (Exception e) {
-            Assert.assertEquals(commitException, e);
-            Assert.assertTrue(testHelper.isCalled());
-
-            new VerificationsInOrder() {{
-                mockedTransactionManager.beginTransaction(transactionIsolation);
-                times = 1;
-
-                mockedTransactionManager.commitTransaction();
-                times = 1;
-
-                mockedTransactionManager.rollbackTransaction();
-                times = 1;
-            }};
-        }
+        doAnswer(invocation -> {
+            throw new PrintException();
+        }).when(mockedTransactionManager).commitTransaction();
+        Assert.assertThrows(Exception.class, () -> managedTransaction.executeConsumer(this::callHelperWithReturn));
+        verify(mockedTransactionManager).beginTransaction(transactionIsolation);
+        verify(mockedTransactionManager).commitTransaction();
+        verify(mockedTransactionManager).rollbackTransaction();
     }
 
     @Test
     public void testCaseCommitTransactionThrowsExceptionAfterCaseIgnoreRollbackException() {
-        final Exception commitException = new Exception("Commit exception");
-        new Expectations() {{
-            mockedTransactionManager.commitTransaction();
-            result = commitException;
-        }};
-
-        try {
-            managedTransaction.executeConsumer(this::callHelperWithThrowIgnoreRollbackException);
-            Assert.fail("It should propagate Exception");
-        } catch (Exception e) {
-            Assert.assertEquals(commitException, e);
-            Assert.assertTrue(testHelper.isCalled());
-
-            new VerificationsInOrder() {{
-                mockedTransactionManager.beginTransaction(transactionIsolation);
-                times = 1;
-
-                mockedTransactionManager.commitTransaction();
-                times = 1;
-
-                mockedTransactionManager.rollbackTransaction();
-                times = 1;
-            }};
-        }
+        doAnswer(invocation -> {
+            throw new PrintException();
+        }).when(mockedTransactionManager).commitTransaction();
+        Assert.assertThrows(Exception.class, () -> managedTransaction.executeConsumer(this::callHelperWithThrowIgnoreRollbackException));
+        verify(mockedTransactionManager).beginTransaction(transactionIsolation);
+        verify(mockedTransactionManager).commitTransaction();
+        verify(mockedTransactionManager).rollbackTransaction();
     }
 
     @Test
     public void testCaseRollbackTransactionThrowsException() {
-        final Exception rollbackException = new Exception("Rollback exception");
-        new Expectations() {{
-            mockedTransactionManager.rollbackTransaction();
-            result = rollbackException;
-        }};
-
-        try {
-            managedTransaction.executeConsumer(this::callHelperWithThrowException);
-            Assert.fail("It should propagate Exception");
-        } catch (Exception e) {
-            Assert.assertEquals(rollbackException, e);
-            Assert.assertTrue(testHelper.isCalled());
-
-            new VerificationsInOrder() {{
-                mockedTransactionManager.beginTransaction(transactionIsolation);
-                times = 1;
-
-                mockedTransactionManager.commitTransaction();
-                times = 0;
-
-                mockedTransactionManager.rollbackTransaction();
-                times = 1;
-            }};
-        }
+        Assert.assertThrows(Exception.class, () -> managedTransaction.executeConsumer(this::callHelperWithThrowException));
+        verify(mockedTransactionManager).beginTransaction(transactionIsolation);
+        verify(mockedTransactionManager, never()).commitTransaction();
+        verify(mockedTransactionManager).rollbackTransaction();
     }
 
     private Integer callHelperWithReturn(Object...args) {
-        testHelper.call(args);
+        this.calledArgs = args;
         return 1;
     }
 
     private Integer callHelperWithThrowException(Object...args) throws Exception {
-        testHelper.throwException(args);
-        return 1;
+        this.calledArgs = args;
+        throw new PrintException();
     }
 
     private Integer callHelperWithThrowIgnoreRollbackException(Object...args) throws Exception {
-        testHelper.throwIgnoreRollbackException(args);
-        return 1;
+        this.calledArgs = args;
+        throw new IgnoreTransactionRollbackException(new PrintException());
     }
 
     private void verifyInteractionWithTransactionManagerSuccessCase(Object...args) {
-        Assert.assertTrue(testHelper.isCalled());
+        Assert.assertArrayEquals(args, this.calledArgs);
 
-        Object[] actualArgs = testHelper.getCalledArgs();
-        Assert.assertArrayEquals(args, actualArgs);
-
-        new VerificationsInOrder() {{
-            mockedTransactionManager.beginTransaction(transactionIsolation);
-            times = 1;
-
-            mockedTransactionManager.commitTransaction();
-            times = 1;
-
-            mockedTransactionManager.rollbackTransaction();
-            times = 0;
-        }};
+        verify(mockedTransactionManager).beginTransaction(transactionIsolation);
+        verify(mockedTransactionManager).commitTransaction();
+        verify(mockedTransactionManager, never()).rollbackTransaction();
     }
 
     private void verifyInteractionWithTransactionManagerWithExceptionCase(Object...args) {
-        Assert.assertTrue(testHelper.isCalled());
+        Assert.assertArrayEquals(args, this.calledArgs);
 
-        Object[] actualArgs = testHelper.getCalledArgs();
-        Assert.assertArrayEquals(args, actualArgs);
-
-        new VerificationsInOrder() {{
-            mockedTransactionManager.beginTransaction(transactionIsolation);
-            times = 1;
-
-            mockedTransactionManager.commitTransaction();
-            times = 0;
-
-            mockedTransactionManager.rollbackTransaction();
-            times = 1;
-        }};
+        verify(mockedTransactionManager).beginTransaction(transactionIsolation);
+        verify(mockedTransactionManager, never()).commitTransaction();
+        verify(mockedTransactionManager).rollbackTransaction();
     }
 
     private void verifyInteractionWithTransactionManagerWithIgnoreRollbackCase(Object...args) {
-        Assert.assertTrue(testHelper.isCalled());
+        Assert.assertArrayEquals(args, this.calledArgs);
 
-        Object[] actualArgs = testHelper.getCalledArgs();
-        Assert.assertArrayEquals(args, actualArgs);
-
-        new VerificationsInOrder() {{
-            mockedTransactionManager.beginTransaction(transactionIsolation);
-            times = 1;
-
-            mockedTransactionManager.commitTransaction();
-            times = 1;
-
-            mockedTransactionManager.rollbackTransaction();
-            times = 0;
-        }};
+        verify(mockedTransactionManager).beginTransaction(transactionIsolation);
+        verify(mockedTransactionManager).commitTransaction();
+        verify(mockedTransactionManager, never()).rollbackTransaction();
     }
 }
