@@ -24,88 +24,88 @@ application {
 
 dependencies {
 
-    compile(project(':registry-common')) { transitive = false }
-    compile project(':registry-common-client')
-    compile(project(':registry-webservice')) {
+    implementation(project(':registry-common')) { transitive = false }
+    implementation project(':registry-common-client')
+    implementation(project(':registry-webservice')) {
         exclude group: 'com.sun.jersey.contribs', module: 'jersey-guice'
     }
-    compile(project(':schema-registry:schema-registry-authorizer')) {
+    implementation(project(':schema-registry:schema-registry-authorizer')) {
         // this has to be on a separate classpath
         exclude group: 'com.hortonworks.registries', module: 'ranger-plugin'
     }
-    compile project(':schema-registry:schema-registry-core')
-    compile project(':atlas-integration:atlas-module')
-    compile project(':storage:storage-core')
-    compile project(':cache')
-    compile(project(':common-auth')) {
+    implementation project(':schema-registry:schema-registry-core')
+    implementation project(':atlas-integration:atlas-module')
+    implementation project(':storage:storage-core')
+    implementation project(':cache')
+    implementation(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
 
-    compile libraries.hibernate_validator
-    compile libraries.el_api
-    compile libraries.jetty
-    compile libraries.guice
+    implementation libraries.hibernate_validator
+    implementation libraries.el_api
+    implementation libraries.jetty
+    implementation libraries.guice
 
-    compile libraries.dropwizard.core
-    compile libraries.dropwizard.swagger
-    compile libraries.dropwizard.assets
-    compile libraries.dropwizard.auth
-    compile libraries.dropwizard.metrics
+    implementation libraries.dropwizard.core
+    implementation libraries.dropwizard.swagger
+    implementation libraries.dropwizard.assets
+    implementation libraries.dropwizard.auth
+    implementation libraries.dropwizard.metrics
 
-    compile libraries.swagger
-    compile libraries.swagger_core
+    implementation libraries.swagger
+    implementation libraries.swagger_core
 
-    compile libraries.hadoop.aws
-    compile libraries.hadoop.azure
-    compile libraries.hadoop.azure_datalake
-    compile libraries.hadoop.cloud
-    compile libraries.hadoop.client
-    compile libraries.hadoop.common
+    implementation libraries.hadoop.aws
+    implementation libraries.hadoop.azure
+    implementation libraries.hadoop.azure_datalake
+    implementation libraries.hadoop.cloud
+    implementation libraries.hadoop.client
+    implementation libraries.hadoop.common
 
-    compile libraries.guava
-    compile libraries.logging.slf4j_api
-    compile libraries.commons.lang3
-    compile libraries.nimbus
-    compile libraries.jersey.media_multipart
+    implementation libraries.guava
+    implementation libraries.logging.slf4j_api
+    implementation libraries.commons.lang3
+    implementation libraries.nimbus
+    implementation libraries.jersey.media_multipart
 
-    testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
+    testImplementation(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
     
     testImplementation group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
     testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
 
-    testCompile libraries.kafka.avro_serializer
+    testImplementation libraries.kafka.avro_serializer
 
-    testCompile project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests')
-    testCompile project(path: ':schema-registry:schema-registry-common', configuration: 'tests')
-    testCompile project(path: ':schema-registry:schema-registry-core', configuration: 'tests')
-    testCompile project(path: ':registry-common', configuration: 'tests')
-    
-    testCompile group: 'org.slf4j', name: 'jul-to-slf4j', version: versions_slf4j
+    testImplementation(project(':schema-registry:schema-registry-serdes'))
+    testImplementation(project(path: ':schema-registry:schema-registry-serdes', configuration: 'tests'))
+    testImplementation(project(path: ':schema-registry:schema-registry-common', configuration: 'tests'))
+    testImplementation(project(path: ':schema-registry:schema-registry-core', configuration: 'tests'))
+    testImplementation(project(path: ':registry-common', configuration: 'tests'))
 
-    testCompile libraries.junit
-    testCompile libraries.mockito
-    testCompile libraries.mockito_inline
-    testCompile libraries.dropwizard.testing
+    testImplementation group: 'org.slf4j', name: 'jul-to-slf4j', version: versions_slf4j
 
-    testCompile libraries.kafka.clients
-    testCompile libraries.kafka.test.clients
-    testCompile libraries.kafka.test.streams
-    testCompile libraries.kafka.test.streams_test_utils
-    
-    testCompile(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
-    testCompile(libraries.kafka.core) { exclude group: 'org.scala-lang' }
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.mockito_inline
+    testImplementation libraries.dropwizard.testing
 
-    testCompile libraries.logging.reload4j
-    testCompile libraries.httpclient.client
+    testImplementation libraries.kafka.clients
+    testImplementation libraries.kafka.test.clients
+    testImplementation libraries.kafka.test.streams
+    testImplementation libraries.kafka.test.streams_test_utils
 
-    runtime group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
+    testImplementation(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
+    testImplementation(libraries.kafka.core) { exclude group: 'org.scala-lang' }
 
+    testImplementation libraries.logging.reload4j
+    testImplementation libraries.httpclient.client
+
+    runtimeOnly group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
 }
 
 jar {
     manifest {
         attributes(
-                "Main-Class": application.mainClassName,
+                "Main-Class": application.mainClass,
                 "Implementation-Title": project.name,
                 "Implementation-Version": project.version
         )

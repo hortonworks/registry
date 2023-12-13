@@ -16,6 +16,8 @@
 
 dependencies {
 
-    compile project(':schema-registry:schema-registry-common')
+    implementation project(':schema-registry:schema-registry-common')
+
+    implementation libraries.logging.slf4j_api
 
 }

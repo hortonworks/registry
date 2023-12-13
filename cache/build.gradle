@@ -14,11 +14,15 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile(project(':registry-common')) { transitive = false }
-    compile project(':registry-common-client')
-    compile libraries.lettuce
-    testCompile libraries.junit
+    api(project(':registry-common')) { transitive = false }
+    api project(':registry-common-client')
+    api libraries.lettuce
+    testImplementation libraries.junit
 
 }

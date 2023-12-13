@@ -14,25 +14,28 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile project(':cache')
-    compile project(':storage:storage-common')
-    compile libraries.postgresql
-    compile libraries.hikari
-    compile libraries.commons.lang3
-    compile libraries.commons.io
+    api project(':cache')
+    api project(':storage:storage-common')
+    api libraries.postgresql
+    api libraries.hikari
+    api libraries.commons.lang3
+    api libraries.commons.io
 
-    testCompile libraries.reflections
+    testImplementation libraries.reflections
 
-    testCompile libraries.h2
-    testCompile libraries.mockito
-    testCompile libraries.junit
-
+    testImplementation libraries.h2
+    testImplementation libraries.mockito
+    testImplementation libraries.junit
 }
 
 task copyDependencies(type: Copy) {
     into "$buildDir/dependency"
-    from configurations.runtime
+    from configurations.runtimeClasspath
 }
 build.finalizedBy(copyDependencies)

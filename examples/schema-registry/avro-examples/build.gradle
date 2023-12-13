@@ -15,39 +15,38 @@
 */
 
 plugins {
-    id "com.commercehub.gradle.plugin.avro" version "0.9.1"
+    id "com.github.davidmc24.gradle.plugin.avro" version "1.0.0"
 }
 
 dependencies {
+    implementation group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
+    implementation group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
 
-    compile group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
-    compile group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
-    
-    compile project(':schema-registry:schema-registry-serdes')
-    testCompile(project(':registry-webservice')) {
+    implementation project(':schema-registry:schema-registry-serdes')
+    testImplementation(project(':registry-webservice')) {
         exclude group: 'org.apache.hadoop'
     }
-    testCompile(project(':schema-registry:schema-registry-webservice')) {
+    testImplementation(project(':schema-registry:schema-registry-webservice')) {
         exclude group: 'org.apache.hadoop'
     }
 
-    compile libraries.commons.cli
-    compile libraries.dropwizard.testing
-    compile libraries.el_api
+    implementation libraries.commons.cli
+    implementation libraries.dropwizard.testing
+    implementation libraries.el_api
     
-    compile libraries.kafka.clients
-    compile libraries.kafka.streams
+    implementation libraries.kafka.clients
+    implementation libraries.kafka.streams
     
-    compile libraries.jackson.dataformat_csv
-    compile libraries.jackson.jaxrs
-    compile libraries.jackson.scala_module
+    implementation libraries.jackson.dataformat_csv
+    implementation libraries.jackson.jaxrs
+    implementation libraries.jackson.scala_module
     
-    compile libraries.logging.slf4j_api
-    compile libraries.logging.logback
+    implementation libraries.logging.slf4j_api
+    implementation libraries.logging.logback
     
-    testCompile libraries.junit
-    testCompile project(':examples:schema-registry:serdes-examples')
-
+    testImplementation libraries.junit
+    testImplementation project(':examples:schema-registry:serdes-examples')
+    testImplementation(project(':schema-registry:schema-registry-core'))
 }
 
 avro {
@@ -58,6 +57,7 @@ avro {
 
 def generatedResources = sourceSets.main.output.resourcesDir
 task copySerdesExampleJar(type: Copy) {
+    mustRunAfter(checkstyleMain, checkstyleTest, javadoc, jar)
     from("$projectDir/../serdes-examples/build/libs") {
         include 'serdes-examples*jar'
         exclude 'serdes-examples*javadoc.jar'
@@ -68,5 +68,5 @@ task copySerdesExampleJar(type: Copy) {
     rename { String fileName -> 'serdes-examples.jar' }
 }
 compileTestJava.finalizedBy(copySerdesExampleJar)
-
+test.dependsOn(copySerdesExampleJar)
 

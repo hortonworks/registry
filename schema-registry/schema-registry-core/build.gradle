@@ -14,18 +14,21 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
+    api project(':schema-registry:schema-registry-common')
+    api project(':storage:storage-core')
+    api libraries.jersey.media_json
+    api libraries.guava
+    api group: 'commons-codec', name: 'commons-codec', version: '1.14'
+    api libraries.swagger
 
-    compile project(':schema-registry:schema-registry-common')
-    compile project(':storage:storage-core')
-    compile libraries.jersey.media_json
-    compile libraries.guava
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.14'
-    compile libraries.swagger
+    testImplementation libraries.logging.logback
 
-    testCompile libraries.logging.logback
-
-    testCompile libraries.junit
-    testCompile libraries.mockito
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
 
 }

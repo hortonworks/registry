@@ -14,25 +14,29 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
     compileOnly project(':ranger-plugin')
-    compile libraries.jna_platform
+    api libraries.jna_platform
 
-    compile project(':schema-registry:schema-registry-core')
-    compile(project(':common-auth')) {
+    api project(':schema-registry:schema-registry-core')
+    api(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
-    
-    testCompile project(':ranger-plugin')
-    testCompile libraries.junit
+
+    testImplementation project(':ranger-plugin')
+    testImplementation libraries.junit
     testRuntimeOnly libraries.logging.slf4j_jcl
     
 }
 
 task copyDependencies(type: Sync) {
     into "$buildDir/dependency"
-    from configurations.runtime
+    from configurations.runtimeClasspath
 }
 assemble.dependsOn(copyDependencies)
 

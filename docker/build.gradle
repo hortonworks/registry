@@ -81,7 +81,7 @@ task jibDirectories(type: Copy) {
 }
 
 task copyConnectorToBootstrap(type: Copy) {
-    from(configurations.runtime) {
+    from(configurations.runtimeOnly) {
         include "mysql-connector-java-${connectorVersion}.jar"
     }
     into "${jibDir}/connector1/bootstrap/lib"
@@ -89,7 +89,7 @@ task copyConnectorToBootstrap(type: Copy) {
 copyConnectorToBootstrap.dependsOn(jibDirectories)
 
 task copyConnectorToLibs(type: Copy) {
-    from(configurations.runtime) {
+    from(configurations.runtimeOnly) {
         include "mysql-connector-java-${connectorVersion}.jar"
     }
     into "${jibDir}/connector2/libs"
@@ -106,9 +106,9 @@ tasks.named('jibDockerBuild').configure {
 }
 
 dependencies {
-    compile project(':hortonworks-registries-bin')
-    compile project(':storage:storage-tool')
-    runtime group: 'mysql', name: 'mysql-connector-java', version: connectorVersion
+    implementation project(':hortonworks-registries-bin')
+    implementation project(':storage:storage-tool')
+    runtimeOnly group: 'mysql', name: 'mysql-connector-java', version: connectorVersion
     
     jibDirectories.dependsOn(':hortonworks-registries-bin:build')
 }

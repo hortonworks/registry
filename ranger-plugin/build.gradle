@@ -14,26 +14,30 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
     compileOnly group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
     compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
 
-    compile libraries.ranger.common
-    compile libraries.ranger.audit
-    compile libraries.ranger.classloader
-    compile libraries.hadoop.client  // for storing audit logs on hdfs
-    compile libraries.hadoop.cloud   // for storing audit logs in the cloud
+    api libraries.ranger.common
+    api libraries.ranger.audit
+    api libraries.ranger.classloader
+    api libraries.hadoop.client  // for storing audit logs on hdfs
+    api libraries.hadoop.cloud   // for storing audit logs in the cloud
 
-    compile libraries.jna
-    compile libraries.httpclient.client
-    compile libraries.hadoop.common
-    compile libraries.guava
+    api libraries.jna
+    api libraries.httpclient.client
+    api libraries.hadoop.common
+    api libraries.guava
 
 }
 
 task copyDependencies(type: Sync) {
     into "$buildDir/dependency"
-    from configurations.runtime
+    from configurations.runtimeClasspath
 }
 assemble.dependsOn(copyDependencies)

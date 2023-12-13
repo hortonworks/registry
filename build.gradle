@@ -22,8 +22,8 @@ allprojects {
             releasesOnly()
         }
       }
-      maven { url gbnUrl }
-      maven { url mavenUrl }
+      maven { url gbnUrl; allowInsecureProtocol = true }
+      maven { url mavenUrl; allowInsecureProtocol = true }
   }
 }
 
@@ -38,19 +38,12 @@ subprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'project-report'
     apply plugin: 'jacoco'
-    apply plugin: 'com.bmuschko.nexus'
+    //apply plugin: 'com.bmuschko.nexus'
     apply plugin: 'checkstyle'
     apply plugin: 'signing'
 
-    // Specific to gradle 6, can be removed when upgraded
-    sourceSets.all {
-        configurations.configureEach {
-            attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-        }
-    }
-
     configurations {
-        compile {
+        implementation {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
             exclude group: 'org.slf4j', module: 'slf4j-reload4j'
             exclude group: 'commons-logging'
@@ -58,31 +51,28 @@ subprojects {
         tests.extendsFrom testRuntime
     }
     dependencies {
-        compile platform(libraries.dropwizard.bom)
-        compile platform(libraries.dropwizard.dependencies)
+        implementation platform(libraries.dropwizard.bom)
+        implementation platform(libraries.dropwizard.dependencies)
 
         constraints {
-            compile(libraries.logging.logback) {
+            implementation(libraries.logging.logback) {
                 version {
                     strictly project.versions_logback
                 }
             }
-            compile(libraries.logging.logback_access) {
+            implementation(libraries.logging.logback_access) {
                 version {
                     strictly project.versions_logback
+                }
+            }
+            implementation(libraries.json_org) {
+                version {
+                    strictly project.versions_json_org
                 }
             }
             constraints {
                 implementation("org.apache.commons:commons-text:$versions_commons_text")
-                testCompile("org.apache.commons:commons-text:$versions_commons_text")
-            }
-        }
-    }
-
-    sourceSets {
-        all {
-            configurations.all { conf ->
-                attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+                testImplementation("org.apache.commons:commons-text:$versions_commons_text")
             }
         }
     }
@@ -97,23 +87,27 @@ subprojects {
     jacocoTestReport.dependsOn(test)
 
     task testJar(type: Jar, dependsOn: testClasses) {
-       classifier = 'test'
-       from sourceSets.test.output
+        archiveClassifier = 'test'
+        from sourceSets.test.output
     }
 
     artifacts {
         tests testJar
     }
-    
+
     checkstyle {
         toolVersion = '9.3'
         ignoreFailures = false
         configFile = rootProject.file('checkstyle/checkstyle.xml')
+        configProperties = [
+                'suppressionsFile': rootProject.file('checkstyle/suppressions.xml')
+        ]
     }
     test.dependsOn('checkstyleMain', 'checkstyleTest')
 
     // include license files into every jar
     task copyLegal(type: Copy) {
+        mustRunAfter(compileJava, compileTestJava, checkstyleTest, checkstyleMain, test, jacocoTestReport, javadoc)
         from(rootDir) {
             include 'LICENSE.txt'
             include 'NOTICE.txt'
@@ -122,6 +116,7 @@ subprojects {
     }
     assemble.dependsOn(copyLegal)
     assemble.dependsOn(projectReport)
+    jar.dependsOn(copyLegal)
 
     tasks.withType(Javadoc) {
         failOnError false
@@ -134,8 +129,8 @@ subprojects {
 
     jacocoTestReport {
         reports {
-            xml.enabled true
-            html.enabled true
+            xml.required = true
+            html.required = true
         }
     }
 
@@ -152,13 +147,13 @@ subprojects {
             }
         }
         
-        signing {
+        /*signing {
             sign publishing.publications.mavenJava
-        }
+        }*/
     }
 
     // put your password into ~/.gradle/build.gradle and then run "gradle sign uploadArchive" to upload into nexus
-    modifyPom {
+    /*modifyPom {
         project {
             name 'Registry'
             description 'Registry is a versioned entity framework that allows to build various registry services such as Schema Registry, ML Model Registry etc..'
@@ -203,7 +198,7 @@ subprojects {
         sign = true
         repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
         snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-    }
+    }*/
 }
 
 buildscript {
@@ -212,12 +207,20 @@ buildscript {
         maven {
           url "https://plugins.gradle.org/m2/"
         }
+        maven {
+          url gbnUrl
+          allowInsecureProtocol = true
+        }
+        maven {
+          url mavenUrl
+          allowInsecureProtocol = true
+        }
     }
 
     dependencies {
-        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+        //classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
         classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
         classpath "com.peterabeles.gversion:com.peterabeles.gversion.gradle.plugin:1.10"
-        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+        classpath "com.github.johnrengelman:shadow:8.1.1"
     }
 }

@@ -16,6 +16,7 @@
 
 plugins {
   id "com.peterabeles.gversion"
+  id 'java-library'
 }
 
 gversion {
@@ -26,13 +27,13 @@ gversion {
 
 dependencies {
 
-    compile libraries.jackson.databind
-    compile libraries.jackson.dataformat_yaml
-    
-    compile libraries.snakeyaml
-    
-    compile libraries.logging.slf4j_log4j
-    compile libraries.logging.slf4j_api
+    api libraries.jackson.databind
+    api libraries.jackson.dataformat_yaml
+
+    api libraries.snakeyaml
+
+    api libraries.logging.slf4j_log4j
+    api libraries.logging.slf4j_api
 
 }
 

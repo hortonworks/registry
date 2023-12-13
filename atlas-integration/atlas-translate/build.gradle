@@ -14,20 +14,25 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile project(':atlas-integration:atlas-common')
-    compile libraries.avro
-    compile libraries.atlas.client
-    compile libraries.guava
-    compile libraries.jsr305
+    api project(':atlas-integration:atlas-common')
+    api libraries.avro
+    api libraries.atlas.client
+    api libraries.guava
+    api libraries.jsr305
 
-    testCompile libraries.junit
+    testImplementation libraries.junit
 
 }
 
 task copyDependencies(type: Copy) {
     into "$buildDir/dependency"
-    from configurations.runtime
+    from configurations.runtimeClasspath
+    duplicatesStrategy = 'exclude'
 }
 assemble.dependsOn(copyDependencies)

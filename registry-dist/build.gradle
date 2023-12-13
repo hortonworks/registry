@@ -20,12 +20,12 @@ plugins {
 }
 
 configurations {
-    runtimeJars
+    runtimeJars.extendsFrom(configurations.runtimeClasspath)
 }
 
 distributions {
     main {
-        baseName = final_name
+        distributionBaseName = final_name
         contents {
             into('bin/') {
                 from("$rootDir/bin")
@@ -133,24 +133,22 @@ distributions {
 tasks.withType(Tar){
     compression = Compression.GZIP
     archiveExtension = 'tar.gz'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 dependencies {
-    
-    runtimeJars configurations.runtimeClasspath
 
-    compile project(':schema-registry:schema-registry-client')
-    compile(project(':schema-registry:schema-registry-webservice')) {
+    implementation project(':schema-registry:schema-registry-client')
+    implementation(project(':schema-registry:schema-registry-webservice')) {
         exclude group: 'mysql'
     }
-    compile project(':atlas-integration:atlas-module')
-    compile project(':schema-registry:schema-registry-serdes')
-    
-    compile libraries.jackson.scala_module
-    compile(libraries.ranger.classloader) {
+    implementation project(':atlas-integration:atlas-module')
+    implementation project(':schema-registry:schema-registry-serdes')
+
+    implementation libraries.jackson.scala_module
+    implementation(libraries.ranger.classloader) {
         exclude group: 'org.slf4j'
     }
-    
     // this will force Gradle to build the tar and zip file only after every other project was built
     distTar.dependsOn(':schema-registry:schema-registry-webservice:build')
     distTar.dependsOn(':registry-common-client:build')
@@ -171,13 +169,16 @@ dependencies {
     distTar.dependsOn(':examples:schema-registry:avro-examples:build')
     distTar.dependsOn(':examples:schema-registry:schema-lifecycle:build')
     distTar.dependsOn(':registry-webservice:build')
+    distTar.dependsOn(':schema-registry:schema-registry-authorizer:authRanger')
 
+    distZip.dependsOn(distTar)
+    distZip.duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 }
 
-signing {
+/*signing {
     sign distTar
     sign distZip
-}
+}*/
 
 //uploadArchives {
 //    repositories {

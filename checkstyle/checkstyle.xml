@@ -159,4 +159,10 @@
     <!-- Do not allow tab characters in source files -->
     <module name="FileTabCharacter"/>
 
+    <!-- suppressions, e.g. generated code -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${suppressionsFile}"/>
+        <property name="optional" value="false" />
+    </module>
+
 </module>

@@ -14,19 +14,23 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile(project(':schema-registry:schema-registry-common')) {
+    api(project(':schema-registry:schema-registry-common')) {
         exclude group: 'javax.validation', module: 'validation-api'
     }
     
-    compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
-    compile project(':registry-common-client')
-    compile(project(':common-auth')) {
+    api project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
+    api project(':registry-common-client')
+    api(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
-    
-    testCompile libraries.junit
-    testCompile libraries.mockito
+
+    testImplementation libraries.mockito
+    testImplementation libraries.junit
 
 }

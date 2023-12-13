@@ -15,7 +15,7 @@
 */
 
 plugins {
-    id "com.github.node-gradle.node" version "2.2.4"
+    id "com.github.node-gradle.node" version "7.0.1"
 }
 
 def nodeJsSrc = 'src/main/nodeJs'
@@ -74,6 +74,7 @@ node {
     version = "13.11.0"
     npmVersion = "6.13.7"
     distBaseUrl = npmSettingsMap['nodeDownloadRoot'] ?: 'https://nodejs.org/dist'
+    allowInsecureProtocol = true
 }
 npmInstall.args = ['--loglevel', 'info']
 
@@ -115,15 +116,15 @@ tasks.register("copyWebsiteAssets", Copy) {
     onlyIf { project.ext.runNpmBuild }
 }
 
-task copyLegal2(type: Copy) {
+copyLegal {
+    dependsOn(copyWebsiteAssets)
     from(rootDir) {
         include 'LICENSE.txt'
         include 'NOTICE.txt'
     }
     into new File("$reactWebsite/assets")
+    duplicatesStrategy = 'exclude'
 }
-copyLegal2.dependsOn(copyWebsiteAssets)
-classes.dependsOn(copyLegal2)
 
 jar {
 

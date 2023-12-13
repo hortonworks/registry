@@ -14,20 +14,24 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile libraries.servlet_api
-    compile libraries.directory_server
-    compile libraries.directory_api
-    compile libraries.nimbus
-    testCompile(libraries.hadoop.minikdc) {
+    api libraries.servlet_api
+    api libraries.directory_server
+    api libraries.directory_api
+    api libraries.nimbus
+    testImplementation(libraries.hadoop.minikdc) {
        exclude group: 'org.slf4j'
     }
-    testCompile libraries.httpclient.client
-    testCompile libraries.junit
-    testCompile libraries.mockito
-    testCompile libraries.jetty
-    testCompile group: 'org.eclipse.jetty', name: 'jetty-servlet'
+    testImplementation libraries.httpclient.client
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.jetty
+    testImplementation group: 'org.eclipse.jetty', name: 'jetty-servlet'
     testRuntimeOnly libraries.logging.slf4j_api
     testRuntimeOnly libraries.logging.slf4j_jcl
     testRuntimeOnly libraries.logging.slf4j_log4j

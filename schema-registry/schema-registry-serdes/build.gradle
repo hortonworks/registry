@@ -14,25 +14,29 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
     compileOnly group: 'org.scala-lang', name: 'scala-library', version: versions_scala212
     compileOnly group: 'org.scala-lang', name: 'scala-reflect', version: versions_scala212
     
-    compile project(':schema-registry:schema-registry-client')
-    
-    compile libraries.jackson.jaxrs
-    compile libraries.jersey.media_json
+    api project(':schema-registry:schema-registry-client')
 
-    compile libraries.avro
-    compile libraries.commons.io
-    
-    testCompile project(':schema-registry:schema-registry-core')
-    
+    api libraries.jackson.jaxrs
+    api libraries.jersey.media_json
+
+    api libraries.avro
+    api libraries.commons.io
+
+    testImplementation project(':schema-registry:schema-registry-core')
+
     compileOnly libraries.kafka.clients
-    testCompile libraries.kafka.clients
+    testImplementation libraries.kafka.clients
     
-    testCompile libraries.mockito
-    testCompile libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.junit
 
 }

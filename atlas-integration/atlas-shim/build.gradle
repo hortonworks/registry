@@ -14,10 +14,14 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile project(':atlas-integration:atlas-common')
-    compile libraries.atlas.classloader
+    api project(':atlas-integration:atlas-common')
+    api libraries.atlas.classloader
 
     // This dependency is only needed when running from IntelliJ. Do not create
     // a direct runtime dependency because it will pull in the classes from Atlas
@@ -34,6 +38,6 @@ dependencies {
 // classes will be located during runtime.
 task copyAtlasPluginImpl(type: Copy) {
     into "$buildDir/libs/atlas-schema-registry-plugin-impl"
-    from configurations.compileOnly
+    from configurations.compileClasspath
 }
 classes.dependsOn(copyAtlasPluginImpl)

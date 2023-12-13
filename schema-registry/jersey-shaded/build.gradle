@@ -22,14 +22,14 @@ def shadingPrefix = 'com.hortonworks.registries.shaded'
 
 dependencies {
     
-    compile libraries.jersey.client
-    compile libraries.jersey.hk2
-    compile(libraries.jersey.media_multipart) {
+    implementation libraries.jersey.client
+    implementation libraries.jersey.hk2
+    implementation(libraries.jersey.media_multipart) {
         exclude group: 'ch.qos.logback'
     }
-    compile libraries.jersey.media_json
-    compile libraries.jackson.jaxrs
-    
+    implementation libraries.jersey.media_json
+    implementation libraries.jackson.jaxrs
+
 }
 
 shadowJar {
@@ -43,6 +43,7 @@ shadowJar {
 }
 
 compileJava.finalizedBy(shadowJar)
+copyLegal.mustRunAfter(shadowJar)
 
 publishing {
     publications {

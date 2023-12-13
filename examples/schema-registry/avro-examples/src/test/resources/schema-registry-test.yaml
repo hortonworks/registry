@@ -96,6 +96,7 @@ server:
   applicationConnectors:
     - type: http
       port: 0
+      bindHost: 127.0.0.1
 #    - type: https
 #      port: 8443
 #      keyStorePath: example.keystore
