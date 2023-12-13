@@ -27,7 +27,6 @@ import com.hortonworks.registries.storage.StorageManager;
 import com.hortonworks.registries.storage.TransactionManager;
 import com.hortonworks.registries.storage.search.SearchQuery;
 import com.hortonworks.registries.storage.transaction.TransactionIsolation;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,7 +112,7 @@ public class AtlasEventsProcessorTest {
         metadataStorable.setSchemaGroup("kafka");
         metadataStorable.setValidationLevel(SchemaValidationLevel.DEFAULT_VALIDATION_LEVEL);
 
-        List<Storable> result = Lists.newArrayList();
+        List<Storable> result = new ArrayList<>();
         result.add(metadataStorable);
 
         when(storageManager.find(eq(SchemaMetadataStorable.NAME_SPACE), anyList())).thenReturn(result);

@@ -16,13 +16,18 @@
 
 dependencies {
 
-    compile project(':schema-registry:schema-registry-webservice')
-    compile(project(':schema-registry:schema-registry-client')) { transitive = false }
+    implementation project(':schema-registry:schema-registry-webservice')
+    implementation(project(':schema-registry:schema-registry-client')) { transitive = false }
+    implementation project(':schema-registry:schema-registry-common')
 
-    compile libraries.dropwizard.testing
-    
+    implementation libraries.dropwizard.testing
+    implementation libraries.swagger
+    implementation libraries.commons.io
+    implementation libraries.logging.slf4j_api
+
     testImplementation group: 'org.scala-lang', name: 'scala-library', version: scala_version
     testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
     
-    testCompile libraries.junit
+    testImplementation libraries.junit
+    testImplementation libraries.avro
 }

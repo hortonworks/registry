@@ -26,9 +26,9 @@ gversion {
 
 dependencies {
 
-    compile libraries.jackson.databind
+    implementation libraries.jackson.databind
 
-    compile libraries.logging.slf4j_api
+    implementation libraries.logging.slf4j_api
 
 }
 

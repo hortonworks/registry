@@ -23,94 +23,99 @@ application {
 }
 
 configurations {
-    testCompile {
+    testImplementation {
         exclude group: 'org.slf4j', module: 'slf4j-simple'
     }
 }
 
 dependencies {
 
-    compile(project(':registry-common')) { transitive = false }
-    compile project(':registry-common-client')
-    compile(project(':registry-webservice')) {
+    implementation(project(':registry-common')) { transitive = false }
+    implementation project(':registry-common-client')
+    implementation(project(':registry-webservice')) {
         exclude group: 'com.sun.jersey.contribs', module: 'jersey-guice'
     }
-    compile project(':schema-registry:schema-registry-authorizer')
-    compile project(':schema-registry:schema-registry-core')
-    compile project(':schema-registry:oauth2-authenticator')
-    compile project(':schema-registry:ssl-authenticator')
-    compile project(':atlas-integration:atlas-module')
-    compile project(':storage:storage-core')
-    compile(project(':common-auth')) {
+    implementation project(':schema-registry:schema-registry-authorizer')
+    implementation project(':schema-registry:schema-registry-common')
+    implementation project(':schema-registry:schema-registry-core')
+    implementation project(':schema-registry:oauth2-authenticator')
+    implementation project(':schema-registry:ssl-authenticator')
+    implementation project(':atlas-integration:atlas-common')
+    implementation project(':atlas-integration:atlas-module')
+    implementation project(':storage:storage-core')
+    implementation(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
 
-    compile libraries.hibernate_validator
-    compile libraries.el_api
-    compile libraries.jetty
-    compile libraries.guice
+    implementation libraries.hibernate_validator
+    implementation libraries.el_api
+    implementation libraries.jetty
+    implementation libraries.guice
 
-    compile libraries.dropwizard.core
-    compile libraries.dropwizard.swagger
-    compile libraries.dropwizard.assets
-    compile libraries.dropwizard.auth
-    compile libraries.dropwizard.metrics
+    implementation libraries.dropwizard.core
+    implementation libraries.dropwizard.swagger
+    implementation libraries.dropwizard.assets
+    implementation libraries.dropwizard.auth
+    implementation libraries.dropwizard.metrics
+    implementation libraries.dropwizard.guicey
 
-    compile libraries.swagger
+    implementation libraries.swagger
 
-    compile libraries.guava
-    compile libraries.commons.lang3
-    compile libraries.commons.collections
-    compile libraries.nimbus
-    compile libraries.jersey.media_multipart
+    implementation libraries.guava
+    implementation libraries.commons.lang3
+    implementation libraries.commons.io
+    implementation libraries.commons.collections
+    implementation libraries.nimbus
+    implementation libraries.jersey.media_multipart
 
-    testCompile(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
+    testImplementation(libraries.jackson.scala_module) { exclude group: 'org.scala-lang' }
 
-    testCompile group: 'junit', name: 'junit', version: '4.13.2'
-    testCompile group: 'org.scala-lang', name: 'scala-library', version: scala_version
-    testCompile group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+    testImplementation group: 'org.scala-lang', name: 'scala-library', version: scala_version
+    testImplementation group: 'org.scala-lang', name: 'scala-reflect', version: scala_version
 
-    testCompile (libraries.kafka.confluent_avro_serializer) {
+    testImplementation (libraries.kafka.confluent_avro_serializer) {
         constraints {
-            testCompile(libraries.kafka.clients) {
+            testImplementation(libraries.kafka.clients) {
                 force = true
             }
         }
     }
-    testCompile (libraries.kafka.confluent_sr_client) {
+    testImplementation (libraries.kafka.confluent_sr_client) {
         constraints {
-            testCompile(libraries.kafka.clients) {
+            testImplementation(libraries.kafka.clients) {
                 force = true
             }
         }
     }
 
-    testCompile(project(path: ':schema-registry:schema-registry-client')) { transitive = false }
-    testCompile(project(path: ':schema-registry:schema-registry-serdes')) { transitive = false }
+    testImplementation(project(path: ':schema-registry:schema-registry-client')) { transitive = false }
+    testImplementation(project(path: ':schema-registry:schema-registry-serdes')) { transitive = false }
+    testImplementation(project(path: ':schema-registry:jersey-shaded', configuration: 'shadow'))
 
-    testCompile libraries.junit
-    testCompile libraries.mockito
-    testCompile libraries.dropwizard.testing
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.dropwizard.testing
 
-    testCompile libraries.kafka.clients
-    testCompile libraries.kafka.test.clients
-    testCompile libraries.kafka.test.streams
-    testCompile libraries.kafka.test.streams_test_utils
+    testImplementation libraries.kafka.clients
+    testImplementation libraries.kafka.test.clients
+    testImplementation libraries.kafka.test.streams
+    testImplementation libraries.kafka.test.streams_test_utils
 
-    testCompile(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
-    testCompile(libraries.kafka.core) { exclude group: 'org.scala-lang' }
+    testImplementation(libraries.kafka.test.core) { exclude group: 'org.scala-lang' }
+    testImplementation(libraries.kafka.core) { exclude group: 'org.scala-lang' }
 
-    testCompile libraries.logging.slf4j_simple
-    testCompile libraries.httpclient.client
+    testImplementation libraries.logging.slf4j_simple
+    testImplementation libraries.httpclient.client
 
-    runtime group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
-//    runtime group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '12.2.0.1'
+    runtimeOnly group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
+//    runtimeOnly group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '12.2.0.1'
 }
 
 jar {
     manifest {
         attributes(
-                "Main-Class": application.mainClassName,
+                "Main-Class": application.mainClass,
                 "Implementation-Title": project.name,
                 "Implementation-Version": project.version
         )

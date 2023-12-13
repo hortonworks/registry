@@ -21,8 +21,8 @@ allprojects {
             releasesOnly()
         }
       }
-      maven { url gbnUrl }
-      maven { url mavenUrl }
+      maven { url gbnUrl; allowInsecureProtocol = true }
+      maven { url mavenUrl; allowInsecureProtocol = true }
 
       // if you need an artifact from the local .m2 uncomment below
       // mavenLocal()
@@ -40,19 +40,13 @@ subprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'project-report'
     apply plugin: 'jacoco'
-    apply plugin: 'com.bmuschko.nexus'
+    //apply plugin: 'com.bmuschko.nexus'
     apply plugin: 'checkstyle'
     apply plugin: 'signing'
-
-    // Specific to gradle 6, can be removed when upgraded
-    sourceSets.all {
-        configurations.configureEach {
-            attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-        }
-    }
+    apply plugin: 'com.dorongold.task-tree'
 
     configurations {
-        compile {
+        implementation {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
             exclude group: 'commons-logging'
         }
@@ -61,37 +55,37 @@ subprojects {
 
     // dependency constraints only
     dependencies {
-        compile platform(libraries.dropwizard.bom)
-        compile platform(libraries.dropwizard.dependencies)
+        implementation platform(libraries.dropwizard.bom)
+        implementation platform(libraries.dropwizard.dependencies)
 
         constraints {
-            compile(libraries.logging.logback) {
+            implementation(libraries.logging.logback) {
                 version {
                     strictly project.versions_logback
                 }
             }
-            compile(libraries.snakeyaml) {
+            implementation(libraries.snakeyaml) {
                 version {
                     strictly project.versions_snakeyaml
                 }
             }
-            compile(libraries.swagger) {
+            implementation(libraries.swagger) {
                 version {
                     strictly project.versions_swagger
                 }
             }
             constraints {
                 implementation("org.apache.commons:commons-text:$versions_commons_text")
-                testCompile("org.apache.commons:commons-text:$versions_commons_text")
+                testImplementation("org.apache.commons:commons-text:$versions_commons_text")
                 implementation("org.scala-lang:scala-library:$scala_version")
-                testCompile("org.scala-lang:scala-library:$scala_version")
+                testImplementation("org.scala-lang:scala-library:$scala_version")
             }
-            compile(libraries.avro) {
+            implementation(libraries.avro) {
                 version {
                     strictly project.versions_avro
                 }
             }
-            compile(libraries.json_org) {
+            implementation(libraries.json_org) {
                 version {
                     strictly project.versions_json_org
                 }
@@ -122,6 +116,7 @@ subprojects {
 
     // include license files into every jar
     task copyLegal(type: Copy) {
+        mustRunAfter(compileJava, compileTestJava, checkstyleTest, test, jacocoTestReport, javadoc)
         from(rootDir) {
             include 'LICENSE.txt'
             include 'NOTICE.txt'
@@ -130,6 +125,7 @@ subprojects {
     }
     assemble.dependsOn(copyLegal)
     assemble.dependsOn(projectReport)
+    jar.dependsOn(copyLegal)
 
     tasks.withType(Javadoc) {
         failOnError false
@@ -142,8 +138,8 @@ subprojects {
 
     jacocoTestReport {
         reports {
-            xml.enabled true
-            html.enabled true
+            xml.required = true
+            html.required = true
         }
     }
 
@@ -166,13 +162,13 @@ subprojects {
             }
         }
         
-        signing {
+        /*signing {
             sign publishing.publications.mavenJava
-        }
+        }*/
     }
 
     // put your password into ~/.gradle/build.gradle and then run "gradle sign uploadArchive" to upload into nexus
-    modifyPom {
+    /*modifyPom {
         project {
             name 'Registry'
             description 'Registry is a versioned entity framework that allows to build various registry services such as Schema Registry, ML Model Registry etc..'
@@ -217,7 +213,7 @@ subprojects {
         sign = true
         repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
         snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-    }
+    }*/
 }
 
 buildscript {
@@ -226,15 +222,24 @@ buildscript {
         maven {
           url "https://plugins.gradle.org/m2/"
         }
+        maven {
+          url gbnUrl
+          allowInsecureProtocol = true
+        }
+        maven {
+          url mavenUrl
+          allowInsecureProtocol = true
+        }
     }
 
     dependencies {
-        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+        //classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
         classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
         classpath "com.peterabeles.gversion:com.peterabeles.gversion.gradle.plugin:1.10"
-        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+        classpath "com.github.johnrengelman:shadow:8.1.1"
         classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"
         classpath 'org.owasp:dependency-check-gradle:7.4.4'
+        classpath 'com.dorongold.plugins:task-tree:2.1.1'
     }
 }
 

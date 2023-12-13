@@ -16,25 +16,25 @@
 
 dependencies {
     
-    testCompile libraries.junit
-    compile project(':storage:storage-common')
+    testImplementation libraries.junit
+    implementation project(':storage:storage-common')
     
-    compile platform(libraries.dropwizard.bom)
+    implementation platform(libraries.dropwizard.bom)
 
-    compile libraries.commons.lang3
-    compile libraries.commons.cli
-    compile libraries.commons.text
-    compile libraries.jackson.core
-    compile libraries.jackson.databind
-    compile libraries.jackson.dataformat_yaml
-    compile libraries.postgresql
-    compile libraries.logging.slf4j_api
-    compile group: 'org.slf4j', name: 'slf4j-simple', version: versions_slf4j
-    compile libraries.commons.io
-    compile libraries.flyway
-    compile libraries.plexus.annotations
-    compile libraries.plexus.dispatcher
-    compile libraries.plexus.utils
+    implementation libraries.commons.lang3
+    implementation libraries.commons.cli
+    implementation libraries.commons.text
+    implementation libraries.jackson.core
+    implementation libraries.jackson.databind
+    implementation libraries.jackson.dataformat_yaml
+    implementation libraries.postgresql
+    implementation libraries.logging.slf4j_api
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: versions_slf4j
+    implementation libraries.commons.io
+    implementation libraries.flyway
+    implementation libraries.plexus.annotations
+    implementation libraries.plexus.dispatcher
+    implementation libraries.plexus.utils
 
 }
 
@@ -44,6 +44,8 @@ jar {
     }
 
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

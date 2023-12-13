@@ -14,24 +14,26 @@
  * limitations under the License.
 */
 
-dependencies {
+plugins {
+    id 'java-library'
+}
 
-    compile(project(':schema-registry:schema-registry-common')) {
+dependencies {
+    api(project(':schema-registry:schema-registry-common')) {
         exclude group: 'schema-registry', module: 'jersey-shaded'
     }
-    compile project(':storage:storage-core')
-    compile libraries.commons.beanutils
-    compile libraries.jersey.media_json
-    compile libraries.guava
-    compile libraries.commons.codec
-    compile libraries.swagger
-    compile libraries.dropwizard.core
-    compile libraries.dropwizard.guicey
-    compile libraries.dropwizard.swagger
+    api project(':storage:storage-core')
+    api libraries.commons.beanutils
+    api libraries.jersey.media_json
+    api libraries.guava
+    api libraries.commons.codec
+    api libraries.swagger
+    api libraries.dropwizard.core
+    api libraries.dropwizard.guicey
+    api libraries.dropwizard.swagger
 
-    testCompile libraries.logging.logback
-    
-    testCompile libraries.junit
-    testCompile libraries.mockito
+    testImplementation libraries.logging.logback
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
 
 }

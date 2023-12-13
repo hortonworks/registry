@@ -14,24 +14,28 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile(project(':common-auth')) {
+    api(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
-    compile(project(':schema-registry:schema-registry-authorizer')) { transitive = false }
-    compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
-    compile project(':schema-registry:oauth2-common')
-    compile libraries.commons.io
-    compile libraries.commons.lang3
-    compile libraries.guava
+    api(project(':schema-registry:schema-registry-authorizer')) { transitive = false }
+    api project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
+    api project(':schema-registry:oauth2-common')
+    api libraries.commons.io
+    api libraries.commons.lang3
+    api libraries.guava
     compileOnly libraries.servlet_api
-    compile libraries.jose4j
-    compile libraries.dropwizard.core
+    api libraries.jose4j
+    api libraries.dropwizard.core
 
-    testCompile libraries.junit
-    testCompile libraries.mockito
-    testCompileOnly libraries.servlet_api
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.servlet_api
     testRuntimeOnly libraries.servlet_api
 
 }

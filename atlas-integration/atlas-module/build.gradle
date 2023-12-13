@@ -14,19 +14,25 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile project(':schema-registry:schema-registry-core')
-    compile project(':schema-registry:schema-registry-common')
-    compile project(':schema-registry:schema-registry-authorizer')
-    compile(project(':registry-common')) { transitive = false }
-    compile project(':registry-common-client')
-    compile project(':atlas-integration:atlas-common')
+    api project(':schema-registry:schema-registry-core')
+    api project(':schema-registry:schema-registry-common')
+    api project(':schema-registry:schema-registry-authorizer')
+    api(project(':registry-common')) { transitive = false }
+    api project(':registry-common-client')
+    api project(':atlas-integration:atlas-common')
 
-    compile libraries.dropwizard.metrics
+    api libraries.dropwizard.metrics
 
-    testCompile libraries.mockito
-    testCompile libraries.junit
-    testCompile libraries.h2
+    testImplementation project(':storage:storage-common')
 
+    testImplementation libraries.mockito
+    testImplementation libraries.junit
+    testImplementation libraries.h2
+    testImplementation libraries.hikari
 }

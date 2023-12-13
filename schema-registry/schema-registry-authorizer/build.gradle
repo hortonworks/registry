@@ -14,23 +14,28 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile libraries.jna_platform
+    api libraries.jna_platform
 
-    compile project(':schema-registry:schema-registry-core')
-    compileOnly libraries.hadoop.common
-    compile(project(':common-auth')) {
+    api project(':schema-registry:schema-registry-core')
+    api(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
     }
 
-    testCompile libraries.junit
-    testCompile libraries.hadoop.common
+    compileOnly libraries.hadoop.common
+
+    testImplementation libraries.junit
+    testImplementation libraries.hadoop.common
     
 }
 
 task copyDependencies(type: Sync) {
     into "$buildDir/dependency"
-    from configurations.runtime
+    from configurations.runtimeClasspath
 }
 assemble.dependsOn(copyDependencies)

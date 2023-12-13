@@ -14,25 +14,29 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile project(':registry-common')
-    compile project(':storage:storage-common')
-    compile libraries.postgresql
-    compile libraries.hikari
-    compile libraries.commons.lang3
-    compile libraries.commons.io
+    api project(':registry-common')
+    api project(':storage:storage-common')
+    api libraries.postgresql
+    api libraries.hikari
+    api libraries.commons.lang3
+    api libraries.commons.io
     
-    testCompile libraries.h2
-    testCompile libraries.junit
-    testCompile libraries.commons.beanutils
-    testCompile libraries.dropwizard.core
-    testCompile libraries.mockito_inline
+    testImplementation libraries.h2
+    testImplementation libraries.junit
+    testImplementation libraries.commons.beanutils
+    testImplementation libraries.dropwizard.core
+    testImplementation libraries.mockito_inline
 
 }
 
 task copyDependencies(type: Copy) {
     into "$buildDir/dependency"
-    from configurations.runtime
+    from configurations.runtimeClasspath
 }
 build.finalizedBy(copyDependencies)

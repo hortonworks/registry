@@ -16,43 +16,61 @@
 
 dependencies {
 
-    testCompile project(':integration-tests').sourceSets.test.output
-    testCompile(project(':schema-registry:schema-registry-client')) {
+    testImplementation project(':integration-tests').sourceSets.test.output
+    testImplementation(project(':schema-registry:schema-registry-client')) {
         transitive = false
     }
-    testCompile(project(':schema-registry:schema-registry-serdes')) {
+    testImplementation(project(':schema-registry:schema-registry-serdes')) {
         transitive = false
     }
-    testCompile project(':schema-registry:oauth2-authenticator')
-    testCompile project(':schema-registry:schema-registry-webservice')
-    // we need this to use Atlas types, but we don't import any transitive dependencies
-    testCompile libraries.atlas.intg
+    testImplementation project(':schema-registry:schema-registry-common')
+    testImplementation project(':schema-registry:schema-registry-core')
+    testImplementation project(':schema-registry:oauth2-authenticator')
+    testImplementation project(':schema-registry:oauth2-common')
+    testImplementation project(':schema-registry:ssl-authenticator')
+    testImplementation project(':schema-registry:schema-registry-webservice')
+    testImplementation project(':common-auth')
+    testImplementation project(':registry-common')
+    testImplementation project(':storage:storage-core')
 
-    testCompile libraries.flyway
-    testCompile libraries.freemarker
+    // we need this to use Atlas types, but we don't import any transitive dependencies
+    testImplementation libraries.atlas.intg
+
+    testImplementation libraries.commons.collections
+    testImplementation libraries.flyway
+    testImplementation libraries.freemarker
     // we need to use version 200 due to new features, but we also need to keep
     // the old version in storage-core because (h2) transactions don't work with newer versions
-    testCompile("com.h2database:h2") {
+    testImplementation("com.h2database:h2") {
         version {
             strictly "1.4.200"
         }
     }
+    testImplementation libraries.hikari
+
+    testImplementation libraries.dropwizard.core
             
-    testCompile libraries.httpclient.client
-    testCompile libraries.httpclient.mime
-    testCompile libraries.validation_api2
-    testCompile libraries.nimbus
-    testCompile libraries.jose4j
+    testImplementation libraries.httpclient.client
+    testImplementation libraries.httpclient.mime
+    testImplementation libraries.validation_api2
+    testImplementation libraries.nimbus
+    testImplementation libraries.jose4j
 
-    testCompile libraries.junit
-    testCompile libraries.mockito
-    testCompile libraries.mockito_junit5
-    testCompile libraries.mockserver
+    testImplementation libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.mockito_junit5
+    testImplementation libraries.mockserver
 
-    testCompile libraries.cucumber.core
-    testCompile libraries.cucumber.junit
-    testCompile libraries.cucumber.junit_platform
-    testCompile libraries.cucumber.picocontainer
+    testImplementation libraries.cucumber.core
+    testImplementation libraries.cucumber.junit
+    testImplementation libraries.cucumber.junit_platform
+    testImplementation libraries.cucumber.picocontainer
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
 }
 
 task cucumber() {
@@ -60,7 +78,7 @@ task cucumber() {
     doLast {
         javaexec {
             main = "io.cucumber.core.cli.Main"
-            classpath = configurations.testCompile + sourceSets.main.output + sourceSets.test.output
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
             args = ['--plugin', 'pretty', '--plugin', 'html:build/reports/cucumber/cucumber-pretty.html',
                     '--glue', 'com.cloudera.dim.schemaregistry', 'src/test/resources']
         }

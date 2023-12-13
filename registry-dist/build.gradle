@@ -20,12 +20,12 @@ plugins {
 }
 
 configurations {
-    runtimeJars
+    runtimeJars.extendsFrom(configurations.runtimeClasspath)
 }
 
 distributions {
     main {
-        baseName = final_name
+        distributionBaseName = final_name
         contents {
             into('bin/') {
                 from("$rootDir/bin")
@@ -88,18 +88,18 @@ tasks.withType(Tar){
 }
 
 dependencies {
-    
-    runtimeJars configurations.runtimeClasspath
 
-    compile(project(':schema-registry:schema-registry-client')) { transitive = false }
-    compile(project(':schema-registry:schema-registry-webservice')) {
+    //runtimeJars configurations.runtimeClasspath
+
+    implementation(project(':schema-registry:schema-registry-client')) { transitive = false }
+    implementation(project(':schema-registry:schema-registry-webservice')) {
         exclude group: 'mysql'
     }
-    compile project(':atlas-integration:atlas-module')
-    compile(project(':schema-registry:schema-registry-serdes')) { transitive = false }
+    implementation project(':atlas-integration:atlas-module')
+    implementation(project(':schema-registry:schema-registry-serdes')) { transitive = false }
     
-    compile libraries.jackson.scala_module
-    
+    implementation libraries.jackson.scala_module
+
     // this will force Gradle to build the tar and zip file only after every other project was built
     distTar.dependsOn(':schema-registry:schema-registry-webservice:build')
     distTar.dependsOn(':registry-common-client:build')
@@ -117,12 +117,13 @@ dependencies {
     distTar.dependsOn(':examples:schema-registry:schema-lifecycle:build')
     distTar.dependsOn(':registry-webservice:build')
 
+    distZip.dependsOn(distTar)
 }
 
-signing {
+/*signing {
     sign distTar
     sign distZip
-}
+}*/
 
 //uploadArchives {
 //    repositories {

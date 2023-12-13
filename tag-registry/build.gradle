@@ -16,24 +16,24 @@
 
 dependencies {
 
-    compile(project(':registry-common')) { transitive = false }
-    compile project(':registry-common-client')
-    compile project(':storage:storage-core')
-    compile libraries.jersey.client
-    compile libraries.jersey.media_multipart
-    compile libraries.jackson.core
-    compile libraries.jackson.annotations
-    compile libraries.jackson.databind
-    compile libraries.jackson.dataformat_yaml
+    implementation(project(':registry-common')) { transitive = false }
+    implementation project(':registry-common-client')
+    implementation project(':storage:storage-core')
+    implementation libraries.jersey.client
+    implementation libraries.jersey.media_multipart
+    implementation libraries.jackson.core
+    implementation libraries.jackson.annotations
+    implementation libraries.jackson.databind
+    implementation libraries.jackson.dataformat_yaml
     
-    testCompile(libraries.dropwizard.core)
-    testCompile(libraries.dropwizard.jersey)
-    testCompile(libraries.dropwizard.util)
-    testCompile(libraries.dropwizard.testing)
+    testImplementation(libraries.dropwizard.core)
+    testImplementation(libraries.dropwizard.jersey)
+    testImplementation(libraries.dropwizard.util)
+    testImplementation(libraries.dropwizard.testing)
     
-    compile(libraries.dropwizard.metrics)
-    compile libraries.hibernate_validator
-    compile libraries.validation_api
+    implementation(libraries.dropwizard.metrics)
+    implementation libraries.hibernate_validator
+    implementation libraries.validation_api
     
-    testCompile libraries.junit
+    testImplementation libraries.junit
 }

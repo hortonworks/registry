@@ -85,6 +85,7 @@ server:
   applicationConnectors:
     - type: https
       port: 0
+      bindHost: 127.0.0.1
       keyStorePath: ./src/test/resources/jks/server.jks
       keyStorePassword: serverpwd
       trustStorePath: ./src/test/resources/jks/client.jks

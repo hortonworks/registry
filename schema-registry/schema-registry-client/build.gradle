@@ -14,36 +14,45 @@
  * limitations under the License.
 */
 
+plugins {
+    id 'java-library'
+}
+
 dependencies {
 
-    compile("com.fasterxml.jackson.core:jackson-core")
-    compile("com.fasterxml.jackson.core:jackson-databind")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-guava")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-joda")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    compile("com.fasterxml.jackson.module:jackson-module-parameter-names")
-    compile("com.fasterxml.jackson.core:jackson-annotations")
+    api("com.fasterxml.jackson.core:jackson-core")
+    api("com.fasterxml.jackson.core:jackson-databind")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-json-org")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-joda")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    api("com.fasterxml.jackson.module:jackson-module-parameter-names")
+    api("com.fasterxml.jackson.core:jackson-annotations")
 
     constraints {
-        compile("org.yaml:snakeyaml") { version { strictly project.versions_snakeyaml } }
-        compile("org.json:json") { version { strictly project.versions_json_org } }
-        compile("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2_databind } }
-        compile("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
-        compile("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
+        implementation("org.yaml:snakeyaml") { version { strictly project.versions_snakeyaml } }
+        implementation("org.json:json") { version { strictly project.versions_json_org } }
+        implementation("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2_databind } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
     }
 
-    compile libraries.snakeyaml
-    compile libraries.json_org
+    api libraries.snakeyaml
+    api libraries.json_org
+    api libraries.logging.slf4j_api
+    api libraries.commons.io
+    api libraries.commons.lang3
+    api libraries.guava
+    api libraries.jsr305
 
-    compile(project(':schema-registry:schema-registry-common')) {
+    api(project(':schema-registry:schema-registry-common')) {
         exclude group: 'javax.validation', module: 'validation-api'
         exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'com.fasterxml.jackson.datatype'
@@ -51,13 +60,13 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.dataformat'
     }
     
-    compile project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
-    compile(project(':registry-common-client')) {
+    api project(path: ':schema-registry:jersey-shaded', configuration: 'shadow')
+    api(project(':registry-common-client')) {
         exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'com.fasterxml.jackson.dataformat'
     }
-    compile project(':schema-registry:oauth2-common')
-    compile(project(':common-auth')) {
+    api project(':schema-registry:oauth2-common')
+    api(project(':common-auth')) {
         exclude group: 'javax.servlet', module: 'servlet-api'
         exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'com.fasterxml.jackson.datatype'
@@ -65,7 +74,7 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.dataformat'
     }
     
-    testCompile libraries.mockito
-    testCompile libraries.junit
+    testImplementation libraries.mockito
+    testImplementation libraries.junit
 
 }
