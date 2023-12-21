@@ -23,7 +23,6 @@ dependencies {
     compile libraries.jackson.core
     compile libraries.jackson.databind
     compile libraries.json_schema_validator
-    compile libraries.jackson.datatype_json_org
     compile libraries.jackson.datatype_guava
     compile libraries.jackson.datatype_jsk8
     compile libraries.jackson.datatype_joda

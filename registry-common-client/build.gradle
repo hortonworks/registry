@@ -27,7 +27,7 @@ gversion {
 dependencies {
 
     compile libraries.jackson.databind
-    compile libraries.jackson.dataformat
+    compile libraries.jackson.dataformat_yaml
     
     compile libraries.snakeyaml
     

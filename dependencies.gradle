@@ -74,20 +74,17 @@ ext.libraries = [
    flyway            : "org.flywaydb:flyway-gradle-plugin:$versions_flyway",
 
    jackson: [
-      annotations    : "com.fasterxml.jackson.core:jackson-annotations",
-      core           : "com.fasterxml.jackson.core:jackson-core",
-      databind       : "com.fasterxml.jackson.core:jackson-databind",
-      dataformat     : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
-      dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv",
-      dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
-      datatype_json_org : "com.fasterxml.jackson.datatype:jackson-datatype-json-org",
-      datatype_guava : "com.fasterxml.jackson.datatype:jackson-datatype-guava",
-      datatype_jsk8  : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8",
-      datatype_joda  : "com.fasterxml.jackson.datatype:jackson-datatype-joda",
-      datatype_jsr310: "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
-      parameter_names: "com.fasterxml.jackson.module:jackson-module-parameter-names",
-      jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider",
-      mapper         : "org.codehaus.jackson:jackson-mapper-asl:$versions_jackson1",
+      annotations    : "com.fasterxml.jackson.core:jackson-annotations:$versions_jackson",
+      core           : "com.fasterxml.jackson.core:jackson-core:$versions_jackson",
+      databind       : "com.fasterxml.jackson.core:jackson-databind:$versions_jackson",
+      dataformat_csv : "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:$versions_jackson",
+      dataformat_yaml: "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions_jackson",
+      datatype_guava : "com.fasterxml.jackson.datatype:jackson-datatype-guava:$versions_jackson",
+      datatype_jsk8  : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$versions_jackson",
+      datatype_joda  : "com.fasterxml.jackson.datatype:jackson-datatype-joda:$versions_jackson",
+      datatype_jsr310: "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$versions_jackson",
+      parameter_names: "com.fasterxml.jackson.module:jackson-module-parameter-names:$versions_jackson",
+      jaxrs          : "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$versions_jackson",
       scala_module   : "com.fasterxml.jackson.module:jackson-module-scala_$kafka_scala_version",
    ],
    jaxb_api          : "javax.xml.bind:jaxb-api:$versions_jaxb_api",
@@ -102,13 +99,12 @@ ext.libraries = [
       media_multipart: "org.glassfish.jersey.media:jersey-media-multipart"
    ],
 
-   jetty             : "org.eclipse.jetty:jetty-server",
+   jetty             : "org.eclipse.jetty:jetty-server:$versions_jetty",
    joda_time         : "joda-time:joda-time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
    jose4j            : "org.bitbucket.b_c:jose4j:$versions_jose4j",
    jsr305            : "com.google.code.findbugs:jsr305",
 
-   json_org          : "org.json:json:$versions_json_org",
    json_schema_validator : "com.github.erosb:everit-json-schema:$versions_json_schema_validator",
    junit             : "junit:junit:$versions_junit",
    mockito           : "org.mockito:mockito-core:$versions_mockito",
@@ -127,7 +123,7 @@ ext.libraries = [
    ],
 
    libphonenumber    : "com.googlecode.libphonenumber:libphonenumber:$versions_libphonenumber",
-   guava             : "com.google.guava:guava",
+   guava             : "com.google.guava:guava:$versions_guava",
    guice             : "com.google.inject:guice:$versions_guice",
 
    h2                : "com.h2database:h2",
@@ -255,7 +251,7 @@ ext.libraries = [
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
    reflections        : "org.reflections:reflections:$versions_reflections",
    validation_api     : "javax.validation:validation-api:$versions_validation_api",
-   snakeyaml          : "org.yaml:snakeyaml",
+   snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
 
    validation_api     : "javax.validation:validation-api:$versions_validation_api",
    validation_api2    : "jakarta.validation:jakarta.validation-api"
