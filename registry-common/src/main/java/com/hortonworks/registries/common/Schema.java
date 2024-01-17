@@ -136,7 +136,7 @@ public class Schema implements Serializable {
 
         @Override
         public String idFromValueAndType(Object o, Class<?> aClass) {
-            return null;
+            return aClass.getSimpleName();
         }
 
         @Override
