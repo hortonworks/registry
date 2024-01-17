@@ -128,7 +128,10 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         bootstrap.addBundle(new SwaggerBundle<RegistryConfiguration>() {
             @Override
             protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(RegistryConfiguration registryConfiguration) {
-                return registryConfiguration.getSwaggerBundleConfiguration();
+                SwaggerBundleConfiguration swaggerConfig = registryConfiguration.getSwaggerBundleConfiguration();
+                // dropwizard-swagger 2.0.12-1 has a bug in its template, hence the custom one
+                swaggerConfig.getSwaggerViewConfiguration().setTemplateUrl("/swagger-index.ftl");
+                return swaggerConfig;
             }
         });
         super.initialize(bootstrap);
