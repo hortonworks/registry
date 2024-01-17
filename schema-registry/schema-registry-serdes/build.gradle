@@ -27,16 +27,16 @@ dependencies {
     api("org.glassfish.jersey.media:jersey-media-json-jackson")
 
     constraints {
-        implementation("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2_databind } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson } }
         implementation("org.glassfish.jersey.media:jersey-media-json-jackson") { version { strictly project.versions_jersey2 } }
         implementation("org.glassfish.jersey.core:jersey-common") { version { strictly project.versions_jersey2 } }
         implementation("org.glassfish.jersey.ext:jersey-entity-filtering") { version { strictly project.versions_jersey2 } }

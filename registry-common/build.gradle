@@ -30,6 +30,17 @@ dependencies {
     api libraries.jackson.core
     api libraries.jackson.databind
     api libraries.jackson.annotations
+    api(libraries.json_schema_validator) {
+        // org.json:json is managed centrally
+        exclude group: 'org.json', module: 'json'
+    }
+    api(libraries.json_org) {
+        // We cannot use a constraint, as it applies just to the app and not to the published libs
+        version {
+            strictly project.versions_json_org
+        }
+        because "we need to overwrite the version com.github.erosb:everit-json-schema"
+    }
 
     api libraries.libphonenumber
 

@@ -78,7 +78,7 @@ ext.libraries = [
    freemarker        : "org.freemarker:freemarker:$versions_freemarker",
 
    jackson: [
-      bom            : "com.fasterxml.jackson:jackson-bom:$versions_jackson2",
+      bom            : "com.fasterxml.jackson:jackson-bom:$versions_jackson",
       annotations    : "com.fasterxml.jackson.core:jackson-annotations",
       core           : "com.fasterxml.jackson.core:jackson-core",
       databind       : "com.fasterxml.jackson.core:jackson-databind",
@@ -109,7 +109,7 @@ ext.libraries = [
       netty_connector: "org.glassfish.jersey.connectors:jersey-netty-connector"
    ],
 
-   jetty             : "org.eclipse.jetty:jetty-server",
+   jetty             : "org.eclipse.jetty:jetty-server:$versions_jetty",
    joda_time         : "joda-time:joda-time",
    jopt              : "net.sf.jopt-simple:jopt-simple:$versions_jopt",
    jose4j            : "org.bitbucket.b_c:jose4j:$versions_jose4j",
@@ -138,7 +138,7 @@ ext.libraries = [
    ],
 
    libphonenumber    : "com.googlecode.libphonenumber:libphonenumber:$versions_libphonenumber",
-   guava             : "com.google.guava:guava",
+   guava             : "com.google.guava:guava:$versions_guava",
    guice             : "com.google.inject:guice:$versions_guice",
 
    h2                : "com.h2database:h2",
@@ -196,7 +196,7 @@ ext.libraries = [
    mysql8            : "mysql:mysql-connector-java:8.0.32",
 
    servlet_api        : "javax.servlet:servlet-api:$versions_servlet_api",
-   snakeyaml          : "org.yaml:snakeyaml",
+   snakeyaml          : "org.yaml:snakeyaml:$versions_snakeyaml",
 
    validation_api     : "javax.validation:validation-api:$versions_validation_api",
    validation_api2    : "jakarta.validation:jakarta.validation-api",

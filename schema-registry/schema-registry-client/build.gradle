@@ -33,15 +33,15 @@ dependencies {
     constraints {
         implementation("org.yaml:snakeyaml") { version { strictly project.versions_snakeyaml } }
         implementation("org.json:json") { version { strictly project.versions_json_org } }
-        implementation("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson2_databind } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson2 } }
-        implementation("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson2 } }
+        implementation("com.fasterxml.jackson.core:jackson-core") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.core:jackson-databind") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-json-org") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-joda") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.module:jackson-module-parameter-names") { version { strictly project.versions_jackson } }
+        implementation("com.fasterxml.jackson.core:jackson-annotations") { version { strictly project.versions_jackson } }
     }
 
     api libraries.snakeyaml

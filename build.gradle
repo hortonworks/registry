@@ -86,11 +86,6 @@ subprojects {
                     strictly project.versions_avro
                 }
             }
-            implementation(libraries.json_org) {
-                version {
-                    strictly project.versions_json_org
-                }
-            }
         }
     }
 

@@ -97,7 +97,6 @@ import com.hortonworks.registries.shaded.javax.ws.rs.client.Entity;
 import com.hortonworks.registries.shaded.javax.ws.rs.client.WebTarget;
 import com.hortonworks.registries.shaded.javax.ws.rs.core.MediaType;
 import com.hortonworks.registries.shaded.javax.ws.rs.core.Response;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -234,7 +233,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
     @SuppressWarnings("unchecked")
     private static Map<String, ?> buildConfFromFile(File confFile) throws IOException {
         try (FileInputStream fis = new FileInputStream(confFile)) {
-            return new Yaml(new SafeConstructor()).load(IOUtils.toString(fis, StandardCharsets.UTF_8));
+            return new Yaml().load(IOUtils.toString(fis, StandardCharsets.UTF_8));
         }
     }
 
