@@ -65,11 +65,6 @@ subprojects {
                     strictly project.versions_logback
                 }
             }
-            implementation(libraries.json_org) {
-                version {
-                    strictly project.versions_json_org
-                }
-            }
             constraints {
                 implementation("org.apache.commons:commons-text:$versions_commons_text")
                 testImplementation("org.apache.commons:commons-text:$versions_commons_text")
