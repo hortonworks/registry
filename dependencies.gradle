@@ -58,13 +58,13 @@ ext.libraries = [
    dropwizard: [
       bom            : "io.dropwizard:dropwizard-bom:$versions_dropwizard",
       dependencies   : "io.dropwizard:dropwizard-dependencies:$versions_dropwizard",
-      core           : "io.dropwizard:dropwizard-core:$versions_dropwizard",
-      assets         : "io.dropwizard:dropwizard-assets:$versions_dropwizard",
-      auth           : "io.dropwizard:dropwizard-auth:$versions_dropwizard",
-      jersey         : "io.dropwizard:dropwizard-jersey:$versions_dropwizard",
-      util           : "io.dropwizard:dropwizard-util:$versions_dropwizard",
-      metrics        : "io.dropwizard.metrics:metrics-annotation:$versions_dropwizard_metrics",
-      testing: dependencies.create("io.dropwizard:dropwizard-testing:$versions_dropwizard") {
+      core           : "io.dropwizard:dropwizard-core",
+      assets         : "io.dropwizard:dropwizard-assets",
+      auth           : "io.dropwizard:dropwizard-auth",
+      jersey         : "io.dropwizard:dropwizard-jersey",
+      util           : "io.dropwizard:dropwizard-util",
+      metrics        : "io.dropwizard.metrics:metrics-annotation",
+      testing: dependencies.create("io.dropwizard:dropwizard-testing") {
           exclude group: 'junit'
       },
       swagger        : "com.smoketurner:dropwizard-swagger:$versions_dropwizard_swagger",
@@ -78,6 +78,7 @@ ext.libraries = [
    freemarker        : "org.freemarker:freemarker:$versions_freemarker",
 
    jackson: [
+      bom            : "com.fasterxml.jackson:jackson-bom:$versions_jackson2",
       annotations    : "com.fasterxml.jackson.core:jackson-annotations",
       core           : "com.fasterxml.jackson.core:jackson-core",
       databind       : "com.fasterxml.jackson.core:jackson-databind",
