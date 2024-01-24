@@ -51,6 +51,7 @@ subprojects {
         tests.extendsFrom testRuntime
     }
     dependencies {
+        implementation enforcedPlatform(libraries.jackson.bom)
         implementation platform(libraries.dropwizard.bom)
         implementation platform(libraries.dropwizard.dependencies)
 
@@ -118,6 +119,11 @@ subprojects {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addStringOption('encoding', 'UTF-8')
         options.addStringOption('charSet', 'UTF-8')
+    }
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        // Enforcing the Jackson version is intentional
+        suppressedValidationErrors.add('enforced-platform')
     }
 
     task allDeps(type: DependencyReportTask) {}
