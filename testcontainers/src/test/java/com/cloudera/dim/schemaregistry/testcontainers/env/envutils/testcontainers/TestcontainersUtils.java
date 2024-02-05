@@ -50,7 +50,7 @@ import static org.awaitility.Awaitility.await;
 public class TestcontainersUtils {
 
     private static final String POSTGRES_DOCKER_IMAGE_V9_6_24_PUBLIC = "registry.hub.docker.com/bitnami/postgresql:9.6.24";
-    private static final String POSTGRES_DOCKER_IMAGE_V12_CLDR = "docker-private.infra.cloudera.com/cloudera_thirdparty/postgres:12";
+    private static final String POSTGRES_DOCKER_IMAGE_V12_CLDR = "docker-private.infra.cloudera.com/cloudera_thirdparty/postgres:12.10";
     private static final String POSTGRES_DOCKER_IMAGE = POSTGRES_DOCKER_IMAGE_V12_CLDR;
 
     public static final String POSTGRES_CONTAINER_NETWORK_ALIAS = "postgres_network_alias";
