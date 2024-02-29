@@ -47,8 +47,6 @@ import com.hortonworks.registries.schemaregistry.SerDesPair;
 import com.hortonworks.registries.schemaregistry.errors.SchemaBranchNotFoundException;
 import com.hortonworks.registries.schemaregistry.errors.SchemaNotFoundException;
 import com.hortonworks.registries.schemaregistry.serde.SerDesException;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.atlas.AtlasBaseClient;
 import org.apache.atlas.AtlasClientV2;
 import org.apache.atlas.AtlasServiceException;
@@ -69,6 +67,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -248,7 +248,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 }
             }
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 return Optional.empty();
             }
             throw new AtlasUncheckedException(asex);
@@ -389,7 +389,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 return Optional.ofNullable(Iterables.getFirst(schemaBranches, null));
             }
         } catch (AtlasServiceException e) {
-            if (e.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (e.getStatus() == Response.Status.NOT_FOUND) {
                 return Optional.empty();
             }
             throw new AtlasUncheckedException(e);
@@ -408,7 +408,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
 
             return Optional.ofNullable(branchTranslator.fromAtlas(branchEntity.getEntity()));
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 return Optional.empty();
             }
             throw new AtlasUncheckedException("Error while searching for schema branch with id " + branchId, asex);
@@ -442,7 +442,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
         try {
             return Optional.of(serdesInfoTranslator.fromAtlas(getSerdesAtlasEntity(serDesId)));
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 return Optional.empty();
             }
             throw new AtlasUncheckedException("Error getting serdes by ID " + serDesId, asex);
@@ -462,7 +462,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             atlasClient.createRelationship(relationship);
         } catch (AtlasServiceException asex) {
             LOG.error("111", asex);
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 throw new SerDesException("Serializer with given ID " + serDesId + " does not exist");
             }
             throw new AtlasUncheckedException("Error creating relation between schema \"" + schemaName + "\" and serdes with ID " + serDesId, asex);
@@ -588,7 +588,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
         } catch (SchemaNotFoundException npex) {
             return Optional.empty();
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 return Optional.empty();
             }
             throw new AtlasUncheckedException(asex);
@@ -633,7 +633,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             }
             return Optional.ofNullable(schemaVersionInfoTranslator.fromAtlas(atlasEntity.getEntity()));
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 return Optional.empty();
             }
             throw new AtlasUncheckedException("Could not get schema version by its ID " + versionId, asex);
@@ -656,7 +656,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             }
 
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 throw new SchemaBranchNotFoundException("Did not find branch with id " + branchId);
             }
             throw new AtlasUncheckedException("Could not get schema version by the branch ID " + branchId, asex);
@@ -680,7 +680,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                 return extractSchemaBranchesFromAtlas((Collection<?>) branches, null);
             }
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 throw new SchemaBranchNotFoundException("Did not find schema version with ID " + versionId);
             }
             throw new AtlasUncheckedException("Could not get schema branches by their version ID " + versionId, asex);
@@ -836,7 +836,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
                         f -> fingerprint.equals(f.get(VersionEntityDef.FINGERPRINT)));
             }
         } catch (AtlasServiceException asex) {
-            if (asex.getStatus() == ClientResponse.Status.NOT_FOUND) {
+            if (asex.getStatus() == Response.Status.NOT_FOUND) {
                 return ImmutableList.of();
             } else {
                 throw new AtlasUncheckedException("Could not search for schema " + schemaName + " and version fingerprint " + fingerprint, asex);
@@ -855,7 +855,7 @@ public class AtlasPluginImpl implements AtlasPlugin {
             descending = orderByFields.getRight();
         }
 
-        MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+        MultivaluedMap<String, String> queryParams = new MultivaluedHashMap();
         queryParams.add("typeName", type);
         queryParams.add("classification", null);
         queryParams.add(AtlasBaseClient.QUERY, query);
